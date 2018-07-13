@@ -1,0 +1,40 @@
+#!/bin/bash
+
+
+if [ $1 ]; then 
+    profile="$1"
+else
+    echo "pls input profile" 
+    exit
+fi
+
+
+if [ $2 ]; then 
+    time="$2"
+else
+    time=7
+fi
+
+currentpid=$(sudo netstat -tulpna | grep 2018 |grep aqc |grep 127.0.0.1 | grep -o 'LISTEN.*/' |grep -o '[[:digit:]]*')
+echo "$currentpid"
+
+
+
+if [ "$currentpid" == "" ]; then 
+    echo "no reverse tunnels detected"
+else
+    ./commander $profile OFF
+    sleep $time
+    sudo kill -9 $currentpid
+fi
+
+sleep 2     
+./commander $profile SSH
+sleep $time
+ssh pi@localhost -p2018 
+
+./commander $profile OFF
+sleep $time
+currentpid=$(sudo netstat -tulpna | grep 2018 |grep aqc |grep 127.0.0.1 | grep -o 'LISTEN.*/' |grep -o '[[:digit:]]*')
+sudo kill -9 $currentpid
+

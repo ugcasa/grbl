@@ -1,0 +1,41 @@
+#!/bin/bash
+
+profile="$1" 
+message="$2"
+
+if [ ! -f server.cfg ]; then 
+    cfgDir="$HOME/ujo.guru/Dropbox/Freesi/Development/AQC-Proto/Code/cfg" 
+    cfgFile="aqc-$profile.cfg" 
+    
+    if [ ! -f "$datasource" ]; then 
+        echo "profile config does not exits: $datasource"
+        exit
+    fi
+
+    datasource="$cfgDir/$cfgFile"
+
+    text=$(cat "$datasource" |grep "host")
+    echo "${text// /}" >>server.cfg
+
+    text=$(cat "$datasource" |grep "port")
+    echo "${text// /}" >>server.cfg
+
+    text=$(cat "$datasource" |grep "user")
+    echo "${text// /}" >>server.cfg
+
+    text=$(cat "$datasource" |grep "password")
+    echo "${text// /}" >>server.cfg
+
+    text=$(cat "$datasource" |grep "cuid")
+    echo "${text// /}" >>server.cfg
+fi
+
+. ./server.cfg
+
+#echo "host: $host"
+#echo "user: $user"
+#echo "password: $password"
+#echo "port: $port"
+echo "$message send to cuid: $cuid on $profile"
+
+mosquitto_pub -h $host -t $cuid/CMD -m $message -u $user -P $password -p $port

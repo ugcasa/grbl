@@ -1,0 +1,44 @@
+#!/bin/bash
+
+profile="$1" 
+variable="$2"
+localCfgDir="../cfg" 
+#localCfgDir="$HOME/ujo.guru/Dropbox/Freesi/Development/AQC-Proto/Code/cfg" 
+RemoteCfgDir="$HOME/ujo.guru/Dropbox/Freesi/Development/AQC-Proto/Code/cfg" 
+cfgFile="aqc-$profile.cfg" 
+datasource="$localCfgDir/$cfgFile"
+
+
+if [ ! -f "$datasource" ]; then 
+    echo "Profile config does not exits $datasource"
+    echo  "Getting configuration file from control unit"
+    #mkdir $profile
+    scp bob@servername.com:/home/bob/public_h $localCfgDir
+    else 
+
+fi
+
+text=$(cat "$datasource" |grep "host")
+echo "${text// /}" >>server.cfg
+
+text=$(cat "$datasource" |grep "port")
+echo "${text// /}" >>server.cfg
+
+text=$(cat "$datasource" |grep "user")
+echo "${text// /}" >>server.cfg
+
+text=$(cat "$datasource" |grep "password")
+echo "${text// /}" >>server.cfg
+
+text=$(cat "$datasource" |grep "cuid")
+echo "${text// /}" >>server.cfg
+
+
+### Modify configuration file
+
+### Send modified file 
+
+scp "$localCfgDir/$cfgFile"
+
+bob@servername.com:/home/bob/public_html/
+

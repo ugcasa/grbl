@@ -1,0 +1,20 @@
+#!/bin/bash
+
+pause(){
+ read -n1 -rsp $'Press any key end the test or Ctrl+C to to leave it background...\n'
+}
+
+./../test isonlinnankatu2 &
+pid1=$(echo $!)
+./../test isonlinnankatu3 & 
+pid2=$(echo $!)
+./../test isonlinnankatu4 &
+pid3=$(echo $!)
+
+pause
+
+kill  $pid1
+kill  $pid2
+kill  $pid3
+
+#illall mosquitto_sub
