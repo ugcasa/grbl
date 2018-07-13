@@ -1,4 +1,3 @@
-instructions/Originals
-cfg/obsolete
+instructions/Originals/*
+cfg/obsolete/*
 log/*
-!log/
