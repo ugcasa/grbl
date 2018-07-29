@@ -6,16 +6,14 @@ import ConfigParser
 import string
 import readline
 
-version = "0.6.7"
+version = "0.6.8"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()
 config.read(cfgFolder+"/"+cfgFile)
-
 networksFile ="networks.cfg"
 networks = ConfigParser.RawConfigParser()
 networks.read(cfgFolder+"/"+networksFile)
-
 menuDelay = int(config.get("menu","delay"))
 loop = True			# Menu loop
 safetyOff = 0
@@ -25,15 +23,13 @@ networkname = ""
 
 def isvalID(answer):
 	if answer != "":
-		if all([c in string.ascii_letters+"12345657890+" for c in answer]):
-			return 1
-		else:
-			return 0
-	else:
-		return 0
+		if all([c in string.ascii_letters+"12345657890+" for c in answer]): return 1
+		else: return 0
+	else: return 0
 
 def print_menu():
-	os.system('clear')
+	time.sleep(menuDelay)
+	os.system('clear')	
 	print("Freesi install toolkit " + 45 * "-" + " v"+version+"\n")	
 	print(" Network")
 	print("  1. Listen network                   4. Known locations")
@@ -46,7 +42,7 @@ def print_menu():
 	print("  14. Shutdown control unit           24. Set factory defaults")
 	print("  15. Update setup"+"\n")
 	print(" Other")
-	print("  w. Scan WiFi channels")
+	print("  w. Scan WiFi networks")
 	print("  d. Device setup                    u. Update tools")
 	print("  q. Exit                            s. Safety mode toggle"+"\n")
 	print(75 * "-")
@@ -60,7 +56,7 @@ def listenNetwork():
 
 def changeNetwork():
 	global CUID, networkname
-	answer = raw_input("Input control unit ID: ")
+	answer = raw_input("Input Control Unit ID: ")
 	if isvalID(answer):
 		CUID = answer
 		networkname = ""
@@ -95,8 +91,7 @@ def changeServer():
 	choice = raw_input("Select: ")
 	if config.has_option("servers",choice):
 		server = config.get("servers",choice)
-	else:
-		print("Invalid selection")
+	else: print("Invalid selection")
 
 def scanWiFi():
 	print("Scanning WiFi networks")
@@ -109,8 +104,7 @@ def resetControlUnit():
 		print("Sending command: "+topic)
 		command = 'mosquitto_pub '+parameters+' '+topic
 		os.system(command)
-	else:
-		print("Canceling..")
+	else: print("Canceling..")
 
 def shutdownControlUnit():
 	choice = raw_input("SHUTDOWN control unit CAN NOT waken up remotely, are you sure? [yes/no]: ")	
@@ -121,10 +115,8 @@ def shutdownControlUnit():
 			print("Sending command: "+topic)
 			command = 'mosquitto_pub '+parameters+' '+topic
 			os.system(command)
-		else:
-			print("Canceling..")
-	else:
-		print("Canceling..")
+		else: print("Canceling..")
+	else: print("Canceling..")
 
 def updateTools():
 	global loop
@@ -133,7 +125,7 @@ def updateTools():
 
 def exitTools():	
 	global loop
-	print("Bye")
+	print("Bye bye!")
 	loop=False 
 
 def getConfig():
@@ -148,38 +140,32 @@ def getConfig():
 
 def toggleSafety():
 	global safetyOff
-	if safetyOff == 0:
-		safetyOff = 1
-	else:
-		safetyOff = 0
+	if safetyOff == 0: safetyOff = 1
+	else: safetyOff = 0
 
 while loop:					## While loop which will keep going until loop = False
-	
 	getConfig()
-	time.sleep(menuDelay)
 	print_menu()	
 	choice = raw_input("Command: ")
-
 	# Network
 	if choice=="1": listenNetwork()	
 	elif choice=="2": changeNetwork()		
 	elif choice=="3": changeServer()
 	elif choice=="4": knownNetwork()
-	
 	# Control unit
-	elif choice=="11": print("11  is not functional yet")
+	elif choice=="11": print("11 is not functional")
 	elif choice=="12": resetControlUnit()
-	elif choice=="13": print("13  is not functional yet")
+	elif choice=="13": print("13 is not functional")
 	elif choice=="14": shutdownControlUnit()
-	elif choice=="15": print("15  is not functional yet")
+	elif choice=="15": print("15 is not functional")
 	# Sensor unit
-	elif choice=="21": print("21 is not functional yet")
-	elif choice=="22": print("22 is not functional yet")
-	elif choice=="23": print("23 is not functional yet")			
-	elif choice=="24": print("24 is not functional yet")
+	elif choice=="21": print("21 is not functional")
+	elif choice=="22": print("22 is not functional")
+	elif choice=="23": print("23 is not functional")			
+	elif choice=="24": print("24 is not functional")
 	# Other
 	elif choice=="w": scanWiFi()
-	elif choice=="d": print("device setup is not functional yet")
+	elif choice=="d": print("device setup is not functional")
 	elif choice=="u": updateTools()
 	elif choice=="q": exitTools()
 	elif choice=="s": toggleSafety()
