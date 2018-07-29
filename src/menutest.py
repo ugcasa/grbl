@@ -144,6 +144,7 @@ while loop:					## While loop which will keep going until loop = False
 			print("31")
 		elif choice=="32":			
 			os.system("bash update")
+			break
 		elif choice=="99":
 			print("Bye")
 			loop=False 

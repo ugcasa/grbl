@@ -19,7 +19,6 @@ mkdir $target
 cd $temp
 git clone -b master https://ujoguru@bitbucket.org/freesi/laptop-tools.git && make_clean
 cd $location
-rm -rf $temp
-pkill python
-sleep 3
-bash $target/run
+rm -rf $temp 
+echo 'Update ready, type "./run" to relaunch'
+bash $target/run 
