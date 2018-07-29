@@ -1,9 +1,11 @@
-
+## Freesi air quality system installer tool kit
+## Juha Palm / ujo.guru (c) 2018
 
 import os
 import time
 import ConfigParser
 import string
+version = 0.6.7
 
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
@@ -16,11 +18,10 @@ safetyOff = 0
 server = config.get("servers","1")
 CUID = config.get("network","cuid")
 
-
 def print_menu():
 	#print("Current server: "+svrHost+":"+svrPort+" and network: "+CUID)
 	print("Current server: "+svrName+" and network: "+CUID)	
-	print("Network")
+	print("network                                                               "+version)
 	print("1. Listen network                   4. Scan WiFi channels")
 	print("2. Change network")
 	print("3. Change server")
@@ -43,7 +44,6 @@ def isvalID(answer):
 			return 0
 	else:
 		return 0
-
 
 while loop:					## While loop which will keep going until loop = False
 
@@ -102,10 +102,8 @@ while loop:					## While loop which will keep going until loop = False
 				command = 'mosquitto_pub '+parameters+' '+topic
 				os.system(command)
 
-		
 			else:
 				print("Canceling..")
-
 
 		elif choice=="13":
 			print("13")
@@ -131,17 +129,17 @@ while loop:					## While loop which will keep going until loop = False
 
 	# Sensor unit
 		elif choice=="21":     
-			print("21")
+			print("21 is not functional yet")
 		elif choice=="22":
-			print("22")
+			print("22 is not functional yet")
 		elif choice=="23":
-			print("23")			
+			print("23 is not functional yet")			
 		elif choice=="24":
-			print("24")
+			print("24 is not functional yet")
 	
 	# Other
 		elif choice=="31":     
-			print("31")
+			print("31 is not functional yet")
 		elif choice=="32":			
 			os.system("bash update")
 			break
@@ -150,27 +148,9 @@ while loop:					## While loop which will keep going until loop = False
 			loop=False 
 		elif choice=="98":
 			safetyOff = 1
-			
-		
-
 
 		else:
 			# Any integer inputs other than values 1-5 we print an error message
 			print("Wrong option selection.")
-
 	else:	
 		print("Use number to select functionality")
-
-
-
-
-
-# Connecting to  -u iisy -P freesi123 -h iisycloud.com -p 1883 topic  -t #
-# gnome-terminal --command="mosquitto_sub  -u iisy -P freesi123 -h iisycloud.com -p 1883  -t #"
-# Failed to parse arguments: Argument to "--command/-e" is not a valid command: 
-
-# Text ended before matching quote was found for #. 
-# (The text was 'mosquitto_sub  -u iisy -P freesi123 -h iisycloud.com -p 1883  -t #')
-
-
-#gnome-terminal --command="mosquitto_pub -u iisy -P freesi123 -h 164.5.160.226 -p 1883 -v  -t 12345/CMD RST"
