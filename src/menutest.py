@@ -5,7 +5,8 @@ import os
 import time
 import ConfigParser
 import string
-version = 0.6.7
+
+version = "0.6.7"
 
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
@@ -21,7 +22,7 @@ CUID = config.get("network","cuid")
 def print_menu():
 	#print("Current server: "+svrHost+":"+svrPort+" and network: "+CUID)
 	print("Current server: "+svrName+" and network: "+CUID)	
-	print("network                                                               "+version)
+	print("network                                                               v"+version)
 	print("1. Listen network                   4. Scan WiFi channels")
 	print("2. Change network")
 	print("3. Change server")
