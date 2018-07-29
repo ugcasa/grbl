@@ -8,7 +8,6 @@ pause(){
 }
 
 make_clean() {
-	pause
 	rm -rf $target/*
 	cp -r $temp/laptop-tools/* $target/ 
 }
