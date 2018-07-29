@@ -3,6 +3,7 @@
 import os
 import time
 import ConfigParser
+import string
 
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
@@ -11,13 +12,14 @@ config.read(cfgFolder+"/"+cfgFile)
 
 menuDelay = int(config.get("menu","delay"))
 loop = True			# Menu loop
-
+safetyOff = 0
 server = config.get("servers","1")
 CUID = config.get("network","cuid")
 
 
 def print_menu():
-	print("Current server: "+svrHost+":"+svrPort+" and network: "+CUID)
+	#print("Current server: "+svrHost+":"+svrPort+" and network: "+CUID)
+	print("Current server: "+svrName+" and network: "+CUID)	
 	print("Network")
 	print("1. Listen network                   4. Scan WiFi channels")
 	print("2. Change network")
@@ -30,17 +32,28 @@ def print_menu():
 	print("15. Update setup")
 	print("Other")
 	print("31. Device setup                    32. Update tools")
-	print("99. Exit")
+	print("99. Exit                            98. Safety mode off")
+	if safetyOff: print('Safety mode is set off "yes" is set default answer (except SHD)')
+
+def isvalID(answer):
+	if answer != "":
+		if all([c in string.ascii_letters+"12345657890" for c in answer]):
+			return 1
+		else:
+			return 0
+	else:
+		return 0
 
 
 while loop:					## While loop which will keep going until loop = False
 
+	svrName = config.get(server,"name")
 	svrHost = config.get(server,"host")
 	svrPort = config.get(server,"port")
 	svrUser = config.get(server,"user")
 	svrPass = config.get(server,"password")
 
-	parameters="-u "+svrUser+" -P "+svrPass+" -h "+svrHost+" -p "+svrPort+" -v "
+	parameters="-u "+svrUser+" -P "+svrPass+" -h "+svrHost+" -p "+svrPort
 	topic ="-t "+CUID+"/#"
 
 	time.sleep(menuDelay)
@@ -52,28 +65,25 @@ while loop:					## While loop which will keep going until loop = False
 	# Network
 		if choice=="1":     
 			print("Connecting to "+parameters+" topic "+topic)
-			command = 'gnome-terminal --command="mosquitto_sub '+parameters+' '+topic+'"'
+			command = 'gnome-terminal --command="mosquitto_sub '+parameters+'  '+topic+' -v "'
 			os.system(command)
+		
 		elif choice=="2":			
-			CUID = raw_input("Input control unit ID: ")
+			answer = raw_input("Input control unit ID: ")
+			if isvalID(answer):
+				CUID = answer
+		
 		elif choice=="3":
 			print("Select server")		
 			i = 1
-			while config.has_option("servers",str(i)):
-				
+			while config.has_option("servers",str(i)):			
 				print(str(i)+". "+config.get(config.get("servers",str(i)),"name"))
 				i += 1
-
-			# print("1. "+config.get(config.get("servers","1"),"name"))
-			# print("2. "+config.get(config.get("servers","2"),"name"))
-			# print("3. "+config.get(config.get("servers","3"),"name"))
-			# print("4. "+config.get(config.get("servers","4"),"name"))
-
 			choice = raw_input("Select: ")
 			if config.has_option("servers",choice):
 				server = config.get("servers",choice)
 			else:
-				print("Not valid selection")
+				print("Invalid selection")
 			
 		elif choice=="4":
 			print("Scanning WiFi networks")
@@ -82,12 +92,40 @@ while loop:					## While loop which will keep going until loop = False
 	# Control unit
 		elif choice=="11":     
 			print("11")
+
 		elif choice=="12":
-			print("12")
+			choice = raw_input("Reset control unit, are you sure? [yes/no]: ")
+			if choice == "yes" or safetyOff:
+				topic ="-t "+CUID+"/CMD -m RST"
+				print("Sending command: "+topic)
+				
+				command = 'mosquitto_pub '+parameters+' '+topic
+				os.system(command)
+
+		
+			else:
+				print("Canceling..")
+
+
 		elif choice=="13":
-			print("13")			
+			print("13")
+
 		elif choice=="14":
-			print("14")
+			choice = raw_input("SHUTDOWN control unit CAN NOT waken up remotely, are you sure? [yes/no]: ")	
+			if choice == "yes" or safetyOff:
+				choice = raw_input("Really? [yes/no]: ")
+				if choice == "yes":
+					topic ="-t "+CUID+"/CMD -m SHD"
+					print("Sending command: "+topic)
+					
+					command = 'mosquitto_pub '+parameters+' '+topic
+					os.system(command)
+	
+				else:
+					print("Canceling..")
+			else:
+				print("Canceling..")
+
 		elif choice=="15":
 			print("15")
 
@@ -104,11 +142,14 @@ while loop:					## While loop which will keep going until loop = False
 	# Other
 		elif choice=="31":     
 			print("31")
-		elif choice=="32":
-			print("32")
+		elif choice=="32":			
+			os.system("bash update")
 		elif choice=="99":
 			print("Bye")
 			loop=False 
+		elif choice=="98":
+			safetyOff = 1
+			
 		
 
 
@@ -129,3 +170,6 @@ while loop:					## While loop which will keep going until loop = False
 
 # Text ended before matching quote was found for #. 
 # (The text was 'mosquitto_sub  -u iisy -P freesi123 -h iisycloud.com -p 1883  -t #')
+
+
+#gnome-terminal --command="mosquitto_pub -u iisy -P freesi123 -h 164.5.160.226 -p 1883 -v  -t 12345/CMD RST"

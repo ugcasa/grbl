@@ -1,0 +1,23 @@
+#!/bin/bash
+temp=/tmp/tool-update
+target=$HOME/tools
+location=$(pwd)
+
+pause(){
+ read -n1 -rsp $'Press any key to continue or Ctrl+C to stop \n'
+}
+
+make_clean() {
+	pause
+	rm -rf $target
+	cp $temp/laptop-tools/* $target 
+}
+
+echo "updating installer tools"
+mkdir $temp
+cd $temp
+git clone -b master https://ujoguru@bitbucket.org/freesi/laptop-tools.git && make_clean
+cd $location
+rm -rf $temp
+pkill python
+.$target/run
