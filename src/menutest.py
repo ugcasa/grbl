@@ -12,18 +12,15 @@ config.read(cfgFolder+"/"+cfgFile)
 menuDelay = int(config.get("menu","delay"))
 loop = True			# Menu loop
 
-svrHost = config.get("server","host")
-svrPort = config.get("server","port")
-svrUser = config.get("server","user")
-svrPass = config.get("server","password")
+server = config.get("servers","1")
 CUID = config.get("network","cuid")
 
 
 def print_menu():
-	print("Current server: "+svrHost+" and network: "+CUID)
-	print("Network ")
-	print("1. Listen network                   5. Listen another network")
-	print("2. Change network                   6. Scan WiFi channels")
+	print("Current server: "+svrHost+":"+svrPort+" and network: "+CUID)
+	print("Network")
+	print("1. Listen network                   4. Scan WiFi channels")
+	print("2. Change network")
 	print("3. Change server")
 	print("Control unit                        Sensor unit")
 	print("11. Request initial information     21. Request initial information")
@@ -38,7 +35,12 @@ def print_menu():
 
 while loop:					## While loop which will keep going until loop = False
 
-	server="-u "+svrUser+" -P "+svrPass+" -h "+svrHost+" -p "+svrPort+" -v "
+	svrHost = config.get(server,"host")
+	svrPort = config.get(server,"port")
+	svrUser = config.get(server,"user")
+	svrPass = config.get(server,"password")
+
+	parameters="-u "+svrUser+" -P "+svrPass+" -h "+svrHost+" -p "+svrPort+" -v "
 	topic ="-t "+CUID+"/#"
 
 	time.sleep(menuDelay)
@@ -49,18 +51,31 @@ while loop:					## While loop which will keep going until loop = False
 		
 	# Network
 		if choice=="1":     
-			print("Connecting to "+server+" topic "+topic)
-			command = 'gnome-terminal --command="mosquitto_sub '+server+' '+topic+'"'
+			print("Connecting to "+parameters+" topic "+topic)
+			command = 'gnome-terminal --command="mosquitto_sub '+parameters+' '+topic+'"'
 			os.system(command)
 		elif choice=="2":			
 			CUID = raw_input("Input control unit ID: ")
 		elif choice=="3":
-			print("3")			
+			print("Select server")		
+			i = 1
+			while config.has_option("servers",str(i)):
+				
+				print(str(i)+". "+config.get(config.get("servers",str(i)),"name"))
+				i += 1
+
+			# print("1. "+config.get(config.get("servers","1"),"name"))
+			# print("2. "+config.get(config.get("servers","2"),"name"))
+			# print("3. "+config.get(config.get("servers","3"),"name"))
+			# print("4. "+config.get(config.get("servers","4"),"name"))
+
+			choice = raw_input("Select: ")
+			if config.has_option("servers",choice):
+				server = config.get("servers",choice)
+			else:
+				print("Not valid selection")
+			
 		elif choice=="4":
-			print("4")
-		elif choice=="5":
-			print("5")
-		elif choice=="6":
 			print("Scanning WiFi networks")
 			os.system('gnome-terminal --command="nmcli dev wifi"')
 
