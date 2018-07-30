@@ -194,7 +194,7 @@ def setSensorFD():
 	os.system(command)
 
 def gotoDoc():
-	command = 'firefox https://bitbucket.org/freesi/diagnostics/wiki/Home'
+	command = 'firefox https://bitbucket.org/freesi/diagnostics/wiki/Home &'
 	os.system(command)
 
 
