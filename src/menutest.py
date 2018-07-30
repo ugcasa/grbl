@@ -5,6 +5,7 @@ import time
 import ConfigParser
 import string
 import readline
+import socket
 
 version = "0.6.9"
 cfgFolder = "../cfg"
@@ -123,7 +124,10 @@ def shutdownControlUnit():
 def remoteConnection():
 	#currentpid = 
 	#os.system("sudo netstat -tulpna | grep 2018 |grep aqc |grep 127.0.0.1 | grep -o 'LISTEN.*/' |grep -o '[[:digit:]]*'")
-
+	if socket.gethostname() != "estella":
+		print("Remote only functional in Juha's PC")
+		return 1
+	
 	currentpid = os.popen("sudo netstat -tulpna | grep 2018 |grep aqc |grep 127.0.0.1 | grep -o 'LISTEN.*/' |grep -o '[[:digit:]]*'").read()
 	if currentpid == "":
 		print("no reverse tunnels detected")
