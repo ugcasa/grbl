@@ -7,7 +7,7 @@ import string
 import readline
 import socket
 
-version = "0.6.9"
+version = "0.7.0"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()
@@ -44,7 +44,7 @@ def print_menu():
 	print("  19. Shutdown control unit ")
 
 	print(" Other")
-	print("  w. Scan WiFi networks")
+	print("  w. Scan WiFi networks              h. Open documentation")
 	print("  d. Device setup                    u. Update tools")
 	print("  q. Exit                            s. Safety mode toggle"+"\n")
 	print(75 * "-")
@@ -193,7 +193,9 @@ def setSensorFD():
 	command = 'mosquitto_pub '+parameters+' '+topic
 	os.system(command)
 
-
+def gotoDoc():
+	command = 'firefox https://bitbucket.org/freesi/diagnostics/wiki/Home'
+	os.system(command)
 
 
 def updateTools():
@@ -248,4 +250,5 @@ while loop:					## While loop which will keep going until loop = False
 	elif choice=="u": updateTools()
 	elif choice=="q": exitTools()
 	elif choice=="s": toggleSafety()
+	elif choice=="h": gotoDoc()
 	else: print("Wrong option selection.")
