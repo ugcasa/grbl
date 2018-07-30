@@ -1,6 +1,6 @@
 #!/bin/bash
-temp=/tmp/tool-update
-target=$HOME/tools
+temp=/tmp/diagnostics
+target=$HOME/diagnostics
 location=$(pwd)
 
 pause(){
@@ -9,15 +9,15 @@ pause(){
 
 make_clean() {
 	rm -rf $target/*
-	cp -r $temp/laptop-tools/* $target/ 
+	cp -r $temp/diagnostics/* $target/ 
 }
 
 echo "updating installer tools"
 mkdir $temp
 mkdir $target
 cd $temp
-git clone -b master https://ujoguru@bitbucket.org/freesi/laptop-tools.git && make_clean
+git clone -b master https://ujoguru@bitbucket.org/freesi/diagnostics.git && make_clean
 cd $location
 rm -rf $temp 
-echo 'Update ready, type "./run" to relaunch'
+#echo 'Update ready, type "./run" to relaunch'
 bash $target/run 
