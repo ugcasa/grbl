@@ -97,7 +97,7 @@ def changeServer():
 
 def scanWiFi():
 	print("Scanning WiFi networks")
-	os.system('gnome-terminal --geometry 100x30 -x bash -c "nmcli d wifi; echo press-any-key-when-done; read"')
+	os.system('gnome-terminal --geometry 100x30 -x bash -c "nmcli d wifi; echo press-enter-when-done; read"')
 
 def resetControlUnit():
 	choice = raw_input("Reset control unit, are you sure? [yes/no]: ")
@@ -125,7 +125,7 @@ def remoteConnection():
 	#currentpid = 
 	#os.system("sudo netstat -tulpna | grep 2018 |grep aqc |grep 127.0.0.1 | grep -o 'LISTEN.*/' |grep -o '[[:digit:]]*'")
 	if socket.gethostname() != "estella":
-		print("Remote only functional in Juha's PC")
+		print("Remote connections only possible on Juha's PC")
 		return 1
 	
 	currentpid = os.popen("sudo netstat -tulpna | grep 2018 |grep aqc |grep 127.0.0.1 | grep -o 'LISTEN.*/' |grep -o '[[:digit:]]*'").read()
@@ -157,6 +157,43 @@ def closeConnection():
 	print("Sending command: "+topic)		
 	command = 'mosquitto_pub '+parameters+' '+topic
 	os.system(command)
+
+def requestControlInit():
+	topic ="-t "+CUID+"/CMD -m INI"			# Shutdown the open tunnel if from current CUID
+	print("Sending command: "+topic)		
+	command = 'mosquitto_pub '+parameters+' '+topic
+	os.system(command)
+
+def requestSensorInit():
+	MUID = raw_input("Enter sensor ID: ")
+	topic ="-t "+CUID+"/CMD/"+MUID+" -m INI"			# Shutdown the open tunnel if from current CUID
+	print("Sending command: "+topic)		
+	command = 'mosquitto_pub '+parameters+' '+topic
+	os.system(command)
+
+def setSensorInt():
+	MUID = raw_input("Enter sensor ID: ")
+	seconds = raw_input("Enter interval in seconds: ")
+	topic ="-t "+CUID+"/CMD/"+MUID+"/INT -m "+seconds			# Shutdown the open tunnel if from current CUID
+	print("Sending command: "+topic)		
+	command = 'mosquitto_pub '+parameters+' '+topic
+	os.system(command)
+
+def resetSensor():
+	MUID = raw_input("Enter sensor ID: ")
+	topic ="-t "+CUID+"/CMD/"+MUID+" -m RST"			# Shutdown the open tunnel if from current CUID
+	print("Sending command: "+topic)		
+	command = 'mosquitto_pub '+parameters+' '+topic
+	os.system(command)
+
+def setSensorFD():
+	MUID = raw_input("Enter sensor ID: ")
+	topic ="-t "+CUID+"/CMD/"+MUID+" -m SFD"			# Shutdown the open tunnel if from current CUID
+	print("Sending command: "+topic)		
+	command = 'mosquitto_pub '+parameters+' '+topic
+	os.system(command)
+
+
 
 
 def updateTools():
@@ -194,20 +231,20 @@ while loop:					## While loop which will keep going until loop = False
 	elif choice=="3": changeServer()
 	elif choice=="4": knownNetwork()
 	# Control unit
-	elif choice=="11": print("11 is not functional")
+	elif choice=="11": print("non functional")#requestControlInit()
 	elif choice=="12": resetControlUnit()
 	elif choice=="13": remoteConnection()
 	elif choice=="14": closeConnection()
 	elif choice=="19": shutdownControlUnit()
 
 	# Sensor unit
-	elif choice=="21": print("21 is not functional")
-	elif choice=="22": print("22 is not functional")
-	elif choice=="23": print("23 is not functional")			
-	elif choice=="24": print("24 is not functional")
+	elif choice=="21": print("non functional") #requestSensorInit()
+	elif choice=="22": print("non functional")#resetSensor()
+	elif choice=="23": print("non functional")#setSensorInt()
+	elif choice=="24": print("non functional")#setSensorFD()
 	# Other
 	elif choice=="w": scanWiFi()
-	elif choice=="d": print("device setup is not functional")
+	elif choice=="d": print("No device setup hardware detected")
 	elif choice=="u": updateTools()
 	elif choice=="q": exitTools()
 	elif choice=="s": toggleSafety()
