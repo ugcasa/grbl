@@ -7,7 +7,7 @@ import string
 import readline
 import socket
 
-version = "0.7.0"
+version = "0.7.1"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()
@@ -41,8 +41,7 @@ def print_menu():
 	print("  12. Reset control unit              22. Reset sensor")
 	print("  13. Remote connection               23. Set measurement interval")
 	print("  14. Close tunnel                    24. Set factory defaults")
-	print("  19. Shutdown control unit ")
-
+	print("  19. Shutdown control unit"+"\n")
 	print(" Other")
 	print("  w. Scan WiFi networks              h. Open documentation")
 	print("  d. Device setup                    u. Update tools")
