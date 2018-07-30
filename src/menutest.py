@@ -97,7 +97,7 @@ def changeServer():
 
 def scanWiFi():
 	print("Scanning WiFi networks")
-	os.system('gnome-terminal --command="nmcli d wifi && read"')
+	os.system('gnome-terminal --geometry 100x30 -x bash -c "nmcli d wifi; echo press-any-key-when-done; read"')
 
 def resetControlUnit():
 	choice = raw_input("Reset control unit, are you sure? [yes/no]: ")
