@@ -7,7 +7,7 @@ import string
 import readline
 import socket
 
-version = "0.7.1"
+version = "0.7.2"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()
@@ -232,17 +232,31 @@ while loop:					## While loop which will keep going until loop = False
 	elif choice=="3": changeServer()
 	elif choice=="4": knownNetwork()
 	# Control unit
-	elif choice=="11": print("non functional")#requestControlInit()
+	elif choice=="11": 
+		if safetyOff: requestControlInit()
+		else: print("non functional")
 	elif choice=="12": resetControlUnit()
 	elif choice=="13": remoteConnection()
 	elif choice=="14": closeConnection()
 	elif choice=="19": shutdownControlUnit()
 
 	# Sensor unit
-	elif choice=="21": print("non functional") #requestSensorInit()
-	elif choice=="22": print("non functional")#resetSensor()
-	elif choice=="23": print("non functional")#setSensorInt()
-	elif choice=="24": print("non functional")#setSensorFD()
+	elif choice=="21": 
+		if safetyOff: requestSensorInit()
+		else: print("non functional")
+
+	elif choice=="22": 
+		if safetyOff: resetSensor()
+		else: print("non functional")	
+
+	elif choice=="23": 
+		if safetyIff: setSensorInt()
+		else: print("non functional")	
+
+	elif choice=="24":
+		if safetyIff: setSensorFD()
+		else: print("non functional")
+
 	# Other
 	elif choice=="w": scanWiFi()
 	elif choice=="d": print("No device setup hardware detected")
