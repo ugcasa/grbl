@@ -6,7 +6,7 @@ import ConfigParser
 import string
 import readline
 
-version = "0.6.8"
+version = "0.6.9"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()
@@ -39,8 +39,9 @@ def print_menu():
 	print("  11. Request initial information     21. Request initial information")
 	print("  12. Reset control unit              22. Reset sensor")
 	print("  13. Remote connection               23. Set measurement interval")
-	print("  14. Shutdown control unit           24. Set factory defaults")
-	print("  15. Update setup"+"\n")
+	print("  14. Close tunnel                    24. Set factory defaults")
+	print("  19. Shutdown control unit ")
+
 	print(" Other")
 	print("  w. Scan WiFi networks")
 	print("  d. Device setup                    u. Update tools")
@@ -118,6 +119,42 @@ def shutdownControlUnit():
 		else: print("Canceling..")
 	else: print("Canceling..")
 
+
+def remoteConnection():
+	#currentpid = 
+	#os.system("sudo netstat -tulpna | grep 2018 |grep aqc |grep 127.0.0.1 | grep -o 'LISTEN.*/' |grep -o '[[:digit:]]*'")
+
+	currentpid = os.popen("sudo netstat -tulpna | grep 2018 |grep aqc |grep 127.0.0.1 | grep -o 'LISTEN.*/' |grep -o '[[:digit:]]*'").read()
+	if currentpid == "":
+		print("no reverse tunnels detected")
+	else:
+		print("Active tunnel detected pid: "+currentpid)
+		
+		topic ="-t "+CUID+"/CMD -m OFF"			# Shutdown the open tunnel if from current CUID
+		print("Sending command: "+topic)		
+		command = 'mosquitto_pub '+parameters+' '+topic
+		os.system(command)
+
+		time.sleep(7)		
+		command = "sudo kill -9 "+currentpid 	# Kill the tunnel even it is not from current CUID
+		os.system(command)
+
+	time.sleep(2)
+	topic ="-t "+CUID+"/CMD -m SSH"			# Open tunnel request to CUID
+	print("Sending command: "+topic)		
+	command = 'mosquitto_pub '+parameters+' '+topic
+	os.system(command)
+	time.sleep(7)
+
+	os.system('gnome-terminal --command="ssh pi@localhost -p2018"')
+
+def closeConnection():
+	topic ="-t "+CUID+"/CMD -m OFF"			# Shutdown the open tunnel if from current CUID
+	print("Sending command: "+topic)		
+	command = 'mosquitto_pub '+parameters+' '+topic
+	os.system(command)
+
+
 def updateTools():
 	global loop
 	os.system("bash update")	
@@ -155,9 +192,10 @@ while loop:					## While loop which will keep going until loop = False
 	# Control unit
 	elif choice=="11": print("11 is not functional")
 	elif choice=="12": resetControlUnit()
-	elif choice=="13": print("13 is not functional")
-	elif choice=="14": shutdownControlUnit()
-	elif choice=="15": print("15 is not functional")
+	elif choice=="13": remoteConnection()
+	elif choice=="14": closeConnection()
+	elif choice=="19": shutdownControlUnit()
+
 	# Sensor unit
 	elif choice=="21": print("21 is not functional")
 	elif choice=="22": print("22 is not functional")
