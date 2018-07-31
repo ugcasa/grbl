@@ -7,7 +7,7 @@ import string
 import readline
 import socket
 
-version = "0.7.3"
+version = "0.7.5"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()
@@ -19,8 +19,11 @@ menuDelay = int(config.get("menu","delay"))
 loop = True			# Menu loop
 safetyOff = 0
 server = config.get("servers","1")
-CUID = config.get("network","cuid")
+#CUID = config.get("network","cuid")
 networkname = ""
+CUID = "+"
+MUID = "+"
+MP = "+"
 
 def isvalID(answer):
 	if answer != "":
@@ -33,34 +36,58 @@ def print_menu():
 	os.system('clear')	
 	print("Freesi install toolkit " + 45 * "-" + " v"+version+"\n")	
 	print(" Network")
-	print("  1. Listen network                   4. Known locations")
-	print("  2. Change network")				 
-	print("  3. Change server"+"\n")
+	print("  1. Listen network                   4. Change server")
+	print("  2. Listen sensor                    5. Select network ")
+	print("  3. Listen measurement point         6. Known networks"+"\n")
 	print(" Control unit                        Sensor unit")
-	print("  11. Request initial information     21. Request initial information")
-	print("  12. Reset control unit              22. Reset sensor")
-	print("  13. Remote connection               23. Set measurement interval")
-	print("  14. Close tunnel                    24. Set factory defaults")
-	print("  19. Shutdown control unit"+"\n")
+	print("  11. Request initial information     21. Select sensor")
+	print("  12. Reset control unit              22. Request initial information")
+	print("  13. Remote connection               23. Reset sensor")
+	print("  14. Close tunnel                    24. Set measurement interval")
+	print("  19. Shutdown control unit           25. Set factory defaults"+"\n")
 	print(" Other")
 	print("  w. Scan WiFi networks              h. Open documentation")
 	print("  d. Device setup                    u. Update tools")
 	print("  q. Exit                            s. Safety mode toggle"+"\n")
 	print(75 * "-")
 	if safetyOff: print('Safety mode is set off "yes" is set default answer (except SHD)')
-	print("Server: "+svrName+", network: "+CUID+" "+networkname)	
+	print("Server: "+svrName+", network: "+CUID+", sensor "+MUID+", mp: "+MP+" "+networkname)	
 
-def listenNetwork():
-	print("Connecting to "+parameters+" topic "+topic)
-	command = 'gnome-terminal --command="mosquitto_sub '+parameters+'  '+topic+' -v "'
-	os.system(command)
-
-def changeNetwork():
+def selectNetwork():
 	global CUID, networkname
 	answer = raw_input("Input Control Unit ID: ")
 	if isvalID(answer):
 		CUID = answer
 		networkname = ""
+
+def selectSensor():
+	global MUID
+	answer = raw_input("Input Sensor Unit ID: ")
+	MUID = answer
+
+def listenNetwork():
+	print("Connecting to "+parameters+" topic "+topic)
+	command = 'gnome-terminal --geometry 33x24 --command="mosquitto_sub '+parameters+'  '+topic+' -v "'
+	os.system(command)
+	
+def listenSensor():
+	if MUID == "+": selectSensor()
+	topic ="-t "+CUID+"/"+MUID+"/#"
+	print("Listening topic "+topic)
+	command = 'gnome-terminal --geometry 33x24 --command="mosquitto_sub '+parameters+'  '+topic+' -v "'
+	os.system(command)
+
+def listenMP():
+	global MP
+	answer = raw_input("Input Mesurement Point: ")
+	if isvalID(answer):
+		MP = answer
+	topic ="-t "+CUID+"/"+MUID+"/"+MP+"/Value"
+	print("Listening topic "+topic)
+	command = 'gnome-terminal --geometry 33x24 --command="mosquitto_sub '+parameters+'  '+topic+' -v "'
+	os.system(command)
+
+
 
 def knownNetwork():
 	global CUID, server, networkname
@@ -99,6 +126,7 @@ def scanWiFi():
 	os.system('gnome-terminal --geometry 100x30 -x bash -c "nmcli d wifi; echo press-enter-when-done; read"')
 
 def resetControlUnit():
+	if CUID == "+": selectNetwork()
 	choice = raw_input("Reset control unit, are you sure? [yes/no]: ")
 	if choice == "yes" or safetyOff:
 		topic ="-t "+CUID+"/CMD -m RST"
@@ -108,6 +136,7 @@ def resetControlUnit():
 	else: print("Canceling..")
 
 def shutdownControlUnit():
+	if CUID == "+": selectNetwork()
 	choice = raw_input("SHUTDOWN control unit CAN NOT waken up remotely, are you sure? [yes/no]: ")	
 	if choice == "yes" or safetyOff:
 		choice = raw_input("Really? [yes/no]: ")
@@ -158,20 +187,21 @@ def closeConnection():
 	os.system(command)
 
 def requestControlInit():
+	if CUID == "+": selectNetwork()
 	topic ="-t "+CUID+"/CMD -m INI"			# Shutdown the open tunnel if from current CUID
 	print("Sending command: "+topic)		
 	command = 'mosquitto_pub '+parameters+' '+topic
 	os.system(command)
 
 def requestSensorInit():
-	MUID = raw_input("Enter sensor ID: ")
+	if MUID == "+": selectSensor()
 	topic ="-t "+CUID+"/CMD/"+MUID+" -m INI"			# Shutdown the open tunnel if from current CUID
 	print("Sending command: "+topic)		
 	command = 'mosquitto_pub '+parameters+' '+topic
 	os.system(command)
 
 def setSensorInt():
-	MUID = raw_input("Enter sensor ID: ")
+	if MUID == "+": selectSensor()
 	seconds = raw_input("Enter interval in seconds: ")
 	topic ="-t "+CUID+"/CMD/"+MUID+"/INT -m "+seconds			# Shutdown the open tunnel if from current CUID
 	print("Sending command: "+topic)		
@@ -179,18 +209,22 @@ def setSensorInt():
 	os.system(command)
 
 def resetSensor():
-	MUID = raw_input("Enter sensor ID: ")
+	if MUID == "+": selectSensor()
 	topic ="-t "+CUID+"/CMD/"+MUID+" -m RST"			# Shutdown the open tunnel if from current CUID
 	print("Sending command: "+topic)		
 	command = 'mosquitto_pub '+parameters+' '+topic
 	os.system(command)
 
 def setSensorFD():
-	MUID = raw_input("Enter sensor ID: ")
+	if MUID == "+": selectSensor()
 	topic ="-t "+CUID+"/CMD/"+MUID+" -m SFD"			# Shutdown the open tunnel if from current CUID
 	print("Sending command: "+topic)		
 	command = 'mosquitto_pub '+parameters+' '+topic
 	os.system(command)
+
+
+
+
 
 def gotoDoc():
 	command = 'firefox https://bitbucket.org/freesi/diagnostics/wiki/Home &'
@@ -228,9 +262,12 @@ while loop:					## While loop which will keep going until loop = False
 	choice = raw_input("Command: ")
 	# Network
 	if choice=="1": listenNetwork()	
-	elif choice=="2": changeNetwork()		
-	elif choice=="3": changeServer()
-	elif choice=="4": knownNetwork()
+	elif choice=="2": listenSensor()
+	elif choice=="3": listenMP()
+	elif choice=="4": changeServer()
+	elif choice=="5": selectNetwork()		
+	elif choice=="6": knownNetwork()
+
 	# Control unit
 	elif choice=="11": 
 		if safetyOff: requestControlInit()
@@ -241,21 +278,22 @@ while loop:					## While loop which will keep going until loop = False
 	elif choice=="19": shutdownControlUnit()
 
 	# Sensor unit
-	elif choice=="21": 
+	elif choice=="21": selectSensor()
+	elif choice=="22": 
 		if safetyOff: requestSensorInit()
 		else: print("non functional")
-
-	elif choice=="22": 
+	elif choice=="23": 
 		if safetyOff: resetSensor()
 		else: print("non functional")	
-
-	elif choice=="23": 
+	elif choice=="24": 
 		if safetyIff: setSensorInt()
 		else: print("non functional")	
-
-	elif choice=="24":
+	elif choice=="25":
 		if safetyIff: setSensorFD()
 		else: print("non functional")
+
+
+	
 
 	# Other
 	elif choice=="w": scanWiFi()
