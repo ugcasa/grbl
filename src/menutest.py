@@ -7,7 +7,7 @@ import string
 import readline
 import socket
 
-version = "0.7.2"
+version = "0.7.3"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()
@@ -149,7 +149,7 @@ def remoteConnection():
 	os.system(command)
 	time.sleep(7)
 
-	os.system('gnome-terminal --command="ssh pi@localhost -p2018"')
+	os.system('ssh pi@localhost -p2018')
 
 def closeConnection():
 	topic ="-t "+CUID+"/CMD -m OFF"			# Shutdown the open tunnel if from current CUID
