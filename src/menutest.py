@@ -7,7 +7,7 @@ import string
 import readline
 import socket
 
-version = "0.7.5"
+version = "0.7.6"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()
@@ -40,8 +40,8 @@ def print_menu():
 	print("  2. Listen sensor                    5. Select network ")
 	print("  3. Listen measurement point         6. Known networks"+"\n")
 	print(" Control unit                        Sensor unit")
-	print("  11. Request initial information     21. Select sensor")
-	print("  12. Reset control unit              22. Request initial information")
+	print("  11. Request initial information     21. Select Sensor Unit")
+	print("  12. Reset Control Unit              22. Request initial information")
 	print("  13. Remote connection               23. Reset sensor")
 	print("  14. Close tunnel                    24. Set measurement interval")
 	print("  19. Shutdown control unit           25. Set factory defaults"+"\n")
@@ -86,8 +86,6 @@ def listenMP():
 	print("Listening topic "+topic)
 	command = 'gnome-terminal --geometry 33x24 --command="mosquitto_sub '+parameters+'  '+topic+' -v "'
 	os.system(command)
-
-
 
 def knownNetwork():
 	global CUID, server, networkname
@@ -147,7 +145,6 @@ def shutdownControlUnit():
 			os.system(command)
 		else: print("Canceling..")
 	else: print("Canceling..")
-
 
 def remoteConnection():
 	#currentpid = 
@@ -222,10 +219,6 @@ def setSensorFD():
 	command = 'mosquitto_pub '+parameters+' '+topic
 	os.system(command)
 
-
-
-
-
 def gotoDoc():
 	command = 'firefox https://bitbucket.org/freesi/diagnostics/wiki/Home &'
 	os.system(command)
@@ -291,9 +284,6 @@ while loop:					## While loop which will keep going until loop = False
 	elif choice=="25":
 		if safetyIff: setSensorFD()
 		else: print("non functional")
-
-
-	
 
 	# Other
 	elif choice=="w": scanWiFi()
