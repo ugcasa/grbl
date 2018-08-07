@@ -7,7 +7,7 @@ import string
 import readline
 import socket
 
-version = "0.7.6"
+version = "0.7.7"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()
@@ -15,6 +15,9 @@ config.read(cfgFolder+"/"+cfgFile)
 networksFile ="networks.cfg"
 networks = ConfigParser.RawConfigParser()
 networks.read(cfgFolder+"/"+networksFile)
+measpFile ="MeasPoint.cfg"
+measPoint = ConfigParser.RawConfigParser()
+measPoint.read(cfgFolder+"/"+measpFile)
 menuDelay = int(config.get("menu","delay"))
 loop = True			# Menu loop
 safetyOff = 0
@@ -41,14 +44,16 @@ def print_menu():
 	print("  3. Listen measurement point         6. Known networks"+"\n")
 	print(" Control unit                        Sensor unit")
 	print("  11. Request initial information     21. Select Sensor Unit")
-	print("  12. Reset Control Unit              22. Request initial information")
-	print("  13. Remote connection               23. Reset sensor")
-	print("  14. Close tunnel                    24. Set measurement interval")
-	print("  19. Shutdown control unit           25. Set factory defaults"+"\n")
+	print("  12. Reset Control Unit              22. Select measurement point")
+	print("  13. Remote connection               23. Request initial information")
+	print("  14. Close tunnel                    24. Reset sensor")
+	print("  19. Shutdown control unit           25. Set measurement interval")
+	print("                                      26. Set factory defaults"+"\n")
 	print(" Other")
-	print("  w. Scan WiFi networks              h. Open documentation")
-	print("  d. Device setup                    u. Update tools")
-	print("  q. Exit                            s. Safety mode toggle"+"\n")
+	print("  w. Scan WiFi networks              u. Update tools")
+	print("  d. Device setup                    s. Safety mode toggle")
+	print("  l. List measurement points         q. Exit")
+	print("  h. Open documentation              " +"\n")
 	print(75 * "-")
 	if safetyOff: print('Safety mode is set off "yes" is set default answer (except SHD)')
 	print("Server: "+svrName+", network: "+CUID+", sensor "+MUID+", mp: "+MP+" "+networkname)	
@@ -63,7 +68,17 @@ def selectNetwork():
 def selectSensor():
 	global MUID
 	answer = raw_input("Input Sensor Unit ID: ")
-	MUID = answer
+	if isvalID(answer):
+		MUID = answer
+
+def selectMP():
+	global MP
+	answer = raw_input("Input mesurement point: ")
+	if isvalID(answer): 
+		MP = answer
+	else:
+		print("Not valid measurement point")
+
 
 def listenNetwork():
 	print("Connecting to "+parameters+" topic "+topic)
@@ -79,9 +94,7 @@ def listenSensor():
 
 def listenMP():
 	global MP
-	answer = raw_input("Input Mesurement Point: ")
-	if isvalID(answer):
-		MP = answer
+	if MP == "+": selectMP()		
 	topic ="-t "+CUID+"/"+MUID+"/"+MP+"/Value"
 	print("Listening topic "+topic)
 	command = 'gnome-terminal --geometry 33x24 --command="mosquitto_sub '+parameters+'  '+topic+' -v "'
@@ -229,6 +242,16 @@ def updateTools():
 	os.system("bash update")	
 	loop=False 
 
+def listMP():
+	global MP
+	i = 0
+	while measPoint.has_section(str(i)):		
+		print(str(i)+". "+ measPoint.get(str(i),"description"))					
+		i += 1
+	answer = raw_input("Press enter to return menu or number to select measurement point: ")
+	if isvalID(answer): 
+		MP = answer
+
 def exitTools():	
 	global loop
 	print("Bye bye!")
@@ -272,16 +295,17 @@ while loop:					## While loop which will keep going until loop = False
 
 	# Sensor unit
 	elif choice=="21": selectSensor()
-	elif choice=="22": 
+	elif choice=="22": selectMP()
+	elif choice=="23": 
 		if safetyOff: requestSensorInit()
 		else: print("non functional")
-	elif choice=="23": 
+	elif choice=="24": 
 		if safetyOff: resetSensor()
 		else: print("non functional")	
-	elif choice=="24": 
+	elif choice=="25": 
 		if safetyIff: setSensorInt()
 		else: print("non functional")	
-	elif choice=="25":
+	elif choice=="26":
 		if safetyIff: setSensorFD()
 		else: print("non functional")
 
@@ -292,4 +316,5 @@ while loop:					## While loop which will keep going until loop = False
 	elif choice=="q": exitTools()
 	elif choice=="s": toggleSafety()
 	elif choice=="h": gotoDoc()
+	elif choice=="l": listMP()
 	else: print("Wrong option selection.")
