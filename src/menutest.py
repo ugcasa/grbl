@@ -7,7 +7,7 @@ import string
 import readline
 import socket
 
-version = "0.7.8"
+version = "0.7.9"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()

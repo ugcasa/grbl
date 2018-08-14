@@ -16,7 +16,7 @@ echo "updating installer tools"
 mkdir $temp
 mkdir $target
 cd $temp
-git clone -b master https://ujoguru:UPbuVRZX7hsdgvkKGQFW@bitbucket.org/freesi/diagnostics.git && make_clean
+git clone -b master https://freesiinstall:Jrykv2FCZMEqcSjQYzLG@bitbucket.org/freesi/diagnostics.git && make_clean
 cd $location
 rm -rf $temp 
 #echo 'Update ready, type "./run" to relaunch'
