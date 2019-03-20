@@ -1,6 +1,6 @@
 #!/bin/bash
 temp=/tmp/diagnostics
-target=$HOME/diagnostics
+target=$HOME/diagnostics ## code review 1.TODO: file plasing Issue #1
 location=$(pwd)
 
 pause(){
@@ -16,7 +16,7 @@ echo "updating installer tools"
 mkdir $temp
 mkdir $target
 cd $temp
-git clone -b master https://freesiinstall:Jrykv2FCZMEqcSjQYzLG@bitbucket.org/freesi/diagnostics.git && make_clean
+git clone -b master git clone https://ujoguru@bitbucket.org/ugdev/giocon.client.git && make_clean
 cd $location
 rm -rf $temp 
 #echo 'Update ready, type "./run" to relaunch'

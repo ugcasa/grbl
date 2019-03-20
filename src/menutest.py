@@ -1,5 +1,7 @@
-## Freesi air quality system installer tool kit
-## Juha Palm / ujo.guru (c) 2018
+## giocon.client control menu
+## 
+## Juha Palm / ujo.guru (c) 2018-2019
+
 import os
 import time
 import ConfigParser
@@ -7,7 +9,7 @@ import string
 import readline
 import socket
 
-version = "0.7.9"
+version = "0.1.0"
 cfgFolder = "../cfg"
 cfgFile ="setup.cfg"
 config = ConfigParser.RawConfigParser()
@@ -15,7 +17,7 @@ config.read(cfgFolder+"/"+cfgFile)
 networksFile ="networks.cfg"
 networks = ConfigParser.RawConfigParser()
 networks.read(cfgFolder+"/"+networksFile)
-measpFile ="MeasPoint.cfg"
+measpFile ="MeasPoint.cfg" 					
 measPoint = ConfigParser.RawConfigParser()
 measPoint.read(cfgFolder+"/"+measpFile)
 menuDelay = int(config.get("menu","delay"))
@@ -37,7 +39,7 @@ def isvalID(answer):
 def print_menu():
 	time.sleep(menuDelay)
 	os.system('clear')	
-	print("Freesi install toolkit " + 45 * "-" + " v"+version+"\n")	
+	print("giocon.client main menu" + 45 * "-" + " v"+version+"\n")	 ## TODO Fix header lenght
 	print(" Network")
 	print("  1. Listen network                   4. Change server")
 	print("  2. Listen sensor                    5. Select network ")
@@ -233,7 +235,7 @@ def setSensorFD():
 	os.system(command)
 
 def gotoDoc():
-	command = 'firefox https://bitbucket.org/freesi/diagnostics/wiki/Home &'
+	command = 'firefox https://bitbucket.org/ugdev/giocon.client/wiki/Home &'
 	os.system(command)
 
 
