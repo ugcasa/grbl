@@ -1,25 +1,60 @@
-# Asentajan tietokoneen työkalut 
+# Guru io connector client 
 
-* [Asentajan ohjeet](https://bitbucket.org/freesi/laptop-tools/wiki/Home) (wiki is in Finnish)
-* [Vika ja parannusolmoitukset ](https://bitbucket.org/freesi/laptop-tools/issues?status=new&status=open) 
+To connect ujo.guru computers through the mobile barriers.
+Based on [Freesi diagnostics](https://bitbucket.org/freesi/diagnostics)
 
-| Käsky | tekninen kuvaus | Kuvaus | Tilanne
-| ---------- | -------------- | ------------------------------------------------------------------ | ---
-| `test` | mqtt sub + cfg | Asentaja voi seurata mitä asennettavassa verkossa tapahtuu | Käytössä |
-| `commander` | mqtt pub + cfg | Kontrollerille voidaan antaa käskyjä | Käytossä |
-| `remote` | cfg + rewerse ssh > ujo.guru:2018 | Avaa huoltoterminaalin | Ei tuotannossa |
-| `injector` | cfg + rewerse scp | Voidaan vaihtaa yksittäisen asetuksen sisältöä | TODO |
-| `update` | clone + rm .git | Asentaja voi päivittää kontrollerin softan | TODO | 
+- menu based ui
+- command line argutments 
 
- 
+----
+
+## Plan (in finnish)
+
+Kun esteban haluaa että esteban ottaa yhteyden kommonikoidaan seuraavasti
+
+- http://lassila.ujo.guru:XX webuserveri saa parametrin `?ssh=esteban` (php/java style)
+- MQTT topic `lassila/estella/ssh-reverse` julkaistaan arvo `esteban`  (metodi löytyy "diagnostic" projektista)
+- toimiston puhelinumeroon tulee tekstiviesti "ssh esteban"
+
+Eli toimitaan seuraavasti: 
+
+### Uusi nimi
+ - control jotn. - nyt vasta yhteyksien luontiin
+ - access, accesser - paska kirjoittaa
+ - tunnel, tunneler - ei ihan osu
+ - connec, connecter, ugconnector, gio.connector, connector, pinemmille giot.controller, **giocon ja giotcon**
+- asiakaspäään apin nimi on **giocon.client**
 
 
+### [Forkataan diagnostic](https://ujoguru@bitbucket.org/ugdev/giocon.client.git)
 
-### Vaatimukset
+ - `git clone https://ujoguru@bitbucket.org/ugdev/giocon.client.git`
 
-* Linux käyttöjärjestelmä (debian)
-* nettiyhteys
-* git asennettuna
-* tarvittavat ohjelmointi- ja asetuslaitteet (määritellään myöhemmin)
+
+### Uusi logo 
+
+Valitettavast kuvat huonosti skaalatti, eli ei ollenkaan. Mikä olisi mieleisin?
+
+#### 1 centro
+![centro.jpg](./icons/centro.jpg)
+
+#### 2 galactic
+![galactic-republic.png](./icons/galactic-republic.png)
+
+#### 3 network
+![network.png](./icons/network.png)
+
+#### 4 seitan
+![seitan.png](./icons/seitan.png)
+
+#### 5 töppeli
+![töppeli.svg](./icons/töppeli.svg)
+
+#### 6 torakka
+![torakka.png](./icons/torakka.png)
+
+#### 7 tricon
+![tricon.png](./icons/tricon.png)
+
 
 
