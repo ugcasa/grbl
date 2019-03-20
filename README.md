@@ -1,14 +1,16 @@
-# Guru io connector client 
+Guru io connector client 
+-------------------------
 
-To connect ujo.guru computers through the mobile barriers.
+Aim is to connect ujo.guru computers through the mobile barriers.
+
+Cause *giocon.client* will be used with terminal and aim is to make usage child easy, text based menu interface with command line argument control selected as user intercase. 
+
 Based on [Freesi diagnostics](https://bitbucket.org/freesi/diagnostics)
 
-- menu based ui
-- command line argutments 
 
-----
 
-## Plan (in finnish)
+Plan - Suunnitelma (in finnish)
+-------------------------------
 
 Kun esteban haluaa että esteban ottaa yhteyden kommonikoidaan seuraavasti
 
@@ -16,9 +18,8 @@ Kun esteban haluaa että esteban ottaa yhteyden kommonikoidaan seuraavasti
 - MQTT topic `lassila/estella/ssh-reverse` julkaistaan arvo `esteban`  (metodi löytyy "diagnostic" projektista)
 - toimiston puhelinumeroon tulee tekstiviesti "ssh esteban"
 
-Eli toimitaan seuraavasti: 
 
-### Uusi nimi
+## Nimi
  - control jotn. - nyt vasta yhteyksien luontiin
  - access, accesser - paska kirjoittaa
  - tunnel, tunneler - ei ihan osu
@@ -26,35 +27,17 @@ Eli toimitaan seuraavasti:
 - asiakaspäään apin nimi on **giocon.client**
 
 
-### [Forkataan diagnostic](https://ujoguru@bitbucket.org/ugdev/giocon.client.git)
+## [Forkataan diagnostic](https://ujoguru@bitbucket.org/ugdev/giocon.client.git)
 
  - `git clone https://ujoguru@bitbucket.org/ugdev/giocon.client.git`
 
 
-### Uusi logo 
+## Logo 
+
+![tricon.png](./icons/tricon.png)
 
 Valitettavast kuvat huonosti skaalatti, eli ei ollenkaan. Mikä olisi mieleisin?
 
-#### 1 centro
-![centro.jpg](./icons/centro.jpg)
+## Wiki 
 
-#### 2 galactic
-![galactic-republic.png](./icons/galactic-republic.png)
-
-#### 3 network
-![network.png](./icons/network.png)
-
-#### 4 seitan
-![seitan.png](./icons/seitan.png)
-
-#### 5 töppeli
-![töppeli.svg](./icons/töppeli.svg)
-
-#### 6 torakka
-![torakka.png](./icons/torakka.png)
-
-#### 7 tricon
-![tricon.png](./icons/tricon.png)
-
-
-
+Kirjoitetaan Freesi ulos, lyhennetaan ja jaetaan uudestaan (kun sen aika)

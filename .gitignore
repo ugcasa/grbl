@@ -1,3 +1,4 @@
-instructions/Originals/*
+test*
+cfg/test*
 cfg/obsolete/*
-log/*
+cfg/freesi/*

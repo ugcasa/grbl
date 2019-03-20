@@ -4,8 +4,8 @@ echo "[Desktop Entry]" >$target
 echo "Comment=Freesi network and device diagnostic and set up tool" >>$target
 echo "Terminal=true" >>$target
 echo "Name=Freesi Diagnostics" >>$target
-echo "Exec=bash $HOME/diagnostics/run" >>$target
-echo "Icon=$HOME/diagnostics/images/freesituuli-darkgray.png" >>$target
+echo "Exec=bash $HOME/diagnostics/run" >>$target        # code review 1. TODO run deleted -> re-organize!
+echo "Icon=$HOME/diagnostics/images/freesituuli-darkgray.png" >>$target # code review 1. TODO bad way to place files -> re-organize!
 echo "Type=Application" >>$target
 chmod +x $target
 echo "Launcher created to desktop"
