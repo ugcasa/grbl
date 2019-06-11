@@ -10,7 +10,7 @@
 
 ## Manupulate .bashrc
 target="$HOME/.bashrc"
-backup="$HOME/.bashrc_giobackup.old"
+backup="$HOME/.bashrc.giobackup"
 
 if grep -q ".gururc" "$target"; then
 	echo "Alredy installed"
@@ -22,7 +22,8 @@ if [[ $edit == "n" ]]; then
 	echo "aborting.."
 	exit 2
 fi	
-	
+
+[ -f "$HOME/.gururc.disabled" ] && rm -f "$HOME/.gururc.disabled"
 cp -f "$target" "$backup"
 cat ./src/tobashrc.sh >>$HOME/.bashrc
 cp -f ./src/gururc.sh $HOME/.gururc

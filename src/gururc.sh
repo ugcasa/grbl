@@ -6,10 +6,21 @@
 
 function gio.disable () {
 	if [ -f "$HOME/.gururc" ]; then 
-		mv "$HOME/.gururc" "$HOME/.gururc.disabled" 
+		mv -f "$HOME/.gururc" "$HOME/.gururc.disabled" 
 		echo "giocon.client disabled"
 	else		
 		echo "disabling failed"
+	fi	
+}
+
+
+function gio.uninstall () {	 
+	if [ -f "$HOME/.bashrc.giobackup" ]; then 
+		mv -f "$HOME/.bashrc.giobackup" "$HOME/.bashrc"		
+		rm -f "$HOME/.gururc"
+		echo "giocon.client uninstalled"
+	else		
+		echo "uninstall failed"
 	fi	
 }
 
@@ -20,8 +31,8 @@ function gio.connect () {
 
 
 export -f gio.disable
+export -f gio.uninstall
 export -f gio.connect
-
 
 
 ### youtube player (mpsyt) controls
