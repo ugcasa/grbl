@@ -9,18 +9,26 @@
 
 
 ## Manupulate .bashrc
-
 target="$HOME/.bashrc"
 backup="$HOME/.bashrc_giobackup.old"
 
-if ! grep -q ".gururc" "$target"; then
-	cp -f "$target" "$backup"
-	cat ./src/tobashrc.sh >>$HOME/.bashrc
-	cp -f ./src/gururc.sh $HOME/.gururc
+if grep -q ".gururc" "$target"; then
+	echo "Alredy installed"
+	exit 1
 fi
+	
+read -p "modifying .bashrc file [Y/n] : " edit	
+if [[ $edit == "n" ]]; then		
+	echo "aborting.."
+	exit 2
+fi	
+	
+cp -f "$target" "$backup"
+cat ./src/tobashrc.sh >>$HOME/.bashrc
+cp -f ./src/gururc.sh $HOME/.gururc
 
 ## Test
-gnome-terminal -- /bin/bash -c "play.by nyan cat; $SHELL"
+#gnome-terminal -- /bin/bash -c "play.by nyan cat; $SHELL"
 
 
 
