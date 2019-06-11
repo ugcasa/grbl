@@ -14,9 +14,10 @@ Based on [Freesi diagnostics](https://bitbucket.org/freesi/diagnostics)
 
 Clone giocon client: `git clone https://ujoguru@bitbucket.org/ugdev/giocon.client.git`
 
+
 ----
 
-## Use case 1, 2, 3
+## Use case 1
 
 Hostname `esteban` want's remote connection to device connected by mobile network. 
 
