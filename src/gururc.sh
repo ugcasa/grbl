@@ -2,6 +2,7 @@
 # Runs every time terminal is opened
 
 ### main functions
+gio_cfg=$HOME/.config/gio
 
 function gio.disable () {
 	if [ -f "$HOME/.gururc" ]; then 
@@ -18,7 +19,9 @@ function gio.uninstall () {
 		mv -f "$HOME/.bashrc.giobackup" "$HOME/.bashrc"		
 		mv -f "$HOME/.profile.giobackup" "$HOME/.profile"				
 		rm -f "$HOME/.gururc"
+		dconf load /org/cinnamon/desktop/keybindings/ < $HOME/.kbbind.backup.cfg		
 		sudo rm -fr /opt/gio
+		rm -fr "$gio_cfg"
 		echo "giocon.client uninstalled"
 	else		
 		echo "uninstall failed"
@@ -57,7 +60,6 @@ function gio.dozer () {
 
 export -f gio.subl
 export -f gio.dozer
-
 
 
 ### youtube player (mpsyt) controls

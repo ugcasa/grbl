@@ -1,7 +1,7 @@
 #!/bin/bash
 # ujo.guru note generator
 
-cfg=$HOME/.config/guru.io/noter.cfg
+cfg=$HOME/.config/gio/noter.cfg
 if [[ -f $cfg ]]; then 
 	. $cfg
 else 
