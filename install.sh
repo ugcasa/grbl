@@ -54,6 +54,7 @@ git --version 	|| sudo apt install git
 pandoc -v 		|| sudo apt install pandoc
 xclip -version  || sudo apt install xclip
 subl -v 		|| sudo apt install sublime-text
+ls /usr/bin/mosquitto_pub || sudo apt install mosquitto-clients
 
 
 ### keyboard bindings (for cinnamon only)

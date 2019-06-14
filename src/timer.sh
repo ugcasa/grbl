@@ -8,84 +8,100 @@ timer_log=$gio_log/current_work.csv
 timer_start_file=/tmp/timer.status
 timer_last=/tmp/timer.last
 
-case "$1" in
-		start)
-	        if [ ! -f $timer_start_file ]; then 
-		        echo "timer_start=$(date +%s)" >$timer_start_file 
-		        echo "start_time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")" >>$timer_start_file
-		        	
-		        [ -f $timer_last ] && . $timer_last			        
-		        [ "$2" ] &&	customer="$2" || customer="$last_customer"
-		        [ "$3" ] &&	project="$3" || project="$last_project"
-		        [ "$4" ] &&	task="$4" || task="$last_task"		       
-		        printf "customer=$customer\nproject=$project\ntask=$task\n" >>$timer_start_file
-		    else
-		    	echo "timer is in use"
-		    fi
-			;;
+start() {	
+	if [ ! -f $timer_start_file ]; then 
+        echo "timer_start=$(date +%s)" >$timer_start_file 
+        echo "start_time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")" >>$timer_start_file
+
+        [ -f $timer_last ] && . $timer_last			        
+        [ "$2" ] &&	customer="$2" || customer="$last_customer"
+        [ "$3" ] &&	project="$3" || project="$last_project"
+        [ "$4" ] &&	task="$4" || task="$last_task"		       
+        printf "customer=$customer\nproject=$project\ntask=$task\n" >>$timer_start_file
+    else
+    	echo "timer is in use"
+    fi
+}
+
+
+end() {
+	if [ -f $timer_start_file ]; then 				
+		. $timer_start_file 	
+		[ -f $timer_log ] || printf "date;start;end;hours;customer;project;task\n">$timer_log
 		
-		end)
-		 	if [ -f $timer_start_file ]; then 
-		 		
-		 		. $timer_start_file 	
-		 		#[ -f $timer_log ] || touch $timer_log
-		 		[ -f $timer_log ] || printf "date;start;end;hours;customer;project;task\n">$timer_log
-		 		
-		 		timer_now=$(date +%s)			 	
-		 		timer_state=$(($timer_now-$timer_start))		 		
-		 		end_date=$(date +%Y.%m.%d)
-		 		
-		 		if  (( $timer_state < 300 )) ; then # less than 5 minutes is free
-		 			end_time=$start_time
-		 		else		 			
-		 			end_time=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M")
-		 		fi
-		 	
-		 		hours=$(printf '%.2d:%.2d' $(($timer_state/3600)) $(($timer_state%3600/60)))
-		 		printf "$end_date;$start_time;$end_time;$hours;$customer;$project;$task\n">>$timer_log		 		
-		 		printf "$end_date $start_time - $end_time $hours $customer $project $task\n"
-				printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$timer_last
-				rm $timer_start_file
-			else
-				echo "timer not started"
-			fi
-		 		#output="$end_date $start_time - $end_time $hours h $customer $project\n"
-		 		#printf "$(gio.stamp date -h) $start_time - $(gio.stamp end) " #>>$timer_log
-		 		#printf '%.2d:%.2d' $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60)) #>>$timer_log
-         		#$(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60)) #>>$timer_log
-			;;
+		timer_now=$(date +%s)			 	
+		timer_state=$(($timer_now-$timer_start))		 		
+		end_date=$(date +%Y.%m.%d)
+		
+		if  (( $timer_state < 300 )) ; then # less than 5 minutes is free
+			end_time=$start_time
+		else		 			
+			end_time=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M")
+		fi
+	
+		hours=$(printf '%.2d:%.2d' $(($timer_state/3600)) $(($timer_state%3600/60)))
 
-        status)
-			if [ -f $timer_start_file ]; then
-			 	. $timer_start_file 
-			 	timer_now=$(date +%s)			 	
-			 	timer_state=$(($timer_now-$timer_start))
-			 	printf '%.2d:%.2d:%.2d'" $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
-			else
-			 	echo "no timer tasks"			 	
-			 	printf "last logged records:\n$(tail $timer_log | tr ";" "  ")\n"
-			fi
-			;;
+		printf "$end_date;$start_time;$end_time;$hours;$customer;$project;$task\n">>$timer_log		 		
+		printf "$end_date $start_time - $end_time $hours $customer $project $task\n"
+		printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$timer_last
+		echo 'mosquitto_pub -h "roima" -t "casa/status" -m "done" -u "gio-app" -P "test-salasana"'
+		rm $timer_start_file
+	else
+		echo "timer not started"
+	fi
+}
 
-		report)
-			[ -z "$2" ] && team="all" || team="$2"
-			report_file="$gio_log/report-$(date +%Y%m%d)-$team.csv"
-			[ -f $timer_log ] || exit 3	
-			cat $timer_log |grep "$2" >$report_file			 	
-			soffice $report_file &
-			;;
-			
 
-		cancel)
-			if [ -f $timer_start_file ]; then			
-				rm $timer_start_file
-				echo "canceled"
-			fi
-			;;
+status() {
+	if [ -f $timer_start_file ]; then
+	 	. $timer_start_file 
+	 	timer_now=$(date +%s)			 	
+	 	timer_state=$(($timer_now-$timer_start))
+	 	printf '%.2d:%.2d:%.2d'" $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
+	else
+	 	echo "no timer tasks"			 	
+	 	printf "last logged records:\n$(tail $timer_log | tr ";" "  ")\n"
+	fi
+}
 
-        *)
-            echo $"Usage: $0 {start|end|status|cancel|report}"
-            exit 1
+
+report() {
+	[ -z "$2" ] && team="all" || team="$2"
+	report_file="$gio_log/report-$(date +%Y%m%d)-$team.csv"
+	[ -f $timer_log ] || exit 3	
+	cat $timer_log |grep "$2" >$report_file			 	
+	soffice $report_file &
+	}
+
+
+cancel() {
+	if [ -f $timer_start_file ]; then			
+		rm $timer_start_file
+		echo "canceled"
+	else
+		echo "not active timer"
+	fi
+}
+
+
+case "$1" in
+			start)
+				start $@
+				;;
+			end)
+			 	end
+				;;
+	        status)
+				status	
+				;;
+			report)
+				report $@
+				;;
+			cancel)
+				cancel 
+				;;
+	        *)
+	            echo $"Usage: $0 {start|end|status|cancel|report}"
+	            exit 1
 esac
 
-exit 0

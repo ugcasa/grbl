@@ -20,27 +20,21 @@ noteDir="$notes/$userName/$(date +%Y/%m)"
 noteFile="$userName"_notes_$(gio.datestamp $teamName).md
 note="$noteDir/$noteFile"
 
-if [[ -d "$noteDir" ]]; then 
-	echo "Folder $(date +%Y/%m) OK"
-	else  
-		mkdir -p "$noteDir"
-		echo "Creating $noteDir"
-	fi
+[[  -d "$noteDir" ]] || mkdir -p "$noteDir"
 
-if [[ -f "$note" ]]; then 
-    echo "$noteFile exists"
-	else 
+if [[ ! -f "$note" ]]; then 
 	    echo "$noteFile" >"$note"
 	    if [[ -f "$template" ]]; then 
 	        cat "$template" >>"$note" 
 	    else 
 	        echo "Template file missing"  
 	    fi
-	fi
+fi
 
 if [ "$editor"=="subl" ] || [ "$editor"=="sublime" ]; then
 	subl --project "$HOME/Dropbox/Notes/casa/project/notes.sublime-project" -a # TODO dropbox folder from config
 	subl "$note" --project "$HOME/Dropbox/Notes/casa/project/notes.sublime-project" -a 
 else
 	$editor "$note" 
+fi
 
