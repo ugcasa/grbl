@@ -1,7 +1,8 @@
 #!/bin/bash
-# ujo.guru note generator
+# giocon note generator
 
 cfg=$HOME/.config/gio/noter.cfg
+
 if [[ -f $cfg ]]; then 
 	. $cfg
 else 
@@ -26,19 +27,20 @@ if [[ -d "$noteDir" ]]; then
 		echo "Creating $noteDir"
 	fi
 
-
 if [[ -f "$note" ]]; then 
     echo "$noteFile exists"
 	else 
-	    echo $noteFile >$note
+	    echo "$noteFile" >"$note"
 	    if [[ -f "$template" ]]; then 
-	        cat $template >>$note 
+	        cat "$template" >>"$note" 
 	    else 
 	        echo "Template file missing"  
 	    fi
 	fi
 
-subl --project $HOME/Dropbox/Notes/casa/project/notes.sublime-project -a 
-subl $note --project $HOME/Dropbox/Notes/casa/project/notes.sublime-project -a 
-#$editor "$note" 
+if [ "$editor"=="subl" ] || [ "$editor"=="sublime" ]; then
+	subl --project "$HOME/Dropbox/Notes/casa/project/notes.sublime-project" -a # TODO dropbox folder from config
+	subl "$note" --project "$HOME/Dropbox/Notes/casa/project/notes.sublime-project" -a 
+else
+	$editor "$note" 
 

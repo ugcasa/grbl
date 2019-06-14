@@ -2,7 +2,9 @@
 # Runs every time terminal is opened
 
 ### main functions
-gio_cfg=$HOME/.config/gio
+# gio_cfg=$HOME/.config/gio
+# gio_log=/var/log/gio
+# gio_bin=/opt/gio/bin
 
 function gio.disable () {
 	if [ -f "$HOME/.gururc" ]; then 
@@ -21,7 +23,7 @@ function gio.uninstall () {
 		rm -f "$HOME/.gururc"
 		dconf load /org/cinnamon/desktop/keybindings/ < $HOME/.kbbind.backup.cfg		
 		sudo rm -fr /opt/gio
-		rm -fr "$gio_cfg"
+		rm -fr "$HOME/.config/gio"
 		echo "giocon.client uninstalled"
 	else		
 		echo "uninstall failed"
@@ -81,8 +83,13 @@ function play.video () {
 	gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
 }
 
+function play.upgrade () {	
+	sudo -H pip3 install --upgrade youtube_dl
+}
+
 
 export -f play.bg
 export -f play.by
 export -f play.video
+export -f play.upgrade
 
