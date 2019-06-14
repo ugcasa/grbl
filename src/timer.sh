@@ -23,6 +23,7 @@ case "$1" in
 		 	if [ -f $timer_start_file ]; then 
 		 		
 		 		. $timer_start_file 	
+		 		#[ -f $timer_log ] || touch $timer_log
 		 		[ -f $timer_log ] || printf "date;start;end;hours;customer;project\n">$timer_log
 		 		
 		 		timer_now=$(date +%s)			 	
@@ -36,8 +37,8 @@ case "$1" in
 		 		fi
 		 	
 		 		hours=$(printf '%.2d:%.2d' $(($timer_state/3600)) $(($timer_state%3600/60)))
-		 		printf "$end_date;$start_time;$end_time;$hours;$customer;$project\n">>$timer_log
-		 		printf "$end_date $start_time - $end_time $hoursh $customer $project\n"
+		 		printf "$end_date;$start_time;$end_time;$hours;$customer;$project\n">>$timer_log		 		
+		 		printf "$end_date $start_time - $end_time $hours $customer $project\n"
 				rm $timer_start_file
 			else
 				echo "timer not started"
@@ -56,9 +57,17 @@ case "$1" in
 			 	printf '%.2d:%.2d:%.2d'" $customer $project\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))
 			else
 			 	echo "no timer tasks"			 	
-			 	printf "last logged records:\n$(tail $timer_log | tac)\n"
+			 	printf "last logged records:\n$(tail $timer_log | tr ";" "  ")\n"
 			fi
 			;;
+
+		report)
+			report_file="$gio_log/report-$(date +%Y%m%d)$2.csv"
+			[ -f $timer_log ] || exit 3	
+			cat $timer_log |grep "$2" >$report_file			 	
+			soffice $report_file &
+			;;
+			
 
 		cancel)
 			if [ -f $timer_start_file ]; then			
@@ -68,7 +77,7 @@ case "$1" in
 			;;
 
         *)
-            echo $"Usage: $0 {start|end|status|cancel}"
+            echo $"Usage: $0 {start|end|status|cancel|report}"
             exit 1
 esac
 
