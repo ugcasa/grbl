@@ -8,12 +8,14 @@ gio_cfg="$HOME/.config/gio"
 gio_log="/tmp"
 
 
+
 ## check and permissions to edit
 
 if grep -q ".gururc" "$bashrc"; then
 	echo "Already installed, run gio.uninstall before re-install. To apply changes system wide pls. logout"
 	exit 1
 fi
+
 read -p "modifying .bashrc and .profile files [Y/n] : " edit	
 if [[ "$edit" == "n" ]]; then
 	echo "aborting.. modifications are needed to run giocon client"
@@ -59,8 +61,9 @@ ls /usr/bin/mosquitto_pub || sudo apt install mosquitto-clients
 
 ### keyboard bindings (for cinnamon only)
 
+
 read -p "set keyboard bindings? :" answer
-if [[ "$answer" == "y" ]]; then 
+if [ "$answer" == "y" ]; then 
 	dconf help >/dev/null || sudo apt install dconf-cli
 	current=$HOME/.kbbind.backup.cfg
 	new=./cfg/kbbind.guruio.cfg
@@ -70,7 +73,7 @@ if [[ "$answer" == "y" ]]; then
 	fi
 
 	read -p "WARNING! WILL OWERWRITE CURRENT SETTINGS! Continue? :" answer
-	if [[ "$answer" == "y" ]]; then 
+	if [ "$answer" == "y" ]; then 
 		dconf load /org/cinnamon/desktop/keybindings/ < $new
 	else
 		echo "Canceled - no changes made"

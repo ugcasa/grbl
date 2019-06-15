@@ -60,14 +60,17 @@ status() {
 	 	timer_state=$(($timer_now-$timer_start))
 	 	printf '%.2d:%.2d:%.2d'" $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
 	else
-	 	echo "no timer tasks"			 	
-	 	printf "last logged records:\n$(tail $timer_log | tr ";" "  ")\n"
+	 	printf "no timer tasks\n"	
 	fi
 }
 
 
 report() {
-	[ -z "$2" ] && team="all" || team="$2"
+	if [ "$2" ]; then 
+		team="$2" 
+	else
+		team="all"
+	fi
 	report_file="$gio_log/report-$(date +%Y%m%d)-$team.csv"
 	[ -f $timer_log ] || exit 3	
 	cat $timer_log |grep "$2" >$report_file			 	
@@ -84,12 +87,16 @@ cancel() {
 	fi
 }
 
+show_log() {
+	printf "last logged records:\n$(tail $timer_log | tr ";" "  ")\n"
+	[ "$2" = "edit" ] && subl "$timer_log"
+}
 
 case "$1" in
-			start)
+			start|change)
 				start $@
 				;;
-			end)
+			end|stop)
 			 	end
 				;;
 	        status)
@@ -101,8 +108,13 @@ case "$1" in
 			cancel)
 				cancel 
 				;;
+			log)
+				show_log $@
+				;;
 	        *)
-	            echo $"Usage: $0 {start|end|status|cancel|report}"
+	            echo $"Usage: $0 {start|end|status|change|cancel|report [team]|log [edit]}"
+	            echo ""
+	            echo "$0 start [task] [project] [team]"
 	            exit 1
 esac
 
