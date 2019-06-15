@@ -14,9 +14,9 @@ start() {
         echo "start_time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")" >>$timer_start_file
 
         [ -f $timer_last ] && . $timer_last			        
-        [ "$2" ] &&	customer="$2" || customer="$last_customer"
+        [ "$2" ] &&	task="$2" || task="$last_task"		       
         [ "$3" ] &&	project="$3" || project="$last_project"
-        [ "$4" ] &&	task="$4" || task="$last_task"		       
+        [ "$4" ] &&	customer="$4" || customer="$last_customer"
         printf "customer=$customer\nproject=$project\ntask=$task\n" >>$timer_start_file
     else
     	echo "timer is in use"
