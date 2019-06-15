@@ -9,18 +9,19 @@ timer_start_file=/tmp/timer.status
 timer_last=/tmp/timer.last
 
 start() {	
-	if [ ! -f $timer_start_file ]; then 
-        echo "timer_start=$(date +%s)" >$timer_start_file 
-        echo "start_time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")" >>$timer_start_file
-
-        [ -f $timer_last ] && . $timer_last			        
-        [ "$2" ] &&	task="$2" || task="$last_task"		       
-        [ "$3" ] &&	project="$3" || project="$last_project"
-        [ "$4" ] &&	customer="$4" || customer="$last_customer"
-        printf "customer=$customer\nproject=$project\ntask=$task\n" >>$timer_start_file
-    else
-    	echo "timer is in use"
+	
+	[ -f $timer_start_file ] && end
+    
+    if [ -f $timer_last ]; then
+    	. $timer_last			        
+    	[ "$2" ] &&	task="$2" || task="$last_task"		       
+    	[ "$4" ] &&	customer="$4" || customer="$last_customer"
+    	[ "$3" ] &&	project="$3" || project="$last_project"
     fi
+    echo "timer_start=$(date +%s)" >$timer_start_file 
+    echo "start_time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")" >>$timer_start_file
+    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$timer_start_file
+    printf "start: @ $start_time $customer $project $task\n"
 }
 
 
@@ -42,9 +43,9 @@ end() {
 		hours=$(printf '%.2d:%.2d' $(($timer_state/3600)) $(($timer_state%3600/60)))
 
 		printf "$end_date;$start_time;$end_time;$hours;$customer;$project;$task\n">>$timer_log		 		
-		printf "$end_date $start_time - $end_time $hours $customer $project $task\n"
+		printf "end: $start_time - $end_time $hours $customer $project $task\n"
 		printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$timer_last
-		echo 'mosquitto_pub -h "roima" -t "casa/status" -m "done" -u "gio-app" -P "test-salasana"'
+		#TODO echo 'mosquitto_pub -h "roima" -t "casa/status" -m "done" -u "gio-app" -P "test-salasana"'
 		rm $timer_start_file
 	else
 		echo "timer not started"
