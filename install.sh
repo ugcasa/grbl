@@ -48,7 +48,7 @@ sudo cp -f ./src/notes.sh "$gio_bin/gio.notes"
 sudo cp -f ./src/stamp.sh "$gio_bin/gio.stamp"
 sudo cp -f ./src/timer.sh "$gio_bin/gio.timer"
 sudo cp -f ./src/datestamp.py "$gio_bin/gio.datestamp"
-sudo cp -f ./src/phoneflush_lite.sh "$gio_bin/gio.phone"
+sudo cp -f ./src/phoneflush-lite.sh "$gio_bin/gio.phone"
 
 
 ## check and install requirements
