@@ -40,7 +40,7 @@ gio.connect () {
 			echo "not connected"
 			;;
 			*)
-			echo "TODO: non functional"
+			echo "TODO: non functional. got parameters: $@"
 	esac	
 }
 
