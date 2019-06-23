@@ -1,13 +1,12 @@
 #!/bin/bash
 # timer for giocon client ujo.guru / juha.palm 2019
 
-gio_cfg=$HOME/.config/gio
-gio_log=/tmp
-gio_bin=/opt/gio/bin
+command="$1"
+shift
 
-case "$1" in
+case $command in
             date)
-    			[ "$2" == "-h" ] && stamp=$(date +%Y.%m.%d) || stamp=$(date +%Y%m%d)			
+    			[ "$1" == "-h" ] && stamp=$(date +%Y.%m.%d) || stamp=$(date +%Y%m%d)			
     			;;
 
     		time)

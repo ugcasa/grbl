@@ -1,7 +1,7 @@
 #!/bin/bash
 # giocon note generator
 
-cfg=$HOME/.config/gio/noter.cfg
+cfg=$GURU_CFG/notes.cfg
 
 if [[ -f $cfg ]]; then 
 	. $cfg
@@ -17,7 +17,7 @@ templateDir="$notes/$userName"
 templateFile="template.$userName.$teamName.md"
 template="$templateDir/$templateFile"
 noteDir="$notes/$userName/$(date +%Y/%m)"
-noteFile="$userName"_notes_$(gio.datestamp $teamName).md
+noteFile="$userName"_notes_$($GURU_BIN/gio.datestamp $teamName).md
 note="$noteDir/$noteFile"
 
 [[  -d "$noteDir" ]] || mkdir -p "$noteDir"

@@ -1,10 +1,8 @@
 #!/bin/bash
 # giocon work time recorder casa@ujo.guru 2019
 
-gio_cfg=$HOME/.config/gio
-gio_log=$HOME/Dropbox/Notes/casa/WorkTimeTrack
-gio_bin=/opt/gio/bin
-timer_log=$gio_log/current_work.csv
+output_folder=$HOME/Dropbox/Notes/casa/WorkTimeTrack
+timer_log=$output_folder/current_work.csv
 timer_start_file=/tmp/timer.status
 timer_last=/tmp/timer.last
 
@@ -14,12 +12,13 @@ start() {
     
     if [ -f $timer_last ]; then
     	. $timer_last			        
-    	[ "$2" ] &&	task="$2" || task="$last_task"		       
-    	[ "$4" ] &&	customer="$4" || customer="$last_customer"
-    	[ "$3" ] &&	project="$3" || project="$last_project"
+    	[ "$1" ] &&	task="$1" || task="$last_task"		       
+    	[ "$2" ] &&	project="$2" || project="$last_project"
+    	[ "$3" ] &&	customer="$3" || customer="$last_customer"
     fi
-    echo "timer_start=$(date +%s)" >$timer_start_file 
-    echo "start_time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")" >>$timer_start_file
+    start_time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
+    timer_start=$(date +%s)
+    printf "timer_start=$timer_start\nstart_time=$start_time\n" >$timer_start_file     
     printf "customer=$customer\nproject=$project\ntask=$task\n" >>$timer_start_file
     printf "start: @ $start_time $customer $project $task\n"
 }
@@ -71,7 +70,7 @@ report() {
 	else
 		team="all"
 	fi
-	report_file="$gio_log/report-$(date +%Y%m%d)-$team.csv"
+	report_file="$output_folder/report-$(date +%Y%m%d)-$team.csv"
 	[ -f $timer_log ] || exit 3	
 	cat $timer_log |grep "$2" >$report_file			 	
 	soffice $report_file &
@@ -87,12 +86,10 @@ cancel() {
 	fi
 }
 
-show_log() {
-	printf "last logged records:\n$(tail $timer_log | tr ";" "  ")\n"
-	[ "$2" = "edit" ] && subl "$timer_log"
-}
+command=$1
+shift
 
-case "$1" in
+case $command in
 			start|change)
 				start $@
 				;;
@@ -108,8 +105,11 @@ case "$1" in
 			cancel)
 				cancel 
 				;;
+			edit)
+				subl "$timer_log"
+				;;
 			log)
-				show_log $@
+				printf "last logged records:\n$(tail $timer_log | tr ";" "  ")\n"
 				;;
 	        *)
 	            echo $"Usage: $0 {start|end|status|change|cancel|report [team]|log [edit]}"

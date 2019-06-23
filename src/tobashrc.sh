@@ -1,10 +1,10 @@
 
-## giocon launcher
+## guru launcher
 if [ -f ~/.gururc ]; then
     . ~/.gururc
 fi
 
-## giocon enabled
+## guru enabled
 function gio.enable () {
 	if [ -f "$HOME/.gururc.disabled" ]; then 
 		mv "$HOME/.gururc.disabled" "$HOME/.gururc" 
