@@ -5,7 +5,7 @@ if [ -f ~/.gururc ]; then
 fi
 
 ## guru enabled
-function gio.enable () {
+function enableguru () {
 	if [ -f "$HOME/.gururc.disabled" ]; then 
 		mv "$HOME/.gururc.disabled" "$HOME/.gururc" 
 		echo "giocon.client enabled"
@@ -14,4 +14,4 @@ function gio.enable () {
 	fi
 }
 
-export -f gio.enable
+export -f enableguru

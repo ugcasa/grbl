@@ -25,13 +25,18 @@ case $command in
 			error_code=$? 			
 			;;
 
+		set)
+			settings $@
+			error_code=$? 			
+			;;
+
 		project)
-			subl_project $@
+			project $@
 			error_code=$? 			
 			;;
 
 		code)
-			subl_project git 
+			project git 
 			error_code=$? 	
 			;;
 

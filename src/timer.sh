@@ -25,16 +25,16 @@ main () {
 					cancel 
 					;;
 				edit)
-					subl "$timer_log"
+					$GURU_EDITOR "$timer_log"
 					;;
 				log)
 					printf "last logged records:\n$(tail $timer_log | tr ";" "  ")\n"
 					;;
 		        *)
-		            echo $"Usage: $0 {start|end|change|cancel|status|log|edit|report}"
+		            echo $"Usage: guru timer {start|end|change|cancel|status|log|edit|report}"
 		            echo "Examples"
-		            echo "$0 start [task] [project] [team], or start at 10:00 [task] [project] [team]"
-		            echo "$0 end, or end at 16:00" 
+		            echo "guru timer start [task] [project] [team], or start at 10:00 [task] [project] [team]"
+		            echo "guru timer end, or end at 16:00" 
 		            exit 1
 	esac
 }
