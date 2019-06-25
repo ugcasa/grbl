@@ -42,7 +42,9 @@ main () {
 
 start() {	
 	
-	[ -f $timer_status_file ] && end    
+	if [ -f $timer_status_file ]; then 
+		end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
+	fi
 
     if [ "$1" == "at" ]; then 
     	shift 						
@@ -51,9 +53,10 @@ start() {
     else
     	start_time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
     fi
-    	
+	
 	timer_start=$(date -d "today $start_time" '+%s')
-    [ -f $timer_last_file ] && . $timer_last_file			            
+    
+    [ -f $timer_last_file ] && . $timer_last_file	# customer, project, task only
    	[ "$1" ] &&	task="$1" || task="$last_task"		   	
 	[ "$2" ] &&	project="$2" || project="$last_project"
 	[ "$3" ] &&	customer="$3" || customer="$last_customer"
@@ -73,18 +76,19 @@ end() {
 	fi
 	
 	[ -f $timer_log ] || printf "date;start;end;hours;customer;project;task\n">$timer_log	
-	timer_now=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M")
+
+	timer_now=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
 		
 	if [ "$1" == "at" ]; then     	
     	shift 						    	
     	end_time="$1"
-    	timer_end=$(date -d "today $1" '+%s')
+    	#timer_end=$(date -d "today $end_time" '+%s')
     	shift    	
     else
 		end_time=$timer_now
-		timer_end=$(date -d "today $timer_now" '+%s')
     fi
 	
+	timer_end=$(date -d "today $end_time" '+%s')	
 	spend=$(($timer_end-$timer_start))
 
 
