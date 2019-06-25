@@ -1,9 +1,10 @@
+# Some simple tools
 
 subl_project () {
 	# Open sublime project 
 	if ! [ -z "$1" ]; then 
 		subl --project "$HOME/Dropbox/Notes/casa/project/$1.sublime-project" -a 
-		subl --project "$HOME/Dropbox/Notes/casa/project/$1.sublime-project" -a 
+		subl --project "$HOME/Dropbox/Notes/casa/project/$1.sublime-project" -a 	#Sublime bug
 	else
 		echo "enter project, and optional file name"
 	fi
@@ -47,7 +48,6 @@ status () {
 	printf "\e[1mTimer\e[0m: $(guru timer status)\n" 
 	#printf "\e[1mConnect\e[0m: $(guru connect status)\n" 
 }
-
 
 
 test_guru () {

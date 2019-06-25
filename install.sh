@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installer for giocon client. ujo.guru / juha.palm 2019
+# Installer for giocon client. ujo.guru / juha.palm 
 
 export GURU_USER="$USER"
 export GURU_BIN=$HOME/bin
@@ -21,10 +21,12 @@ if [[ "$edit" == "n" ]]; then
 	exit 2
 fi	
 
+
 ### .bashrc
 
 [ -f "$HOME/.bashrc.giobackup" ] || cp -f "$bashrc" "$HOME/.bashrc.giobackup"
 cat ./src/tobashrc.sh >>"$bashrc"
+
 
 ## folder structure copy files
 
@@ -38,17 +40,17 @@ cp -f ./cfg/* "$GURU_CFG"
 cp -f ./src/* -f "$GURU_BIN"
 cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"
 
+
 ## check and install requirements
 
 git --version 	|| sudo apt install git
 pandoc -v 		|| sudo apt install pandoc
 xclip -version  || sudo apt install xclip
 subl -v 		|| sudo apt install sublime-text
-ls /usr/bin/mosquitto_pub || sudo apt install mosquitto-clients
+ls /usr/bin/mosquitto_pub >>/dev/null || sudo apt install mosquitto-clients
 
 
 ### keyboard bindings (for cinnamon only)
-
 
 read -p "set keyboard bindings? :" answer
 if [ "$answer" == "y" ]; then 
@@ -67,7 +69,6 @@ if [ "$answer" == "y" ]; then
 		echo "Canceled - no changes made"
 	fi
 fi
-
 
 echo "success, logout to apply settings system wide."
 

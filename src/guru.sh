@@ -1,13 +1,13 @@
 #!/bin/bash
+# This is free but useless piece of software. Shit comes without any warranty, to
+# the extent permitted by applicable law. If you like to use these uninspiring scripts, 
+# you may/or may not redistribute it and/or modify it under the terms of the Do What The 
+# Fuck You Want To Public License. In case of wisdom is your guide to life, DO NOT USE 
+# this piece of crap for any purpose (except professional chuckle). In case you accidentally 
+# cloned this repository it is advisable to remove directory immediately! 
+# Published for no reason by Juha Palm ujo.guru 2019
+
 version="0.2.0"
-# Bin:
-# - >`/opt/bin` -> `~/bin`
-# - -`.profiles` muokkausta ei tarvita
-# - +`~/bin`
-# - +`~/bin/guru` kutsuu ja välittää argumentit työkaluille - DONE
-# Conffit:
-# - >`~/.config/guru.io`  ja , `~/.config/gio` -> `~/.config/guru`
-# - +`~/.config/guru/guru.conf` <- guru framework bash konfiburaatio 
 
 export GURU_USER="$USER"
 export GURU_BIN=$HOME/bin
