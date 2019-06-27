@@ -1,22 +1,16 @@
 #!/bin/bash
-# giocon note generator
+# note generator
 
-cfg=$GURU_CFG/notes.cfg
+cfg="$HOME/.gururc"
 
-if [[ -f $cfg ]]; then 
-	. $cfg
-else 
-	echo "config file missing"
-	exit 1
-fi 
-
+[[ -f "$cfg" ]] && . $cfg || exit 17
 [[ -z "$1" ]] && userName="$USER" || userName="$1"
 [[ -z "$2" ]] && teamName="ujo.guru" || teamName="$2"
 
-templateDir="$notes/$userName"
+templateDir="$GURU_NOTES/$userName"
 templateFile="template.$userName.$teamName.md"
 template="$templateDir/$templateFile"
-noteDir="$notes/$userName/$(date +%Y/%m)"
+noteDir="$GURU_NOTES/$userName/$(date +%Y/%m)"
 noteFile="$userName"_notes_$($GURU_BIN/gio.datestamp $teamName).md
 note="$noteDir/$noteFile"
 
@@ -31,10 +25,10 @@ if [[ ! -f "$note" ]]; then
 	    fi
 fi
 
-if [ "$editor"=="subl" ] || [ "$editor"=="sublime" ]; then
+if [ $GURU_EDITOR == "subl" ]; then 
 	subl --project "$HOME/Dropbox/Notes/casa/project/notes.sublime-project" -a # TODO dropbox folder from config
 	subl "$note" --project "$HOME/Dropbox/Notes/casa/project/notes.sublime-project" -a 
 else
-	$editor "$note" 
+	$GURU_EDITOR "$note" 
 fi
 

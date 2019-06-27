@@ -3,7 +3,7 @@
 project () {
 	# Open sublime project 
 	
-	if [ ! $GURU_EDITOR == "subl"]; then 
+	if [ ! $GURU_EDITOR == "subl" ]; then 
 		echo 'works only with sublime. Set preferred editor by typing: "guru set editor subl"'		
 		return 15
 	fi
