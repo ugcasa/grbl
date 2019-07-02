@@ -111,7 +111,7 @@ status() {
 	 	. $timer_status_file 
 	 	timer_now=$(date +%s)			 	
 	 	timer_state=$(($timer_now-$timer_start))
-	 	printf '%.2d:%.2d:%.2d'" $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
+	 	printf '%.2d:%.2d:%.2d'" $start_time > $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
 	else
 	 	printf "no timer tasks\n"	
 	fi
