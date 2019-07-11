@@ -168,6 +168,7 @@ install () {
 
 		django|freeman)
 			conda install django
+			conda list |grep django 
 			return $?
 			;;
 
