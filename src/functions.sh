@@ -1,8 +1,8 @@
-# Some simple tools
+# Some simple functions not complicate enough to write separate scripts
+# ujo.guru 2019 
 
 project () {
-	# Open sublime project 
-	
+
 	if [ ! $GURU_EDITOR == "subl" ]; then 
 		echo 'works only with sublime. Set preferred editor by typing: "guru set editor subl"'		
 		return 15
@@ -30,8 +30,6 @@ settings () {
 				fi				
 
 				sed -i -e "/GURU_EDITOR=/s/=.*/=$new_value/" $HOME/.gururc
-				#echo "export GURU_EDITOR=$new_value" >/tmp/run
-				#. /tmp/run
 				;;
 
 			user)
@@ -42,10 +40,6 @@ settings () {
 				fi				
 
 				sed -i -e "/GURU_USER=/s/=.*/=$new_value/" $HOME/.gururc
-				
-				#printf "#!/bin/bash\nexport GURU_USER=$new_value\n" >/tmp/run
-				#chmod +x /tmp/run
-				#source /tmp/run
 				;;		
 
 			conda)
@@ -60,6 +54,7 @@ settings () {
 }
 
 dozer () {
+
 	cfg=$HOME/.config/guru.io/noter.cfg
 	[[ -z "$2" ]] && template="ujo.guru.004" || template="$2"
 	[[ -f "$cfg" ]] && . $cfg || echo "cfg file missing $cfg" | exit 1 
@@ -69,6 +64,7 @@ dozer () {
 
 
 disable () {
+
 	if [ -f "$HOME/.gururc" ]; then 
 		mv -f "$HOME/.gururc" "$HOME/.gururc.disabled" 
 		echo "giocon.client disabled"
@@ -81,9 +77,9 @@ disable () {
 
 
 uninstall () {	 
+
 	if [ -f "$HOME/.bashrc.giobackup" ]; then 
 		mv -f "$HOME/.bashrc.giobackup" "$HOME/.bashrc"		
-		#mv -f "$HOME/.profile.giobackup" "$HOME/.profile"				
 		rm -f "$HOME/.gururc"
 		dconf load /org/cinnamon/desktop/keybindings/ < $HOME/.kbbind.backup.cfg		
 		sudo rm -fr /opt/gio
@@ -98,6 +94,7 @@ uninstall () {
 
 
 status () {
+
 	printf "\e[1mTimer\e[0m: $(guru timer status)\n" 
 	#printf "\e[1mConnect\e[0m: $(guru connect status)\n" 
 	return 0
@@ -105,17 +102,10 @@ status () {
 
 
 test_guru () {
+
 	printf "var: $#: $*\nuser: $GURU_USER \n"
 	return 10
 }
-
-conda_instal_fake () {
-
-	echo "fake install"
-	conda list
-
-}
-
 
 
 conda_install () {
@@ -132,6 +122,7 @@ conda_install () {
 	sha256sum $conda_installer >installer_sum
 	printf "checking sum, if exit it's invalid: "
 	cat installer_sum |grep $conda_sum && echo "ok" || return 11
+
 	chmod +x $conda_installer
 	bash $conda_installer -u && rm $conda_installer installer_sum || return 12
 	source ~/.bashrc 
@@ -139,12 +130,12 @@ conda_install () {
 	return 0
 }
 
+
 conda_setup(){
 
 	cat ~/.bashrc |grep "__conda_setup" || cat "$GURU_BIN/conda_launcher.sh" >>$HOME/.bashrc
 	source ~/.bashrc
 	conda list >>/dev/null || return 14 && 	echo "conda installation found"
-
 	conda config --set auto_activate_base false
 	echo "to create and activate environment type: "
 	echo "conda create --name my_env python=3"
@@ -152,8 +143,8 @@ conda_setup(){
 }
 
 
-
 install () {
+
 	command="$1" 
 	shift
 
@@ -176,6 +167,4 @@ install () {
 			echo "nothing to install"
 			return 22
 	esac
-
-
 }

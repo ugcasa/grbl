@@ -3,6 +3,8 @@
 
 export GURU_USER="$USER"
 export GURU_EDITOR="subl"
+export GURU_OFFICE_DOC="libreoffice"
+
 
 # Folders
 export GURU_BIN=$HOME/bin

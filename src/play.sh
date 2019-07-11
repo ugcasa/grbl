@@ -47,6 +47,4 @@ case $variable in
                 pkill mpsyt
                 command="mpsyt set show_video True, set search_music False, /$variable, 1, q"
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
-                ;;
-
 esac
