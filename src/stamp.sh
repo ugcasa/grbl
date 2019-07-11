@@ -6,7 +6,7 @@ shift
 
 case $command in
             date)
-    			[ "$1" == "-h" ] && stamp=$(date +%Y.%m.%d) || stamp=$(date +%Y%m%d)			
+    			[ "$1" == "-h" ] && stamp=$(date +%-d.%-m.%Y) || stamp=$(date +%Y%m%d)			
     			;;
 
     		time)

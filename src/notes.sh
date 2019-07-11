@@ -1,25 +1,27 @@
 #!/bin/bash
 # note generator
 
+
 cfg="$HOME/.gururc"
 
 [[ -f "$cfg" ]] && . $cfg || exit 17
-[[ -z "$1" ]] && userName="$USER" || userName="$1"
-[[ -z "$2" ]] && teamName="ujo.guru" || teamName="$2"
+[[ -z "$1" ]] && teamName="ujo.guru" || teamName="$1"
 
-templateDir="$GURU_NOTES/$userName"
-templateFile="template.$userName.$teamName.md"
+templateDir="$GURU_NOTES/$GURU_USER/template"
+templateFile="template.$GURU_USER.$teamName.md"
+
 template="$templateDir/$templateFile"
-noteDir="$GURU_NOTES/$userName/$(date +%Y/%m)"
-noteFile="$userName"_notes_$($GURU_BIN/gio.datestamp $teamName).md
+noteDir=$GURU_NOTES/$GURU_USER/$(date +%Y/%m)
+noteFile=$GURU_USER"_notes_"$(date +%Y%m%d).md
 note="$noteDir/$noteFile"
 
 [[  -d "$noteDir" ]] || mkdir -p "$noteDir"
 
-if [[ ! -f "$note" ]]; then 
-	    echo "$noteFile" >"$note"
+if [[ ! -f "$note" ]]; then 	    
+	    printf "$noteFile $(date +%H:%M:%S)\n\n# Muistiinpanot $(date +%-d.%-m.%Y)\n\n" >$note
+	    echo "notesfile = $noteFile"
 	    if [[ -f "$template" ]]; then 
-	        cat "$template" >>"$note" 
+	        cat "$template" >>$note
 	    else 
 	        echo "Template file missing"  
 	    fi
