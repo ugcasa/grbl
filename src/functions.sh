@@ -163,6 +163,10 @@ install () {
 			return $?
 			;;
 
+		programmer|pk2)
+			command=$GURU_BIN/install-pk2.sh
+			gnome-terminal --geometry=80x28 -- /bin/bash -c "$command; exit; $SHELL; "
+			;;
 		*)
 			echo "nothing to install"
 			return 22
