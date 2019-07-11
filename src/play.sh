@@ -6,13 +6,35 @@ shift
 
 case $variable in
 
-            vt)
-                wget http://artscene.textfiles.com/vt100/$1.vt
-                cat "$1.vt" | pv -q -L 2000
-                ;;
+            vt|text|textfile)
+                video_name="$1"
+                video="$GURU_VIDEO/$1.vt"
+                
 
-            vt-list|list-vt)
-                more $GURU_CFG/vt.list
+                case "$1" in 
+
+                    list)
+                            more $GURU_CFG/vt.list                            
+                            ;;
+                    locale|local)
+                            files=$(basename "$(ls $GURU_VIDEO|grep vt| cut -f1 -d".")")
+                            echo $files
+                            ;;
+
+                    help|-h|--help)
+                            echo $"Usage: guru play text COMMAD or what-to-play"
+                            echo "Commands:"
+                            printf "list            list of videos on artscene.textfiles.com \n"
+                            printf "local|locale    local videos\n"
+                            echo 'check list, "guru play text list" then "guru play text <what-found-in-list>" ' 
+                            ;;
+                        *)
+                            if ! [ -f $video ]; then 
+                                cat $GURU_CFG/vt.list |grep $video_name && wget -N -P $GURU_VIDEO http://artscene.textfiles.com/vt100/$1.vt || echo "no video"
+                            fi
+                            
+                            cat "$video" | pv -q -L 2000                         
+                esac
                 ;;
 
             video|youtube)

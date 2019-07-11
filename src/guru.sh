@@ -7,7 +7,7 @@
 # cloned this repository it is advisable to remove directory immediately! 
 # Published for no reason by Juha Palm ujo.guru 2019
 
-version="0.2.2"
+version="0.2.3"
 
 export GURU_USER="$USER"
 export GURU_BIN=$HOME/bin
@@ -61,7 +61,7 @@ case $command in
 		play)
 			play.sh $@
 			;;
-
+		
 		document)
 			dozer $@
 			;;
