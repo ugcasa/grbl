@@ -6,6 +6,15 @@ shift
 
 case $variable in
 
+            vt)
+                wget http://artscene.textfiles.com/vt100/$1.vt
+                cat "$1.vt" | pv -q -L 2000
+                ;;
+
+            vt-list|list-vt)
+                more $GURU_CFG/vt.list
+                ;;
+
             video|youtube)
                 pkill mpsyt
                 command="mpsyt set show_video True, set search_music False, /$@, 1-, q"
