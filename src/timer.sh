@@ -31,11 +31,22 @@ main () {
 					printf "last logged records:\n$(tail $timer_log | tr ";" "  ")\n"
 					;;
 		        *)
-		            echo $"Usage: guru timer {start|end|change|cancel|status|log|edit|report}"
-		            echo "Examples"
-		            echo "guru timer start [task] [project] [team], or start at 10:00 [task] [project] [team]"
-		            echo "guru timer end, or end at 16:00" 
-		            exit 1
+				 	printf "ujo.guru command line toolkit @ $(guru version)\n"
+				 	printf 'Usage guru timer [COMMAND] <at 00:00> [TASK] [PROJECT] [CUSTOMER]\n'            
+		            echo "Commands:"            
+					printf 'start|change     \t start timer for target with last customer and project \n'
+					printf 'start at [TIME]  \t start timer at given time in format HH:MM \n'
+					printf 'end|stop         \t end current task \n'
+					printf 'end at [TIME]    \t end current task at given time in format HH:MM \n'
+					printf 'cancel           \t cancels the current task \n'
+					printf 'report           \t creates report in .csv format and opens it with $GURU_OFFICE_DOC \n' # TODO
+					printf 'log              \t prints out 10 last tasks from log \n' # TODO
+					printf 'edit             \t opens work time log with $GURU_EDITOR\n' # TODO
+					printf 'If PROJECT or CUSTOMER is not filled last used one will be used as default\n'
+		            return 1
+
+
+
 	esac
 }
 

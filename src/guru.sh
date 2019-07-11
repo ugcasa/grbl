@@ -20,13 +20,17 @@ shift
 
 case $command in 
 
-		notes)
-			notes.sh $@
-			error_code=$? 			
-			;;
+		status)
+			status $@
+            ;;  
 
 		set)
 			settings $@
+			error_code=$? 			
+			;;
+
+		notes)
+			notes.sh $@
 			error_code=$? 			
 			;;
 
@@ -54,10 +58,6 @@ case $command in
 			phoneflush-lite.sh $@
 			;;
 
-		status)
-			status $@
-			;;
-
 		play)
 			play.sh $@
 			;;
@@ -68,6 +68,11 @@ case $command in
 
 		disable)
 			disable
+			;;
+
+		silence|-i)
+			guru play stop
+			error_code=$?
 			;;
 
 		uninstall)
@@ -89,8 +94,24 @@ case $command in
 			;;
 
 		--help|-h|help|*)
-		 	printf "Usage $0 [TOOL] [COMMAND] [VARIABLES]\n"
-
+		 	printf "ujo.guru command line toolkit @ $(guru version)\n"
+		 	printf "Usage guru [TOOL] [COMMAND] [VARIABLES]\n"
+            echo "Commands:"            
+			printf 'notes     \t open daily notes \n'
+			printf 'set       \t sets options:  editor|conda\n' 
+			printf 'project   \t opens project to edotor \n'
+			printf 'code      \t open curren code project \n'
+			printf 'timer     \t timing tools ("guru timer help" for more info) \n'
+			printf 'stamp     \t timestamp to clopboard and terminal\n'
+			printf 'phone     \t get data from android phone \n'
+			printf 'status    \t status of guru user \n'
+			printf 'play      \t play videos and music ("guru play help" for more info) \n'			
+			printf 'document  \t turns markdown to libre office file using templates \n'
+			printf 'disable   \t disables guru toolkit \n'
+			printf 'silence   \t kill all audio and lights \n'
+			printf 'uninstall \t uninstall guru toolkit \n'
+			printf 'install   \t install tools: conda|django \n'
+			printf 'version   \t printout version \n'
 esac	
 
 [ -z $error_code ] || logger "$0 $command: $error_code"

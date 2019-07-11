@@ -34,7 +34,16 @@ case $command in
                 ;;
              
             *)
-                echo $"Usage: $0 {start|end|..|}"
+                echo $"Usage: guru stamp [COMMAND]"
+                echo "Commands:"
+                printf "date        \t datestamp \n"
+                printf "time        \t timestamp \n"
+                printf "start       \t start time stamp in format HH:MM \n"                
+                printf "end         \t end time stamp in format HH:MM \n"
+                printf "round       \t rounded up time stamp \n"    #>TODO poisko?
+                printf "signature   \t user signature \n"   
+                printf "transaction \t stansaction stamp for notes r\n"   
+                printf "all stamps will also be to copied to clipboard\n"  
                 exit 1
 esac
 
