@@ -39,11 +39,6 @@ case $command in
 			error_code=$? 			
 			;;
 
-		code)
-			project git 
-			error_code=$? 	
-			;;
-
 		timer)
 			timer.sh $@
 			error_code=$? 			
@@ -100,7 +95,6 @@ case $command in
 			printf 'notes     \t open daily notes \n'
 			printf 'set       \t sets options:  editor|conda\n' 
 			printf 'project   \t opens project to edotor \n'
-			printf 'code      \t open curren code project \n'
 			printf 'timer     \t timing tools ("guru timer help" for more info) \n'
 			printf 'stamp     \t timestamp to clopboard and terminal\n'
 			printf 'phone     \t get data from android phone \n'
