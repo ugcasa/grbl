@@ -7,7 +7,7 @@ fi
 
 install_found(){
 
-	read -p "allready installed.. force install? : " force
+	read -p "allready installed.. force re-install? : " install
 	if ! [  $install == "y"  ]; then
 	     exit 1 
 	fi
