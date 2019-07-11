@@ -34,14 +34,14 @@ main () {
 				 	printf "ujo.guru command line toolkit @ $(guru version)\n"
 				 	printf 'Usage guru timer [COMMAND] <at 00:00> [TASK] [PROJECT] [CUSTOMER]\n'            
 		            echo "Commands:"            
-					printf 'start|change     \t start timer for target with last customer and project \n'
-					printf 'start at [TIME]  \t start timer at given time in format HH:MM \n'
-					printf 'end|stop         \t end current task \n'
-					printf 'end at [TIME]    \t end current task at given time in format HH:MM \n'
-					printf 'cancel           \t cancels the current task \n'
-					printf 'report           \t creates report in .csv format and opens it with $GURU_OFFICE_DOC \n' # TODO
-					printf 'log              \t prints out 10 last tasks from log \n' # TODO
-					printf 'edit             \t opens work time log with $GURU_EDITOR\n' # TODO
+					printf 'start|change     start timer for target with last customer and project \n'
+					printf 'start at [TIME]  start timer at given time in format HH:MM \n'
+					printf 'end|stop         end current task \n'
+					printf 'end at [TIME]    end current task at given time in format HH:MM \n'
+					printf 'cancel           cancels the current task \n'
+					printf "report           creates report in .csv format and opens it with $GURU_OFFICE_DOC \n" # TODO
+					printf 'log              prints out 10 last tasks from log \n' # TODO
+					printf "edit             opens work time log with $GURU_EDITOR\n" # TODO
 					printf 'If PROJECT or CUSTOMER is not filled last used one will be used as default\n'
 		            return 1
 
