@@ -74,6 +74,11 @@ case $command in
 			uninstall
 			;;
 
+		install|-i)
+			install $@
+			error_code=$?
+			;;
+
 		--test|-t)
 			test_guru $@
 			error_code=$? 			
