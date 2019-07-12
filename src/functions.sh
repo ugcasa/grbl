@@ -167,6 +167,16 @@ install () {
 			command=$GURU_BIN/install-pk2.sh
 			gnome-terminal --geometry=80x28 -- /bin/bash -c "$command; exit; $SHELL; "
 			;;
+
+
+		mpsyt|player|play)
+			sudo apt-get -y install mplayer python3-pip
+			sudo -H pip3 install --upgrade pip
+			sudo -H pip3 install setuptools mps-youtube
+			sudo -H pip3 install --upgrade youtube_dl 
+			pip3 install mps-youtube --upgrade 
+			sudo ln -s  /usr/local/bin/mpsyt /usr/bin/mpsyt 
+			;;
 		*)
 			echo "nothing to install"
 			return 22
