@@ -81,6 +81,12 @@ case $command in
 
 		demo)
 			guru play vt twilight
+			guru play vt jumble
+			error_code=$?
+			;;
+
+		fuck_you)
+			guru play vt monkey
 			error_code=$?
 			;;
 
