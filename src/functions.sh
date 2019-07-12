@@ -176,6 +176,7 @@ install () {
 			sudo -H pip3 install --upgrade youtube_dl 
 			pip3 install mps-youtube --upgrade 
 			sudo ln -s  /usr/local/bin/mpsyt /usr/bin/mpsyt 
+			return 0
 			;;
 		*)
 			echo "nothing to install"
