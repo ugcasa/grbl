@@ -4,6 +4,8 @@
 variable="$1"
 shift
 
+mpsyt --ver >>/dev/null || guru install mpsyt
+
 case $variable in
 
             vt|text|textfile)
