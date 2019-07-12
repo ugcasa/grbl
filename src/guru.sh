@@ -79,6 +79,11 @@ case $command in
 			error_code=$?
 			;;
 
+		demo)
+			guru play vt twilight
+			error_code=$?
+			;;
+
 		--test|-t)
 			test_guru $@
 			error_code=$? 			

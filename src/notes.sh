@@ -19,7 +19,6 @@ note="$noteDir/$noteFile"
 
 if [[ ! -f "$note" ]]; then 	    
 	    printf "$noteFile $(date +%H:%M:%S)\n\n# Muistiinpanot $(date +%-d.%-m.%Y)\n\n" >$note
-	    echo "notesfile = $noteFile"
 	    if [[ -f "$template" ]]; then 
 	        cat "$template" >>$note
 	    else 
