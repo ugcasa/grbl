@@ -39,6 +39,12 @@ case $variable in
                 esac
                 ;;
 
+            karaoke|kara|oke|sing)
+                pkill mpsyt
+                command="mpsyt set show_video True, set search_music True, /$@ lyrics, 1, q"
+                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
+                ;;
+
             video|youtube)
                 pkill mpsyt
                 command="mpsyt set show_video True, set search_music False, /$@, 1-, q"
