@@ -92,14 +92,15 @@ disable () {
 
 
 upgrade () {
-	
+
 	temp_dir="/tmp/guru"
 	source="https://ujoguru@bitbucket.org/ugdev/giocon.client.git"
 	cd $temp_dir
 	git clone $source
+
 	guru uninstall 
-	bash $temp_dir/install.sh
-	rm -rf $temp_dir
+	bash $temp_dir/giocon.client/install.sh
+	#rm -rf $temp_dir
 }
 
 uninstall () {	 
