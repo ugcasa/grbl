@@ -11,22 +11,41 @@ disable="$HOME/.gururc.disabled"
 ## check and permissions to edit
 
 if grep -q ".gururc" "$bashrc"; then
-	echo "Already installed, run gio.uninstall before re-install. To apply changes system wide pls. logout"
-	exit 1
+	echo "Already installed, run gio.uninstall before re-install. To apply changes system wide pls. logout, or"	
+	read -p "force re-install [y/n] : " edit	
+	if ! [[ "$edit" == "y" ]]; then
+		echo "aborting.. modifications are needed to run giocon client"
+		exit 2
+	fi
+	reinstall=true
 fi
 
-read -p "modifying .bashrc file [Y/n] : " edit	
-if [[ "$edit" == "n" ]]; then
-	echo "aborting.. modifications are needed to run giocon client"
-	exit 2
-fi	
+if [ "$1" ]; then 
+	platform="$1"
+else
+	platform="desktop" 
+fi
+
+if [ "$platform" == "server" ] || ! [ "$platform" == "desktop" ]; then 
+	echo '"server" of "desktop" are only valid platforms'
+	exit 3
+fi
+
+
+
+# read -p "modifying .bashrc file [y/n] : " edit	
+# if ! [[ "$edit" == "y" ]]; then
+# 	echo "aborting.. modifications are needed to run giocon client"
+# 	exit 2
+# fi	
 
 
 ### .bashrc
 
-[ -f "$HOME/.bashrc.giobackup" ] || cp -f "$bashrc" "$HOME/.bashrc.giobackup"
-cat ./src/tobashrc.sh >>"$bashrc"
-
+if ! $reinstall; then 
+	[ -f "$HOME/.bashrc.giobackup" ] || cp -f "$bashrc" "$HOME/.bashrc.giobackup"
+	cat ./src/tobashrc.sh >>"$bashrc"
+fi
 
 ## folder structure copy files
 
@@ -43,34 +62,40 @@ cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"
 
 ## check and install requirements
 
-git --version 	|| sudo apt install git
-pandoc -v 		|| sudo apt install pandoc
-xclip -version  || sudo apt install xclip
-subl -v 		|| sudo apt install sublime-text
-ls /usr/bin/mosquitto_pub >>/dev/null || sudo apt install mosquitto-clients
+git --version 	>/dev/null|| sudo apt install git
+ls /usr/bin/mosquitto_pub >>/dev/null|| sudo apt install mosquitto-clients
+
+if [ $platform == "desktop" ]; then 
+	pandoc -v 		>/dev/null|| sudo apt install pandoc
+	echo "installed" |xclip -i -selection clipboard >/dev/null || sudo apt install xclip
+	subl -v 		>/dev/null|| sudo apt install sublime-text
+	dconf help >/dev/null || sudo apt install dconf-cli
+fi
 
 
 ### keyboard bindings (for cinnamon only)
 
-read -p "set keyboard bindings? :" answer
-if [ "$answer" == "y" ]; then 
-	dconf help >/dev/null || sudo apt install dconf-cli
-	current=$HOME/.kbbind.backup.cfg
-	new=./cfg/kbbind.guruio.cfg
-		
-	if [ ! -f $current ]; then 		
-		dconf dump /org/cinnamon/desktop/keybindings/ > $current && cat $current |grep binding=
-	fi
 
-	read -p "WARNING! WILL OWERWRITE CURRENT SETTINGS! Continue? :" answer
-	if [ "$answer" == "y" ]; then 
-		dconf load /org/cinnamon/desktop/keybindings/ < $new
-	else
-		echo "Canceled - no changes made"
-	fi
+if [ $platform == "desktop" ]; then 
+
+	# read -p "set keyboard bindings? :" answer
+	# if [ "$answer" == "y" ]; then 
+	# 	current=$HOME/.kbbind.backup.cfg
+		new=./cfg/kbbind.guruio.cfg
+			
+		if [ ! -f $current ]; then 		
+			dconf dump /org/cinnamon/desktop/keybindings/ > $current && cat $current |grep binding=
+		fi
+
+		# read -p "WARNING! WILL OWERWRITE CURRENT SETTINGS! Continue? :" answer
+		# if [ "$answer" == "y" ]; then 
+			dconf load /org/cinnamon/desktop/keybindings/ < $new
+		# else
+			# echo "Canceled - no changes made"
+		# fi
+	# fi
 fi
 
 echo "success, logout to apply settings system wide."
-
 
 

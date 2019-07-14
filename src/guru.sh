@@ -75,6 +75,10 @@ case $command in
 			uninstall
 			;;
 
+		upgrade)
+			upgrade
+			;;
+
 		install|-i)
 			install $@
 			error_code=$?
@@ -84,7 +88,7 @@ case $command in
 			guru play demo $@
 			;;
 
-		fuck_you)
+		fuck_you|fu)
 			guru play vt monkey
 			error_code=$?
 			;;

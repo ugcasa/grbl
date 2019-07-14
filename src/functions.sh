@@ -42,13 +42,28 @@ settings () {
 				sed -i -e "/GURU_USER=/s/=.*/=$new_value/" $HOME/.gururc
 				;;		
 
+
+			audio)
+				if [ ! "$2" ]; then 
+					read -p "new value (true/false) : " new_value
+				else
+					new_value=$2
+				fi				
+
+				sed -i -e "/GURU_AUDIO=/s/=.*/=$new_value/" $HOME/.gururc
+				;;
+
 			conda)
 				conda_setup
 				return $?
 				;;
 	
+			status|stat)
+				echo "Current settings:"
+				cat $HOME/.gururc |grep "export"| cut -c8-
+				;;
 			*)
-				echo "non valid input"
+				echo "non exist set up"
 				return 2
 	esac
 }
@@ -75,6 +90,17 @@ disable () {
 	fi	
 }
 
+
+upgrade () {
+	
+	temp_dir="/tmp/guru"
+	source="https://ujoguru@bitbucket.org/ugdev/giocon.client.git"
+	cd $temp_dir
+	git clone $source
+	guru uninstall 
+	bash $temp_dir/install.sh
+	rm -rf $temp_dir
+}
 
 uninstall () {	 
 
@@ -185,24 +211,3 @@ install () {
 }
 
 
-volume () {
-	amixer set 'Master' $1 >>/dev/null
-}
-
-fade_low () {
-	for i in {1..5}
-		do
-		amixer -M get Master >>/dev/null
-		amixer set 'Master' 5%- >>/dev/null
-		sleep 0.5
-	done
-}
-
-fade_up () {
-	for i in {1..5}
-		do
-		amixer -M get Master >>/dev/null
-		amixer set 'Master' 5%+ >>/dev/null
-		sleep 0.5
-	done
-}

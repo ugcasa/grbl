@@ -4,6 +4,7 @@
 export GURU_USER="$USER"
 export GURU_EDITOR="subl"
 export GURU_OFFICE_DOC="libreoffice"
+export GURU_AUDIO=false
 
 
 # Folders

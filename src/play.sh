@@ -44,6 +44,39 @@ pulseaudio_pause()
     pulseaudio --start
 }
 
+demo () {
+            audio=$GURU_AUDIO            
+            clear                
+            
+            if $audio; then
+                fade_low
+                 pkill mplayer
+                 pkill xplayer
+                 volume 50%                
+                 mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_AUDIO/fairlight.m4a </dev/null >/dev/null 2>&1 &
+                 fade_up
+             fi
+            
+            guru play vt twilight
+            printf "\n                             akrasia.ujo.guru \n"
+            
+            if $audio; then
+                fade_low
+                pkill mplayer
+                mplayer >>/dev/null && mplayer -ss 1 $GURU_AUDIO/satelite.m4a </dev/null >/dev/null 2>&1 &                
+                fade_up
+            fi
+
+            guru play vt jumble
+            printf "\n                    http://ujo.guru - ujoguru.slack.com \n"
+            
+            if $audio; then
+                fade_low
+                pkill mplayer
+            fi
+
+
+}
 
 case $variable in
 
@@ -103,23 +136,7 @@ case $variable in
                 ;;
 
             demo) 
-                fade_low
-                pkill mplayer
-                pkill xplayer
-                volume 50%                
-                mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_AUDIO/fairlight.m4a </dev/null >/dev/null 2>&1 &
-                clear                
-                fade_up
-                guru play vt twilight
-                printf "\n                             akrasia.ujo.guru \n"
-                fade_low
-                pkill mplayer
-                mplayer >>/dev/null && mplayer -ss 1 $GURU_AUDIO/satelite.m4a </dev/null >/dev/null 2>&1 &                
-                fade_up
-                guru play vt jumble
-                printf "\n                    http://ujo.guru - ujoguru.slack.com \n"
-                fade_low
-                pkill mplayer
+                demo
                 #error_code=$?
                 ;;
 
