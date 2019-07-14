@@ -95,11 +95,15 @@ upgrade () {
 
 	temp_dir="/tmp/guru"
 	source="https://ujoguru@bitbucket.org/ugdev/giocon.client.git"
+	
+	[ -d $temp_dir ] && rm -rf $temp_dir
+	mkdir $temp_dir 
 	cd $temp_dir
 	git clone $source
 
 	guru uninstall 
-	bash $temp_dir/giocon.client/install.sh
+	cd $temp_dir/giocon.client
+	bash install.sh
 	#rm -rf $temp_dir
 }
 
