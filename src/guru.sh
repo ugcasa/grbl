@@ -13,6 +13,7 @@ export GURU_USER="$USER"
 export GURU_BIN=$HOME/bin
 export GURU_CFG=$HOME/.config/guru
 
+. $HOME/.gururc
 . $GURU_BIN/functions.sh
 
 command="$1"

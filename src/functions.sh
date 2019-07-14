@@ -18,6 +18,12 @@ project () {
 	fi
 }
 
+set_value () {
+	sed -i -e "/$1=/s/=.*/=$2/" $HOME/.gururc
+}
+
+
+
 settings () {
 
 	case "$1" in 
@@ -27,30 +33,19 @@ settings () {
 					read -p "input preferred editor : " new_value
 				else
 					new_value=$2
-				fi				
-
-				sed -i -e "/GURU_EDITOR=/s/=.*/=$new_value/" $HOME/.gururc
+				fi		
+				set_value GURU_EDITOR $new_value	
+				#sed -i -e "/GURU_EDITOR=/s/=.*/=$new_value/" $HOME/.gururc
 				;;
 
-			user)
-				if [ ! "$2" ]; then 
-					read -p "input new user : " new_value
-				else
-					new_value=$2
-				fi				
-
-				sed -i -e "/GURU_USER=/s/=.*/=$new_value/" $HOME/.gururc
-				;;		
-
-
 			audio)
-				if [ ! "$2" ]; then 
-					read -p "new value (true/false) : " new_value
-				else
+				if [ "$2" ]; then 
 					new_value=$2
+				else
+					read -p "new value (true/false) : " new_value
 				fi				
-
-				sed -i -e "/GURU_AUDIO=/s/=.*/=$new_value/" $HOME/.gururc
+				set_value GURU_AUDIO_ENABLED $new_value
+				#sed -i -e "/GURU_AUDIO_ENABLED=/s/=.*/=$new_value/" $HOME/.gururc
 				;;
 
 			conda)
@@ -60,11 +55,12 @@ settings () {
 	
 			status|stat)
 				echo "Current settings:"
-				cat $HOME/.gururc |grep "export"| cut -c8-
+				cat $HOME/.gururc |grep "export"| cut -c13-
 				;;
+
 			*)
-				echo "non exist set up"
-				return 2
+				set_value GURU_${1^^} $2
+				echo "setting GURU_${1^^} to $2"
 	esac
 }
 

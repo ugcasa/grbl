@@ -4,8 +4,8 @@
 export GURU_USER="$USER"
 export GURU_EDITOR="subl"
 export GURU_OFFICE_DOC="libreoffice"
-export GURU_AUDIO=false
-
+export GURU_AUDIO_ENABLED=false
+export GURU_INSTALL="desktop"
 
 # Folders
 export GURU_BIN=$HOME/bin
