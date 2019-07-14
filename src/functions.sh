@@ -183,3 +183,26 @@ install () {
 			return 22
 	esac
 }
+
+
+volume () {
+	amixer set 'Master' $1 >>/dev/null
+}
+
+fade_low () {
+	for i in {1..5}
+		do
+		amixer -M get Master >>/dev/null
+		amixer set 'Master' 5%- >>/dev/null
+		sleep 0.5
+	done
+}
+
+fade_up () {
+	for i in {1..5}
+		do
+		amixer -M get Master >>/dev/null
+		amixer set 'Master' 5%+ >>/dev/null
+		sleep 0.5
+	done
+}

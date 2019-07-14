@@ -66,6 +66,7 @@ case $command in
 			;;
 
 		silence|-i)
+			fade_low
 			guru play stop
 			error_code=$?
 			;;
@@ -80,14 +81,7 @@ case $command in
 			;;
 
 		demo)
-			#guru play twilight zone theme https://www.youtube.com/watch?v=XVSRm80WzZk
-			#sleep 
-			guru play vt twilight
-			printf "\n                             akrasia.ujo.guru \n"
-			sleep 4
-			guru play vt jumble
-			printf "\n                     iot.ujo.guru - ujoguru.slack.com \n"
-			error_code=$?
+			guru play demo $@
 			;;
 
 		fuck_you)

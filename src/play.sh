@@ -6,6 +6,45 @@ shift
 
 mpsyt --ver >>/dev/null || guru install mpsyt
 
+volume () {
+    amixer set 'Master' $1 >>/dev/null
+}
+
+fade_low () {
+    for i in {1..5}
+        do
+        amixer -M get Master >>/dev/null
+        amixer set 'Master' 5%- >>/dev/null
+        sleep 0.5
+    done
+}
+
+fade_up () {
+    for i in {1..5}
+        do
+        amixer -M get Master >>/dev/null
+        amixer set 'Master' 5%+ >>/dev/null
+        sleep 0.5
+    done
+}
+
+
+pulseaudio_pause()
+{
+    #kill all audio permately, till logout
+    
+    echo autospawn = no > $HOME/.config/pulse/client.conf
+    pulseaudio --kill
+    rm $HOME/.config/pulse/client.conf
+
+}
+
+pulseaudio_pause()
+{
+    pulseaudio --start
+}
+
+
 case $variable in
 
             vt|text|textfile)
@@ -61,6 +100,27 @@ case $variable in
                 pkill mpsyt
                 command="for i in {1..3}; do mpsyt set show_video False, set search_music True, //$@, "'$i'", 1-, q; done"  
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "    
+                ;;
+
+            demo) 
+                fade_low
+                pkill mplayer
+                pkill xplayer
+                volume 50%                
+                mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_AUDIO/fairlight.m4a </dev/null >/dev/null 2>&1 &
+                clear                
+                fade_up
+                guru play vt twilight
+                printf "\n                             akrasia.ujo.guru \n"
+                fade_low
+                pkill mplayer
+                mplayer >>/dev/null && mplayer -ss 1 $GURU_AUDIO/satelite.m4a </dev/null >/dev/null 2>&1 &                
+                fade_up
+                guru play vt jumble
+                printf "\n                    http://ujo.guru - ujoguru.slack.com \n"
+                fade_low
+                pkill mplayer
+                #error_code=$?
                 ;;
 
             upgrade)

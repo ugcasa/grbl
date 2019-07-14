@@ -11,3 +11,4 @@ export GURU_BIN=$HOME/bin
 export GURU_CFG=$HOME/.config/guru
 export GURU_NOTES="$HOME/Dropbox/Notes"
 export GURU_VIDEO="$HOME/Dropbox/Video"
+export GURU_AUDIO="$HOME/Dropbox/Audio"
