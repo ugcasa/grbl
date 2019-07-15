@@ -169,6 +169,28 @@ conda_setup(){
 	echo "conda activate my_env"
 }
 
+kaldi_install(){
+	
+	if [  $1 == ""  ]; then
+		read -p "how many cores you like to use for compile?  : " cores
+	    cores=8		
+	fi
+	echo "installing kaldi.."
+	sudo apt install g++ subversion
+	cd git 
+	mkdir speech 
+	cd speech
+	git clone https://github.com/kaldi-asr/kaldi.git kaldi --origin upstream
+	cd tools
+	./extras/check_dependencies.sh # || kato mitä palauttaa, nyt testaan ensin. Interlillä äly hidas repo ~10min/220MB
+	sudo ./extras/install_mkl.sh -sp debian intel-mkl-64bit-2019.2-057 # Onko syytä pointtaa noi tiukasti versioon?
+	make -j $cores
+	cd ../src/
+	./configure --shared
+	make depend -j $cores
+	make -j $cores
+	return $?
+}
 
 install () {
 
@@ -202,9 +224,16 @@ install () {
 			sudo -H pip3 install setuptools mps-youtube
 			sudo -H pip3 install --upgrade youtube_dl 
 			pip3 install mps-youtube --upgrade 
+			error=$?
 			sudo ln -s  /usr/local/bin/mpsyt /usr/bin/mpsyt 
-			return 0
+			return $error
 			;;
+
+		kaldi|listener)
+			kaldi_install 4
+			return $?
+			;;
+
 		*)
 			echo "nothing to install"
 			return 22
