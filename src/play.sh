@@ -45,38 +45,75 @@ pulseaudio_pause()
 }
 
 
+play_vt() {
+
+        video_name="$1"
+        video="$GURU_VIDEO/$1.vt"
+
+        case "$1" in 
+
+            list)
+                    more $GURU_CFG/vt.list                            
+                    ;;
+            locale|local)
+                    files=$(basename "$(ls $GURU_VIDEO|grep vt| cut -f1 -d".")")
+                    echo $files
+                    ;;
+
+            help|-h|--help)
+                    echo $"Usage: guru play text COMMAD or what-to-play"
+                    echo "Commands:"
+                    printf "list            list of videos on artscene.textfiles.com \n"
+                    printf "local|locale    local videos\n"
+                    echo 'check list, "guru play text list" then "guru play text <what-found-in-list>" ' 
+                    ;;
+                *)
+                    if ! [ -f $video ]; then 
+                        cat $GURU_CFG/vt.list |grep $video_name && wget -N -P $GURU_VIDEO http://artscene.textfiles.com/vt100/$1.vt || echo "no video"
+                    fi
+                    
+                    cat "$video" | pv -q -L 2000                         
+        esac
+}
+
+run_demo() {
+
+        audio=$GURU_AUDIO_ENABLED          
+        clear                
+
+        if $audio; then
+            fade_low
+             pkill mplayer
+             pkill xplayer
+             volume 50%                
+             mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_AUDIO/fairlight.m4a </dev/null >/dev/null 2>&1 &
+             fade_up
+         fi
+
+        guru play vt twilight
+        printf "\n                             akrasia.ujo.guru \n"
+
+        if $audio; then
+            fade_low
+            pkill mplayer
+            mplayer >>/dev/null && mplayer -ss 1 $GURU_AUDIO/satelite.m4a </dev/null >/dev/null 2>&1 &                
+            fade_up
+        fi
+
+        guru play vt jumble
+        printf "\n                    http://ujo.guru - ujoguru.slack.com \n"
+
+        if $audio; then
+            fade_low
+            pkill mplayer
+        fi
+}
+
 
 case $variable in
 
             vt|text|textfile)
-                video_name="$1"
-                video="$GURU_VIDEO/$1.vt"
-                
-
-                case "$1" in 
-
-                    list)
-                            more $GURU_CFG/vt.list                            
-                            ;;
-                    locale|local)
-                            files=$(basename "$(ls $GURU_VIDEO|grep vt| cut -f1 -d".")")
-                            echo $files
-                            ;;
-
-                    help|-h|--help)
-                            echo $"Usage: guru play text COMMAD or what-to-play"
-                            echo "Commands:"
-                            printf "list            list of videos on artscene.textfiles.com \n"
-                            printf "local|locale    local videos\n"
-                            echo 'check list, "guru play text list" then "guru play text <what-found-in-list>" ' 
-                            ;;
-                        *)
-                            if ! [ -f $video ]; then 
-                                cat $GURU_CFG/vt.list |grep $video_name && wget -N -P $GURU_VIDEO http://artscene.textfiles.com/vt100/$1.vt || echo "no video"
-                            fi
-                            
-                            cat "$video" | pv -q -L 2000                         
-                esac
+                play_vt $@
                 ;;
 
             karaoke|kara|oke|sing)
@@ -110,37 +147,7 @@ case $variable in
                 ;;
 
             demo) 
-                audio=$GURU_AUDIO_ENABLED          
-                clear                
-                
-                if $audio; then
-                    fade_low
-                     pkill mplayer
-                     pkill xplayer
-                     volume 50%                
-                     mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_AUDIO/fairlight.m4a </dev/null >/dev/null 2>&1 &
-                     fade_up
-                 fi
-                
-                guru play vt twilight
-                printf "\n                             akrasia.ujo.guru \n"
-                
-                if $audio; then
-                    fade_low
-                    pkill mplayer
-                    mplayer >>/dev/null && mplayer -ss 1 $GURU_AUDIO/satelite.m4a </dev/null >/dev/null 2>&1 &                
-                    fade_up
-                fi
-
-                guru play vt jumble
-                printf "\n                    http://ujo.guru - ujoguru.slack.com \n"
-                
-                if $audio; then
-                    fade_low
-                    pkill mplayer
-                fi
-
-                #error_code=$?
+                run_demo
                 ;;
 
             upgrade)
@@ -152,14 +159,17 @@ case $variable in
                 ;;
 
             help|h)           
-                echo $"Usage: guru play COMMAND what-to-play"
-                echo "Commands:"
-                printf "video|youtube             \tplay video\n"
-                printf "song|music|by|band|artist \tPlay music with video\n"
-                printf "backroung|bg              \tPlay playlist backround witout video\n"                
-                printf "stop|end                  \tStop and kill player\n"
-                printf "upgrade                   \tUpgrade player\n"          
-                printf "Without command only first match will be played, then exited\n"          
+                printf 'usage: guru play COMMAND what-to-play \ncommands: \n'
+                printf 'url|id         play youtube ID or full url \n'
+                printf 'video|youtube  search and play video \n'
+                printf 'song|music|by  search and play music with video \n'
+                printf 'backroung|bg   search and play play list without video output\n'
+                printf 'karaoke        force to find lyrics for songs \n'
+                printf 'stop|end       stop and kill player \n'
+                printf 'demo           run demo ("guru set audio true" to play with audio) \n'
+                printf 'vt|text        play vt100 animations ("guru play vt help") for more info \n'
+                printf 'upgrade        upgrade player \n'          
+                printf 'Without command only first match will be played, then exited\n'
                 ;;       
         
             *)                 

@@ -21,16 +21,12 @@ fi
 
 # Default is desktop
 
-if [ "$1" ]; then 
-	platform="$1"
-else
-	platform="desktop" 
-fi
+[ "$1" ] && platform="$1" || platform="desktop"
+
 
 ## Common files
 
 ### .bashrc
-
 [ -f "$HOME/.bashrc.giobackup" ] || cp -f "$bashrc" "$HOME/.bashrc.giobackup"
 grep -q ".gururc" "$bashrc" || cat ./src/tobashrc.sh >>"$bashrc"
 
@@ -45,18 +41,18 @@ cp -f ./cfg/* "$GURU_CFG"
 cp -f ./src/* -f "$GURU_BIN"
 cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"
 
-## Common requirements
-git --version 	>/dev/null|| sudo apt install git
-ls /usr/bin/mosquitto_pub >>/dev/null|| sudo apt install mosquitto-clients
-pip3 || sudo apt install python3-pip
+## Common debian requirements
+git --version >/dev/null || sudo apt install git
+[ -f /usr/bin/mosquitto_pub ] || sudo apt install mosquitto-clients
+pip3 help >/dev/null || sudo apt install python3-pip
 
 case $platform in 
 
-	desktop|cinnamon) # debian/ubuntu
+	desktop|cinnamon) # debian/ubuntu/mint
 	
-		pandoc -v 		>/dev/null|| sudo apt install pandoc
+		subl -v >/dev/null || sudo apt install sublime-text
+		pandoc -v >/dev/null || sudo apt install pandoc		
 		echo "installed" |xclip -i -selection clipboard >/dev/null || sudo apt install xclip
-		subl -v 		>/dev/null|| sudo apt install sublime-text
 
 		# mint/cinnamon 
 		dconf help >/dev/null || sudo apt install dconf-cli
@@ -66,19 +62,18 @@ case $platform in
 		fi
 		dconf load /org/cinnamon/desktop/keybindings/ < $new
 		
-		# set up
-		guru set audio true
+		# set up		
+		# mpsyt --version || guru install mpsyt
+		# guru set audio true
 		;;
-
 
 	server)	# Server/ubuntu server no gui
 	
 		# debian
-		# joe -v 		>/dev/null|| sudo apt install joe
-		#ls /usr/bin/mosquitto server >>/dev/null|| sudo apt install mosquitto-server
+		joe --help >/dev/null || sudo apt install joe
 
 		# set up
-		guru set audio false
+		# guru set audio false
 		;;
 
 
@@ -86,10 +81,10 @@ case $platform in
 		echo "TODO"
 		;;
 	*)
-		echo "non valid plaform"
+		echo "non valid platform"
 		exit 4
 esac
 
-echo "success, logout to apply settings system wide."
+echo "successfully installed"
 
 

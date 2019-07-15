@@ -7,7 +7,7 @@
 # cloned this repository it is advisable to remove directory immediately! 
 # Published for no reason by Juha Palm ujo.guru 2019
 
-version="0.2.3"
+version="0.2.5"
 
 export GURU_USER="$USER"
 export GURU_BIN=$HOME/bin
@@ -81,7 +81,7 @@ case $command in
 			;;
 
 		install|-i)
-			install $@
+			installer.sh $@
 			error_code=$?
 			;;
 
@@ -104,23 +104,24 @@ case $command in
 			;;
 
 		--help|-h|help|*)
-		 	printf "ujo.guru command line toolkit @ $(guru version)\n"
-		 	printf "Usage guru [TOOL] [COMMAND] [VARIABLES]\n"
-            echo "Commands:"            
-			printf 'notes     \t open daily notes \n'
-			printf 'set       \t sets options:  editor|conda\n' 
-			printf 'project   \t opens project to edotor \n'
-			printf 'timer     \t timing tools ("guru timer help" for more info) \n'
-			printf 'stamp     \t timestamp to clopboard and terminal\n'
-			printf 'phone     \t get data from android phone \n'
-			printf 'status    \t status of guru user \n'
-			printf 'play      \t play videos and music ("guru play help" for more info) \n'			
-			printf 'document  \t turns markdown to libre office file using templates \n'
-			printf 'disable   \t disables guru toolkit \n'
-			printf 'silence   \t kill all audio and lights \n'
-			printf 'uninstall \t uninstall guru toolkit \n'
-			printf 'install   \t install tools: conda|django \n'
-			printf 'version   \t printout version \n'
+		 	printf "ujo.guru command line toolkit @ $(guru version) \n"
+		 	printf "usage: guru [TOOL] [COMMAND] [VARIABLES] \ncommands: \n"
+			printf 'timer     timing tools ("guru timer help" for more info) \n'
+			printf 'notes     open daily notes \n'
+			printf 'project   opens project to edotor \n'
+			printf 'document  turns markdown to libre office file using templates \n'
+			printf 'play      play videos and music ("guru play help" for more info) \n'			
+			printf 'phone     get data from android phone \n'
+			printf 'stamp     timestamp to clopboard and terminal\n'
+			printf 'silence   kill all audio and lights \n'
+			printf 'demo      run demo ("guru set audio true" to play with audio)\n'			
+			printf 'status    status of guru user \n'
+			printf 'install   install tools: conda|django \n'
+			printf 'set       set options ("guru set help" for more information)' 
+			printf 'disable   disables guru toolkit \n'
+			printf 'upgrade   upgrade giocon.client \n'
+			printf 'uninstall uninstall guru toolkit \n'
+			printf 'version   printout version \n'
 esac	
 
 [ -z $error_code ] || logger "$0 $command: $error_code"
