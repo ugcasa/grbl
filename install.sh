@@ -48,6 +48,7 @@ cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"
 ## Common requirements
 git --version 	>/dev/null|| sudo apt install git
 ls /usr/bin/mosquitto_pub >>/dev/null|| sudo apt install mosquitto-clients
+pip3 || sudo apt install python3-pip
 
 case $platform in 
 
@@ -73,7 +74,7 @@ case $platform in
 	server)	# Server/ubuntu server no gui
 	
 		# debian
-		joe -v 		>/dev/null|| sudo apt install joe
+		# joe -v 		>/dev/null|| sudo apt install joe
 		#ls /usr/bin/mosquitto server >>/dev/null|| sudo apt install mosquitto-server
 
 		# set up
