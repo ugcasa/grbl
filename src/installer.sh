@@ -87,9 +87,18 @@ case "$command" in
 		exit $?
 		;;
 
-	*)
-		echo "nothing to install"
-		exit 22
+	edoypts|edi)
+		echo "TODO"
+		exit $?
+		;;
+
+	help|-h|--help|*) 		# hardly never updated help printout
+	 	printf "usage: guru install [MODULE] \nmobules: \n"
+		printf 'conda           anaconda python environment manger \n'
+		printf 'django          web framework for python people\n'
+		printf 'kaldi           the ears, brains and.. lot of learning \n'
+		printf 'mpsyt|player    players for terminal, music, video, youtube \n'
+		printf 'programmer|pk2  pickit2 pic mcu programmer \n'		
 esac
 
 

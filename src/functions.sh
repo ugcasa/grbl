@@ -116,7 +116,7 @@ upgrade () {
 	cd $temp_dir
 	git clone $source
 
-	guru uninstall 
+	guru uninstall $GURU_INSTALL
 	cd $temp_dir/giocon.client
 	bash install.sh
 	rm -rf $temp_dir
