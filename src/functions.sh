@@ -159,11 +159,11 @@ counter () {
 
 	command=$1
 	shift
+	id_file="$GURU_COUNTERS/$1"
 
 	case $command in
 
 			read)
-				id_file="$GURU_COUNTERS/$1.id"
 				if ! [ -f $id_file ]; then 
 					echo "no such counter"		
 					return 16
@@ -172,30 +172,26 @@ counter () {
 				;;
 
 			inc)
-				id_file="$GURU_COUNTERS/$1"
-				[ -f $id_file ] || printf 0 >$id_file				
+				[ -f $id_file ] || echo  0 >$id_file				
 				id=$(($(cat $id_file)+1))
 				echo "$id" >$id_file
 				;;
 
 			add)
-				id_file="$GURU_COUNTERS/$1"
-				[ -f $id_file ] || printf 0 >$id_file
+				[ -f $id_file ] || echo  0 >$id_file
 				[ -z $2 ] && up=1 || up=$2
 				id=$(($(cat $id_file)+$up))
 				echo "$id" >$id_file
 				;;
 
 			reset)
-				id_file="$GURU_COUNTERS/$1"
-				[ -f $id_file ] && printf 0 > -f $id_file
-				[ -z $2 ] && up=1 || up=$2
-				id=$(($(cat $id_file)+$up))
-				echo "$id" >$id_file
-				;;
-			esac
+				[ -z $2 ] && id=0 || id=$2
+				[ -f $id_file ] && echo "$id" >$id_file 				
+
+	esac
 
 	echo "$id" 
+	return 0
 }
 
 inc_counter () {

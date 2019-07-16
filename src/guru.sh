@@ -27,7 +27,6 @@ case $command in
 			error_code=$? 
             ;;  
 
-
 		settings|set)			# set environmental variables
 			settings $@
 			error_code=$? 			
@@ -132,10 +131,11 @@ case $command in
 			printf 'disable   disables guru toolkit type "guru.enable" to enable \n'
 			printf 'uninstall uninstall guru toolkit \n'
 			printf 'version   printout version \n'
-			;;
+
 esac	
 
-if [ $error_code -gt 0 ]; then
+#if [ $error_code -gt 0 ]; then
+if (( error_code > 0 )); then
 	logger "$0 $command: $error_code $error_msg"					# log errors
 	echo "function exited with error: $error_code $error_msg"		# print error
 fi
