@@ -151,8 +151,72 @@ status () {
 test_guru () {
 
 	printf "var: $#: $*\nuser: $GURU_USER \n"
-	return 10
+	return 0
 }
 
 
+counter () {
 
+	command=$1
+	shift
+
+	case $command in
+
+			read)
+				id_file="$GURU_COUNTERS/$1.id"
+				if ! [ -f $id_file ]; then 
+					echo "no such counter"		
+					return 16
+				fi
+				id=$(($(cat $id_file)))
+				;;
+
+			inc)
+				id_file="$GURU_COUNTERS/$1"
+				[ -f $id_file ] || printf 0 >$id_file				
+				id=$(($(cat $id_file)+1))
+				echo "$id" >$id_file
+				;;
+
+			add)
+				id_file="$GURU_COUNTERS/$1"
+				[ -f $id_file ] || printf 0 >$id_file
+				[ -z $2 ] && up=1 || up=$2
+				id=$(($(cat $id_file)+$up))
+				echo "$id" >$id_file
+				;;
+
+			reset)
+				id_file="$GURU_COUNTERS/$1"
+				[ -f $id_file ] && printf 0 > -f $id_file
+				[ -z $2 ] && up=1 || up=$2
+				id=$(($(cat $id_file)+$up))
+				echo "$id" >$id_file
+				;;
+			esac
+
+	echo "$id" 
+}
+
+inc_counter () {
+
+	id_file="$GURU_COUNTERS/$1"
+	[ -f $id_file ] || printf 1000 >$id_file
+	[ -z $2 ] && up=1 || up=$2
+	id=$(($(cat $id_file)+$up))
+	echo "$id" >$id_file
+	echo "$id" 
+	return 0
+}
+
+read_counter () {
+
+	id_file="$GURU_COUNTERS/$1.id"
+	if ! [ -f $id_file ]; then 
+		echo "no such counter"		
+		return 16
+	fi
+	id=$(($(cat $id_file)))
+	echo "$id" 
+	return 0
+}

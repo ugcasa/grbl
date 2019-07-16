@@ -21,6 +21,12 @@ case $command in
 			status $@
 			error_code=$? 
             ;;  
+		
+		counter|count|id) 					# Add things 
+			counter $@
+			error_code=$? 
+            ;;  
+
 
 		settings|set)			# set environmental variables
 			settings $@
