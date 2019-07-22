@@ -122,7 +122,7 @@ upgrade () {
 	cd $temp_dir
 	git clone $source
 
-	guru uninstall $GURU_INSTALL
+	guru uninstall 
 	cd $temp_dir/giocon.client
 	bash install.sh
 	rm -rf $temp_dir
@@ -134,11 +134,13 @@ uninstall () {
 	if [ -f "$HOME/.bashrc.giobackup" ]; then 
 		mv -f "$HOME/.bashrc.giobackup" "$HOME/.bashrc"		
 		rm -f "$HOME/.gururc"
+		rm -f "$GURU_BIN/$GURU_CALL"
 		dconf load /org/cinnamon/desktop/keybindings/ < $HOME/.kbbind.backup.cfg		
 		sudo rm -fr /opt/gio
 		rm -fr "$HOME/.config/gio"
 		echo "successfully uninstalled"
-		return 0
+		#return 0
+		exit 0
 	else		
 		echo "uninstall failed"
 		return 22

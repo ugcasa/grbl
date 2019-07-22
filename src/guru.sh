@@ -116,30 +116,29 @@ parse_command () {
 
 
 			version|ver|-v|--ver) 	# la versíon
-				printf "$0 version $version\n"
+				printf "giocon.client v.$version installed to $0\n"
 				;;
 
 			help|-h|--help|*) 		# hardly never updated help printout
-			 	printf "ujo.guru command line toolkit @ $(guru version) \n"
-			 	printf "usage: guru [TOOL] [COMMAND] [VARIABLES] \ncommands: \n"
-				printf 'timer     timing tools ("guru timer help" for more info) \n'
+			 	printf "giocon command line toolkit client v.$version \n"
+			 	printf "usage: $GURU_CALL [TOOL] [COMMAND] [VARIABLES] \ncommands: \n"
+				printf 'timer     timing tools ("$GURU_CALL timer help" for more info) \n'
 				printf 'notes     open daily notes \n'
 				printf 'project   opens project to edotor \n'
 				printf 'document  compile markdown to .odt format \n'
-				printf 'play      play videos and music ("guru play help" for more info) \n'			
+				printf 'play      play videos and music ("$GURU_CALL play help" for more info) \n'			
 				printf 'phone     get data from android phone \n'
 				printf 'stamp     time stamp to clipboard and terminal\n'
 				printf 'terminal  start guru toolkit in terminal mode to exit terminal mode type "exit"\n'
 				printf 'silence   kill all audio and lights \n'
-				printf 'demo      run demo ("guru set audio true" to play with audio)\n'			
-				printf 'status    status of guru user \n'
-				printf 'install   install tools ("guru install help" for more info) \n'
-				printf 'set       set options ("guru set help" for more information) \n' 
+				printf 'demo      run demo ("$GURU_CALL set audio true" to play with audio)\n'			
+				printf 'status    status of user \n'
+				printf 'install   install tools ("$GURU_CALL install help" for more info) \n'
+				printf 'set       set options ("$GURU_CALL set help" for more information) \n' 
 				printf 'upgrade   upgrade guru toolkit \n'
 				printf 'disable   disables guru toolkit type "guru.enable" to enable \n'
 				printf 'uninstall un-install guru toolkit \n'
 				printf 'version   printout version \n'
-
 	esac	
 
 	if (( error_code > 0 )); then

@@ -11,12 +11,12 @@ disable="$HOME/.gururc.disabled"
 ## already installed? reinstall?
 
 if grep -q ".gururc" "$bashrc"; then	
-	
-	read -p "already installed, force re-install [y/n] : " edit	
-	if ! [[ "$edit" == "y" ]]; then
+	read -p "already installed, force re-install [y/n] : " answer	
+	if ! [[ "$answer" == "y" ]]; then
 		echo "aborting.."
 		exit 2
-	fi
+	fi	
+	[ -f $GURU_BIN/$GURU_CALL ] && bash $GURU_BIN/$GURU_CALL uninstall || echo "uninstaller not found"
 fi
 
 # Default is desktop
