@@ -36,7 +36,8 @@ grep -q ".gururc" "$bashrc" || cat ./src/tobashrc.sh >>"$bashrc"
 
 [ -f $disable ] && rm -f $disable 			# remove gio.disabler file
 cp -f ./src/gururc.sh "$HOME/.gururc"
-cp -f ./src/guru.sh "$GURU_BIN/guru"
+. $HOME/.gururc
+cp -f ./src/guru.sh "$GURU_BIN/$GURU_CALL"
 cp -f ./cfg/* "$GURU_CFG"
 cp -f ./src/* -f "$GURU_BIN"
 cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"

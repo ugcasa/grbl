@@ -1,10 +1,6 @@
 #!/bin/bash
 # giocon work time recorder casa@ujo.guru 2019
 
-output_folder=$HOME/Dropbox/Notes/casa/WorkTimeTrack
-timer_log=$output_folder/current_work.csv
-timer_status_file=$output_folder/timer.status
-timer_last_file=$output_folder/timer.last
 
 main () {
 	
@@ -25,10 +21,10 @@ main () {
 					cancel 
 					;;
 				edit)
-					$GURU_EDITOR "$timer_log"
+					$GURU_EDITOR "$GURU_TRACKDATA"
 					;;
 				log)
-					printf "last logged records:\n$(tail $timer_log | tr ";" "  ")\n"
+					printf "last logged records:\n$(tail $GURU_TRACKDATA | tr ";" "  ")\n"
 					;;
 		        *)
 				 	printf "ujo.guru command line toolkit @ $(guru version)\n"
@@ -53,7 +49,7 @@ main () {
 
 start() {	
 	
-	if [ -f $timer_status_file ]; then 
+	if [ -f $GURU_TRACKSTATUS ]; then 
 		end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
 	fi
 
@@ -67,26 +63,26 @@ start() {
 	
 	timer_start=$(date -d "today $start_time" '+%s')
     
-    [ -f $timer_last_file ] && . $timer_last_file	# customer, project, task only
+    [ -f $GURU_TRACKLAST ] && . $GURU_TRACKLAST	# customer, project, task only
    	[ "$1" ] &&	task="$1" || task="$last_task"		   	
 	[ "$2" ] &&	project="$2" || project="$last_project"
 	[ "$3" ] &&	customer="$3" || customer="$last_customer"
-    printf "timer_start=$timer_start\nstart_time=$start_time\n" >$timer_status_file     
-    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$timer_status_file
+    printf "timer_start=$timer_start\nstart_time=$start_time\n" >$GURU_TRACKSTATUS     
+    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_TRACKSTATUS
     printf "start: @ $start_time $customer $project $task\n"
 }
 
 
 end() {
 
-	if [ -f $timer_status_file ]; then 	
-		. $timer_status_file 
+	if [ -f $GURU_TRACKSTATUS ]; then 	
+		. $GURU_TRACKSTATUS 
 	else
 		echo "timer not started"
 		return 13
 	fi
 	
-	[ -f $timer_log ] || printf "date;start;end;hours;customer;project;task\n">$timer_log	
+	[ -f $GURU_TRACKDATA ] || printf "date;start;end;hours;customer;project;task\n">$GURU_TRACKDATA	
 
 	timer_now=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
 		
@@ -110,16 +106,16 @@ end() {
 	#minutes=$(date -u -d "0 $timer_end sec - $timer_start sec" +"%-M")
 	#dec_minutes=$(python -c "print ($minutes / 60)*100") Ei ymmärrä, jos 15 pitäis tulla 25, vaan tulee 0, % sama
 	printf "end: $start_time - $end_time $hours:$minutes $customer $project $task\n"
-	printf "$end_date;$start_time;$end_time;$hours;$customer;$project;$task\n">>$timer_log		 		
-	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$timer_last_file	
-	rm $timer_status_file	
+	printf "$end_date;$start_time;$end_time;$hours;$customer;$project;$task\n">>$GURU_TRACKDATA		 		
+	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_TRACKLAST	
+	rm $GURU_TRACKSTATUS	
 }
 
 
 status() {
 
-	if [ -f $timer_status_file ]; then
-	 	. $timer_status_file 
+	if [ -f $GURU_TRACKSTATUS ]; then
+	 	. $GURU_TRACKSTATUS 
 	 	timer_now=$(date +%s)			 	
 	 	timer_state=$(($timer_now-$timer_start))
 	 	printf '%.2d:%.2d:%.2d'" $start_time > $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
@@ -136,17 +132,17 @@ report() {
 	else
 		team="all"
 	fi
-	report_file="$output_folder/report-$(date +%Y%m%d)-$team.csv"
-	[ -f $timer_log ] || exit 3	
-	cat $timer_log |grep "$2" >$report_file			 	
+	report_file="$GURU_WORKTRACK/report-$(date +%Y%m%d)-$team.csv"
+	[ -f $GURU_TRACKDATA ] || exit 3	
+	cat $GURU_TRACKDATA |grep "$2" >$report_file			 	
 	soffice $report_file &
 	}
 
 
 cancel() {
 
-	if [ -f $timer_status_file ]; then			
-		rm $timer_status_file
+	if [ -f $GURU_TRACKSTATUS ]; then			
+		rm $GURU_TRACKSTATUS
 		echo "canceled"
 	else
 		echo "not active timer"

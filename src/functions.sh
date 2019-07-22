@@ -32,6 +32,12 @@ settings () {
 				set_value GURU_EDITOR $new_value					
 				;;
 
+			name)
+				[ "$2" ] && new_value=$2 ||	read -p "input new call name for $GURU_CALL : " new_value				
+				mv $GURU_BIN/$GURU_CALL	$GURU_BIN/$new_value
+				set_value GURU_CALL $new_value
+				;;
+
 			audio)
 				[ "$2" ] &&	new_value=$2 || read -p "new value (true/false) : " new_value
 				set_value GURU_AUDIO_ENABLED $new_value				
@@ -142,7 +148,7 @@ uninstall () {
 
 status () {
 
-	printf "\e[1mTimer\e[0m: $(guru timer status)\n" 
+	printf "\e[3mTimer\e[0m: $(guru timer status)\n" 
 	#printf "\e[1mConnect\e[0m: $(guru connect status)\n" 
 	return 0
 }
