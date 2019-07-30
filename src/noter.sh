@@ -115,14 +115,13 @@ make_note() {
 note_file () {
 
 	input=$1
-	
+
 	if [ "$input" ]; then 		# YYYYMMDD only
 		year=${input::-4}		# Tässä paukkuu jos open parametri ei ole oikeassa formaatissa
 		date=${input:6:2}
 		month=${input:4:2}
 		noteDir=$GURU_NOTES/$GURU_USER/$year/$month
 		noteFile=$GURU_USER"_notes_"$year$month$date.md
-
 	else
 		printf "no date given"
 		exit 124
