@@ -3,7 +3,13 @@
 
 main () {
 	
+	variable=$1
+	
 	case $command in
+
+				make|note|today|new)
+					make_note 
+					;;
 
 				report)					
 					notefile=$(note_file $1)					
@@ -13,10 +19,6 @@ main () {
 
 				list|ls)
 					list_notes $@
-					;;
-				
-				open|edit)
-					open_note $1
 					;;
 
 				yesterday|yd)
@@ -60,8 +62,17 @@ main () {
 					printf '<weekday|wkd>     open last week day notes (POC) \n' 
 					printf 'without command or input open todays notes, exist or not\n'
 		            ;;
-				*)
-					make_note 
+
+				open|edit)
+					open_note "$1"
+					;;
+
+				*) 			
+					if [ ! -z "$command" ]; then 
+						open_note "$command"
+					else
+						make_note
+					fi
 	esac
 }
 
