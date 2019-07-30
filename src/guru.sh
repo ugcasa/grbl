@@ -7,7 +7,7 @@
 # cloned this repository it is advisable to remove directory immediately! 
 # Published for no reason by Juha Palm ujo.guru 2019
 
-version="0.2.7"
+version="0.2.8"
 
 . $HOME/.gururc 				# user and platform settings (implement here, always up to date)
 . $GURU_BIN/functions.sh 		# common functions, if no ".sh", check here
@@ -33,8 +33,9 @@ parse_command () {
 				error_code=$? 			
 				;;
 
-			notes|note) 			# create, manipulate and make format changes
-				notes.sh $@
+			notes|note|noter) 		# create, manipulate and make format changes
+				noter.sh $@
+				#notes.sh $@		# rollback
 				error_code=$? 			
 				;;
 
@@ -124,7 +125,7 @@ parse_command () {
 			 	printf "usage: '$GURU_CALL' [TOOL] [COMMAND] [VARIABLES] \ncommands: \n"
 				printf 'timer     timing tools ("'$GURU_CALL' timer help" for more info) \n'
 				printf 'notes     open daily notes \n'
-				printf 'project   opens project to edotor \n'
+				printf 'project   opens project to editor \n'
 				printf 'document  compile markdown to .odt format \n'
 				printf 'play      play videos and music ("'$GURU_CALL' play help" for more info) \n'			
 				printf 'phone     get data from android phone \n'
@@ -142,8 +143,8 @@ parse_command () {
 	esac	
 
 	if (( error_code > 0 )); then
-		logger "$0 $command: $error_code $error_msg"					# log errors
-		echo "function exited with error: $error_code $error_msg"		# print error
+		logger "$0 $command: $error_code: $GURU_ERROR_MSG"				# log errors
+		echo "error: $error_code"										# print error
 	fi
 	
 	return $error_code 													# relay error
@@ -170,6 +171,12 @@ guru_terminal() {
 
 ## main 
 
-[ $1 ] && parse_command $@ || guru_terminal 							# guru without parameters starts terminal loop
-exit $?	 																# delivery both case's errors
+if [ $1 ]; then 					# guru without parameters starts terminal loop
+	parse_command $@ 
+	exit $?
+	else
+	guru_terminal 								
+	exit $?
+fi
+
 
