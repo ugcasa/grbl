@@ -194,7 +194,21 @@ counter () {
 
 			reset)
 				[ -z $2 ] && id=0 || id=$2
-				[ -f $id_file ] && echo "$id" >$id_file 				
+				[ -f $id_file ] && echo "$id" >$id_file 
+				;;				
+
+			remove|rm)				
+				id="counter $id_file removed"
+				[ -f $id_file ] && rm $id_file || id="$id_file not exist"
+				;;	
+
+			*)				
+				id_file="$GURU_COUNTERS/$command"
+				if ! [ -f $id_file ]; then 
+					echo "no such counter"		
+					return 16
+				fi
+				id=$(($(cat $id_file)))
 
 	esac
 

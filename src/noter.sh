@@ -7,14 +7,10 @@ main () {
 	
 	case $command in
 
-				make|note|today|new)
-					make_note 
-					;;
-
 				report)					
 					notefile=$(note_file $1)					
 					$GURU_CALL document $notefile $2
-					$GURU_OFFICE_DOC ${notefile%%.*}.odt
+					$GURU_OFFICE_DOC ${notefile%%.*}.odt &
 					;;
 
 				list|ls)
@@ -103,10 +99,11 @@ make_note() {
 		note="$noteDir/$noteFile"
 
 		[[  -d "$noteDir" ]] || mkdir -p "$noteDir"
+		[[  -d "$templateDir" ]] || mkdir -p "$templateDir"
 
 		if [[ ! -f "$note" ]]; then 	    
 			    printf "$noteFile $(date +%H:%M:%S)\n\n# $GURU_NOTE_HEADER $(date +%-d.%-m.%Y)\n\n" >$note			    
-			    [[ -f "$template" ]] && cat "$template" >>$note || echo "Template file missing"			    
+			    [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note			    
 		fi
 
 		open_note "$(date +%Y%m%d)"
@@ -131,10 +128,13 @@ note_file () {
 
 }
 
+
 open_note() {
 
 	note="$(note_file $1)"
-
+	projectFolder=$GURU_NOTES/$GURU_USER/project 
+	[ -f $projectFolder ] || mkdir -p $projectFolder
+	
 	if [[ ! -f "$note" ]]; then 
 		printf  "no note for given day. "
 		exit 125
@@ -143,8 +143,10 @@ open_note() {
 	case $GURU_EDITOR in
 	
 		subl)
-			subl --project "$GURU_NOTES/$GURU_USER/project/notes.sublime-project" -a 
-			subl "$note" --project "$GURU_NOTES/$GURU_USER/project/notes.sublime-project" -a 		
+			projectFile=$projectFolder/notes.sublime-project
+			[ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_NOTES/$GURU_USER'"'"\n\t\t}\n\t]\n}\n" >$projectFile
+			subl --project "$projectFile" -a 
+			subl "$note" --project "$projectFile" -a 		
 			return $?
 			;;
 		*)
