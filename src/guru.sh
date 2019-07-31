@@ -76,7 +76,7 @@ parse_command () {
 
 			silence) 				# "kill all audio and lights"
 				fade_low
-				guru play stop
+				$GURU_CALL play stop
 				error_code=$?
 				;;
 
@@ -96,12 +96,12 @@ parse_command () {
 				;;
 
 			demo) 					# Play text based demo (TODO add thanks!)
-				guru play demo $@
+				$GURU_CALL play demo $@
 				error_code=$? 
 				;;
 
 			fu)						# fuck you animation
-				guru play vt monkey 	
+				$GURU_CALL play vt monkey 	
 				error_code=$?
 				;;
 

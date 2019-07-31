@@ -64,7 +64,7 @@ settings () {
 				;;
 			
 			*)				
-				[ $2 ] || return 32
+				[ $2 ] || return 130
 				set_value GURU_${1^^} $2				
 				echo "setting GURU_${1^^} to $2"
 	esac
@@ -73,19 +73,28 @@ settings () {
 
 project () {
 
+	if [ -z "$1" ]; then 
+		printf "plase enter project name. "
+		return 131
+	fi
+		
+	projectFolder=$GURU_NOTES/$GURU_USER/project 
+	[ -f $projectFolder ] || mkdir -p $projectFolder
+
+	projectFile=$projectFolder/$1.sublime-project
+	if ! [ -f $projectFile ]; then 
+		printf "no such project found "
+		return 132
+	fi
+	
 	if [ ! $GURU_EDITOR == "subl" ]; then 
-		echo 'works only with sublime. Set preferred editor by typing: "guru set editor subl"'		
-		return 15
+		printf 'projects work only with sublime. Set preferred editor by typing: "'$GURU_CALL' set editor subl", or edit "~/.gururc". '		
+		return 133
 	fi
 
-	if ! [ -z "$1" ]; then 
-		subl --project "$HOME/Dropbox/Notes/casa/project/$1.sublime-project" -a 
-		subl --project "$HOME/Dropbox/Notes/casa/project/$1.sublime-project" -a 	#Sublime bug
-		return 0
-	else
-		echo "enter project, and optional file name"
-		return 1
-	fi
+	subl --project "$projectFile" -a 
+	subl --project "$projectFile" -a 	# Sublime how to open workpace?, this works anyway
+
 }
 
 
@@ -107,7 +116,7 @@ disable () {
 		return 0
 	else		
 		echo "disabling failed"
-		return 21
+		return 134
 	fi	
 }
 
@@ -143,7 +152,7 @@ uninstall () {
 		exit 0
 	else		
 		echo "uninstall failed"
-		return 22
+		return 135
 	fi	
 }
 
@@ -167,14 +176,14 @@ counter () {
 
 	command=$1
 	shift
-	id_file="$GURU_COUNTERS/$1"
+	id_file="$GRU_COUNTER/$1"
 
 	case $command in
 
 			read)
 				if ! [ -f $id_file ]; then 
 					echo "no such counter"		
-					return 16
+					return 136
 				fi
 				id=$(($(cat $id_file)))
 				;;
@@ -203,10 +212,10 @@ counter () {
 				;;	
 
 			*)				
-				id_file="$GURU_COUNTERS/$command"
+				id_file="$GURU_COUNTER/$command"
 				if ! [ -f $id_file ]; then 
 					echo "no such counter"		
-					return 16
+					return 137
 				fi
 				id=$(($(cat $id_file)))
 
@@ -218,7 +227,7 @@ counter () {
 
 inc_counter () {
 
-	id_file="$GURU_COUNTERS/$1"
+	id_file="$GURU_COUNTER/$1"
 	[ -f $id_file ] || printf 1000 >$id_file
 	[ -z $2 ] && up=1 || up=$2
 	id=$(($(cat $id_file)+$up))
@@ -229,10 +238,10 @@ inc_counter () {
 
 read_counter () {
 
-	id_file="$GURU_COUNTERS/$1.id"
+	id_file="$GURU_COUNTER/$1.id"
 	if ! [ -f $id_file ]; then 
 		echo "no such counter"		
-		return 16
+		return 138
 	fi
 	id=$(($(cat $id_file)))
 	echo "$id" 

@@ -8,8 +8,8 @@ main () {
 	case $command in
 
 				report)					
-					notefile=$(note_file $1)					
-					$GURU_CALL document $notefile $2
+					[ $1 ] && notefile=$(note_file $1) || notefile=$(note_file $(date +%Y%m%d))					
+					$GURU_CALL document $notefile $2					
 					$GURU_OFFICE_DOC ${notefile%%.*}.odt &
 					;;
 
@@ -50,12 +50,13 @@ main () {
 					;;
 
 		        help)
-				 	printf 'Usage: $GURU_CALL notes [command] <date> \n'            
+				 	printf 'Usage: '$GURU_CALL' notes [command] <date> \n'            
 		            echo "Commands:"            
-					printf 'open|edit         open given date notes use time format YYYYMMDD \n'
-					printf 'list              first parameter is month, second year (POC) \n' 
-					printf 'ŕeport            open note to temp template on $GURU_OFFICE_DOC \n' 
-					printf '<weekday|wkd>     open last week day notes (POC) \n' 
+					printf 'open|edit         open given date notes (use time format YYYYMMDD) \n'
+					printf 'list              list of notes. first parameter is month (MM), second year (YYYY) \n' 
+					printf 'report            open note with template to '$GURU_OFFICE_DOC' \n' 
+					printf '<yesteerday|yd>   open yesterdays notes \n' 
+					printf '<weekday|wkd>     open last week day notes \n' 
 					printf 'without command or input open todays notes, exist or not\n'
 		            ;;
 
@@ -102,7 +103,7 @@ make_note() {
 		[[  -d "$templateDir" ]] || mkdir -p "$templateDir"
 
 		if [[ ! -f "$note" ]]; then 	    
-			    printf "$noteFile $(date +%H:%M:%S)\n\n# $GURU_NOTE_HEADER $(date +%-d.%-m.%Y)\n\n" >$note			    
+			    printf "$noteFile $(date +%H:%M:%S)\n\n# $GURU_NOTE_HEADER $GURU_REAL_NAME $(date +%-d.%-m.%Y)\n\n" >$note			    
 			    [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note			    
 		fi
 
