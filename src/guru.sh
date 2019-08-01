@@ -110,8 +110,8 @@ parse_command () {
 				error_code=$? 			
 				;;
 
-			test) 					# unused test interface
-				test_guru $@
+			news|uutiset) 					# unused test interface
+				rrs.py $@
 				error_code=$? 			
 				;;
 
