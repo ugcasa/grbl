@@ -83,11 +83,15 @@ a = input()
 if a == "q": 
 	ulos()
 
+
 entry = feed.entries[int(a)-1]
-cmd = 'chromium-browser '+entry.link+' &'
+browser = os.environ["GURU_BROWSER"]
+cmd = browser+' '+entry.link+' &'
 os.system(cmd)
 
 ulos()
+
+#https://www.youtube.com/watch?v=L2b9PqSHqe4
 
 
 

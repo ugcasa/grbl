@@ -111,7 +111,7 @@ parse_command () {
 				;;
 
 			news|uutiset) 					# unused test interface
-				rrs.py $@
+				DISPLAY=:0 rrs.py $@
 				error_code=$? 			
 				;;
 
