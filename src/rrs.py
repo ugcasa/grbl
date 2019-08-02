@@ -3,7 +3,15 @@
 # RSS (Rich Site Summary) is a format for delivering regularly changing web content.
 # add to install: sudo pip install --upgrade pip; sudo pip install feedparser
 
-import feedparser
+try:
+	import feedparser
+except ModuleNotFoundError:
+	print(" installing module")
+	os.system('sudo pip install --upgrade pip')
+	os.system('sudo pip install feedparser')
+finally:
+	import feedparser
+
 import os
 import sys
 from os import system
