@@ -53,6 +53,11 @@ shift
 
 case "$command" in 
 	
+	
+	basic)
+		sudo apt install xterm
+
+
 	conda|anaconda|letku)
 		conda_install $@
 		error_code="$?"			

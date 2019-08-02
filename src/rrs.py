@@ -1,21 +1,36 @@
 #!/usr/bin/python3
+# rrs news feed
 # RSS (Rich Site Summary) is a format for delivering regularly changing web content.
-# 
 # add to install: sudo pip install --upgrade pip; sudo pip install feedparser
-#
+
 import feedparser
 import os
+import sys
+from os import system
 from datetime import datetime
+
+def ulos():
+	print("exit")
+	os.system('resize -s 24 80')
+	os.system('clear')
+	quit()
 
 feedlist = ["https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_UUTISET",\
 			"http://feeds.bbci.co.uk/news/world/rss.xml",\
-			"http://www.cbn.com/cbnnews/world/feed/",\
 			"http://feeds.reuters.com/Reuters/worldNews",\
+			"http://www.cbn.com/cbnnews/world/feed/",\
 			"http://feeds.bbci.co.uk/news/technology/rss.xml"]
 
-feed = feedparser.parse(feedlist[0])
 
-# print 5 top topics http://strftime.org/
+#def get_feed (feed_selection, list_length=5):
+os.system('resize -s 24 120') 
+
+feed_selection = int(sys.argv[1])-1
+list_length =  22
+
+feed = feedparser.parse(feedlist[feed_selection])
+
+# http://strftime.org/
 known_format = ['%a, %d %b %Y %H:%M:%S GMT',\
 				'%a, %d %b %Y %H:%M:%S +0300',\
 				'%Y-%m-%dT%H:%M:%S-05:00',\
@@ -26,6 +41,9 @@ known_format = ['%a, %d %b %Y %H:%M:%S GMT',\
 
 for i in range(len(feed.entries)):
 	entry = feed.entries[i]
+
+	if i > list_length:
+		break
 	
 	for format_count in range(len(known_format)):
 		try:
@@ -36,18 +54,31 @@ for i in range(len(feed.entries)):
 		except:
 			pass			#print("other fuck-up date format"+entry.published)
 
-	datestamp = datetime.strptime(entry.published, known_format[format_count]).strftime('[%d.%m.%y %H:%M]')	
-	summary=entry.summary.replace("&nbsp;", "")
-	
-	print("["+str(i)+"]" +" "+ summary[0:80] +".. "+ datestamp)	#+ ".. "+ entry.link
-	#: "+entry.link+"
+	datestamp = datetime.strptime(entry.published, known_format[format_count]).strftime('%d.%m.%y %H:%M')	
+	summary=entry.summary.replace("&nbsp;", "")	
 
-print('open news nr: ')
+	if len(summary) < 100:
+		summary += ' ' * (100-len(summary))
+
+	if i < 9:
+		print(' ', end='')
+	
+	print("["+str(i+1)+"]" +" "+ summary[0:100] +" "+ datestamp)	
+		
+
+#get_feed(1,5)
+
+print('open news: ', end = '')
 a = input()
-entry = feed.entries[int(a)]
+
+if a == "q": 
+	ulos()
+
+entry = feed.entries[int(a)-1]
 cmd = 'chromium-browser '+entry.link+' &'
 os.system(cmd)
-#print("link: "+entry.link)
+
+ulos()
 
 
 
