@@ -111,6 +111,8 @@ parse_command () {
 				;;
 
 			news|uutiset) 					# unused test interface
+				sudo apt install xterm
+
 				DISPLAY=:0 rrs.py $@
 				error_code=$? 			
 				;;

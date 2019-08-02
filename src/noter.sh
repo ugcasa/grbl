@@ -64,6 +64,11 @@ main () {
 					open_note "$1"
 					;;
 
+				fromweb|web)
+					make_html_md $@
+
+					;;
+
 				*) 			
 					if [ ! -z "$command" ]; then 
 						open_note "$command"
@@ -72,6 +77,23 @@ main () {
 					fi
 	esac
 }
+
+
+make_html_md() {
+
+	[ $1 ] && url=$1 || read -p "url: " url
+	[ $2 ] && filename=$2 || read -p "filename: " filename
+	tempfile=/tmp/noter.temp
+	[ -f $tempfile ] && rm -f $tempfile
+	
+	echo "converting $url to $filename"
+	curl --silent $url | pandoc --from html --to markdown_strict -o $tempfile
+	sed -e 's/<[^>]*>//g' $tempfile >$filename
+	[ -f $tempfile ] && rm -f $tempfile
+}
+
+
+
 
 
 list_notes() {
