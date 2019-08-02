@@ -18,6 +18,11 @@ except ModuleNotFoundError:
 finally:
 	import feedparser
 
+try:
+	os.system('xterm -v')
+except:
+	os.system('sudo apt install xterm')
+
 def ulos():
 	print("exit")
 	os.system('resize -s 24 80')
