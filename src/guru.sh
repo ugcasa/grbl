@@ -117,6 +117,11 @@ parse_command () {
 				error_code=$? 			
 				;;
 
+			scan) 					# media playing tools (later format changes etc.)
+				scan.sh $@
+				error_code=$? 
+				;;
+
 
 			version|ver|-v|--ver) 	# la versíon
 				printf "giocon.client v.$version installed to $0\n"

@@ -46,9 +46,10 @@ cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"
 git --version >/dev/null || sudo apt install git
 [ -f /usr/bin/mosquitto_pub ] || sudo apt install mosquitto-clients
 pip3 help >/dev/null || sudo apt install python3-pip
+xterm -v >/dev/null || sudo apt install xterm
 
 case $platform in 
-
+	
 	desktop|cinnamon) # debian/ubuntu/mint
 	
 		subl -v >/dev/null || sudo apt install sublime-text

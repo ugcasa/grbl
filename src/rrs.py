@@ -18,16 +18,15 @@ except ModuleNotFoundError:
 finally:
 	import feedparser
 
-try:
-	os.system('xterm -v')
-except:
-	os.system('sudo apt install xterm')
-
 def ulos():
 	print("exit")
 	os.system('resize -s 24 80')
 	os.system('clear')
 	quit()
+
+wide=160
+high=24
+
 
 feedlist = ["https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_UUTISET",\
 			"http://feeds.bbci.co.uk/news/world/rss.xml",\
@@ -37,7 +36,7 @@ feedlist = ["https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_UUTISET
 
 
 #def get_feed (feed_selection, list_length=5):
-os.system('resize -s 24 120') 
+os.system('resize -s '+str(high)+' '+str(wide)) 
 
 feed_selection = int(sys.argv[1])-1
 list_length =  22
@@ -69,15 +68,16 @@ for i in range(len(feed.entries)):
 			pass			#print("other fuck-up date format"+entry.published)
 
 	datestamp = datetime.strptime(entry.published, known_format[format_count]).strftime('%d.%m.%y %H:%M')	
+	title=entry.title.replace("&nbsp;", "")	
 	summary=entry.summary.replace("&nbsp;", "")	
 
-	if len(summary) < 100:
-		summary += ' ' * (100-len(summary))
+	if len(title) < wide-20:
+		title += ' ' * (wide-20-len(title))
 
 	if i < 9:
 		print(' ', end='')
 	
-	print("["+str(i+1)+"]" +" "+ summary[0:100] +" "+ datestamp)	
+	print("["+str(i+1)+"]" +" "+ title[0:wide-20] +" "+ datestamp)	
 		
 
 #get_feed(1,5)

@@ -22,9 +22,11 @@ export GURU_COUNTER="$HOME/Dropbox/Notes/$GURU_USER/counters"
 export GURU_WORKTRACK="$HOME/Dropbox/Notes/$GURU_USER/WorkTimeTrack"
 #export GURU_PHOTO="$HOME/bubblebay/Photos"
 #export GURU_PICTURE="$HOME/Dropbox/Pictures"
-#export GURU_ACCOUNTING="$HOME/Dropbox/Accounting"
-#export GURU_RECEIPTS="$GURU_ACCOUNT/Ostolaskut"
-#export GURU_SCAN="$GURU_ACCOUNT/Scan"
+export GURU_ACCOUNTING="$HOME/Dropbox/Accounting"
+export GURU_PERSONAL_ACCOUNTING="$HOME/bubblebay/Talous"
+export GURU_RECEIPTS="Ostolaskut"
+export GURU_SCAN="$GURU_PICTURE"
+
 
 # Files
 export GURU_TRACKDATA="$GURU_WORKTRACK/current_work.csv"
