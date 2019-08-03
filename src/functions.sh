@@ -144,7 +144,10 @@ uninstall () {
 		mv -f "$HOME/.bashrc.giobackup" "$HOME/.bashrc"		
 		rm -f "$HOME/.gururc"
 		rm -f "$GURU_BIN/$GURU_CALL"
-		dconf load /org/cinnamon/desktop/keybindings/ < $HOME/.kbbind.backup.cfg		
+		if [[ GURU_INSTALL="desktop" ]]; then 
+			dconf load /org/cinnamon/desktop/keybindings/ < $HOME/.kbbind.backup.cfg		
+		fi
+		
 		sudo rm -fr /opt/gio
 		rm -fr "$HOME/.config/gio"
 		echo "successfully uninstalled"
