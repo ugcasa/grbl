@@ -46,7 +46,6 @@ cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"
 git --version >/dev/null || sudo apt install git
 [ -f /usr/bin/mosquitto_pub ] || sudo apt install mosquitto-clients
 pip3 help >/dev/null || sudo apt install python3-pip
-xterm -v >/dev/null || sudo apt install xterm
 
 case $platform in 
 	
@@ -55,6 +54,7 @@ case $platform in
 		subl -v >/dev/null || sudo apt install sublime-text
 		pandoc -v >/dev/null || sudo apt install pandoc		
 		echo "installed" |xclip -i -selection clipboard >/dev/null || sudo apt install xclip
+		xterm -v >/dev/null || sudo apt install xterm
 
 		# mint/cinnamon 
 		dconf help >/dev/null || sudo apt install dconf-cli
