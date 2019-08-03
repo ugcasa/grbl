@@ -86,7 +86,7 @@ parse_command () {
 				;;
 
 			upgrade) 				# Force upgrade from git
-				upgrade
+				upgrade $@
 				error_code=$? 
 				;;
 

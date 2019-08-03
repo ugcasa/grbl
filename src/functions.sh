@@ -133,7 +133,7 @@ upgrade () {
 
 	guru uninstall 
 	cd $temp_dir/giocon.client
-	bash install.sh
+	bash install.sh $1
 	rm -rf $temp_dir
 }
 
