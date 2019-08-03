@@ -144,7 +144,7 @@ uninstall () {
 		mv -f "$HOME/.bashrc.giobackup" "$HOME/.bashrc"		
 		rm -f "$HOME/.gururc"
 		rm -f "$GURU_BIN/$GURU_CALL"
-		if [[ $GURU_INSTALL=="desktop" ]]; then 
+		if [[ $GURU_INSTALL -eq "desktop" ]]; then 
 			dconf load /org/cinnamon/desktop/keybindings/ < $HOME/.kbbind.backup.cfg		
 		fi
 		
