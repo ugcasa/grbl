@@ -20,7 +20,7 @@ finally:
 
 # later to config file [feed_name] url=, date_format= ..
 
-wide = 160
+wide = 120
 height = 24
 list_length = height - 3
 
