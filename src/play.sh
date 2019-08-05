@@ -158,6 +158,14 @@ case $variable in
                 pkill mpsyt
                 ;;
 
+
+            world-news)     # wrong
+                pkill mpsyt
+                command="mpsyt set show_video True, url $(cat $GURU_CFG/news-live.pl)"
+                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
+                ;;
+
+
             help|h)           
                 printf 'usage: guru play COMMAND what-to-play \ncommands: \n'
                 printf 'url|id         play youtube ID or full url \n'

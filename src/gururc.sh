@@ -27,7 +27,6 @@ export GURU_PERSONAL_ACCOUNTING="$HOME/bubblebay/Talous"
 export GURU_RECEIPTS="Ostolaskut"
 export GURU_SCAN="$GURU_PICTURE"
 
-
 # Files
 export GURU_TRACKDATA="$GURU_WORKTRACK/current_work.csv"
 export GURU_TRACKLAST="$GURU_WORKTRACK/timer.last"
