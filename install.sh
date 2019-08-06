@@ -25,8 +25,13 @@ if grep -q ".gururc" "$bashrc"; then
 	[ -f $GURU_BIN/uninstall.sh ] && bash $GURU_BIN/uninstall.sh || echo "uninstaller not found"
 fi
 
-# Default is desktop
-[ "$1" ] && platform="$1" || platform="desktop"
+# Default is server
+ if [ $1 ]; then 
+ 	platform=$1
+ else
+ 	lsb_release -crid | grep Mint >/dev/null && platform="desktop" || echo platform="server"
+ fi
+
 
 ### .bashrc
 [ -f "$HOME/.bashrc.giobackup" ] || cp -f "$bashrc" "$HOME/.bashrc.giobackup"
@@ -50,8 +55,8 @@ git --version >/dev/null || sudo apt install git
 [ -f /usr/bin/mosquitto_pub ] || sudo apt install mosquitto-clients
 pip3 help >/dev/null || sudo apt install python3-pip
 pv -V >/dev/null || sudo apt install pv 
-check_python_module feedparser >/dev/null ||pip3 install feedparser	
-check_python_module virtualenv >/dev/null ||pip3 install virtualenv
+check_python_module feedparser >/dev/null || pip3 install feedparser	
+check_python_module virtualenv >/dev/null || pip3 install virtualenv
 
 case $platform in 
 	
@@ -59,27 +64,21 @@ case $platform in
 	
 		subl -v >/dev/null || sudo apt install sublime-text
 		pandoc -v >/dev/null || sudo apt install pandoc		
-		echo "installed" |xclip -i -selection clipboard >/dev/null || sudo apt install xclip
-		xterm -v >/dev/null || sudo apt install xterm
-
-		# mint/cinnamon 
+		echo "installed" | xclip -i -selection clipboard >/dev/null || sudo apt install xclip
+		xterm -v >/dev/null || sudo apt install xterm		
 		dconf help >/dev/null || sudo apt install dconf-cli
 		new=./cfg/kbbind.guruio.cfg				
 		if [ ! -f $current ]; then 		
-			dconf dump /org/cinnamon/desktop/keybindings/ > $current && cat $current |grep binding=
+			dconf dump /org/cinnamon/desktop/keybindings/ > $current && cat $current | grep binding=
 		fi
-		dconf load /org/cinnamon/desktop/keybindings/ < $new
-		
+		dconf load /org/cinnamon/desktop/keybindings/ < $new		
 		# set up		
 		bash $GURU_CALL set audio true
-		mpsyt --version >>/dev/null || $GURU_CALL install mpsyt
+		mpsyt --version >>/dev/null || $GURU_CALL install mpsyt		
 		;;
 
-	server)	# Server/ubuntu server no gui
-	
-		# debian
+	server)	# Server/ubuntu server no gui		
 		joe --help >/dev/null || sudo apt install joe
-
 		# set up
 		bash $GURU_CALL set audio false
 		bash $GURU_CALL set editor joe
@@ -95,6 +94,7 @@ case $platform in
 		exit 4
 esac
 
+bash $GURU_CALL counter add giocon_install >/dev/null
 echo "successfully installed"
 
 
