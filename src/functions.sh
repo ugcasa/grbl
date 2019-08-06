@@ -157,7 +157,7 @@ counter () {
 
 	command=$1
 	shift
-	id_file="$GRU_COUNTER/$1"
+	id_file="$GURU_COUNTER/$1"
 
 	case $command in
 
@@ -170,13 +170,13 @@ counter () {
 				;;
 
 			inc)
-				[ -f $id_file ] || echo  0 >$id_file				
+				[ -f $id_file ] || echo 0 >$id_file				
 				id=$(($(cat $id_file)+1))
 				echo "$id" >$id_file
 				;;
 
 			add)
-				[ -f $id_file ] || echo  0 >$id_file
+				[ -f $id_file ] || echo 0 >$id_file
 				[ -z $2 ] && up=1 || up=$2
 				id=$(($(cat $id_file)+$up))
 				echo "$id" >$id_file
