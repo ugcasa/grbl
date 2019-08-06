@@ -25,6 +25,9 @@ fi
 
 
 ## Common files
+	python -c "import $1"; 	
+	return $?
+}
 
 ### .bashrc
 [ -f "$HOME/.bashrc.giobackup" ] || cp -f "$bashrc" "$HOME/.bashrc.giobackup"
@@ -46,6 +49,16 @@ cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"
 git --version >/dev/null || sudo apt install git
 [ -f /usr/bin/mosquitto_pub ] || sudo apt install mosquitto-clients
 pip3 help >/dev/null || sudo apt install python3-pip
+pv -V >/dev/null || sudo apt install pv 
+
+#if [ $(check_python_module feedparser) -eq "0" ]; then  echo "install feedparser"; else echo "OK"; fi
+#if [ $(check_python_module feedparser) -eq "1" ];  then  echo "joo"; else echo "wi"; fi
+#if check_python_module feedparster; then echo jees; else echo pöö fi; fi
+#check_python_module feedparster ||  echo pöö
+check_python_module feedparser >/dev/null ||pip3 install feedparser	
+check_python_module virtualenv >/dev/null ||pip3 install virtualenv
+check_python_module math >/dev/null ||pip3 install math
+# list= feedparser virtualenv
 
 case $platform in 
 	
@@ -88,5 +101,6 @@ case $platform in
 esac
 
 echo "successfully installed"
+
 
 

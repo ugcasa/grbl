@@ -7,7 +7,7 @@
 # cloned this repository it is advisable to remove directory immediately! 
 # Published for no reason by Juha Palm ujo.guru 2019
 
-version="0.2.8"
+version="0.2.9"
 
 . $HOME/.gururc 				# user and platform settings (implement here, always up to date)
 . $GURU_BIN/functions.sh 		# common functions, if no ".sh", check here

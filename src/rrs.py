@@ -13,8 +13,9 @@ try:
 	import feedparser
 except ModuleNotFoundError:
 	print(" installing module")
-	os.system('sudo pip install --upgrade pip')
-	os.system('sudo pip install feedparser')
+	os.system('pip install --upgrade pip')
+	os.system('sudo -H pip install feedparser')
+	exit(124)
 finally:
 	import feedparser
 
@@ -57,11 +58,10 @@ def ulos():
 
 
 def resize_terminal_x11 (height, lenght):
-
 	"resize terminal windows on x11. requires xterm install. input height and length. checks first that x11 in use"
-	session_type = os.environ["XDG_SESSION_TYPE"] 
-	if session_type == "x11":
-		os.system('resize -s '+str(height)+' '+str(lenght)) 
+	#session_type = os.environ["XDG_SESSION_TYPE"] 
+	#if session_type == "x11":
+	os.system('resize -s '+str(height)+' '+str(lenght)) 
 
 
 def print_header ():
