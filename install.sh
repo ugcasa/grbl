@@ -16,7 +16,7 @@ if grep -q ".gururc" "$bashrc"; then
 		echo "aborting.."
 		exit 2
 	fi	
-	[ -f $GURU_BIN/$GURU_CALL ] && bash $GURU_BIN/$GURU_CALL uninstall || echo "uninstaller not found"
+	[ -f $GURU_BIN/uninstall.sh ] && bash $GURU_BIN/uninstall.sh || echo "uninstaller not found"
 fi
 
 # Default is desktop

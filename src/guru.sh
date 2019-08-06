@@ -81,7 +81,7 @@ parse_command () {
 				;;
 
 			uninstall)				# Get rid of this shit 
-				uninstall
+				bash $GURU_BIN/uninstall.sh $@
 				error_code=$? 
 				;;
 
