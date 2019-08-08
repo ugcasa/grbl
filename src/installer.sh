@@ -27,16 +27,38 @@ mosquitto_server_install () { 	#not tested
 
 	# sudo apt-get update && sudo apt-get upgrade || return $?
 	# sudo apt install mosquitto mosquitto-clients || return $?
-	echo "ssl"
-	# sudo ufw allow 8883
-	# printf '# ujo.guru mqtt setup \nlistener 1883 localhost\n\nlistener 8883\ncertfile /etc/letsencrypt/live/mqtt.ujo.guru/cert.pem\ncafile /etc/letsencrypt/live/mqtt.ujo.guru/chain.pem\nkeyfile /etc/letsencrypt/live/mqtt.ujo.guru/privkey.pem' >/etc/mosquitto/conf.d/default.conf
-	# ln -s /etc/mosquitto/conf.d/default.conf $GURU_CFG/mosquitto.default.conf
-	sudo systemctl restart mosquitto
-	mosquitto_pub -h localhost -t "test" -m "hello 1883" -p 8883 --capath /etc/ssl/certs/ -u $username -P $password && echo "localhost 1883 passed" || echo "localhost 1883 failed"
+	
+	
+	ln -s /etc/mosquitto/conf.d/default.conf $GURU_CFG/mosquitto.default.conf
 
+	if yes_no "setup password login?"; then 
+		pass=1
+		echo "setting up password login"
+		read -p "mqtt client username :" username
+		[ "$username" ] || return 668
+		# sudo mosquitto_passwd -c /etc/mosquitto/passwd $username && printf "allow_anonymous false\npassword_file /etc/mosquitto/passwd\n" >>/etc/mosquitto/conf.d/default.conf || return 668
+		# sudo systemctl restart mosquitto || return $?
+
+		read -p "password for testing :" password
+		[ "$password" ] || return 671
+		# mosquitto_pub -h localhost -t "test" -m "hello login" -p 1883 -u $username -P $password && echo "loalhost 1883 passed" || echo "failed loalhost 8883 "
+	fi
+
+	if yes_no "setup encryption?"; then 
+		enc=1
+		echo "setting up ssl encryption"
+		# sudo ufw allow 8883
+		# printf '# ujo.guru mqtt setup \nlistener 1883 localhost\n\nlistener 8883\ncertfile /etc/letsencrypt/live/mqtt.ujo.guru/cert.pem\ncafile /etc/letsencrypt/live/mqtt.ujo.guru/chain.pem\nkeyfile /etc/letsencrypt/live/mqtt.ujo.guru/privkey.pem' >/etc/mosquitto/conf.d/default.conf
+		# sudo systemctl restart mosquitto
+		if [ $pass ]; then 
+			# mosquitto_pub -h localhost -t "test" -m "hello encryption" -u $username P $password -p 8883 --capath /etc/ssl/certs/ && echo "localhost 8883 passed" || echo "localhost 8883 failed"
+		else  
+			# mosquitto_pub -h localhost -t "test" -m "hello encryption" -p 8883 --capath /etc/ssl/certs/ && echo "localhost 8883 passed" || echo "localhost 8883 failed"
+		fi
 	
 	if yes_no "setup certificates?"; then 
-		echo "certs"
+		cert=1
+		echo "setting up certificate login"
 		# sudo add-apt-repository ppa:certbot/certbot || return $?
 		sudo apt-get update || return $?
 		# sudo apt-get install certbot || return $?
@@ -44,27 +66,22 @@ mosquitto_server_install () { 	#not tested
 		# sudo certbot certonly --standalone --standalone-supported-challenges http-01 -d mqtt.ujo.guru
 		echo "to renew certs automatically add following line to crontab (needs to be done manually)"
 		echo '15 3 * * * certbot renew --noninteractive --post-hook "systemctl restart mosquitto"'
-		read -p "press anykey to continue.. "
+		read -p "press any key to continue.. "
 		# sudo crontab -e	
+
+		if [ $enc ]; then 
+		# mosquitto_pub -h localhost -t "test" -m "hello 8883" -p 8883 --capath /etc/ssl/certs/ && echo "loalhost 8883 passed" || echo "failed loalhost 8883 "
+
+
 	fi
 
-	if yes_no "setup password login?"; then 
-		echo "passwd"
 
-		read -p "mqtt client username :" username
-		[ "$username" ] || return 668
-		# sudo mosquitto_passwd -c /etc/mosquitto/passwd $username && printf "allow_anonymous false\npassword_file /etc/mosquitto/passwd\n" >>/etc/mosquitto/conf.d/default.conf || return 668
-		#sudo systemctl restart mosquitto || return $?
+	# Testing 
+	echo "mosquitto server successfully installed"
+	
 
-		read -p "password for testing :" password
-		[ "$password" ] || return 671
-		#mosquitto_pub -h localhost -t "test" -m "hello 1883" -p 8883 --capath /etc/ssl/certs/ -u $username -P $password && echo "localhost 1883 passed" || echo "localhost 1883 failed"
-		#mosquitto_pub -h localhost -t "test" -m "hello 8883" -p 8883 --capath /etc/ssl/certs/ -u $username -P $password && echo "loalhost 8883 passed" || echo "failed loalhost 8883 "
-	fi
 
-	echo "done"
 	return 0
-
 }
 
 conda_install () {
