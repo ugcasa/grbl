@@ -1,6 +1,18 @@
 # Some simple functions not complicate enough to write separate scripts
 # ujo.guru 2019 
 
+alias docker="resize -s 24 160;docker"
+
+
+yes_no () {
+	[ "$1" ] || return 2
+	read -p "$1 [y/n]: " answer
+	[ $answer ] || return 1
+	[ $answer == "y" ]  && return 0 
+	return 1
+}
+
+
 conda_setup(){
 
 	cat ~/.bashrc |grep "__conda_setup" || cat "$GURU_BIN/conda_launcher.sh" >>$HOME/.bashrc
