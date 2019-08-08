@@ -55,13 +55,10 @@ git --version >/dev/null || sudo apt install git
 #[ -f /usr/bin/mosquitto_pub ] || sudo apt install mosquitto-clients
 pip3 help >/dev/null || sudo apt install python3-pip
 pv -V >/dev/null || sudo apt install pv 
-<<<<<<< HEAD
 check_python_module feedparser >/dev/null || pip3 install feedparser	
 check_python_module virtualenv >/dev/null || pip3 install virtualenv
-=======
-check_python_module feedparser >/dev/null ||sudo -H pip3 install feedparser	 # TODO system level, fix to environment
-check_python_module virtualenv >/dev/null ||sudo -H pip3 install virtualenv
->>>>>>> 7df7660237dd82c98e0eaf8e6994980bd28849a3
+
+
 
 case $platform in 
 	
@@ -101,6 +98,7 @@ esac
 
 bash $GURU_CALL counter add giocon_install >/dev/null
 echo "successfully installed"
+
 
 
 
