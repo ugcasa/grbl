@@ -142,7 +142,8 @@ case $variable in
 
             backroung|bg)
                 pkill mpsyt
-                command="for i in {1..3}; do mpsyt set show_video False, set search_music True, //$@, "'$i'", 1-, q; done"  
+                #command="for i in {1..3}; do mpsyt set show_video False, set search_music True, //$@, "'$i'", 1-, q; done"  
+                command="mpsyt set show_video False, set search_music True, //$@, "'$i'", 1-, q;"  
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "    
                 ;;
 
