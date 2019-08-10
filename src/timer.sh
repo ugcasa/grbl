@@ -52,16 +52,36 @@ start() {
 	if [ -f $GURU_TRACKSTATUS ]; then 
 		end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
 	fi
+	
 
     if [ "$1" == "at" ]; then 
-    	shift 						
+		shift
+		
     	start_time="$1"
-    	shift
+		
+		if [ "$2" ]; then 
+    		start_date=$(date -d "$2" '+%Y%m%d')   	
+		else
+			start_date=$(date -d "today" '+%Y%m%d')  
+       	fi
+		
+		timer_start=$(date -d "$start_date $start_time" '+%s')
+   
     else
     	start_time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
+    	start_date=$(date -d "today" '+%Y%m%d') 
+    	timer_start=$(date -d "today $start_time" '+%s')
     fi
-	
-	timer_start=$(date -d "today $start_time" '+%s')
+
+	# if [ "$1" ]; then 
+	# 	start_date=$(date -d "$2" '+%Y%m%d')
+	# 	timer_start=$(date -d "today $start_time" '+%s')
+	# else
+	# 	echo "input required"
+	# 	exit 231
+	# fi
+
+
     
     [ -f $GURU_TRACKLAST ] && . $GURU_TRACKLAST	# customer, project, task only
    	[ "$1" ] &&	task="$1" || task="$last_task"		   	
@@ -69,7 +89,7 @@ start() {
 	[ "$3" ] &&	customer="$3" || customer="$last_customer"
     printf "timer_start=$timer_start\nstart_time=$start_time\n" >$GURU_TRACKSTATUS     
     printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_TRACKSTATUS
-    printf "start: @ $start_time $customer $project $task\n"
+    printf "start: $start_date @ $start_time $customer $project $task\n"
 }
 
 
@@ -82,31 +102,45 @@ end() {
 		return 13
 	fi
 	
-	[ -f $GURU_TRACKDATA ] || printf "date;start;end;hours;customer;project;task\n">$GURU_TRACKDATA	
+	[ -f $GURU_TRACKDATA ] || printf "start_date;start;end_date;end;hours;customer;project;task\n">$GURU_TRACKDATA	
 
 	timer_now=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
 		
 	if [ "$1" == "at" ]; then     	
     	shift 						    	
-    	end_time="$1"
-    	#timer_end=$(date -d "today $end_time" '+%s')
+    	end_time="$1"									
+    	end_date=$(date -d "$1" '+%Y%m%d')    		
+    	
+    	if [ "$2" ]; then 
+    		end_date=$(date -d "$2" '+%Y%m%d')
+    		shift    	
+    	fi
+
+    	timer_end=$(date -d "today $end_time" '+%s')	
     	shift    	
     else
 		end_time=$timer_now
+		end_date=$(date -d "today " '+%Y%m%d')		
     fi
-	
-	timer_end=$(date -d "today $end_time" '+%s')	
-	spend=$(($timer_end-$timer_start))
 
+	timer_end=$(date -d "today $end_time" '+%s')	
+
+	spend=$(($timer_end-$timer_start)) 					
+
+	echo "end time "$end_time	
+	echo "end date "$end_date
+	echo "timer end "$timer_end
+	echo "spend "$timer_end
 
 	(( $spend < 300 )) && end_time=$start_time # less than 5 min is free of charge	
 	
 	end_date=$(date +%Y.%m.%d)		
+	#hours=$(date -u -d "0 $timer_end sec - $timer_start sec" +"%H:%M")
 	hours=$(date -u -d "0 $timer_end sec - $timer_start sec" +"%H:%M")
 	#minutes=$(date -u -d "0 $timer_end sec - $timer_start sec" +"%-M")
 	#dec_minutes=$(python -c "print ($minutes / 60)*100") Ei ymmärrä, jos 15 pitäis tulla 25, vaan tulee 0, % sama
 	printf "end: $start_time - $end_time $hours:$minutes $customer $project $task\n"
-	printf "$end_date;$start_time;$end_time;$hours;$customer;$project;$task\n">>$GURU_TRACKDATA		 		
+	printf "$end_date;$start_time;$end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_TRACKDATA		 		
 	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_TRACKLAST	
 	rm $GURU_TRACKSTATUS	
 }
