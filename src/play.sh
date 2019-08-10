@@ -134,16 +134,22 @@ case $variable in
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
                 ;;
 
+            album)
+                pkill mpsyt
+                command="mpsyt set show_video True, set search_music True, album $@"
+                gnome-terminal --geometry=80x28 --zoom=1 -- /bin/bash -c "$command; exit; $SHELL; "
+                ;;
+
             url|id)
                 pkill mpsyt
-                command="mpsyt set show_video True, set search_music True, url $@, 1, q"
+                command="mpsyt set show_video, url $@, 1, q"
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
                 ;;
 
             backroung|bg)
                 pkill mpsyt
                 #command="for i in {1..3}; do mpsyt set show_video False, set search_music True, //$@, "'$i'", 1-, q; done"  
-                command="mpsyt set show_video False, set search_music True, //$@, "'$i'", 1-, q;"  
+                command="mpsyt set show_video False, set search_music True, //$@, $((1 + RANDOM % 6)), 1-, q"  
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "    
                 ;;
 
