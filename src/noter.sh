@@ -7,14 +7,31 @@ main () {
 	
 	case $command in
 
-				report)					
-					[ $1 ] && notefile=$(note_file $1) || notefile=$(note_file $(date +%Y%m%d))					
-					$GURU_CALL document $notefile $2					
-					$GURU_OFFICE_DOC ${notefile%%.*}.odt &
+				make|mk)
+					make_note $variable
 					;;
 
 				list|ls)
 					list_notes $@
+					;;
+
+				open|edit)
+					open_note "$variable"
+					;;
+
+				fromweb|web)
+					md_to_html $@
+					;;
+
+				report)					
+					[ $1 ] && notefile=$(note_file_name $variable) || notefile=$(note_file_name $(date +%Y%m%d))										
+					#echo "notefile:"$notefile
+					if [ -f $notefile ]; then 
+						$GURU_CALL document $notefile $2					
+						$GURU_OFFICE_DOC ${notefile%%.*}.odt &
+					else
+						echo "no sutch note"
+					fi
 					;;
 
 				yesterday|yd)
@@ -60,26 +77,18 @@ main () {
 					printf 'without command or input open todays notes, exist or not\n'
 		            ;;
 
-				open|edit)
-					open_note "$1"
-					;;
-
-				fromweb|web)
-					make_html_md $@
-
-					;;
-
 				*) 			
 					if [ ! -z "$command" ]; then 
 						open_note "$command"
 					else
 						make_note
 					fi
+					;;
 	esac
 }
 
 
-make_html_md() {
+md_to_html() {
 
 	[ $1 ] && url=$1 || read -p "url: " url
 	[ $2 ] && filename=$2 || read -p "filename: " filename
@@ -91,9 +100,6 @@ make_html_md() {
 	sed -e 's/<[^>]*>//g' $tempfile >$filename
 	[ -f $tempfile ] && rm -f $tempfile
 }
-
-
-
 
 
 list_notes() {
@@ -113,33 +119,51 @@ list_notes() {
 
 
 make_note() {
-
-		templateDir="$GURU_NOTES/$GURU_USER/template"
-		templateFile="template.$GURU_USER.$GURU_TEAM.md"
-		template="$templateDir/$templateFile"
-		noteDir=$GURU_NOTES/$GURU_USER/$(date +%Y/%m)
-		noteFile=$GURU_USER"_notes_"$(date +%Y%m%d).md
-		note="$noteDir/$noteFile"
-
-		[[  -d "$noteDir" ]] || mkdir -p "$noteDir"
-		[[  -d "$templateDir" ]] || mkdir -p "$templateDir"
-
-		if [[ ! -f "$note" ]]; then 	    
-			    printf "$noteFile $(date +%H:%M:%S)\n\n# $GURU_NOTE_HEADER $GURU_REAL_NAME $(date +%-d.%-m.%Y)\n\n" >$note			    
-			    [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note			    
+		
+		if [ "$1" ]; then  		 							# given days note
+			note_data="$(note_file_details $1)" 			#Ouput: [0]file [1]folder [2]filename [3]year [4]month [5]date
+			note_data=' ' read -r -a note_meta_array <<< "$note_data"
+			noteDir=${note_meta_array[1]}	
+			noteFile=${note_meta_array[2]}	
+			note_date="${note_meta_array[5]}.${note_meta_array[4]}.${note_meta_array[3]}"
+			note_date_stamp="${note_meta_array[3]}${note_meta_array[4]}${note_meta_array[5]}"
+		else 												# Todays note
+			noteDir=$GURU_NOTES/$GURU_USER/$(date +%Y/%m)
+			noteFile=$GURU_USER"_notes_"$(date +%Y%m%d).md		
+			note_date=$(date +%-d.%-m.%Y)
+			note_date_stamp=$(date +%Y%m%d)
 		fi
 
-		open_note "$(date +%Y%m%d)"
+		note="$noteDir/$noteFile"							#; echo "note file "$note
+		templateFile="template.$GURU_USER.$GURU_TEAM.md"	#; echo "temp file name "$templateFile
+		template="$GURU_TEMPLATES/$templateFile"			#; echo "template file "$template
+
+		[[  -d "$noteDir" ]] || mkdir -p "$noteDir"
+		[[  -d "$GURU_TEMPLATES" ]] || mkdir -p "$GURU_TEMPLATES"
+
+		if [[ ! -f "$note" ]]; then 	    
+		    # header
+		    printf "$noteFile\n\n# $GURU_NOTE_HEADER $GURU_REAL_NAME $note_date\n\n" >$note			    
+		    
+		    # template 
+		    [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note	
+		    
+		    # change table
+		    printf "\n\ndate                | author | change\n:------------------ | ------ |:------\n $(date +%-d.%-m.%Y-%H:%M:%S) | $GURU_USER  | created\n" >>$note
+		fi
+		#;echo "given day stamp "$note_date_stamp
+		open_note "$note_date_stamp"
 }
 
-note_file () {
 
+note_file_details () {
+	# inoput format YYYYMMDD only, no format checking
 	input=$1
 
 	if [ "$input" ]; then 		# YYYYMMDD only
 		year=${input::-4}		# Tässä paukkuu jos open parametri ei ole oikeassa formaatissa
-		date=${input:6:2}
 		month=${input:4:2}
+		date=${input:6:2}
 		noteDir=$GURU_NOTES/$GURU_USER/$year/$month
 		noteFile=$GURU_USER"_notes_"$year$month$date.md
 	else
@@ -147,17 +171,23 @@ note_file () {
 		exit 124
 	fi
 
-	echo "$noteDir/$noteFile"
+	echo "$noteDir/$noteFile $noteDir $noteFile $year $month $date"
+}
 
+
+note_file_name () {
+	note_data="$(note_file_details $1)" 					# Ouput: [0]file [1]folder [2]filename [3]year [4]month [5]date
+	note_data=' ' read -r -a note_meta_array <<< "$note_data" 	#; echo "${note_meta_array[2]}"																
+	echo ${note_meta_array[0]}	
 }
 
 
 open_note() {
 
-	note="$(note_file $1)"
-	projectFolder=$GURU_NOTES/$GURU_USER/project 
-	[ -f $projectFolder ] || mkdir -p $projectFolder
-	
+	note_data="$(note_file_details $1)" 					# Ouput: [0]file [1]folder [2]filename [3]year [4]month [5]date
+	note_data=' ' read -r -a note_meta_array <<< "$note_data" 	#; echo "${note_meta_array[2]}"																
+	note=${note_meta_array[0]}	
+
 	if [[ ! -f "$note" ]]; then 
 		printf  "no note for given day. "
 		exit 125
@@ -166,6 +196,8 @@ open_note() {
 	case $GURU_EDITOR in
 	
 		subl)
+			projectFolder=$GURU_NOTES/$GURU_USER/project 
+			[ -f $projectFolder ] || mkdir -p $projectFolder
 			projectFile=$projectFolder/notes.sublime-project
 			[ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_NOTES/$GURU_USER'"'"\n\t\t}\n\t]\n}\n" >$projectFile
 			subl --project "$projectFile" -a 

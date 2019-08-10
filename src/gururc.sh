@@ -26,6 +26,7 @@ export GURU_ACCOUNTING="$HOME/Dropbox/Accounting"
 export GURU_PERSONAL_ACCOUNTING="$HOME/bubblebay/Talous"
 export GURU_RECEIPTS="Ostolaskut"
 export GURU_SCAN="$GURU_PICTURE"
+export GURU_TEMPLATES="$GURU_NOTES/$GURU_USER/template"
 
 # Files
 export GURU_TRACKDATA="$GURU_WORKTRACK/current_work.csv"
