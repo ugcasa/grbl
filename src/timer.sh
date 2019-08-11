@@ -7,24 +7,31 @@ main () {
 	case $command in
 				start|change)
 					start $@
+					return $?
 					;;
 				end|stop)
 				 	end $@
+				 	return $?
 					;;
 		        status)
-					status	
+					status
+					return $?
 					;;
 				report)
 					report $@
+					return $?
 					;;
 				cancel)
 					cancel 
+					return $?
 					;;
 				edit)
 					$GURU_EDITOR "$GURU_TRACKDATA"
+					return $?
 					;;
 				log)
 					printf "last logged records:\n$(tail $GURU_TRACKDATA | tr ";" "  ")\n"
+					return 0
 					;;
 		        *)
 				 	printf "ujo.guru command line toolkit @ $(guru version)\n"
@@ -39,64 +46,66 @@ main () {
 					printf 'log              prints out 10 last tasks from log \n' # TODO
 					printf "edit             opens work time log with $GURU_EDITOR\n" # TODO
 					printf 'If PROJECT or CUSTOMER is not filled last used one will be used as default\n'
-		            return 1
-
-
-
+		            return 0
 	esac
 }
+
+
+
+
 
 
 start() {	
 	
 	if [ -f $GURU_TRACKSTATUS ]; then 
-		end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
-	fi
-	
+	 	end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
+	fi 	
 
-    if [ "$1" == "at" ]; then 
-		shift
-		
-    	start_time="$1"
-		
-		if [ "$2" ]; then 
-    		start_date=$(date -d "$2" '+%Y%m%d')   	
-		else
-			start_date=$(date -d "today" '+%Y%m%d')  
-       	fi
-		
-		timer_start=$(date -d "$start_date $start_time" '+%s')
-   
-    else
-    	start_time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
-    	start_date=$(date -d "today" '+%Y%m%d') 
-    	timer_start=$(date -d "today $start_time" '+%s')
-    fi
+	case "$1" in
 
-	# if [ "$1" ]; then 
-	# 	start_date=$(date -d "$2" '+%Y%m%d')
-	# 	timer_start=$(date -d "today $start_time" '+%s')
-	# else
-	# 	echo "input required"
-	# 	exit 231
-	# fi
+		at|from)    
+			shift																	#; echo "input: "$@
+			if date -d "$1" '+%H:%M' >/dev/null 2>&1; then															
+				time=$(date -d "$1" '+%H:%M') 		
+				shift																#; echo "time pass: "$@
+			else 
+				time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M") 		#; echo "now pass: "$@
+			fi
 
+			if date -d "$1" '+%Y%m%d' >/dev/null 2>&1; then															
+				date=$(date -d "$1" '+%Y%m%d') 		
+				shift																#; echo "date pass: "$@
+			else															
+				date=$(date -d "today" '+%Y%m%d')  									#; echo "today pass: "$@
+   			fi   			
+			;;
 
+		*)			
+			date=$(date -d "today" '+%Y%m%d')			
+			time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M") 			#; echo "no input pass:"$@			
+			;;
+	esac
+
+	start_date=$date																#; echo "start_date: "$start_date
+	start_time=$time																#; echo "start_time: "$start_time
+    nice_date=$(date -d $start_date '+%d.%m.%Y')									#; echo "nice_date: "$nice_date		   	
+   	timer_start=$(date -d "$start_date $start_time" '+%s')							#; echo "timer_start: "$timer_start
     
     [ -f $GURU_TRACKLAST ] && . $GURU_TRACKLAST	# customer, project, task only
    	[ "$1" ] &&	task="$1" || task="$last_task"		   	
 	[ "$2" ] &&	project="$2" || project="$last_project"
 	[ "$3" ] &&	customer="$3" || customer="$last_customer"
-    printf "timer_start=$timer_start\nstart_time=$start_time\n" >$GURU_TRACKSTATUS     
+    
+    printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_TRACKSTATUS     
     printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_TRACKSTATUS
-    printf "start: $start_date @ $start_time $customer $project $task\n"
+    printf "start: $nice_date $start_time $customer $project $task\n"
 }
 
 
 end() {
 
 	if [ -f $GURU_TRACKSTATUS ]; then 	
-		. $GURU_TRACKSTATUS 
+		. $GURU_TRACKSTATUS 														#; echo "timer start "$timer_start
 	else
 		echo "timer not started"
 		return 13
@@ -104,43 +113,52 @@ end() {
 	
 	[ -f $GURU_TRACKDATA ] || printf "start_date;start;end_date;end;hours;customer;project;task\n">$GURU_TRACKDATA	
 
-	timer_now=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
-		
-	if [ "$1" == "at" ]; then     	
-    	shift 						    	
-    	end_time="$1"									
-    	end_date=$(date -d "$1" '+%Y%m%d')    		
-    	
-    	if [ "$2" ]; then 
-    		end_date=$(date -d "$2" '+%Y%m%d')
-    		shift    	
-    	fi
+	case "$1" in
 
-    	timer_end=$(date -d "today $end_time" '+%s')	
-    	shift    	
-    else
-		end_time=$timer_now
-		end_date=$(date -d "today " '+%Y%m%d')		
-    fi
+		at|to|till)    
+			shift																	#; echo "input: "$@
+			if date -d "$1" '+%H:%M' >/dev/null 2>&1; then															
+				time=$(date -d "$1" '+%H:%M') 		
+				shift																#; echo "time pass: "$@
+			else 
+				time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M") 		#; echo "now pass: "$@
+			fi
 
-	timer_end=$(date -d "today $end_time" '+%s')	
+			if date -d "$1" '+%Y%m%d' >/dev/null 2>&1; then															
+				date=$(date -d "$1" '+%Y%m%d') 		
+				shift																#; echo "date pass: "$@
+			else															
+				date=$(date -d "today" '+%Y%m%d')  									#; echo "today pass: "$@
+   			fi   			
+			;;
 
-	spend=$(($timer_end-$timer_start)) 					
+		*)			
+			date=$(date -d "today" '+%Y%m%d')			
+			time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M") 			#; echo "no input pass:"$@			
+			;;
+	esac
 
-	echo "end time "$end_time	
-	echo "end date "$end_date
-	echo "timer end "$timer_end
-	echo "spend "$timer_end
+	end_date=$date																	#; echo "end_date: "$end_date
+	end_time=$time																	#; echo "end_time: "$end_time																			
+	timer_end=$(date -d "$end_date $end_time" '+%s')								#; echo "timer end "$timer_end
+	nice_start_date=$(date -d $start_date '+%d.%m.%Y')								#; echo "nice_start_date: "$nice_start_date
+	nice_end_date=$(date -d $end_date '+%d.%m.%Y')									#; echo "nice_end_date: "$nice_end_date
 
-	(( $spend < 300 )) && end_time=$start_time # less than 5 min is free of charge	
+	(( spend_sec = timer_end - timer_start )) 										#; echo "spend_sec: "$spend_sec
+	(( spend_min = spend_sec / 60 )) 												#; echo "spend_min: "$spend_min
+	(( spend_hour = spend_min / 60 ))												#; echo "spend_hour: "$spend_hour
+	(( spend_min_div = spend_min % 60 ))											#; echo "spend_min_div: "$spend_min_div
+	spend_min_dec=$(python -c "print(int(round($spend_min_div * 1.6666, 0)))") 		#; echo "spend_min_dec: "$spend_min_dec
+	hours="$spend_hour.$spend_min_dec"												#; echo "hours: "$hours
 	
-	end_date=$(date +%Y.%m.%d)		
-	#hours=$(date -u -d "0 $timer_end sec - $timer_start sec" +"%H:%M")
-	hours=$(date -u -d "0 $timer_end sec - $timer_start sec" +"%H:%M")
-	#minutes=$(date -u -d "0 $timer_end sec - $timer_start sec" +"%-M")
-	#dec_minutes=$(python -c "print ($minutes / 60)*100") Ei ymmärrä, jos 15 pitäis tulla 25, vaan tulee 0, % sama
-	printf "end: $start_time - $end_time $hours:$minutes $customer $project $task\n"
-	printf "$end_date;$start_time;$end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_TRACKDATA		 		
+	if [[ "$nice_start_date" == "$nice_end_date" ]]; then 
+		option_end_date=""
+	else
+		option_end_date=" ($nice_end_date)"
+	fi
+	
+	printf "end: $nice_start_date $start_time - $end_time$option_end_date $hours h:$minutes $customer $project $task\n"
+	[[ $hours > 0.11 ]] && printf "$nice_start_date;$start_time;$nice_end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_TRACKDATA		 		
 	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_TRACKLAST	
 	rm $GURU_TRACKSTATUS	
 }
@@ -152,7 +170,8 @@ status() {
 	 	. $GURU_TRACKSTATUS 
 	 	timer_now=$(date +%s)			 	
 	 	timer_state=$(($timer_now-$timer_start))
-	 	printf '%.2d:%.2d:%.2d'" $start_time > $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
+	 	nice_start_date=$(date -d $start_date '+%d.%m.%Y')
+	 	printf '%.2d:%.2d:%.2d'" $nice_start_date $start_time > $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
 	else
 	 	printf "no timer tasks\n"	
 	fi
