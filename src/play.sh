@@ -165,24 +165,22 @@ case $variable in
                 pkill mpsyt
                 ;;
 
-
             world-news)     # wrong
                 pkill mpsyt
                 command="mpsyt set show_video True, url $(cat $GURU_CFG/news-live.pl)"
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
                 ;;
 
-
             help|h)           
-                printf 'usage: guru play COMMAND what-to-play \ncommands: \n'
+                printf 'usage: '$GURU_CALL' play COMMAND what-to-play \ncommands: \n'
                 printf 'url|id         play youtube ID or full url \n'
                 printf 'video|youtube  search and play video \n'
                 printf 'song|music|by  search and play music with video \n'
                 printf 'backroung|bg   search and play play list without video output\n'
                 printf 'karaoke        force to find lyrics for songs \n'
                 printf 'stop|end       stop and kill player \n'
-                printf 'demo           run demo ("guru set audio true" to play with audio) \n'
-                printf 'vt|text        play vt100 animations ("guru play vt help") for more info \n'
+                printf 'demo           run demo ("'$GURU_CALL' set audio true" to play with audio) \n'
+                printf 'vt|text        play vt100 animations ("'$GURU_CALL' play vt help") for more info \n'
                 printf 'upgrade        upgrade player \n'          
                 printf 'Without command only first match will be played, then exited\n'
                 ;;       

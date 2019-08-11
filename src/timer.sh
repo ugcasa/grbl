@@ -1,10 +1,10 @@
 #!/bin/bash
 # giocon work time recorder casa@ujo.guru 2019
 
-
 main () {
 	
 	case $command in
+
 				start|change)
 					start $@
 					return $?
@@ -49,10 +49,6 @@ main () {
 		            return 0
 	esac
 }
-
-
-
-
 
 
 start() {	
