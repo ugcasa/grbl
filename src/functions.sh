@@ -85,27 +85,82 @@ settings () {
 
 project () {
 
-	if [ -z "$1" ]; then 
+	project_name=$1
+	# shift
+
+	if [ -z "$project_name" ]; then 
 		printf "plase enter project name. "
 		return 131
 	fi
-		
-	projectFolder=$GURU_NOTES/$GURU_USER/project 
-	[ -f $projectFolder ] || mkdir -p $projectFolder
 
-	projectFile=$projectFolder/$1.sublime-project
-	if ! [ -f $projectFile ]; then 
-		printf "no such project found "
-		return 132
-	fi
+	# Turha edes yrittää nysvätä bashilla -> python
+	# project_array=('guru=(giocon test1 test2 teste3)'\
+	# 			   'inno=(genextIR test4 test5)'\
+	# 			   'deal=(freesi test6)'\
+	# 			   )
 	
-	if [ ! $GURU_EDITOR == "subl" ]; then 
-		printf 'projects work only with sublime. Set preferred editor by typing: "'$GURU_CALL' set editor subl", or edit "~/.gururc". '		
-		return 133
-	fi
+	# "${projec_array[,b]} ${projec_array[0,1]}" 
 
-	subl --project "$projectFile" -a 
-	subl --project "$projectFile" -a 	# Sublime how to open workpace?, this works anyway
+
+	# if [ -f $GURU_TRACKSTATUS ]; then 
+	# 	. $GURU_TRACKSTATUS 
+	# 	# echo "timer_start "$timer_start
+	# 	# echo "start_date "$start_date
+	# 	# echo "start_time "$start_time
+	# 	# echo "customer "$customer
+	# 	# echo "project "$project
+	# 	# echo "task "$task			
+
+	# 	if [[ $project != $project_name ]]; then 
+	# 		if yes_no "timer running for different project, change?"; then 
+	# 			read -p "task description: " task_desc
+	# 			$GURU_CALL timer start $task_desc $project_name
+	# 		else
+	# 			echo no 
+	# 		fi
+	# 	fi
+
+	# 	echo "timer running for different project, change?"
+	# 	echo "project=$project_name" >>$GURU_TRACKSTATUS 
+	# else
+	# 	[ -f $GURU_TRACKLAST ] && . $GURU_TRACKLAST || return 132
+		
+	# 	echo "last_task "$last_task
+	# 	echo "last_project "$last_project
+	# 	echo "last_customer "$last_customer
+		
+	# 	if yes_no "start timer?"; then 
+	# 		$GURU_CALL timer start $project_name
+	# 	else
+	# 		echo no 
+	# 	fi
+
+	# fi
+	
+
+
+# sublime project
+	subl_project_folder=$GURU_NOTES/$GURU_USER/project 
+	[ -f $subl_project_folder ] || mkdir -p $subl_project_folder
+
+	subl_project_file=$subl_project_folder/$1.sublime-project
+	
+	if ! [ -f $subl_project_file ]; then 
+		printf "no sublime project found "
+		return 132
+	fi	
+	
+	case $GURU_EDITOR in 
+	
+			subl|sublime|sublime-text)
+				subl --project "$subl_project_file" -a 
+				subl --project "$subl_project_file" -a 	# Sublime how to open workpace?, this works anyway
+				;;
+			*)
+			printf 'projects work only with sublime. Set preferred editor by typing: "'$GURU_CALL' set editor subl", or edit "~/.gururc". '		
+			return 133
+	esac
+
 
 }
 

@@ -51,10 +51,13 @@ mosquitto_server_install () { 	#not tested
 		# printf '# ujo.guru mqtt setup \nlistener 1883 localhost\n\nlistener 8883\ncertfile /etc/letsencrypt/live/mqtt.ujo.guru/cert.pem\ncafile /etc/letsencrypt/live/mqtt.ujo.guru/chain.pem\nkeyfile /etc/letsencrypt/live/mqtt.ujo.guru/privkey.pem' >/etc/mosquitto/conf.d/default.conf
 		# sudo systemctl restart mosquitto
 		if [ $pass ]; then 
+			echo "pass"
 			# mosquitto_pub -h localhost -t "test" -m "hello encryption" -u $username P $password -p 8883 --capath /etc/ssl/certs/ && echo "localhost 8883 passed" || echo "localhost 8883 failed"
 		else  
+			echo "pass"
 			# mosquitto_pub -h localhost -t "test" -m "hello encryption" -p 8883 --capath /etc/ssl/certs/ && echo "localhost 8883 passed" || echo "localhost 8883 failed"
 		fi
+	fi
 	
 	if yes_no "setup certificates?"; then 
 		cert=1
@@ -70,16 +73,12 @@ mosquitto_server_install () { 	#not tested
 		# sudo crontab -e	
 
 		if [ $enc ]; then 
+			echo "pass"
 		# mosquitto_pub -h localhost -t "test" -m "hello 8883" -p 8883 --capath /etc/ssl/certs/ && echo "loalhost 8883 passed" || echo "failed loalhost 8883 "
-
-
+		fi
 	fi
-
-
 	# Testing 
 	echo "mosquitto server successfully installed"
-	
-
 
 	return 0
 }
@@ -131,6 +130,45 @@ kaldi_install(){
 }
 
 
+alpine_install () {
+
+	target_cfg=$HOME/.pinerc	
+	if ! $(alpine -v >>/dev/null); then 
+		echo "installing alpine"
+		sudo apt install alpine
+	else
+		echo "installed"			
+	fi
+	
+	echo "setting up alpine: TODO"
+	return 0
+	
+	# [ -f $target_cfg ] && mv -f $target_cfg $GURU_CFG/.pinerc.original
+	
+	# echo "personal-name=$GURU_USER"				>$target_cfg
+	# echo "user-domain=ujo.guru"					>$target_cfg
+
+	# read -p "imput "
+	# imap.gmail.com/ssl/user=YOURUSERNAME@GMAIL.COM
+
+	# export GURU_EMAIL="juha.palm@ujo.guru casa@ujo.guru" 
+	# export GURU_GMAIL="juha.palm@gmail.com regressio@gmail.com" 
+	# export GURU_PMAIL="juha.palm@protonmail.com regressio@protonmail.com" 
+}
+
+mpsyt_install () {
+
+		sudo apt-get -y install mplayer python3-pip pulseaudio amixer pkill gnome-terminal
+		sudo -H pip3 install --upgrade pip
+		sudo -H pip3 install setuptools mps-youtube
+		sudo -H pip3 install --upgrade youtube_dl 
+		pip3 install mps-youtube --upgrade 
+		error=$?
+		sudo ln -s /usr/local/bin/mpsyt /usr/bin/mpsyt 
+		return $error
+}
+
+
 command="$1" 
 shift
 
@@ -138,14 +176,17 @@ case "$command" in
 	
 		basic)
 			sudo apt install xterm
+			exit $?
 			;;
 
 		mqtt-client)
 			mosquitto_client_install $@
+			exit $?
 			;;
 
 		mqtt-server)
 			mosquitto_server_install $@
+			exit $?
 			;;
 
 		conda|anaconda|letku)
@@ -153,6 +194,7 @@ case "$command" in
 			error_code="$?"			
 			[ -z $error_code ] || echo "conda install failed with code: $error_code"
 			exit $error_code
+			exit $?
 			;;
 
 		django|freeman)
@@ -161,19 +203,19 @@ case "$command" in
 			exit $?
 			;;
 
+		alpine|pine|email)
+			alpine_install $@
+			exit $?
+			;;
+
 		programmer|pk2)
 			command=$GURU_BIN/install-pk2.sh
 			gnome-terminal --geometry=80x28 -- /bin/bash -c "$command; exit; $SHELL; "
+			exit $?
 			;;
 
-		mpsyt|player|play)
-			sudo apt-get -y install mplayer python3-pip
-			sudo -H pip3 install --upgrade pip
-			sudo -H pip3 install setuptools mps-youtube
-			sudo -H pip3 install --upgrade youtube_dl 
-			pip3 install mps-youtube --upgrade 
-			error=$?
-			sudo ln -s  /usr/local/bin/mpsyt /usr/bin/mpsyt 
+		mpsyt|player|play)			
+			mpsyt_install $@
 			exit $error
 			;;
 

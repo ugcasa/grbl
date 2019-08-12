@@ -1,5 +1,6 @@
-# ujo.guru giocon tool kit launcher
-# Runs every time terminal is opened
+# ujo.guru tool kit ENVIRONMENT VARIABLES
+# only for static variables for individual sessions 
+# called from .bashrc (will be every time bash session starts)
 
 # User information
 export GURU_USER="casa"
