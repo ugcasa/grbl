@@ -174,18 +174,22 @@ status() {
 }
 
 
+
 report() {
 
-	if [ "$2" ]; then 
-		team="$2" 
-	else
-		team="all"
-	fi
-	report_file="$GURU_WORKTRACK/report-$(date +%Y%m%d)-$team.csv"
+	[ "$1" ] && team="$1" || team="$GURU_TEAM"					; echo "team :"$team
+	[ "$team" == "no-team" ] && team=""
+	report_file="work-track-report-$(date +%Y%m%d)-$team.csv" 				#; echo "report_file: "$report_file
+	output_folder=$HOME/Documents								#; echo "output_folder: $output_folder"
 	[ -f $GURU_TRACKDATA ] || exit 3	
-	cat $GURU_TRACKDATA |grep "$2" >$report_file			 	
-	soffice $report_file &
+	#[ -f /home/casa/Documents ] && echo joo || echo ei 		" whatta.."
+	#[ -f $output_folder ]  || output_folder=""  				#; echo "output_folder after: $output_folder"	
+	echo "report_file+path: "$output_folder/$report_file		#; echo "should be: $HOME/Documents/$report_file"
+
+	cat $GURU_TRACKDATA |grep "$team" >"$output_folder/$report_file"
+	$GURU_OFFICE_DOC $output_folder/$report_file &
 	}
+
 
 
 cancel() {
