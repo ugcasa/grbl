@@ -1,6 +1,77 @@
 #!/bin/bash
 # install functions for giocon client ujo.guru / juha.palm 2019
 
+main () {
+
+	case "$command" in
+		
+			basic)
+				sudo apt install xterm
+				exit $?
+				;;
+
+			mqtt-client)
+				mosquitto_client_install $@
+				exit $?
+				;;
+
+			mqtt-server)
+				mosquitto_server_install $@
+				exit $?
+				;;
+
+			conda|anaconda|letku)
+				conda_install $@
+				error_code="$?"			
+				[ -z $error_code ] || echo "conda install failed with code: $error_code"
+				exit $error_code
+				exit $?
+				;;
+
+			django|freeman)
+				conda install django
+				conda list |grep django 
+				exit $?
+				;;
+
+			alpine|pine|email)
+				alpine_install $@
+				exit $?
+				;;
+
+			programmer|pk2)
+				command=$GURU_BIN/install-pk2.sh
+				gnome-terminal --geometry=80x28 -- /bin/bash -c "$command; exit; $SHELL; "
+				exit $?
+				;;
+
+			mpsyt|player|play)			
+				$GURU_CALL play install $@
+				exit $error
+				;;
+
+			kaldi|listener)
+				kaldi_install 4
+				exit $?
+				;;
+
+			edoypts|edi)
+				echo "TODO"
+				exit $?
+				;;
+
+			help|-h|--help|*) 		# hardly never updated help printout
+			 	printf "usage: guru install [MODULE] \nmobules: \n"
+				printf 'conda           anaconda python environment manger \n'
+				printf 'django          web framework for python people\n'
+				printf 'kaldi           the ears, brains and.. lot of learning \n'
+				printf 'mpsyt|player    players for terminal, music, video, youtube \n'
+				printf 'programmer|pk2  pickit2 pic mcu programmer \n'		
+	esac
+
+}
+
+
 yes_no () {
 	[ "$1" ] || return 2
 	read -p "$1 [y/n]: " answer
@@ -156,86 +227,17 @@ alpine_install () {
 	# export GURU_PMAIL="juha.palm@protonmail.com regressio@protonmail.com" 
 }
 
-mpsyt_install () {
-
-		sudo apt-get -y install mplayer python3-pip pulseaudio amixer pkill gnome-terminal
-		sudo -H pip3 install --upgrade pip
-		sudo -H pip3 install setuptools mps-youtube
-		sudo -H pip3 install --upgrade youtube_dl 
-		pip3 install mps-youtube --upgrade 
-		error=$?
-		sudo ln -s /usr/local/bin/mpsyt /usr/bin/mpsyt 
-		return $error
-}
-
-
 command="$1" 
 shift
-
-case "$command" in
-	
-		basic)
-			sudo apt install xterm
-			exit $?
-			;;
-
-		mqtt-client)
-			mosquitto_client_install $@
-			exit $?
-			;;
-
-		mqtt-server)
-			mosquitto_server_install $@
-			exit $?
-			;;
-
-		conda|anaconda|letku)
-			conda_install $@
-			error_code="$?"			
-			[ -z $error_code ] || echo "conda install failed with code: $error_code"
-			exit $error_code
-			exit $?
-			;;
-
-		django|freeman)
-			conda install django
-			conda list |grep django 
-			exit $?
-			;;
-
-		alpine|pine|email)
-			alpine_install $@
-			exit $?
-			;;
-
-		programmer|pk2)
-			command=$GURU_BIN/install-pk2.sh
-			gnome-terminal --geometry=80x28 -- /bin/bash -c "$command; exit; $SHELL; "
-			exit $?
-			;;
-
-		mpsyt|player|play)			
-			mpsyt_install $@
-			exit $error
-			;;
-
-		kaldi|listener)
-			kaldi_install 4
-			exit $?
-			;;
-
-		edoypts|edi)
-			echo "TODO"
-			exit $?
-			;;
-
-		help|-h|--help|*) 		# hardly never updated help printout
-		 	printf "usage: guru install [MODULE] \nmobules: \n"
-			printf 'conda           anaconda python environment manger \n'
-			printf 'django          web framework for python people\n'
-			printf 'kaldi           the ears, brains and.. lot of learning \n'
-			printf 'mpsyt|player    players for terminal, music, video, youtube \n'
-			printf 'programmer|pk2  pickit2 pic mcu programmer \n'		
-esac
+main $@
 
 
+
+
+#git add functions.sh; git commit -m"  "
+#git add gururc.sh; git commit -m"  "
+#git add installer.sh; git commit -m"  "
+#git add noter.sh; git commit -m"  "
+#git add play.sh; git commit -m"  "
+#git add scan.sh; git commit -m"  "
+#git add timer.sh; git commit -m"  "

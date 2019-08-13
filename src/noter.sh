@@ -1,6 +1,9 @@
 #!/bin/bash
 # note generator
 
+subl -v >/dev/null || sudo apt install sublime-text		
+pandoc -v >/dev/null || sudo apt install pandoc
+
 main () {
 	
 	variable=$1

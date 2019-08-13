@@ -1,6 +1,38 @@
 #!/bin/bash
 # Neanderilainen skanneriscripti
 
+scanimage -V || echo "not installed" 
+gocr -v || echo "not installed" 
+convert -v || sudo "sudo apt install imagemagick-6.q16 "
+
+main () {
+
+	case $command in
+
+		invoice|inv|lasku)
+			scan_invoice $@	
+			error_code=$?
+			;;
+
+		receipt|rep|kuitti)
+			scan_receipt $@	
+			error_code=$?
+			;;
+
+		help|--help|-h)			
+		 	printf "usage: '$GURU_CALL' [COMMAND] [VARIABLES] \ncommands: \n"
+			printf 'receipt|rep|kuitti      scan receipt size grayscale \n'
+			printf 'invoice|inv|lasku       scan receipt A4 size optimized grayscale \n'
+			error_code=0
+			;;		
+		*)
+			exit
+
+	esac
+		
+		
+}
+
 scan_receipt() {
 	
 	stamp=$(date +%s)
@@ -81,43 +113,6 @@ scan_invoice () {
 	rm -f cropped-1.pgm image.pgm temp.sh tocompile
 	return 0
 }
-
-
-main () {
-
-	case $command in
-
-		invoice|inv|lasku)
-			scan_invoice $@	
-			error_code=$?
-			;;
-
-		receipt|rep|kuitti)
-			scan_receipt $@	
-			error_code=$?
-			;;
-
-		help|--help|-h)			
-		 	printf "usage: '$GURU_CALL' [COMMAND] [VARIABLES] \ncommands: \n"
-			printf 'receipt|rep|kuitti      scan receipt size grayscale \n'
-			printf 'invoice|inv|lasku       scan receipt A4 size optimized grayscale \n'
-			error_code=0
-			;;		
-		*)
-			exit
-
-	esac
-		
-		
-}
-
-
-
-
-# export GURU_ACCOUNTING="$HOME/Dropbox/Accounting"
-# export GURU_RECEIPTS="Ostolaskut"
-# export GURU_PERSONAL_RECEIPTS="OmatOstot"
-# export GURU_SCAN="$GURU_PICTURE"
 
 command=$1
 shift

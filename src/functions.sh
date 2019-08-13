@@ -1,7 +1,7 @@
 # Some simple functions not complicate enough to write separate scripts
 # ujo.guru 2019 
 
-alias docker="resize -s 24 160;docker"
+alias docker="resize -s 24 160;docker" 	#TEST
 
 
 yes_no () {
@@ -26,9 +26,11 @@ conda_setup(){
 	return $error
 }
 
+
 set_value () {
 	sed -i -e "/$1=/s/=.*/=$2/" $HOME/.gururc
 }
+
 
 settings () {
 
@@ -138,8 +140,8 @@ project () {
 	# fi
 	
 
-
 # sublime project
+
 	subl_project_folder=$GURU_NOTES/$GURU_USER/project 
 	[ -f $subl_project_folder ] || mkdir -p $subl_project_folder
 

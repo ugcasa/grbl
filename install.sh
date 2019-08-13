@@ -59,11 +59,8 @@ cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"
 
 
 ## Common requirements
-
 git --version >/dev/null || sudo apt install git
-#[ -f /usr/bin/mosquitto_pub ] || sudo apt install mosquitto-clients # >> installer.sh
 pip3 help >/dev/null || sudo apt install python3-pip
-pv -V >/dev/null || sudo apt install pv 
 
 # TODO -> virtual env
 #check_python_module feedparser >/dev/null || sudo pip -H install feedparser		
@@ -73,8 +70,7 @@ case $platform in
 	
 	desktop|cinnamon) # debian/ubuntu/mint
 	
-		subl -v >/dev/null || sudo apt install sublime-text
-		pandoc -v >/dev/null || sudo apt install pandoc		
+		
 		echo "installed" | xclip -i -selection clipboard >/dev/null || sudo apt install xclip
 		xterm -v >/dev/null || sudo apt install xterm		
 		dconf help >/dev/null || sudo apt install dconf-cli
@@ -86,18 +82,17 @@ case $platform in
 		
 		dconf load /org/cinnamon/desktop/keybindings/ < $new		
 		
-		# set up		
-		bash $GURU_CALL set audio true
-		mpsyt --version >>/dev/null || $GURU_CALL install mpsyt		
+		bash $GURU_BIN/$GURU_CALL set audio true
+		bash $GURU_BIN/$GURU_CALL set editor subl
 		;;
 
 	server)	# Server/ubuntu server no gui		
 		joe --help >/dev/null || sudo apt install joe
 		
-		# set up
-		bash $GURU_CALL set install server
-		bash $GURU_CALL set audio false
-		bash $GURU_CALL set editor joe
+		# set up this method does not work on first installation, but in use in server installations
+		bash $GURU_BIN/$GURU_CALL set install server
+		bash $GURU_BIN/$GURU_CALL set audio false
+		bash $GURU_BIN/$GURU_CALL set editor joe
 		;;
 
 

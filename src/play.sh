@@ -1,6 +1,8 @@
 #!/bin/bash
 # timer for giocon client ujo.guru / juha.palm 2019
 
+pv -V >/dev/null || sudo apt install pv 
+
 main () {
     case $variable in
 
@@ -54,6 +56,10 @@ main () {
                 exit $?             
                 ;;
 
+            install) 
+                mpsyt_install $@
+                ;;
+
             stop|end)
                 pkill mpsyt
                 exit $?
@@ -86,6 +92,18 @@ main () {
     esac
 }
 
+
+mpsyt_install () {
+
+        sudo apt-get -y install mplayer python3-pip pulseaudio amixer pkill gnome-terminal
+        sudo -H pip3 install --upgrade pip
+        sudo -H pip3 install setuptools mps-youtube
+        sudo -H pip3 install --upgrade youtube_dl 
+        pip3 install mps-youtube --upgrade 
+        error=$?
+        sudo ln -s /usr/local/bin/mpsyt /usr/bin/mpsyt 
+        return $error
+}
 
 volume () {
     amixer set 'Master' $1 >>/dev/null

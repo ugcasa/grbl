@@ -4,7 +4,7 @@
 
 # User information
 export GURU_USER="casa"
-export GURU_TEAM="ujo.guru"
+export GURU_TEAM="guru"
 export GURU_REAL_NAME="Juha Palm"
 export GURU_NOTE_HEADER="Muistiinpanot"
 
