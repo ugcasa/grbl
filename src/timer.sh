@@ -182,7 +182,7 @@ report() {
 	output_folder=$HOME/Documents											#; echo "output_folder: $output_folder"
 	[ "$team" == "all" ] && team=""
 	[ -f $GURU_TRACKDATA ] || exit 3	
-	cat $GURU_TRACKDATA |grep "$team" >"$output_folder/$report_file"
+	cat $GURU_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
 	$GURU_OFFICE_DOC $output_folder/$report_file &
 	}
 
