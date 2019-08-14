@@ -214,9 +214,11 @@ open_note() {
 	
 }
 
-command=$1
-shift
-main $@
-exit $?
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	command=$1
+	shift
+	main $@
+	exit $?
+fi
 
 
