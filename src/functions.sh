@@ -63,8 +63,7 @@ settings () {
 				;;
 
 			help|-h|--help)
-				printf "ujo.guru command line toolkit @ $(guru version) \n"
-		 		printf "usage: guru set <variable> <value> \ncommands: \n"
+		 		printf "usage: guru set <variable> <value> \narguments: \n"
             	printf "current|status          list of values \n"
             	printf "help|-h|--help          help \n"
             	printf "pre-made setup functions: \n"
@@ -224,11 +223,11 @@ test_guru () {
 
 counter () {
 
-	command=$1
+	argument=$1
 	shift
 	id_file="$GURU_COUNTER/$1"
 
-	case $command in
+	case $argument in
 
 			read)
 				if ! [ -f $id_file ]; then 
@@ -262,7 +261,7 @@ counter () {
 				;;	
 
 			*)				
-				id_file="$GURU_COUNTER/$command"
+				id_file="$GURU_COUNTER/$argument"
 				if ! [ -f $id_file ]; then 
 					echo "no such counter"		
 					return 137
