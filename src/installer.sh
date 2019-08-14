@@ -3,7 +3,7 @@
 
 main () {
 
-	case "$command" in
+	case "$argument" in
 		
 			basic)
 				sudo apt install xterm
@@ -40,8 +40,8 @@ main () {
 				;;
 
 			programmer|pk2)
-				command=$GURU_BIN/install-pk2.sh
-				gnome-terminal --geometry=80x28 -- /bin/bash -c "$command; exit; $SHELL; "
+				argument=$GURU_BIN/install-pk2.sh
+				gnome-terminal --geometry=80x28 -- /bin/bash -c "$argument; exit; $SHELL; "
 				exit $?
 				;;
 
@@ -80,6 +80,7 @@ yes_no () {
 	return 1
 }
 
+
 mosquitto_client_install () { 	#not tested
 
 	echo "install client"
@@ -94,11 +95,11 @@ mosquitto_client_install () { 	#not tested
 	return 0
 }
 
+
 mosquitto_server_install () { 	#not tested
 
 	# sudo apt-get update && sudo apt-get upgrade || return $?
 	# sudo apt install mosquitto mosquitto-clients || return $?
-	
 	
 	ln -s /etc/mosquitto/conf.d/default.conf $GURU_CFG/mosquitto.default.conf
 
@@ -153,6 +154,7 @@ mosquitto_server_install () { 	#not tested
 
 	return 0
 }
+
 
 conda_install () {
 
@@ -227,17 +229,11 @@ alpine_install () {
 	# export GURU_PMAIL="juha.palm@protonmail.com regressio@protonmail.com" 
 }
 
-command="$1" 
-shift
-main $@
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	argument="$1" 
+	shift
+	main $@
+fi
 
 
 
-
-#git add functions.sh; git commit -m"  "
-#git add gururc.sh; git commit -m"  "
-#git add installer.sh; git commit -m"  "
-#git add noter.sh; git commit -m"  "
-#git add play.sh; git commit -m"  "
-#git add scan.sh; git commit -m"  "
-#git add timer.sh; git commit -m"  "
