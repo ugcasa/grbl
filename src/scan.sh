@@ -114,7 +114,9 @@ scan_invoice () {
 	return 0
 }
 
-command=$1
-shift
-main $@	
-exit $error_code
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	command=$1
+	shift
+	main $@	
+	exit $error_code
+fi
