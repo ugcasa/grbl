@@ -2,15 +2,17 @@
 # timer for giocon client ujo.guru / juha.palm 2019
 
 pv -V >/dev/null || sudo apt install pv 
+mpsyt --ver >>/dev/null || mpsyt_install 
 
 main () {
-    case $variable in
+
+    case $argument in
 
             vt|text|textfile)
                 play_vt $@
                 ;;
 
-            karaoke|kara|oke|sing)
+            karaoke)
                 pkill mpsyt
                 command="mpsyt set show_video True, set search_music True, /$@ lyrics, 1, q"
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "                
@@ -22,12 +24,6 @@ main () {
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
                 ;;
 
-            song|music|by|band|artist)
-                pkill mpsyt
-                command="mpsyt set show_video True, set search_music True, /$@, 1-, q"
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
-                ;;
-
             album)
                 pkill mpsyt
                 command="mpsyt set show_video True, set search_music True, album $@"
@@ -36,15 +32,8 @@ main () {
 
             url|id)
                 pkill mpsyt
-                command="mpsyt set show_video, url $@, 1, q"
+                command="mpsyt set show_video True, url $@, 1, q"
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
-                ;;
-
-            backroung|bg)
-                pkill mpsyt
-                #command="for i in {1..3}; do mpsyt set show_video False, set search_music True, //$@, "'$i'", 1-, q; done"  
-                command="mpsyt set show_video False, set search_music True, //$@, $((1 + RANDOM % 6)), 1-, q"  
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "    
                 ;;
 
             demo) 
@@ -53,7 +42,7 @@ main () {
 
             upgrade)
                 sudo -H pip3 install --upgrade youtube_dl  
-                exit $?             
+                return $?             
                 ;;
 
             install) 
@@ -62,7 +51,8 @@ main () {
 
             stop|end)
                 pkill mpsyt
-                exit $?
+                #exit $?
+                return 0
                 ;;
 
             world-news)     # wrong
@@ -85,10 +75,23 @@ main () {
                 printf 'Without command only first match will be played, then exited\n'
                 ;;       
         
-            *)                 
+            backroung|bg)
+                pkill mpsyt                
+                command="mpsyt set show_video False, set search_music True, //$@, $((1 + RANDOM % 6)), 1-, q"  
+                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "    
+                ;;
+
+            music-video)
                 pkill mpsyt
-                command="mpsyt set show_video True, set search_music False, /$variable, 1, q"
+                command="mpsyt set show_video True, set search_music True, /$@, 1-, q"
                 gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
+                ;; 
+
+            *)
+                pkill mpsyt
+                command="mpsyt set show_video False, set search_music True, /$argument $@, 1-, q"
+                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
+                ;;
     esac
 }
 
@@ -114,9 +117,9 @@ volume () {
 fade_low () {
     for i in {1..5}
         do
-        amixer -M get Master >>/dev/null
-        amixer set 'Master' 5%- >>/dev/null
-        sleep 0.5
+        amixer -M get Master #>>/dev/null
+        amixer set 'Master' 5%- #>>/dev/null
+        sleep 0.2
     done
 }
 
@@ -124,10 +127,11 @@ fade_low () {
 fade_up () {
     for i in {1..5}
         do
-        amixer -M get Master >>/dev/null
-        amixer set 'Master' 5%+ >>/dev/null
-        sleep 0.5
+        amixer -M get Master #>>/dev/null
+        amixer set 'Master' 5%+ #>>/dev/null
+        sleep 0.2
     done
+    return 0
 }
 
 
@@ -214,8 +218,11 @@ run_demo() {
         return 0
 }
 
-variable="$1"
-shift
-mpsyt --ver >>/dev/null || $GURU_CALL install mpsyt 
-main $@
-exit $?
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    argument="$1"
+    shift
+    main $@
+    exit $?
+fi
+
