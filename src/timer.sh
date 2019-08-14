@@ -137,6 +137,8 @@ end() {
 	end_date=$date																	#; echo "end_date: "$end_date
 	end_time=$time																	#; echo "end_time: "$end_time																			
 	timer_end=$(date -d "$end_date $end_time" '+%s')								#; echo "timer end "$timer_end
+	dot_start_date=$(date -d $start_date '+%Y.%m.%d')								#; echo "nice_start_date: "$nice_start_date
+	dot_end_date=$(date -d $end_date '+%Y.%m.%d')									#; echo "nice_end_date: "$nice_end_date
 	nice_start_date=$(date -d $start_date '+%d.%m.%Y')								#; echo "nice_start_date: "$nice_start_date
 	nice_end_date=$(date -d $end_date '+%d.%m.%Y')									#; echo "nice_end_date: "$nice_end_date
 
@@ -154,7 +156,7 @@ end() {
 	fi
 	
 	printf "end: $nice_start_date $start_time - $end_time$option_end_date $hours h:$minutes $customer $project $task\n"
-	[[ $hours > 0.11 ]] && printf "$nice_start_date;$start_time;$nice_end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_TRACKDATA		 		
+	[[ $hours > 0.11 ]] && printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_TRACKDATA		 		
 	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_TRACKLAST	
 	rm $GURU_TRACKSTATUS	
 }
@@ -199,8 +201,9 @@ cancel() {
 }
 
 
-command=$1
-shift
-main $@
-
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	command=$1
+	shift
+	main $@
+fi
 
