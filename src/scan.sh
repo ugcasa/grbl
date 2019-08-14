@@ -1,9 +1,9 @@
 #!/bin/bash
 # Neanderilainen skanneriscripti
 
-scanimage -V || echo "not installed" 
-gocr -v || echo "not installed" 
-convert -v || sudo "sudo apt install imagemagick-6.q16 "
+scanimage -V >/dev/null || echo "not installed" 
+gocr >/dev/null || echo "not installed" 
+convert -version >/dev/null || sudo "sudo apt install imagemagick-6.q16 "
 
 main () {
 
