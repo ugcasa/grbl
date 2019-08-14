@@ -10,34 +10,67 @@ main () {
 					;;				
 		       
 		        *)
-				 	printf "ujo.guru command line toolkit @ $(guru version)\n"
-				 	printf 'Usage guru timer [COMMAND] <at 00:00> [TASK] [PROJECT] [CUSTOMER]\n'            
-		            echo "Commands:"            
+				 	printf 'Usage: '$GURU_CALL' timer [COMMAND] <at 00:00> [TASK] [PROJECT] [CUSTOMER] \nCommands:\n'            
 					printf 'start|change     start timer for target with last customer and project \n'
 					printf 'start at [TIME]  start timer at given time in format HH:MM \n'
 					printf 'end|stop         end current task \n'
 					printf 'end at [TIME]    end current task at given time in format HH:MM \n'
 					printf 'cancel           cancels the current task \n'
-					printf "report           creates report in .csv format and opens it with $GURU_OFFICE_DOC \n" # TODO
-					printf 'log              prints out 10 last tasks from log \n' # TODO
-					printf "edit             opens work time log with $GURU_EDITOR\n" # TODO
-					printf 'If PROJECT or CUSTOMER is not filled last used one will be used as default\n'
+					printf 'log              prints out 10 last tasks from log \n' 
+					printf 'edit             opens work time log with '$GURU_EDITOR'\n'
+					printf 'report           creates report in .csv format and opens it with '$GURU_OFFICE_DOC' \n' 
+					printf '\nIf PROJECT or CUSTOMER is not filled last used one will be used\n'
 		            return 0
+		            ;;
 	esac
 }
 
 
 status() {
 
-	if [ -f $GURU_TRACKSTATUS ]; then
-	 	. $GURU_TRACKSTATUS 
-	 	timer_now=$(date +%s)			 	
-	 	timer_state=$(($timer_now-$timer_start))
-	 	nice_start_date=$(date -d $start_date '+%d.%m.%Y')
-	 	printf '%.2d:%.2d:%.2d'" $nice_start_date $start_time > $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
-	else
-	 	printf "no timer tasks\n"	
+	if [ ! -f $GURU_TRACKSTATUS ]; then
+		printf "no timer tasks\n"
+		return 0
 	fi
+
+ 	. $GURU_TRACKSTATUS 
+ 	timer_now=$(date +%s)			 	
+ 	timer_state=$(($timer_now-$timer_start))
+ 	nice_start_date=$(date -d $start_date '+%d.%m.%Y')
+ 	hours=$(($timer_state/3600))
+ 	minutes=$(($timer_state%3600/60))
+ 	seconds=$(($timer_state%60))
+
+ 	[[ $hours > 0 ]] && print_h=" $hours hours and" || print_h=""	 	
+ 	[[ $minutes > 0 ]] && print_m=" $minutes minutes" || print_m=""	 	
+ 	[[ $hours > 0 ]] && print_s="" || print_s=" $seconds sesonds"
+
+ 	case $1 in 
+
+ 		-h|human) 
+			printf "working for $customer from $start_time $nice_start_date, now spend:$print_h$print_m$print_s to $project $task \n"
+			;;
+ 		
+ 		-t|table)
+ 			printf " Start date      | Start time  | Hours  | Minutes  | Seconds  | Customer  | Project  | Task \n"
+			printf " --------------- | ----------- | ------ | -------- | -------- | --------- | -------- | ------------ \n"
+			printf " $nice_start_date | $start_time | $hours | $minutes | $seconds | $customer | $project | $task\n"
+ 			;;
+
+ 		-c|csv)
+ 			printf "Start date;Start time;Hours;Minutes;Seconds;Sustomer;Project;Task \n"
+ 			printf "$nice_start_date;$start_time;$hours;$minutes;$seconds;$customer;$project;$task\n"
+ 			;;
+
+ 		old)
+ 			printf "$nice_start_date $start_time > $hours:$minutes:$seconds c:$customer p:$project t:$task\n"
+	 		;;
+ 		
+ 		simple|*)		 	
+		 	printf "$start_time > "'%.2d:%.2d:%.2d'" > $customer $project $task\n"\
+	 					$(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))	
+ 			;;
+ 	esac
 
 	return 0
 }
@@ -141,7 +174,7 @@ end() {
 
 		*)			
 			date=$(date -d "today" '+%Y%m%d')			
-			time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M") 			#; echo "no input pass:"$@			
+			time=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M") 			#; echo "no input pass:"$@			
 			;;
 	esac
 
