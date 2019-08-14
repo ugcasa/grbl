@@ -5,33 +5,33 @@ main () {
 	
 	case $command in
 
-				start|change)
-					start $@
-					return $?
-					;;
-				end|stop)
-				 	end $@
-				 	return $?
-					;;
 		        status)
 					status
 					return $?
 					;;
-				report)
-					report $@
+				start|change)
+					start $@
 					return $?
 					;;
 				cancel)
 					cancel 
 					return $?
 					;;
-				edit)
-					$GURU_EDITOR "$GURU_TRACKDATA"
+				end|stop)
+				 	end $@
+				 	return $?
+					;;
+				report)
+					report $@
 					return $?
 					;;
 				log)
 					printf "last logged records:\n$(tail $GURU_TRACKDATA | tr ";" "  ")\n"
 					return 0
+					;;
+				edit)
+					$GURU_EDITOR "$GURU_TRACKDATA"
+					return $?
 					;;
 		        *)
 				 	printf "ujo.guru command line toolkit @ $(guru version)\n"
@@ -48,6 +48,20 @@ main () {
 					printf 'If PROJECT or CUSTOMER is not filled last used one will be used as default\n'
 		            return 0
 	esac
+}
+
+
+status() {
+
+	if [ -f $GURU_TRACKSTATUS ]; then
+	 	. $GURU_TRACKSTATUS 
+	 	timer_now=$(date +%s)			 	
+	 	timer_state=$(($timer_now-$timer_start))
+	 	nice_start_date=$(date -d $start_date '+%d.%m.%Y')
+	 	printf '%.2d:%.2d:%.2d'" $nice_start_date $start_time > $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
+	else
+	 	printf "no timer tasks\n"	
+	fi
 }
 
 
@@ -98,6 +112,17 @@ start() {
 }
 
 
+cancel() {
+
+	if [ -f $GURU_TRACKSTATUS ]; then			
+		rm $GURU_TRACKSTATUS
+		echo "canceled"
+	else
+		echo "not active timer"
+	fi
+}
+
+
 end() {
 
 	if [ -f $GURU_TRACKSTATUS ]; then 	
@@ -107,7 +132,6 @@ end() {
 		return 13
 	fi
 	
-	[ -f $GURU_TRACKDATA ] || printf "start_date;start;end_date;end;hours;customer;project;task\n">$GURU_TRACKDATA	
 
 	case "$1" in
 
@@ -146,6 +170,7 @@ end() {
 	(( spend_min = spend_sec / 60 )) 												#; echo "spend_min: "$spend_min
 	(( spend_hour = spend_min / 60 ))												#; echo "spend_hour: "$spend_hour
 	(( spend_min_div = spend_min % 60 ))											#; echo "spend_min_div: "$spend_min_div
+
 	spend_min_dec=$(python -c "print(int(round($spend_min_div * 1.6666, 0)))") 		#; echo "spend_min_dec: "$spend_min_dec
 	hours="$spend_hour.$spend_min_dec"												#; echo "hours: "$hours
 	
@@ -156,25 +181,14 @@ end() {
 	fi
 	
 	printf "end: $nice_start_date $start_time - $end_time$option_end_date $hours h:$minutes $customer $project $task\n"
+	
+	[ -f $GURU_TRACKDATA ] || printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n">$GURU_TRACKDATA	
 	[[ $hours > 0.11 ]] && printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_TRACKDATA		 		
+	
 	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_TRACKLAST	
+	
 	rm $GURU_TRACKSTATUS	
 }
-
-
-status() {
-
-	if [ -f $GURU_TRACKSTATUS ]; then
-	 	. $GURU_TRACKSTATUS 
-	 	timer_now=$(date +%s)			 	
-	 	timer_state=$(($timer_now-$timer_start))
-	 	nice_start_date=$(date -d $start_date '+%d.%m.%Y')
-	 	printf '%.2d:%.2d:%.2d'" $nice_start_date $start_time > $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60))			 	
-	else
-	 	printf "no timer tasks\n"	
-	fi
-}
-
 
 
 report() {
@@ -186,18 +200,6 @@ report() {
 	[ -f $GURU_TRACKDATA ] || exit 3	
 	cat $GURU_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
 	$GURU_OFFICE_DOC $output_folder/$report_file &
-	}
-
-
-
-cancel() {
-
-	if [ -f $GURU_TRACKSTATUS ]; then			
-		rm $GURU_TRACKSTATUS
-		echo "canceled"
-	else
-		echo "not active timer"
-	fi
 }
 
 
