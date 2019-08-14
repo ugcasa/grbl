@@ -33,6 +33,7 @@ export GURU_TEMPLATES="$GURU_NOTES/$GURU_USER/template"
 export GURU_TRACKDATA="$GURU_WORKTRACK/current_work.csv"
 export GURU_TRACKLAST="$GURU_WORKTRACK/timer.last"
 export GURU_TRACKSTATUS="$GURU_WORKTRACK/timer.status"
+export GURU_ERROR_MSG="/tmp/guru-last.error"
 
 # Preferred applications
 export GURU_EDITOR="subl"

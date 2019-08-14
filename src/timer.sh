@@ -135,7 +135,7 @@ cancel() {
 
 	if [ -f $GURU_TRACKSTATUS ]; then			
 		rm $GURU_TRACKSTATUS
-		echo "canceled"
+		echo "canceled" 
 	else
 		echo "not active timer"
 	fi
@@ -148,7 +148,7 @@ end() {
 	if [ -f $GURU_TRACKSTATUS ]; then 	
 		. $GURU_TRACKSTATUS 														#; echo "timer start "$timer_start
 	else
-		echo "timer not started"
+		echo "timer not started" >>$GURU_ERROR_MSG
 		return 13
 	fi
 	
@@ -214,7 +214,7 @@ end() {
 
 stop () {
 	end $@
-	return $?
+	return 0
 }
 
 

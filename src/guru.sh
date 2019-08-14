@@ -7,7 +7,7 @@
 # cloned this repository it is advisable to remove directory immediately! 
 # Published for no reason by Juha Palm ujo.guru 2019
 
-version="0.3.1"
+version="0.3.2"
 
 . $HOME/.gururc 						# user and platform settings (implement here, always up to date)
 . $GURU_BIN/functions.sh 				# common functions, if no ".sh", check here
@@ -18,13 +18,18 @@ main () {
 		parse_argument $@ 
 		error_code=$?
 	else
-		terminal 								
+		terminal 						# rsplib-legacy-wrappers name collision, not big broblem i think
+		
 		error_code=$?
 	fi
 
 	if (( error_code > 0 )); then
-		logger "$0 $argument: $error_code: $GURU_ERROR_MSG"				# log errors
-		echo "error: $error_code"										# print error
+		
+		[ -f $GURU_ERROR_MSG ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)
+		#error_message=$(cat -n 1 $GURU_ERROR_MSG)
+		logger "$0 $argument: $error_code: $error_message"				# log errors
+		echo "error: $error_code: $error_message"						# print error
+		rm -f $GURU_ERROR_MSG
 	fi
 
 	return $error_code
@@ -46,7 +51,7 @@ parse_argument () {
 	            ;;  
 
 	        # bash sctripts
-			notes|note|noter|stamp|timer|phone|play|install|scan) 		
+			note|stamp|timer|phone|play|install|scan) 		
 				$argument.sh $@
 				return $? 			
 				;;
@@ -64,15 +69,15 @@ parse_argument () {
 				return $?
 				;;
 
-			uninstall)					# Get rid of this shit 
-				bash $GURU_BIN/uninstall.sh $@
-				return $? 
-				;;
-
 			# basic stuff
 			version|ver|-v|--ver) 		# la versíon
 				printf "giocon.client v.$version installed to $0\n"
 				return 0
+				;;
+
+			uninstall)					# Get rid of this shit 
+				bash $GURU_BIN/uninstall.sh $@
+				return $? 
 				;;
 
 			help|-h|--help|*) 			# hardly never updated help printout
@@ -123,3 +128,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 	main $@
 	exit $?
 fi
+
+# Purkat
+

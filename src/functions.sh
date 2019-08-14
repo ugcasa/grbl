@@ -90,7 +90,7 @@ project () {
 	# shift
 
 	if [ -z "$project_name" ]; then 
-		printf "plase enter project name. "
+		printf "plase enter project name" >>$GURU_ERROR_MSG
 		return 131
 	fi
 
@@ -147,7 +147,7 @@ project () {
 	subl_project_file=$subl_project_folder/$1.sublime-project
 	
 	if ! [ -f $subl_project_file ]; then 
-		printf "no sublime project found "
+		printf "no sublime project found" >>$GURU_ERROR_MSG
 		return 132
 	fi	
 	
@@ -158,7 +158,7 @@ project () {
 				subl --project "$subl_project_file" -a 	# Sublime how to open workpace?, this works anyway
 				;;
 			*)
-			printf 'projects work only with sublime. Set preferred editor by typing: "'$GURU_CALL' set editor subl", or edit "~/.gururc". '		
+			printf 'projects work only with sublime. Set preferred editor by typing: "'$GURU_CALL' set editor subl", or edit "~/.gururc". '	>>$GURU_ERROR_MSG
 			return 133
 	esac
 
@@ -183,7 +183,7 @@ disable () {
 		echo "giocon.client disabled"
 		return 0
 	else		
-		echo "disabling failed"
+		echo "disabling failed" >>$GURU_ERROR_MSG
 		return 134
 	fi	
 }
@@ -231,7 +231,7 @@ counter () {
 
 			read)
 				if ! [ -f $id_file ]; then 
-					echo "no such counter"		
+					echo "no such counter" >>$GURU_ERROR_MSG	
 					return 136
 				fi
 				id=$(($(cat $id_file)))
@@ -263,7 +263,7 @@ counter () {
 			*)				
 				id_file="$GURU_COUNTER/$argument"
 				if ! [ -f $id_file ]; then 
-					echo "no such counter"		
+					echo "no such counter" >>$GURU_ERROR_MSG
 					return 137
 				fi
 				id=$(($(cat $id_file)))
