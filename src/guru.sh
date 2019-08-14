@@ -12,11 +12,11 @@ version="0.3.0"
 . $HOME/.gururc 				# user and platform settings (implement here, always up to date)
 . $GURU_BIN/functions.sh 		# common functions, if no ".sh", check here
 
-parse_command () {
-	# parse commands and delivery variables to corresponding application, function, bash script, python.. whatever
-	command="$1" 					# store original command
+parse_argument () {
+	# parse arguments and delivery variables to corresponding application, function, bash script, python.. whatever
+	argument="$1" 					# store original argument
 	shift							# shift arguments left
-	case $command in 
+	case $argument in 
 
 			status) 				# Print out all statuses
 				status $@
@@ -75,7 +75,7 @@ parse_command () {
 				;;
 
 			silence) 				# "kill all audio and lights"
-				fade_low
+				. $GURU_BIN/play.sh && fade_low				 
 				$GURU_CALL play stop
 				error_code=$?
 				;;
@@ -126,8 +126,8 @@ parse_command () {
 				;;
 
 			help|-h|--help|*) 		# hardly never updated help printout
-			 	printf "giocon command line toolkit client v.$version \n"
-			 	printf "usage: '$GURU_CALL' [TOOL] [COMMAND] [VARIABLES] \ncommands: \n"
+			 	printf "ujo.guru tool kit client v.$version \n"
+			 	printf "usage: '$GURU_CALL' [TOOL] [COMMAND] [VARIABLES] \ncommand: \n"
 				printf 'timer     timing tools ("'$GURU_CALL' timer help" for more info) \n'
 				printf 'notes     open daily notes \n'
 				printf 'project   opens project to editor \n'
@@ -148,7 +148,7 @@ parse_command () {
 	esac	
 
 	if (( error_code > 0 )); then
-		logger "$0 $command: $error_code: $GURU_ERROR_MSG"				# log errors
+		logger "$0 $argument: $error_code: $GURU_ERROR_MSG"				# log errors
 		echo "error: $error_code"										# print error
 	fi
 	
@@ -168,7 +168,7 @@ guru_terminal() {
 																		# -> pyhton, sooner then better POC starts to be done
 
 		[ "$cmd" == "exit" ] && exit 3
-		parse_command $cmd
+		parse_argument $cmd
 		done
 	return 123
 }
@@ -177,7 +177,7 @@ guru_terminal() {
 ## main 
 
 if [ $1 ]; then 					# guru without parameters starts terminal loop
-	parse_command $@ 
+	parse_argument $@ 
 	exit $?
 	else
 	guru_terminal 								
