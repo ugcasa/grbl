@@ -5,34 +5,10 @@ main () {
 	
 	case $command in
 
-		        status)
-					status
-					return $?
-					;;
-				start|change)
-					start $@
-					return $?
-					;;
-				cancel)
-					cancel 
-					return $?
-					;;
-				end|stop)
-				 	end $@
-				 	return $?
-					;;
-				report)
-					report $@
-					return $?
-					;;
-				log)
-					printf "last logged records:\n$(tail $GURU_TRACKDATA | tr ";" "  ")\n"
-					return 0
-					;;
-				edit)
-					$GURU_EDITOR "$GURU_TRACKDATA"
-					return $?
-					;;
+		        status|start|change|cancel|end|stop|report|log|edit)
+					$command $@; return $? 
+					;;				
+		       
 		        *)
 				 	printf "ujo.guru command line toolkit @ $(guru version)\n"
 				 	printf 'Usage guru timer [COMMAND] <at 00:00> [TASK] [PROJECT] [CUSTOMER]\n'            
@@ -62,6 +38,8 @@ status() {
 	else
 	 	printf "no timer tasks\n"	
 	fi
+
+	return 0
 }
 
 
@@ -109,6 +87,14 @@ start() {
     printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_TRACKSTATUS     
     printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_TRACKSTATUS
     printf "start: $nice_date $start_time $customer $project $task\n"
+
+    return 0
+}
+
+
+change() {
+	start $@
+	return $?
 }
 
 
@@ -120,6 +106,7 @@ cancel() {
 	else
 		echo "not active timer"
 	fi
+	return 0
 }
 
 
@@ -188,6 +175,25 @@ end() {
 	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_TRACKLAST	
 	
 	rm $GURU_TRACKSTATUS	
+	return 0
+}
+
+
+stop () {
+	end $@
+	return $?
+}
+
+
+log () {
+	printf "last logged records:\n$(tail $GURU_TRACKDATA | tr ";" "  ")\n"
+	return 0
+}
+
+
+edit  () {
+	$GURU_EDITOR "$GURU_TRACKDATA" &
+	return $?
 }
 
 
