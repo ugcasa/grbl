@@ -7,125 +7,75 @@
 # cloned this repository it is advisable to remove directory immediately! 
 # Published for no reason by Juha Palm ujo.guru 2019
 
-version="0.3.0"
+version="0.3.1"
 
-. $HOME/.gururc 				# user and platform settings (implement here, always up to date)
-. $GURU_BIN/functions.sh 		# common functions, if no ".sh", check here
+. $HOME/.gururc 						# user and platform settings (implement here, always up to date)
+. $GURU_BIN/functions.sh 				# common functions, if no ".sh", check here
+
+main () {
+
+	if [ $1 ]; then 					# guru without parameters starts terminal loop
+		parse_argument $@ 
+		error_code=$?
+	else
+		terminal 								
+		error_code=$?
+	fi
+
+	if (( error_code > 0 )); then
+		logger "$0 $argument: $error_code: $GURU_ERROR_MSG"				# log errors
+		echo "error: $error_code"										# print error
+	fi
+
+	return $error_code
+}
+
 
 parse_argument () {
 	# parse arguments and delivery variables to corresponding application, function, bash script, python.. whatever
-	argument="$1" 					# store original argument
-	shift							# shift arguments left
+
+	argument="$1" 						# store original argument
+	shift								# shift arguments left
+
 	case $argument in 
 
-			status) 				# Print out all statuses
-				status $@
-				error_code=$? 
-	            ;;  
-			
-			counter|count|id) 		# Add things 
-				counter $@
-				error_code=$? 
+			# functions (in fucntions.sh)
+			status|counter|set|project|pro|document|disable|slack|terminal|upgrade) 
+				$argument $@
+				return $? 
 	            ;;  
 
-			settings|set)			# set environmental variables
-				settings $@
-				error_code=$? 			
+	        # bash sctripts
+			notes|note|noter|stamp|timer|phone|play|install|scan) 		
+				$argument.sh $@
+				return $? 			
 				;;
 
-			notes|note|noter) 		# create, manipulate and make format changes
-				noter.sh $@
-				#notes.sh $@		# rollback
-				error_code=$? 			
+			# python scripts
+			uutiset) 					# unused test interface
+				DISPLAY=:0 $argument.py $@
+				return $? 			
 				;;
 
-			project|pro) 			# change, create and manage projects
-				project $@
-				error_code=$? 			
-				;;
-
-			timer)	 				# timer tools for work time tracking
-				timer.sh $@
-				error_code=$? 			
-				;;
-
-			stamp) 					# time, date and other like signatures etc. to clipboard
-				stamp.sh $@
-				error_code=$? 			
-				;;
-
-			phone|phoneflush) 		# get pictures/files from phone by ssh 
-				phoneflush-lite.sh $@
-				error_code=$? 
-				;;
-
-			play) 					# media playing tools (later format changes etc.)
-				play.sh $@
-				error_code=$? 
-				;;
-			
-			document)				# reporting and documentation tools
-				dozer $@
-				error_code=$? 
-				;;
-
-			disable) 				# tool to use if guru pisses you off
-				disable
-				error_code=$? 
-				;;
-
-			silence) 				# "kill all audio and lights"
+			# shortcuts
+			silence) 					# "kill all audio and lights"
 				. $GURU_BIN/play.sh && fade_low				 
 				$GURU_CALL play stop
-				error_code=$?
+				return $?
 				;;
 
-			uninstall)				# Get rid of this shit 
+			uninstall)					# Get rid of this shit 
 				bash $GURU_BIN/uninstall.sh $@
-				error_code=$? 
+				return $? 
 				;;
 
-			upgrade) 				# Force upgrade from git
-				upgrade $@
-				error_code=$? 
-				;;
-
-			install) 				# Installation script collection (later "Install modules")
-				installer.sh $@
-				error_code=$?
-				;;
-
-			demo) 					# Play text based demo (TODO add thanks!)
-				$GURU_CALL play demo $@
-				error_code=$? 
-				;;
-
-			fu)						# fuck you animation
-				$GURU_CALL play vt monkey 	
-				error_code=$?
-				;;
-
-			terminal) 				# unused test interface
-				guru_terminal $@
-				error_code=$? 			
-				;;
-
-			news|uutiset) 					# unused test interface
-				DISPLAY=:0 rrs.py $@
-				error_code=$? 			
-				;;
-
-			scan) 					# media playing tools (later format changes etc.)
-				scan.sh $@
-				error_code=$? 
-				;;
-
-
-			version|ver|-v|--ver) 	# la versíon
+			# basic stuff
+			version|ver|-v|--ver) 		# la versíon
 				printf "giocon.client v.$version installed to $0\n"
+				return 0
 				;;
 
-			help|-h|--help|*) 		# hardly never updated help printout
+			help|-h|--help|*) 			# hardly never updated help printout
 			 	printf "ujo.guru tool kit client v.$version \n"
 			 	printf "usage: '$GURU_CALL' [TOOL] [COMMAND] [VARIABLES] \ncommand: \n"
 				printf 'timer     timing tools ("'$GURU_CALL' timer help" for more info) \n'
@@ -145,18 +95,12 @@ parse_argument () {
 				printf 'disable   disables guru toolkit type "guru.enable" to enable \n'
 				printf 'uninstall un-install guru toolkit \n'
 				printf 'version   printout version \n'
+				return 0
 	esac	
-
-	if (( error_code > 0 )); then
-		logger "$0 $argument: $error_code: $GURU_ERROR_MSG"				# log errors
-		echo "error: $error_code"										# print error
-	fi
-	
-	return $error_code 													# relay error
 }
 
 
-guru_terminal() { 
+terminal() { 
 	# Terminal looper	
 	echo "$GURU_CALL in terminal mode. press enter for help."
 	while :																
@@ -166,7 +110,6 @@ guru_terminal() {
 																	    # there was to other but no	
 																		# guru:>timer start at 00:00 gioco^[[C^[[D 
 																		# -> pyhton, sooner then better POC starts to be done
-
 		[ "$cmd" == "exit" ] && exit 3
 		parse_argument $cmd
 		done
@@ -174,14 +117,9 @@ guru_terminal() {
 }
 
 
-## main 
+## main check (like like often in pyhton)
 
-if [ $1 ]; then 					# guru without parameters starts terminal loop
-	parse_argument $@ 
-	exit $?
-	else
-	guru_terminal 								
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	main $@
 	exit $?
 fi
-
-

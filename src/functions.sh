@@ -166,7 +166,7 @@ project () {
 }
 
 
-dozer () {
+document () {
 
 	cfg=$HOME/.config/guru.io/noter.cfg
 	[[ -z "$2" ]] && template="ujo.guru.004" || template="$2"
@@ -295,4 +295,98 @@ read_counter () {
 	id=$(($(cat $id_file)))
 	echo "$id" 
 	return 0
+}
+
+
+slack () {
+
+	case $1 in 
+		
+		home|bubble|buble|kupla|koti|maea)
+			$GURU_BROWSER \
+			https://app.slack.com/client/T0DBYHPK6/G0DC74V0F \
+			https://app.slack.com/client/T0DBYHPK6/D0DC78PJN \
+			https://app.slack.com/client/T0DBYHPK6/C99KU7SG1 \
+			>/dev/null &
+			;;
+
+		duplicate|random|general)
+			$GURU_BROWSER \
+			https://app.slack.com/client/T0DBYHPK6/C0DC5JD32 \
+			https://app.slack.com/client/T0DBYHPK6/G0DC9LPTR \
+			https://app.slack.com/client/T0DBYHPK6/C0DC5JDCG \
+			>/dev/null &
+			;;
+
+		lassila|lab|gurulab|mechanics|electronis|radio)
+			$GURU_BROWSER \
+			https://app.slack.com/client/T0DBYHPK6/CGVFK0WS1 \
+			https://app.slack.com/client/T0DBYHPK6/GHNK2ERHR \
+			https://app.slack.com/client/T0DBYHPK6/C9A5ZATEY \
+			https://app.slack.com/client/T0DBYHPK6/GHNK2ERHR \
+			https://app.slack.com/client/T0DBYHPK6/GDVCYR4F7 \
+			>/dev/null &
+			;;
+		
+		duuni|work)
+			$GURU_BROWSER \
+			https://app.slack.com/client/T0DBYHPK6/G30H7RZLH \
+			https://app.slack.com/client/T0DBYHPK6/G9VTFH74G \
+			https://app.slack.com/client/T0DBYHPK6/D9V7167GQ \
+			>/dev/null &
+			;;
+
+		projektit|hankkeet|project|idea|startup)
+			$GURU_BROWSER \
+			https://app.slack.com/client/T0DBYHPK6/GJ1EK6MHV \
+			https://app.slack.com/client/T0DBYHPK6/C8TDJJ095 \
+			https://app.slack.com/client/T0DBYHPK6/CHNPV8C2W \
+			https://app.slack.com/client/T0DBYHPK6/CB06ESYCA \
+			https://app.slack.com/client/T0DBYHPK6/GBJDUV50R \
+			https://app.slack.com/client/T0DBYHPK6/GGW451ECX \
+			https://app.slack.com/client/T0DBYHPK6/CHP2RK0FK \
+			>/dev/null & 
+			;;
+		
+		feed)
+			$GURU_BROWSER \
+			https://app.slack.com/client/T0DBYHPK6/G30H7RZLH \
+			https://app.slack.com/client/T0DBYHPK6/CHP2RK0FK \
+			https://app.slack.com/client/T0DBYHPK6/G363BM51S \
+			https://app.slack.com/client/T0DBYHPK6/G314G4X61 \
+			>/dev/null &
+			;;
+
+		code|coding)
+			$GURU_BROWSER \
+			https://app.slack.com/client/T0DBYHPK6/C97QYBU3W \
+			https://app.slack.com/client/T0DBYHPK6/CAGG8B20G \
+			https://app.slack.com/client/T0DBYHPK6/GBJDUV50R \
+			>/dev/null &
+			;;
+
+		iot)
+			$GURU_BROWSER \
+			https://app.slack.com/client/T0DBYHPK6/CB06ESYCA \
+			https://app.slack.com/client/T0DBYHPK6/CHNPV8C2W \
+			https://app.slack.com/client/T0DBYHPK6/GJ1EK6MHV \
+			>/dev/null &
+			;;
+
+		*)
+			$GURU_BROWSER https://app.slack.com/client/T0DBYHPK6/C0DC5JD32 &
+			;;
+	esac
+}
+
+
+
+relax () {	
+	$GURU_CALL play "electric lounge chill low tempo instrumental"
+	$GURU_BROWSER \
+		https://yle.fi/uutiset \
+		https://hackaday.com/ \
+		https://areena.yle.fi/radio/ohjelmat/yle-puhe \
+		https://areena.yle.fi/1-3822119 \
+		>/dev/null &
 }
