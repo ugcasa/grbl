@@ -40,7 +40,7 @@ parse_argument () {
 	case $argument in 
 
 			# functions (in fucntions.sh)
-			status|counter|set|project|pro|document|disable|slack|terminal|upgrade) 
+			status|counter|set|project|pro|document|disable|slack|terminal|upgrade|relax) 
 				$argument $@
 				return $? 
 	            ;;  
