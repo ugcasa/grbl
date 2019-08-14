@@ -1,5 +1,19 @@
 #!/bin/bash
 
+main () {
+	case "$command" in 
+		
+		software)
+			remove-sw $@
+			exit $?
+			;;
+		*)
+			uninstall $@
+			exit $?
+	esac
+}
+
+
 uninstall () {	 
 
 	if [ ! -f "$HOME/.bashrc.giobackup" ]; then 
@@ -61,19 +75,9 @@ remove-sw() {
 }
 
 
-command=$1
-shift
-
-case "$command" in 
-	
-	software)
-		remove-sw $@
-		exit $?
-		;;
-
-	*)
-		uninstall $@
-		exit $?
-
-esac
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	command=$1
+	shift
+	main $@
+fi
 
