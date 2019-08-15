@@ -52,7 +52,7 @@ parse_argument () {
 				;;          
 
 			# functions (in fucntions.sh)
-			status|counter|set|project|pro|document|disable|slack|terminal|upgrade|relax) 
+			status|counter|set|project|pro|document|disable|slack|terminal|upgrade|relax|save|remove) 
 				$argument $@
 				return $? 
 	            ;;  
@@ -124,10 +124,10 @@ terminal() {
 	echo "$GURU_CALL in terminal mode. press enter for help."
 	while :																
 		do
-		. $HOME/.gururc
-		read -e -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd" 
-		[ "$cmd" == "exit" ] && exit 0
-		parse_argument $cmd
+			. $HOME/.gururc
+			read -e -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd" 
+			[ "$cmd" == "exit" ] && exit 0
+			parse_argument $cmd
 		done
 	return 123
 }
@@ -135,7 +135,8 @@ terminal() {
 
 ## main check (like like often in pyhton)
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+me=${BASH_SOURCE[0]}
+if [[ "$me" == "${0}" ]]; then
 	main $@
 	exit $?
 fi

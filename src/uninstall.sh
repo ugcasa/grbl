@@ -17,19 +17,19 @@ main () {
 uninstall () {	 
 
 	if [ ! -f "$HOME/.bashrc.giobackup" ]; then 
-		echo "not installed, aborting.."
+		echo "not installed, aborting.." >>$GURU_ERROR_MSG
 		return 135
 	fi		
 
 	if [ -f $HOME/.gururc ]; then 
 		 . $HOME/.gururc 
 	else
-		echo "no variables setup file exists, aborting.."
+		echo "$me no variables setup file exists, aborting.." >>$GURU_ERROR_MSG
 		return 136	
 	fi	
 
 	if [ $GURU_BIN == "" ]; then 
-		echo "no environment variables set, aborting.."
+		echo "no environment variables set, aborting.." >>$GURU_ERROR_MSG
 		return 137		
 	fi
 
@@ -37,7 +37,7 @@ uninstall () {
 	mv -f "$HOME/.bashrc.giobackup" "$HOME/.bashrc"		
 	rm -f "$HOME/.gururc"	
 	rm -f "$GURU_BIN/$GURU_CALL"		
-	rm -fr "$GURU_CFG"
+	[ $GURU_CFG ] && rm -f "$GURU_CFG/*"
 	
 	if [[ -f "$HOME/.kbbind.backup.cfg" ]]; then 
 		dconf load /org/cinnamon/desktop/keybindings/ < $HOME/.kbbind.backup.cfg
@@ -75,7 +75,8 @@ remove-sw() {
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+me=${BASH_SOURCE[0]}
+if [[ "$me" == "${0}" ]]; then
 	command=$1
 	shift
 	main $@

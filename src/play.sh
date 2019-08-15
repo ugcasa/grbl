@@ -218,8 +218,8 @@ run_demo() {
         return 0
 }
 
-
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+me=${BASH_SOURCE[0]}
+if [[ "$me" == "${0}" ]]; then
     argument="$1"
     shift
     main $@

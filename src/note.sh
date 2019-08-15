@@ -1,6 +1,8 @@
 #!/bin/bash
 # note generator
 
+
+
 subl -v >/dev/null || sudo apt install sublime-text		
 pandoc -v >/dev/null || sudo apt install pandoc
 
@@ -214,7 +216,8 @@ open_note() {
 	
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+me=${BASH_SOURCE[0]}
+if [[ "$me" == "${0}" ]]; then
 	command=$1
 	shift
 	main $@
