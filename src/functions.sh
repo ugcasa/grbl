@@ -16,8 +16,7 @@ me=${BASH_SOURCE[0]}
 save () {
 
 	argument=$1
-	shift
-	echo "entering"
+	shift	
 
 	case $argument in
 
@@ -91,14 +90,17 @@ conda_setup(){
 set_value () {
 
 	[ -f $GURU_USER_RC ] && target_rc="$GURU_USER_RC" || target_rc="$HOME/.gururc"
-	[ $3 ] && target_rc=$3
-	sed -i -e "/$1=/s/=.*/=$2/" $target_rc
+	#[ $3 ] && target_rc=$3
+	sed -i -e "/$1=/s/=.*/=$2 $3 $4/" $target_rc
 }
 
 
 set () {
 
-	case "$1" in 
+	argument="$1"
+	shift
+
+	case "$argument" in 
 			
 			current|status)
 				[ -f $GURU_USER_RC ] && source_rc="$GURU_USER_RC" || source_rc="$HOME/.gururc"
@@ -106,19 +108,20 @@ set () {
 				cat $source_rc |grep "export"| cut -c13-
 				;;
 
+
 			editor)
-				[ "$2" ] && new_value=$2 ||	read -p "input preferred editor : " new_value				
+				[ "$1" ] && new_value=$1 ||	read -p "input preferred editor : " new_value				
 				set_value GURU_EDITOR $new_value					
 				;;
 
 			name)
-				[ "$2" ] && new_value=$2 ||	read -p "input new call name for $GURU_CALL : " new_value				
+				[ "$1" ] && new_value=$1 ||	read -p "input new call name for $GURU_CALL : " new_value				
 				mv $GURU_BIN/$GURU_CALL	$GURU_BIN/$new_value
 				set_value GURU_CALL $new_value
 				;;
 
 			audio)
-				[ "$2" ] &&	new_value=$2 || read -p "new value (true/false) : " new_value
+				[ "$1" ] &&	new_value=$1 || read -p "new value (true/false) : " new_value
 				set_value GURU_AUDIO_ENABLED $new_value				
 				;;
 
@@ -137,15 +140,14 @@ set () {
 				printf 'editor <editor>         wizard to set preferred editor \n'				
 				;;
 
-			"")
-				guru set current
+			"")				
 				;;
 			
 			*)				
-				[ $2 ] || return 130
-				set_value GURU_${1^^} $2				
-				echo "setting GURU_${1^^} to $2"
-	esac
+				[ $1 ] || return 130
+				set_value GURU_${argument^^} $@
+				echo "setting GURU_${argument^^} to $@"
+	esac 
 }
 
 

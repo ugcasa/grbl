@@ -121,7 +121,7 @@ parse_argument () {
 
 terminal() { 
 	# Terminal looper	
-	echo "$GURU_CALL in terminal mode. press enter for help."
+	echo $GURU_CALL' in terminal mode (type "help" enter for help)'
 	while :																
 		do
 			. $HOME/.gururc
