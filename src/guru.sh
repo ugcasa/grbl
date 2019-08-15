@@ -44,6 +44,13 @@ parse_argument () {
 
 	case $argument in 
 
+	
+			# os ćommands
+			clear|ls|cd|ssh|echo) 
+				$argument $@
+				return $?
+				;;          
+
 			# functions (in fucntions.sh)
 			status|counter|set|project|pro|document|disable|slack|terminal|upgrade|relax) 
 				$argument $@
@@ -105,8 +112,9 @@ parse_argument () {
 			
 			"")					
 				;;
+
 			*)	
-				printf "unknown command $@\n"
+				printf "$argument: command not found\n"
 	esac	
 }
 
