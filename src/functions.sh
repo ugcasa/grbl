@@ -3,14 +3,75 @@
 
 alias docker="resize -s 24 160;docker" 	#TEST
 
+me=${BASH_SOURCE[0]}
 
-yes_no () {
-	[ "$1" ] || return 2
-	read -p "$1 [y/n]: " answer
-	[ $answer ] || return 1
-	[ $answer == "y" ]  && return 0 
-	return 1
+# yes_do () {
+# 	[ "$1" ] || return 0
+# 	read -p "$1 [y/n]: " answer
+# 	[ $answer ] || return 0
+# 	[ $answer == "y" ]  && return 1
+# }
+
+
+save () {
+
+	argument=$1
+	shift
+	echo "entering"
+
+	case $argument in
+
+		user-data) 
+			save_user_data
+			;;
+		*)
+			echo "hä?"
+			;;
+	esac
 }
+
+
+save_user_data () {
+
+	[ -f "$GURU_CFG/$GURU_USER" ] || mkdir -p "$GURU_CFG/$GURU_USER"
+	echo "saving current setting to permanent user settings"
+	
+	if [ -f $GURU_USER_RC ]; then 
+		
+		read -p  "over write current user permanent serttings?: " answer
+		if [ ! $answer == "y" ] ; then 								
+			echo "not written" >>$GURU_ERROR_MSG
+			return 142
+		fi
+		
+	fi
+	
+	cat $HOME/.gururc | grep "export" | grep -v "#" | grep -v "GURU_USER_RC" >$GURU_USER_RC
+
+}
+
+remove () {
+
+	argument=$1
+	shift
+
+	case $argument in
+
+		user-data) 
+			
+			if [ $1 ]; then 
+				[ -f "$GURU_CFG/$1/userrc" ] && rm -f "$GURU_CFG/$1/userrc" || return 142
+			else			
+				[ -f $GURU_USER_RC ] && rm -f $GURU_USER_RC || return 143
+			fi
+
+			;;
+		*)
+			echo "hä?"
+			;;
+	esac
+}
+
 
 
 conda_setup(){
@@ -28,17 +89,21 @@ conda_setup(){
 
 
 set_value () {
-	sed -i -e "/$1=/s/=.*/=$2/" $HOME/.gururc
+
+	[ -f $GURU_USER_RC ] && target_rc="$GURU_USER_RC" || target_rc="$HOME/.gururc"
+	[ $3 ] && target_rc=$3
+	sed -i -e "/$1=/s/=.*/=$2/" $target_rc
 }
 
 
-settings () {
+set () {
 
 	case "$1" in 
 			
 			current|status)
+				[ -f $GURU_USER_RC ] && source_rc="$GURU_USER_RC" || source_rc="$HOME/.gururc"
 				echo "current settings:"
-				cat $HOME/.gururc |grep "export"| cut -c13-
+				cat $source_rc |grep "export"| cut -c13-
 				;;
 
 			editor)
@@ -113,7 +178,7 @@ project () {
 	# 	# echo "task "$task			
 
 	# 	if [[ $project != $project_name ]]; then 
-	# 		if yes_no "timer running for different project, change?"; then 
+	# 		if yes_do "timer running for different project, change?"; then 
 	# 			read -p "task description: " task_desc
 	# 			$GURU_CALL timer start $task_desc $project_name
 	# 		else
@@ -130,7 +195,7 @@ project () {
 	# 	echo "last_project "$last_project
 	# 	echo "last_customer "$last_customer
 		
-	# 	if yes_no "start timer?"; then 
+	# 	if yes_do "start timer?"; then 
 	# 		$GURU_CALL timer start $project_name
 	# 	else
 	# 		echo no 
