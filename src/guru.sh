@@ -80,7 +80,7 @@ parse_argument () {
 				return $? 
 				;;
 
-			help|-h|--help|*) 			# hardly never updated help printout
+			help|-h|--help) 			# hardly never updated help printout
 			 	printf "ujo.guru tool kit client v.$version \n"
 			 	printf "usage: '$GURU_CALL' [TOOL] [COMMAND] [VARIABLES] \ncommand: \n"
 				printf 'timer     timing tools ("'$GURU_CALL' timer help" for more info) \n'
@@ -101,6 +101,12 @@ parse_argument () {
 				printf 'uninstall un-install guru toolkit \n'
 				printf 'version   printout version \n'
 				return 0
+				;;
+			
+			"")					
+				;;
+			*)	
+				printf "unknown command $@\n"
 	esac	
 }
 
@@ -111,11 +117,8 @@ terminal() {
 	while :																
 		do
 		. $HOME/.gururc
-		read -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd" # just a POC, read is terrible input tool, 
-																	    # there was to other but no	
-																		# guru:>timer start at 00:00 gioco^[[C^[[D 
-																		# -> pyhton, sooner then better POC starts to be done
-		[ "$cmd" == "exit" ] && exit 3
+		read -e -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd" 
+		[ "$cmd" == "exit" ] && exit 0
 		parse_argument $cmd
 		done
 	return 123
