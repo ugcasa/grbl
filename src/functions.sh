@@ -300,6 +300,10 @@ read_counter () {
 
 slack () {
 
+	if [ "$GURU_BROWSER" == "chromium-browser" ]; then
+		GURU_BROWSER="$GURU_BROWSER --user-data-dir=$GURU_CHROME_USER_DATA"
+	fi
+
 	case $1 in 
 		
 		home|bubble|buble|kupla|koti|maea)
@@ -382,6 +386,11 @@ slack () {
 
 
 relax () {	
+	
+	if [ "$GURU_BROWSER" == "chromium-browser" ]; then
+		GURU_BROWSER="$GURU_BROWSER --user-data-dir=$GURU_CHROME_USER_DATA"
+	fi
+
 	$GURU_CALL play "electric lounge chill low tempo instrumental"
 	$GURU_BROWSER \
 		https://yle.fi/uutiset \
@@ -390,3 +399,4 @@ relax () {
 		https://areena.yle.fi/1-3822119 \
 		>/dev/null &
 }
+
