@@ -23,17 +23,17 @@ export GURU_AUDIO_ENABLED=true
 # Folders 
 export GURU_BIN="$HOME/bin"
 export GURU_CFG="$HOME/.config/guru"
-export GURU_NOTES="$HOME/Dropbox/Notes"
-export GURU_VIDEO="$HOME/Dropbox/Video"
-export GURU_AUDIO="$HOME/Dropbox/Audio"
-export GURU_COUNTER="$HOME/Dropbox/Notes/$GURU_USER/counters"
-export GURU_WORKTRACK="$HOME/Dropbox/Notes/$GURU_USER/WorkTimeTrack"
-export GURU_CHROME_USER_DATA="/home/casa/.config/chromium/regressio@gmail.com"
-export GURU_ACCOUNTING="$HOME/Dropbox/Accounting"
-export GURU_PERSONAL_ACCOUNTING="$HOME/bubblebay/Talous"
-export GURU_RECEIPTS="Ostolaskut"
-export GURU_SCAN="$GURU_PICTURE"
-export GURU_TEMPLATES="$GURU_NOTES/$GURU_USER/template"
+export GURU_NOTES="$HOME/Documents"
+export GURU_VIDEO="$HOME/Videos"
+export GURU_AUDIO="$HOME/Music"
+export GURU_COUNTER="$HOME/.counters"
+export GURU_WORKTRACK="$HOME/.timetrack"
+export GURU_CHROME_USER_DATA="$HOME/.config/chromium/$EMAIL"
+export GURU_ACCOUNTING="$HOME/Documents/Accounting"
+export GURU_RECEIPTS="invoices"										# benetah previous folder + /year/month 
+export GURU_PERSONAL_ACCOUNTING="$HOME/Documents/personal"
+export GURU_SCAN="$HOME/Documents" 		
+export GURU_TEMPLATES="$HOME/template"
 
 # Files
 export GURU_USER_RC="$GURU_CFG/$GURU_USER/userrc"
