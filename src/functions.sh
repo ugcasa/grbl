@@ -232,6 +232,10 @@ project () {
 
 }
 
+pro () {
+	project $@
+	return $?
+}
 
 document () {
 
