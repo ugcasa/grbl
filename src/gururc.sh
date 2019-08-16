@@ -5,8 +5,8 @@
 if [ -f "$GURU_USER_RC" ]; then 			# if user setting exist  
 	. $GURU_USER_RC							# run those
 
-else	#bad intend, I know.. for  not
-
+else	#bad intend, I know.. 
+	
 # User information
 export GURU_USER="$USER"
 export GURU_TEAM="guru"
