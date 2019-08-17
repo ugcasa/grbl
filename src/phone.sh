@@ -96,7 +96,7 @@ copy_pictures () {
 
 
 read -p "remove photos and videos after copying from phone? [y/N]: " remove_files
-[ $photos ] && copy_photo
+[ $photos ] && copy_photos
 [ $whatsup ] && copy_whatsapp
 [ $download ] && copy_download
 [ $pictures ] && copy_pictures
