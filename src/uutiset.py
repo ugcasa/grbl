@@ -19,7 +19,7 @@ import sys
 import ast
 import json
 
-from bs4 import BeautifulSoup
+
 from os import system
 from datetime import datetime
 
@@ -32,6 +32,19 @@ except ModuleNotFoundError:
 	exit(124)
 finally:
 	import feedparser
+
+try:
+	from bs4 import BeautifulSoup
+except ModuleNotFoundError:
+	print(" installing module")
+	os.system('pip install --upgrade pip')
+	os.system('pip install beautifulsoup4')
+	exit(124)
+finally:
+	from bs4 import BeautifulSoup
+
+
+
 
 # later to config file [feed_name] url=, date_format= ..
 
