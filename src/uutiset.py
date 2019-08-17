@@ -4,8 +4,22 @@
 # add to install: sudo pip install --upgrade pip; sudo pip install feedparser
 
 
+
+
+# >>> d.feed.description
+# u'For documentation <em>only</em>'
+# >>> d.feed.published
+# u'Sat, 07 Sep 2002 00:00:01 GMT'
+# >>> d.feed.published_parsed
+# (2002, 9, 7, 0, 0, 1, 5, 250, 0)
+
 import os
 import sys
+#import nltk
+import ast
+import json
+
+from bs4 import BeautifulSoup
 from os import system
 from datetime import datetime
 
@@ -39,6 +53,7 @@ feed_list_names = ["yle tuoreimman",\
 					"bbc tech",\
 					"hackaday tech"]
 
+# date format https://pythonhosted.org/feedparser/date-parsing.html
 known_format = ['%a, %d %b %Y %H:%M:%S GMT',\
 				'%a, %d %b %Y %H:%M:%S +0300',\
 				'%a, %d %b %Y %H:%M:%S +0000',\
@@ -66,7 +81,8 @@ def resize_terminal_x11 (height, lenght):
 
 def print_header ():
 
-	header = feed_list_names[int(feed_selection)]+" feed "
+	feed_title = feed.feed.title	
+	header = feed_title 	
 	logo = " ujo.guru"
 	if len(header) < wide-len(logo):
 		header += '-' * (wide-len(header)-len(logo))
@@ -91,8 +107,8 @@ def print_feed ():
 				pass			#print("other fuck-up date format"+entry.published)
 
 		datestamp = datetime.strptime(entry.published, known_format[format_count]).strftime('%d.%m.%y %H:%M')	
-		title=entry.title.replace("&nbsp;", "")	
-		summary=entry.summary.replace("&nbsp;", "")	
+		title = entry.title.replace("&nbsp;", "")	
+		
 
 		if len(title) < wide-20:
 			title += ' ' * (wide-20-len(title))
@@ -109,12 +125,36 @@ def print_feed ():
 
 
 
-def open_news_input (feed_index):
+def open_news (feed_index):
 
 	entry = feed.entries[int(feed_index)-1]
-	browser = os.environ["GURU_BROWSER"]
-	cmd = browser+' '+entry.link+' &'
-	os.system(cmd)
+	browser = os.environ["GURU_BROWSER"]+' '+entry.link+' &'
+	summary = entry.summary.replace("&nbsp;", "")	
+	title = entry.title.replace("&nbsp;", "")	
+	link = entry.link.replace("&nbsp;", "")		
+
+	try:
+		json_string = entry.content	
+		content = ''.join(BeautifulSoup(str(json_string), "html.parser").stripped_strings).split("'")[13].replace('\\n',"\n")
+	except AttributeError:
+		content = ""
+	except:
+		pass
+
+	
+	os.system('clear')
+
+	print(title+"\n\n"+summary+"\n")
+	print(content+"\n\n"+link+"\n") 	
+
+	print('"o" to open in browser, enter to return: ', end = '')
+	answer = input()
+	
+	if answer == "o":
+		os.system(browser)
+	else:
+		return 0
+
 
 
 def user_input():
@@ -129,7 +169,7 @@ def user_input():
 		selection = int(answer)
 
 		if (selection < 23):			# is feed selection call
-			open_news_input(answer)	
+			open_news(answer)	
 			return 0		
 		
 		if selection < 100:
