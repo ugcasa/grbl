@@ -156,8 +156,8 @@ def open_news (feed_index):
 
 	
 	os.system('clear')
-
-	print(title+"\n\n"+summary+"\n")
+	print_header()
+	print("\n"+title+"\n\n"+summary+"\n")
 	print(content+"\n\n"+link+"\n") 	
 
 	print('"o" to open in browser, enter to return: ', end = '')
