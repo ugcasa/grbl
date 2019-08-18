@@ -38,7 +38,7 @@ try:
 except ModuleNotFoundError:
 	print(" installing module")
 	os.system('pip install --upgrade pip')
-	os.system('pip install beautifulsoup4')
+	os.system('sudo -H pip install beautifulsoup4')
 	exit(124)
 finally:
 	from bs4 import BeautifulSoup
