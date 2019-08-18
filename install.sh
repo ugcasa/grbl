@@ -49,6 +49,7 @@ cp -f ./src/gururc.sh "$HOME/.gururc"
 
 [ -d $GURU_BIN ] || mkdir -p $GURU_BIN
 [ -d $GURU_CFG ] || mkdir -p $GURU_CFG
+[ -d $GURU_APP ] || mkdir -p $GURU_APP
 cp -f ./src/guru.sh "$GURU_BIN/guru"							# to able to call just "guru"
 cp -f ./cfg/* "$GURU_CFG"										# guru toolkit configurations
 cp -f ./src/* -f "$GURU_BIN"									# guru toolkit scripts
