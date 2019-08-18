@@ -23,6 +23,7 @@ export GURU_AUDIO_ENABLED=true
 # Folders 
 export GURU_BIN="$HOME/bin"
 export GURU_CFG="$HOME/.config/guru"
+export GURU_APP="$HOME/apps"
 export GURU_NOTES="$HOME/Documents"
 export GURU_VIDEO="$HOME/Videos"
 export GURU_AUDIO="$HOME/Music"
