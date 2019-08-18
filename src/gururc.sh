@@ -2,20 +2,10 @@
 # only for static variables for individual sessions 
 # called from .bashrc (will be every time bash session starts)
 
-
-
-
 # User information
 export GURU_USER="$USER"
 export GURU_CFG="$HOME/.config/guru"
 export GURU_USER_RC="$GURU_CFG/$GURU_USER/userrc"
-
-if [ -f "$GURU_USER_RC" ]; then 			# if user setting exist  
-	. $GURU_USER_RC							# run those
-	alias "$GURU_CALL"=$GURU_BIN/guru
-	return 0
-fi
-
 export GURU_CALL="guru"
 export GURU_BIN="$HOME/bin"
 
@@ -56,4 +46,8 @@ export GURU_OFFICE_DOC="libreoffice"
 export GURU_OFFICE_SPR="libreoffice"
 
 
+if [ -f "$GURU_USER_RC" ]; then 			# if user setting exist  
+	. $GURU_USER_RC							# run those
+	alias "$GURU_CALL"=$GURU_BIN/guru
+fi
 
