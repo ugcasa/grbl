@@ -80,6 +80,12 @@ yes_no () {
 	return 1
 }
 
+tor_browser () {
+	GURU_APP="$HOME/apps"
+	[ -f $GURU_APP ] && exit 12 || mkdir 
+	wget https://www.torproject.org/dist/torbrowser/8.5.4/tor-browser-linux64-8.5.4_en-US.tar.xz -P $GURU_APP
+	tar xf tor-browser-linux64-8.5.4_en-US.tar.xz
+}
 
 mosquitto_client_install () { 	#not tested
 
