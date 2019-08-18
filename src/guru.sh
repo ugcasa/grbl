@@ -86,9 +86,17 @@ parse_argument () {
 				bash $GURU_BIN/uninstall.sh $@
 				return $? 
 				;;
+
 			tor)
 				[ -d $GURU_APP/tor-browser_en-US ] || guru install tor
 				sh -c '"$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" --detach || ([ !  -x "$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" ] && "$(dirname "$*")"/Browser/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
+				error_code=$?
+				if (( error_code == 127 )); then 
+					rm -rf $GURU_APP/tor-browser_en-US
+					echo "failed, try re-install"
+					return $error_code
+				fi
+				return 0
 				;;
 
 			help|-h|--help) 			# hardly never updated help printout

@@ -10,18 +10,18 @@ main () {
 				exit $?
 				;;
 
-			mqtt-client)
-				mosquitto_client_install $@
+			mqtt-client|mosquitto-client|mosquitto-pub|mosquitto-sub)
+				install_mosquitto_client $@
 				exit $?
 				;;
 
-			mqtt-server)
-				mosquitto_server_install $@
+			mqtt-server|mosquitto-server)
+				install_mosquitto_server $@
 				exit $?
 				;;
 
 			conda|anaconda|letku)
-				conda_install $@
+				install_conda $@
 				error_code="$?"			
 				[ -z $error_code ] || echo "conda install failed with code: $error_code"
 				exit $error_code
@@ -35,7 +35,7 @@ main () {
 				;;
 
 			alpine|pine|email)
-				alpine_install $@
+				install_alpine $@
 				exit $?
 				;;
 
@@ -51,10 +51,12 @@ main () {
 				;;
 
 			kaldi|listener)
-				kaldi_install 4
+				install_kaldi 4
 				exit $?
 				;;
-
+			tor|tor-browser|tor-firrefox)
+				install_tor_browser
+				;;
 			edoypts|edi)
 				echo "TODO"
 				exit $?
@@ -80,14 +82,17 @@ yes_no () {
 	return 1
 }
 
-tor_browser () {
-	GURU_APP="$HOME/apps"
-	[ -f $GURU_APP ] && exit 12 || mkdir 
-	wget https://www.torproject.org/dist/torbrowser/8.5.4/tor-browser-linux64-8.5.4_en-US.tar.xz -P $GURU_APP
-	tar xf tor-browser-linux64-8.5.4_en-US.tar.xz
+install_tor_browser () { # fised to 8.5.4_en-US
+	
+	echo "installing version 8.5.4_en-US, there might be more reacent release available"
+	[ -f /tmp/tor-browser-linux64-8.5.4_en-US.tar.xz ] || wget https://www.torproject.org/dist/torbrowser/8.5.4/tor-browser-linux64-8.5.4_en-US.tar.xz -P /tmp
+	[ -d $GURU_APP ] || mkdir -p $GURU_APP
+	[ -d $GURU_APP/tor-browser_en-US ] &&rm -rf $GURU_APP/tor-browser_en-US
+	tar xf /tmp/tor-browser-linux64-8.5.4_en-US.tar.xz -C $GURU_APP	
+	sh -c '"$(dirname "$*")"/Browser/start-tor-browser --detach || ([ ! -x "$(dirname "$*")"/Browser/start-tor-browser ] && "$(dirname "$*")"/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
 }
 
-mosquitto_client_install () { 	#not tested
+install_mosquitto_client () { 	#not tested
 
 	echo "install client"
 	# sudo apt-get update && sudo apt-get upgrade || return $?
@@ -102,7 +107,7 @@ mosquitto_client_install () { 	#not tested
 }
 
 
-mosquitto_server_install () { 	#not tested
+install_mosquitto_server () { 	#not tested
 
 	# sudo apt-get update && sudo apt-get upgrade || return $?
 	# sudo apt install mosquitto mosquitto-clients || return $?
@@ -162,7 +167,7 @@ mosquitto_server_install () { 	#not tested
 }
 
 
-conda_install () {
+install_conda () {
 
 	conda list && return 13 || echo "no conda installed"
 
@@ -185,7 +190,7 @@ conda_install () {
 }
 
 
-kaldi_install(){
+install_kaldi(){
 	
 	if [  $1 == ""  ]; then
 		read -p "how many cores you like to use for compile?  : " cores
@@ -209,7 +214,7 @@ kaldi_install(){
 }
 
 
-alpine_install () {
+install_alpine () {
 
 	target_cfg=$HOME/.pinerc	
 	if ! $(alpine -v >>/dev/null); then 
