@@ -26,23 +26,30 @@ from datetime import datetime
 try:
 	import feedparser
 except ModuleNotFoundError:
-	print(" installing module")
 	os.system('pip install --upgrade pip')
 	os.system('sudo -H pip install feedparser')
-	exit(124)
+	#exit(124)
 finally:
 	import feedparser
 
 try:
 	from bs4 import BeautifulSoup
 except ModuleNotFoundError:
-	print(" installing module")
 	os.system('pip install --upgrade pip')
 	os.system('sudo -H pip install beautifulsoup4')
-	exit(124)
+	#exit(124)
 finally:
 	from bs4 import BeautifulSoup
 
+
+try:
+	import xml.etree.ElementTree as ET
+except ModuleNotFoundError:
+	os.system('pip install --upgrade pip')
+	os.system('sudo -H pip install elementpath')
+	#exit(124)
+finally:
+	import xml.etree.ElementTree as ET
 
 
 
@@ -144,14 +151,20 @@ def open_news (feed_index):
 	browser = os.environ["GURU_BROWSER"]+' '+entry.link+' &'
 	summary = entry.summary.replace("&nbsp;", "")	
 	title = entry.title.replace("&nbsp;", "")	
-	link = entry.link.replace("&nbsp;", "")		
+	link = entry.link.replace("&nbsp;", "")			
 
+	#stuff = str(entry.content)[1:-1]
+	#xml = ET.fromstring(stuff)
+	#print(xml+"\n")
+	#content = xml.iter('type')
+	 
 	try:
-		json_string = entry.content	
+		json_string = entry.content
 		content = ''.join(BeautifulSoup(str(json_string), "html.parser").stripped_strings).split("'")[13].replace('\\n',"\n")
 	except AttributeError:
 		content = ""
-	except:
+	except:	
+		content = ""
 		pass
 
 	os.system('clear')
