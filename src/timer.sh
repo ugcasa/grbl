@@ -5,7 +5,7 @@ main () {
 	
 	case $command in
 
-		        status|start|change|cancel|end|stop|report|log|edit)
+		        status|start|change|cancel|end|stop|report|log|edit|last)
 					$command $@; return $? 
 					;;				
 		       
@@ -75,6 +75,12 @@ status() {
 	return 0
 }
 
+
+last() {
+
+    [ -f $GURU_TRACKLAST ] && cat $GURU_TRACKLAST || echo "no last task set"
+
+}
 
 start() {	
 	
