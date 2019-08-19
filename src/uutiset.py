@@ -148,7 +148,6 @@ def print_feed ():
 def open_news (feed_index):
 
 	entry = feed.entries[int(feed_index)-1]
-	browser = os.environ["GURU_BROWSER"]+' '+entry.link+' &'
 	summary = entry.summary.replace("&nbsp;", "")	
 	title = entry.title.replace("&nbsp;", "")	
 	link = entry.link.replace("&nbsp;", "")			
@@ -160,7 +159,7 @@ def open_news (feed_index):
 	 
 	try:
 		json_string = entry.content
-		content = ''.join(BeautifulSoup(str(json_string), "html.parser").stripped_strings).split("'")[13].replace('\\n',"\n")
+		content = ''.join(BeautifulSoup(str(json_string), "html.parser").stripped_strings).split("'")[13].replace('\\n',"\n") # bubblecum
 	except AttributeError:
 		content = ""
 	except:	
@@ -176,6 +175,8 @@ def open_news (feed_index):
 	answer = input()
 	
 	if answer == "o":
+		profile = '--user-data-dir='+os.environ["GURU_CHROME_USER_DATA"]
+		browser = os.environ["GURU_BROWSER"]+' '+profile+' '+entry.link+' &'
 		os.system(browser)
 	else:
 		return 0
