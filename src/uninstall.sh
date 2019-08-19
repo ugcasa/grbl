@@ -3,11 +3,20 @@
 main () {
 	case "$command" in 
 		
-		software)
+		software|sw)
 			remove-sw $@
 			exit $?
 			;;
-		*)
+		all)
+			uninstall $@	
+			remove-sw $@
+			;;
+		cfg)
+			uninstall $@	
+			remove-sw $@
+			[ $GURU_CFG ] && rm -rf "$GURU_CFG"
+			;;
+		*)	
 			uninstall $@
 			exit $?
 	esac
@@ -24,7 +33,7 @@ uninstall () {
 	if [ -f $HOME/.gururc ]; then 
 		 . $HOME/.gururc 
 	else
-		echo "$me no variables setup file exists, aborting.." >>$GURU_ERROR_MSG
+		echo "$me no setup file exists, aborting.." >>$GURU_ERROR_MSG
 		return 136	
 	fi	
 
@@ -50,10 +59,9 @@ uninstall () {
 		server)			
 			;;
 			*)
-			
 	esac
 	
-	#rm -f "$GURU_BIN"				# TODO: own folder meaby?
+	#rm -fr "$GURU_BIN"				# TODO: own folder meaby?
 	echo "successfully un-installed"
 	return 0
 }
@@ -65,7 +73,9 @@ remove-sw() {
 	sudo apt remove pandoc xterm dconf-cli mosquitto-clients
 	#rm /usr/bin/mpsyt
 	#pip3 remove mps-youtube youtube_dl 
-	
+
+	[ -d $GURU_APP ] || rm -fr $GURU_APP
+		
 	if [ "$1" == "all" ]; then 
 		echo "sublime-text git setuptools "
 		#sudo apt remove sublime-text git 
