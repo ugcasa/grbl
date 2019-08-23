@@ -96,7 +96,7 @@ set_value () {
 
 
 set () {
-
+	# set guru environmental funtions
 	argument="$1"
 	shift
 
@@ -145,7 +145,7 @@ set () {
 			
 			*)				
 				[ $1 ] || return 130
-				set_value GURU_${argument^^} $@
+				set_value GURU_${argument^^} '"'"$@"'"'
 				echo "setting GURU_${argument^^} to $@"
 	esac 
 }
@@ -162,6 +162,8 @@ project () {
 	fi
 
 	# Turha edes yrittää nysvätä bashilla -> python
+	# update 20190823: Vika kyllä taisi olla yes_no funktiossa, tämä saattais toimiakkin 
+
 	# project_array=('guru=(giocon test1 test2 teste3)'\
 	# 			   'inno=(genextIR test4 test5)'\
 	# 			   'deal=(freesi test6)'\
@@ -370,9 +372,10 @@ read_counter () {
 
 
 slack () {
+	# open slack channel - bubblecum
 
-	if [ "$GURU_BROWSER" == "chromium-browser" ]; then
-		GURU_BROWSER="$GURU_BROWSER --user-data-dir=$GURU_CHROME_USER_DATA"
+	if [ "$GURU_BROWSER" == "chromium-browser" ]; then 						# check browser and user data foler, if set
+		[ $GURU_CHROME_USER_DATA ] && GURU_BROWSER="$GURU_BROWSER --user-data-dir=$GURU_CHROME_USER_DATA" 
 	fi
 
 	case $1 in 
@@ -452,6 +455,8 @@ slack () {
 			$GURU_BROWSER https://app.slack.com/client/T0DBYHPK6/C0DC5JD32 &
 			;;
 	esac
+
+	# echo $GURU_BROWSER
 }
 
 
@@ -472,8 +477,6 @@ relax () {
 }
 
 
-
-
 translate () {
 	 # terminal based translator
 
@@ -483,20 +486,33 @@ translate () {
 	 	chmod +x ./trans
 	 fi
 
+	if [[ $1 == *"-"* ]]; then
+		argument1=$1
+		shift		
+	else
+	  	argument1=""	  	
+	fi
+
+	if [[ $1 == *"-"* ]]; then
+		argument2=$1
+		shift		
+	else
+	  	argument2=""	  	
+	fi
+
 	if [[ $1 == *":"* ]]; then
-	  	#echo "iz variable"
+	  	#echo "iz variable: $variable"
 		variable=$1
 		shift
 		word=$@
 
 	else
-	  	#echo "iz word"
+	  	#echo "iz word: $word"
 	  	word=$@
 	  	variable=""
 	fi
 
-	#echo $word
-	$GURU_BIN/trans -b -p $variable "$word"
+	$GURU_BIN/trans $argument1 $argument2 $variable "$word"
 
 }
 
