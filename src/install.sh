@@ -54,11 +54,18 @@ main () {
 				install_kaldi 4
 				exit $?
 				;;
+
 			tor|tor-browser|tor-firrefox)
 				install_tor_browser
 				;;
+
 			edoypts|edi)
 				echo "TODO"
+				exit $?
+				;;
+
+			pictures)
+				set_up_dropbox_pictures $@
 				exit $?
 				;;
 
@@ -248,3 +255,17 @@ fi
 
 
 
+set_up_dropbox_pictures () {
+
+	[ -d "$GURU_PICTURE" ] || exit 123
+
+	if [ -d "$HOME/Pictures" ]; then 
+		read -p "copy your current $HOME/Pictures to $GURU_PICTURE?"
+		[ "$answer"=="y" ] || exit 124
+		cp -r "$HOME/Pictures" "$GURU_PICTURE" && echo "success" || exit 125
+	fi
+
+	rm -rf $HOME/Pictures
+	ln -s $GURU_PICTURE $HOME/Pictures
+
+}

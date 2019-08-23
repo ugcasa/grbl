@@ -52,7 +52,10 @@ parse_argument () {
 				;;          
 
 			# functions (in fucntions.sh)
-			status|counter|set|project|pro|document|disable|slack|terminal|upgrade|relax|save|remove|trans|translate|volume|vol|mute) 
+			status|counter|set|project|pro|disable|upgrade| \
+					document|slack|terminal|trans|translate| \
+					volume|vol|mute|stop|fadedown|fadeup|silence| \
+					save|remove|relax)				
 				$argument $@
 				return $? 
 	            ;;  
@@ -67,13 +70,6 @@ parse_argument () {
 			uutiset) 					# unused test interface
 				DISPLAY=:0 $argument.py $@
 				return $? 			
-				;;
-
-			# shortcuts
-			silence) 					# "kill all audio and lights"
-				. $GURU_BIN/play.sh && fade_low				 
-				$GURU_CALL play stop
-				return $?
 				;;
 
 			# basic stuff

@@ -49,6 +49,7 @@ save_user_data () {
 
 }
 
+
 remove () {
 
 	argument=$1
@@ -235,6 +236,7 @@ project () {
 }
 
 pro () {
+	# alias
 	project $@
 	return $?
 }
@@ -347,6 +349,7 @@ counter () {
 	return 0
 }
 
+
 inc_counter () {
 
 	id_file="$GURU_COUNTER/$1"
@@ -357,6 +360,7 @@ inc_counter () {
 	echo "$id" 
 	return 0
 }
+
 
 read_counter () {
 
@@ -462,6 +466,7 @@ slack () {
 
 
 relax () {	
+	# relaxing music and someting to read, listen or watch
 	
 	if [ "$GURU_BROWSER" == "chromium-browser" ]; then
 		GURU_BROWSER="$GURU_BROWSER --user-data-dir=$GURU_CHROME_USER_DATA"
@@ -517,6 +522,7 @@ translate () {
 }
 
 trans (){
+	# alias
 	translate $@
 }
 
@@ -544,13 +550,47 @@ volume () {
 }
 
 
-vol () {
-	# alias 
-	volume $@
+
+stop () {
+
+		$GURU_CALL fadedown
+		$GURU_CALL play stop
+		sleep 1.5
+		return $?
+}
+
+fadedown () {
+
+    for i in {1..5}
+        do
+        amixer -M get Master >>/dev/null
+        amixer set 'Master' 5%- >>/dev/null
+        sleep 0.2
+    done
 }
 
 
-mute () {
-	# alias 
+fadeup () {
+
+    for i in {1..5}
+        do
+        amixer -M get Master >>/dev/null
+        amixer set 'Master' 5%+ >>/dev/null
+        sleep 0.2
+    done
+    return 0
+}
+
+
+vol () {		# alias 
+	volume $@
+}
+
+mute () {		# alias 
 	volume mute
+}
+
+silence () {	# alias
+	$GURU_CALL mute
+	$GURU_CALL play stop
 }

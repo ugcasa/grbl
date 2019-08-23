@@ -50,8 +50,12 @@ main () {
                 ;;
 
             stop|end)
-                pkill mpsyt
-                #exit $?
+                
+                exec 3>&2
+                exec 2> /dev/null
+                    pkill mpsyt 
+                    pkill pv 
+                exec 2>&3
                 return 0
                 ;;
 
@@ -109,41 +113,20 @@ mpsyt_install () {
 }
 
 
-fade_low () {
-    for i in {1..5}
-        do
-        amixer -M get Master >>/dev/null
-        amixer set 'Master' 5%- >>/dev/null
-        sleep 0.2
-    done
-}
+# pulseaudio_pause()
+# {
+#     #kill all audio permately, till logout
+#     echo autospawn = no > $HOME/.config/pulse/client.conf
+#     pulseaudio --kill
+#     rm $HOME/.config/pulse/client.conf
+# }
 
 
-fade_up () {
-    for i in {1..5}
-        do
-        amixer -M get Master >>/dev/null
-        amixer set 'Master' 5%+ >>/dev/null
-        sleep 0.2
-    done
-    return 0
-}
-
-
-pulseaudio_pause()
-{
-    #kill all audio permately, till logout
-    echo autospawn = no > $HOME/.config/pulse/client.conf
-    pulseaudio --kill
-    rm $HOME/.config/pulse/client.conf
-}
-
-
-pulseaudio_pause()
-{
-    pulseaudio --start
-    return $?
-}
+# pulseaudio_pause()
+# {
+#     pulseaudio --start
+#     return $?
+# }
 
 
 play_vt() {
@@ -185,29 +168,29 @@ run_demo() {
         clear                
 
         if $audio; then
-            fade_low
+             $GURU_CALL fadedown
              pkill mplayer
              pkill xplayer
-             guru volume 50
+             #guru volume 50
              mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_AUDIO/fairlight.m4a </dev/null >/dev/null 2>&1 &
-             fade_up
+             $GURU_CALL fadeup
          fi
 
         guru play vt twilight
         printf "\n                             akrasia.ujo.guru \n"
 
         if $audio; then
-            fade_low
+            $GURU_CALL fadedown
             pkill mplayer
             mplayer >>/dev/null && mplayer -ss 1 $GURU_AUDIO/satelite.m4a </dev/null >/dev/null 2>&1 &                
-            fade_up
+            $GURU_CALL fadeup
         fi
 
         guru play vt jumble
         printf "\n                    http://ujo.guru - ujoguru.slack.com \n"
 
         if $audio; then
-            fade_low
+            $GURU_CALL fadedown
             pkill mplayer
         fi
         return 0
