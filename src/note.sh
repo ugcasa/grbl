@@ -2,18 +2,27 @@
 # note generator
 
 
+# import and install requirements
 
-subl -v >/dev/null || sudo apt install sublime-text		
-pandoc -v >/dev/null || sudo apt install pandoc
+if [ $GURU_INSTALL == "desktop" ]; then 
+
+	subl -v >/dev/null || sudo apt install sublime-text		
+	pandoc -v >/dev/null || sudo apt install pandoc
+
+fi
+
+# functions
 
 main () {
-	
+	# main command parser
+
 	variable=$1
+	shift 
 	
 	case $command in
 
 				make|mk)
-					make_note $variable
+					make_note "$variable"
 					;;
 
 				list|ls)
@@ -29,47 +38,48 @@ main () {
 					;;
 
 				report)					
-					[ $1 ] && notefile=$(note_file_name $variable) || notefile=$(note_file_name $(date +%Y%m%d))										
-					#echo "notefile:"$notefile
+					[ $variable ] && notefile=$(note_file_name $(date +%Y%m%d -d $variable)) || notefile=$(note_file_name $(date +%Y%m%d))
+					echo "variable: "$variable
+					echo "notefile: "$notefile
 					if [ -f $notefile ]; then 
-						$GURU_CALL document $notefile $2					
+						$GURU_CALL document $notefile $1
 						$GURU_OFFICE_DOC ${notefile%%.*}.odt &
 					else
-						echo "no sutch note"
+						echo "no note for $(date +%d.%m.%Y -d $variable)"
 					fi
 					;;
 
-				yesterday|yd)
-					open_note $(date +%Y%m%d -d "yesterday")
-					;;
+				# yesterday|yd)
+				# 	open_note $(date +%Y%m%d -d "yesterday")
+				# 	;;
 
-				monday|mon|maanantai|ma)
-					open_note $(date +%Y%m%d -d "last-monday")
-					;;
+				# monday|mon|maanantai|ma)
+				# 	open_note $(date +%Y%m%d -d "last-monday")
+				# 	;;
 
-				tuesday|tue|tiistai|ti)
-					open_note $(date +%Y%m%d -d "last-tuesday")
-					;;
+				# tuesday|tue|tiistai|ti)
+				# 	open_note $(date +%Y%m%d -d "last-tuesday")
+				# 	;;
 
-				wednesday|wed|kerskiviikko|ke)
-					open_note $(date +%Y%m%d -d "last-wednesday")
-					;;
+				# wednesday|wed|kerskiviikko|ke)
+				# 	open_note $(date +%Y%m%d -d "last-wednesday")
+				# 	;;
 
-				thursday|thu|torstai|to)
-					open_note $(date +%Y%m%d -d "last-thursday")
-					;;
+				# thursday|thu|torstai|to)
+				# 	open_note $(date +%Y%m%d -d "last-thursday")
+				# 	;;
 
-				friday|fri|perjantai|pe)
-					open_note $(date +%Y%m%d -d "last-friday")
-					;;
+				# friday|fri|perjantai|pe)
+				# 	open_note $(date +%Y%m%d -d "last-friday")
+				# 	;;
 
-				saturday|sat|lauvantai|lauantai|la)
-					open_note $(date +%Y%m%d -d "last-saturday")
-					;;
+				# saturday|sat|lauvantai|lauantai|la)
+				# 	open_note $(date +%Y%m%d -d "last-saturday")
+				# 	;;
 
-				sunday|sun|sunnuntai|su)
-					open_note $(date +%Y%m%d -d "last-sunday")
-					;;
+				# sunday|sun|sunnuntai|su)
+				# 	open_note $(date +%Y%m%d -d "last-sunday")
+				# 	;;
 
 		        help)
 				 	printf 'Usage: '$GURU_CALL' notes [command] <date> \n'            
@@ -84,7 +94,8 @@ main () {
 
 				*) 			
 					if [ ! -z "$command" ]; then 
-						open_note "$command"
+						echo "opening $(date +%d.%m.%Y -d $command) note"
+						open_note $(date +%Y%m%d -d $command)
 					else
 						make_note
 					fi
@@ -162,7 +173,11 @@ make_note() {
 
 
 note_file_details () {
-	# inoput format YYYYMMDD only, no format checking
+	# figures out note filename based on datestamp
+	# input format YYYYMMDD only, no format checking
+	# output is stdín passed array containing following data 
+	# 0 = folder/filename, 1 = folder, 2 = filename, 3 = year, 4 = month, 5 = day
+
 	input=$1
 
 	if [ "$input" ]; then 		# YYYYMMDD only
@@ -181,6 +196,9 @@ note_file_details () {
 
 
 note_file_name () {
+	# parses note_file location and name based on time stamp 
+	# input format YYYYMMDD only, no format checking
+	
 	note_data="$(note_file_details $1)" 					# Ouput: [0]file [1]folder [2]filename [3]year [4]month [5]date
 	note_data=' ' read -r -a note_meta_array <<< "$note_data" 	#; echo "${note_meta_array[2]}"																
 	echo ${note_meta_array[0]}	
@@ -188,14 +206,21 @@ note_file_name () {
 
 
 open_note() {
-
+	# open note to preferred editor
+	# input format YYYYMMDD only, no format checking
+	
 	note_data="$(note_file_details $1)" 					# Ouput: [0]file [1]folder [2]filename [3]year [4]month [5]date
 	note_data=' ' read -r -a note_meta_array <<< "$note_data" 	#; echo "${note_meta_array[2]}"																
 	note=${note_meta_array[0]}	
 
 	if [[ ! -f "$note" ]]; then 
 		printf  "no note for given day" >>$GURU_ERROR_MSG
-		exit 125
+		read -p "create a note? :" answer
+		if [ $answer == "y" ]; then 
+			make_note $1
+		else
+			exit 125
+		fi
 	fi
 
 	case $GURU_EDITOR in
@@ -215,6 +240,8 @@ open_note() {
 	esac			
 	
 }
+
+# run main if this file is not imported
 
 me=${BASH_SOURCE[0]}
 if [[ "$me" == "${0}" ]]; then
