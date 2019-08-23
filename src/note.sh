@@ -11,6 +11,8 @@ if [ $GURU_INSTALL == "desktop" ]; then
 
 fi
 
+. $GURU_BIN/functions.sh
+
 # functions
 
 main () {
@@ -48,38 +50,6 @@ main () {
 						echo "no note for $(date +%d.%m.%Y -d $variable)"
 					fi
 					;;
-
-				# yesterday|yd)
-				# 	open_note $(date +%Y%m%d -d "yesterday")
-				# 	;;
-
-				# monday|mon|maanantai|ma)
-				# 	open_note $(date +%Y%m%d -d "last-monday")
-				# 	;;
-
-				# tuesday|tue|tiistai|ti)
-				# 	open_note $(date +%Y%m%d -d "last-tuesday")
-				# 	;;
-
-				# wednesday|wed|kerskiviikko|ke)
-				# 	open_note $(date +%Y%m%d -d "last-wednesday")
-				# 	;;
-
-				# thursday|thu|torstai|to)
-				# 	open_note $(date +%Y%m%d -d "last-thursday")
-				# 	;;
-
-				# friday|fri|perjantai|pe)
-				# 	open_note $(date +%Y%m%d -d "last-friday")
-				# 	;;
-
-				# saturday|sat|lauvantai|lauantai|la)
-				# 	open_note $(date +%Y%m%d -d "last-saturday")
-				# 	;;
-
-				# sunday|sun|sunnuntai|su)
-				# 	open_note $(date +%Y%m%d -d "last-sunday")
-				# 	;;
 
 		        help)
 				 	printf 'Usage: '$GURU_CALL' notes [command] <date> \n'            
@@ -214,13 +184,8 @@ open_note() {
 	note=${note_meta_array[0]}	
 
 	if [[ ! -f "$note" ]]; then 
-		printf  "no note for given day" >>$GURU_ERROR_MSG
-		read -p "create a note? :" answer
-		if [ $answer == "y" ]; then 
-			make_note $1
-		else
-			exit 125
-		fi
+		read -p "no note for target day, create? [y/n]: " answer
+		[ "$answer" == "y" ] && make_note $1 || exit 0		
 	fi
 
 	case $GURU_EDITOR in
@@ -228,8 +193,10 @@ open_note() {
 		subl)
 			projectFolder=$GURU_NOTES/$GURU_USER/project 
 			[ -f $projectFolder ] || mkdir -p $projectFolder
+			
 			projectFile=$projectFolder/notes.sublime-project
 			[ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_NOTES/$GURU_USER'"'"\n\t\t}\n\t]\n}\n" >$projectFile
+			
 			subl --project "$projectFile" -a 
 			subl "$note" --project "$projectFile" -a 		
 			return $?
