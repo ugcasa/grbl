@@ -548,3 +548,9 @@ vol () {
 	# alias 
 	volume $@
 }
+
+
+mute () {
+	# alias 
+	volume mute
+}
