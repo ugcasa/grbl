@@ -52,7 +52,7 @@ parse_argument () {
 				;;          
 
 			# functions (in fucntions.sh)
-			status|counter|set|project|pro|document|disable|slack|terminal|upgrade|relax|save|remove) 
+			status|counter|set|project|pro|document|disable|slack|terminal|upgrade|relax|save|remove|trans|translate) 
 				$argument $@
 				return $? 
 	            ;;  

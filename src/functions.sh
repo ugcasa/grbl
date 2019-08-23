@@ -471,3 +471,35 @@ relax () {
 		>/dev/null &
 }
 
+
+
+
+translate () {
+	 # terminal based translator
+
+	 if ! [ -f $GURU_BIN/trans ]; then 
+	 	cd $GURU_BIN
+	 	wget git.io/trans
+	 	chmod +x ./trans
+	 fi
+
+	if [[ $1 == *":"* ]]; then
+	  	#echo "iz variable"
+		variable=$1
+		shift
+		word=$@
+
+	else
+	  	#echo "iz word"
+	  	word=$@
+	  	variable=""
+	fi
+
+	#echo $word
+	$GURU_BIN/trans -b -p $variable "$word"
+
+}
+
+trans (){
+	translate $@
+}
