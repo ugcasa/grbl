@@ -90,7 +90,7 @@ main () {
             *)
                 pkill mpsyt
                 command="mpsyt set show_video False, set search_music True, /$argument $@, 1-, q"
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
+                gnome-terminal --geometry=80x28 --zoom=0.25 -- /bin/bash -c "$command; exit; $SHELL; "
                 ;;
     esac
 }
@@ -108,17 +108,12 @@ mpsyt_install () {
         return $error
 }
 
-volume () {
-    amixer set 'Master' $1 >>/dev/null
-    return $?
-}
-
 
 fade_low () {
     for i in {1..5}
         do
-        amixer -M get Master #>>/dev/null
-        amixer set 'Master' 5%- #>>/dev/null
+        amixer -M get Master >>/dev/null
+        amixer set 'Master' 5%- >>/dev/null
         sleep 0.2
     done
 }
@@ -127,8 +122,8 @@ fade_low () {
 fade_up () {
     for i in {1..5}
         do
-        amixer -M get Master #>>/dev/null
-        amixer set 'Master' 5%+ #>>/dev/null
+        amixer -M get Master >>/dev/null
+        amixer set 'Master' 5%+ >>/dev/null
         sleep 0.2
     done
     return 0
@@ -193,7 +188,7 @@ run_demo() {
             fade_low
              pkill mplayer
              pkill xplayer
-             volume 50%                
+             guru volume 50
              mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_AUDIO/fairlight.m4a </dev/null >/dev/null 2>&1 &
              fade_up
          fi

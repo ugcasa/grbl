@@ -519,3 +519,32 @@ translate () {
 trans (){
 	translate $@
 }
+
+
+volume () {
+    # set volume
+
+    case $1 in 
+
+            mute|unmute)   
+                amixer -D pulse set Master toggle  >/dev/null		#; echo "audio mute toggle"
+                ;;
+            up)   
+                str=`amixer set Master 5+` >/dev/null
+                vol=`echo $str| awk '{print $22}'`					#; echo "audio $vol"
+                ;;
+            down) 
+                str=`amixer set Master 5-` >/dev/null
+                vol=`echo $str| awk '{print $22}'`					#; echo "audio $vol"
+                ;;
+            *)
+                str=`amixer set Master $1` >/dev/null
+                vol=`echo $str| awk '{print $22}'`					#; echo "audio $vol"
+    esac
+}
+
+
+vol () {
+	# alias 
+	volume $@
+}

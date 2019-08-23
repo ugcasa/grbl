@@ -52,7 +52,7 @@ parse_argument () {
 				;;          
 
 			# functions (in fucntions.sh)
-			status|counter|set|project|pro|document|disable|slack|terminal|upgrade|relax|save|remove|trans|translate) 
+			status|counter|set|project|pro|document|disable|slack|terminal|upgrade|relax|save|remove|trans|translate|volume|vol) 
 				$argument $@
 				return $? 
 	            ;;  
@@ -85,6 +85,23 @@ parse_argument () {
 			uninstall)					# Get rid of this shit 
 				bash $GURU_BIN/uninstall.sh $@
 				return $? 
+				;;
+
+			bisse)
+				resize -s 24 66
+				guru play volume 50
+				guru play classical music valze
+				while true; do 
+					guru play vt tauko
+					read -n 1 -t 3 input                  # so read doesn't hang
+				  	if [[ $input ]];
+   						then
+			      		echo 							  # to get a newline after quitting
+      					break
+				  	fi 
+				done
+				guru play stop
+				clear
 				;;
 
 			tor)
