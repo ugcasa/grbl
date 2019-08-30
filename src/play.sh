@@ -100,7 +100,7 @@ main () {
             *)
                 pkill mpsyt
                 command="mpsyt set show_video False, set search_music True, /$argument $@, 1-, q"
-                gnome-terminal --geometry=80x28 --zoom=0.25 -- /bin/bash -c "$command; exit; $SHELL; "
+                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
                 ;;
     esac
 }
