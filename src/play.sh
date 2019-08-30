@@ -12,6 +12,12 @@ main () {
                 play_vt $@
                 ;;
 
+            song)
+                pkill mpsyt
+                command="mpsyt set show_video False, set search_music True, /$@, 1, q"
+                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "                
+                ;;
+
             karaoke)
                 pkill mpsyt
                 command="mpsyt set show_video True, set search_music True, /$@ lyrics, 1, q"
