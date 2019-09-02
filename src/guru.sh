@@ -83,10 +83,6 @@ parse_argument () {
 				return $? 
 				;;
 
-			bisse)
-				$GURU_BIN/guru play beer_break
-				;;
-
 			tor)
 				[ -d $GURU_APP/tor-browser_en-US ] || guru install tor
 				sh -c '"$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" --detach || ([ !  -x "$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" ] && "$(dirname "$*")"/Browser/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
