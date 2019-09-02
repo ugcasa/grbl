@@ -20,12 +20,13 @@ main () {
             video|youtube)      to_play="/$@, 1-, q"; search_music=False ;;
             album)              to_play="album $@, 1-, q" ;;
             url|id)             to_play="url $@, 1, q" ;;
-            world-news)         to_play="url $(cat $GURU_CFG/news-live.pl)"; search_music=False ;; 
+            world-news|news)    to_play="url $(cat $GURU_CFG/news-live.pl)"; search_music=False ;; 
             bg|backroung)       to_play="//$@, $((1 + RANDOM % 6)), 1-, q" ; show_video=False ;;
             music-video)        to_play="/$@, 1-, q" ;;
             
             vt|text|ascii)      play_vt $@; mpsyt=False ;;
             demo)               run_demo; mpsyt=False ;;
+            beer_brake)         beer_brake ;;
 
             stop|end)
                 exec 3>&2
@@ -145,6 +146,34 @@ run_demo() {
         fi
         return 0
 }
+
+beer_brake () {
+
+        resize -s 24 66
+
+        if $GURU_AUDIO_ENABLED; then
+            guru play volume 50
+            guru play classical music valze
+        fi
+
+        while true; do 
+            guru play vt tauko
+            read -n 1 -t 3 input
+            if [[ $input ]];
+                then
+                echo            
+                break
+            fi 
+
+        done
+        
+        if $GURU_AUDIO_ENABLED; then
+            guru play stop
+        fi
+
+        clear
+}
+
 
 me=${BASH_SOURCE[0]}
 if [[ "$me" == "${0}" ]]; then
