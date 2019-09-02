@@ -5,70 +5,35 @@ pv -V >/dev/null || sudo apt install pv
 mpsyt --ver >>/dev/null || mpsyt_install 
 
 main () {
+    
+    argument="$1"; shift
+    show_video=True
+    search_music=True                
 
     case $argument in
 
-            vt|text|textfile)
-                play_vt $@
-                ;;
-
-            song)
-                pkill mpsyt
-                command="mpsyt set show_video False, set search_music True, /$@, 1, q"
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "                
-                ;;
-
-            karaoke)
-                pkill mpsyt
-                command="mpsyt set show_video True, set search_music True, /$@ lyrics, 1, q"
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "                
-                ;;
-
-            video|youtube)
-                pkill mpsyt
-                command="mpsyt set show_video True, set search_music False, /$@, 1-, q"
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
-                ;;
-
-            album)
-                pkill mpsyt
-                command="mpsyt set show_video True, set search_music True, album $@"
-                gnome-terminal --geometry=80x28 --zoom=1 -- /bin/bash -c "$command; exit; $SHELL; "
-                ;;
-
-            url|id)
-                pkill mpsyt
-                command="mpsyt set show_video True, url $@, 1, q"
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
-                ;;
-
-            demo) 
-                run_demo
-                ;;
-
-            upgrade)
-                sudo -H pip3 install --upgrade youtube_dl  
-                return $?             
-                ;;
-
-            install) 
-                mpsyt_install $@
-                ;;
+            upgrade)            sudo -H pip3 install --upgrade youtube_dl; return $? ;;
+            install)            mpsyt_install $@ ;;
+            
+            song)               to_play="/$@, 1, q"; show_video=False; ;;
+            karaoke|lyrics)     to_play="/$@ lyrics, 1, q" ;;
+            video|youtube)      to_play="/$@, 1-, q"; search_music=False ;;
+            album)              to_play="album $@, 1-, q" ;;
+            url|id)             to_play="url $@, 1, q" ;;
+            world-news)         to_play="url $(cat $GURU_CFG/news-live.pl)"; search_music=False ;; 
+            bg|backroung)       to_play="//$@, $((1 + RANDOM % 6)), 1-, q" ; show_video=False ;;
+            music-video)        to_play="/$@, 1-, q" ;;
+            
+            vt|text|ascii)      play_vt $@; mpsyt=False ;;
+            demo)               run_demo; mpsyt=False ;;
 
             stop|end)
-                
                 exec 3>&2
                 exec 2> /dev/null
-                    pkill mpsyt 
+                    pkill mpsyt
                     pkill pv 
                 exec 2>&3
                 return 0
-                ;;
-
-            world-news)     # wrong
-                pkill mpsyt
-                command="mpsyt set show_video True, url $(cat $GURU_CFG/news-live.pl)"
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
                 ;;
 
             help|h)           
@@ -76,33 +41,28 @@ main () {
                 printf 'url|id         play youtube ID or full url \n'
                 printf 'video|youtube  search and play video \n'
                 printf 'song|music|by  search and play music with video \n'
-                printf 'backroung|bg   search and play play list without video output\n'
+                printf 'background|bg  search and play play list without video output\n'
                 printf 'karaoke        force to find lyrics for songs \n'
                 printf 'stop|end       stop and kill player \n'
                 printf 'demo           run demo ("'$GURU_CALL' set audio true" to play with audio) \n'
                 printf 'vt|text        play vt100 animations ("'$GURU_CALL' play vt help") for more info \n'
                 printf 'upgrade        upgrade player \n'          
                 printf 'Without command only first match will be played, then exited\n'
+                exit 0
                 ;;       
-        
-            backroung|bg)
-                pkill mpsyt                
-                command="mpsyt set show_video False, set search_music True, //$@, $((1 + RANDOM % 6)), 1-, q"  
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "    
-                ;;
-
-            music-video)
-                pkill mpsyt
-                command="mpsyt set show_video True, set search_music True, /$@, 1-, q"
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
-                ;; 
-
-            *)
-                pkill mpsyt
-                command="mpsyt set show_video False, set search_music True, /$argument $@, 1-, q"
-                gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
-                ;;
+            
+            "") to_play="/nyan cat, 1, q" ;; 
+            
+            *) to_play="/$argument $@, 1-, q"; show_video=False ;;
     esac
+
+    if ! [ $mpsyt ]; then 
+        pkill mpsyt                                             #; echo to_play: $to_play
+        show_video="set show_video $show_video"                 #; echo $show_video
+        search_music="set search_music $search_music"           #; echo $search_music
+        command="mpsyt $show_video, $search_music, $to_play"    #; echo $command
+        gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
+    fi
 }
 
 
@@ -117,22 +77,6 @@ mpsyt_install () {
         sudo ln -s /usr/local/bin/mpsyt /usr/bin/mpsyt 
         return $error
 }
-
-
-# pulseaudio_pause()
-# {
-#     #kill all audio permately, till logout
-#     echo autospawn = no > $HOME/.config/pulse/client.conf
-#     pulseaudio --kill
-#     rm $HOME/.config/pulse/client.conf
-# }
-
-
-# pulseaudio_pause()
-# {
-#     pulseaudio --start
-#     return $?
-# }
 
 
 play_vt() {
@@ -204,9 +148,22 @@ run_demo() {
 
 me=${BASH_SOURCE[0]}
 if [[ "$me" == "${0}" ]]; then
-    argument="$1"
-    shift
     main $@
     exit $?
 fi
+
+
+
+# tests
+
+    # argument=$($GURU_BIN/guru translate -b :en $argument)     # subject command to translator.. interesting but probably not practical
+
+    # while [[ "$#" -gt 0 ]]
+    #     do case $1 in
+    #           -bg|--backround) show_video=False ;;     
+    #           -ko|--karaoke|--lyrics) show_video=False ;;      
+    #           *) ;;                                              
+    #     esac
+    # done
+
 
