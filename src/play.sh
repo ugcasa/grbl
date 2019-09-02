@@ -23,6 +23,8 @@ main () {
             world-news|news)    to_play="url $(cat $GURU_CFG/news-live.pl)"; search_music=False ;; 
             bg|backroung)       to_play="//$@, $((1 + RANDOM % 6)), 1-, q" ; show_video=False ;;
             music-video)        to_play="/$@, 1-, q" ;;
+            something|ihansama|\
+            random|rändöm)      to_play="/$(shuf -n1  /usr/share/dict/words), 1-, q"; show_video=False ;;
             
             vt|text|ascii)      play_vt $@; mpsyt=False ;;
             demo)               run_demo; mpsyt=False ;;
