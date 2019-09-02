@@ -60,7 +60,7 @@ parse_argument () {
 				return $? 
 	            ;;  
 
-	        # bash sctripts
+	        # bash scripts
 			note|stamp|timer|phone|play|install|scan) 		
 				$argument.sh $@
 				return $? 			
@@ -84,20 +84,7 @@ parse_argument () {
 				;;
 
 			bisse)
-				resize -s 24 66
-				guru play volume 50
-				guru play classical music valze
-				while true; do 
-					guru play vt tauko
-					read -n 1 -t 3 input                  # so read doesn't hang
-				  	if [[ $input ]];
-   						then
-			      		echo 							  # to get a newline after quitting
-      					break
-				  	fi 
-				done
-				guru play stop
-				clear
+				$GURU_BIN/guru play beer_break
 				;;
 
 			tor)
