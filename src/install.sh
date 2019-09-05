@@ -39,11 +39,20 @@ main () {
 				exit $?
 				;;
 
-			programmer|pk2)
+			# programmer)
+			# 	;;
+
+			pk2)
 				argument=$GURU_BIN/install-pk2.sh
 				gnome-terminal --geometry=80x28 -- /bin/bash -c "$argument; exit; $SHELL; "
 				exit $?
 				;;
+
+			st-link)
+				install_st-link $@				
+				exit $?
+				;;
+
 
 			mpsyt|player|play)			
 				$GURU_CALL play install $@
@@ -218,6 +227,28 @@ install_kaldi(){
 	make depend -j $cores
 	make -j $cores
 	return $?
+}
+
+
+
+install_st-link () {
+	# did not work properly - not mutch testing done dow
+	st-flash --version && exit 0
+	cmake >>/dev/null || sudo apt install cmake
+	dpkg -l libusb-1.0-0-dev >> /dev/null|| sudo apt-get install libusb-1.0-0-dev
+	cd /tmp	
+	git clone https://github.com/texane/stlink
+	cd stlink
+	make release	
+	#install binaries:
+	sudo cp build/Release/st-* /usr/local/bin -f
+	#install udev rules
+	sudo cp etc/udev/rules.d/49-stlinkv* /etc/udev/rules.d/ -f
+	#and restart udev
+	sudo udevadm control --reload
+	echo "installed"
+	echo "usage: st-flash --reset read test.bin 0x8000000 4096"
+	exit 0
 }
 
 
