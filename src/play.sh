@@ -7,67 +7,72 @@ mpsyt --ver >>/dev/null || mpsyt_install
 main () {
     
     argument="$1"; shift
-    show_video=True
-    search_music=True                
+    show_video="True"
+    search_music="True"                                           # mpsyt uses "True" with captal T
+    mpsyt=true                                                  # bash uses true lover case
+    # argument=$($GURU_BIN/guru translate -b :en $argument)     # subject command to translator.. interesting but probably not practical
 
     case $argument in
 
-            upgrade)            sudo -H pip3 install --upgrade youtube_dl; return $? ;;
+            # With own exit
+            upgrade)            sudo -H pip3 install --upgrade youtube_dl; exit $? ;;
             install)            mpsyt_install $@ ;;
-            
-            song)               to_play="/$@, 1, q"; show_video=False; ;;
+            help|h)             help $@ ;;       
+            stop|end)           stop $@ ;;
+            vt|text|ascii)      vt_player $@ ;;
+            demo)               run_demo ;;
+            beer_break)         beer_break ;;
+
+            # continues
+            song|biisi|kappale) to_play="/$@, 1, q"; show_video="False"; ;;
             karaoke|lyrics)     to_play="/$@ lyrics, 1, q" ;;
-            video|youtube)      to_play="/$@, 1-, q"; search_music=False ;;
-            album)              to_play="album $@, 1-, q" ;;
+            video|youtube)      to_play="/$@, 1-, q"; search_music="False" ;;
+            album|albumi)       to_play="album $@, 1-, q" ;;
             url|id)             to_play="url $@, 1, q" ;;
-            world-news|news)    to_play="url $(cat $GURU_CFG/news-live.pl)"; search_music=False ;; 
-            bg|backroung)       to_play="//$@, $((1 + RANDOM % 6)), 1-, q" ; show_video=False ;;
+            world-news|news)    to_play="url $(cat $GURU_CFG/news-live.pl)"; search_music="False" ;; 
+            bg|backroung)       to_play="//$@, $((1 + RANDOM % 6)), 1-, q" ; show_video="False" ;;
             music-video)        to_play="/$@, 1-, q" ;;
-            something|ihansama|\
-            random|rändöm)      to_play="/$(shuf -n1  /usr/share/dict/words), 1-, q"; show_video=False ;;
-            
-            vt|text|ascii)      play_vt $@; mpsyt=False ;;
-            demo)               run_demo; mpsyt=False ;;
-            beer_brake)         beer_brake ;;
-
-            stop|end)
-                exec 3>&2
-                exec 2> /dev/null
-                    pkill mpsyt
-                    pkill pv 
-                exec 2>&3
-                return 0
-                ;;
-
-            help|h)           
-                printf 'usage: '$GURU_CALL' play COMMAND what-to-play \ncommands: \n'
-                printf 'url|id         play youtube ID or full url \n'
-                printf 'video|youtube  search and play video \n'
-                printf 'song|music|by  search and play music with video \n'
-                printf 'background|bg  search and play play list without video output\n'
-                printf 'karaoke        force to find lyrics for songs \n'
-                printf 'stop|end       stop and kill player \n'
-                printf 'demo           run demo ("'$GURU_CALL' set audio true" to play with audio) \n'
-                printf 'vt|text        play vt100 animations ("'$GURU_CALL' play vt help") for more info \n'
-                printf 'upgrade        upgrade player \n'          
-                printf 'Without command only first match will be played, then exited\n'
-                exit 0
-                ;;       
-            
-            "") to_play="/nyan cat, 1, q" ;; 
-            
-            *) to_play="/$argument $@, 1-, q"; show_video=False ;;
+            something|jotain|\
+            random|rändöm)      to_play="/$(shuf -n1  /usr/share/dict/words), 1-, q"; show_video="False" ;;
+            "")                 to_play="/nyan cat, 1, q" ;; 
+            *)                  to_play="/$argument $@, 1-, q"; show_video="False" ;;
     esac
 
-    if ! [ $mpsyt ]; then 
-        pkill mpsyt                                             #; echo to_play: $to_play
-        show_video="set show_video $show_video"                 #; echo $show_video
-        search_music="set search_music $search_music"           #; echo $search_music
-        command="mpsyt $show_video, $search_music, $to_play"    #; echo $command
+    if [ $mpsyt ]; then 
+        pkill mpsyt                                                                     #; echo to_play: $to_play
+        show_video="set show_video $(printf '%s' "${show_video[@]^}")"                 #; echo $show_video, (+re capital initial to be sure)
+        search_music="set search_music $(printf '%s' "${search_music[@]^}")"           #; echo $search_music (+re capital initial)
+        command="mpsyt $show_video, $search_music, $to_play"                            #; echo $command
         gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
     fi
 }
 
+
+help () {
+    printf 'usage: '$GURU_CALL' play COMMAND what-to-play \ncommands: \n'
+    printf 'url|id         play youtube ID or full url \n'
+    printf 'video|youtube  search and play video \n'
+    printf 'song|music|by  search and play music with video \n'
+    printf 'background|bg  search and play play list without video output\n'
+    printf 'karaoke        force to find lyrics for songs \n'
+    printf 'stop|end       stop and kill player \n'
+    printf 'demo           run demo ("'$GURU_CALL' set audio true" to play with audio) \n'
+    printf 'vt|text        play vt100 animations ("'$GURU_CALL' play vt help") for more info \n'
+    printf 'upgrade        upgrade player \n'          
+    printf 'Without command only first match will be played, then exited\n'
+    exit 0    
+}
+
+
+stop () {
+    exec 3>&2       # This method removes all stdin messages when >/dev/null is not enough
+    exec 2> /dev/null
+        pkill mpsyt
+        pkill pv 
+    exec 2>&3
+    exit 0 
+
+}
 
 mpsyt_install () {
 
@@ -77,12 +82,13 @@ mpsyt_install () {
         sudo -H pip3 install --upgrade youtube_dl 
         pip3 install mps-youtube --upgrade 
         error=$?
-        sudo ln -s /usr/local/bin/mpsyt /usr/bin/mpsyt 
-        return $error
+        sudo ln -s /usr/local/bin/mpsyt /usr/bin/mpsyt    # hmm.. 
+        is [ $error ] && echo $error
+        exit $error
 }
 
 
-play_vt() {
+vt_player() {
 
         video_name="$1"
         video="$GURU_VIDEO/$1.vt"
@@ -112,6 +118,7 @@ play_vt() {
                     
                     cat "$video" | pv -q -L 2000                         
         esac
+        exit 0 
 }
 
 
@@ -146,10 +153,10 @@ run_demo() {
             $GURU_CALL fadedown
             pkill mplayer
         fi
-        return 0
+        exit 0 
 }
 
-beer_brake () {
+beer_break () {
 
         resize -s 24 66
 
@@ -174,6 +181,7 @@ beer_brake () {
         fi
 
         clear
+        exit 0 
 }
 
 
@@ -187,12 +195,11 @@ fi
 
 # tests
 
-    # argument=$($GURU_BIN/guru translate -b :en $argument)     # subject command to translator.. interesting but probably not practical
 
     # while [[ "$#" -gt 0 ]]
     #     do case $1 in
-    #           -bg|--backround) show_video=False ;;     
-    #           -ko|--karaoke|--lyrics) show_video=False ;;      
+    #           -bg|--backround) show_video="False" ;;     
+    #           -ko|--karaoke|--lyrics) show_video="False" ;;      
     #           *) ;;                                              
     #     esac
     # done
