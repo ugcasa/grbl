@@ -33,6 +33,12 @@ case $command in
     			stamp="Juha Palm, ujo.guru, +358 400 810 055, juha.palm@ujo.guru"
                 ;;
              
+            picture-md)
+                file="$GURU_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
+                [[ -f $file ]] || exit 234
+                stamp="![]($file){ width=500px }" 
+                ;;
+
             *)
                 printf "usage: guru stamp [COMMAND] \ncommands: \n"                
                 printf "date              datestamp \n"
