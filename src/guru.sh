@@ -1,4 +1,6 @@
 #!/bin/bash
+# No Fucking Point to Clone Disaster 
+# IN case of NFPCP: 
 # This is free but useless piece of software. Shit comes without any warranty, to
 # the extent permitted by applicable law. If you like to use these uninspiring scripts, 
 # you may/or may not redistribute it and/or modify it under the terms of the Do What The 
@@ -6,6 +8,11 @@
 # this piece of crap for any purpose (except professional chuckle). In case you accidentally 
 # cloned this repository it is advisable to remove directory immediately! 
 # Published for no reason by Juha Palm ujo.guru 2019
+# 
+# In case of IOTSIHTOTBACM (installation of this shit in hindsight turned out to be a colossal mistake) do:
+# guru uninstall; [ -d $GURU_CFG ] && rm /$GURU_CFG -rf 	# to get totally rig of this worm and all your personal configs
+
+
 
 version="0.3.2"
 
@@ -45,13 +52,13 @@ parse_argument () {
 	case $argument in 
 
 	
-			# os ćommands
+			# os commands
 			clear|ls|cd|ssh|echo) 
 				$argument $@
 				return $?
 				;;          
 
-			# functions (in fucntions.sh)
+			# functions (in functions.sh)
 			status|counter|set|project|pro|disable|upgrade| \
 					document|slack|terminal|trans|translate| \
 					volume|vol|mute|stop|fadedown|fadeup|silence| \
@@ -67,22 +74,12 @@ parse_argument () {
 				;;
 
 			# python scripts
-			uutiset) 					# unused test interface
+			uutiset)
 				DISPLAY=:0 $argument.py $@
 				return $? 			
 				;;
 
-			# basic stuff
-			version|ver|-v|--ver) 		# la versíon
-				printf "giocon.client v.$version installed to $0\n"
-				return 0
-				;;
-
-			uninstall)					# Get rid of this shit 
-				bash $GURU_BIN/uninstall.sh $@
-				return $? 
-				;;
-
+			# jostain syystä täällä
 			tor)
 				[ -d $GURU_APP/tor-browser_en-US ] || guru install tor
 				sh -c '"$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" --detach || ([ !  -x "$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" ] && "$(dirname "$*")"/Browser/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
@@ -94,6 +91,18 @@ parse_argument () {
 				fi
 				return 0
 				;;
+
+			# basic stuff
+			version|ver|-v|--ver) 		# la versi on
+				printf "giocon.client v.$version installed to $0\n"
+				return 0
+				;;
+
+			uninstall)					# Get rid of this shit 
+				bash $GURU_BIN/uninstall.sh $@
+				return $? 
+				;;
+
 
 			help|-h|--help) 			# hardly never updated help printout
 			 	printf "ujo.guru tool kit client v.$version \n"
@@ -113,7 +122,7 @@ parse_argument () {
 				printf 'set       set options ("'$GURU_CALL' set help" for more information) \n' 
 				printf 'upgrade   upgrade guru toolkit \n'
 				printf 'disable   disables guru toolkit type "guru.enable" to enable \n'
-				printf 'uninstall un-install guru toolkit \n'
+				printf 'uninstall remove guru toolkit \n'
 				printf 'version   printout version \n'
 				return 0
 				;;
@@ -130,7 +139,7 @@ parse_argument () {
 terminal() { 
 	# Terminal looper	
 	echo $GURU_CALL' in terminal mode (type "help" enter for help)'
-	while :																
+	while :											
 		do
 			. $HOME/.gururc
 			read -e -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd" 
@@ -141,13 +150,11 @@ terminal() {
 }
 
 
-## main check (like like often in pyhton)
+## main check (like like often in python)
 
 me=${BASH_SOURCE[0]}
 if [[ "$me" == "${0}" ]]; then
 	main $@
 	exit $?
 fi
-
-# Purkat
 

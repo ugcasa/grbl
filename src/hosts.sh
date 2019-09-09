@@ -1,4 +1,5 @@
 #!/bin/bash
+# tää on puhdas laina.. TODO kaiva mist löytyi. ei implementoitu mutta vaikutta kätsältä. hyvin samaan pataan strukturoitu on omat skriptit. 
 
 HOSTSFILE="/etc/hosts"
 BAKFILE="$HOSTSFILE.bak"
