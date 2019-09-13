@@ -188,13 +188,33 @@ install_mosquitto_server () { 	#not tested
 }
 
 
+
+
+
+
+
 install_webmin() {
 
-	sudo sh -c "echo 'deb http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list"
-	wget http://www.webmin.com/jcameron-key.asc && sudo apt-key add jcameron-key.asc
-	sudo apt update
-	sudo apt install webmin 
-	echo "webmin installed, connect http://localhost:10000 (if ssh tunnel ssh http://localhost.localdomain:100000)"
+	cat /etc/apt/sources.list |grep "download.webmin.com"
+	if ! [ $? ]; then 
+		sudo sh -c "echo 'deb http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list"
+		wget http://www.webmin.com/jcameron-key.asc #&&\
+		sudo apt-key add jcameron-key.asc #&&\
+		rm jcameron-key.asc 
+	else
+		echo "jcameron-key.asc allready installed" 
+	fi
+	
+	cat /etc/apt/sources.list |grep "webmin"	
+	if ! [ $? ]; then 
+		sudo apt update
+		sudo apt install webmin 
+		echo "webmin installed, connect http://localhost:10000"
+		echo "if using ssh tunnel try http://localhost.localdomain:100000)"
+	else
+		echo "allready installed" 
+	fi
+
 }
 
 
