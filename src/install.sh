@@ -195,7 +195,7 @@ install_mosquitto_server () { 	#not tested
 
 install_webmin() {
 
-	cat /etc/apt/sources.list |grep "download.webmin.com"
+	cat /etc/apt/sources.list |grep "download.webmin.com" >/dev/null
 	if ! [ $? ]; then 
 		sudo sh -c "echo 'deb http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list"
 		wget http://www.webmin.com/jcameron-key.asc #&&\
@@ -205,7 +205,7 @@ install_webmin() {
 		echo "jcameron-key.asc already installed" 
 	fi
 	
-	cat /etc/apt/sources.list |grep "webmin"	
+	cat /etc/apt/sources.list |grep "webmin" >/dev/null
 	if ! [ $? ]; then 
 		sudo apt update
 		sudo apt install webmin 
