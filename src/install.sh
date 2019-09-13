@@ -68,6 +68,11 @@ main () {
 				install_tor_browser
 				;;
 
+			webmin)
+				install_webmin
+				;;
+
+
 			edoypts|edi)
 				echo "TODO"
 				exit $?
@@ -180,6 +185,16 @@ install_mosquitto_server () { 	#not tested
 	echo "mosquitto server successfully installed"
 
 	return 0
+}
+
+
+install_webmin() {
+
+	sudo sh -c "echo 'deb http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list"
+	wget http://www.webmin.com/jcameron-key.asc && sudo apt-key add jcameron-key.asc
+	sudo apt update
+	sudo apt install webmin 
+	echo "webmin installed, connect http://localhost:10000 (if ssh tunnel ssh http://localhost.localdomain:100000)"
 }
 
 
