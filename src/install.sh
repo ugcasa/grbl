@@ -202,7 +202,7 @@ install_webmin() {
 		sudo apt-key add jcameron-key.asc #&&\
 		rm jcameron-key.asc 
 	else
-		echo "jcameron-key.asc allready installed" 
+		echo "jcameron-key.asc already installed" 
 	fi
 	
 	cat /etc/apt/sources.list |grep "webmin"	
@@ -212,7 +212,7 @@ install_webmin() {
 		echo "webmin installed, connect http://localhost:10000"
 		echo "if using ssh tunnel try http://localhost.localdomain:100000)"
 	else
-		echo "allready installed" 
+		echo "already installed" 
 	fi
 
 }
