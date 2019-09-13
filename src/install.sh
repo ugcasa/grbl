@@ -201,8 +201,6 @@ install_webmin() {
 		wget http://www.webmin.com/jcameron-key.asc #&&\
 		sudo apt-key add jcameron-key.asc #&&\
 		rm jcameron-key.asc 
-	else
-		echo "jcameron-key.asc already installed" 
 	fi
 	
 	cat /etc/apt/sources.list |grep "webmin" >/dev/null
