@@ -267,12 +267,14 @@ install_kaldi(){
 install_st-link () {
 	# did not work properly - not mutch testing done dow
 	st-flash --version && exit 0
-	cmake >>/dev/null || sudo apt install cmake
-	dpkg -l libusb-1.0-0-dev >> /dev/null|| sudo apt-get install libusb-1.0-0-dev
+	cmake >>/dev/null ||sudo apt install cmake
+	sudo apt install --reinstall build-essential -y
+	dpkg -l libusb-1.0-0-dev >>/dev/null ||sudo apt-get install libusb-1.0-0-dev
 	cd /tmp	
+	[ -d stlink ] && rm -rf stlink
 	git clone https://github.com/texane/stlink
 	cd stlink
-	make release	
+	make release
 	#install binaries:
 	sudo cp build/Release/st-* /usr/local/bin -f
 	#install udev rules
