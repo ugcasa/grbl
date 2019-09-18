@@ -1,5 +1,9 @@
 #!/bin/bash
 # lite version of phoneflush (old POC)
+
+# Phonenflushin poc semmoisinaan. Tämä on täynnä kiinteitä asetuksia ja vain yhteen verkkoon, korjataan jossain vaiheessa. 
+
+
 sshpass -V >/dev/null|| sudo apt install sshpass
 
 [ "$1" ] && user="$1" || read -p "input user : " user

@@ -68,6 +68,11 @@ main () {
 				install_tor_browser
 				;;
 
+			webmin)
+				install_webmin
+				;;
+
+
 			edoypts|edi)
 				echo "TODO"
 				exit $?
@@ -183,6 +188,34 @@ install_mosquitto_server () { 	#not tested
 }
 
 
+
+
+
+
+
+install_webmin() {
+
+	cat /etc/apt/sources.list |grep "download.webmin.com" >/dev/null
+	if ! [ $? ]; then 
+		sudo sh -c "echo 'deb http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list"
+		wget http://www.webmin.com/jcameron-key.asc #&&\
+		sudo apt-key add jcameron-key.asc #&&\
+		rm jcameron-key.asc 
+	fi
+	
+	cat /etc/apt/sources.list |grep "webmin" >/dev/null
+	if ! [ $? ]; then 
+		sudo apt update
+		sudo apt install webmin 
+		echo "webmin installed, connect http://localhost:10000"
+		echo "if using ssh tunnel try http://localhost.localdomain:100000)"
+	else
+		echo "already installed" 
+	fi
+
+}
+
+
 install_conda () {
 
 	conda list && return 13 || echo "no conda installed"
@@ -234,12 +267,14 @@ install_kaldi(){
 install_st-link () {
 	# did not work properly - not mutch testing done dow
 	st-flash --version && exit 0
-	cmake >>/dev/null || sudo apt install cmake
-	dpkg -l libusb-1.0-0-dev >> /dev/null|| sudo apt-get install libusb-1.0-0-dev
+	cmake >>/dev/null ||sudo apt install cmake
+	sudo apt install --reinstall build-essential -y
+	dpkg -l libusb-1.0-0-dev >>/dev/null ||sudo apt-get install libusb-1.0-0-dev
 	cd /tmp	
+	[ -d stlink ] && rm -rf stlink
 	git clone https://github.com/texane/stlink
 	cd stlink
-	make release	
+	make release
 	#install binaries:
 	sudo cp build/Release/st-* /usr/local/bin -f
 	#install udev rules
