@@ -39,9 +39,6 @@ main () {
 				exit $?
 				;;
 
-			# programmer)
-			# 	;;
-
 			pk2)
 				argument=$GURU_BIN/install-pk2.sh
 				gnome-terminal --geometry=80x28 -- /bin/bash -c "$argument; exit; $SHELL; "
@@ -52,7 +49,6 @@ main () {
 				install_st-link $@				
 				exit $?
 				;;
-
 
 			mpsyt|player|play)			
 				$GURU_CALL play install $@
@@ -72,6 +68,10 @@ main () {
 				install_webmin
 				;;
 
+			scanner|DS30)
+				$GURU_CALL scan install
+				exit $?
+				;;
 
 			edoypts|edi)
 				echo "TODO"
@@ -85,11 +85,21 @@ main () {
 
 			help|-h|--help|*) 		# hardly never updated help printout
 			 	printf "usage: guru install [MODULE] \nmobules: \n"
-				printf 'conda           anaconda python environment manger \n'
-				printf 'django          web framework for python people\n'
-				printf 'kaldi           the ears, brains and.. lot of learning \n'
-				printf 'mpsyt|player    players for terminal, music, video, youtube \n'
-				printf 'programmer|pk2  pickit2 pic mcu programmer \n'		
+				printf 'mqtt-client 				mosquitto client \n'
+				printf 'mqtt-server 				mosquitto server \n'
+				printf 'conda|anaconda 		 		anaconda environment tool for python \n'
+				printf 'django|freeman 				django platform for python web \n'
+				printf 'alpine|pine|email 			email client install \n'
+				printf 'pk2 						pickit2 programmer interface \n'
+				printf 'st-link 					st-link programmer for SM32 \n'
+				printf 'mpsyt|player|play			text based youtube player \n'
+				printf 'kaldi|listener 				speech to text ai \n'
+				printf 'tor|tor-browser 			tor browser \n'
+				printf 'webmin 						webmin tool for server configuration\n'
+				printf 'scanner|DS30 				Epson DS30 + scanner tools (mint19 only) \n'
+				printf 'edoypts|edi 				hmm. no clue\n'
+				printf 'pictures 					set ~/Pictures point to dropbox \n'
+				;;
 	esac
 
 }
