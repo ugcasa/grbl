@@ -1,9 +1,9 @@
 #!/bin/bash
 # Neanderilainen skanneriscripti
 
-scanimage -V >/dev/null || echo "not installed" 
-gocr >/dev/null || echo "not installed" 
-convert -version >/dev/null || sudo "sudo apt install imagemagick-6.q16 "
+scanimage -V >/dev/null || $GURU_CALL scan install 
+convert -version >/dev/null || sudo sudo apt install imagemagick-6.q16
+gocr >/dev/null || sudo apt-get install -y gocr
 
 
 main () {
@@ -20,16 +20,59 @@ main () {
 			error_code=$?
 			;;
 
+		install)
+			install_DS30_mint19 $@
+			;;
+
 		help|--help|-h)			
-		 	printf "usage: '$GURU_CALL' [COMMAND] [VARIABLES] \ncommands: \n"
+		 	printf 'usage: '$GURU_CALL' scan command options \ncommands: \n'
 			printf 'receipt|rep|kuitti      scan receipt size grayscale \n'
-			printf 'invoice|inv|lasku       scan receipt A4 size optimized grayscale \n'
+			printf 'invoice|inv|lasku       scan receipt A4 size optimized grayscale \noptions\n'
+			printf '-p 						owner is personal \n'
+			printf '-c 						owner is company/team \n'
 			error_code=0
 			;;		
 		*)
 			exit
 			;;
 	esac	
+}
+
+
+install_DS30_mint19 () {
+
+	# http://download.ebz.epson.net/man/linux/iscan_e.html#sec9
+	read -p "Installing DS30 - NEWER RUNNED, continue enter ctrl-c cancel" nothing
+	
+	if [[ "$(ls /usr/bin/iscan >/dev/null)" -ne 0 ]]; then 
+		cd /tmp
+		wget https://download2.ebz.epson.net/imagescanv3/linuxmint/lts1/deb/x64/imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz
+
+		tar -xvf  imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz
+		cd imagescan-bundle-linuxmint-19-3.59.2.x64.deb
+		sh install.sh
+		cd ..
+		rm imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz*
+		rm -rf imagescan-bundle-linuxmint-19-3.59.2.x64.deb
+		sudo apt update #&&sudo at upgrade -y
+		sudo apt install xsane imagemagick gocr
+		# Test
+		sudo sane-find-scanner|grep "EPSON DS-30"&&echo "Scanner found"
+
+		file=/etc/udev/rules.d/79-udev-epson.rules
+		#sudo rm $file
+		if [[ -f "$file" ]]; then 
+			echo "$file exist"
+			else 
+			echo 'SUBSYSTEM="usb_device", ACTION="add", GOTO="epson_rules_end"' | sudo tee --append  $file
+			echo 'ATTR{idVendor}="0x04b8", ATTR{idProduct}="0x012f", SYMLINK+="scan-epson", MODE="0666", OWNER="$USER", GROUP="scanner"' | sudo tee --append $file
+			echo 'LABEL="epson_rules_end"' | sudo tee --append $file
+		fi
+		read -p "modifying config files NOT TESTED! continue enter ctrl-c cancel" nothing
+		file=/etc/ImageMagick-6/policy.xml
+		sudo sed -i -e 's/policy domain="coder" rights="none" pattern="PDF"/policy domain="coder" rights="read|write" pattern="PDF"/g' $file
+	fi
+
 }
 
 
@@ -41,7 +84,7 @@ scan_receipt() {
 
 	echo "please place the receipt to scnner!"	
 	if [[ -z "$1" ]]; then read -p "name for receipt: " name; else name=$1; fi
-	if [[ -z "$2" ]]; then read -p "company or personal account [c/p]: " organ; else organ=$2; fi
+	if [[ -z "$2" ]]; then read -p "company or personal account [c/p]: " target_team; else target_team=$2; fi
 
 	echo "press push-button when green LED lights up"
 	
@@ -57,7 +100,7 @@ scan_receipt() {
 	mogrify -resize 33% cropped$stamp.pgm
 	convert cropped$stamp.pgm archive$stamp.pdf && rm cropped$stamp.pgm
 
-	if [ $organ == "p" ]; then
+	if [ $target_team == "p" ]; then
 		account_folder=$GURU_PERSONAL_ACCOUNTING
 	else
 		account_folder=$GURU_ACCOUNTING
@@ -78,9 +121,10 @@ scan_receipt() {
 
 
 scan_invoice () {
+
 	if [[ -z "$1" ]]; then read -p "name for receipt: " name; else name=$1; fi
-	if [[ -z "$2" ]]; then read -p "company or personal account [c/p]: " organ; else organ=$2; fi
-	if [ -z "$3" ]; then read -p "pages to scan: " pages; else organ=$3; fi
+	if [[ -z "$2" ]]; then read -p "company or personal account [c/p]: " target_team; else target_team=$2; fi
+	if [ -z "$3" ]; then read -p "pages to scan: " pages; else target_team=$3; fi
 	if [[ $pages == "" ]]; then pages=1; fi
 
 	page=1
@@ -101,7 +145,7 @@ scan_invoice () {
 	echo "convert "$(echo ${fileItemArray[*]})" archive$stamp.pdf" >temp$stamp.sh 
 	. ./temp$stamp.sh
 
-	if [ $organ == "p" ]; then
+	if [ $target_team == "p" ]; then
 		GURU_ACCOUNTING=$GURU_SCAN
 		GURU_RECEIPTS=$GURU_PERSONAL_RECEIPTS
 	fi
