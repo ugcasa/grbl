@@ -5,6 +5,7 @@ scanimage -V >/dev/null || echo "not installed"
 gocr >/dev/null || echo "not installed" 
 convert -version >/dev/null || sudo "sudo apt install imagemagick-6.q16 "
 
+
 main () {
 
 	case $command in
@@ -14,7 +15,7 @@ main () {
 			error_code=$?
 			;;
 
-		receipt|rep|kuitti)
+		receipt|rec|kuitti)
 			scan_receipt $@	
 			error_code=$?
 			;;
@@ -27,23 +28,23 @@ main () {
 			;;		
 		*)
 			exit
-
-	esac
-		
-		
+			;;
+	esac	
 }
+
 
 scan_receipt() {
 	
 	stamp=$(date +%s)
-	# Start to scan already to save some time (scanner takes loooong tome to start)
+	# Start scanner now to save time (scanner takes loooong tIme to start)
 	scanimage -x 75 -y 300 --mode Gray --format=pgm -v >tempimage$stamp.pgm && mv tempimage$stamp.pgm cropped$stamp.pgm & #|| echo "Error in scanning" | exit 2
 
 	echo "please place the receipt to scnner!"	
-	if [[ -z "$1" ]]; then read -p "Gimmy name of receipt: " name; else name=$1; fi
-	if [[ -z "$2" ]]; then read -p "Company or personal [c/p]: " organ; else organ=$2; fi
+	if [[ -z "$1" ]]; then read -p "name for receipt: " name; else name=$1; fi
+	if [[ -z "$2" ]]; then read -p "company or personal account [c/p]: " organ; else organ=$2; fi
 
-	echo "press push-butten when green LED lights up"
+	echo "press push-button when green LED lights up"
+	
 	printf "waiting scanner."
 	while [ ! -f cropped$stamp.pgm ]
 		do
@@ -63,29 +64,30 @@ scan_receipt() {
 	fi
 
 	[[ -d "$account_folder/$(date +%Y)/$GURU_RECEIPTS" ]] || mkdir -p "$account_folder/$(date +%Y)/$GURU_RECEIPTS"
+
 	cp archive$stamp.pdf "$account_folder/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).pdf" || echo "Error in copy" && rm "archive$stamp.pdf"
 	cp archive$stamp.txt "$account_folder/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).txt" || echo "Error in ocr copy" && rm "archive$stamp.txt"
+
 	echo "Scanned to $account_folder/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).pdf"
-	[[ -z "$1" ]] && nemo "$account_folder/$(date +%Y)/$GURU_RECEIPTS"
-	stamp=$(date +%s)
+	# [[ -z "$1" ]] && nemo "$account_folder/$(date +%Y)/$GURU_RECEIPTS" # annoying
+
 	[ -f cropped$stamp.pgm ] && rm cropped$stamp.pgm
 	rm -f cropped-1.pgm image.pgm temp.sh tocompile
 	return 0
 }
 
 
-
 scan_invoice () {
-
-	if [[ -z "$1" ]]; then read -p "Gimmy name of invoice: " name; else name=$1; fi
-	if [[ -z "$2" ]]; then read -p "Company or personal? [c/p]: " organ; else organ=$2; fi
-	if [ -z "$3" ]; then read -p "How many pages?: " pages; else organ=$3; fi
+	if [[ -z "$1" ]]; then read -p "name for receipt: " name; else name=$1; fi
+	if [[ -z "$2" ]]; then read -p "company or personal account [c/p]: " organ; else organ=$2; fi
+	if [ -z "$3" ]; then read -p "pages to scan: " pages; else organ=$3; fi
 	if [[ $pages == "" ]]; then pages=1; fi
 
 	page=1
+	
 	while [ "$page" -le "$pages" ]
 	    do
-		echo "Press scanner push button when green LED lights up.."
+		echo "press scanner push button when green LED lights up.."
 		scanimage -x 205 -y 292 --mode Gray --format=pgm -v >image$stamp.pgm 
 		convert image$stamp.pgm -crop 2416x4338+55+120 cropped$stamp-$page.pgm 
 		gocr -i cropped$stamp-$page.pgm -f UTF8 -v >>archive$stamp.txt 
@@ -105,14 +107,18 @@ scan_invoice () {
 	fi
 
 	[[ -d "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS" ]] || mkdir -p "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS"
+
 	cp archive$stamp.pdf "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).pdf" || echo "Error in copy" && rm "archive$stamp.pdf"
 	cp archive$stamp.txt "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).txt" || echo "Error in ocr copy" && rm "archive$stamp.txt"
+
 	echo "Scanned to $GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).pdf"
-	[[ -z "$1" ]] && nemo "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS"
+	# [[ -z "$1" ]] && nemo "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS" # annoying
+
 	[ -f cropped$stamp.pgm ] && rm cropped$stamp.pgm	
 	rm -f cropped-1.pgm image.pgm temp.sh tocompile
 	return 0
 }
+
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 	command=$1
