@@ -135,10 +135,11 @@ make_note() {
 		    [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note	
 		    
 		    # change table
-		    printf "\n\ndate                | author | change\n:------------------ | ------ |:------\n $(date +%-d.%-m.%Y-%H:%M:%S) | $GURU_USER  | created\n" >>$note
+		    printf "\n\ndate                | author | change\n:------------------ | ------ |:------\n $(date +%-d.%-m.%Y)-$(date +%H:%M:%S) | $GURU_USER | created\n" >>$note
 		fi
 		#;echo "given day stamp "$note_date_stamp
 		open_note "$note_date_stamp"
+		export GURU_DAILY_NOTE="$noteDir/$noteFile"
 }
 
 
