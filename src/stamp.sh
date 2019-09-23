@@ -54,7 +54,8 @@ stamp_main () {
                     printf "end               end time stamp in format HH:MM \n"
                     printf "round             rounded up time stamp \n"    #>TODO poisko?
                     printf "signature         user signature \n"   
-                    printf "transaction       stansaction stamp for notes r\n"   
+                    printf "transaction       stansaction stamp for notes \n"   
+                    printf "weekplan          generates week plan (<from> <to> numeral week day) \n"   
                     printf "all stamps will also be to copied to clipboard\n"  
                     exit 1
     esac
