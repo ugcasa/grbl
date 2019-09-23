@@ -139,7 +139,6 @@ make_note() {
 		fi
 		#;echo "given day stamp "$note_date_stamp
 		open_note "$note_date_stamp"
-		export GURU_DAILY_NOTE="$noteDir/$noteFile"
 }
 
 
