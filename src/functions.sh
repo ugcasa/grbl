@@ -34,20 +34,31 @@ save_user_data () {
 
 	[ -f "$GURU_CFG/$GURU_USER" ] || mkdir -p "$GURU_CFG/$GURU_USER"
 	echo "saving current setting to permanent user settings"
-	
+
+
+
 	if [ -f $GURU_USER_RC ]; then 
 		
-		read -p  "over write current user permanent serttings?: " answer
+		read -p  "overwrite current user settings?: " answer
 		if [ ! $answer == "y" ] ; then 								
 			echo "not written" >>$GURU_ERROR_MSG
 			return 142
-		fi
-		
+		fi		
+		rm -f $GURU_USER_RC
 	fi
 	
-	cat $HOME/.gururc | grep "export" | grep -v "#" | grep -v "GURU_USER_RC" >$GURU_USER_RC
+	settings=$(set | grep GURU_)
+
+	for setting in $settings; do 
+		echo "$setting"
+		echo "export $setting"  >>$GURU_USER_RC
+	done
+
+	#cat $HOME/.gururc | grep "export" | grep -v "#" | grep -v "GURU_USER_RC" >$GURU_USER_RC
 
 }
+
+
 
 
 remove () {

@@ -35,26 +35,29 @@ main () {
 					open_note "$variable"
 					;;
 
+				location)
+					note_file_name "$variable" $@
+					;;
+
 				fromweb|web)
 					md_to_html $@
 					;;
 
 				report)					
-					[ $variable ] && notefile=$(note_file_name $(date +%Y%m%d -d $variable)) || notefile=$(note_file_name $(date +%Y%m%d))
-					echo "variable: "$variable
-					echo "notefile: "$notefile
+					[ $variable ] && notefile=$(note_file_name $(date +%Y%m%d -d $variable)) || notefile=$(note_file_name $(date +$GURU_FILE_DATE_FORMAT)) 	#; echo "variable: "$variable"					
 					if [ -f $notefile ]; then 
-						$GURU_CALL document $notefile $1
-						$GURU_OFFICE_DOC ${notefile%%.*}.odt &
+						$GURU_CALL document $notefile $1																					#; echo "note file: "$notefile"
+						$GURU_OFFICE_DOC ${notefile%%.*}.odt & 																				
+						echo "report file: ${notefile%%.*}.odt"
 					else
-						echo "no note for $(date +%d.%m.%Y -d $variable)"
+						echo "no note for $(date +$GURU_DATE_FORMAT -d $variable)"
 					fi
 					;;
 
 		        help)
 				 	printf 'Usage: '$GURU_CALL' notes [command] <date> \n'            
 		            echo "Commands:"            
-					printf 'open|edit         open given date notes (use time format YYYYMMDD) \n'
+					printf 'open|edit         open given date notes (use time format '$GURU_FILE_DATE_FORMAT' \n'
 					printf 'list              list of notes. first parameter is month (MM), second year (YYYY) \n' 
 					printf 'report            open note with template to '$GURU_OFFICE_DOC' \n' 
 					printf '<yesteerday|yd>   open yesterdays notes \n' 
@@ -64,7 +67,7 @@ main () {
 
 				*) 			
 					if [ ! -z "$command" ]; then 
-						echo "opening $(date +%d.%m.%Y -d $command) note"
+						echo "opening $(date +$GURU_DATE_FORMAT -d $command) note"
 						open_note $(date +%Y%m%d -d $command)
 					else
 						make_note
@@ -115,9 +118,9 @@ make_note() {
 			note_date_stamp="${note_meta_array[3]}${note_meta_array[4]}${note_meta_array[5]}"
 		else 												# Todays note
 			noteDir=$GURU_NOTES/$GURU_USER/$(date +%Y/%m)
-			noteFile=$GURU_USER"_notes_"$(date +%Y%m%d).md		
+			noteFile=$GURU_USER"_notes_"$(date +$GURU_FILE_DATE_FORMAT).md		
 			note_date=$(date +%-d.%-m.%Y)
-			note_date_stamp=$(date +%Y%m%d)
+			note_date_stamp=$(date +$GURU_FILE_DATE_FORMAT)
 		fi
 
 		note="$noteDir/$noteFile"							#; echo "note file "$note
@@ -149,7 +152,6 @@ note_file_details () {
 	# 0 = folder/filename, 1 = folder, 2 = filename, 3 = year, 4 = month, 5 = day
 
 	input=$1
-
 	if [ "$input" ]; then 		# YYYYMMDD only
 		year=${input::-4}		# Tässä paukkuu jos open parametri ei ole oikeassa formaatissa
 		month=${input:4:2}
@@ -168,10 +170,11 @@ note_file_details () {
 note_file_name () {
 	# parses note_file location and name based on time stamp 
 	# input format YYYYMMDD only, no format checking
-	
-	note_data="$(note_file_details $1)" 					# Ouput: [0]file [1]folder [2]filename [3]year [4]month [5]date
-	note_data=' ' read -r -a note_meta_array <<< "$note_data" 	#; echo "${note_meta_array[2]}"																
-	echo ${note_meta_array[0]}	
+	[ "$1" ] && target_date=$1 || target_date="20190923" 			#; printf "$1, $2"	
+	[ "$2" ] && position=$2 || position=0 							#; printf "$target_date, $position\n"	
+	note_data="$(note_file_details $target_date)" 					# Output: [0]file [1]folder [2]filename [3]year [4]month [5]date
+	note_data=' ' read -r -a note_meta_array <<< "$note_data" 		#; echo "${note_meta_array[$position]}"																
+	echo ${note_meta_array[$position]}	
 }
 
 
