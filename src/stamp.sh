@@ -34,7 +34,7 @@ case $command in
                 ;;
              
             picture-md)
-                file="$GURU_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
+                [ $1 ] && file="$1" || file="$GURU_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
                 [[ -f $file ]] || exit 234
                 stamp="![]($file){ width=500px }" 
                 ;;
