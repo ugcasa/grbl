@@ -1,9 +1,10 @@
+#!/bin/bash
 # Some simple functions not complicate enough to write separate scripts
 # ujo.guru 2019 
 
 alias docker="resize -s 24 160;docker" 	#TEST
 
-me=${BASH_SOURCE[0]}
+#me=${BASH_SOURCE[0]}
 
 # yes_do () {
 # 	[ "$1" ] || return 0
@@ -35,30 +36,27 @@ save_user_data () {
 	[ -f "$GURU_CFG/$GURU_USER" ] || mkdir -p "$GURU_CFG/$GURU_USER"
 	echo "saving current setting to permanent user settings"
 
-
-
-	if [ -f $GURU_USER_RC ]; then 
-		
-		read -p  "overwrite current user settings?: " answer
-		if [ ! $answer == "y" ] ; then 								
-			echo "not written" >>$GURU_ERROR_MSG
+	if [ -f "$GURU_USER_RC" ]; then 
+		read  -r -p  "overwrite current user settings?: " answer
+		if [ ! "$answer" == "y" ] ; then 								
+			echo "$0: not written" >>"$GURU_ERROR_MSG"
 			return 142
 		fi		
-		rm -f $GURU_USER_RC
 	fi
 	
-	settings=$(set | grep GURU_)
-
+	echo "# $($GURU_CALL version) personal config file" >"$GURU_USER_RC"
+	settings=$(printenv | grep GURU_)
+	IFS=' '
 	for setting in $settings; do 
 		echo "$setting"
-		echo "export $setting"  >>$GURU_USER_RC
+		echo "export $setting" >>"$GURU_USER_RC"
 	done
 
 	#cat $HOME/.gururc | grep "export" | grep -v "#" | grep -v "GURU_USER_RC" >$GURU_USER_RC
 
 }
 
-
+#for setting in $settings; do echo "$setting";done
 
 
 remove () {
@@ -70,10 +68,10 @@ remove () {
 
 		user-data) 
 			
-			if [ $1 ]; then 
+			if [ "$1" ]; then 
 				[ -f "$GURU_CFG/$1/userrc" ] && rm -f "$GURU_CFG/$1/userrc" || return 142
 			else			
-				[ -f $GURU_USER_RC ] && rm -f $GURU_USER_RC || return 143
+				[ -f "$GURU_USER_RC" ] && rm -f "$GURU_USER_RC" || return 143
 			fi
 
 			;;
@@ -87,8 +85,9 @@ remove () {
 
 conda_setup(){
 
-	cat ~/.bashrc |grep "__conda_setup" || cat "$GURU_BIN/conda_launcher.sh" >>$HOME/.bashrc
-	source ~/.bashrc
+	cat "$HOME/.bashrc" |grep "__conda_setup" || cat "$GURU_BIN/conda_launcher.sh" >>"$HOME/.bashrc"		 #yes cmd < data is better, but do not want to test this again
+	
+	source "$HOME/.bashrc"
 	conda list >>/dev/null || return 14 && 	echo "conda installation found"
 	conda config --set auto_activate_base false
 	error=$?
@@ -101,9 +100,9 @@ conda_setup(){
 
 set_value () {
 
-	[ -f $GURU_USER_RC ] && target_rc="$GURU_USER_RC" || target_rc="$HOME/.gururc"
+	[ -f "$GURU_USER_RC" ] && target_rc="$GURU_USER_RC" || target_rc="$HOME/.gururc"
 	#[ $3 ] && target_rc=$3
-	sed -i -e "/$1=/s/=.*/=$2 $3 $4/" $target_rc
+	sed -i -e "/$1=/s/=.*/=$2 $3 $4/" "$target_rc"
 }
 
 
@@ -115,26 +114,26 @@ set () {
 	case "$argument" in 
 			
 			current|status)
-				[ -f $GURU_USER_RC ] && source_rc="$GURU_USER_RC" || source_rc="$HOME/.gururc"
+				[ -f "$GURU_USER_RC" ] && source_rc="$GURU_USER_RC" || source_rc="$HOME/.gururc"
 				echo "current settings:"
-				cat $source_rc |grep "export"| cut -c13-
+				cat "$source_rc" |grep "export"| cut -c13-
 				;;
 
 
 			editor)
 				[ "$1" ] && new_value=$1 ||	read -p "input preferred editor : " new_value				
-				set_value GURU_EDITOR $new_value					
+				set_value GURU_EDITOR "$new_value"					
 				;;
 
 			name)
 				[ "$1" ] && new_value=$1 ||	read -p "input new call name for $GURU_CALL : " new_value				
-				mv $GURU_BIN/$GURU_CALL	$GURU_BIN/$new_value
-				set_value GURU_CALL $new_value
+				mv "$GURU_BIN/$GURU_CALL" "$GURU_BIN/$new_value"
+				set_value GURU_CALL "$new_value"
 				;;
 
 			audio)
 				[ "$1" ] &&	new_value=$1 || read -p "new value (true/false) : " new_value
-				set_value GURU_AUDIO_ENABLED $new_value				
+				set_value GURU_AUDIO_ENABLED "$new_value"				
 				;;
 
 			conda)
@@ -169,7 +168,7 @@ project () {
 	# shift
 
 	if [ -z "$project_name" ]; then 
-		printf "plase enter project name" >>$GURU_ERROR_MSG
+		printf "plase enter project name" >>"$GURU_ERROR_MSG"
 		return 131
 	fi
 
@@ -228,7 +227,7 @@ project () {
 	subl_project_file=$subl_project_folder/$1.sublime-project
 	
 	if ! [ -f $subl_project_file ]; then 
-		printf "no sublime project found" >>$GURU_ERROR_MSG
+		printf "no sublime project found" >>"$GURU_ERROR_MSG"
 		return 132
 	fi	
 	
@@ -239,7 +238,7 @@ project () {
 				subl --project "$subl_project_file" -a 	# Sublime how to open workpace?, this works anyway
 				;;
 			*)
-			printf 'projects work only with sublime. Set preferred editor by typing: "'$GURU_CALL' set editor subl", or edit "~/.gururc". '	>>$GURU_ERROR_MSG
+			printf 'projects work only with sublime. Set preferred editor by typing: "'$GURU_CALL' set editor subl", or edit "~/.gururc". '	>>"$GURU_ERROR_MSG"
 			return 133
 	esac
 
