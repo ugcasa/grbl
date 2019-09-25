@@ -43,13 +43,13 @@ save_user_data () {
 			return 142
 		fi		
 	fi
-	
+	IFS
 	echo "# $($GURU_CALL version) personal config file" >"$GURU_USER_RC"
-	settings=$(printenv | grep GURU_)
-	IFS=' '
+	settings="$(printenv | grep GURU_)"
 	for setting in $settings; do 
-		echo "$setting"
-		echo "export $setting" >>"$GURU_USER_RC"
+		variable="${setting%=*}"				; echo "$variable"
+		value="${setting#*=}"					; echo "$value"
+		echo "export $variable"'="'"$value"'"' 	>>"$GURU_USER_RC"
 	done
 
 	#cat $HOME/.gururc | grep "export" | grep -v "#" | grep -v "GURU_USER_RC" >$GURU_USER_RC
