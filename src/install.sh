@@ -210,8 +210,13 @@ install_hackrf () {
 		gnuradio-companion --help >/dev/null || sudo apt-get install gnuradio gqrx-sdr hackrf gr-osmosdr -y
 		read -r -p "Connect HacrkRF One and press anykey: " nouse
 		hackrf_info && echo "successfully installed" || echo "HackrRF One not found, pls. re-plug or re-install"
+		mkdir -p $HOME/git/labtools/radio 
+		cd $HOME/git/labtools/radio 
+		git clone https://github.com/mossmann/hackrf.git
+		git clone https://github.com/mossmann/hackrf.wiki.git
+		echo "Documentation file://$HOME/git/labtools/radio/hackrf.wiki"		
 		read -r -p "to start GNU radio press anykey (or CTRL+C to exit): " nouse
-		gnuradio-companion  
+		gnuradio-companion &
 		return 0
 }
 
