@@ -214,6 +214,7 @@ install_hackrf () {
 		cd $HOME/git/labtools/radio 
 		git clone https://github.com/mossmann/hackrf.git
 		git clone https://github.com/mossmann/hackrf.wiki.git
+		git clone https://ujoguru@bitbucket.org/ugdev/radlab.git
 		echo "Documentation file://$HOME/git/labtools/radio/hackrf.wiki"		
 		read -r -p "to start GNU radio press anykey (or CTRL+C to exit): " nouse
 		gnuradio-companion &
