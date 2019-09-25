@@ -80,6 +80,10 @@ main () {
 				exit $?
 				;;
 
+			spectrumanalyzer|SA)
+				install_spectrumanalyzer "$@"
+				exit $?
+				;;
 
 			edoypts|edi)
 				echo "TODO"
@@ -207,6 +211,7 @@ install_mosquitto_server () {   #not tested
 
 
 install_hackrf () {
+
 		gnuradio-companion --help >/dev/null ||sudo apt-get install gnuradio gqrx-sdr hackrf gr-osmosdr -y
 		read -r -p "Connect HacrkRF One and press anykey: " nouse
 		hackrf_info && echo "successfully installed" ||echo "HackrRF One not found, pls. re-plug or re-install"
@@ -217,9 +222,25 @@ install_hackrf () {
 		git clone https://ujoguru@bitbucket.org/ugdev/radlab.git
 		echo "Documentation file://$HOME/git/labtools/radio/hackrf.wiki"		
 		read -r -p "to start GNU radio press anykey (or CTRL+C to exit): " nouse
-		gnuradio-companion &
+		gnuradio-companion 
 		return 0
 }
+
+install_spectrumanalyzer () {
+
+		sudo add-apt-repository -y ppa:myriadrf/drivers
+		sudo apt-get update
+
+		sudo apt-get install -y python3-pip python3-pyqt5 python3-numpy python3-scipy soapysdr python3-soapysdr
+		sudo apt-get install -y soapysdr-module-rtlsdr soapysdr-module-airspy soapysdr-module-hackrf soapysdr-module-lms7
+		cd /tmp
+		git clone https://github.com/xmikos/qspectrumanalyzer.git
+		cd qspectrumanalyzer
+		pip3 install --user .
+		qspectrumanalyzer
+		return 0
+}
+
 
 install_webmin() {
 
