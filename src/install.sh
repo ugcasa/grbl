@@ -11,18 +11,18 @@ main () {
 				;;
 
 			mqtt-client|mosquitto-client|mosquitto-pub|mosquitto-sub)
-				install_mosquitto_client $@
+				install_mosquitto_client "$@"
 				exit $?
 				;;
 
 			mqtt-server|mosquitto-server)
-				install_mosquitto_server $@
+				install_mosquitto_server "$@"
 				exit $?
 				;;
 
 			conda|anaconda|letku)
-				install_conda $@
-				error_code="$?"			
+				install_conda "$@"
+				error_code="$?"         
 				[ -z $error_code ] || echo "conda install failed with code: $error_code"
 				exit $error_code
 				exit $?
@@ -35,7 +35,7 @@ main () {
 				;;
 
 			alpine|pine|email)
-				install_alpine $@
+				install_alpine "$@"
 				exit $?
 				;;
 
@@ -46,12 +46,12 @@ main () {
 				;;
 
 			st-link)
-				install_st-link $@				
+				install_st-link "$@"                
 				exit $?
 				;;
 
-			mpsyt|player|play)			
-				$GURU_CALL play install $@
+			mpsyt|player|play)          
+				$GURU_CALL play install "$@"
 				exit $error
 				;;
 
@@ -62,10 +62,12 @@ main () {
 
 			tor|tor-browser|tor-firrefox)
 				install_tor_browser
+				exit $?
 				;;
 
 			webmin)
 				install_webmin
+				exit $?
 				;;
 
 			scanner|DS30)
@@ -73,32 +75,38 @@ main () {
 				exit $?
 				;;
 
+			hackrf|gnuradio|rf-tools)
+				install_hackrf "$@"
+				exit $?
+				;;
+
+
 			edoypts|edi)
 				echo "TODO"
 				exit $?
 				;;
 
 			pictures)
-				set_up_dropbox_pictures $@
+				set_up_dropbox_pictures "$@"
 				exit $?
 				;;
 
-			help|-h|--help|*) 		# hardly never updated help printout
-			 	printf "usage: guru install [MODULE] \nmobules: \n"
-				printf 'mqtt-client 				mosquitto client \n'
-				printf 'mqtt-server 				mosquitto server \n'
-				printf 'conda|anaconda 		 		anaconda environment tool for python \n'
-				printf 'django|freeman 				django platform for python web \n'
-				printf 'alpine|pine|email 			email client install \n'
-				printf 'pk2 						pickit2 programmer interface \n'
-				printf 'st-link 					st-link programmer for SM32 \n'
-				printf 'mpsyt|player|play			text based youtube player \n'
-				printf 'kaldi|listener 				speech to text ai \n'
-				printf 'tor|tor-browser 			tor browser \n'
-				printf 'webmin 						webmin tool for server configuration\n'
-				printf 'scanner|DS30 				Epson DS30 + scanner tools (mint19 only) \n'
-				printf 'edoypts|edi 				hmm. no clue\n'
-				printf 'pictures 					set ~/Pictures point to dropbox \n'
+			help|-h|--help|*)       # hardly never updated help printout
+				printf "usage: guru install [MODULE] \nmobules: \n"
+				printf 'mqtt-client                 mosquitto client \n'
+				printf 'mqtt-server                 mosquitto server \n'
+				printf 'conda|anaconda              anaconda environment tool for python \n'
+				printf 'django|freeman              django platform for python web \n'
+				printf 'alpine|pine|email           email client install \n'
+				printf 'pk2                         pickit2 programmer interface \n'
+				printf 'st-link                     st-link programmer for SM32 \n'
+				printf 'mpsyt|player|play           text based youtube player \n'
+				printf 'kaldi|listener              speech to text ai \n'
+				printf 'tor|tor-browser             tor browser \n'
+				printf 'webmin                      webmin tool for server configuration\n'
+				printf 'scanner|DS30                Epson DS30 + scanner tools (mint19 only) \n'
+				printf 'edoypts|edi                 hmm. no clue\n'
+				printf 'pictures                    set ~/Pictures point to dropbox \n'
 				;;
 	esac
 
@@ -119,11 +127,11 @@ install_tor_browser () { # fised to 8.5.4_en-US
 	[ -f /tmp/tor-browser-linux64-8.5.4_en-US.tar.xz ] || wget https://www.torproject.org/dist/torbrowser/8.5.4/tor-browser-linux64-8.5.4_en-US.tar.xz -P /tmp
 	[ -d $GURU_APP ] || mkdir -p $GURU_APP
 	[ -d $GURU_APP/tor-browser_en-US ] &&rm -rf $GURU_APP/tor-browser_en-US
-	tar xf /tmp/tor-browser-linux64-8.5.4_en-US.tar.xz -C $GURU_APP	
+	tar xf /tmp/tor-browser-linux64-8.5.4_en-US.tar.xz -C $GURU_APP 
 	sh -c '"$(dirname "$*")"/Browser/start-tor-browser --detach || ([ ! -x "$(dirname "$*")"/Browser/start-tor-browser ] && "$(dirname "$*")"/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
 }
 
-install_mosquitto_client () { 	#not tested
+install_mosquitto_client () {   #not tested
 
 	echo "install client"
 	# sudo apt-get update && sudo apt-get upgrade || return $?
@@ -138,7 +146,7 @@ install_mosquitto_client () { 	#not tested
 }
 
 
-install_mosquitto_server () { 	#not tested
+install_mosquitto_server () {   #not tested
 
 	# sudo apt-get update && sudo apt-get upgrade || return $?
 	# sudo apt install mosquitto mosquitto-clients || return $?
@@ -184,7 +192,7 @@ install_mosquitto_server () { 	#not tested
 		echo "to renew certs automatically add following line to crontab (needs to be done manually)"
 		echo '15 3 * * * certbot renew --noninteractive --post-hook "systemctl restart mosquitto"'
 		read -p "press any key to continue.. "
-		# sudo crontab -e	
+		# sudo crontab -e   
 
 		if [ $enc ]; then 
 			echo "pass"
@@ -197,6 +205,15 @@ install_mosquitto_server () { 	#not tested
 	return 0
 }
 
+
+install_hackrf () {
+		gnuradio-companion --help >/dev/null || sudo apt-get install gnuradio gqrx-sdr hackrf gr-osmosdr -y
+		read -r -p "Connect HacrkRF One and press anykey: " nouse
+		hackrf_info && echo "successfully installed" || echo "HackrRF One not found, pls. re-plug or re-install"
+		read -r -p "to start GNU radio press anykey (or CTRL+C to exit): " nouse
+		gnuradio-companion  
+		return 0
+}
 
 install_webmin() {
 
@@ -247,7 +264,7 @@ install_kaldi(){
 	
 	if [  $1 == ""  ]; then
 		read -p "how many cores you like to use for compile?  : " cores
-	    cores=8		
+		cores=8     
 	fi
 	echo "installing kaldi.."
 	sudo apt install g++ subversion
@@ -274,7 +291,7 @@ install_st-link () {
 	cmake >>/dev/null ||sudo apt install cmake
 	sudo apt install --reinstall build-essential -y
 	dpkg -l libusb-1.0-0-dev >>/dev/null ||sudo apt-get install libusb-1.0-0-dev
-	cd /tmp	
+	cd /tmp 
 	[ -d stlink ] && rm -rf stlink
 	git clone https://github.com/texane/stlink
 	cd stlink
@@ -293,12 +310,12 @@ install_st-link () {
 
 install_alpine () {
 
-	target_cfg=$HOME/.pinerc	
+	target_cfg=$HOME/.pinerc    
 	if ! $(alpine -v >>/dev/null); then 
 		echo "installing alpine"
 		sudo apt install alpine
 	else
-		echo "installed"			
+		echo "installed"            
 	fi
 	
 	echo "setting up alpine: TODO"
@@ -306,8 +323,8 @@ install_alpine () {
 	
 	# [ -f $target_cfg ] && mv -f $target_cfg $GURU_CFG/.pinerc.original
 	
-	# echo "personal-name=$GURU_USER"				>$target_cfg
-	# echo "user-domain=ujo.guru"					>$target_cfg
+	# echo "personal-name=$GURU_USER"               >$target_cfg
+	# echo "user-domain=ujo.guru"                   >$target_cfg
 
 	# read -p "imput "
 	# imap.gmail.com/ssl/user=YOURUSERNAME@GMAIL.COM
