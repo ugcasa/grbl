@@ -54,7 +54,7 @@ parse_argument () {
 	
 			# os commands
 			clear|ls|cd|ssh|echo) 
-				$argument $@
+				$argument "$@"
 				return $?
 				;;          
 
@@ -63,19 +63,19 @@ parse_argument () {
 					document|slack|terminal|trans|translate| \
 					volume|vol|mute|stop|fadedown|fadeup|silence| \
 					save|remove|relax)				
-				$argument $@
+				$argument "$@"
 				return $? 
 	            ;;  
 
 	        # bash scripts
 			note|stamp|timer|phone|play|install|scan) 		
-				$argument.sh $@
+				$argument.sh "$@" 
 				return $? 			
 				;;
 
 			# python scripts
-			uutiset)
-				DISPLAY=:0 $argument.py $@
+			uutiset|fmradio)
+				DISPLAY=:0 $argument.py "$@" &
 				return $? 			
 				;;
 
@@ -99,7 +99,7 @@ parse_argument () {
 				;;
 
 			uninstall)					# Get rid of this shit 
-				bash $GURU_BIN/uninstall.sh $@
+				bash $GURU_BIN/uninstall.sh "$@"
 				return $? 
 				;;
 
