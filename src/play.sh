@@ -24,6 +24,7 @@ main () {
             beer_break)         beer_break ;;
 
             # continues
+            radio|fm)           $GURU_CALL radio; exit 0;;            
             song|biisi|kappale) to_play="/$@, 1, q"; show_video="False"; ;;
             karaoke|lyrics)     to_play="/$@ lyrics, 1, q" ;;
             video|youtube)      to_play="/$@, 1-, q"; search_music="False" ;;
@@ -33,7 +34,10 @@ main () {
             bg|backroung)       to_play="//$@, $((1 + RANDOM % 6)), 1-, q" ; show_video="False" ;;
             music-video)        to_play="/$@, 1-, q" ;;
             something|jotain|\
-            random|rändöm)      to_play="/$(shuf -n1  /usr/share/dict/words), 1-, q"; show_video="False" ;;
+            random|rändöm)      
+                                random=$(shuf -n1  /usr/share/dict/words)
+                                $GURU_CALL trans -b -p $random
+                                to_play="/$random, 1-, q"; show_video="False" ;;
             "")                 to_play="/nyan cat, 1, q" ;; 
             *)                  to_play="/$argument $@, 1-, q"; show_video="False" ;;
     esac
