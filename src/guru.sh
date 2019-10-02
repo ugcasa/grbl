@@ -62,7 +62,7 @@ parse_argument () {
 			status|counter|set|project|pro|disable|upgrade| \
 					document|slack|terminal|trans|translate| \
 					volume|vol|mute|stop|fadedown|fadeup|silence| \
-					save|remove|relax)				
+					save|remove|relax|user)				
 				$argument "$@"
 				return $? 
 	            ;;  
