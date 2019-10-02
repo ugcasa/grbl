@@ -33,12 +33,15 @@ main () {
             world-news|news)    to_play="url $(cat $GURU_CFG/news-live.pl)"; search_music="False" ;; 
             bg|backroung)       to_play="//$@, $((1 + RANDOM % 6)), 1-, q" ; show_video="False" ;;
             music-video)        to_play="/$@, 1-, q" ;;
-            something|jotain|\
-            random|rändöm)      
-                                random=$(shuf -n1  /usr/share/dict/words)
-                                $GURU_CALL trans -b -p $random
+            something|random)   random=$(shuf -n1  /usr/share/dict/words)
+                                $GURU_CALL trans -b -p "$random"
                                 to_play="/$random, 1-, q"; show_video="False" ;;
-            "")                 to_play="/nyan cat, 1, q" ;; 
+            jotain|rändöm|ihansama)      
+                                random=$($GURU_CALL trans -b -p en:fi "$(shuf -n1 /usr/share/dict/words)")
+                                echo "$random"
+                                to_play="/$random, 1-, q"; show_video="False" ;;
+            
+            "")                 to_play="/nyan cat, 1, q" ;;             
             *)                  to_play="/$argument $@, 1-, q"; show_video="False" ;;
     esac
 
