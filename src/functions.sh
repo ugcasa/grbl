@@ -604,3 +604,37 @@ silence () {	# alias
 	$GURU_CALL mute
 	$GURU_CALL play stop
 }
+
+
+user () {	# alias
+
+	variable="$1"
+	shift
+	
+	case $variable in 
+
+		ls|list)
+			cd $GURU_CFG
+			users=$(ls -d */ | cut -f1 -d'/')
+			;;
+		
+		change)
+			[ "$1" ] && user_name="$1" || exit 166			
+			[ -d "$GURU_CFG/$user_name" ] || exit 167
+			. "$GURU_CFG/$user_name/userrc"
+			#$GURU_CALL set user "$user_name"
+			;;
+
+		"")
+			echo "user name expected"
+			;;
+
+		*) 
+			echo "non valid input"
+			;;
+
+	esac
+
+
+			
+}
