@@ -1,8 +1,24 @@
-function get_video_metadata () {
+download_app="/home/casa/.local/bin/yle-dl"
 
-	#yle-dl --version >/dev/null || sudo -H pip3 install --user --upgrade yle-dl 
-	ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
-	jq --version >/dev/null || sudo apt install jq -y
+function yle_main () {
+	case $1 in 
+
+		install)	
+			yle-dl --version >/dev/null || sudo -H pip3 install --user --upgrade yle-dl 
+			ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
+			jq --version >/dev/null || sudo apt install jq -y
+			echo "logout is first time isntall yle-dl"
+			;;
+
+		*)			
+			get_video_metadata "$@" && get_video "$video_id"
+			;;
+
+		esac
+}
+
+
+function get_video_metadata () {
 
 	error=""
 	base_url="https://areena.yle.fi"
@@ -30,6 +46,7 @@ function get_video () {
 	$download_app "$base_url/$1" -o "$video_filename"
 }
 
-download_app="/home/casa/.local/bin/yle-dl"
 
-get_video_metadata "$@" && get_video "$video_id"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	yle_main $@
+fi
