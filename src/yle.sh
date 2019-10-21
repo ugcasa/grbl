@@ -1,3 +1,5 @@
+#!/bin/bash
+
 download_app="/home/casa/.local/bin/yle-dl"
 
 function yle_main () {

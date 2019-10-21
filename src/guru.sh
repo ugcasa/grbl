@@ -68,7 +68,7 @@ parse_argument () {
 	            ;;  
 
 	        # bash scripts
-			note|stamp|timer|phone|play|install|scan) 		
+			note|stamp|timer|phone|play|install|scan|tag|yle) 		
 				$argument.sh "$@" 
 				return $? 			
 				;;
