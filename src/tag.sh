@@ -88,28 +88,3 @@ fi
 
 
 
-
-
-
-
-
-
-		# case "$file" in
-		# 	.)
-		# 		echo "kokohakemisto"
-		# 		file="."
-		# 		#return 1
-		# 		;;
-		# 	"\*"|all) 
-		# 		echo "kaikkifilut"
-		# 		file="*.$value"
-		# 		#return 1
-		# 		;;
-		# 	"")
-		# 		echo "input file"
-		# 		return 1
-		# 		;;
-		# 	*) 
-		# 		echo "file not found"
-		# 		return 1
-		# 	esac
