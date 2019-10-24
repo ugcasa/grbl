@@ -14,7 +14,13 @@ tag_main () {
 
 	case "$tag_file_format" in 
 
-		3G2|3GP2|3GP|3GPP|AAX|AI|AIT|ARQ|ARW|CR2|CR3|CRM|CRW|CIFF|CS1|DCP|DNG|DR4|DVB|EPS|EPSF|PS|ERF|EXIF|EXV|F4A|F4B|F4P|F4V|FFF|FLIF|GIF|GPR|HDP|WDP|JXR|HEIC|HEIF|ICC|ICM|IIQ|IND|INDD|INDT|JP2|JPF|JPM|JPX|JPEG|JPG|JPE|LRV|M4A|M4B|M4P|M4V|MEF|MIE|MOS|MOV|QT|MP4|MPO|MQV|MRW|NEF|NRW|ORF|PDF|PEF|PNG JNG|MNG|PPM|PBM|PGM|PSD|PSB|PSDT|QTIF|QTI|QIF|RAF|RAW|RW2|RWL|SR2|SRW|THM|TIFF|TIF|VRD|X3F|XMP)
+		3G2|3GP2|3GP|3GPP|AAX|AI|AIT|ARQ|ARW|CR2|CR3|CRM|CRW|CIFF|\
+		CS1|DCP|DNG|DR4|DVB|EPS|EPSF|PS|ERF|EXIF|EXV|F4A|F4B|F4P|\
+		F4V|FFF|FLIF|GIF|GPR|HDP|WDP|JXR|HEIC|HEIF|ICC|ICM|IIQ|IND|\
+		INDD|INDT|JP2|JPF|JPM|JPX|JPEG|JPG|JPE|LRV|M4A|M4B|M4P|M4V|\
+		MEF|MIE|MOS|MOV|QT|MP4|MPO|MQV|MRW|NEF|NRW|ORF|PDF|PEF|PNG|\
+		JNG|MNG|PPM|PBM|PGM|PSD|PSB|PSDT|QTIF|QTI|QIF|RAF|RAW|RW2|\
+		RWL|SR2|SRW|THM|TIFF|TIF|VRD|X3F|XMP)
 			tag_picture "$@"
 			;;
 
@@ -38,28 +44,28 @@ tag_audio () {
 		current_tags=$($tag_tool -l $tag_file_name |grep $tag_container) 
 		current_tags=${current_tags##*=}
 		[[ $current_tags == "" ]] || echo "${current_tags//,/ }"
-		}
+	}
 
 	add_tag () { 		
-		current_tags=$(ls_tag)															#; echo "current_tags:$current_tags|"; echo "new tags:$@|"		
-		[[ $current_tags == "" ]] && current_tags="$GURU_USER $GURU_TEAM"
-		$tag_tool --$tag_container "${current_tags// /,},${@// /,}"  "$tag_file_name" 	# use "," as separator to use multible tags
-		}	
+		current_tags=$(ls_tag)																		#; echo "current_tags:$current_tags|"; echo "new tags:$@|"
+		[[ $current_tags == "" ]] && current_tags="audio ${tag_file_format,,} $GURU_USER $GURU_TEAM"
+		$tag_tool --$tag_container "${current_tags// /,},${@// /,}" "$tag_file_name" 				# use "," as separator to use multible tags
+	}	
 
 	rm_tag () { 	
 		$tag_tool --delete-frames="$tag_container" "$tag_file_name" 								
-		}						
+	}						
 	
 	case "$tag_action" in
 	
-		rm)
-			rm_tag 
+		ls|"")						
+			ls_tag 
 			;;
 		add)			
 			[[ "$@" ]] && add_tag "$@" 
 			;;
-		ls|"")						
-			ls_tag 
+		rm)
+			rm_tag 
 			;;
 		*)			
 			[[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
@@ -75,10 +81,16 @@ tag_picture () {
 	tag_container="Comment" 			# the title under which the information is stored in the image
 	tag_tool="exiftool"
 
+	ls_tag () { 
+		current_tags=$($tag_tool -$tag_container "$tag_file_name") 
+		current_tags=${current_tags##*": "}
+		[[ $current_tags == "" ]] || echo "$current_tags"
+	}
+	
 	add_tag () { 
 		current_tags=$($tag_tool -$tag_container "$tag_file_name")
 		current_tags=${current_tags##*": "}
-		[[ $current_tags == "" ]] && current_tags="$GURU_USER $GURU_TEAM"
+		[[ $current_tags == "" ]] && current_tags="picture ${tag_file_format,,} $GURU_USER $GURU_TEAM"
 		$tag_tool -$tag_container="$current_tags $@" "$tag_file_name" -overwrite_original_in_place -q 	
 	}
 
@@ -86,22 +98,17 @@ tag_picture () {
 		$tag_tool -$tag_container= "$tag_file_name" -overwrite_original_in_place -q 							
 	}
 
-	ls_tag () { 
-		current_tags=$($tag_tool -$tag_container "$tag_file_name") 
-		current_tags=${current_tags##*": "}
-		[[ $current_tags == "" ]] || echo "$current_tags"
-	}
 
 	case "$tag_action" in
 	
-		rm)
-			rm_tag 
+		ls|"")						
+			ls_tag 
 			;;
 		add)			
 			[[ "$@" ]] && add_tag "$@" 
 			;;
-		ls|"")						
-			ls_tag 
+		rm)
+			rm_tag 
 			;;
 		*)			
 			[[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
@@ -111,24 +118,25 @@ tag_picture () {
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then			# run if called or act like lib is included
 	
 	case "$1" in 
 
-	install)
-		sudo apt install libimage-$tag_tool-perl 		# install picture tag tool
-		sudo apt-get install python-mutagen 			# install mp3 tag tool
-		exit 0
-		;;
+		install)
+			sudo apt install libimage-$tag_tool-perl 		# install picture tag tool
+			sudo apt-get install python-mutagen 			# install mp3 tag tool
+			exit 0
+			;;
 
-	uninstall)
-		sudo apt remove libimage-$tag_tool-perl 		# remove picture tag tool
-		sudo apt-get remove python-mutagen 				# remove mp3 tag tool
-		exit 0
-		;;
+		uninstall)
+			sudo apt remove libimage-$tag_tool-perl 		# remove picture tag tool
+			sudo apt-get remove python-mutagen 				# remove mp3 tag tool
+			exit 0
+			;;
 
-	*)	
-		tag_main "$@"
+		*)	
+			tag_main "$@"
 	esac
+
 
 fi
