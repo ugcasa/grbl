@@ -27,12 +27,59 @@ tag_main () {
 		MP3)
 			tag_audio "$@"
 			;;
+
+		MD|TXT|MDD)
+			tag_text "$@"
+			;;
 		*)
 			echo "unknown format"
 			return 123
 	esac
 }
 
+tag_text () {
+	# If file has more than two lines it's taggable
+
+	get_tags () { 
+		current_tags=$(sed -n '2p' $tag_file_name) 	
+		current_tags=${current_tags##*:} 			# Cut "tag:" text away
+	}
+
+	add_tags () { 
+		get_tags 
+		if [ "$current_tags" ]; then 
+			sed '2d' $tag_file_name  >temp_file.txt && mv -f temp_file.txt $tag_file_name 
+		else
+			current_tags="text ${tag_file_format,,} $GURU_USER $GURU_TEAM" 
+		fi 
+		sed "2i\\tag: $current_tags $@" $tag_file_name >temp_file.txt && mv -f temp_file.txt $tag_file_name 
+	}
+
+	rm_tags () { 
+		get_tags 
+		if [ "$current_tags" ]; then 
+			sed '2d' $tag_file_name  >temp_file.txt && mv -f temp_file.txt $tag_file_name 
+		fi 
+	}
+
+	case "$tag_action" in
+	
+		ls|"")						
+			get_tags
+			[ "$current_tags" ] && echo $current_tags
+			;;
+		add)			
+			[[ "$@" ]] && add_tags "$@" 
+			;;
+		rm)
+			rm_tags 
+			;;
+		*)			
+			[[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
+			[[ "$tag_action" ]] && add_tags "$string" 			
+			;;
+		esac
+}
 
 tag_audio () {
 	# Audio tagging tools
@@ -40,36 +87,36 @@ tag_audio () {
 	tag_tool="mid3v2"
 	tag_container="TIT3"
 	
-	ls_tag () { 
+	get_tags () { 
 		current_tags=$($tag_tool -l $tag_file_name |grep $tag_container) 
 		current_tags=${current_tags##*=}
-		[[ $current_tags == "" ]] || echo "${current_tags//,/ }"
 	}
 
-	add_tag () { 		
-		current_tags=$(ls_tag)																		#; echo "current_tags:$current_tags|"; echo "new tags:$@|"
+	add_tags () { 																						#; echo "current_tags:$current_tags|"; echo "new tags:$@|"
+		get_tags
 		[[ $current_tags == "" ]] && current_tags="audio ${tag_file_format,,} $GURU_USER $GURU_TEAM"
-		$tag_tool --$tag_container "${current_tags// /,},${@// /,}" "$tag_file_name" 				# use "," as separator to use multible tags
+		$tag_tool --$tag_container "${current_tags// /,},${@// /,}" "$tag_file_name" 					# use "," as separator to use multible tags
 	}	
 
-	rm_tag () { 	
+	rm_tags () { 	
 		$tag_tool --delete-frames="$tag_container" "$tag_file_name" 								
 	}						
 	
 	case "$tag_action" in
 	
 		ls|"")						
-			ls_tag 
+			get_tags 
+			[ "$current_tags" ] && echo "${current_tags//,/ }"
 			;;
 		add)			
-			[[ "$@" ]] && add_tag "$@" 
+			[[ "$@" ]] && add_tags "$@" 
 			;;
 		rm)
-			rm_tag 
+			rm_tags 
 			;;
 		*)			
 			[[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
-			[[ "$tag_action" ]] && add_tag "$string" 			
+			[[ "$tag_action" ]] && add_tags "$string" 			
 			;;
 		esac
 }
@@ -81,20 +128,18 @@ tag_picture () {
 	tag_container="Comment" 			# the title under which the information is stored in the image
 	tag_tool="exiftool"
 
-	ls_tag () { 
+	get_tags () { 
 		current_tags=$($tag_tool -$tag_container "$tag_file_name") 
 		current_tags=${current_tags##*": "}
-		[[ $current_tags == "" ]] || echo "$current_tags"
 	}
 	
-	add_tag () { 
-		current_tags=$($tag_tool -$tag_container "$tag_file_name")
-		current_tags=${current_tags##*": "}
+	add_tags () { 
+		get_tags
 		[[ $current_tags == "" ]] && current_tags="picture ${tag_file_format,,} $GURU_USER $GURU_TEAM"
 		$tag_tool -$tag_container="$current_tags $@" "$tag_file_name" -overwrite_original_in_place -q 	
 	}
 
-	rm_tag () { 	
+	rm_tags () { 	
 		$tag_tool -$tag_container= "$tag_file_name" -overwrite_original_in_place -q 							
 	}
 
@@ -102,17 +147,18 @@ tag_picture () {
 	case "$tag_action" in
 	
 		ls|"")						
-			ls_tag 
+			get_tags 
+			[ "$current_tags" ] && echo "$current_tags"
 			;;
 		add)			
-			[[ "$@" ]] && add_tag "$@" 
+			[[ "$@" ]] && add_tags "$@" 
 			;;
 		rm)
-			rm_tag 
+			rm_tags 
 			;;
 		*)			
 			[[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
-			[[ "$tag_action" ]] && add_tag "$string" 			
+			[[ "$tag_action" ]] && add_tags "$string" 			
 			;;
 		esac
 }
@@ -140,3 +186,22 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then			# run if called or act like lib i
 
 
 fi
+
+
+# Test
+
+./tag.sh test.md
+./tag.sh test.md rm
+./tag.sh test.md add eka
+./tag.sh test.md toka
+./tag.sh test.md ls
+./tag.sh test.jpg
+./tag.sh test.jpg rm
+./tag.sh test.jpg add eka
+./tag.sh test.jpg toka
+./tag.sh test.jpg ls
+./tag.sh test.mp3
+./tag.sh test.mp3 rm
+./tag.sh test.mp3 add eka
+./tag.sh test.mp3 toka
+./tag.sh test.mp3 ls
