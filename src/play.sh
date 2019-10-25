@@ -139,7 +139,7 @@ run_demo() {
              pkill mplayer
              pkill xplayer
              #guru volume 50
-             mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_AUDIO/fairlight.m4a </dev/null >/dev/null 2>&1 &
+             mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_MUSIC/fairlight.m4a </dev/null >/dev/null 2>&1 &
              $GURU_CALL fadeup
          fi
 
@@ -149,7 +149,7 @@ run_demo() {
         if $audio; then
             $GURU_CALL fadedown
             pkill mplayer
-            mplayer >>/dev/null && mplayer -ss 1 $GURU_AUDIO/satelite.m4a </dev/null >/dev/null 2>&1 &                
+            mplayer >>/dev/null && mplayer -ss 1 $GURU_MUSIC/satelite.m4a </dev/null >/dev/null 2>&1 &                
             $GURU_CALL fadeup
         fi
 
