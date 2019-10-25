@@ -75,7 +75,6 @@ tag_text () {
 	}
 
 
-
 	case "$tag_action" in
 	
 		ls|"")						
@@ -95,6 +94,7 @@ tag_text () {
 		esac
 }
 
+
 tag_audio () {
 	# Audio tagging tools
 
@@ -104,6 +104,7 @@ tag_audio () {
 	get_tags () { 
 		current_tags=$($tag_tool -l $tag_file_name |grep $tag_container) 
 		current_tags=${current_tags##*=}
+		return 0
 	}
 
 	add_tags () { 																						#; echo "current_tags:$current_tags|"; echo "new tags:$@|"
@@ -133,6 +134,8 @@ tag_audio () {
 			[[ "$tag_action" ]] && add_tags "$string" 			
 			;;
 		esac
+		
+		return 0 			# Otherwice returns 1
 }
 
 
@@ -196,6 +199,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then				# run if called or act like lib 
 
 		*)	
 			tag_main "$@"
+			exit $?
 	esac
 
 fi
