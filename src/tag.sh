@@ -190,18 +190,18 @@ fi
 
 # Test
 
-./tag.sh test.md
-./tag.sh test.md rm
-./tag.sh test.md add eka
-./tag.sh test.md toka
-./tag.sh test.md ls
-./tag.sh test.jpg
-./tag.sh test.jpg rm
-./tag.sh test.jpg add eka
-./tag.sh test.jpg toka
-./tag.sh test.jpg ls
-./tag.sh test.mp3
-./tag.sh test.mp3 rm
-./tag.sh test.mp3 add eka
-./tag.sh test.mp3 toka
-./tag.sh test.mp3 ls
+# ./tag.sh test.md
+# ./tag.sh test.md rm
+# ./tag.sh test.md add eka
+# ./tag.sh test.md toka
+# ./tag.sh test.md ls
+# ./tag.sh test.jpg
+# ./tag.sh test.jpg rm
+# ./tag.sh test.jpg add eka
+# ./tag.sh test.jpg toka
+# ./tag.sh test.jpg ls
+# ./tag.sh test.mp3
+# ./tag.sh test.mp3 rm
+# ./tag.sh test.mp3 add eka
+# ./tag.sh test.mp3 toka
+# ./tag.sh test.mp3 ls
