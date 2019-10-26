@@ -42,25 +42,38 @@ tag_text () {
 
 	get_tags () { 
 		current_tags=$(sed -n '2p' $tag_file_name) 	
-		current_tags=${current_tags##*:} 			# Cut "tag:" text away
+		current_tags=${current_tags##*": "} 			# Cut "tag:" text away
+	}
+
+	change_table () { 
+
+ 		#echo "|$current_tags|"
+		string=$(printf " $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | tags added")
+		printf "$string\n" >>$tag_file_name 
 	}
 
 	add_tags () { 
+
 		get_tags 
+
 		if [ "$current_tags" ]; then 
 			sed '2d' $tag_file_name  >temp_file.txt && mv -f temp_file.txt $tag_file_name 
 		else
 			current_tags="text ${tag_file_format,,} $GURU_USER $GURU_TEAM" 
 		fi 
 		sed "2i\\tag: $current_tags $@" $tag_file_name >temp_file.txt && mv -f temp_file.txt $tag_file_name 
+		change_table
 	}
 
 	rm_tags () { 
+
 		get_tags 
+
 		if [ "$current_tags" ]; then 
 			sed '2d' $tag_file_name  >temp_file.txt && mv -f temp_file.txt $tag_file_name 
 		fi 
 	}
+
 
 	case "$tag_action" in
 	
@@ -81,6 +94,7 @@ tag_text () {
 		esac
 }
 
+
 tag_audio () {
 	# Audio tagging tools
 
@@ -90,6 +104,7 @@ tag_audio () {
 	get_tags () { 
 		current_tags=$($tag_tool -l $tag_file_name |grep $tag_container) 
 		current_tags=${current_tags##*=}
+		return 0
 	}
 
 	add_tags () { 																						#; echo "current_tags:$current_tags|"; echo "new tags:$@|"
@@ -119,13 +134,15 @@ tag_audio () {
 			[[ "$tag_action" ]] && add_tags "$string" 			
 			;;
 		esac
+		
+		return 0 			# Otherwice returns 1
 }
 
 
 tag_picture () {
 	# Picture tagging tools
 
-	tag_container="Comment" 			# the title under which the information is stored in the image
+	tag_container="Comment" 				# the title under which the information is stored in the image
 	tag_tool="exiftool"
 
 	get_tags () { 
@@ -164,7 +181,7 @@ tag_picture () {
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then			# run if called or act like lib is included
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then				# run if called or act like lib is included
 	
 	case "$1" in 
 
@@ -182,8 +199,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then			# run if called or act like lib i
 
 		*)	
 			tag_main "$@"
+			exit $?
 	esac
-
 
 fi
 

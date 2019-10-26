@@ -57,8 +57,10 @@ get_video_metadata () {
 
 	video_title=$(cat "$meta_data" | jq '.[].title')			#;echo "$video_title"
 	video_filename=$(cat "$meta_data" | jq '.[].filename')		
-	video_filename=${video_filename/' '/'-'} 					#;echo "$video_filename"
 	video_address=$(cat "$meta_data" | jq '.[].webpage') 		#;echo "$video_address"
+	video_filename=${video_filename//'"'/''} 					
+	video_filename=${video_filename//":"/""} 					
+	video_filename=${video_filename//" "/-} 					#;echo "$video_filename"
 	echo "$video_title"
 }
 
@@ -66,9 +68,10 @@ get_video_metadata () {
 get_video () {
 
 	$download_app "$video_url" -o "$video_filename"
+	$GURU_CALL tag "$video_filename" "yle $(date +$GURU_FILE_DATE_FORMAT) $video_title"
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-	yle_main $@
+	yle_main "$@"
 fi
