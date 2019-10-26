@@ -32,6 +32,7 @@ main () {
 					;;
 
 				open|edit)
+					just_created=""
 					open_note "$variable"
 					;;
 
@@ -138,7 +139,9 @@ make_note() {
 		    [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note	
 		    
 		    # change table
-		    printf "\n\ndate                | author | change\n:------------------ | ------ |:------\n $(date +%-d.%-m.%Y)-$(date +%H:%M:%S) | $GURU_USER | created\n" >>$note
+		    printf "\n\ndate                | author | change\n:------------------ | ------ |:------\n $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | created\n" >>$note
+			$GURU_CALL tag $note "note $GURU_PROJECT $(date +$GURU_FILE_DATE_FORMAT)"
+			just_created="yep"
 		fi
 		#;echo "given day stamp "$note_date_stamp
 		open_note "$note_date_stamp"
@@ -189,8 +192,11 @@ open_note() {
 	if [[ ! -f "$note" ]]; then 
 		read -p "no note for target day, create? [y/n]: " answer
 		[ "$answer" == "y" ] && make_note $1 || exit 0		
+	else
+		[ "$just_created" ] || echo " $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | edited" >>$note		
 	fi
 
+	
 	case $GURU_EDITOR in
 	
 		subl)

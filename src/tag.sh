@@ -48,7 +48,7 @@ tag_text () {
 	change_table () { 
 
  		#echo "|$current_tags|"
-		string=$(printf " $(date +$GURU_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | tags added")
+		string=$(printf " $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | tags added")
 		printf "$string\n" >>$tag_file_name 
 	}
 
