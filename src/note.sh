@@ -1,6 +1,7 @@
 #!/bin/bash
 # note generator
-
+# TODO Ihan vitun sekava. Lienee kirjoitettu osia tarpeen mukaan ilman että on jäsennelty uudestaan. 
+# TODO Vois kirjoittaa pythonilla, stringin ja tiedoston käsittely helpompaa
 
 # import and install requirements
 
