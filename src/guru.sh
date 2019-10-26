@@ -59,7 +59,7 @@ parse_argument () {
 				;;          
 
 			# functions (in functions.sh)
-			status|counter|set|project|pro|disable|upgrade| \
+			status|set|project|pro|disable|upgrade| \
 					document|slack|terminal|trans|translate| \
 					volume|vol|mute|stop|fadedown|fadeup|silence| \
 					save|remove|relax|user)				
@@ -68,7 +68,7 @@ parse_argument () {
 	            ;;  
 
 	        # bash scripts
-			note|stamp|timer|phone|play|install|scan|tag|yle) 		
+			counter|note|stamp|timer|phone|play|install|scan|tag|yle) 		
 				$argument.sh "$@" 
 				return $? 			
 				;;
