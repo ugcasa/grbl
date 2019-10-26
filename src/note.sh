@@ -40,6 +40,7 @@ note_main () { 			# command parser
 					;;
 
 		        help)
+					printf 'Usage: '$GURU_CALL' note [command] <date> \nCommands:\n'            		            
 					printf 'check   		  check do note exist, returns 0 if i do \n' 
 					printf 'list              list of notes. first parameter is month (MM), second year (YYYY) \n' 
 					printf 'open|edit|*       open given date notes (use time format '$GURU_FILE_DATE_FORMAT' \n'
@@ -52,11 +53,10 @@ note_main () { 			# command parser
 		            ;;
 
 				*) 			
-					if [ ! -z "$command" ]; then 
-						echo "opening $(date +"$GURU_DATE_FORMAT" -d $"command") note"
+					if [ "$command" ]; then 						
 						open_note $(date +"$GURU_FILE_DATE_FORMAT" -d "$command")
 					else
-						make_note
+						make_note $(date +"$GURU_FILE_DATE_FORMAT")
 					fi
 	esac
 }
@@ -66,13 +66,14 @@ list_notes() {
 
 		# List of notes on this month and year or given in order and format YYYY MM
 
-		[ "$1" ] && month="$1" || month=$(date +%m) 	#; echo "month: $month"
-		[ "$2" ] && year="$2" || year=$(date +%Y) 		#; echo "year: $year"
+		[ "$1" ] && month=$(date -d 2000-$1-1 +%m) || month=$(date +%m) 	#; echo "month: $month"
+		[ "$2" ] && year=$(date -d $2-1-1 +%Y) || year=$(date +%Y) 		#; echo "year: $year"
 		
+
 		directory="$GURU_NOTES/$GURU_USER/$year/$month"
 		
 		if [ -d "$directory" ]; then 
-			ls "$directory" | grep ".md" | grep -v "~" 
+			ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted"
 		else
 			printf "no folder exist" >>"$GURU_ERROR_MSG"		 
 			exit 126
@@ -99,9 +100,8 @@ set_for_date () {
 		note_date_stamp=$(date -d $year-$month-$day +%Y%m%d)		
 		note_date=$(date -d $year-$month-$day +%-m.%-d.%Y)
 
-		
 		note_dir=$GURU_NOTES/$GURU_USER/$year/$month
-		note_file=$GURU_USER"_notes_"$year$month$day.md	
+		note_file=$GURU_USER"_notes_"$note_date_stamp.md	
 		note="$note_dir/$note_file"							#; echo "note file "$note
 		
 		template_file="template.$GURU_USER.$GURU_TEAM.md"	#; echo "temp file name "$template_file
@@ -124,7 +124,7 @@ make_note() {
 		# template 
 		    [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note			    
 		# change table
-		    printf "\n\ŋ## Change log\n\n date               | author | change\n:----------------- | ------ |:------\n $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | created\n" >>$note
+		    printf "\n\n## Change log\n\n date               | author | change\n:----------------- | ------ |:------\n $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | created\n" >>$note
 		# tags 
 			$GURU_CALL tag $note "note $GURU_PROJECT $(date +$GURU_FILE_DATE_FORMAT)"
 		# flags
@@ -136,7 +136,7 @@ make_note() {
 
 
 open_note() {
-	# open note to preferred editor 
+
 	# input format YYYYMMDD 
 	
 	set_for_date "$1" 
@@ -153,6 +153,8 @@ open_note() {
 
 
 call_editor	() {
+
+	# open note to preferred editor 
 
 	case "$GURU_EDITOR" in
 	
