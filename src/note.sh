@@ -98,7 +98,7 @@ set_for_date () {
 		fi
 
 		note_date_stamp=$(date -d $year-$month-$day +%Y%m%d)		
-		note_date=$(date -d $year-$month-$day +%-m.%-d.%Y)
+		note_date=$(date -d $year-$month-$day +%-d.%-m.%Y)
 
 		note_dir=$GURU_NOTES/$GURU_USER/$year/$month
 		note_file=$GURU_USER"_notes_"$note_date_stamp.md	
