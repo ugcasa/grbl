@@ -52,7 +52,6 @@ finally:
 	import xml.etree.ElementTree as ET
 
 
-
 # later to config file [feed_name] url=, date_format= ..
 
 wide = 120
@@ -171,10 +170,10 @@ def open_news (feed_index):
 	print_header()
 	print("\n"+title+"\n\n"+summary)
 	print("\n"+content+"\n\n"+link+"\n") 	
-	print('"o" to open in browser, enter to return: ', end = '')
+	print('"o" or "2" to open in browser, enter to return: ', end = '')
 	answer = input()
 	
-	if answer == "o":
+	if answer == "o" or answer == "2":
 		profile = '--user-data-dir='+os.environ["GURU_CHROME_USER_DATA"]
 		browser = os.environ["GURU_BROWSER"]+' '+profile+' '+entry.link+' &'
 		os.system(browser)
@@ -185,11 +184,15 @@ def open_news (feed_index):
 
 def user_input():
 
+
 	global feed, feed_selection
 
 	print('open news: ', end = '')
 	answer = input()
 	
+	if answer == "q" or answer == "999": 
+		ulos()
+
 	if (answer.isdigit()): 				
 
 		selection = int(answer)
@@ -211,8 +214,6 @@ def user_input():
 			integer = int(feed_selection) 
 			feed = feedparser.parse(feed_list[integer])	
 
-	if answer == "q" or answer == "exit": 
-		ulos()
 
 ## Main
 

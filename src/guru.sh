@@ -74,8 +74,14 @@ parse_argument () {
 				;;
 
 			# python scripts
-			uutiset|fmradio)
-				DISPLAY=:0 $argument.py "$@" &
+			fmradio)
+				DISPLAY=:0 
+				$argument.py "$@" &
+				return $? 			
+				;;
+				
+			uutiset)
+				$argument.py "$@" &
 				return $? 			
 				;;
 

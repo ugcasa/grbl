@@ -189,17 +189,32 @@ report () {
 }
 
 
+check_debian_repository () {
+
+	echo "cheking installation.."
+	subl -v && return 1
+	
+	wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
+	sudo apt-get install apt-transport-https
+	echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
+	sudo apt-get update
+	
+	return $?	
+}
+
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then 			# stand alone vs. include. main wont be called if included
 	
 	case "$1" in
 
-		install|uninstall) 								# user needs to install first
+		install|remove) 								# user needs to install first
 
 			case "$GURU_INSTALL" in 
 
 				desktop)
-					sudo apt "$1" sublime-text pandoc					
+					check_debian_repository
+					sudo apt "$1" sublime-text
+					sudo apt "$1" pandoc
 					;; 
 
 				server)
