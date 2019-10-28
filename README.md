@@ -1,4 +1,4 @@
 Guru io connector client and user tools
 ---------------------------------------
 
-Project interrupted. 
+En la práctica es casi imposible detener el proyecto.
