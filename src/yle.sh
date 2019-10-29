@@ -8,11 +8,12 @@ yle_main () {
 
 		install)	
 			pip sudo -H install --upgrade pip
-			#yle-dl --version >/dev/null || pip3 install --user --upgrade yle-dl 
 			[ -f $download_app ] || pip3 install --user --upgrade yle-dl 
 			ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
 			jq --version >/dev/null || sudo apt install jq -y
+			sudo apt install detox
 			echo "Successfully installed"
+
 			;;
 
 		uninstall)	
@@ -55,19 +56,23 @@ get_video_metadata () {
 		return 100 
 	fi
 
-	video_title=$(cat "$meta_data" | jq '.[].title')			#;echo "$video_title"
-	video_filename=$(cat "$meta_data" | jq '.[].filename')		
-	video_address=$(cat "$meta_data" | jq '.[].webpage') 		#;echo "$video_address"
-	video_filename=${video_filename//'"'/''} 					
-	video_filename=${video_filename//":"/""} 					
-	video_filename=${video_filename//" "/-} 					#;echo "$video_filename"
+	video_title=$(cat "$meta_data" | jq '.[].title')			;echo "$video_title"
+	video_address=$(cat "$meta_data" | jq '.[].webpage') 		;echo "$video_address"
+	video_filename=$(cat "$meta_data" | jq '.[].filename')		;echo "meta: $video_filename"
 	echo "$video_title"
 }
 
 
 get_video () {
 
+	yle_temp="$HOME/tmp/yle"
+	[ -d "$yle-temp" ] && rm -rf "$yle-temp" 	
+	
+	mkdir -p "$yle-temp"
+	cd "$yle-temp"
 	$download_app "$video_url" -o "$video_filename"
+	video_filename=$(detox -v * | grep -v "Scanning")			;echo "detox: $video_filename"
+	video_filename=${video_filename#*"-> "}						;echo "cut: $video_filename"	
 	$GURU_CALL tag "$video_filename" "yle $(date +$GURU_FILE_DATE_FORMAT) $video_title"
 }
 
