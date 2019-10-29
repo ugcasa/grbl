@@ -18,7 +18,7 @@ tag_main () {
 		CS1|DCP|DNG|DR4|DVB|EPS|EPSF|PS|ERF|EXIF|EXV|F4A|F4B|F4P|\
 		F4V|FFF|FLIF|GIF|GPR|HDP|WDP|JXR|HEIC|HEIF|ICC|ICM|IIQ|IND|\
 		INDD|INDT|JP2|JPF|JPM|JPX|JPEG|JPG|JPE|LRV|M4A|M4B|M4P|M4V|\
-		MEF|MIE|MOS|MOV|QT|MP4|MPO|MQV|MRW|NEF|NRW|ORF|PDF|PEF|PNG|\
+		MEF|MIE|MOS|MOV|QT|MPO|MQV|MRW|NEF|NRW|ORF|PDF|PEF|PNG|\
 		JNG|MNG|PPM|PBM|PGM|PSD|PSB|PSDT|QTIF|QTI|QIF|RAF|RAW|RW2|\
 		RWL|SR2|SRW|THM|TIFF|TIF|VRD|X3F|XMP)
 			tag_picture "$@"
@@ -26,6 +26,10 @@ tag_main () {
 
 		MP3)
 			tag_audio "$@"
+			;;
+
+		MP4)
+			tag_mp4 "$@"
 			;;
 
 		MD|TXT|MDD)
@@ -139,6 +143,49 @@ tag_audio () {
 }
 
 
+tag_mp4 () {
+	# Video tagging tools
+
+	tag_tool="AtomicParsley"
+	tag_container="--comment"
+	
+	get_tags () { 
+		current_tags=$($tag_tool $tag_file_name -t |grep cmt) 
+		current_tags=${current_tags##*": "}
+		return 0
+	}
+
+	add_tags () { 																						#; echo "current_tags:$current_tags|"; echo "new tags:$@|"
+		get_tags
+		[[ $current_tags == "" ]] && current_tags="video ${tag_file_format,,} $GURU_USER $GURU_TEAM"
+		$tag_tool "$tag_file_name" "$tag_container" "$current_tags $@" --overWrite  >/dev/null
+	}	
+
+	rm_tags () { 	
+		$tag_tool "$tag_file_name" "$tag_container" "" --overWrite	>/dev/null
+	}						
+	
+	case "$tag_action" in
+	
+		ls|"")						
+		   	get_tags 
+			[ "$current_tags" ] && echo "$current_tags" 
+			;;
+		add)			
+			[[ "$@" ]] && add_tags "$@" 
+			;;
+		rm)
+			rm_tags 
+			;;
+		*)			
+			[[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
+			[[ "$tag_action" ]] && add_tags "$string" 			
+			;;
+		esac
+		
+		return 0 			# Otherwice returns 1
+}
+
 tag_picture () {
 	# Picture tagging tools
 
@@ -152,7 +199,7 @@ tag_picture () {
 	
 	add_tags () { 
 		get_tags
-		[[ $current_tags == "" ]] && current_tags="picture ${tag_file_format,,} $GURU_USER $GURU_TEAM"
+		[[ "$current_tags" == "" ]] && current_tags="picture ${tag_file_format,,} $GURU_USER $GURU_TEAM"
 		$tag_tool -$tag_container="$current_tags $@" "$tag_file_name" -overwrite_original_in_place -q 	
 	}
 
@@ -185,17 +232,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then				# run if called or act like lib 
 	
 	case "$1" in 
 
-		install)
-			sudo apt install libimage-$tag_tool-perl 		# install picture tag tool
-			sudo apt-get install python-mutagen 			# install mp3 tag tool
+		install|remove)
+			sudo apt $1 libimage-$tag_tool-perl 		# install picture tag tool
+			sudo apt $1 python-mutagen 			# install mp3 tag tool
+			#sudo apt $1 mpeg4ip-utils
+			sudo apt $1 easytag
 			exit 0
 			;;
 
-		uninstall)
-			sudo apt remove libimage-$tag_tool-perl 		# remove picture tag tool
-			sudo apt-get remove python-mutagen 				# remove mp3 tag tool
-			exit 0
-			;;
 
 		*)	
 			tag_main "$@"
@@ -203,6 +247,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then				# run if called or act like lib 
 	esac
 
 fi
+
 
 
 # Test
