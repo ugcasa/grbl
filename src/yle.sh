@@ -23,18 +23,18 @@ yle_main () {
 
 		get|dl|download)			
 			shift
-			get_media_metadata "$@" && get_media
+			for item in "$@"
+				do
+				   get_media_metadata "$item" && get_media
+				done
 			;;
 
 		news|uutiset|"")			
-			#uutiset suora #$download_app --pipe --latestepisode https://areena.yle.fi/1-4371930 2>/dev/null | vlc - &
 			$download_app --pipe --latestepisode https://areena.yle.fi/1-3235352 2>/dev/null | vlc - &
 				exit 0			
 			;;
 
 		weekly|relax|suosikit)
-			#run_count=$($GURU_CALL counter guru_run)
-			#(( run_count < 3 ))
 			printf "To remove notification do next:  \n 1. In VLC, click Tools ► Preferences \n 2. At the bottom left, for Show settings, click All \n 3. At the top left, for Search, paste the string: unimportant \n 4. In the box below Search, click: Qt \n 5. On the right-side, near the very bottom, uncheck Show unimportant error and warnings dialogs \n 6. Click Save \n 7. Close VLC to commit the pref change (otherwise, if VLC crashes, this change {or some changes} might not be saved) \n 8. Run VLC & see if that fixes the problem\n" 	
 			$download_app --pipe --latestepisode https://areena.yle.fi/1-3251215 2>/dev/null | vlc - 
 			$download_app --pipe --latestepisode https://areena.yle.fi/1-3245752 2>/dev/null | vlc - 
@@ -45,11 +45,17 @@ yle_main () {
 
 		meta|data|metadata|information|info)
 			shift
-			get_media_metadata "$@"
+			for item in "$@"
+				do
+				   get_media_metadata "$item" && get_media
+				done
 			;;
 		
-		*)
-			get_media_metadata "$@"
+		*)			
+			for item in "$@"
+				do
+				   get_media_metadata "$item" 
+				done
 			;;
 
 		esac
@@ -88,17 +94,18 @@ get_media () {
 	cd "$yle_temp"
 	$download_app "$media_url" -o "$media_file_name" 2>/dev/null
 	media_file_name=$(detox -v * | grep -v "Scanning")			#;echo "detox: $media_file_name"
-	media_file_name=${media_file_name#*"-> "}						#;echo "cut: $media_file_name"	
+	media_file_name=${media_file_name#*"-> "}					#;echo "cut: $media_file_name"	
 	
 	place_media
 
 }
 
+
 place_media () {
 
-	media_file_format="${media_file_name: -5}" 		; echo "media_file_format:$media_file_format|"		# read last characters of filename
-	media_file_format="${media_file_format#*.}"		; echo "media_file_format:$media_file_format|" 	# read after separator
-	media_file_format="${media_file_format^^}" 		; echo "media_file_format:$media_file_format|" 	# upcase
+	media_file_format="${media_file_name: -5}" 		#; echo "media_file_format:$media_file_format|"		# read last characters of filename
+	media_file_format="${media_file_format#*.}"		#; echo "media_file_format:$media_file_format|" 	# read after separator
+	media_file_format="${media_file_format^^}" 		#; echo "media_file_format:$media_file_format|" 	# upcase
 
 	$GURU_CALL tag "$media_file_name" "yle $(date +$GURU_FILE_DATE_FORMAT) $media_title"
 
@@ -120,8 +127,9 @@ place_media () {
 			media_file=$GURU_MEDIA/$media_file_name
 		esac
 
-	echo "command: $2"
+	#echo "command: $2"
 	[ "$2" == "play" ] && play_media "$media_file"
+	#[ "$2" == "cast" ] && play_media "$media_file"
 }
 
 play_media () {
