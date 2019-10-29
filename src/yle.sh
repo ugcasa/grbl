@@ -1,6 +1,7 @@
 #!/bin/bash
 
 download_app="yle-dl"
+run_folder=$(pwd) 	;echo "run_folder: $run_folder"
 
 yle_main () {
 
@@ -16,7 +17,7 @@ yle_main () {
 			;;
 
 		uninstall)	
-			sudo -H pip3 remove --user  yle-dl 
+			sudo -H pip3 remove --user yle-dl 
 			sudo apt remove ffmpeg jq -y			
 			echo "uninstalled"
 			;;
@@ -25,13 +26,24 @@ yle_main () {
 			shift
 			for item in "$@"
 				do
-				   get_media_metadata "$item" && get_media
+				   get_media_metadata "$item" || return 127
+				   get_media 
+				   place_media
 				done
 			;;
 
 		news|uutiset|"")			
 			$download_app --pipe --latestepisode https://areena.yle.fi/1-3235352 2>/dev/null | vlc - &
 				exit 0			
+			;;
+
+		subtitle|subtitles|sub|subs)	
+					shift		
+			   	   get_media_metadata "$1" || return 127
+				   get_subtitles 
+				   place_media "$run_folder"
+				   #guru tag Pahuuden_tunnukset-12-2019-10-28T06_00.mp4
+
 			;;
 
 		weekly|relax|suosikit)
@@ -79,58 +91,69 @@ get_media_metadata () {
 		return 100 
 	fi
 
-	media_title=$(cat "$meta_data" | jq '.[].title')			#;echo "title: $media_title"
-	media_address=$(cat "$meta_data" | jq '.[].webpage') 		#;echo "address: $media_address"
-	media_file_name=$(cat "$meta_data" | jq '.[].filename')		#;echo "meta: $media_file_name"
+	media_title=$(cat "$meta_data" | jq '.[].title')			;echo "title: $media_title"
+	media_address=$(cat "$meta_data" | jq '.[].webpage') 		;echo "address: $media_address"
+	media_file_name=$(cat "$meta_data" | jq '.[].filename')		;echo "meta: $media_file_name"
 	echo "$media_title"
 }
 
 
 get_media () {
-
+	
 	yle_temp="$HOME/tmp/yle"
 	[ -d "$yle_temp" ] && rm -rf "$yle_temp" 	
 	mkdir -p "$yle_temp"	
 	cd "$yle_temp"
-	$download_app "$media_url" -o "$media_file_name" 2>/dev/null
+	$download_app "$media_url" -o "$media_file_name" --sublang all #2>/dev/null
 	media_file_name=$(detox -v * | grep -v "Scanning")			#;echo "detox: $media_file_name"
 	media_file_name=${media_file_name#*"-> "}					#;echo "cut: $media_file_name"	
-	
-	place_media
-
 }
 
+get_subtitles () {
+	
+	yle_temp="$HOME/tmp/yle"
+	[ -d "$yle_temp" ] && rm -rf "$yle_temp" 	
+	mkdir -p "$yle_temp"	
+	cd "$yle_temp"
+	$download_app --subtitlesonly "$media_url"  #2>/dev/null
+	media_file_name=$(detox -v * | grep -v "Scanning")			#;echo "detox: $media_file_name"
+	media_file_name=${media_file_name#*"-> "}					#;echo "cut: $media_file_name"	
+}
 
 place_media () {
 
+	#location="$@"
 	media_file_format="${media_file_name: -5}" 		#; echo "media_file_format:$media_file_format|"		# read last characters of filename
 	media_file_format="${media_file_format#*.}"		#; echo "media_file_format:$media_file_format|" 	# read after separator
 	media_file_format="${media_file_format^^}" 		#; echo "media_file_format:$media_file_format|" 	# upcase
 
-	$GURU_CALL tag "$media_file_name" "yle $(date +$GURU_FILE_DATE_FORMAT) $media_title"
+	$GURU_CALL tag "$media_file_name" "yle $(date +$GURU_FILE_DATE_FORMAT) $media_title $media_url"
 
 	case "$media_file_format" in 
 
-		MP3|A3M)	
-			echo "saving to: $GURU_AUDIO/$media_file_name"
-			mv -f "$media_file_name" "$GURU_AUDIO"
-			media_file=$GURU_AUDIO/$media_file_name
+		MP3)	
+			[ "$location" ] && location="$1" || location="$GURU_AUDIO"
 			;;
 		MP4)
-			echo "saving to $GURU_VIDEO/$media_file_name"
-			mv -f "$media_file_name" "$GURU_VIDEO"
-			media_file=$GURU_VIDEO/$media_file_name
+			[ "$location" ] && location="$1" || location="$GURU_VIDEO"
+			;;
+		SRC|SUB)
+			[ "$location" ] && location="$1" || location="$GURU_VIDEO"
 			;;
 		*)
-			echo "saving to: $GURU_MEDIA/$media_file_name"
-			mv -f "$media_file_name" "$GURU_MEDIA"
-			media_file=$GURU_MEDIA/$media_file_name
-		esac
+			[ "$location" ] && location="$1" || location="$GURU_MEDIA"		
+	esac
+
+	echo "saving to: $location/$media_file_name"
+	mv -f "$media_file_name" "$location"
+	media_file=$location/$media_file_name
+
 
 	#echo "command: $2"
 	[ "$2" == "play" ] && play_media "$media_file"
 	#[ "$2" == "cast" ] && play_media "$media_file"
 }
+
 
 play_media () {
 	vlc --play-and-exit "$1" &
