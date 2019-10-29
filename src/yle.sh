@@ -1,6 +1,6 @@
 #!/bin/bash
 
-download_app="/home/casa/.local/bin/yle-dl"
+download_app="yle-dl"
 
 yle_main () {
 
@@ -21,29 +21,24 @@ yle_main () {
 			echo "uninstalled"
 			;;
 
-		# play)			
-		# 	#echo "$2" |grep "http" && base_url="" || base_url="https://areena.yle.fi/"
-		# 	yle-dl --pipe "$1" 2>/dev/null | vlc - &
-		# 	exit 0			
-			# ;;
-
 		get|dl|download)			
 			shift
 			get_media_metadata "$@" && get_media
 			;;
 
 		news|uutiset|"")			
-			$download_app --pipe --latestepisode https://areena.yle.fi/1-4559510 2>/dev/null | vlc - &
-			exit 0			
+			#uutiset suora #$download_app --pipe --latestepisode https://areena.yle.fi/1-4371930 2>/dev/null | vlc - &
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-3235352 2>/dev/null | vlc - &
+				exit 0			
 			;;
 
 		weekly|relax|suosikit)
 			#run_count=$($GURU_CALL counter guru_run)
 			#(( run_count < 3 ))
 			printf "To remove notification do next:  \n 1. In VLC, click Tools ► Preferences \n 2. At the bottom left, for Show settings, click All \n 3. At the top left, for Search, paste the string: unimportant \n 4. In the box below Search, click: Qt \n 5. On the right-side, near the very bottom, uncheck Show unimportant error and warnings dialogs \n 6. Click Save \n 7. Close VLC to commit the pref change (otherwise, if VLC crashes, this change {or some changes} might not be saved) \n 8. Run VLC & see if that fixes the problem\n" 	
-			$download_app --pipe --latestepisod https://areena.yle.fi/1-3251215 2>/dev/null | vlc - 
-			$download_app --pipe --latestepisod https://areena.yle.fi/1-3245752 2>/dev/null | vlc - 
-			$download_app --pipe --latestepisod https://areena.yle.fi/1-4360930 2>/dev/null | vlc - 			
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-3251215 2>/dev/null | vlc - 
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-3245752 2>/dev/null | vlc - 
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-4360930 2>/dev/null | vlc - 			
 			exit 0			
 			;;
 
