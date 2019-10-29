@@ -22,6 +22,12 @@ yle_main () {
 			echo "uninstalled"
 			;;
 
+		# play)			
+		# 	#echo "$2" |grep "http" && base_url="" || base_url="https://areena.yle.fi/"
+		# 	yle-dl --pipe "$1" 2>/dev/null | vlc - &
+		# 	exit 0			
+			# ;;
+
 		get|dl|download)			
 			shift
 			get_media_metadata "$@" && get_media
@@ -86,7 +92,7 @@ get_media () {
 	[ -d "$yle_temp" ] && rm -rf "$yle_temp" 	
 	mkdir -p "$yle_temp"	
 	cd "$yle_temp"
-	$download_app "$media_url" -o "$media_file_name"
+	$download_app "$media_url" -o "$media_file_name" 2>/dev/null
 	media_file_name=$(detox -v * | grep -v "Scanning")			#;echo "detox: $media_file_name"
 	media_file_name=${media_file_name#*"-> "}						#;echo "cut: $media_file_name"	
 	
@@ -120,7 +126,7 @@ place_media () {
 			media_file=$GURU_MEDIA/$media_file_name
 		esac
 
-	[ "$2"=="play" ] && play_media 
+	[ "$2" == "play" ] && play_media 
 }
 
 play_media () {
