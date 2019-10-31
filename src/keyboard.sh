@@ -11,7 +11,8 @@ phone_kb="Yealink usb-p1k"
 phone_kb_dev='/dev/input/by-id/usb-Yealink_Network_Technology_Ltd._VOIP_USB_Phone-event-if03'
 
 history=""
-history_file="$HOME/tmp/file.rm"
+history_file="$HOME/tmp/kb.log"
+
 
 keyboard_main() {
 
@@ -39,6 +40,10 @@ keyboard_main() {
             mask_kb "$phone_kb" 
             poll_kb "$phone_kb_dev"
             enable_kb "$phone_kb"
+            ;;
+
+        install|remove)
+            sudo apt "$command" xinput
             ;;
         *)
         echo "duud!"
