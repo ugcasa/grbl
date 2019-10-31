@@ -22,14 +22,15 @@ yle_main () {
 			echo "uninstalled"
 			;;
 
-		# play)			
-		# 	#echo "$2" |grep "http" && base_url="" || base_url="https://areena.yle.fi/"
-		# 	yle-dl --pipe "$1" 2>/dev/null | vlc - &
-		# 	exit 0			
-			# ;;
+		play)			
+			#echo "$2" |grep "http" && base_url="" || base_url="https://areena.yle.fi/"
+			yle-dl --pipe "$1" 2>/dev/null | vlc - &
+			exit 0			
+			;;
 
 		get|dl|download)			
 			shift
+			[ "$2" == "play" ] && play_after="turre"
 			get_media_metadata "$@" && get_media
 			;;
 
@@ -59,6 +60,8 @@ yle_main () {
 			;;
 
 		esac
+
+	return 0	
 }
 
 
@@ -126,7 +129,7 @@ place_media () {
 			media_file=$GURU_MEDIA/$media_file_name
 		esac
 
-	[ "$2" == "play" ] && play_media 
+	[ "$play_after" ] && play_media 
 }
 
 play_media () {
