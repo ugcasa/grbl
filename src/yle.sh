@@ -1,6 +1,6 @@
 #!/bin/bash
 
-download_app="/home/casa/.local/bin/yle-dl"
+download_app="yle-dl"
 
 yle_main () {
 
@@ -11,9 +11,8 @@ yle_main () {
 			[ -f $download_app ] || pip3 install --user --upgrade yle-dl 
 			ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
 			jq --version >/dev/null || sudo apt install jq -y
-			sudo apt install detox cvlc
+			sudo apt install detox vlc
 			echo "Successfully installed"
-
 			;;
 
 		uninstall)	
@@ -35,28 +34,32 @@ yle_main () {
 			;;
 
 		news|uutiset|"")			
-			yle-dl --pipe --latestepisod https://areena.yle.fi/1-4559510 2>/dev/null | vlc - &
-			exit 0			
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-3235352 2>/dev/null | vlc - &
+				exit 0			
 			;;
 
 		weekly|relax|suosikit)
-			#run_count=$($GURU_CALL counter guru_run)
-			#(( run_count < 3 ))
 			printf "To remove notification do next:  \n 1. In VLC, click Tools ► Preferences \n 2. At the bottom left, for Show settings, click All \n 3. At the top left, for Search, paste the string: unimportant \n 4. In the box below Search, click: Qt \n 5. On the right-side, near the very bottom, uncheck Show unimportant error and warnings dialogs \n 6. Click Save \n 7. Close VLC to commit the pref change (otherwise, if VLC crashes, this change {or some changes} might not be saved) \n 8. Run VLC & see if that fixes the problem\n" 	
-			yle-dl --pipe --latestepisod https://areena.yle.fi/1-3251215 2>/dev/null | vlc - 
-			yle-dl --pipe --latestepisod https://areena.yle.fi/1-3245752 2>/dev/null | vlc - 
-			yle-dl --pipe --latestepisod https://areena.yle.fi/1-4360930 2>/dev/null | vlc - 			
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-3251215 2>/dev/null | vlc - 
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-3245752 2>/dev/null | vlc - 
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-4360930 2>/dev/null | vlc - 			
 			exit 0			
 			;;
 
 
 		meta|data|metadata|information|info)
 			shift
-			get_media_metadata "$@"
+			for item in "$@"
+				do
+				   get_media_metadata "$item" && get_media
+				done
 			;;
 		
-		*)
-			get_media_metadata "$@"
+		*)			
+			for item in "$@"
+				do
+				   get_media_metadata "$item" 
+				done
 			;;
 
 		esac
@@ -97,11 +100,12 @@ get_media () {
 	cd "$yle_temp"
 	$download_app "$media_url" -o "$media_file_name" 2>/dev/null
 	media_file_name=$(detox -v * | grep -v "Scanning")			#;echo "detox: $media_file_name"
-	media_file_name=${media_file_name#*"-> "}						#;echo "cut: $media_file_name"	
+	media_file_name=${media_file_name#*"-> "}					#;echo "cut: $media_file_name"	
 	
 	place_media
 
 }
+
 
 place_media () {
 
@@ -129,11 +133,12 @@ place_media () {
 			media_file=$GURU_MEDIA/$media_file_name
 		esac
 
-	[ "$play_after" ] && play_media 
+	[ "$2" == "play" ] && play_media "$media_file"
+
 }
 
 play_media () {
-	vlc --play-and-exit "$media_file" &
+	vlc --play-and-exit "$1" &
 }
 
 
