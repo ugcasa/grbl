@@ -10,22 +10,12 @@ barcode_dev='/dev/input/by-id/usb-Newland_Auto-ID_NLS_IOTC_PRDs_HID_KBW_EY016945
 phone_kb="Yealink usb-p1k" 
 phone_kb_dev='/dev/input/by-id/usb-Yealink_Network_Technology_Ltd._VOIP_USB_Phone-event-if03'
 
+
 keyboard_main() {
 
     command="$1"; shift
 
     case "$command" in
-
-        test)
-            mask_kb "$phone_kb"
-            mask_kb "$barcode"
-            read -p "disabled: " foo
-            [ "$foo" ] && echo "failed" || echo "passed"
-            enable_kb "$phone_kb"
-            enable_kb "$barcode"
-            read -p "enabled: " foo
-            [ "$foo" ] && echo "passed" || echo "failed"
-            ;;
 
         disable|ds)
             mask_kb "$phone_kb"
@@ -49,6 +39,24 @@ keyboard_main() {
             enable_kb "$phone_kb"
             ;;
     
+        test1|t1)
+            mask_kb "$phone_kb"
+            output=$(poll_kb "$barcode") 
+            echo "got: $output" 
+            enable_kb "$phone_kb"           
+            ;;
+
+        test2|t2)
+            mask_kb "$phone_kb"
+            mask_kb "$barcode"
+            read -p "disabled: " foo
+            [ "$foo" ] && echo "failed" || echo "passed"
+            enable_kb "$phone_kb"
+            enable_kb "$barcode"
+            read -p "enabled: " foo
+            [ "$foo" ] && echo "passed" || echo "failed"
+            ;;
+
         *)
         echo "duud!"
     esac
@@ -58,9 +66,10 @@ keyboard_main() {
 get_input_device_id() {
     # Get given device name ID
     tab=$(printf "\t")
-    temp_id=$(xinput --list|grep "$@")
-    temp_id=${temp_id#*=}   
-    temp_id=${temp_id%%$tab*}
+    temp_id=$(xinput --list|grep "$@")      # places line of list where input is mentioned
+                                            # Format '∼ Yealink usb-p1k                           id=13   [floating slave]'
+    temp_id=${temp_id#*=}                   # removes all before "=" character
+    temp_id=${temp_id%%$tab*}               # removes all from tab character
     echo "$temp_id"
 }
 
@@ -79,7 +88,6 @@ check_kb () {
 
 mask_kb() {
     # remove connection between hardware and core virtual master imput stream
-    
     check_kb "$@" 
     temp_id=$(get_input_device_id "$@")
     xinput float $temp_id
@@ -88,7 +96,7 @@ mask_kb() {
 
 enable_kb(){
     # returns connection between hardware and core virtual master imput stream
-    # input device name
+    # input: device name
     echo "$0: device not connected" >$GURU_ERROR_MSG
     check_kb "$@" && rm $GURU_ERROR_MSG || return 123 
     temp_id=$(get_input_device_id "$@")                      #;echo "targed: $temp_id"
@@ -98,37 +106,31 @@ enable_kb(){
 
 
 parse_kb () {
+    # Parses key values from xinput output and parses key commands (for now)
+    # Event: time 1572541863.140094, type 1 (EV_KEY), code 2 (KEY_1), value 1
+    data_array=()
     line=$(echo "$@" | grep "code " | grep "EV_KEY" | grep -v "value 0") 
-    line=${line#*code }             #;echo "$line"
-    line=${line#*"("}               #;echo "$line"
-    line=${line#*"("}               #;echo "$line"
-    line=${line%%")"*}              #;echo "$line"
-    line=${line#*KEY_}              #;echo "$line"
-    case $line in
-        ENTER)
-            printf "\n"
+    line=${line#*code }             #;echo "$line"      # remove all before "code "
+    line=${line#*"("}               #;echo "$line"      # remove all to first "("
+    line=${line#*"("}               #;echo "$line"      # remove all to second from "(
+    line=${line%%")"*}              #;echo "$line"      # remove ")" 
+    line=${line#*KEY_}              #;echo "$line"      # remove "KEY_" form value
+    
+    case "$line" in
+        ENTER)          
+                    #printf "\n" 
+                        ;; # TODO: How to break out here?? we are in sub case function called by sub routine while loop, cannot exit mothers 
+        BACKSPACE)  printf "\b \b" ;;
+        LEFTSHIFT*) printf "#" ;;  
+        KPASTERISK) printf "*" ;;
+        LEFT)       printf "←" ;;
+        UP)         
+            #printf "↑" 
+            >"$HOME/tmp/file.rm"
             ;;
-        BACKSPACE)
-            printf "\b \b"                
-            ;;
-        LEFTSHIFT*)
-            printf "#"
-            ;;                
-        KPASTERISK)
-            printf "*"
-            ;;
-        LEFT)
-            printf "←"
-            ;;
-        UP)
-            printf "↑"
-            ;;
-        DOWN)
-            printf "↓"
-            ;;
-        RIGHT)
-            printf "→"
-            ;;               
+
+        DOWN)       printf "↓" ;;
+        RIGHT)      printf "→" ;;                       
         ESC)
             for ((i=$counter; i>=1; i--)); do
                 printf "\b \b"
@@ -136,14 +138,18 @@ parse_kb () {
             ;;
         *)
             ((counter++))
-            [ "$line" ] && printf "$line" 
+            if [ "$line" ]; then
+                printf "$line"             
+                data_array+=("$line")
+            fi
         esac
 }
 
 
 poll_kb() {
+    # Poll for given keyboard device
+    # TODO add long press function, doable, both states are reported in xinput put-put
     # Event: time 1572541863.140094, type 1 (EV_KEY), code 2 (KEY_1), value 1
-    # TODO long press
     sudo evtest "$1" | while read line; do parse_kb "$line"; done 
 }
 
