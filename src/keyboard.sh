@@ -57,7 +57,7 @@ keyboard_main() {
 
 get_input_device_id() {
     # Get given device name ID
-    tab=$(printf "\t")6415600549813
+    tab=$(printf "\t")
     temp_id=$(xinput --list|grep "$@")
     temp_id=${temp_id#*=}   
     temp_id=${temp_id%%$tab*}
