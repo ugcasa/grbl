@@ -10,6 +10,8 @@ barcode_dev='/dev/input/by-id/usb-Newland_Auto-ID_NLS_IOTC_PRDs_HID_KBW_EY016945
 phone_kb="Yealink usb-p1k" 
 phone_kb_dev='/dev/input/by-id/usb-Yealink_Network_Technology_Ltd._VOIP_USB_Phone-event-if03'
 
+history=""
+history_file="$HOME/tmp/file.rm"
 
 keyboard_main() {
 
@@ -38,25 +40,6 @@ keyboard_main() {
             poll_kb "$phone_kb_dev"
             enable_kb "$phone_kb"
             ;;
-    
-        test1|t1)
-            mask_kb "$phone_kb"
-            output=$(poll_kb "$barcode") 
-            echo "got: $output" 
-            enable_kb "$phone_kb"           
-            ;;
-
-        test2|t2)
-            mask_kb "$phone_kb"
-            mask_kb "$barcode"
-            read -p "disabled: " foo
-            [ "$foo" ] && echo "failed" || echo "passed"
-            enable_kb "$phone_kb"
-            enable_kb "$barcode"
-            read -p "enabled: " foo
-            [ "$foo" ] && echo "passed" || echo "failed"
-            ;;
-
         *)
         echo "duud!"
     esac
@@ -87,7 +70,7 @@ check_kb () {
 
 
 mask_kb() {
-    # remove connection between hardware and core virtual master imput stream
+    # remove connection between hardware and core virtual master iNput stream
     check_kb "$@" 
     temp_id=$(get_input_device_id "$@")
     xinput float $temp_id
@@ -95,11 +78,10 @@ mask_kb() {
 
 
 enable_kb(){
-    # returns connection between hardware and core virtual master imput stream
+    # returns connection between hardware and core virtual master iNput stream
     # input: device name
-    echo "$0: device not connected" >$GURU_ERROR_MSG
-    check_kb "$@" && rm $GURU_ERROR_MSG || return 123 
-    temp_id=$(get_input_device_id "$@")                      #;echo "targed: $temp_id"
+    check_kb "$@" || return 123 
+    temp_id=$(get_input_device_id "$@")                      #;echo "target: $temp_id"
     core_id=$(get_input_device_id "Virtual core keyboard")   #;echo "core: $core_id" 
     xinput reattach $temp_id $core_id
 }
@@ -108,39 +90,50 @@ enable_kb(){
 parse_kb () {
     # Parses key values from xinput output and parses key commands (for now)
     # Event: time 1572541863.140094, type 1 (EV_KEY), code 2 (KEY_1), value 1
-    data_array=()
-    line=$(echo "$@" | grep "code " | grep "EV_KEY" | grep -v "value 0") 
-    line=${line#*code }             #;echo "$line"      # remove all before "code "
-    line=${line#*"("}               #;echo "$line"      # remove all to first "("
-    line=${line#*"("}               #;echo "$line"      # remove all to second from "(
-    line=${line%%")"*}              #;echo "$line"      # remove ")" 
-    line=${line#*KEY_}              #;echo "$line"      # remove "KEY_" form value
     
-    case "$line" in
-        ENTER)          
-                    #printf "\n" 
-                        ;; # TODO: How to break out here?? we are in sub case function called by sub routine while loop, cannot exit mothers 
-        BACKSPACE)  printf "\b \b" ;;
+    key=$(echo "$@" | grep "code " | grep "EV_KEY" | grep -v "value 0") 
+    key=${key#*code }             #;echo "$key"      # remove all before "code "
+    key=${key#*"("}               #;echo "$key"      # remove all to first "("
+    key=${key#*"("}               #;echo "$key"      # remove all to second from "(
+    key=${key%%")"*}              #;echo "$key"      # remove ")" 
+    key=${key#*KEY_}              #;echo "$key"      # remove "KEY_" form value
+    
+    case "$key" in
+        # TODO: How to break out here?? we are in sub case function called by sub routine while loop, cannot exit mothers 
         LEFTSHIFT*) printf "#" ;;  
-        KPASTERISK) printf "*" ;;
         LEFT)       printf "←" ;;
-        UP)         
-            #printf "↑" 
-            >"$HOME/tmp/file.rm"
-            ;;
-
         DOWN)       printf "↓" ;;
         RIGHT)      printf "→" ;;                       
+        UP)         printf "↑" ;; 
+
+        KPASTERISK) 
+                history="$history "
+                printf " " 
+                ;;
+
+        BACKSPACE)  
+            printf "\b \b" 
+            [ $history ] && history=${history::-1}
+            ;;
+
+
         ESC)
             for ((i=$counter; i>=1; i--)); do
                 printf "\b \b"
             done
+            history=""
             ;;
+
+        ENTER)      
+            printf "\n" 
+            [ "$history" ] && printf "$history\n" >>"$history_file"
+            history=""
+            ;;                     
         *)
             ((counter++))
-            if [ "$line" ]; then
-                printf "$line"             
-                data_array+=("$line")
+            if [ "$key" ]; then
+                printf "$key" 
+                history="$history$key"
             fi
         esac
 }
