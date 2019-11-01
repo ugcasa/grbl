@@ -8,6 +8,7 @@ export GURU_CFG="$HOME/.config/guru"
 export GURU_USER_RC="$GURU_CFG/$GURU_USER/userrc"
 export GURU_BIN="$HOME/bin"
 export GURU_CALL="guru"
+export GURU_DOMAIN_NAME="ujo.guru"
 
 # userrc
 export GURU_REAL_NAME="your full name"
@@ -60,6 +61,7 @@ export GURU_EDITOR="subl"
 export GURU_BROWSER="chromium-browser"
 export GURU_OFFICE_DOC="libreoffice"
 export GURU_OFFICE_SPR="libreoffice"
+
 
 # Overwrite with user confic - if exist
 

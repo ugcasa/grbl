@@ -20,23 +20,23 @@ keyboard_main() {
 
     case "$command" in
 
-        disable|ds)
+        mask)
             mask_kb "$phone_kb"
             mask_kb "$barcode"
             ;;
         
-        enable|en)  
+        enamble)  
             enable_kb "$phone_kb"
             enable_kb "$barcode"        
             ;;
 
-        barcode|poll_barcode)  
+        barcode)  
             mask_kb "$barcode"      
             poll_kb "$barcode_dev"         
             enable_kb "$barcode"          
             ;;
 
-        phone|phone_kb|poll-phone-kb)  
+        phone|phone_kb)  
             mask_kb "$phone_kb" 
             poll_kb "$phone_kb_dev"
             enable_kb "$phone_kb"
@@ -45,8 +45,20 @@ keyboard_main() {
         install|remove)
             sudo apt "$command" xinput
             ;;
+
+        help)
+            printf "usage: $GURU_CALL [command] argument \ncommands: \n"
+            printf "mask            remove target device from core import feed\n"
+            printf "enable          connect target device to core import feed\n"
+            printf "barcode         record barcode reader \n"
+            printf "phone           record Nokia 3110 type interface \n"
+            printf "install|remove  install/remove needed tools \n"
+            ;;
         *)
-        echo "duud!"
+            # Reset to default 
+            enable_kb "$phone_kb"
+            enable_kb "$barcode"      
+        
     esac
 }
 
@@ -101,11 +113,11 @@ parse_kb () {
     key=${key#*"("}               #;echo "$key"      # remove all to first "("
     key=${key#*"("}               #;echo "$key"      # remove all to second from "(
     key=${key%%")"*}              #;echo "$key"      # remove ")" 
-    key=${key#*KEY_}              #;echo "$key"      # remove "KEY_" form value
+    key=${key#*KEY_}              #;echo "$key"      # remove "KEY_" from value
     
     case "$key" in
         # TODO: How to break out here?? we are in sub case function called by sub routine while loop, cannot exit mothers 
-        LEFTSHIFT*) printf "#" ;;  
+        LEFTSHIFT*) printf "#" ;;  # TODO remove "3" somehow without using string pointing to name.. do not work. 
         LEFT)       printf "←" ;;
         DOWN)       printf "↓" ;;
         RIGHT)      printf "→" ;;                       
@@ -133,7 +145,8 @@ parse_kb () {
             printf "\n" 
             [ "$history" ] && printf "$history\n" >>"$history_file"
             history=""
-            ;;                     
+            ;;             
+
         *)
             ((counter++))
             if [ "$key" ]; then
