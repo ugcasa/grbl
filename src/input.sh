@@ -25,6 +25,7 @@ keyboard_main() {
             mask_kb "$barcode"
             ;;
         
+
         enamble)  
             enable_kb "$phone_kb"
             enable_kb "$barcode"        
@@ -45,13 +46,19 @@ keyboard_main() {
         install|remove)
             sudo apt "$command" xinput
             ;;
+        
+        last|history)
+            [ "$1" ] && lines="$1" || lines="1"
+            tail $history_file -n$lines
+            ;;
 
         help)
-            printf "usage: $GURU_CALL [command] argument \ncommands: \n"
+            printf "usage: $GURU_CALL input [command] argument \ncommands: \n"
             printf "mask            remove target device from core import feed\n"
             printf "enable          connect target device to core import feed\n"
             printf "barcode         record barcode reader \n"
             printf "phone           record Nokia 3110 type interface \n"
+            printf "last|history    last <n> lines og history \n"
             printf "install|remove  install/remove needed tools \n"
             ;;
         *)
@@ -64,7 +71,7 @@ keyboard_main() {
 
 
 get_input_device_id() {
-    # Get given device name ID
+# Get given device name ID
     tab=$(printf "\t")
     temp_id=$(xinput --list|grep "$@")      # places line of list where input is mentioned
                                             # Format '∼ Yealink usb-p1k                           id=13   [floating slave]'
@@ -75,7 +82,7 @@ get_input_device_id() {
 
 
 check_kb () {
-    # check that its connected return 0 if is and 1 if not
+# check that its connected return 0 if is and 1 if not
     xinput --list|grep "$@" >/dev/null; error="$?"
     if [ $error -gt 0 ]; then 
         echo "device $@ not connected" # >$GURU_ERROR_MSG
@@ -87,7 +94,7 @@ check_kb () {
 
 
 mask_kb() {
-    # remove connection between hardware and core virtual master iNput stream
+# remove connection between hardware and core virtual master iNput stream
     check_kb "$@" 
     temp_id=$(get_input_device_id "$@")
     xinput float $temp_id
@@ -95,8 +102,8 @@ mask_kb() {
 
 
 enable_kb(){
-    # returns connection between hardware and core virtual master iNput stream
-    # input: device name
+# returns connection between hardware and core virtual master iNput stream
+# input: device name
     check_kb "$@" || return 123 
     temp_id=$(get_input_device_id "$@")                      #;echo "target: $temp_id"
     core_id=$(get_input_device_id "Virtual core keyboard")   #;echo "core: $core_id" 
@@ -105,8 +112,8 @@ enable_kb(){
 
 
 parse_kb () {
-    # Parses key values from xinput output and parses key commands (for now)
-    # Event: time 1572541863.140094, type 1 (EV_KEY), code 2 (KEY_1), value 1
+# Parses key values from xinput output and parses key commands (for now)
+# Event: time 1572541863.140094, type 1 (EV_KEY), code 2 (KEY_1), value 1
     
     key=$(echo "$@" | grep "code " | grep "EV_KEY" | grep -v "value 0") 
     key=${key#*code }             #;echo "$key"      # remove all before "code "
@@ -116,39 +123,39 @@ parse_kb () {
     key=${key#*KEY_}              #;echo "$key"      # remove "KEY_" from value
     
     case "$key" in
-        # TODO: How to break out here?? we are in sub case function called by sub routine while loop, cannot exit mothers 
+    # TODO: How to break out here?? we are in sub case function called by sub routine while loop, cannot exit mothers 
         LEFTSHIFT*) printf "#" ;;  # TODO remove "3" somehow without using string pointing to name.. do not work. 
         LEFT)       printf "←" ;;
         DOWN)       printf "↓" ;;
         RIGHT)      printf "→" ;;                       
         UP)         printf "↑" ;; 
 
-        KPASTERISK) 
+        KPASTERISK)                     # Use as space till long press implemented
                 history="$history "
                 printf " " 
                 ;;
 
-        BACKSPACE)  
+        BACKSPACE)                      
             printf "\b \b" 
             [ $history ] && history=${history::-1}
             ;;
 
 
-        ESC)
-            for ((i=$counter; i>=1; i--)); do
+        ESC)                            # Cancel line
+            for ((i=$character_count; i>=1; i--)); do
                 printf "\b \b"
             done
             history=""
             ;;
 
-        ENTER)      
+        ENTER)                          # Confirm line
             printf "\n" 
             [ "$history" ] && printf "$history\n" >>"$history_file"
             history=""
             ;;             
 
         *)
-            ((counter++))
+            ((character_count++))               
             if [ "$key" ]; then
                 printf "$key" 
                 history="$history$key"
@@ -158,9 +165,9 @@ parse_kb () {
 
 
 poll_kb() {
-    # Poll for given keyboard device
-    # TODO add long press function, doable, both states are reported in xinput put-put
-    # Event: time 1572541863.140094, type 1 (EV_KEY), code 2 (KEY_1), value 1
+# Poll for given keyboard device
+# TODO add long press function, doable, both states are reported in xinput put-put
+# Event: time 1572541863.140094, type 1 (EV_KEY), code 2 (KEY_1), value 1
     sudo evtest "$1" | while read line; do parse_kb "$line"; done 
 }
 
