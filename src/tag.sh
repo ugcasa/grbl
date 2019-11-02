@@ -103,7 +103,7 @@ tag_audio () {
 	# Audio tagging tools
 
 	tag_tool="mid3v2"
-	tag_container="TIT3"
+	tag_container="TIT3" 			# Comment better? is shown by default in various programs
 	
 	get_tags () { 
 		current_tags=$($tag_tool -l $tag_file_name |grep $tag_container) 
@@ -189,8 +189,8 @@ tag_mp4 () {
 tag_picture () {
 	# Picture tagging tools
 
-	tag_container="Comment" 				# the title under which the information is stored in the image
 	tag_tool="exiftool"
+	tag_container="Comment" 				# the title under which the information is stored in the image
 
 	get_tags () { 
 		current_tags=$($tag_tool -$tag_container "$tag_file_name") 
