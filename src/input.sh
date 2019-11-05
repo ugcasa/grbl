@@ -138,30 +138,39 @@ parse_kb () {
     key=${key%%")"*}              #;echo "$key"      # remove ")" 
     key=${key#*KEY_}              #;echo "$key"      # remove "KEY_" prefix
     key=${key#*KP}                #;echo "$key"      # remove "PK" prefix 
-    
-    
+    key_non_num=${key//[[:digit:]]/}
+
+    case "$key_non_num" in      # To remove nueric variable names, dont know why do not worki
+        LEFTALT)     history="$history'='"; printf "="; return 0 ;;
+        LEFTSHIFT)   history="$history'#'"; printf "#"; return 0 ;;  # TODO remove "3" somehow without using string pointing to name.. do not work. 
+        # TODO: bug: prints out leftover numbers of key string, dont know where those comes!
+    esac
+
     case "$key" in
     # TODO: How to break out here?? we are in sub case function called by sub routine while loop, cannot exit mothers 
     # Numpad keys: 
 
-        LEFTALT*)      printf "=" ;;
-        SLASH  )        printf "/" ;;
-        MINUS)          printf "-" ;;
-        PLUS)           printf "+" ;;
-        0KP0KP0)        printf "000" ;; 
-        DOT)            printf "," ;;
-        LEFTSHIFT*)     printf "#" ;;  # TODO remove "3" somehow without using string pointing to name.. do not work. 
-        LEFT)           printf "←" ;;
-        DOWN)           printf "↓" ;;
-        RIGHT)          printf "→" ;;                       
-        UP)             printf "↑" ;; 
-        
-        ASTERISK)                     # Use as space till long press implemented
-                history="$history'*'"
-                printf "*" 
-                ;;
+    # ignored characters
+        HOME)       printf "" ;;
+        PAGEUP)     printf "" ;;
+        END)        printf "" ;;
+        PAGEDOWN)   printf "" ;;
+        INSERT)     printf "" ;;
 
-        BACKSPACE)                      
+    # prited characters (added to history)
+        SLASH)      history="$history'/'"; printf "/" ;;
+        MINUS)      history="$history'-'"; printf "-" ;;
+        PLUS)       history="$history'+'"; printf "+" ;;
+        DOT)        history="$history','"; printf "," ;;
+        LEFT)       history="$history'<'"; printf "←" ;;
+        DOWN)       history="$history'_'"; printf "↓" ;;
+        RIGHT)      history="$history'>'"; printf "→" ;;                       
+        UP)         history="$history'^'"; printf "↑" ;; 
+        ASTERISK)   history="$history'*'"; printf "*" ;;
+
+    # Special function key
+
+        BACKSPACE|DELETE)                      
             printf "\b \b" 
             [ $history ] && history=${history::-1}
             ;;
@@ -178,6 +187,8 @@ parse_kb () {
             [ "$history" ] && printf "$history\n" >>"$history_file"
             history=""
             ;;             
+        
+    # Numerals
 
         *)
             key=${key//NUMLOCK/}    # NUMLOCK7NUMLOCK -> 7
