@@ -1,14 +1,14 @@
 #!/bin/bash
 
 download_app="yle-dl"
-run_folder=$(pwd) 	;echo "run_folder: $run_folder"
+run_folder=$(pwd) 	#;echo "run_folder: $run_folder"
 
 yle_main () {
 
 	case "$1" in 
 
 		install)	
-			pip sudo -H install --upgrade pip
+			pip3 install --upgrade pip
 			[ -f $download_app ] || pip3 install --user --upgrade yle-dl 
 			ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
 			jq --version >/dev/null || sudo apt install jq -y
@@ -32,18 +32,29 @@ yle_main () {
 				done
 			;;
 
-		news|uutiset|"")			
-			$download_app --pipe --latestepisode https://areena.yle.fi/1-3235352 2>/dev/null | vlc - &
-				exit 0			
+		news|uutiset)			
+			news_core="https://areena.yle.fi/1-3235352"
+			$download_app --pipe --latestepisode "$news_core" | vlc -  &
+			;;
+
+		episodes)	
+			shift			
+			get_media_metadata "$1" || return 127 
+			[ "$episodes" ] &&echo "$episodes" ||echo "single episode"
+			;;
+
+		play)
+			shift			
+			get_media_metadata "$1" || return 127 
+			echo "osoite: $media_address"
+			$download_app --pipe "$media_address" 2>/dev/null | vlc - 2>/dev/null & 
 			;;
 
 		subtitle|subtitles|sub|subs)	
-					shift		
-			   	   get_media_metadata "$1" || return 127
-				   get_subtitles 
-				   place_media "$run_folder"
-				   #guru tag Pahuuden_tunnukset-12-2019-10-28T06_00.mp4
-
+			shift		
+			get_media_metadata "$1" || return 127
+			get_subtitles 
+			place_media "$run_folder"
 			;;
 
 		weekly|relax|suosikit)
@@ -78,11 +89,14 @@ get_media_metadata () {
 
 	error=""
 	media_title="no media for $1"
+	declare -g episodes=()
 	meta_data="/tmp/meta.json"
 	echo "$1" |grep "http" && base_url="" || base_url="https://areena.yle.fi/"	
 	media_id="$1"
-	media_url="$base_url$media_id" 								#;echo "$media_url"
-
+	media_url="$base_url$media_id" 								#;echo "$media_url"; exit 0
+	episodes=$($download_app --showepisodepage $media_url |grep -v $media_url)
+	latest=$(echo $episodes | cut -d " " -f 1) 			#; echo "latest: $latest"; exit 0
+	[ "$latest" ] && media_url=$latest				#; echo "media_url: $media_url"; exit 0
 	$download_app "$media_url" --showmetadata >"$meta_data"
 	grep "error" "$meta_data" && error=$(cat "$meta_data" | jq '.[].flavors[].error')
 
@@ -91,10 +105,11 @@ get_media_metadata () {
 		return 100 
 	fi
 
-	media_title=$(cat "$meta_data" | jq '.[].title')			;echo "title: $media_title"
-	media_address=$(cat "$meta_data" | jq '.[].webpage') 		;echo "address: $media_address"
-	media_file_name=$(cat "$meta_data" | jq '.[].filename')		;echo "meta: $media_file_name"
-	echo "$media_title"
+	media_title=$(cat "$meta_data" | jq '.[].title')			#;echo "title: $media_title"
+	media_address=$media_url #$(cat "$meta_data" | jq '.[].webpage') 		#;echo "address: $media_address"
+	media_address=${media_address//'"'/""} 						#;echo "$media_address" 						# remove " signs
+	media_file_name=$(cat "$meta_data" | jq '.[].filename')		#;echo "meta: $media_file_name"
+	echo "${media_title//'"'/""}"
 }
 
 
@@ -115,7 +130,7 @@ get_subtitles () {
 	[ -d "$yle_temp" ] && rm -rf "$yle_temp" 	
 	mkdir -p "$yle_temp"	
 	cd "$yle_temp"
-	$download_app --subtitlesonly "$media_url"  #2>/dev/null
+	$download_app "$media_url" --subtitlesonly #2>/dev/null
 	media_file_name=$(detox -v * | grep -v "Scanning")			#;echo "detox: $media_file_name"
 	media_file_name=${media_file_name#*"-> "}					#;echo "cut: $media_file_name"	
 }
@@ -147,9 +162,6 @@ place_media () {
 	echo "saving to: $location/$media_file_name"
 	mv -f "$media_file_name" "$location"
 	media_file=$location/$media_file_name
-
-
-	#echo "command: $2"
 	[ "$2" == "play" ] && play_media "$media_file"
 	#[ "$2" == "cast" ] && play_media "$media_file"
 }
