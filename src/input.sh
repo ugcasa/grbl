@@ -29,32 +29,36 @@ keyboard_main() {
             xinput --list
             ;;
 
-        mask)
-            mask_kb "$phone_kb"
-            mask_kb "$barcode"
+        mask|enable)
+           case "$1" in 
+                numpad|-nb)  $command "$numpad" ;;
+                phone|-pb)   $command "$phone_kb" ;;
+                barcode|-br) $command "$barcode" ;;
+                all) 
+                    $command "$numpab" 
+                    $command "$phone_kb"
+                    $command "$barcode"
+                    ;;
+                *) echo "please input keyboard alias"
+            esac
             ;;
         
-        enamble)  
-            enable_kb "$phone_kb"
-            enable_kb "$barcode"        
-            ;;
-
         barcode)  
-            mask_kb "$barcode"      
+            mask "$barcode"      
             poll_kb "$barcode_dev"         
-            enable_kb "$barcode"          
+            enable "$barcode"          
             ;;
 
         phone|phone_kb)  
-            mask_kb "$phone_kb" 
+            mask "$phone_kb" 
             poll_kb "$phone_kb_dev"
-            enable_kb "$phone_kb"
+            enable "$phone_kb"
             ;;
 
         numpad|pad|num)  
-            mask_kb "$numpab" 
+            mask "$numpab" 
             poll_kb "$numpab_dev"
-            enable_kb "$numpab"
+            enable "$numpab"
             ;;
 
         install|remove)
@@ -77,8 +81,8 @@ keyboard_main() {
             ;;
         *)
             # Reset to default 
-            enable_kb "$phone_kb"
-            enable_kb "$barcode"      
+            enable "$phone_kb"
+            enable "$barcode"      
         
     esac
 }
@@ -107,7 +111,7 @@ check_kb () {
 }
 
 
-mask_kb() {
+mask() {
 # remove connection between hardware and core virtual master iNput stream
     check_kb "$@" 
     temp_id=$(get_input_device_id "$@")
@@ -116,7 +120,7 @@ mask_kb() {
 }
 
 
-enable_kb(){
+enable(){
 # returns connection between hardware and core virtual master iNput stream
 # input: device name
     check_kb "$@" || return 123 
