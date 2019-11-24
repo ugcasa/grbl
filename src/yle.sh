@@ -91,23 +91,30 @@ get_media_metadata () {
 	media_title="no media for $1"
 	declare -g episodes=()
 	meta_data="/tmp/meta.json"
+	
 	echo "$1" |grep "http" && base_url="" || base_url="https://areena.yle.fi/"	
 	media_id="$1"
 	media_url="$base_url$media_id" 								#;echo "$media_url"; exit 0
+	
+	# Check if id contain episodes, then select first one (newest)
 	episodes=$($download_app --showepisodepage $media_url |grep -v $media_url)
 	latest=$(echo $episodes | cut -d " " -f 1) 			#; echo "latest: $latest"; exit 0
 	[ "$latest" ] && media_url=$latest				#; echo "media_url: $media_url"; exit 0
+	
+	# Get metadata
 	$download_app "$media_url" --showmetadata >"$meta_data"
+	
 	grep "error" "$meta_data" && error=$(cat "$meta_data" | jq '.[].flavors[].error')
-
 	if [ "$error" ]; then  
 		echo "$error"
 		return 100 
 	fi
 
-	media_title=$(cat "$meta_data" | jq '.[].title')			#;echo "title: $media_title"
-	media_address=$media_url #$(cat "$meta_data" | jq '.[].webpage') 		#;echo "address: $media_address"
-	media_address=${media_address//'"'/""} 						#;echo "$media_address" 						# remove " signs
+	# set variables (like they be local anyway)
+	media_title="$(cat "$meta_data" | jq '.[].title')"			#;echo "title: $media_title"
+	media_address="$media_url "
+	#$(cat "$meta_data" | jq '.[].webpage') 					#;echo "address: $media_address"
+	#media_address=${media_address//'"'/""} 					#;echo "$media_address" 						# remove " signs
 	media_file_name=$(cat "$meta_data" | jq '.[].filename')		#;echo "meta: $media_file_name"
 	echo "${media_title//'"'/""}"
 }
