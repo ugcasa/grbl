@@ -81,7 +81,7 @@ parse_argument () {
 				;;
 				
 			uutiset)
-				$argument.py "$@" &
+				$argument.py "$@" 
 				return $? 			
 				;;
 
