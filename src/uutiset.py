@@ -6,9 +6,10 @@ import os
 import sys
 import ast
 import json
-import readline
 from os import system
 from datetime import datetime
+import readline
+import subprocess
 
 try:
 	import feedparser
@@ -65,6 +66,15 @@ def resize_terminal_x11 (height, lenght):
 	os.system('resize -s '+str(height)+' '+str(lenght)) 
 
 
+def get_terminal_size ():
+	global height, wide, list_lenght_max
+	height = int(str(subprocess.check_output('resize -c', shell=True)).split("LINES ",1)[1].split("'")[1].split("'")[0])
+	wide = int(str(subprocess.check_output('resize -c', shell=True)).split("COLUMNS ",1)[1].split("'")[1].split("'")[0])
+	list_lenght_max = height - 3
+	#print( "lines: " + str(height)  )
+	#print( "columns: " + str(wide)  )
+	
+
 def print_header ():
 
 	feed_title = feed.feed.title	
@@ -89,25 +99,31 @@ def print_feed ():
 			try:
 				datestamp = datetime.strptime(entry.published.rsplit(' ', 1)[0].rsplit('-', 1)[0], known_format[format_count])
 				break
-			except ValueError:
-				#print("unknown date format: "+entry.published.rsplit(' ', 1)[0].rsplit('-', 1)[0])	
+			except ValueError: 		# what?
 				pass			
 			except:
-				#print("other fuck-up date format"+entry.published.rsplit(' ', 1)[0].rsplit('-', 1)[0])
 				pass			
 
 		datestamp = datetime.strptime(entry.published.rsplit(' ', 1)[0].rsplit('-', 1)[0], known_format[format_count]).strftime('%d.%m.%y %H:%M')	
 		
 		title = entry.title.replace("&nbsp;", "")	
 		
+		if wide > 90:
+			pass
+		elif wide > 60:
+			datestamp = datestamp.split()[1]
+		else:
+			datestamp = ''
+				
+		extra_space = 6 + len(datestamp)
 
-		if len(title) < wide-20:
-			title += ' ' * (wide-20-len(title))
+		if len(title) < wide-extra_space: 
+			title += ' ' * (wide-extra_space-len(title))
 
 		if i < 9:
-			print(' ', end='')
-		
-		print("["+str(i+1)+"]" +" "+ title[0:wide-20] +" "+ datestamp)	
+			print(' ', end='')		
+
+		print("["+str(i+1)+"]" +" "+ title[0:wide-extra_space] +" "+ datestamp)	
 	
 	if i < list_lenght_max:
 			temp = '\n' * ((list_lenght_max-i)-1)
@@ -145,8 +161,7 @@ def open_news (feed_index):
 	print_header()
 	print("\n"+title+"\n\n"+summary)
 	print("\n"+content+"\n\n"+link+"\n") 	
-	print('"o" to open in browser, enter to return: ', end = '')
-	answer = input()
+	answer = input('"o" to open in browser, enter to return: ')
 	
 	if answer == "o":
 		profile = '--user-data-dir='+os.environ["GURU_CHROME_USER_DATA"]
@@ -161,6 +176,7 @@ def user_input():
 	global feed, feed_selection, list_lenght
 
 	#print('open news: ', end = '')
+
 	answer = input('open news: ')
 
 	if answer == "q" or answer == "exit": 
@@ -200,6 +216,7 @@ feed_selection = 0
 feed = feedparser.parse(feed_list[feed_selection])
 
 while 1:
+	get_terminal_size()
 	print_header()
 	print_feed()
-	user_input()	
+	user_input()
