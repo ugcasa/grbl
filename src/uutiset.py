@@ -78,7 +78,7 @@ def print_header (header, logo = "ujo.guru", id = 0, off = 0,):
 		else:
 			counter = ""
 			
-		bar = ' '+'-' * (term_columns-len(header)-1-len(counter)-1-len(logo)-1)
+		bar = ' '+' ' * (term_columns-len(header)-1-len(counter)-1-len(logo)-1)
 		
 	
 	print(bc.HEADER+header+bar+' '+counter+' '+logo+bc.ENDC)
