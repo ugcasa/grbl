@@ -23,21 +23,21 @@ yle_main () {
 			;;
 
 		play)			
-			#echo "$2" |grep "http" && base_url="" || base_url="https://areena.yle.fi/"
-			yle-dl --pipe "$1" 2>/dev/null | vlc - &
+			shift
+			echo "$1" |grep "http" && base_url="" || base_url="https://areena.yle.fi/"
+			yle-dl --pipe "base_url$1" 2>/dev/null | vlc - &
 			exit 0			
 			;;
 
 		get|dl|download)			
 			shift
-			[ "$2" == "play" ] && play_after="turre"
-			get_media_metadata "$@" && get_media
-			# for item in "$@"
-			# 	do
-			# 	   get_media_metadata "$item" || return 127
-			# 	   get_media 
-			# 	   place_media
-			# 	done
+			#get_media_metadata "$@" && get_media
+			for item in "$@"
+				do
+				   get_media_metadata "$item" || return 127
+				   get_media 
+				   place_media
+				done
 			;;
 
 		news|uutiset)			

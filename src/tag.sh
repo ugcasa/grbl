@@ -233,13 +233,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then				# run if called or act like lib 
 	case "$1" in 
 
 		install|remove)
-			sudo apt $1 libimage-$tag_tool-perl 		# install picture tag tool
-			sudo apt $1 python-mutagen 			# install mp3 tag tool
-			#sudo apt $1 mpeg4ip-utils
-			sudo apt $1 easytag
-			exit 0
+			sudo apt $1 -y libimage-exiftool-perl easytag atomicparsley python-mutagen 		
 			;;
-
 
 		*)	
 			tag_main "$@"
