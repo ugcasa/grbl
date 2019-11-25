@@ -42,7 +42,7 @@ yle_main () {
 
 		news|uutiset)			
 			news_core="https://areena.yle.fi/1-3235352"
-			$download_app --pipe --latestepisode "$news_core" | vlc -  &
+			yle-dl --pipe --latestepisode "$news_core" | vlc - &
 			;;
 
 		episodes)	
