@@ -82,6 +82,7 @@ main () {
 
 			spectrumanalyzer|SA)
 				install_spectrumanalyzer "$@"
+				install_fosphor "$@"
 				exit $?
 				;;
 
@@ -230,7 +231,28 @@ install_hackrf () {
 		return 0
 }
 
+
+install_fosphor () {
+
+	#[ -f /usr/local/bin/qspectrumanalyzer ] && exit 0
+
+	sudo apt-get install cmake xorg-dev libglu1-mesa-dev
+	cd ~/tmp
+	git clone https://github.com/glfw/glfw
+	cd glfw
+	mkdir build
+	cd build
+	cmake ../ -DBUILD_SHARED_LIBS=true
+	make
+	sudo make install
+	sudo ldconfig
+	#rm -fr glfw
+
+}
+
 install_spectrumanalyzer () {
+
+		[ -f /usr/local/bin/qspectrumanalyzer ] && return 0
 
 		sudo add-apt-repository -y ppa:myriadrf/drivers
 		sudo apt-get update
