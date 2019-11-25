@@ -98,7 +98,7 @@ mpsyt_install () {
 vt_player() {
 
         video_name="$1"
-        video="$GURU_VIDEO/$1.vt"
+        video="$GURU_VIDEO/vt/$1.vt"
 
         case "$1" in 
 

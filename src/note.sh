@@ -1,230 +1,225 @@
 #!/bin/bash
-# note generator
+# note generator 2.0 
 
+note_main () { 																	
+	# command parser		
+		command="$1"; shift															#; echo "command: $command"
+		argument="$1"; shift 														#; echo "argument: $argument"
+		user_input="$@"
+		
+		case "$command" in
 
-# import and install requirements
+					list|ls)
+						list_notes "$argument" "$user_input"
+						;;
 
-if [ $GURU_INSTALL == "desktop" ]; then 
+					locate)
+						set_for_date "$argument" 									# set basic variables for functions
+						echo "$note"
+						;;
 
-	subl -v >/dev/null || sudo apt install sublime-text		
-	pandoc -v >/dev/null || sudo apt install pandoc
+					check)
+						set_for_date "$argument" 									# set basic variables for functions
+						[ -f "$note" ] && exit 0 || exit 127
+						;;
 
-fi
+					open|edit)
+						just_created=""
+						open_note "$argument"
+						;;
 
-. $GURU_BIN/functions.sh
+					tag)
+						set_for_date "$argument" 									# set basic variables for functions
+						[ -f "$note" ] && $GURU_CALL "tag $note $user_input" 		#|| echo "no such note"
+						;;
 
-# functions
+					report)					
+						report 
+						;;
 
-main () {
-	# main command parser
+			        help)
+						printf 'Usage: '$GURU_CALL' note [command] <date> \nCommands:\n'            		            
+						printf 'check   		  check do note exist, returns 0 if i do \n' 
+						printf 'list              list of notes. first parameter is month (MM), second year (YYYY) \n' 
+						printf 'open|edit|*       open given date notes (use time format '$GURU_FILE_DATE_FORMAT' \n'
+						printf '<yesterday>         open yesterdays notes \n' 
+						printf '<tuesday>...        open last week day notes \n' 
+						printf 'tag   			  read or add tags to note file \n' 
+						printf 'locate   		  returns file location of note given YYYYMMDD \n' 
+						printf 'report            open note with template to '$GURU_OFFICE_DOC' \n' 
+						printf 'Without command or input open todays notes, creates if if is not exist \n'
+			            ;;
 
-	variable=$1
-	shift 
-	
-	case $command in
-
-				make|mk)
-					make_note "$variable"
-					;;
-
-				list|ls)
-					list_notes $@
-					;;
-
-				open|edit)
-					just_created=""
-					open_note "$variable"
-					;;
-
-				location)
-					note_file_name "$variable" $@
-					;;
-
-				fromweb|web)
-					md_to_html $@
-					;;
-
-				report)					
-					[ $variable ] && notefile=$(note_file_name $(date +%Y%m%d -d $variable)) || notefile=$(note_file_name $(date +$GURU_FILE_DATE_FORMAT)) 	#; echo "variable: "$variable"					
-					if [ -f $notefile ]; then 
-						$GURU_CALL document $notefile $1																					#; echo "note file: "$notefile"
-						$GURU_OFFICE_DOC ${notefile%%.*}.odt & 																				
-						echo "report file: ${notefile%%.*}.odt"
-					else
-						echo "no note for $(date +$GURU_DATE_FORMAT -d $variable)"
-					fi
-					;;
-
-		        help)
-				 	printf 'Usage: '$GURU_CALL' notes [command] <date> \n'            
-		            echo "Commands:"            
-					printf 'open|edit         open given date notes (use time format '$GURU_FILE_DATE_FORMAT' \n'
-					printf 'list              list of notes. first parameter is month (MM), second year (YYYY) \n' 
-					printf 'report            open note with template to '$GURU_OFFICE_DOC' \n' 
-					printf '<yesteerday|yd>   open yesterdays notes \n' 
-					printf '<weekday|wkd>     open last week day notes \n' 
-					printf 'without command or input open todays notes, exist or not\n'
-		            ;;
-
-				*) 			
-					if [ ! -z "$command" ]; then 
-						echo "opening $(date +$GURU_DATE_FORMAT -d $command) note"
-						open_note $(date +%Y%m%d -d $command)
-					else
-						make_note
-					fi
-					;;
-	esac
-}
-
-
-md_to_html() {
-
-	[ $1 ] && url=$1 || read -p "url: " url
-	[ $2 ] && filename=$2 || read -p "filename: " filename
-	tempfile=/tmp/noter.temp
-	[ -f $tempfile ] && rm -f $tempfile
-	
-	echo "converting $url to $filename"
-	curl --silent $url | pandoc --from html --to markdown_strict -o $tempfile
-	sed -e 's/<[^>]*>//g' $tempfile >$filename
-	[ -f $tempfile ] && rm -f $tempfile
+					*) 			
+						if [ "$command" ]; then 						
+							open_note $(date +"$GURU_FILE_DATE_FORMAT" -d "$command")
+						else
+							make_note $(date +"$GURU_FILE_DATE_FORMAT")
+							open_note $(date +"$GURU_FILE_DATE_FORMAT")
+						fi
+		esac
 }
 
 
 list_notes() {
-
-		[ $1 ] && month=$1 || month=$(date +%m)
-		[ $2 ] && year=$2 || year=$(date +%Y)
-
-		noteDir=$GURU_NOTES/$GURU_USER/$year/$month
+	# List of notes on this month and year or given in order and format YYYY MM
+		[ "$1" ] && month=$(date -d 2000-$1-1 +%m) || month=$(date +%m) 			#; echo "month: $month"
+		[ "$2" ] && year=$(date -d $2-1-1 +%Y) || year=$(date +%Y) 					#; echo "year: $year"
+		directory="$GURU_NOTES/$GURU_USER/$year/$month"
 		
-		if [ -d $noteDir ]; then 
-			ls $noteDir | grep .md | grep -v "~" 
+		if [ -d "$directory" ]; then 
+			ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted"
 		else
-			printf "no folder exist" >>$GURU_ERROR_MSG		 
+			printf "no folder exist" >>"$GURU_ERROR_MSG"		 
 			exit 126
 		fi
 }
 
 
-make_note() {
+set_for_date () { 	
+	# populates needed variables based on given date in format YYYMMDD
+		input=$1
 		
-		if [ "$1" ]; then  		 							# given days note
-			note_data="$(note_file_details $1)" 			#Ouput: [0]file [1]folder [2]filename [3]year [4]month [5]date
-			note_data=' ' read -r -a note_meta_array <<< "$note_data"
-			noteDir=${note_meta_array[1]}	
-			noteFile=${note_meta_array[2]}	
-			note_date="${note_meta_array[5]}.${note_meta_array[4]}.${note_meta_array[3]}"
-			note_date_stamp="${note_meta_array[3]}${note_meta_array[4]}${note_meta_array[5]}"
-		else 												# Todays note
-			noteDir=$GURU_NOTES/$GURU_USER/$(date +%Y/%m)
-			noteFile=$GURU_USER"_notes_"$(date +$GURU_FILE_DATE_FORMAT).md		
-			note_date=$(date +%-d.%-m.%Y)
-			note_date_stamp=$(date +$GURU_FILE_DATE_FORMAT)
+		if [ "$input" ]; then 											# User inputs, no crash handling, mostly input is from other functions not from user
+			year=${input::-4}											# crashes here if date input is not in correct format YYYYMMDD
+			month=${input:4:2} 
+			day=${input:6:2}
+		else
+			month=$(date +%m) 											# current day if no input 
+			year=$(date +%Y)
+			day=$(date +%d)
 		fi
 
-		note="$noteDir/$noteFile"							#; echo "note file "$note
-		templateFile="template.$GURU_USER.$GURU_TEAM.md"	#; echo "temp file name "$templateFile
-		template="$GURU_TEMPLATES/$templateFile"			#; echo "template file "$template
+		short_datestamp=$(date -d $year-$month-$day +%Y%m%d)			# issue #19 workaround needed before this can be set by user
+		nice_datestamp=$(date -d $year-$month-$day +$GURU_DATE_FORMAT) 	# nice date format 
 
-		[[  -d "$noteDir" ]] || mkdir -p "$noteDir"
+		note_dir=$GURU_NOTES/$GURU_USER/$year/$month
+		note_file=$GURU_USER"_notes_"$short_datestamp.md	
+		note="$note_dir/$note_file"										#; echo "note file "$note
+		
+		template_file_name="template.$GURU_USER.$GURU_TEAM.md"			#; echo "temp file name "$template_file_name
+		template="$GURU_TEMPLATES/$template_file_name"					#; echo "template file "$template
+
+		#echo "$note $note_dir $note_file $year $month $date"			# uncomment if need output for array, should not affect current usage
+	}
+
+
+make_note() {
+	# creates notes and opens them to default editor
+		set_for_date "$1" 												# set basic variables 	 for functions
+		[[  -d "$note_dir" ]] || mkdir -p "$note_dir"
 		[[  -d "$GURU_TEMPLATES" ]] || mkdir -p "$GURU_TEMPLATES"
+		
+		if [[ ! -f "$note" ]]; then 	    	    	
+			# header
+		    printf "$note_file\n\n# $GURU_NOTE_HEADER $GURU_REAL_NAME $nice_datestamp\n\n" >$note			    		
 
-		if [[ ! -f "$note" ]]; then 	    
-		    # header
-		    printf "$noteFile\n\n# $GURU_NOTE_HEADER $GURU_REAL_NAME $note_date\n\n" >$note			    
-		    
-		    # template 
+			# template	
 		    [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note	
-		    
-		    # change table
-		    printf "\n\ndate                | author | change\n:------------------ | ------ |:------\n $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | created\n" >>$note
-			$GURU_CALL tag $note "note $GURU_PROJECT $(date +$GURU_FILE_DATE_FORMAT)"
-			just_created="yep"
+			
+			# change table
+			printf "\n\n## Change log\n\n date               | author | change\n:----------------- | ------ |:------\n $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | created\n" >>$note 
+			
+			# tags 
+			$GURU_CALL tag $note "note $GURU_PROJECT $(date +$GURU_FILE_DATE_FORMAT)" 									
+			
+			# flags
+			just_created="yep"																							
 		fi
-		#;echo "given day stamp "$note_date_stamp
-		open_note "$note_date_stamp"
-}
-
-
-note_file_details () {
-	# figures out note filename based on datestamp
-	# input format YYYYMMDD only, no format checking
-	# output is stdín passed array containing following data 
-	# 0 = folder/filename, 1 = folder, 2 = filename, 3 = year, 4 = month, 5 = day
-
-	input=$1
-	if [ "$input" ]; then 		# YYYYMMDD only
-		year=${input::-4}		# Tässä paukkuu jos open parametri ei ole oikeassa formaatissa
-		month=${input:4:2}
-		date=${input:6:2}
-		noteDir=$GURU_NOTES/$GURU_USER/$year/$month
-		noteFile=$GURU_USER"_notes_"$year$month$date.md
-	else
-		printf "no date given" >>$GURU_ERROR_MSG
-		exit 124
-	fi
-
-	echo "$noteDir/$noteFile $noteDir $noteFile $year $month $date"
-}
-
-
-note_file_name () {
-	# parses note_file location and name based on time stamp 
-	# input format YYYYMMDD only, no format checking
-	[ "$1" ] && target_date=$1 || target_date="20190923" 			#; printf "$1, $2"	
-	[ "$2" ] && position=$2 || position=0 							#; printf "$target_date, $position\n"	
-	note_data="$(note_file_details $target_date)" 					# Output: [0]file [1]folder [2]filename [3]year [4]month [5]date
-	note_data=' ' read -r -a note_meta_array <<< "$note_data" 		#; echo "${note_meta_array[$position]}"																
-	echo ${note_meta_array[$position]}	
 }
 
 
 open_note() {
-	# open note to preferred editor
-	# input format YYYYMMDD only, no format checking
-	
-	note_data="$(note_file_details $1)" 					# Ouput: [0]file [1]folder [2]filename [3]year [4]month [5]date
-	note_data=' ' read -r -a note_meta_array <<< "$note_data" 	#; echo "${note_meta_array[2]}"																
-	note=${note_meta_array[0]}	
-
-	if [[ ! -f "$note" ]]; then 
-		read -p "no note for target day, create? [y/n]: " answer
-		[ "$answer" == "y" ] && make_note $1 || exit 0		
-	else
-		[ "$just_created" ] || echo " $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | edited" >>$note		
-	fi
-
-	
-	case $GURU_EDITOR in
-	
-		subl)
-			projectFolder=$GURU_NOTES/$GURU_USER/project 
-			[ -f $projectFolder ] || mkdir -p $projectFolder
-			
-			projectFile=$projectFolder/notes.sublime-project
-			[ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_NOTES/$GURU_USER'"'"\n\t\t}\n\t]\n}\n" >$projectFile
-			
-			subl --project "$projectFile" -a 
-			subl "$note" --project "$projectFile" -a 		
-			return $?
-			;;
-		*)
-			$GURU_EDITOR "$note" 
-			return $?
-	esac			
-	
+	# input format YYYYMMDD 	
+		set_for_date "$1"  												# set basic variables for functions
+		
+		if [[ -f "$note" ]]; then 
+			[ "$just_created" ] || echo " $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | edited" >>$note	
+		else
+			read -p "no note for target day, create? [y/n]: " answer
+			[ "$answer" == "y" ] && make_and_open_note "$1" || exit 0		
+		fi
+		call_editor	"$note"												# variables are global dough
 }
 
-# run main if this file is not imported
 
-me=${BASH_SOURCE[0]}
-if [[ "$me" == "${0}" ]]; then
-	command=$1
-	shift
-	main $@
-	exit $?
+make_and_open_note() {
+	# creates and opens notes (often limited call options, combo needed) 
+		make_note "$1"
+		open_note "$1"
+}
+
+
+call_editor	() {
+	# open note to preferred editor 
+		case "$GURU_EDITOR" in
+			subl)
+				projectFolder=$GURU_NOTES/$GURU_USER/project 
+				[ -f $projectFolder ] || mkdir -p $projectFolder
+				
+				projectFile=$projectFolder/notes.sublime-project
+				[ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_NOTES/$GURU_USER'"'"\n\t\t}\n\t]\n}\n" >$projectFile
+				
+				subl --project "$projectFile" -a 
+				subl "$note" --project "$projectFile" -a 		
+				return $?
+				;;
+			*)
+				$GURU_EDITOR "$1" 
+				return $?
+		esac	
+}
+
+
+report () {
+	# created odt with team template out of given days note 
+		[ "$argument" ] && notefile=$(get_from_array $(date +$GURU_FILE_DATE_FORMAT -d $argument)) || notefile=$(get_from_array $(date +$GURU_FILE_DATE_FORMAT)) 	#; echo "argument: "$argument"					
+		
+		if [ -f "$notefile" ]; then 
+			$GURU_CALL document "$notefile $user_input"																					#; echo "note file: "$notefile"
+			$GURU_OFFICE_DOC ${notefile%%.*}.odt & 																				
+			echo "report file: ${notefile%%.*}.odt"
+		else
+			echo "no note for $(date +$GURU_DATE_FORMAT -d $argument)"
+		fi
+}
+
+
+check_debian_repository () {
+	# add sublime to repository list 
+		echo "cheking installation.."
+		subl -v && return 1
+
+		wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
+		sudo apt-get install apt-transport-https
+		echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
+		sudo apt-get update
+		return $?	
+}
+
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then 			# stand alone vs. include. main wont be called if included
+		
+	case "$1" in
+
+		install|remove) 								# user needs to install first
+
+			case "$GURU_INSTALL" in 
+
+				desktop)
+					check_debian_repository 			# if installed, do not add repositories
+					sudo apt "$1" sublime-text 			# install or remove sublime
+					sudo apt "$1" pandoc 				# install or remove pandoc
+					;; 
+
+				server)
+					sudo apt "$1" joe 				
+			esac
+			;;		
+
+		*)
+			note_main "$@"
+			exit $? 									# otherwise can be non zero even all fine TODO check why, case function feature?
+	esac
 fi
-
 

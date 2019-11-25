@@ -1,6 +1,7 @@
 #!/bin/bash
 
-download_app="/home/casa/.local/bin/yle-dl"
+download_app="yle-dl"
+run_folder=$(pwd) 	;echo "run_folder: $run_folder"
 
 yle_main () {
 
@@ -8,46 +9,81 @@ yle_main () {
 
 		install)	
 			pip sudo -H install --upgrade pip
-			#yle-dl --version >/dev/null || pip3 install --user --upgrade yle-dl 
 			[ -f $download_app ] || pip3 install --user --upgrade yle-dl 
 			ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
 			jq --version >/dev/null || sudo apt install jq -y
+			sudo apt install detox vlc
 			echo "Successfully installed"
 			;;
 
 		uninstall)	
-			sudo -H pip3 remove --user  yle-dl 
+			sudo -H pip3 remove --user yle-dl 
 			sudo apt remove ffmpeg jq -y			
 			echo "uninstalled"
 			;;
 
 		get|dl|download)			
 			shift
-			get_video_metadata "$@" && get_video
+			for item in "$@"
+				do
+				   get_media_metadata "$item" || return 127
+				   get_media 
+				   place_media
+				done
 			;;
+
+		news|uutiset|"")			
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-3235352 2>/dev/null | vlc - &
+				exit 0			
+			;;
+
+		subtitle|subtitles|sub|subs)	
+					shift		
+			   	   get_media_metadata "$1" || return 127
+				   get_subtitles 
+				   place_media "$run_folder"
+				   #guru tag Pahuuden_tunnukset-12-2019-10-28T06_00.mp4
+
+			;;
+
+		weekly|relax|suosikit)
+			printf "To remove notification do next:  \n 1. In VLC, click Tools ► Preferences \n 2. At the bottom left, for Show settings, click All \n 3. At the top left, for Search, paste the string: unimportant \n 4. In the box below Search, click: Qt \n 5. On the right-side, near the very bottom, uncheck Show unimportant error and warnings dialogs \n 6. Click Save \n 7. Close VLC to commit the pref change (otherwise, if VLC crashes, this change {or some changes} might not be saved) \n 8. Run VLC & see if that fixes the problem\n" 	
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-3251215 2>/dev/null | vlc - 
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-3245752 2>/dev/null | vlc - 
+			$download_app --pipe --latestepisode https://areena.yle.fi/1-4360930 2>/dev/null | vlc - 			
+			exit 0			
+			;;
+
 
 		meta|data|metadata|information|info)
 			shift
-			get_video_metadata "$@"
+			for item in "$@"
+				do
+				   get_media_metadata "$item" && get_media
+				done
 			;;
 		
-		*)
-			get_video_metadata "$@"
+		*)			
+			for item in "$@"
+				do
+				   get_media_metadata "$item" 
+				done
 			;;
 
 		esac
 }
 
 
-get_video_metadata () {
+get_media_metadata () {
 
 	error=""
+	media_title="no media for $1"
 	meta_data="/tmp/meta.json"
 	echo "$1" |grep "http" && base_url="" || base_url="https://areena.yle.fi/"	
-	video_id="$1"
-	video_url="$base_url$video_id" 								#;echo "$video_url"
+	media_id="$1"
+	media_url="$base_url$media_id" 								#;echo "$media_url"
 
-	$download_app "$video_url" --showmetadata >"$meta_data"
+	$download_app "$media_url" --showmetadata >"$meta_data"
 	grep "error" "$meta_data" && error=$(cat "$meta_data" | jq '.[].flavors[].error')
 
 	if [ "$error" ]; then  
@@ -55,23 +91,79 @@ get_video_metadata () {
 		return 100 
 	fi
 
-	video_title=$(cat "$meta_data" | jq '.[].title')			#;echo "$video_title"
-	video_filename=$(cat "$meta_data" | jq '.[].filename')		
-	video_address=$(cat "$meta_data" | jq '.[].webpage') 		#;echo "$video_address"
-	video_filename=${video_filename//'"'/''} 					
-	video_filename=${video_filename//":"/""} 					
-	video_filename=${video_filename//" "/-} 					#;echo "$video_filename"
-	echo "$video_title"
+	media_title=$(cat "$meta_data" | jq '.[].title')			;echo "title: $media_title"
+	media_address=$(cat "$meta_data" | jq '.[].webpage') 		;echo "address: $media_address"
+	media_file_name=$(cat "$meta_data" | jq '.[].filename')		;echo "meta: $media_file_name"
+	echo "$media_title"
 }
 
 
-get_video () {
+get_media () {
+	
+	yle_temp="$HOME/tmp/yle"
+	[ -d "$yle_temp" ] && rm -rf "$yle_temp" 	
+	mkdir -p "$yle_temp"	
+	cd "$yle_temp"
+	$download_app "$media_url" -o "$media_file_name" --sublang all #2>/dev/null
+	media_file_name=$(detox -v * | grep -v "Scanning")			#;echo "detox: $media_file_name"
+	media_file_name=${media_file_name#*"-> "}					#;echo "cut: $media_file_name"	
+}
 
-	$download_app "$video_url" -o "$video_filename"
-	$GURU_CALL tag "$video_filename" "yle $(date +$GURU_FILE_DATE_FORMAT) $video_title"
+get_subtitles () {
+	
+	yle_temp="$HOME/tmp/yle"
+	[ -d "$yle_temp" ] && rm -rf "$yle_temp" 	
+	mkdir -p "$yle_temp"	
+	cd "$yle_temp"
+	$download_app --subtitlesonly "$media_url"  #2>/dev/null
+	media_file_name=$(detox -v * | grep -v "Scanning")			#;echo "detox: $media_file_name"
+	media_file_name=${media_file_name#*"-> "}					#;echo "cut: $media_file_name"	
+}
+
+place_media () {
+
+	#location="$@"
+	media_file_format="${media_file_name: -5}" 		#; echo "media_file_format:$media_file_format|"		# read last characters of filename
+	media_file_format="${media_file_format#*.}"		#; echo "media_file_format:$media_file_format|" 	# read after separator
+	media_file_format="${media_file_format^^}" 		#; echo "media_file_format:$media_file_format|" 	# upcase
+
+	$GURU_CALL tag "$media_file_name" "yle $(date +$GURU_FILE_DATE_FORMAT) $media_title $media_url"
+
+	case "$media_file_format" in 
+
+		MP3)	
+			[ "$location" ] && location="$1" || location="$GURU_AUDIO"
+			;;
+		MP4)
+			[ "$location" ] && location="$1" || location="$GURU_VIDEO"
+			;;
+		SRC|SUB)
+			[ "$location" ] && location="$1" || location="$GURU_VIDEO"
+			;;
+		*)
+			[ "$location" ] && location="$1" || location="$GURU_MEDIA"		
+	esac
+
+	echo "saving to: $location/$media_file_name"
+	mv -f "$media_file_name" "$location"
+	media_file=$location/$media_file_name
+
+
+	#echo "command: $2"
+	[ "$2" == "play" ] && play_media "$media_file"
+	#[ "$2" == "cast" ] && play_media "$media_file"
+}
+
+
+play_media () {
+	vlc --play-and-exit "$1" &
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 	yle_main "$@"
 fi
+
+
+
+
