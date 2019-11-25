@@ -1,6 +1,6 @@
 #!/usr/bin/python3
-# rrs news feed
-# add to install: sudo pip install --upgrade pip; sudo pip install feedparser
+# -*- coding: utf-8 -*-
+# ujo.guru rrs news feed 
 
 import os
 import sys
@@ -36,6 +36,7 @@ finally:
 	import xml.etree.ElementTree as ET
 
 class bc:
+
     HEADER = '\033[104m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -48,248 +49,255 @@ class bc:
     ENDC = '\033[0m'
 
 
-def bye_bye():
-	print("exit")
-	terminal_resize(24, 80)	
-	os.system('clear')
-	quit()
+class menu ():
 
-def terminal_clear():
-	print("\n" * term_lines)
+	term_columns 		= 120
+	term_lines 			= 24
+	list_length 		= 0
+	list_length_max 	= 0
+	selection 			= 100
+	known_date_formats 	= [ '%a, %d %b %Y %H:%M:%S' ,\
+					 		'%Y-%m-%dT%H:%M:%S' ] 			# http://strftime.org/
 
-def terminal_resize (term_lines, lenght):
-	"resize terminal windows on x11. requires xterm install. input term_lines and length. checks first that x11 in use"
-	#session_type = os.environ["XDG_SESSION_TYPE"] 
-	#if session_type == "x11":
-	os.system('resize -s '+str(term_lines)+' '+str(lenght)) 
-
-def terminal_get_size ():
-	global term_lines, term_columns, list_lenght_max
-	term_lines = int(str(subprocess.check_output('resize -c', shell=True)).split("LINES ",1)[1].split("'")[1].split("'")[0])
-	term_columns = int(str(subprocess.check_output('resize -c', shell=True)).split("COLUMNS ",1)[1].split("'")[1].split("'")[0])
-	list_lenght_max = term_lines - 3
-
-
-def print_header (header, logo = "ujo.guru", id = 0, off = 0,):
-	if len(header) < term_columns-len(logo):
+	def __init__ ( self, x, y ):
 		
-		if term_columns > 60 and id:
-			counter = str(id) + "/" + str(off)
-		else:
-			counter = ""
+		self.term_columns 		= x
+		self.term_lines 		= y
+		self.list_length 		= self.term_lines - 3
+		self.selection	 		= 100
+		
+		self.resize( self.term_lines, self.term_columns )
+		os.system( 'clear' )
+
+		self.feed_list_file 	= open( os.environ["GURU_CFG"] + "/rss-feed.list", "r" )
+		self.feed_list 			= self.feed_list_file.readlines()
+		self.feed_list_file.close()
+
+		self.feed = feedparser.parse( self.feed_list[0] )
+
+
+	def clear ( self ):
+		"clear the screen. os clear do not work in phone "
+		print("\n" * self.term_lines)
+
+
+	def resize ( self, lines, columns ):
+		"resize terminal window"
+		os.system('resize -s '+str(lines)+' '+str(columns)) 
+
+
+	def get_size ( self ):
+		"get terminal window size"
+		self.term_lines = int(str(subprocess.check_output('resize -c', shell=True)).split("LINES ",1)[1].split("'")[1].split("'")[0]) 			# instable method
+		self.term_columns = int(str(subprocess.check_output('resize -c', shell=True)).split("COLUMNS ",1)[1].split("'")[1].split("'")[0])
+		self.list_length_max = self.term_lines - 3		
+
+	def header ( self, content , logo = "ujo.guru", id = 0, off = 0 ):
+		"print out the header, title is needed, default logo and optional counter "
+		counter = ""	
+		if len( content ) < self.term_columns - len( logo ):
 			
-		bar = ' '+' ' * (term_columns-len(header)-1-len(counter)-1-len(logo)-1)
+			if self.term_columns > 60 and id:
+				counter = str( id ) + "/" + str( off )
+			
+		bar = ' '+' ' * ( self.term_columns - len( content ) - 1 - len( counter)  - 1 - len( logo ) - 1 )
+			
+		print(bc.HEADER + content + bar + ' ' + counter + ' ' + logo + bc.ENDC)
+
+
+	def feeds ( self ):
+		"print out the list of feed fit in terminal size"
 		
-	
-	print(bc.HEADER+header+bar+' '+counter+' '+logo+bc.ENDC)
+		for i in range(len(self.feed.entries)): 														# parse all titles in feed.entries list
+			entry = self.feed.entries[i]
+			
+			if i > self.list_length_max:																# is there still space for new line
+				break			
+			
+			for format_count in range(len(m.known_date_formats)): 								# check time stamp formats and select suitable and translate it to wanted format
 
+				try: 
+					datestamp = datetime.strptime(entry.published.rsplit(' ', 1)[0].rsplit('-', 1)[0], m.known_date_formats[format_count]).strftime('%d.%m.%y %H:%M')
+					break
 
-def print_publisher_feeds ():
+				except ValueError: 																		# what?
+					pass			
 
-	for i in range(len(feed.entries)):
-		global list_lenght, selection
-		entry = feed.entries[i]
+				except:
+					pass			
+			 																					# Remove possible html pieces left in titles and ugly lines an extra spaces	
+			title = entry.title.replace("&nbsp;", "").replace(" ,", ',').replace(' –', ':').replace(' –', ':')	
 
-		if i > list_lenght_max:
-			break
+			if self.term_columns > 90:																	# select details to be printed out
+				pass
+			elif self.term_columns > 60:
+				datestamp = datestamp.split()[1]
+			else:
+				datestamp = ''
+						
+			base_size = 6 + len(datestamp) 					 											# reserves space for spaces and id
+
+			
+			if len( title ) < self.term_columns - base_size: 											# space bar
+				title += ' ' * (self.term_columns - base_size - len( title ))
+
+			if i < 9: 																					# intended lines 1 - 9
+				print(' ', end='')			
+
+			title = title[ 0: self.term_columns - base_size ]											# cut to right length
+
+			if title[ -1: ] != ' ': 																	# check is middle of word
+				lastword = title.split()[ -1 ]															# remove last word or piece of it
+				lastword_length = len( lastword )  														# check how long it was
+				title = title.rsplit( ' ', 1 )[0] + '.. '+ (' ' * ( lastword_length - 2 ) ) 			# place ".." to end of line
 		
-		for format_count in range(len(known_format)):
-			#print(known_format)	
-			try:
-				datestamp = datetime.strptime(entry.published.rsplit(' ', 1)[0].rsplit('-', 1)[0], known_format[format_count])
-				break
-			except ValueError: 		# what?
-				pass			
-			except:
-				pass			
+			print( "[" + str( i + 1 ) + "]" + " " + title[ 0: self.term_columns - base_size ] + " " + datestamp)	# print out the line 
 
-		datestamp = datetime.strptime(entry.published.rsplit(' ', 1)[0].rsplit('-', 1)[0], known_format[format_count]).strftime('%d.%m.%y %H:%M')	
-		
-		title = entry.title.replace("&nbsp;", "")	
+		if i < self.list_length_max:																	# to make sure not print too many lines
+				temp = '\n' * ( ( self.list_length_max - i ) - 1 )
+				print( temp )
 
-		title = title.replace(" ,", ',')
-		title = title.replace(' –', ':')
-		title = title.replace(' –', ':')
+		self.list_length = i 																			# update list length
+		return i
 
-		if term_columns > 90:
+
+	def input ( self, answer = 0 ):
+		"waits user input if not given pre-hand"
+
+		if answer : 																					# id not given, ask
 			pass
-		elif term_columns > 60:
-			datestamp = datestamp.split()[1]
-		else:
-			datestamp = ''
-				
-		extra_space = 6 + len(datestamp)
+		else :
+			answer = input( bc.OKBLUE + 'Open news id: ' + bc.ENDC )
+			print( "wait.." )
 
-		if len(title) < term_columns-extra_space: 
-			title += ' ' * (term_columns-extra_space-len(title))
+		if answer == "q" or answer == "exit" or answer == "99":  										# character commands
+			self.quit()
 
-		if i < 9:
-			print(' ', end='')		
+		elif answer == "n" and self.selection < len(self.feed_list) * 100:								# increment if nor last
+			self.selection = str( int( self.selection ) + 100 )
+			self.input( self.selection ) 
 
-		title = title[ 0: term_columns - extra_space ]
-
-		if title[-1:] != ' ':
-			lastword = title.split()[-1]
-			lastword_length = len(lastword) 
-			title = title.rsplit(' ', 1)[0]+ '.. '+ (' ' * (lastword_length - 2) )
-	
-				
-		print("["+str(i+1)+"]" +" "+ title[ 0: term_columns - extra_space ] +" "+ datestamp)	
-	
-	if i < list_lenght_max:
-			temp = '\n' * ((list_lenght_max-i)-1)
-			print(temp)
-	list_lenght=i
-	return i
-
-
-def open_browser (link):
-		profile = '--user-data-dir='+os.environ["GURU_CHROME_USER_DATA"]
-		browser = os.environ["GURU_BROWSER"]+' '+profile+' '+link+' &'
-		os.system(browser)
-
-
-def open_news (feed_index):
-
-	global list_lenght, selection
-	entry = feed.entries[int(feed_index)-1]
-	title = entry.title.replace("&nbsp;", "")	
-	link = entry.link.replace("&nbsp;", "")			
-
-	try:
-		summary = entry.summary.replace("&nbsp;", "")	
-	except AttributeError:		
-		print("no summary data, opening link")
-		open_browser(link)
-		return 2
-	except:	
-		return 3
-
-	summary = entry.summary.replace("&nbsp;", "")	
-	
-	try:
-		json = entry.content
-
-		#if feed.feed.title == "Yle Uutiset | Tuoreimmat uutiset": 			 			# Yle purkka, nimet
-		json = str(json).replace('<strong class="yle__article__strong">', '') 
+		elif answer == "b" and self.selection > 100 : 													# decrement if not first
+			self.selection = str( int( self.selection ) - 100 )
+			self.input( self.selection )
 		
-		content = ''.join(BeautifulSoup(str(json), "html.parser").stripped_strings).split("'")[13].replace('\\n',"\n ") # bubblecum
-		content = content.replace(". ",".\n ")
-	except AttributeError:
-		content = ""
-	except:	
-		content = ""
+		if not answer.isdigit() : 				 														# Numeral selections 
+			return 2
 
-
-	#os.system('reset') 			# fucks up ssh + phone
-	os.system('clear')
-	terminal_clear()
-
-	print("\n")
-	print_header(feed.feed.title, id = feed_index, off = list_lenght)
-	print("\n "+bc.BOLD+ title +bc.ENDC+"\n")
-	print("\n "+bc.ITAL+ summary +bc.ENDC+"\n")
-	print("\n "+content+"\n")
-	print("\n "+bc.DARK+ link +bc.ENDC+"\n") 	
-	
-	answer = input(bc.OKBLUE+'Hit "o" to open news in browser, news id to jump to news or "Enter" to return to list: '+bc.ENDC)
-
-	if answer == "q" or answer == "exit" or answer == "99": 
-		bye_bye()
-
-	if answer == "o" :
-		open_browser(entry.link)
-	
-	if answer == "n" :		
-		feed_index = str(int(feed_index) + 1)
-		user_input(feed_index)
-
-	if answer == "b":
-		feed_index = str(int(feed_index) - 1)
-		user_input(feed_index)
-
-	if not answer.isdigit():
-		return 0
-
-	if int(answer) < list_lenght:
-		open_news(answer)
-		return 0
-	
-	if int(answer) > 99:
-		user_input(answer)
-
-
-def user_input(answer = 0):
-
-	global feed, publisher, list_lenght, selection
-
-	if answer:
-		pass
-	else:
-		answer = input(bc.OKBLUE+'Open news id: '+bc.ENDC)
-		print("wait..")
-
-	if answer == "q" or answer == "exit" or answer == "99": 
-		bye_bye()
-
-	if answer == "n" and selection < len(feed_list)*100:		
-		selection = str(int(selection) + 100)
-		user_input(selection)
-
-	if answer == "b" and selection > 100:
-		selection = str(int(selection) - 100)
-		user_input(selection)
-	
-	if (answer.isdigit()): 				
-
-		selection = int(answer)
-
-		if selection > 0 and selection < 100:			# is feed selection call
-			if selection <= list_lenght:
-				open_news(answer)						
-		else:
-			sub_selection = selection % 100			
-			select_int = int(selection / 100 - 1)  		# is float
+		self.selection = int( answer ) 																	# is digit can be taken as an select value
+		
+		if self.selection > 0 and self.selection < 100 and self.selection <= self.list_length:			# is current publisher line number
+			self.open( answer )	 									 									# open the news
+		
+		else: 																							# is publisher id number, maybe with sub selection
+			select_int = int( self.selection / 100 - 1 )  									 			# parse publisher main menu 
+			sub_selection = self.selection % 100							 							# Parse out possible sub selection
 			
-			if select_int > len(feed_list) or select_int < 0:
+			if select_int >= self.list_length or select_int < 0: 										# is in limits, log more than list is long 
 				return 2			
-			
+
 			try:
-				feed = feedparser.parse(feed_list[select_int])	
-			except:	
+				self.feed = feedparser.parse( self.feed_list[ select_int ] )							# try to parse a feed, if possible valid id
+
+			except:	 																					# is not valid id
 				return 2
 
-			feed = feedparser.parse(feed_list[select_int])	
-			
-			if sub_selection > 0: 								
-				
-				if (sub_selection) > list_lenght:
-					return 2
+			if sub_selection > self.list_length: 														# is no more than list is long, non valid !!!
+				return 2
 
-				open_news(sub_selection)	
+			if sub_selection > 0: 													 					# is not negative
+				self.open( sub_selection )	 															# open the news
+																			
+	
+	def browser ( self, link ):
 
-## Main
-# later to config file [feed_name] url=, date_format= ..
-term_columns = 120
-term_lines = 24
-list_lenght = 0
-list_lenght_max = term_lines - 3
+		profile = '--user-data-dir=' + os.environ[ "GURU_CHROME_USER_DATA" ]
+		browser = os.environ[ "GURU_BROWSER" ] + ' ' + profile + ' ' + link + ' &'
+		os.system( browser )
 
-# Open rrs-feed list file    
-feed_list_file = open (os.environ["GURU_CFG"]+"/rrs-feed.list", "r")
-feed_list = feed_list_file.readlines()
-feed_list_file.close()
-selection = 100
-# date format https://pythonhosted.org/feedparser/date-parsing.html
-known_format = ['%a, %d %b %Y %H:%M:%S',\
-				'%Y-%m-%dT%H:%M:%S'] 			# http://strftime.org/
 
-terminal_resize(term_lines, term_columns)
-publisher = 0
-feed = feedparser.parse(feed_list[publisher])
-os.system('clear')
+	def open ( self, feed_index ):
+
+		entry 	= self.feed.entries[ int( feed_index ) - 1 ]
+		title	= entry.title.replace( "&nbsp;", "" )	
+		link 	= entry.link.replace( "&nbsp;", "" )			
+
+		try :
+			summary = entry.summary.replace( "&nbsp;", "" )	
+
+		except AttributeError:		
+			print( "no summary data, opening link" )
+			self.browser( link )
+			return 2
+
+		except :	
+			print( "erooer" )
+			return 3
+
+		summary = entry.summary.replace( "&nbsp;", "" )	
+		
+		try:
+			json = entry.content			
+			json = str(json).replace( '<strong class="yle__article__strong">', '' ) 													# Yle purkka, nimet
+			content = ''.join( BeautifulSoup( str( json ), "html.parser" ).stripped_strings ).split( "'" )[13].replace( '\\n',"\n " ) 	# bubblecum
+			content = content.replace( ". ",".\n " )
+		
+		except AttributeError:
+			content = ""
+			print("ttributeError")
+		
+		except:	
+			content = ""
+			print("ttributeError")
+
+		os.system( 'clear' ) 																			# clear terminal
+		self.clear()
+		self.header( self.feed.feed.title, id = feed_index, off = self.list_length ) 							# header
+
+		print( "\n\n " + bc.BOLD + title 	 + bc.ENDC + "\n" )											# titles
+		print( "\n "   + bc.ITAL + summary   + bc.ENDC + "\n" )
+		print( "\n "   + content + "\n" )
+		print( "\n "   + bc.DARK + link 	 + bc.ENDC + "\n" ) 	
+		
+		answer = input(bc.OKBLUE+'Hit "o" to open news in browser, news id to jump to news or "Enter" to return to list: '+bc.ENDC)
+
+		if answer == "q" or answer == "exit" or answer == "99": 
+			self.quit()
+
+		if answer == "o" :
+			self.browser( self.entry.link )
+		
+		if answer == "n" :		
+			feed_index = str( int( feed_index ) + 1 )
+			self.input( feed_index )
+
+		if answer == "b":
+			feed_index = str( int( feed_index ) - 1 )
+			self.input( feed_index )
+
+		if not answer.isdigit() :
+			return 0
+
+		if int(answer) < self.list_length:
+			self.open( answer )
+			return 0
+		
+		if int( answer ) > 99 :
+			self.input( answer )
+
+	def quit ( self ) :
+		"quit and return terminal size"
+		self.resize( 24, 80 )	
+		os.system( 'clear' )
+		quit()
+
+
+## MAN
+
+m = menu( 120, 24 ) 
+
 while 1:
-	terminal_get_size()
-	print_header(feed.feed.title, id=selection, off=len(feed_list*100))
-	print_publisher_feeds()
-	user_input()
+	m.get_size()
+	m.header( content = m.feed.feed.title )
+	m.feeds()
+	m.input()
