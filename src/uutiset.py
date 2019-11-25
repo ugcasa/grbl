@@ -265,7 +265,7 @@ class menu ():
 			self.quit()
 
 		if answer == "o" :
-			self.browser( self.entry.link )
+			self.browser( entry.link )
 		
 		if answer == "n" :		
 			feed_index = str( int( feed_index ) + 1 )
