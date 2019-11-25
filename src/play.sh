@@ -1,5 +1,6 @@
 #!/bin/bash
-# timer for giocon client ujo.guru / juha.palm 2019
+# player wrap for giocon.client
+# casa@ujo.guru 2019
 
 pv -V >/dev/null || sudo apt install pv 
 mpsyt --ver >>/dev/null || mpsyt_install 
@@ -7,23 +8,20 @@ mpsyt --ver >>/dev/null || mpsyt_install
 main () {
     
     argument="$1"; shift
-    show_video="True"
-    search_music="True"                                           # mpsyt uses "True" with captal T
+    show_video="True"                                           # mpsyt believes only "True" with the capital t
+    search_music="True"                                         
     mpsyt=true                                                  # bash uses true lover case
     # argument=$($GURU_BIN/guru translate -b :en $argument)     # subject command to translator.. interesting but probably not practical
 
     case $argument in
 
             # With own exit
-            upgrade)            sudo -H pip3 install --upgrade youtube_dl; exit $? ;;
             install)            mpsyt_install $@ ;;
             help|h)             help $@ ;;       
             stop|end)           stop $@ ;;
             vt|text|ascii)      vt_player $@ ;;
             demo)               run_demo ;;
             beer_break)         beer_break ;;
-
-            # continues
             radio|fm)           $GURU_CALL radio; exit 0;;            
             song|biisi|kappale) to_play="/$@, 1, q"; show_video="False"; ;;
             karaoke|lyrics)     to_play="/$@ lyrics, 1, q" ;;
@@ -33,10 +31,17 @@ main () {
             world-news|news)    to_play="url $(cat $GURU_CFG/news-live.pl)"; search_music="False" ;; 
             bg|backroung)       to_play="//$@, $((1 + RANDOM % 6)), 1-, q" ; show_video="False" ;;
             music-video)        to_play="/$@, 1-, q" ;;
+            upgrade)            sudo -H pip3 install --upgrade youtube_dl
+
+                                # to update critical settings without re-install, remove later
+                                sudo apt-get install mpv    # change mplayer to mpv to
+                                mpsyt set player mpv        # prevent player premature coetus interraptus
+
+                                exit $? ;;
             something|random)   random=$(shuf -n1  /usr/share/dict/words)
                                 $GURU_CALL trans -b -p "$random"
                                 to_play="/$random, 1-, q"; show_video="False" ;;
-            jotain|rändöm|ihansama)      
+            jotain)      
                                 random=$($GURU_CALL trans -b -p en:fi "$(shuf -n1 /usr/share/dict/words)")
                                 echo "$random"
                                 to_play="/$random, 1-, q"; show_video="False" ;;
@@ -72,7 +77,7 @@ help () {
 
 
 stop () {
-    exec 3>&2       # This method removes all stdin messages when >/dev/null is not enough
+    exec 3>&2                        # This method removes all stdin messages when >/dev/null is not enough
     exec 2> /dev/null
         pkill mpsyt
         pkill pv 
@@ -82,20 +87,27 @@ stop () {
 }
 
 mpsyt_install () {
+        # install 
 
         sudo apt-get -y install mplayer python3-pip pulseaudio amixer pkill gnome-terminal
         sudo -H pip3 install --upgrade pip
         sudo -H pip3 install setuptools mps-youtube
         sudo -H pip3 install --upgrade youtube_dl 
         pip3 install mps-youtube --upgrade 
+        sudo apt-get install mpv mplayer    # both mplayer to mpv to support easy change
         error=$?
         sudo ln -s /usr/local/bin/mpsyt /usr/bin/mpsyt    # hmm.. 
+        mpsyt set player mpv                # prevent player premature coetus interraptus      
         is [ $error ] && echo $error
         exit $error
 }
 
 
 vt_player() {
+        # Play text based videos on terminal window.
+        # Uses htps://artscene.textfiles.com as source
+        # local storage is checked before download 
+        # Dowloaded files ase saved to $GURU_VIDEO/vt
 
         video_name="$1"
         video="$GURU_VIDEO/vt/$1.vt"
@@ -138,7 +150,6 @@ run_demo() {
              $GURU_CALL fadedown
              pkill mplayer
              pkill xplayer
-             #guru volume 50
              mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_MUSIC/fairlight.m4a </dev/null >/dev/null 2>&1 &
              $GURU_CALL fadeup
          fi
@@ -192,23 +203,8 @@ beer_break () {
 }
 
 
-me=${BASH_SOURCE[0]}
-if [[ "$me" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main $@
     exit $?
 fi
-
-
-
-# tests
-
-
-    # while [[ "$#" -gt 0 ]]
-    #     do case $1 in
-    #           -bg|--backround) show_video="False" ;;     
-    #           -ko|--karaoke|--lyrics) show_video="False" ;;      
-    #           *) ;;                                              
-    #     esac
-    # done
-
 

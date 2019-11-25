@@ -13,6 +13,43 @@ alias docker="resize -s 24 160;docker" 	#TEST
 # 	[ $answer == "y" ]  && return 1
 # }
 
+get_platform_info () {
+	# Returns a list of platform variables. "var=($(get_platform_info))"
+	# 0=description, 1=installation, 2=distribution, 3=release, 4=codename, 
+	# 5=connect, 6=session, 7=desktop
+	npsp=$(printf "\u00A0")
+
+	array[0]=$(lsb_release -ds) 		# Description 
+	array[0]=${array[0]//" "/"$npsp"} 	# to be able to pass in array
+	
+	array[2]=$(lsb_release -is) 		# Distribution "Mint" TODO test with another mother Ubuntu OK
+	array[2]=${array[2]##*"Linux"} 		# We know it's linux
+	array[2]=${array[2],,} 				# downcase
+	
+	array[3]=$(lsb_release -rs) 		# Release "19.2"
+	array[4]=$(lsb_release -cs) 		# Codename "tessa"
+	
+	array[5]=$([[ $(who am i) =~ \([0-9\.]+\)$ ]] && echo ssh || echo local) # session type
+	array[6]=${GDMSESSION,,} 			# Session "cinnamon"
+	
+	array[7]=${XDG_CURRENT_DESKTOP,,}	# Desktop "X-Cinnamon"
+	[ ${array[7]} ] && array[1]="desktop" || array[1]="server"
+
+	# Damn! https://stackoverflow.com/questions/5564418/exporting-an-array-in-bash-script
+	echo "${array[0]} ${array[1]} ${array[2]} ${array[3]} ${array[4]} ${array[5]} ${array[6]} ${array[7]}" # workaround:
+}
+
+print_platform () {
+
+	echo "Description: ${platform[0]}"
+	echo "Installation: ${platform[1]}"
+	echo "Distributor ID: ${platform[2]}"
+	echo "Release: ${platform[3]}"
+	echo "Codename: ${platform[4]}"
+	echo "Connect: ${platform[5]}"
+	echo "Session: ${platform[6]}"  
+	echo "Desktop: ${platform[7]}"
+}
 
 save () {
 
