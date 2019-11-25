@@ -5,6 +5,14 @@ main () {
 
 	case "$argument" in
 		
+			all)
+				guru tag install 
+				guru note install 
+				guru yle install 
+				guru play install 
+				;;
+
+
 			basic)
 				sudo apt install xterm
 				exit $?
