@@ -98,7 +98,7 @@ mpsyt_install () {
         error=$?
         sudo ln -s /usr/local/bin/mpsyt /usr/bin/mpsyt    # hmm.. 
         mpsyt set player mpv                # prevent player premature coetus interraptus      
-        is [ $error ] && echo $error
+        [ $error ] && echo $error
         exit $error
 }
 
