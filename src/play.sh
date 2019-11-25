@@ -1,4 +1,3 @@
-#!/bin/bash
 # player wrap for giocon.client
 # casa@ujo.guru 2019
 
@@ -22,6 +21,7 @@ main () {
             vt|text|ascii)      vt_player $@ ;;
             demo)               run_demo ;;
             beer_break)         beer_break ;;
+            enter)              cvlc $GURU_AUDIO/system/enter.mp4 --play-and-exit; exit 0;;
             radio|fm)           $GURU_CALL radio; exit 0;;            
             song|biisi|kappale) to_play="/$@, 1, q"; show_video="False"; ;;
             karaoke|lyrics)     to_play="/$@ lyrics, 1, q" ;;
