@@ -1,5 +1,5 @@
 #!/bin/bash
-# giocon work time recorder casa@ujo.guru 2019
+# giocon work time tracker casa@ujo.guru (c) 2019
 
 main () {
 	
@@ -80,6 +80,7 @@ last() {
 
     [ -f $GURU_TRACKLAST ] && cat $GURU_TRACKLAST || echo "no last task set"
 
+
 }
 
 start() {	
@@ -92,6 +93,13 @@ start() {
 
 		at|from)    
 			shift																	#; echo "input: "$@
+			
+			if ! [ "$1" ]; then  													
+				echo "pls. input start time"
+				return 124
+			fi
+
+
 			if date -d "$1" '+%H:%M' >/dev/null 2>&1; then															
 				time=$(date -d "$1" '+%H:%M') 		
 				shift																#; echo "time pass: "$@
@@ -131,24 +139,6 @@ start() {
 }
 
 
-change() {
-	start $@
-	return $?
-}
-
-
-cancel() {
-
-	if [ -f $GURU_TRACKSTATUS ]; then			
-		rm $GURU_TRACKSTATUS
-		echo "canceled" 
-	else
-		echo "not active timer"
-	fi
-	return 0
-}
-
-
 end() {
 
 	if [ -f $GURU_TRACKSTATUS ]; then 	
@@ -163,7 +153,14 @@ end() {
 
 		at|to|till)    
 			shift																	#; echo "input: "$@
-			if date -d "$1" '+%H:%M' >/dev/null 2>&1; then															
+			
+			if ! [ "$1" ]; then  													
+				echo "pls. input end time"
+				return 124
+			fi
+
+
+			if date -d "$1" '+%H:%M' >/dev/null 2>&1; then							# Some level of format check
 				time=$(date -d "$1" '+%H:%M') 		
 				shift																#; echo "time pass: "$@
 			else 
@@ -220,6 +217,24 @@ end() {
 
 stop () {
 	end $@
+	return 0
+}
+
+
+change() {
+	start $@
+	return $?
+}
+
+
+cancel() {
+
+	if [ -f $GURU_TRACKSTATUS ]; then			
+		rm $GURU_TRACKSTATUS
+		echo "canceled" 
+	else
+		echo "not active timer"
+	fi
 	return 0
 }
 
