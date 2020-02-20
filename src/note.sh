@@ -112,7 +112,7 @@ make_note() {
 		
 		if [[ ! -f "$note" ]]; then 	    	    	
 			# header
-		    printf "$note_file\n\n# $GURU_NOTE_HEADER $GURU_REAL_NAME $nice_datestamp\n\n" >$note			    		
+		    printf "$note_file\n\n# $GURU_NOTE_HEADER $nice_datestamp\n\n" >$note			    		
 
 			# template	
 		    [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note	

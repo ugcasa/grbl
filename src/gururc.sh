@@ -19,7 +19,7 @@ else 												# Defaults
 	export GURU_REAL_NAME="Roger von Gullit"
 	export GURU_USER_EMAIL="$GURU_USER@ujo.guru"
 	export GURU_USER_PHONE="-your phone number-"
-	export GURU_NOTE_HEADER="Notes" 				# TODO koostetaan valmiiksi sringi tässä
+	export GURU_NOTE_HEADER="Daily notes $GURU_REAL_NAME" 				# TODO koostetaan valmiiksi sringi tässä
 
 # (to teamrc)
 	export GURU_TEAM="test"
