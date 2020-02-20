@@ -35,24 +35,24 @@ else 												# Defaults
 	export GURU_FILE_TIME_FORMAT='%H%M%S'
 
 # Folders (in teamrc)
-	export GURU_NOTES="$HOME/Documents"
-	export GURU_WORKTRACK="$HOME/Documents/.timetrack"
+	export GURU_NOTES="$HOME/Notes"
+	export GURU_WORKTRACK="$HOME/Track/timetrack"
+	export GURU_COUNTER="$HOME/Track/counters"
 	export GURU_TEMPLATES="$HOME/Templates"
 	export GURU_VIDEO="$HOME/Videos"
 	export GURU_MEDIA="$HOME/Downloads"
 	export GURU_AUDIO="$HOME/Audio"
 	export GURU_MUSIC="$HOME/Music"
-	export GURU_COUNTER="$HOME/Documents/.counters"
 	export GURU_RECEIPTS="invoices"										
 	export GURU_SCAN="$HOME/Documents" 		
 	export GURU_ACCOUNTING="$HOME/Economics"
 	export GURU_PERSONAL_ACCOUNTING="$HOME/Documents"
 
-# Folders 
+# Tool folders (lowercase)
 	export GURU_BIN="$HOME/bin"
 	export GURU_CFG="$HOME/.config/guru"
 	export GURU_APP="$HOME/apps"
-	export GURU_CHROME_USER_DATA="$HOME/.config/chromium/$EMAIL"
+	export GURU_CHROME_USER_DATA="$HOME/.config/chromium/$GURU_USER_EMAIL"
 
 # Files
 	export GURU_TRACKDATA="$GURU_WORKTRACK/current_work.csv"
@@ -65,11 +65,19 @@ else 												# Defaults
 	export GURU_INSTALL="desktop"
 
 # Preferred applications
+    export GURU_TERMINAL="gnome-terminal"
 	export GURU_EDITOR="subl"
 	export GURU_BROWSER="firefox"
 	export GURU_OFFICE_DOC="libreoffice"
 	export GURU_OFFICE_SPR="libreoffice"
 
+# Keyboard bindings 
+    export GURU_KEYBIND_TERMINAL="F1"
+    export GURU_KEYBIND_NOTE="<Ctrl>n"
+    export GURU_KEYBIND_DATESTAMP=""
+    export GURU_KEYBIND_TIMESTAMP="<Ctrl>t"
+    export GURU_KEYBIND_SIGNATURE=""
+    export GURU_KEYBIND_PICTURE_MD=""
 fi
 
 alias "$GURU_CALL"=$GURU_BIN/guru 					
