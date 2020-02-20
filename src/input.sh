@@ -43,6 +43,24 @@ keyboard_main() {
             esac
             ;;
         
+        # shortcut)     # user interface for keyboard shorcut tool proto
+        #     shift
+        #     . $GURU_BIN/keyboard-shortcuts.sh
+        #     case "$1" in
+        #         add)
+        #             set_ubuntu_keyboard_shortcuts "$@"
+        #         ;;
+        #         release)
+        #             release_ubuntu_keyboard_shortcut "$@"
+        #         ;;
+        #         reset)
+        #             reset_ubuntu_keyboard_shortcuts
+        #         ;;
+        #         *)
+        #     esac
+                
+        #     ;;
+
         barcode)  
             mask "$barcode"      
             poll_kb "$barcode_dev"         
