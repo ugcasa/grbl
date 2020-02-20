@@ -2,8 +2,10 @@
 # sshfs mount functions for guru tool-kit
 # casa@ujo.guru 2020
 
+
 mount_sshfs() {
     #mount [what] [where] 
+    
     local source_folder="$1"
     local target_folder="$2"    
     local remote_flag="$3"  
@@ -61,6 +63,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     
     case "$command" in
 
+        install)
+            sudo apt install sshfs
+            ;;
         mount|connect)
             if [ "$1" == "all" ]; then 
                 mount_guru_defaults 
