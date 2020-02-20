@@ -52,7 +52,7 @@ cp -f ./src/gururc.sh "$HOME/.gururc"
 [ -d $GURU_APP ] || mkdir -p $GURU_APP
 cp -f ./src/guru.sh "$GURU_BIN/guru"							# to able to call just "guru"
 cp -f ./cfg/* "$GURU_CFG"										# guru toolkit configurations
-cp -f ./src/* -f "$GURU_BIN"									# guru toolkit scripts
+cp -f -r ./src/* -f "$GURU_BIN"									# guru toolkit scripts
 cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"  			# compatibility bubblegum
 
 ## Basic requirements, even dough user cannot get this far whit out these 
