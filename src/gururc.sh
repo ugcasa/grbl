@@ -25,19 +25,36 @@ else 												# Defaults
 	export GURU_TEAM="test"
 	export GURU_TEAM_NAME="tester-group"
 
-# Folders (in teamrc)
+# Folders 
 	export GURU_NOTES="$HOME/Notes"
-	export GURU_WORKTRACK="$HOME/Track/timetrack"
-	export GURU_COUNTER="$HOME/Track/counters"
+	export GURU_PICTURES="$HOME/Pictures"
 	export GURU_TEMPLATES="$HOME/Templates"
 	export GURU_VIDEO="$HOME/Videos"
-	export GURU_MEDIA="$HOME/Downloads"
 	export GURU_AUDIO="$HOME/Audio"
 	export GURU_MUSIC="$HOME/Music"
-	export GURU_RECEIPTS="invoices"										
 	export GURU_SCAN="$HOME/Documents" 		
 	export GURU_ACCOUNTING="$HOME/Economics"
-	export GURU_PERSONAL_ACCOUNTING="$HOME/Documents"
+	export GURU_PERSONAL_ACCOUNTING="$HOME/Economics/Personal"
+
+	export GURU_WORKTRACK="$HOME/Track/timetrack"
+	export GURU_COUNTER="$HOME/Track/counters"
+	export GURU_RECEIPTS="invoices"												# bad monkey!
+
+# Server setup 
+	export GURU_REMOTE_FILE_SERVER_USER="$USER"	
+	export GURU_LOCAL_FILE_SERVER="192.168.1.10"
+	export GURU_LOCAL_FILE_SERVER_PORT="22"
+	export GURU_REMOTE_FILE_SERVER="ujo.guru"
+	export GURU_REMOTE_FILE_SERVER_PORT="2010"
+
+	export GURU_CLOUD_NOTES="/home/$GURU_REMOTE_FILE_SERVER_USER/ujo.guru/Notes"
+	export GURU_CLOUD_PICTURES="/home/$GURU_REMOTE_FILE_SERVER_USER/ujo.guru/Pictures"
+	export GURU_CLOUD_TEMPLATES="/home/$GURU_REMOTE_FILE_SERVER_USER/Templates"
+	export GURU_CLOUD_VIDEO="/home/$GURU_REMOTE_FILE_SERVER_USER/bubble/Videos"
+	export GURU_CLOUD_AUDIO="/home/$GURU_REMOTE_FILE_SERVER_USER/bubble/Audio"
+	export GURU_CLOUD_MUSIC="/home/$GURU_REMOTE_FILE_SERVER_USER/bubble/Music"
+	export GURU_CLOUD_ACCOUNTING="/home/$GURU_REMOTE_FILE_SERVER_USER/ujo.guru/Accounting"
+	export GURU_CLOUD_RECEIPTS="invoices"										# bad monkey!
 
 # Preferred applications
 	export GURU_TERMINAL="gnome-terminal"
