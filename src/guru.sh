@@ -16,6 +16,11 @@ version="0.4.0"
 
 source "$HOME/.gururc" 						# user and platform settings (implement here, always up to date)
 source "$GURU_BIN/functions.sh" 				# common functions, if no ".sh", check here
+source "$(dirname "$0")/lib/common.sh"
+
+counter add guru-runned >/dev/null
+
+#$GURU_CALL counter add guru_runned
 
 main () {
 
@@ -130,7 +135,7 @@ parse_argument () {
 				printf 'version  	 	printout version \n'
 				printf "\nMost of tools has it own more detailed help page. pls review those before contacting me ;)\n"				
 				printf "\nExamples:\n"
-				printf "\t %s note yesterday ('%s note help' m more)\n" "$GURU_CALL"
+				printf "\t %s note yesterday ('%s note help' m morehelp)\n" "$GURU_CALL"
 				printf "\t %s install mqtt-server \n" "$GURU_CALL"
 				printf "\t %s ssh key add github \n" "$GURU_CALL"
 				printf "\t %s timer start at 12:00 \n" "$GURU_CALL"
@@ -152,6 +157,7 @@ parse_argument () {
 terminal() { 
 	# Terminal looper	
 	echo $GURU_CALL' in terminal mode (type "help" enter for help)'
+	#$GURU_CALL counter add guru_terminal_runned
 	while :											
 		do
 			. $HOME/.gururc

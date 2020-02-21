@@ -2,7 +2,7 @@
 # guru tool-kit keyboard shortcut functions 
 # casa@ujo.guru 2020
 
-source "$(dirname "$0")/lib/common.sh"
+#source "$(dirname "$0")/lib/common.sh"
 
 keyboard_main() {
 
