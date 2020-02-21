@@ -101,7 +101,8 @@ add_key_accesspoint () {
     eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
     ssh-add "$key_file" && echo "Key add OK" || return 24    
 
-    ssh-copy-id -i "$key_file" "$GURU_USER@$$GURU_ACCESS_POINT_SERVER" -p "$$GURU_ACCESS_POINT_SERVER_PORT"
+    ssh-copy-id -p "$GURU_ACCESS_POINT_SERVER_PORT" -i "$key_file" "$GURU_ACCESS_POINT_SERVER" 
+
 
     # add domain based rule to ssh config
     if [ "$(grep -e ujo.guru < $HOME/.ssh/config)" ]; then 
