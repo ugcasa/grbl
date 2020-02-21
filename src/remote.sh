@@ -2,6 +2,8 @@
 # sshfs mount functions for guru tool-kit
 # casa@ujo.guru 2020
 
+source "$(dirname "$0")/lib/ssh.sh"
+
 remote_main() {
 
     command="$1"
@@ -29,35 +31,13 @@ remote_main() {
                 grep "sshfs" < /etc/mtab
                 ;;
 
-        pull)
-                case $1 in
-                    all )
-                        pull_guru_config_file
-                        #+ other
-                        ;;
-                    
-                    config|cfg)
-                        pull_guru_config_file
-                        ;;
-                        *)
-                        echo "guru remote pull [config|all]"
-                esac            
-            ;;
+        pull|get)
+                remote_pull "$@"
+                ;;
 
-        push)
-                case $1 in
-                    all )
-                        push_guru_config_file
-                        #+ other
-                        ;;
-                    
-                    config|cfg)
-                        push_guru_config_file
-                        ;;
-                        *)
-                        echo "guru remote push [config|all]"
-                esac            
-            ;;
+        push|set)
+                remote_push "$@"
+                ;;
 
         help|*)
                 printf "\nUsage:\n\t $0 [command] [arguments]\n\t $0 mount [source] [target]\n"
@@ -73,10 +53,45 @@ remote_main() {
                 printf "                        [all] send all to server (not sure wha all mean for now)\n"
                 printf " install                install requirements\n"   
                 printf "\nExample:\n\t %s remote mount /home/%s/share /home/%s/mount/%s/ \n\n"\
-                       "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER" "$GURU_REMOTE_FILE_SERVER"
+                       "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
     esac
 
     return 0
+}
+
+remote_push(){
+    
+    case $1 in
+        
+        all)
+            push_guru_config_file
+            #+ other
+            ;;
+        
+        config|cfg)
+            push_guru_config_file
+            ;;
+        *)
+            echo "guru remote push [config|all]"
+    esac            
+
+}
+
+remote_pull() {
+
+    case $1 in
+        
+        all)
+            pull_guru_config_file
+            #+ other
+            ;;
+        
+        config|cfg)
+            pull_guru_config_file
+            ;;
+        *)
+            echo "guru remote pull [config|all]"
+    esac   
 }
 
 install_requirements() {

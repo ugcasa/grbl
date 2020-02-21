@@ -2,11 +2,11 @@
 # guru tool-kit keyboard shortcut functions 
 # casa@ujo.guru 2020
 
-# Inclides
-. $GURU_BIN/lib/common.sh
+source "$(dirname "$0")/lib/common.sh"
 
 keyboard_main() {
 
+    distro="$(check_distro)"    # lazy
     command="$1"
     shift
 
@@ -14,18 +14,22 @@ keyboard_main() {
 
         add-shortcut)
                 if [ "$1" == "all" ]; then  
-                    add_ubuntu_guru_shortcuts
-                    add_cinnamon_guru_shortcuts
+                     [ "$distro" == "linuxmint" ] && add_cinnamon_guru_shortcuts 
+                     [ "$distro" == "ubuntu" ] && add_ubuntu_guru_shortcuts 
                 else
-                    set_ubuntu_keyboard_shortcut "$@"
+                    [ "$distro" == "linuxmint" ] && set_cinnamon_keyboard_shortcut "$@"
+                    [ "$distro" == "ubuntu" ] && set_ubuntu_keyboard_shortcut "$@"
                 fi
                 ;;
         
         release-shortcut)
                 if [ "$1" == "all" ]; then  
                     reset_ubuntu_keyboard_shortcuts
+                    [ "$distro" == "linuxmint" ] && add_cinnamon_guru_shortcuts 
+                    [ "$distro" == "ubuntu" ] && add_ubuntu_guru_shortcuts 
                 else
-                    release_ubuntu_keyboard_shortcut "$@"
+                    [ "$distro" == "linuxmint" ] && release_cinnamon_guru_shortcut "$@"
+                    [ "$distro" == "ubuntu" ] && release_ubuntu_keyboard_shortcut "$@"
                 fi
                 ;;
 
@@ -116,9 +120,6 @@ add_cinnamon_guru_shortcuts() {
         
         dconf load /org/cinnamon/desktop/keybindings/ < "$new"    
 }
-
- 
-
 
 
 # check is called by user of includet in scrip. 
