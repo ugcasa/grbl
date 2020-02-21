@@ -14,7 +14,8 @@ keyboard_main() {
 
         add-shortcut)
                 if [ "$1" == "all" ]; then  
-                    add_guru_defaults 
+                    add_ubuntu_guru_shortcuts
+                    add_cinnamon_guru_shortcuts
                 else
                     set_ubuntu_keyboard_shortcut "$@"
                 fi
@@ -29,9 +30,12 @@ keyboard_main() {
                 ;;
 
             *)
-                printf "\nUsage:\n\t $0 [command] [arguments]\n\t $0 mount [source] [target]\n"
+                printf "\nUsage:\n\t %s keyboard [command] [variables]\n" "$GURU_CALL"
                 printf "\nCommands:\n\n"
-                prinff "[name] [command] [binding]"
+                printf " add-shortcut [all]             add shortcut\n"
+                printf "                                [all] add shortcuts set in '~/.config/guru/$GURU_USER/userrc'\n"
+                printf " release-shortcut [all]         releases shortcut [name]\n"
+                printf "                                [all] release all custom shortcuts\n"
                 printf "\nExample:\n\t %s keyboard add-shortcut terminal %s F1\n\n" "$GURU_CALL" "$GURU_TERMINAL"
                 ;;
     esac
@@ -74,13 +78,11 @@ release_ubuntu_keyboard_shortcut(){
 }
 
 
-add_ubuntu_guru_defaults(){
-    # test for older guru toolkits where these variables are not set    
-        # guru variablesfor test, not implemented to userrc yet
-        
-        echo "Testing keyboard shortcuts in $PRETTY_NAME"
+add_ubuntu_guru_shortcuts(){
+    # set guru defaults
 
-        # Test
+        compatible_with "ubuntu" || return 1
+
         reset_ubuntu_keyboard_shortcuts
 
         [ "$GURU_KEYBIND_TERMINAL" ]    && set_ubuntu_keyboard_shortcut terminal      "$GURU_TERMINAL"            "$GURU_KEYBIND_TERMINAL"    ; error=$((error+$?))
@@ -97,6 +99,26 @@ add_ubuntu_guru_defaults(){
         fi
         return 0
 }
+
+
+add_cinnamon_guru_shortcuts() {
+
+        compatible_with "linuxmint" || return 1
+
+        dconf help >/dev/null || sudo apt install dconf-cli
+        
+        new=$GURU_CFG/kbbind.guruio.cfg           
+        backup=$GURU_CFG/kbbind.backup.cfg
+        
+        if [ ! -f "$backup" ]; then       
+            dconf dump /org/cinnamon/desktop/keybindings/ > "$backup" && cat "$backup" | grep binding=
+        fi
+        
+        dconf load /org/cinnamon/desktop/keybindings/ < "$new"    
+}
+
+ 
+
 
 
 # check is called by user of includet in scrip. 

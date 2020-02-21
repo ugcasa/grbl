@@ -72,10 +72,11 @@ case $platform in
 		echo "installed" | xclip -i -selection clipboard >/dev/null || sudo apt install xclip
 		xterm -v >/dev/null || sudo apt install xterm		
 		dconf help >/dev/null || sudo apt install dconf-cli
-		new=./cfg/kbbind.guruio.cfg				
+		new=./cfg/kbbind.guruio.cfg		
+		backup=./cfg/kbbind.backup.cfg
 		
-		if [ ! -f $current ]; then 		
-			dconf dump /org/cinnamon/desktop/keybindings/ > $current && cat $current | grep binding=
+		if [ ! -f "$backup" ]; then 		
+			dconf dump /org/cinnamon/desktop/keybindings/ > "$backup" && cat "$backup" | grep "binding="
 		fi
 		
 		dconf load /org/cinnamon/desktop/keybindings/ < $new		
