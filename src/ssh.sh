@@ -21,6 +21,9 @@ ssh_main() {
         rm-key)
             echo "TBD"
             ;;
+        get-config|get-guru-config|get-guru-user-config)
+            get_guru_config_file
+            ;;
             
         help|*)
             printf "ssh main menu\nUsage:\n\t$0 [command] [variables]\n"
@@ -28,11 +31,19 @@ ssh_main() {
             printf " add-keys      adds keys to server [server_selection] [variables] \n"
             printf " rm-key        remove from remote server server [key_file] \n"
             printf " rm-key-local  remove local key files server [key_file] \n"
-            printf " ls-key        list of keys \n\n"
+            printf " ls-key        list of keys \n"
+            printf " get-config    gets from server and replace guru userrc config file \n\n"
             ;;
     esac
 }
 
+get_guru_config_file(){
+    # usage: get_guru_config_file 
+    local user_name=$GURU_USER
+    #echo rsync -p "$GURU_ACCESS_POINT_SERVER_PORT" "$GURU_ACCESS_POINT_SERVER:$GURU_ACCESS_POINT_SERVER_PORT:/home/$user_name/user/conf/$user_name.userrc.sh" "$GURU_CFG/$GURU_USER/userrc" 
+    rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$user_name/usr/cfg/$user_name.userrc.sh" "$GURU_CFG/$GURU_USER/userrc" 
+
+}
 
 ssh_add_key(){
     error="1"  # Warning "1" is default exit code
