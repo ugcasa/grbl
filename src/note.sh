@@ -1,11 +1,14 @@
 #!/bin/bash
 # note generator 2.0 
 
+source "$(dirname "$0")/lib/common.sh"
+
 note_main () {                                                                  
     # command parser        
         command="$1"; shift                                                         #; echo "command: $command"
         argument="$1"; shift                                                        #; echo "argument: $argument"
         user_input="$@"
+        counter add note-runned >/dev/null                                          # Usage statistics
         
         case "$command" in
 
