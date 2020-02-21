@@ -2,10 +2,6 @@
 ## bash script to add SSH key to remote service provider
 # tested: 2/2020 ubuntu desktop 18.04 and mint cinnamon 19.2 
 
-# Inclides
-#. lib/common.sh
-
-
 ssh_main() {
     # main selector off ssh functions
     command="$1"
@@ -40,19 +36,14 @@ ssh_main() {
     esac
 }
 
-pull_guru_config_file(){
-    # usage: pull_guru_config_file 
-    local user_name=$GURU_USER
-    #echo rsync -p "$GURU_ACCESS_POINT_SERVER_PORT" "$GURU_ACCESS_POINT_SERVER:$GURU_ACCESS_POINT_SERVER_PORT:/home/$user_name/user/conf/$user_name.userrc.sh" "$GURU_CFG/$GURU_USER/userrc" 
-    rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$user_name/usr/cfg/$user_name.userrc.sh" "$GURU_CFG/$GURU_USER/userrc" 
 
+pull_guru_config_file(){
+    rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_USER/usr/cfg/$GURU_USER.userrc.sh" "$GURU_CFG/$GURU_USER/userrc" 
 }
 
+
 push_guru_config_file(){
-    # usage: pull_guru_config_file 
-    local user_name=$GURU_USER
-    #echo rsync -p "$GURU_ACCESS_POINT_SERVER_PORT" "$GURU_ACCESS_POINT_SERVER:$GURU_ACCESS_POINT_SERVER_PORT:/home/$user_name/user/conf/$user_name.userrc.sh" "$GURU_CFG/$GURU_USER/userrc" 
-    rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" "$GURU_CFG/$GURU_USER/userrc" "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$user_name/usr/cfg/$user_name.userrc.sh"
+    rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" "$GURU_CFG/$GURU_USER/userrc" "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_USER/usr/cfg/$GURU_USER.userrc.sh"
 }
 
 
@@ -108,6 +99,7 @@ ssh_add_key(){
     return 0
 }
 
+
 add_key_accesspoint () {        # mint pass, ubuntu not tested
     # function to add keys to ujo.guru access point server 
 
@@ -132,7 +124,6 @@ add_key_accesspoint () {        # mint pass, ubuntu not tested
         printf "\nHost *ujo.guru \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
     fi
     return 0
-
 }
 
 
@@ -167,7 +158,6 @@ add_key_github () {
         printf "\nHost *github.com \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
     fi
     return 0
-
 }
 
 
