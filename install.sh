@@ -7,12 +7,12 @@ GURU_BIN=$HOME/bin
 GURU_CFG=$HOME/.config/guru
 
 source src/lib/common.sh
+source src/keyboard.sh
 
 check_python_module () {			# Does work, but returns funny
 	python -c "import $1"; 	
 	return $?
 }
-
 
 target_rc="$HOME/.bashrc"
 disabler_flag_file="$HOME/.gururc.disabled"
@@ -46,7 +46,7 @@ grep -q ".gururc" "$target_rc" || cat ./src/tobashrc.sh >>"$target_rc"
 ## folder structure copy files
 
 cp -f ./src/gururc.sh "$HOME/.gururc"
-. $HOME/.gururc													# rise default environmental variables
+source $HOME/.gururc													# rise default environmental variables
 
 [ -d $GURU_BIN ] || mkdir -p $GURU_BIN
 [ -d $GURU_CFG ] || mkdir -p $GURU_CFG
@@ -61,34 +61,20 @@ cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"  			# compatibility bubblegum
 git --version >/dev/null || sudo apt install git
 pip3 help >/dev/null || sudo apt install python3-pip
 
-# TODO -> virtual env to get rid of these 
-#check_python_module feedparser >/dev/null || sudo pip -H install feedparser		
-#check_python_module virtualenv >/dev/null || sudo pip -H install virtualenv
-
 platform=$(check_distro)
 
-case $platform in 
+case "$platform" in 
 	
-	linuxmint) # debian/ubuntu/mint
-	
-		
+	linuxmint) 
 		echo "installed" | xclip -i -selection clipboard >/dev/null || sudo apt install xclip
 		xterm -v >/dev/null || sudo apt install xterm		
 		dconf help >/dev/null || sudo apt install dconf-cli
-		bash "$GURU_BIN/$GURU_CALL" set audio true
-		bash "$GURU_BIN/$GURU_CALL" set editor subl
-		bash "$GURU_BIN/$GURU_CALL" keyboard add-shortcut all
+		add_cinnamon_guru_shortcuts 
 		;;
 
 	ubuntu)	# Server/ubuntu server no gui		
-		
-		bash "$GURU_BIN/$GURU_CALL" keyboard add-shortcut all
 		joe --help >/dev/null || sudo apt install joe
-		
-		# set up this method does not work on first installation, but in use in server installations
-		bash "$GURU_BIN/$GURU_CALL" set install server
-		bash "$GURU_BIN/$GURU_CALL" set audio false
-		bash "$GURU_BIN/$GURU_CALL" set editor joe
+		add_ubuntu_guru_shortcuts
 		;;
 
 
@@ -100,13 +86,9 @@ case $platform in
 		exit 4
 esac
 
-															# Issue: 
-bash $GURU_CALL counter add giocon_install >/dev/null		# some conflicts recorded, not fully working method to sync by Dropbox
-															# giocon_install (estella's conflicted copy 2019-08-10) "10" 
-															# giocon_install (estella's conflicted copy 2019-08-14) "67"
-
+counter add guru-installed >/dev/null
 echo "successfully installed"
-
+exit 0
 
 
 
