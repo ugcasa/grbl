@@ -14,7 +14,7 @@
 
 
 
-version="0.3.2"
+version="0.4.0"
 
 . $HOME/.gururc 						# user and platform settings (implement here, always up to date)
 . $GURU_BIN/functions.sh 				# common functions, if no ".sh", check here
@@ -30,7 +30,7 @@ main () {
 		error_code=$?
 	fi
 
-	if (( error_code > 0 )); then
+	if (( error_code > 1 )); then
 		
 		[ -f $GURU_ERROR_MSG ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)
 		#error_message=$(cat -n 1 $GURU_ERROR_MSG)
@@ -68,7 +68,7 @@ parse_argument () {
 	            ;;  
 
 	        # bash scripts
-			ssh|remote|input|counter|note|stamp|timer|phone|play|install|scan|tag|yle) 		
+			keyboard|ssh|remote|input|counter|note|stamp|timer|phone|play|install|scan|tag|yle) 		
 				$argument.sh "$@" 
 				return $? 			
 				;;
