@@ -27,7 +27,7 @@ ssh_main() {
             printf "ssh main menu\nUsage:\n\t$0 [command] [variables]\n"
             printf "\nCommands:\n"
             printf " pull-cfg      get personal config from server and replace guru './config/guru/%s/userrc' file \n" "$GURU_USER"
-            printf " push-cfg      sends current user config to %s \n\n" "$GURU_ACCESS_POINT_SERVER"
+            printf " push-cfg      sends current user config to %s \n" "$GURU_ACCESS_POINT_SERVER"
             printf " ls-key        list of keys \n"
             printf " add-keys      adds keys to server [server_selection] [variables] \n"
             printf " rm-key        remove from remote server server [key_file] \n"
