@@ -14,52 +14,36 @@ ssh_main() {
         add-key)
             ssh_add_key "$@"
             ;;
-        rm-key)
+        rm-key|rm-key-local)
             echo "TBD"
             ;;
-        pull-cfg|pull-config|get-config)
-            pull_guru_config_file
-            ;;
-        push-cfg|push-config|put-config)
-            push_guru_config_file
-            ;;
         help)
-            printf "ssh main menu\nUsage:\n\t$0 [command] [variables]\n"
-            printf "\nCommands:\n"
-            printf " pull-cfg      get personal config from server and replace guru './config/guru/%s/userrc' file \n" "$GURU_USER"
-            printf " push-cfg      sends current user config to %s \n" "$GURU_ACCESS_POINT_SERVER"
+            printf "\nssh main menu\n\nUsage:\n\t$0 [command] [variables]\n"
+            printf "\nCommands:\n\n"
             printf " ls-key        list of keys \n"
-            printf " add-keys      adds keys to server [server_selection] [variables] \n"
+            printf " add-key       adds keys to server [server_selection] [variables] \n"
             printf " rm-key        remove from remote server server [key_file] \n"
             printf " rm-key-local  remove local key files server [key_file] \n"
+            printf "\nExample:\n\t %s ssh add-key %s \n\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER" 
             ;;
         *)
         ssh "$@"
-        
+
     esac
 }
 
 
-pull_guru_config_file(){
-    rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_USER/usr/cfg/$GURU_USER.userrc.sh" "$GURU_CFG/$GURU_USER/userrc" 
-}
-
-
-push_guru_config_file(){
-    rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" "$GURU_CFG/$GURU_USER/userrc" "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_USER/usr/cfg/$GURU_USER.userrc.sh"
-}
-
-
 ssh_add_key(){
-    error="1"  # Warning "1" is default exit code
     # [1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket
+
     # Install requirements
     xclip -help >/dev/null 2>&1 ||sudo apt install xclip
 
     [ -d "$HOME/.ssh" ] || mkdir "$HOME/.ssh"
+    error="1"  # Warning "1" is default exit code
 
     # Select git service provider
-    [ "$1" ] && remote="$1" ||read -r -p "[1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket : " remote
+    [ "$1" ] && remote="$1" ||read -r -p "[1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket, [5] other: " remote
     shift 
 
     case $remote in
@@ -84,14 +68,15 @@ ssh_add_key(){
             error="$?"
             ;;   
         help|*)
-           printf "Add key to server and rule to ~/.ssh/config \nUsage: \n\t%s add-key [selection] [variables]\n" "$0"
-           printf "\nselections:\n\n"
+           printf "\nAdd key to server and rule to ~/.ssh/config \n\nUsage: \n\t%s add-key [selection] [variables]\n" "$0"
+           printf "\nSelections:\n\n"
            printf "1|ujo.guru      add key to ujo.guru accesspoint\n"     
            printf "2|git.ujo.guru  add key to own git server \n"
            printf "3|github        add key to github.com [user_email] \n"
            printf "4|bitbucket     add key to bitbucket.org [user_email] \n"
            printf "5|other         add key to any server [domain] [port] [username] \n\n"
            printf "without variables script asks input during process\n\n"
+           printf "example:\n\t %s ssh add-key other pornhub.com 22 jorma69\n\n" "$GURU_CALL" 
     esac
 
     if [[ "$error" -gt "1" ]]; then 
@@ -103,12 +88,10 @@ ssh_add_key(){
 }
 
 
-add_key_accesspoint () {        # mint pass, ubuntu not tested
+add_key_accesspoint () {        
     # function to add keys to ujo.guru access point server 
 
     local key_file="$HOME/.ssh/$GURU_ACCESS_POINT_SERVER"'_id_rsa'
-    local server_domain="$GURU_ACCESS_POINT_SERVER"
-    local server_port="$GURU_ACCESS_POINT_SERVER_PORT"
 
     ## Generate keys
     ssh-keygen -t rsa -b 4096 -C "$GURU_USER" -f "$key_file" && echo "Key OK" || return 22
@@ -118,7 +101,7 @@ add_key_accesspoint () {        # mint pass, ubuntu not tested
     eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
     ssh-add "$key_file" && echo "Key add OK" || return 24    
 
-    ssh-copy-id -i "$key_file" "$GURU_USER@$server_domain" -p "$server_port"
+    ssh-copy-id -i "$key_file" "$GURU_USER@$$GURU_ACCESS_POINT_SERVER" -p "$$GURU_ACCESS_POINT_SERVER_PORT"
 
     # add domain based rule to ssh config
     if [ "$(grep -e ujo.guru < $HOME/.ssh/config)" ]; then 
@@ -126,6 +109,7 @@ add_key_accesspoint () {        # mint pass, ubuntu not tested
     else
         printf "\nHost *ujo.guru \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
     fi
+    
     return 0
 }
 
@@ -160,6 +144,7 @@ add_key_github () {
     else
         printf "\nHost *github.com \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
     fi
+    
     return 0
 }
 
@@ -194,6 +179,7 @@ add_key_bitbucket () {
     else
         printf "\nHost *bitbucket.org \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
     fi
+    
     return 0
 }
 
@@ -222,8 +208,8 @@ add_key_other() {
     else
         printf "\nHost *$server_domain \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
     fi
+
     return 0
-    return 1
 }
 
 
