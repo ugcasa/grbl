@@ -12,12 +12,10 @@
 # In case of IOTSIHTOTBACM (installation of this shit in hindsight turned out to be a colossal mistake) do:
 # guru uninstall; [ -d $GURU_CFG ] && rm /$GURU_CFG -rf 	# to get totally rig of this worm and all your personal configs
 
-
-
 version="0.4.0"
 
-. $HOME/.gururc 						# user and platform settings (implement here, always up to date)
-. $GURU_BIN/functions.sh 				# common functions, if no ".sh", check here
+source "$HOME/.gururc" 						# user and platform settings (implement here, always up to date)
+source "$GURU_BIN/functions.sh" 				# common functions, if no ".sh", check here
 
 main () {
 
@@ -32,14 +30,14 @@ main () {
 
 	if (( error_code > 1 )); then
 		
-		[ -f $GURU_ERROR_MSG ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)
+		[ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)
 		#error_message=$(cat -n 1 $GURU_ERROR_MSG)
 		logger "$0 $argument: $error_code: $error_message"				# log errors
 		echo "error: $error_code: $error_message"						# print error
 		rm -f $GURU_ERROR_MSG
 	fi
 
-	return $error_code
+	return "$error_code"
 }
 
 
@@ -111,25 +109,34 @@ parse_argument () {
 
 
 			help|-h|--help) 			# hardly never updated help printout
-			 	printf "ujo.guru tool kit client v.$version \n"
-			 	printf "usage: '$GURU_CALL' [TOOL] [COMMAND] [VARIABLES] \ncommand: \n"
-				printf 'timer     timing tools ("'$GURU_CALL' timer help" for more info) \n'
-				printf 'notes     open daily notes \n'
-				printf 'project   opens project to editor \n'
-				printf 'document  compile markdown to .odt format \n'
-				printf 'play      play videos and music ("'$GURU_CALL' play help" for more info) \n'			
-				printf 'phone     get data from android phone \n'
-				printf 'stamp     time stamp to clipboard and terminal\n'
-				printf 'silence   kill all audio and lights \n'
-				printf 'terminal  start guru toolkit in terminal mode to exit terminal mode type "exit"\n'				
-				printf 'demo      run demo ("'$GURU_CALL' set audio true" to play with audio)\n'			
-				printf 'status    status of user \n'
-				printf 'install   install tools ("'$GURU_CALL' install help" for more info) \n'
-				printf 'set       set options ("'$GURU_CALL' set help" for more information) \n' 
-				printf 'upgrade   upgrade guru toolkit \n'
-				printf 'disable   disables guru toolkit type "guru.enable" to enable \n'
-				printf 'uninstall remove guru toolkit \n'
-				printf 'version   printout version \n'
+			 	printf "\n-- guru tool-kit linux client - v.$version ----------- casa@ujo.guru 2019 - 2020\n"
+			 	printf "\nUsage:\n\t %s [tool] [command] [variables] \n\nCommand:\n\n" "$GURU_CALL"
+				printf 'timer    	 	timing tools ("%s timer help" for more info) \n' "$GURU_CALL"
+				printf 'notes    	 	open daily notes \n'
+				printf 'project  	 	opens project to editor \n'
+				printf 'document 	 	compile markdown to .odt format \n'
+				printf 'play     	 	play videos and music ("%s play help" for more info) \n' "$GURU_CALL"			
+				printf 'phone    	 	get data from android phone \n'
+				printf 'stamp    	 	time stamp to clipboard and terminal\n'
+				printf 'silence  	 	kill all audio and lights \n'
+				printf 'terminal 	 	start guru toolkit in terminal mode to exit terminal mode type "exit"\n'				
+				printf 'demo     	 	run demo ("%s set audio true" to play with audio)\n' "$GURU_CALL"			
+				printf 'status   	 	status of user \n'
+				printf 'install  	 	install tools ("%s install help" for more info) \n' "$GURU_CALL"
+				printf 'set      	 	set options ("%s set help" for more information) \n' "$GURU_CALL" 
+				printf 'upgrade  	 	upgrade guru toolkit \n'
+				printf 'disable  		disables guru toolkit type "guru.enable" to enable \n'
+				printf 'uninstall	 	remove guru toolkit \n'
+				printf 'version  	 	printout version \n'
+				printf "\nMost of tools has it own more detailed help page. pls review those before contacting me ;)\n"				
+				printf "\nExamples:\n"
+				printf "\t %s note yesterday ('%s note help' m more)\n" "$GURU_CALL"
+				printf "\t %s install mqtt-server \n" "$GURU_CALL"
+				printf "\t %s ssh key add github \n" "$GURU_CALL"
+				printf "\t %s timer start at 12:00 \n" "$GURU_CALL"
+				printf "\t %s keyboard add-shortcut terminal %s F1\n" "$GURU_CALL" "$GURU_TERMINAL"
+				printf "\t %s remote mount /home/%s/share /home/%s/mount/%s/ \n\n"\
+                       "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER" "$GURU_REMOTE_FILE_SERVER"
 				return 0
 				;;
 			
