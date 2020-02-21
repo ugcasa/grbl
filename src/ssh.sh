@@ -10,17 +10,25 @@ ssh_main() {
     # main selector off ssh functions
     command="$1"
     shift
-    echo "$command"
     case $command in 
         
+        ls-key|list-keys)
+            ssh-add -l
+            ;;
         add-key)
             ssh_add_key "$@"
             ;;
+        rm-key)
+            echo "TBD"
+            ;;
+            
         help|*)
-            printf "\nUsage:\n\t$0 [command] [variables]\n"
+            printf "ssh main menu\nUsage:\n\t$0 [command] [variables]\n"
             printf "\nCommands:\n"
-            printf " add-keys   adds keys to server. \n\n"
-            printf "            guru ssh add-keys help for more information.\n\n"
+            printf " add-keys      adds keys to server [server_selection] [variables] \n"
+            printf " rm-key        remove from remote server server [key_file] \n"
+            printf " rm-key-local  remove local key files server [key_file] \n"
+            printf " ls-key        list of keys \n\n"
             ;;
     esac
 }
@@ -38,16 +46,13 @@ ssh_add_key(){
     [ "$1" ] && remote="$1" ||read -r -p "[1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket : " remote
     shift 
 
-    echo "$remote"
-    echo "$1"
-
     case $remote in
         
         1|ujo.guru)
             add_key_accesspoint "$@"
             ;;
-        2|other|git.ujo.guru)
-            my-git_ssh_set "$@"
+        2|git.ujo.guru)
+            add_key_my-git "$@"
             error="$?"
             ;;
         3|github)
@@ -58,13 +63,18 @@ ssh_add_key(){
             add_key_bitbucket "$@"
             error="$?"
             ;;        
+        5|other)
+            add_key_other "$@"
+            error="$?"
+            ;;   
         help|*)
-           printf "Usage: \n\t%s [remote_provider] [login_email]\n" "$0"
-           printf "\nRemote_provider:\n\n"
-           printf "1|ujo.guru      add key to server and rule to .ssh/config \n"
+           printf "Add key to server and rule to ~/.ssh/config \nUsage: \n\t%s add-key [selection] [variables]\n" "$0"
+           printf "\nselections:\n\n"
+           printf "1|ujo.guru      add key to ujo.guru accesspoint\n"     
            printf "2|git.ujo.guru  add key to own git server \n"
-           printf "3|github        add key to github.com \n"
-           printf "4|bitbucket     add key to bitbucket.org \n\n"
+           printf "3|github        add key to github.com [user_email] \n"
+           printf "4|bitbucket     add key to bitbucket.org [user_email] \n"
+           printf "5|other         add key to any server [domain] [port] [username] \n\n"
            printf "without variables script asks input during process\n\n"
     esac
 
@@ -76,21 +86,22 @@ ssh_add_key(){
     return 0
 }
 
-add_key_accesspoint () {        # Non tested!!!
-    # function to setup ssh key login with github 
-    
-    local key_file="$HOME/.ssh/ujo.guru_id_rsa"
-    local ssh_key_add_url="ujo.guru"
+add_key_accesspoint () {        # mint pass, ubuntu not tested
+    # function to add keys to ujo.guru access point server 
 
-    [ "$1" ] && user_name="$1" || read -r -p "ujo.guru login name: " user_name
+    local key_file="$HOME/.ssh/$GURU_ACCESS_POINT_SERVER"'_id_rsa'
+    local server_domain="$GURU_ACCESS_POINT_SERVER"
+    local server_port="$GURU_ACCESS_POINT_SERVER_PORT"
 
     ## Generate keys
-    ssh-keygen -t rsa -b 4096 -C "$user_name" -f "$key_file" && echo "Key OK" || return 22
+    ssh-keygen -t rsa -b 4096 -C "$GURU_USER" -f "$key_file" && echo "Key OK" || return 22
     chmod 600 "$key_file"
 
     ## Start agent and add private key
     eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
     ssh-add "$key_file" && echo "Key add OK" || return 24    
+
+    ssh-copy-id -i "$key_file" "$GURU_USER@$server_domain" -p "$server_port"
 
     # add domain based rule to ssh config
     if [ "$(grep -e ujo.guru < $HOME/.ssh/config)" ]; then 
@@ -172,8 +183,31 @@ add_key_bitbucket () {
 }
 
 
-my-git_ssh_set() {
-    echo "TBD"
+add_key_other() {
+    
+    [ "$1" ] && server_domain="$1" ||read -r -p "domain: " server_domain   
+    [ "$2" ] && server_port="$2" ||read -r -p "port: " server_port  
+    [ "$3" ] && user_name="$3" ||read -r -p "user name: " user_name
+
+    local key_file="$HOME/.ssh/$server_domain"'_id_rsa'
+
+    ## Generate keys
+    ssh-keygen -t rsa -b 4096 -C "$user_name" -f "$key_file" && echo "Key OK" || return 22
+    chmod 600 "$key_file"
+
+    ## Start agent and add private key
+    eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
+    ssh-add "$key_file" && echo "Key add OK" || return 24    
+
+    ssh-copy-id -i "$key_file" "$user_name@$server_domain" -p "$server_port"
+
+    # add domain based rule to ssh config
+    if [ "$(grep -e ujo.guru < $HOME/.ssh/config)" ]; then 
+        echo "Rule already exist OK"
+    else
+        printf "\nHost *$server_domain \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
+    fi
+    return 0
     return 1
 }
 
