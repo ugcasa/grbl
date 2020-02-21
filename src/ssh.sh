@@ -6,30 +6,72 @@ ssh_main() {
     # main selector off ssh functions
     command="$1"
     shift
-    case $command in 
+    case "$command" in 
         
-        ls-key|list-keys)
-            ssh-add -l
+        key|keys)            
+            key_main "$@"
             ;;
-        add-key)
-            ssh_add_key "$@"
-            ;;
-        rm-key|rm-key-local)
-            echo "TBD"
-            ;;
+
         help)
-            printf "\nssh main menu\n\nUsage:\n\t$0 [command] [variables]\n"
-            printf "\nCommands:\n\n"
-            printf " ls-key        list of keys \n"
-            printf " add-key       adds keys to server [server_selection] [variables] \n"
-            printf " rm-key        remove from remote server server [key_file] \n"
-            printf " rm-key-local  remove local key files server [key_file] \n"
-            printf "\nExample:\n\t %s ssh add-key %s \n\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER" 
+            printf "guru ssh tools\n\nUsage:\n\t$0 [command] [variables]\n"
+            printf "\nCommands:\n"
+            printf " key|keys    key management tools, try '%s ssh key help' for more info.\n" "$GURU_CALL"
+            printf "\nAny on known ssh command is passed trough to open-ssh client\n"
+            printf "\nExample:\n\t %s ssh key add %s \n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER" 
             ;;
         *)
         ssh "$@"
 
     esac
+}
+
+
+key_main() {
+    # ssh key tools
+    local command="$1"
+    shift
+    case "$command" in
+
+        ps|active)
+            ssh-add -l
+            ;;
+        
+        ls|files)
+            ls "$HOME/.ssh" |grep "rsa" |grep -v "pub"
+            ;;
+
+        add)
+            ssh_add_key "$@"
+            ;;
+        rm)
+            ssh_rm_key "$@"
+            ;;
+        help|*)
+            printf "guru ssh key tools\n\nUsage:\n\t$0 [command] [variables]\n"
+            printf "\nCommands:\n"
+            printf " ps        list of keys \n"
+            printf " ls        list of keys files\n"
+            printf " add       adds keys to server [server_selection] [variables] \n"
+            printf " rm        remove from remote server server [key_file] \n"          
+            printf "\nExample:\n\t %s ssh key add %s \n\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER" 
+            ;;
+    esac
+
+}
+
+ssh_rm_key() {
+    # remove local keyfiles (not from server known hosts) TODO
+    echo "key file not found" > "$GURU_ERROR_MSG"
+    [ -f "$HOME/.ssh/$input""_id_rsa" ] && [ -f "$HOME/.ssh/$input""_id_rsa.pub" ] || exit 127
+    
+    [ "$1" ] && local input="$1" ||read -r -p "key title (no '_id_rsa') : " input
+    
+    read -r -p "Are you sure to delete files '$input""_id_rsa' and '$input""_id_rsa.pub'? " answer
+    [ "$input" ] || return 127
+    if [ "${answer^^}" == "Y" ]; then 
+        [ -f "$HOME/.ssh/$input""_id_rsa" ] && rm -f "$HOME/.ssh/$input""_id_rsa"
+        [ -f "$HOME/.ssh/$input""_id_rsa.pub" ] && rm -f "$HOME/.ssh/$input""_id_rsa.pub"
+    fi
 }
 
 
@@ -46,10 +88,11 @@ ssh_add_key(){
     [ "$1" ] && remote="$1" ||read -r -p "[1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket, [5] other: " remote
     shift 
 
-    case $remote in
+    case "$remote" in
         
         1|ujo.guru)
             add_key_accesspoint "$@"
+            error="$?"
             ;;
         2|git.ujo.guru)
             add_key_my-git "$@"
@@ -68,23 +111,19 @@ ssh_add_key(){
             error="$?"
             ;;   
         help|*)
-           printf "\nAdd key to server and rule to ~/.ssh/config \n\nUsage: \n\t%s add-key [selection] [variables]\n" "$0"
-           printf "\nSelections:\n\n"
-           printf "1|ujo.guru      add key to ujo.guru accesspoint\n"     
-           printf "2|git.ujo.guru  add key to own git server \n"
-           printf "3|github        add key to github.com [user_email] \n"
-           printf "4|bitbucket     add key to bitbucket.org [user_email] \n"
-           printf "5|other         add key to any server [domain] [port] [username] \n\n"
-           printf "without variables script asks input during process\n\n"
-           printf "example:\n\t %s ssh add-key other pornhub.com 22 jorma69\n\n" "$GURU_CALL" 
+           printf "Add key to server and rule to '~/.ssh/config' \n\nUsage:\t%s ssh key add [selection] [variables]\n" "$GURU_CALL"
+           printf "\nSelections:\n"
+           printf " 1|%s    \t add key to access point server \n" "$GURU_ACCESS_POINT_SERVER"    
+           printf " 2|git.ujo.guru  add key to own git server \n"
+           printf " 3|github        add key to github.com [user_email] \n"
+           printf " 4|bitbucket     add key to bitbucket.org [user_email] \n"
+           printf " 5|other         add key to any server [domain] [port] [user_name] \n"
+           printf "\nWithout variables script asks input during process\n"
+           printf "\nExample: %s ssh key add github \n" "$GURU_CALL"
+           printf "\t %s ssh key add other %s %s %s\n\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER" "$GURU_ACCESS_POINT_SERVER_PORT" "$GURU_USER"
     esac
 
-    if [[ "$error" -gt "1" ]]; then 
-        echo "Error: $error, Something went wrong." 
-        return $error
-    fi
-
-    return 0
+    return "$error"
 }
 
 
@@ -94,13 +133,18 @@ add_key_accesspoint () {
     local key_file="$HOME/.ssh/$GURU_ACCESS_POINT_SERVER"'_id_rsa'
 
     ## Generate keys
+    echo "key file exist /user interrupt" >"$GURU_ERROR_MSG"
     ssh-keygen -t rsa -b 4096 -C "$GURU_USER" -f "$key_file" && echo "Key OK" || return 22
     chmod 600 "$key_file"
 
     ## Start agent and add private key
+    echo "ssh-agent do not start" >"$GURU_ERROR_MSG"
     eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
+    
+    echo "ssh-add error" >"$GURU_ERROR_MSG"
     ssh-add "$key_file" && echo "Key add OK" || return 24    
-
+   
+    echo "ssh-copy-id error" >"$GURU_ERROR_MSG"
     ssh-copy-id -p "$GURU_ACCESS_POINT_SERVER_PORT" -i "$key_file" "$GURU_ACCESS_POINT_SERVER" 
 
 
