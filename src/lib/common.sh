@@ -1,4 +1,5 @@
 # guru tool-kit common functions for installer casa@ujo.guru 2020
+# echo "common.sh: included by: $0"
 
 compatible_with(){
     # check that current os is compatible with input [ID] {VERSION_ID}
@@ -18,36 +19,11 @@ compatible_with(){
         fi
 }
 
-# compatible_ubuntu(){
-#     # check that current os is ubuntu
 
-#     . /etc/os-release
+check_distro() {
+    # returns least some standasrt type linux distributuin name
+    . /etc/os-release
+    echo "$ID"
+    return 0
 
-#     case "$ID" in
-
-#         linuxmint)
-            
-#             echo "Not valid method for $PRETTY_NAME installations"; 
-#             if ! [ "$ID_LIKE" == "ubuntu" ]; then 
-#                 return 255          # no go 
-#             fi
-            
-#             read -r -p "it is $ID_LIKE dow, you wanna try? y/n: " answer
-#             if [ "${answer^^}" == "Y" ]; then                 
-#                 return 0            # go!
-#             fi
-            
-#             return 255              # no go
-#             ;;
-        
-#         ubuntu)
-            
-#             return 0                # go!
-#             ;;
-        
-#         *)
-#             echo "Non compatible installation $PRETTY_NAME, do not like to break anything, returning.."
-#             return 255              # no go
-#     esac        
-#     return 255                      # no go
-# }
+}
