@@ -21,10 +21,14 @@ ssh_main() {
         rm-key)
             echo "TBD"
             ;;
-        get-config|get-guru-config|get-guru-user-config)
-            get_guru_config_file
+        pull-cfg|pull-config|get-config)
+            pull_guru_config_file
             ;;
             
+        push-cfg|push-config|put-config)
+            push_guru_config_file
+            ;;
+
         help|*)
             printf "ssh main menu\nUsage:\n\t$0 [command] [variables]\n"
             printf "\nCommands:\n"
@@ -37,13 +41,21 @@ ssh_main() {
     esac
 }
 
-get_guru_config_file(){
-    # usage: get_guru_config_file 
+pull_guru_config_file(){
+    # usage: pull_guru_config_file 
     local user_name=$GURU_USER
     #echo rsync -p "$GURU_ACCESS_POINT_SERVER_PORT" "$GURU_ACCESS_POINT_SERVER:$GURU_ACCESS_POINT_SERVER_PORT:/home/$user_name/user/conf/$user_name.userrc.sh" "$GURU_CFG/$GURU_USER/userrc" 
     rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$user_name/usr/cfg/$user_name.userrc.sh" "$GURU_CFG/$GURU_USER/userrc" 
 
 }
+
+push_guru_config_file(){
+    # usage: pull_guru_config_file 
+    local user_name=$GURU_USER
+    #echo rsync -p "$GURU_ACCESS_POINT_SERVER_PORT" "$GURU_ACCESS_POINT_SERVER:$GURU_ACCESS_POINT_SERVER_PORT:/home/$user_name/user/conf/$user_name.userrc.sh" "$GURU_CFG/$GURU_USER/userrc" 
+    rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" "$GURU_CFG/$GURU_USER/userrc" "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$user_name/usr/cfg/$user_name.userrc.sh"
+}
+
 
 ssh_add_key(){
     error="1"  # Warning "1" is default exit code
