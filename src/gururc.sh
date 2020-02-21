@@ -46,6 +46,8 @@ else 												# Defaults
 	export GURU_LOCAL_FILE_SERVER_PORT="22"
 	export GURU_REMOTE_FILE_SERVER="ujo.guru"
 	export GURU_REMOTE_FILE_SERVER_PORT="2010"
+	export GURU_ACCESS_POINT_SERVER="ujo.guru"
+	export GURU_ACCESS_POINT_SERVER_PORT="2010"
 
 	export GURU_CLOUD_NOTES="/home/$GURU_REMOTE_FILE_SERVER_USER/ujo.guru/Notes"
 	export GURU_CLOUD_PICTURES="/home/$GURU_REMOTE_FILE_SERVER_USER/ujo.guru/Pictures"
