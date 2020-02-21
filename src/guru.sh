@@ -53,7 +53,7 @@ parse_argument () {
 
 	
 			# os commands
-			clear|ls|cd|ssh|echo) 
+			clear|ls|cd|echo) 
 				$argument "$@"
 				return $?
 				;;          

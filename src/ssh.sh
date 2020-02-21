@@ -23,7 +23,7 @@ ssh_main() {
         push-cfg|push-config|put-config)
             push_guru_config_file
             ;;
-        help|*)
+        help)
             printf "ssh main menu\nUsage:\n\t$0 [command] [variables]\n"
             printf "\nCommands:\n"
             printf " pull-cfg      get personal config from server and replace guru './config/guru/%s/userrc' file \n" "$GURU_USER"
@@ -33,6 +33,9 @@ ssh_main() {
             printf " rm-key        remove from remote server server [key_file] \n"
             printf " rm-key-local  remove local key files server [key_file] \n"
             ;;
+        *)
+        ssh "$@"
+        
     esac
 }
 
