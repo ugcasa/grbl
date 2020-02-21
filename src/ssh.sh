@@ -24,11 +24,9 @@ ssh_main() {
         pull-cfg|pull-config|get-config)
             pull_guru_config_file
             ;;
-            
         push-cfg|push-config|put-config)
             push_guru_config_file
             ;;
-
         help|*)
             printf "ssh main menu\nUsage:\n\t$0 [command] [variables]\n"
             printf "\nCommands:\n"
@@ -36,7 +34,8 @@ ssh_main() {
             printf " rm-key        remove from remote server server [key_file] \n"
             printf " rm-key-local  remove local key files server [key_file] \n"
             printf " ls-key        list of keys \n"
-            printf " get-config    gets from server and replace guru userrc config file \n\n"
+            printf " pull-cfg      get personal config from server and replace guru './config/guru/%s/userrc' file \n" "$GURU_USER"
+            printf " push-cfg      sends current user config to ujo.guru clound (accesspoint server) \n\n"
             ;;
     esac
 }
