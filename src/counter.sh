@@ -1,6 +1,15 @@
 #!/bin/bash
+# counters ans service functions for counting stuff. Not aritrehmxz but doing just 1, 2, 3..
 
 counter_main () {
+	# Counter case statment  
+	
+	argument="$1"	; shift 		# arguments		
+	id="$1"			; shift 		# counter name
+	value="$1"		; shift 		# input value	
+	id_file="$GURU_COUNTER/$id" 	# counter location
+ 	
+ 	[ -d "$GURU_COUNTER" ] ||mkdir -p "$GURU_COUNTER"
 
 	case "$argument" in
 
@@ -10,28 +19,28 @@ counter_main () {
 					;;
 
 				get)
-					if ! [ -f $id_file ]; then 
-						echo "no such counter" >>$GURU_ERROR_MSG	
+					if ! [ -f "$id_file" ]; then 
+						echo "no such counter" >"$GURU_ERROR_MSG"	
 						return 136
 					fi
 					id=$(($(cat $id_file)))
 					;;
 
 				add|inc)					
-					[ -f $id_file ] || echo 0 >$id_file
+					[ -f "$id_file" ] || echo "0" >"$id_file"
 					[ "$value" ] && up="$value" || up=1
 					id=$(($(cat $id_file)+$up))
-					echo "$id" >$id_file
+					echo "$id" >"$id_file"
 					;;
 
 				set)
-					[ -z $value ] && id=0 || id=$value
-					[ -f $id_file ] && echo "$id" >$id_file 
+					[ -z "$value" ] && id=0 || id=$value
+					[ -f "$id_file" ] && echo "$id" >"$id_file" 
 					;;				
 
 				rm)				
 					id="counter $id_file removed"
-					[ -f $id_file ] && rm $id_file || id="$id_file not exist"
+					[ -f "$id_file" ] && rm "$id_file" || id="$id_file not exist"
 					exit 0 
 					;;	
 
@@ -45,8 +54,8 @@ counter_main () {
 					printf "set [counter_name] <value>  set and set counter preset value (def 0)\n"
 					printf "rm                          remove counter \n"  
 					printf "If no argument given returns counter value \n"	
-					exit 0
-				;;
+					return 0
+					;;
 
 				*)				
 					id_file="$GURU_COUNTER/$argument"
@@ -60,20 +69,12 @@ counter_main () {
 	esac
 
 	echo "$id" 		# is not exited before
-
+	return 0
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  	
-  	argument="$1"	; shift 	# arguments		
-	id="$1"			; shift 	# counter name
-	value="$1"		; shift 	# imput value	
-
-	id_file=$GURU_COUNTER/$id 	# counter location
-
-    counter_main "$@" 			# alternative values
-
+  	counter_main "$@" 			# alternative values
 fi
 
 
