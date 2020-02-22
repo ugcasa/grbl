@@ -4,136 +4,61 @@
 
 alias docker="resize -s 24 160;docker" 	#TEST
 
-#me=${BASH_SOURCE[0]}
-
-# yes_do () {
-# 	[ "$1" ] || return 0
-# 	read -p "$1 [y/n]: " answer
-# 	[ $answer ] || return 0
-# 	[ $answer == "y" ]  && return 1
-# }
-
-get_platform_info () {
-	# Returns a list of platform variables. "var=($(get_platform_info))"
-	# 0=description, 1=installation, 2=distribution, 3=release, 4=codename, 
-	# 5=connect, 6=session, 7=desktop
-	npsp=$(printf "\u00A0")
-
-	array[0]=$(lsb_release -ds) 		# Description 
-	array[0]=${array[0]//" "/"$npsp"} 	# to be able to pass in array
-	
-	array[2]=$(lsb_release -is) 		# Distribution "Mint" TODO test with another mother Ubuntu OK
-	array[2]=${array[2]##*"Linux"} 		# We know it's linux
-	array[2]=${array[2],,} 				# downcase
-	
-	array[3]=$(lsb_release -rs) 		# Release "19.2"
-	array[4]=$(lsb_release -cs) 		# Codename "tessa"
-	
-	array[5]=$([[ $(who am i) =~ \([0-9\.]+\)$ ]] && echo ssh || echo local) # session type
-	array[6]=${GDMSESSION,,} 			# Session "cinnamon"
-	
-	array[7]=${XDG_CURRENT_DESKTOP,,}	# Desktop "X-Cinnamon"
-	[ ${array[7]} ] && array[1]="desktop" || array[1]="server"
-
-	# Damn! https://stackoverflow.com/questions/5564418/exporting-an-array-in-bash-script
-	echo "${array[0]} ${array[1]} ${array[2]} ${array[3]} ${array[4]} ${array[5]} ${array[6]} ${array[7]}" # workaround:
+tor() {
+        [ -d "$GURU_APP/tor-browser_en-US" ] || guru install tor
+        sh -c '"$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" --detach || ([ !  -x "$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" ] && "$(dirname "$*")"/Browser/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
+        error_code="$?"
+        if (( error_code == 127 )); then 
+            rm -rf "$GURU_APP/tor-browser_en-US"
+            echo "failed, try re-install"
+            return "$error_code"
+        fi
+        return 0
 }
 
-print_platform () {
+translate () {
+	 # terminal based translator
 
-	echo "Description: ${platform[0]}"
-	echo "Installation: ${platform[1]}"
-	echo "Distributor ID: ${platform[2]}"
-	echo "Release: ${platform[3]}"
-	echo "Codename: ${platform[4]}"
-	echo "Connect: ${platform[5]}"
-	echo "Session: ${platform[6]}"  
-	echo "Desktop: ${platform[7]}"
-}
+	 if ! [ -f $GURU_BIN/trans ]; then 
+	 	cd $GURU_BIN
+	 	wget git.io/trans
+	 	chmod +x ./trans
+	 fi
 
-save () {
-
-	argument=$1
-	shift	
-
-	case $argument in
-
-		user-data) 
-			save_user_data
-			;;
-		*)
-			echo "hä?"
-			;;
-	esac
-}
-
-
-save_user_data () {
-
-	[ -f "$GURU_CFG/$GURU_USER" ] || mkdir -p "$GURU_CFG/$GURU_USER"
-	echo "saving current setting to permanent user settings"
-
-	if [ -f "$GURU_USER_RC" ]; then 
-		read  -r -p  "overwrite current user settings?: " answer
-		if [ ! "$answer" == "y" ] ; then 								
-			echo "$0: not written" >>"$GURU_ERROR_MSG"
-			return 142
-		fi		
+	if [[ $1 == *"-"* ]]; then
+		argument1=$1
+		shift		
+	else
+	  	argument1=""	  	
 	fi
-	IFS
-	echo "# $($GURU_CALL version) personal config file" >"$GURU_USER_RC"
-	settings="$(printenv | grep GURU_)"
-	for setting in $settings; do 
-		variable="${setting%=*}"				; echo "$variable"
-		value="${setting#*=}"					; echo "$value"
-		echo "export $variable"'="'"$value"'"' 	>>"$GURU_USER_RC"
-	done
 
-	#cat $HOME/.gururc | grep "export" | grep -v "#" | grep -v "GURU_USER_RC" >$GURU_USER_RC
+	if [[ $1 == *"-"* ]]; then
+		argument2=$1
+		shift		
+	else
+	  	argument2=""	  	
+	fi
+
+	if [[ $1 == *":"* ]]; then
+	  	#echo "iz variable: $variable"
+		variable=$1
+		shift
+		word=$@
+
+	else
+	  	#echo "iz word: $word"
+	  	word=$@
+	  	variable=""
+	fi
+
+	$GURU_BIN/trans $argument1 $argument2 $variable "$word"
 
 }
 
-#for setting in $settings; do echo "$setting";done
-
-
-remove () {
-
-	argument=$1
-	shift
-
-	case $argument in
-
-		user-data) 
-			
-			if [ "$1" ]; then 
-				[ -f "$GURU_CFG/$1/userrc" ] && rm -f "$GURU_CFG/$1/userrc" || return 142
-			else			
-				[ -f "$GURU_USER_RC" ] && rm -f "$GURU_USER_RC" || return 143
-			fi
-
-			;;
-		*)
-			echo "hä?"
-			;;
-	esac
+trans (){
+	# alias
+	translate $@
 }
-
-
-
-conda_setup(){
-
-	cat "$HOME/.bashrc" |grep "__conda_setup" || cat "$GURU_BIN/conda_launcher.sh" >>"$HOME/.bashrc"		 #yes cmd < data is better, but do not want to test this again
-	
-	source "$HOME/.bashrc"
-	conda list >>/dev/null || return 14 && 	echo "conda installation found"
-	conda config --set auto_activate_base false
-	error=$?
-	echo "to create and activate environment type: "
-	echo "conda create --name my_env python=3"
-	echo "conda activate my_env"
-	return $error
-}
-
 
 set_value () {
 
@@ -199,95 +124,6 @@ set () {
 }
 
 
-project () {
-
-	project_name=$1
-	# shift
-
-	if [ -z "$project_name" ]; then 
-		printf "plase enter project name" >>"$GURU_ERROR_MSG"
-		return 131
-	fi
-
-	# Turha edes yrittää nysvätä bashilla -> python
-	# update 20190823: Vika kyllä taisi olla yes_no funktiossa, tämä saattais toimiakkin 
-
-	# project_array=('guru=(giocon test1 test2 teste3)'\
-	# 			   'inno=(genextIR test4 test5)'\
-	# 			   'deal=(freesi test6)'\
-	# 			   )
-	
-	# "${projec_array[,b]} ${projec_array[0,1]}" 
-
-
-	# if [ -f $GURU_TRACKSTATUS ]; then 
-	# 	. $GURU_TRACKSTATUS 
-	# 	# echo "timer_start "$timer_start
-	# 	# echo "start_date "$start_date
-	# 	# echo "start_time "$start_time
-	# 	# echo "customer "$customer
-	# 	# echo "project "$project
-	# 	# echo "task "$task			
-
-	# 	if [[ $project != $project_name ]]; then 
-	# 		if yes_do "timer running for different project, change?"; then 
-	# 			read -p "task description: " task_desc
-	# 			$GURU_CALL timer start $task_desc $project_name
-	# 		else
-	# 			echo no 
-	# 		fi
-	# 	fi
-
-	# 	echo "timer running for different project, change?"
-	# 	echo "project=$project_name" >>$GURU_TRACKSTATUS 
-	# else
-	# 	[ -f $GURU_TRACKLAST ] && . $GURU_TRACKLAST || return 132
-		
-	# 	echo "last_task "$last_task
-	# 	echo "last_project "$last_project
-	# 	echo "last_customer "$last_customer
-		
-	# 	if yes_do "start timer?"; then 
-	# 		$GURU_CALL timer start $project_name
-	# 	else
-	# 		echo no 
-	# 	fi
-
-	# fi
-	
-
-# sublime project
-
-	subl_project_folder=$GURU_NOTES/$GURU_USER/project 
-	[ -f $subl_project_folder ] || mkdir -p $subl_project_folder
-
-	subl_project_file=$subl_project_folder/$1.sublime-project
-	
-	if ! [ -f $subl_project_file ]; then 
-		printf "no sublime project found" >>"$GURU_ERROR_MSG"
-		return 132
-	fi	
-	
-	case $GURU_EDITOR in 
-	
-			subl|sublime|sublime-text)
-				subl --project "$subl_project_file" -a 
-				subl --project "$subl_project_file" -a 	# Sublime how to open workpace?, this works anyway
-				;;
-			*)
-			printf 'projects work only with sublime. Set preferred editor by typing: "'$GURU_CALL' set editor subl", or edit "~/.gururc". '	>>"$GURU_ERROR_MSG"
-			return 133
-	esac
-
-
-}
-
-pro () {
-	# alias
-	project $@
-	return $?
-}
-
 document () {
 
 	cfg=$HOME/.config/guru.io/noter.cfg
@@ -298,47 +134,26 @@ document () {
 }
 
 
-disable () {
+upgrade() {
 
-	if [ -f "$HOME/.gururc" ]; then 
-		mv -f "$HOME/.gururc" "$HOME/.gururc.disabled" 
-		echo "giocon.client disabled"
-		return 0
-	else		
-		echo "disabling failed" >>$GURU_ERROR_MSG
-		return 134
-	fi	
+    local temp_dir="/tmp/guru"
+    local source="git@github.com:ugcasa/guru-ui.git"
+    
+    [ -d "$temp_dir" ] && rm -rf "$temp_dir"
+    mkdir "$temp_dir" 
+    cd "$temp_dir"
+    git clone "$source" || exit 666
+    guru uninstall 
+    cd "$temp_dir/giocon.client"
+    bash install.sh "$@"
+    rm -rf "$temp_dir"
 }
-
-
-upgrade () {
-
-	temp_dir="/tmp/guru"
-	source="https://ujoguru@bitbucket.org/ugdev/giocon.client.git"
-	
-	[ -d $temp_dir ] && rm -rf $temp_dir
-	mkdir $temp_dir 
-	cd $temp_dir
-	git clone $source || exit 666
-	guru uninstall 
-	cd $temp_dir/giocon.client
-	bash install.sh $@
-	rm -rf $temp_dir
-}
-
 
 
 status () {
 
 	printf "\e[3mTimer\e[0m: $(guru timer status)\n" 
 	#printf "\e[1mConnect\e[0m: $(guru connect status)\n" 
-	return 0
-}
-
-
-test_guru () {
-
-	printf "var: $#: $*\nuser: $GURU_USER \n"
 	return 0
 }
 
@@ -432,69 +247,6 @@ slack () {
 }
 
 
-
-relax () {	
-	# relaxing music and someting to read, listen or watch
-	
-	if [ "$GURU_BROWSER" == "chromium-browser" ]; then
-		GURU_BROWSER="$GURU_BROWSER --user-data-dir=$GURU_CHROME_USER_DATA"
-	fi
-
-	$GURU_CALL play "electric lounge chill low tempo instrumental"
-	$GURU_BROWSER \
-		https://yle.fi/uutiset \
-		https://hackaday.com/ \
-		https://areena.yle.fi/radio/ohjelmat/yle-puhe \
-		https://areena.yle.fi/1-3822119 \
-		>/dev/null &
-}
-
-
-translate () {
-	 # terminal based translator
-
-	 if ! [ -f $GURU_BIN/trans ]; then 
-	 	cd $GURU_BIN
-	 	wget git.io/trans
-	 	chmod +x ./trans
-	 fi
-
-	if [[ $1 == *"-"* ]]; then
-		argument1=$1
-		shift		
-	else
-	  	argument1=""	  	
-	fi
-
-	if [[ $1 == *"-"* ]]; then
-		argument2=$1
-		shift		
-	else
-	  	argument2=""	  	
-	fi
-
-	if [[ $1 == *":"* ]]; then
-	  	#echo "iz variable: $variable"
-		variable=$1
-		shift
-		word=$@
-
-	else
-	  	#echo "iz word: $word"
-	  	word=$@
-	  	variable=""
-	fi
-
-	$GURU_BIN/trans $argument1 $argument2 $variable "$word"
-
-}
-
-trans (){
-	# alias
-	translate $@
-}
-
-
 volume () {
     # set volume
 
@@ -563,36 +315,3 @@ silence () {	# alias
 	$GURU_CALL play stop
 }
 
-
-user () {	# alias
-
-	variable="$1"
-	shift
-	
-	case $variable in 
-
-		ls|list)
-			cd $GURU_CFG
-			users=$(ls -d */ | cut -f1 -d'/')
-			;;
-		
-		change)
-			[ "$1" ] && user_name="$1" || exit 166			
-			[ -d "$GURU_CFG/$user_name" ] || exit 167
-			. "$GURU_CFG/$user_name/userrc"
-			#$GURU_CALL set user "$user_name"
-			;;
-
-		"")
-			echo "user name expected"
-			;;
-
-		*) 
-			echo "non valid input"
-			;;
-
-	esac
-
-
-			
-}

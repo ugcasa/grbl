@@ -25,10 +25,10 @@ check_distro() {
     . /etc/os-release
     echo "$ID"
     return 0
-
 }
 
-counter () {
+
+counter() {
     # Counter case statment  
     
     argument="$1"   ; shift         # arguments     

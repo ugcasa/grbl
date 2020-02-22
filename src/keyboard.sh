@@ -2,22 +2,22 @@
 # guru tool-kit keyboard shortcut functions 
 # casa@ujo.guru 2020
 
-#source "$(dirname "$0")/lib/common.sh"
-
 keyboard_main() {
 
+    source "$(dirname "$0")/lib/common.sh"
     distro="$(check_distro)"    # lazy
+    
     command="$1"
     shift
 
-    case $command in
+    case "$command" in
 
         add-shortcut)
                 if [ "$1" == "all" ]; then  
                      [ "$distro" == "linuxmint" ] && add_cinnamon_guru_shortcuts 
                      [ "$distro" == "ubuntu" ] && add_ubuntu_guru_shortcuts 
                 else
-                    [ "$distro" == "linuxmint" ] && set_cinnamon_keyboard_shortcut "$@"
+                    [ "$distro" == "linuxmint" ] && echo "TBD set_cinnamon_keyboard_shortcut"
                     [ "$distro" == "ubuntu" ] && set_ubuntu_keyboard_shortcut "$@"
                 fi
                 ;;
@@ -25,11 +25,11 @@ keyboard_main() {
         release-shortcut)
                 if [ "$1" == "all" ]; then  
                     reset_ubuntu_keyboard_shortcuts
-                    [ "$distro" == "linuxmint" ] && add_cinnamon_guru_shortcuts 
-                    [ "$distro" == "ubuntu" ] && add_ubuntu_guru_shortcuts 
+                    [ "$distro" == "linuxmint" ] && echo "TBD reset_cinnamon_keyboard_shortcuts"
+                    [ "$distro" == "ubuntu" ] && reset_ubuntu_keyboard_shortcuts
                 else
-                    [ "$distro" == "linuxmint" ] && release_cinnamon_guru_shortcut "$@"
-                    [ "$distro" == "ubuntu" ] && release_ubuntu_keyboard_shortcut "$@"
+                    [ "$distro" == "linuxmint" ] && echo "TBD release_cinnamon_guru_shortcut" "$@"
+                    [ "$distro" == "ubuntu" ] && echo "TBD release_ubuntu_keyboard_shortcut"
                 fi
                 ;;
 
