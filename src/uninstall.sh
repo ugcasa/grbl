@@ -49,7 +49,7 @@ uninstall () {
 	[ $GURU_CFG ] && rm -f "$GURU_CFG/*"
 	
 	if [[ -f "$HOME/.kbbind.backup.cfg" ]]; then 
-		dconf load /org/cinnamon/desktop/keybindings/ < $HOME/.kbbind.backup.cfg
+		dconf load /org/cinnamon/desktop/keybindings/ < $GURU_CFG/kbbind.backup.cfg
 	fi
 	
 	case "$GURU_INSTALL" in 			# Installation type 
