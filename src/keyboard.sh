@@ -99,7 +99,7 @@ add_ubuntu_guru_shortcuts(){
 
         # sum errors
         if [[ "$error" -gt "0" ]]; then 
-            echo "${BASH_SOURCE[0]} Error: $error, non defined shortcut keys in config file" 
+            echo "warning: $error in ${BASH_SOURCE[0]}, non defined shortcut keys in config file" 
             return "$error"
         fi
         return 0
