@@ -62,10 +62,11 @@ set_ubuntu_keyboard_shortcut () {
             new_keys="['$key_base$key_number/']"
         fi
 
-        gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "$new_keys"
-        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$key_base$key_number/ name "$1" 
-        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$key_base$key_number/ command "'$2'"
-        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$key_base$key_number/ binding "$3"
+        gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "$new_keys" ||return 100
+        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$key_base$key_number/ name "$1"  ||return 101
+        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$key_base$key_number/ command "'$2'"  ||return 102
+        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$key_base$key_number/ binding "$3"  ||return 103
+        return 0
     }
 
 
@@ -98,7 +99,7 @@ add_ubuntu_guru_shortcuts(){
 
         # sum errors
         if [[ "$error" -gt "0" ]]; then 
-            echo "Error: $error, Something went wrong." 
+            echo "${BASH_SOURCE[0]} Error: $error, non defined shortcut keys in config file" 
             return "$error"
         fi
         return 0
