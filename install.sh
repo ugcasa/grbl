@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installer for giocon client. ujo.guru / juha.palm 
+# Installer for guru tool-kit. ujo.guru casa@ujo.guru 2017-2020
 
 GURU_CALL="guru"
 GURU_USER="$USER"
