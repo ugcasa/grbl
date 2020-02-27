@@ -22,11 +22,19 @@ compatible_with(){
 
 check_distro() {
     # returns least some standasrt type linux distributuin name
-    . /etc/os-release
-    echo "$ID"
+    if [ -f /etc/os-release ]; then 
+        . /etc/os-release
+        echo "$ID"
+    else
+        echo "other"
+    fi
     return 0
 }
 
+ check_python_module () {                                      # Does work, but returns funny (futile: not called from anywhere)
+   python -c "import $1"
+   return "$?"
+}
 
 counter() {
     # Counter case statment  
