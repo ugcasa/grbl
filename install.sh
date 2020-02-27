@@ -48,7 +48,7 @@ platform=$(check_distro)                                        # check that dis
 case "$platform" in                                             # different dependent settings
 
     linuxmint)      
-        cinnamon_version=$(cinnamon --version |grep -o "[^ ]*$"|cut -f1 -d".")                      # check cinnamon version number
+        cinnamon_version=$(cinnamon --version |grep -o "[^ ]*$"|cut -f1 -d".")                      # check cinnamon main version number
         if [ "$cinnamon_version" -lt "4" ]; then                                                    # compatible with cinnamon version 3+ 
             echo "not valid version of cinnamon environment, exiting.." 
             exit 2                      
@@ -62,7 +62,7 @@ case "$platform" in                                             # different depe
         ;;
 
     ubuntu)
-        gnome_version=$(gnome-shell --version |grep -o "[^ ]*$"|cut -f1 -d".")                      # check gnome version number
+        gnome_version=$(gnome-shell --version |grep -o "[^ ]*$"|cut -f1 -d".")                      # check gnome main version number
         if [ "$gnome_version" -lt "3" ]; then                                                       # compatible with gnome version 3+ 
             echo "not valid version of gnome environment, exiting.." 
             exit 2                      
