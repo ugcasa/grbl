@@ -46,11 +46,11 @@ grep -q ".gururc" "$target_rc" || cat ./src/tobashrc.sh >>"$target_rc"
 ## folder structure copy files
 
 cp -f ./src/gururc.sh "$HOME/.gururc"
-source $HOME/.gururc													# rise default environmental variables
+source "$HOME/.gururc"													# rise default environmental variables
 
-[ -d $GURU_BIN ] || mkdir -p $GURU_BIN
-[ -d $GURU_CFG ] || mkdir -p $GURU_CFG
-[ -d $GURU_APP ] || mkdir -p $GURU_APP
+[ -d "$GURU_BIN" ] || mkdir -p "$GURU_BIN"
+[ -d "$GURU_CFG" ] || mkdir -p "$GURU_CFG"
+[ -d "$GURU_APP" ] || mkdir -p "$GURU_APP"
 cp -f ./src/guru.sh "$GURU_BIN/guru"							# to able to call just "guru"
 cp -f ./cfg/* "$GURU_CFG"										# guru toolkit configurations
 cp -f -r ./src/* -f "$GURU_BIN"									# guru toolkit scripts
