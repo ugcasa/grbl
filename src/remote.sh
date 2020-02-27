@@ -2,7 +2,7 @@
 # sshfs mount functions for guru tool-kit
 # casa@ujo.guru 2020
 
-source "$(dirname "$0")/lib/ssh.sh"
+source "$(dirname "$0")/ssh.sh"
 
 remote_main() {
 
@@ -17,14 +17,15 @@ remote_main() {
 
         mount)
                 if [ "$1" == "all" ]; then 
-                    mount_guru_defaults 
+                    shift
+                    mount_guru_defaults "$@"
                 else
-                    mount_sshfs "$1" "$2"           
+                    mount_sshfs "$@"       
                 fi
                 ;;
 
         unmount|umount)           
-                [ "$1" == "all" ] && unmount_guru_defaults ||mount_sshfs "unmount" "$1"
+                [ "$1" == "all" ] && unmount_guru_defaults ||mount_sshfs "unmount" "$1"        
                 ;;
 
         ls|list)
@@ -94,9 +95,11 @@ remote_pull() {
     esac   
 }
 
+
 install_requirements() {
     sudo apt install sshfs
 }
+
 
 mount_sshfs() {
     #mount [what] [where] 
@@ -121,25 +124,26 @@ mount_sshfs() {
     if [ "$remote_flag" ]; then 
             server="$GURU_REMOTE_FILE_SERVER"             
             server_port="$GURU_REMOTE_FILE_SERVER_PORT"
+            user="GURU_REMOTE_FILE_SERVER_USER"
         else
             server="$GURU_LOCAL_FILE_SERVER"
             server_port="$GURU_LOCAL_FILE_SERVER_PORT"
+            user="GURU_LOCAL_FILE_SERVER_USER"
     fi 
-
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$GURU_USER@$server:$source_folder" "$target_folder"
-
+    #echo sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$source_folder" "$target_folder"
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$GURU_USER@$server:$source_folder" "$target_folder" && echo "mounted $GURU_USER@$server:$source_folder to $target_folder"
     return "$?"
 }
 
 
 mount_guru_defaults() {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
-    mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" ||mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" -remote
-    mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" ||mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" -remote
-    mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" ||mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" -remote
-    mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" ||mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" -remote
-    mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" ||mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" -remote
-    mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" ||mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" -remote
+    mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" "$1" #||mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" -remote
+    mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" "$1" #||mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" -remote
+    mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" "$1" #||mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" -remote
+    mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" "$1" #||mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" -remote
+    mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" "$1" #||mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" -remote
+    mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" "$1" #||mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" -remote
 }
 
 
