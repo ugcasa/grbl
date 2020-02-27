@@ -25,13 +25,13 @@ if grep -q ".gururc" "$target_rc"; then
 		echo "aborting.."
 		exit 2
 	fi	
-	[ -f $GURU_BIN/uninstall.sh ] && bash $GURU_BIN/uninstall.sh || echo "uninstaller not found"
+	[ -f "$GURU_BIN/uninstall.sh" ] && bash "$GURU_BIN/uninstall.sh" || echo "uninstaller not found"
 fi
 
 # Default is server
 
- if [ $1 ]; then 
- 	platform=$1
+ if [ "$1" ]; then 
+ 	platform="$1"
  else
  	lsb_release -crid | grep "Mint" >/dev/null && platform="desktop" || platform="server"
  fi
@@ -41,7 +41,7 @@ fi
 [ -f "$HOME/.bashrc.giobackup" ] || cp -f "$target_rc" "$HOME/.bashrc.giobackup"
 grep -q ".gururc" "$target_rc" || cat ./src/tobashrc.sh >>"$target_rc"
 
-[ -f $disabler_flag_file ] && rm -f $disabler_flag_file 	
+[ -f "$disabler_flag_file" ] && rm -f "$disabler_flag_file" 	
 
 ## folder structure copy files
 
