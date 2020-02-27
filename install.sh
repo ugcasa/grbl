@@ -10,8 +10,8 @@ source src/lib/common.sh
 source src/keyboard.sh
 
 check_python_module () {			# Does work, but returns funny
-	python -c "import $1"; 	
-	return $?
+	python -c "import $1"
+	return "$?"
 }
 
 target_rc="$HOME/.bashrc"
