@@ -5,10 +5,10 @@ source "$(dirname "$0")/lib/common.sh"
 
 note_main () {                                                                  
     # command parser        
+        unset command argument user_input        
         command="$1"; shift                                                         #; echo "command: $command"
         argument="$1"; shift                                                        #; echo "argument: $argument"
         user_input="$@"
-        counter add note-runned >/dev/null                                          # Usage statistics
         
         case "$command" in
 
@@ -61,13 +61,14 @@ note_main () {
                             open_note $(date +"$GURU_FILE_DATE_FORMAT")
                         fi
         esac
+        counter add note-runned >/dev/null                                          # Usage statistics
 }
 
 
 list_notes() {
     # List of notes on this month and year or given in order and format YYYY MM
-        [ "$1" ] && month=$(date -d 2000-$1-1 +%m) || month=$(date +%m)             #; echo "month: $month"
-        [ "$2" ] && year=$(date -d $2-1-1 +%Y) || year=$(date +%Y)                  #; echo "year: $year"
+        [ "$1" ] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
+        [ "$2" ] && year=$(date -d "$2"-1-1 +%Y) || year=$(date +%Y)                  #; echo "year: $year"
         directory="$GURU_NOTES/$GURU_USER/$year/$month"
         
         if [ -d "$directory" ]; then 
