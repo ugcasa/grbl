@@ -34,7 +34,7 @@ volume_main () {
                 amixer -D pulse sset Master 5%- >/dev/null
                 ;;
             
-            fadeup|fadedown|silence)
+            fadeup|fadedown)
                 $command "$@"
                 ;;
 
@@ -61,31 +61,25 @@ mute() {
 
 
 fadedown () {
-
-    for i in {1..5}
-        do
-        amixer -M get Master >>/dev/null
-        amixer -D pulse sset Master 5%- >>/dev/null
-        sleep 0.2
+    get_volume
+    volume=$((volume/5))
+    for (( i=0; i<=$volume; i++ )); do         
+        amixer -D pulse sset Master 5%- >/dev/null
+        sleep 0.02
     done
 }
 
 
 fadeup () {
-
-    for i in {1..5}
-        do
-        amixer -M get Master >>/dev/null
-        amixer -D pulse sset Master 5%+ >>/dev/null
-        sleep 0.2
+    get_volume
+    [ "$1" ] && local to=$1 || local to=50
+    volume=$(($to-volume))
+    volume=$((volume/5))
+    for (( i=0; i<=$volume; i++ )); do 
+        amixer -D pulse sset Master 5%+ >/dev/null
+        sleep 0.02
     done
     return 0
-}
-
-
-silence () {	# alias
-	$GURU_CALL mute
-	$GURU_CALL play stop
 }
 
 
