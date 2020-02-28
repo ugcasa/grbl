@@ -62,14 +62,13 @@ parse_argument () {
                 ;;          
 
             # functions (in functions.sh)
-            tor|trans|translate|status|upgrade|document|slack|terminal|set| \
-            volume|vol|mute|stop|fadedown|fadeup|silence)
+            tor|trans|translate|status|upgrade|document|slack|terminal|set)
                 $argument "$@"
                 return $? 
                 ;;  
 
             # bash scripts
-            keyboard|ssh|remote|input|counter|note|stamp|timer|phone|play|install|scan|tag|yle)         
+            keyboard|ssh|remote|input|counter|note|stamp|timer|phone|play|vol|install|scan|tag|yle)         
                 $argument.sh "$@" 
                 return $?           
                 ;;
