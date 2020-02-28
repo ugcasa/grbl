@@ -17,7 +17,7 @@ volume_main () {
                 echo "$volume"
                 ;;
 
-            unmute|umute)
+            unmute|umute|silence)
                 return 0
                 ;; 
 
@@ -26,12 +26,11 @@ volume_main () {
                 ;;
 
             up|+)   
-                amixer -D pulse sset Master 5%+ >/dev/null   
+                volume_up "$@" 
                 ;;
 
             down|-) 
-                
-                amixer -D pulse sset Master 5%- >/dev/null
+                volume_down "$@"
                 ;;
             
             fadeup|fadedown)
@@ -40,18 +39,36 @@ volume_main () {
 
             *)
                 if [[ "$command" =~ ^[0-9]+$ ]]; then
-                    amixer -D pulse sset Master "$command"% >/dev/null
+                    set_volume "$command"
+                    return 0
                 else
                     echo "volume needs to be numeral" >$GURU_ERROR_MSG
                     return 100
-                fi                
+                fi  
+                ;;
     esac
+}
+
+set_volume() {
+    amixer -D pulse sset Master "$1"% >/dev/null;       # weird, without ; syntax error near unexpected token ` {'
+}
+
+
+volume_up() {
+    [ "$1" ] && step="$1" || step=10
+    amixer -D pulse sset Master "$step"%+ >/dev/null
+}
+
+
+volume_down() {
+    [ "$1" ] && step="$1" || step=10
+    amixer -D pulse sset Master "$step"%- >/dev/null
 }
 
 
 get_volume() {
-        volume=$(awk -F"[][]" '/%/ { print $2 }' <(amixer -D pulse sget Master|grep "Front Left"))
-        volume=${volume//%}
+    volume=$(awk -F"[][]" '/%/ { print $2 }' <(amixer -D pulse sget Master|grep "Front Left"))
+    volume=${volume//%}
 }
 
 
@@ -64,19 +81,19 @@ fadedown () {
     get_volume
     volume=$((volume/5))
     for (( i=0; i<=$volume; i++ )); do         
-        amixer -D pulse sset Master 5%- >/dev/null
+        volume_down
         sleep 0.02
     done
 }
 
 
-fadeup () {
-    get_volume
-    [ "$1" ] && local to=$1 || local to=50
-    volume=$(($to-volume))
+fadeup () {    
+    get_volume;                                     # weird, without ;     
+    [ "$1" ] && set_to="$1" || set_to=50
+    volume=$(($set_to-volume))
     volume=$((volume/5))
     for (( i=0; i<=$volume; i++ )); do 
-        amixer -D pulse sset Master 5%+ >/dev/null
+        volume_up
         sleep 0.02
     done
     return 0
