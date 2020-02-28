@@ -131,7 +131,7 @@ mount_sshfs() {
             user="GURU_LOCAL_FILE_SERVER_USER"
     fi 
     #echo sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$source_folder" "$target_folder"
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$GURU_USER@$server:$source_folder" "$target_folder" && echo "mounted $GURU_USER@$server:$source_folder to $target_folder"
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$USER@$server:$source_folder" "$target_folder" && echo "mounted $GURU_USER@$server:$source_folder to $target_folder"
     return "$?"
 }
 
@@ -160,7 +160,7 @@ unmount_guru_defaults() {
 
 pull_guru_config_file(){
     rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
-        "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_USER/usr/cfg/$GURU_USER.userrc.sh" \
+        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$USER/usr/cfg/$GURU_USER.userrc.sh" \
         "$GURU_CFG/$GURU_USER/userrc" 
 }
 
@@ -168,7 +168,7 @@ pull_guru_config_file(){
 push_guru_config_file(){
     rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
         "$GURU_CFG/$GURU_USER/userrc" \
-        "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_USER/usr/cfg/$GURU_USER.userrc.sh"
+        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$USER/usr/cfg/$GURU_USER.userrc.sh"
 }
 
 
