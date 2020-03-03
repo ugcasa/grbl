@@ -41,21 +41,27 @@ remote_main() {
                 ;;
 
         help|*)
-                printf "\nUsage:\n\t $0 [command] [arguments]\n\t $0 mount [source] [target]\n"
+                printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] <remote flag> \n"
                 printf "\nCommands:\n\n"
-                printf " ls                     list all active mounts\n" 
-                printf " mount [all]            mount remote filesystem [folder_in_fileserver] [mount_point] \n"
-                printf "                        [all] mount guru defaults \n\t\t\tWarning! Mount point may be generic location as '~/Pictures'  \n"
-                printf " unmount [all]          unmount [mount_point]\n"
-                printf "                        [all] unmount guru defaul locations\n"
-                printf " pull [variable]        [cfg|config] get personal config from server and replace guru \n\t\t\t'./config/guru/%s/userrc' file \n" "$GURU_USER"
-                printf "                        [all] gets all from server (not sure wha all mean for now)\n"
-                printf " push [variable]        [cfg|config] sends current user config to %s \n" "$GURU_ACCESS_POINT_SERVER"
-                printf "                        [all] send all to server (not sure wha all mean for now)\n"
-                printf " install                install requirements\n"   
-                printf "\nExample:\n\t %s remote mount /home/%s/share /home/%s/mount/%s/ \n\n"\
-                       "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
+                printf " ls                       list all active mounts \n" 
+                printf " mount [source] [target]  mount any server [folder_in_fileserver] [mount_point] \n"
+                printf " mount all [remote]       mount primary file server default folders \n"
+                printf "                          Warning! Mount point may be generic location as '~/Pictures' \n"
+                printf "                          [remote] connect to remote file server instead or local one\n"
+                printf " unmount [all]            unmount [mount_point] \n"
+                printf "                          'all' unmount guru defaul locations \n"
+                printf " pull [cfg|all]           copy configuration files from access point server \n"
+                printf "                          'cfg' get personal config from server \n"
+                printf "                          'all' gets all configurations from server \n"
+                printf " push [cfg|all]           copy configuration files to access point server \n"
+                printf "                         'cfg' sends current user config to %s \n" "$GURU_ACCESS_POINT_SERVER"
+                printf "                          'all' send all to server (not sure wha all mean for now) \n"
+                printf " install                  install requirements \n"   
+                printf "\nExample:\n"
+                printf "\t %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
+                printf "\t %s remote mount all remote \n\n" "$GURU_CALL"                
     esac
+    
 
     return 0
 }
