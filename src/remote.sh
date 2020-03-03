@@ -54,7 +54,7 @@ remote_main() {
                 printf "                          'cfg' get personal config from server \n"
                 printf "                          'all' gets all configurations from server \n"
                 printf " push [cfg|all]           copy configuration files to access point server \n"
-                printf "                         'cfg' sends current user config to %s \n" "$GURU_ACCESS_POINT_SERVER"
+                printf "                          'cfg' sends current user config to %s \n" "$GURU_ACCESS_POINT_SERVER"
                 printf "                          'all' send all to server (not sure wha all mean for now) \n"
                 printf " install                  install requirements \n"   
                 printf "\nExample:\n"
