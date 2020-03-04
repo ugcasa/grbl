@@ -14,7 +14,6 @@ remote_main() {
         install)
                 install_requirements "$@"
                 ;;
-
         mount)
                 if [ "$1" == "all" ]; then 
                     shift
@@ -23,28 +22,23 @@ remote_main() {
                     mount_sshfs "$@"       
                 fi
                 ;;
-
         unmount|umount)           
                 [ "$1" == "all" ] && unmount_guru_defaults ||mount_sshfs "unmount" "$1"        
                 ;;
-
         ls|list)
                 grep "sshfs" < /etc/mtab
                 ;;
-
         pull|get)
-                remote_pull "$@"
+                pull_config_files
                 ;;
-
         push|set)
-                remote_push "$@"
+                push_config_files
                 ;;
-
-        test)
-                test "$@"
+        test)                
+                echo "TEST"
+                test_config "$@"
+                test_mounts "$@"
                 ;;
-
-
         help|*)
                 printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] <remote flag> \n"
                 printf "\nCommands:\n\n"
@@ -55,55 +49,20 @@ remote_main() {
                 printf "                          [remote] connect to remote file server instead or local one\n"
                 printf " unmount [all]            unmount [mount_point] \n"
                 printf "                          'all' unmount guru defaul locations \n"
-                printf " pull [cfg|all]           copy configuration files from access point server \n"
+                printf " pull [cfg|all|pro]       copy configuration files from access point server \n"
                 printf "                          'cfg' get personal config from server \n"
+                printf "                          'pro' project files from server \n"
                 printf "                          'all' gets all configurations from server \n"
-                printf " push [cfg|all]           copy configuration files to access point server \n"
+                printf " push [cfg|all|pro]        copy configuration files to access point server \n"
                 printf "                          'cfg' sends current user config to %s \n" "$GURU_ACCESS_POINT_SERVER"
+                printf "                          'pro' send project files to server \n"
                 printf "                          'all' send all to server (not sure wha all mean for now) \n"
                 printf " install                  install requirements \n"   
                 printf "\nExample:\n"
                 printf "\t %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
                 printf "\t %s remote mount all remote \n\n" "$GURU_CALL"                
     esac
-    
-
     return 0
-}
-
-remote_push(){
-    
-    case $1 in
-        
-        all)
-            push_guru_config_file
-            #+ other
-            ;;
-        
-        config|cfg)
-            push_guru_config_file
-            ;;
-        *)
-            echo "guru remote push [config|all]"
-    esac            
-
-}
-
-remote_pull() {
-
-    case $1 in
-        
-        all)
-            pull_guru_config_file
-            #+ other
-            ;;
-        
-        config|cfg)
-            pull_guru_config_file
-            ;;
-        *)
-            echo "guru remote pull [config|all]"
-    esac   
 }
 
 
@@ -149,12 +108,13 @@ mount_sshfs() {
 
 mount_guru_defaults() {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
-    mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" "$1" #||mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" -remote
-    mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" "$1" #||mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" -remote
-    mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" "$1" #||mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" -remote
-    mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" "$1" #||mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" -remote
-    mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" "$1" #||mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" -remote
-    mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" "$1" #||mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" -remote
+    mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" "$1" || return "$?"
+    mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" "$1" || return "$?"
+    mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" "$1" || return "$?"
+    mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" "$1" || return "$?"
+    mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" "$1" || return "$?"
+    mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" "$1" || return "$?"
+    return 0
 }
 
 
@@ -166,30 +126,42 @@ unmount_guru_defaults() {
     mount_sshfs "unmount" "$GURU_AUDIO"
     mount_sshfs "unmount" "$GURU_VIDEO"
     mount_sshfs "unmount" "$GURU_MUSIC"
-}
-
-
-pull_guru_config_file(){
-    rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
-        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$USER/usr/cfg/$GURU_USER.userrc.sh" \
-        "$GURU_CFG/$GURU_USER/userrc" 
-}
-
-
-push_guru_config_file(){
-    rsync -rvz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
-        "$GURU_CFG/$GURU_USER/userrc" \
-        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$USER/usr/cfg/$GURU_USER.userrc.sh"
-}
-
-
-test(){
-    # simple tester
-    mount_guru_defaults          && echo PASSED || echo FAILED
-    sleep 2
-    unmount_guru_defaults        && echo PASSED || echo FAILED
     return 0
 }
+
+
+pull_config_files(){
+    rsync -ravz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
+        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$USER/usr/cfg" \
+        "$GURU_CFG/$GURU_USER" 
+    return "$?"
+}
+
+
+push_config_files(){
+    rsync -ravz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
+        "$GURU_CFG/$GURU_USER" \
+        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$USER/usr/cfg"
+    return "$?"
+}
+
+
+test_mounts(){
+    
+    echo "mount "; mount_guru_defaults && echo "PASSED" || echo "FAILED"
+    sleep 2
+    printf "un-mount "; unmount_guru_defaults && echo "PASSED" || echo "FAILED"
+    return 0
+}
+
+
+test_config(){
+    
+    printf "push "; push_config_files && echo "PASSED" || echo "FAILED"
+    printf "pull "; pull_config_files && echo "PASSED" || echo "FAILED"
+    return 0
+}
+
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
