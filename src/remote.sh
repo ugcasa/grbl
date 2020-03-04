@@ -40,6 +40,11 @@ remote_main() {
                 remote_push "$@"
                 ;;
 
+        test)
+                test "$@"
+                ;;
+
+
         help|*)
                 printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] <remote flag> \n"
                 printf "\nCommands:\n\n"
@@ -177,6 +182,14 @@ push_guru_config_file(){
         "$USER@$GURU_ACCESS_POINT_SERVER:/home/$USER/usr/cfg/$GURU_USER.userrc.sh"
 }
 
+
+test(){
+    # simple tester
+    mount_guru_defaults          && echo PASSED || echo FAILED
+    sleep 2
+    unmount_guru_defaults        && echo PASSED || echo FAILED
+    return 0
+}
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
