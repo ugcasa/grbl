@@ -29,7 +29,6 @@ case "$1" in
         platform="desktop"
 esac
 
-
 if grep -q ".gururc" "$target_rc" ; then                         # already installed? reinstall?
     [ $force_overwrite ] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer   
     if ! [[ "$answer" == "y" ]]; then
