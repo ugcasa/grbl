@@ -11,37 +11,32 @@ remote_main() {
     
     case "$command" in
 
-        install)
-                install_requirements "$@"
-                ;;
-        mount)
-                if [ "$1" == "all" ]; then 
-                    shift
-                    mount_guru_defaults "$@"
-                else
-                    mount_sshfs "$@"       
-                fi
-                ;;
-        unmount|umount)           
-                [ "$1" == "all" ] && unmount_guru_defaults ||mount_sshfs "unmount" "$1"        
-                ;;
         ls|list)
                 grep "sshfs" < /etc/mtab
+                ;;
+        mount)
+                [ "$1" == "all" ] && mount_guru_defaults ||mount_sshfs "$@"                
+                ;;
+        unmount|umount)           
+                [ "$1" == "all" ] && unmount_guru_defaults ||mount_sshfs "unmount" "$1"
+                ;;
+        push|send)
+                push_config_files
                 ;;
         pull|get)
                 pull_config_files
                 ;;
-        push|set)
-                push_config_files
+        install)
+                install_requirements "$@"
                 ;;
         test)                
                 echo "# Test Report $0 $1 $(date)"
                 case "$1" in 
-                    1) test_config "$@" ;;
-                    2) test_mount "$@" ;;
-                    3) test_default_mounts "$@" ;;
-                    all|*)
-                         test_mount && test_config && test_default_mounts
+                    1) test_config ;;
+                    2) test_mount ;;                    
+                    3) test_default_mounts ;;
+                    all) test_mount && test_config ;; 
+                    *) echo "no test case for $1"
                 esac
                 ;;
         help|*)
@@ -98,7 +93,7 @@ mount_sshfs() {
             server_port="$GURU_LOCAL_FILE_SERVER_PORT"
             user="GURU_LOCAL_FILE_SERVER_USER"
     fi 
-    #echo sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$USER@$server:$source_folder" "$target_folder" && echo "mounted $GURU_USER@$server:$source_folder to $target_folder"
+
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
           -p "$server_port" "$USER@$server:$source_folder" "$target_folder" \
           && echo "mounted $server:$source_folder to $target_folder"
