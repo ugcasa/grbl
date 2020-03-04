@@ -1,8 +1,7 @@
 #!/bin/bash
-# Some simple functions not complicate enough to write separate scripts
+# guru tool-kit prototypes
+# Some prototype functions not complicate enough to write separate scripts
 # ujo.guru 2019 
-
-alias docker="resize -s 24 160;docker" 	#TEST
 
 tor() {
         [ -d "$GURU_APP/tor-browser_en-US" ] || guru install tor
@@ -55,10 +54,12 @@ translate () {
 
 }
 
+
 trans (){
 	# alias
 	translate $@
 }
+
 
 set_value () {
 
