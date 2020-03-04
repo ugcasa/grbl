@@ -40,28 +40,21 @@ remote_main() {
                 esac
                 ;;
         help|*)
-                printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] <remote flag> \n"
+                printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] \n"
                 printf "\nCommands:\n\n"
-                printf " ls                       list all active mounts \n" 
-                printf " mount [source] [target]  mount any server [folder_in_fileserver] [mount_point] \n"
-                printf " mount all [remote]       mount primary file server default folders \n"
+                printf " ls                       list of mounted folders \n" 
+                printf " mount [source] [target]  mount folder in file server to local folder \n"
+                printf " mount all                mount primary file server default folders \n"
                 printf "                          Warning! Mount point may be generic location as '~/Pictures' \n"
-                printf "                          [remote] connect to remote file server instead or local one\n"
-                printf " unmount [all]            unmount [mount_point] \n"
-                printf "                          'all' unmount guru defaul locations \n"
-                printf " pull [cfg|all|pro]       copy configuration files from access point server \n"
-                printf "                          'cfg' get personal config from server \n"
-                printf "                          'pro' project files from server \n"
-                printf "                          'all' gets all configurations from server \n"
-                printf " push [cfg|all|pro]        copy configuration files to access point server \n"
-                printf "                          'cfg' sends current user config to %s \n" "$GURU_ACCESS_POINT_SERVER"
-                printf "                          'pro' send project files to server \n"
-                printf "                          'all' send all to server (not sure wha all mean for now) \n"
+                printf " unmount [mount_point]    unmount [mount_point] \n"
+                printf " unmount [all]            unmount all default folders \n"
+                printf " pull                     copy configuration files from access point server \n"
+                printf " push                     copy configuration files to access point server \n"
                 printf " install                  install requirements \n"   
-                printf " test <case_nr>           run test case number (be careful!) [1-3|all] \n"
+                printf " test <case_nr>|all       run given test case \n"
                 printf "\nExample:\n"
-                printf "\t %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
-                printf "\t %s remote mount all remote \n\n" "$GURU_CALL"                
+                printf "\t %s remote mount /home/%s/share /home/%s/mount/%s/\n\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
+        
     esac
     return 0
 }
@@ -73,30 +66,30 @@ install_requirements() {
 
 
 mount_sshfs() {
-    #mount [what] [where] 
+    #mount_sshfs remote_foder mount_point, servers are already known
     
     local source_folder="$1"
     local target_folder="$2"    
-    #local remote_flag="$3"              
 
     [ -d "$target_folder" ] ||mkdir -p "$target_folder"                                 # be sure that mount point exist
     grep "$target_folder" < /etc/mtab >/dev/null && fusermount -u "$target_folder"      # unmount target if mounted  
     [ "$source_folder" == "unmount" ] && return 0                                       # if first argument is "unmount" all done for now, exit
     [ "$(ls $target_folder)" ] && return 23                                             # Check that directory is empty
 
-    if [ "$remote_flag" ]; then                                                         # mount
-            server="$GURU_REMOTE_FILE_SERVER"             
-            server_port="$GURU_REMOTE_FILE_SERVER_PORT"
-            user="GURU_REMOTE_FILE_SERVER_USER"
-        else
-            server="$GURU_LOCAL_FILE_SERVER"
-            server_port="$GURU_LOCAL_FILE_SERVER_PORT"
-            user="GURU_LOCAL_FILE_SERVER_USER"
-    fi 
+    local server="$GURU_LOCAL_FILE_SERVER"                                              # assume that server is in local network
+    local server_port="$GURU_LOCAL_FILE_SERVER_PORT"
+    local user="$GURU_LOCAL_FILE_SERVER_USER"
+
+    if ! ssh -q -p "$server_port" "$user@$server" exit; then                            # check local server connection 
+        server="$GURU_REMOTE_FILE_SERVER"                                               # if no connection try remote server connection
+        server_port="$GURU_REMOTE_FILE_SERVER_PORT"
+        user="$GURU_REMOTE_FILE_SERVER_USER"
+    fi
 
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
           -p "$server_port" "$USER@$server:$source_folder" "$target_folder" \
           && echo "mounted $server:$source_folder to $target_folder"
+    
     return "$?"
 }
 
