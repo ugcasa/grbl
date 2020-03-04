@@ -12,21 +12,33 @@ source src/keyboard.sh                                          # include keyboa
 target_rc="$HOME/.bashrc"                                       # environmental values rc file
 disabler_flag_file="$HOME/.gururc.disabled"                     # flag for disabling the rc file 
 
-if grep -q ".gururc" "$target_rc"; then                         # already installed? reinstall?
-    read -p "already installed, force re-install [y/n] : " answer   
+case "$1" in
+    server)
+            platform="server"
+        ;;    
+    desktop)
+            platform="desktop"
+        ;;        
+    force|-f|-y)
+            force_overwrite=true
+        ;;        
+    help)
+        printf  "help your self"
+        ;;
+    *)
+        platform="desktop"
+esac
 
+
+if grep -q ".gururc" "$target_rc" ; then                         # already installed? reinstall?
+    [ $force_overwrite ] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer   
     if ! [[ "$answer" == "y" ]]; then
         echo "aborting.."
         exit 2
     fi  
+
     [ -f "$GURU_BIN/uninstall.sh" ] && bash "$GURU_BIN/uninstall.sh" || echo "un-installer not found"
 fi
-
-if [ "$1" ]; then                                               # installation type from user [server] or [desktop]
-    platform="$1"
-else
-    lsb_release -crid | grep "Mint" >/dev/null && platform="desktop" || platform="server"   # default is server, do not mess thing up too badly
-fi  
 
 [ -f "$HOME/.bashrc.giobackup" ] || cp -f "$target_rc" "$HOME/.bashrc.giobackup"            # Make a backup of original .bashrc but only if installed first time
 grep -q ".gururc" "$target_rc" || cat ./src/tobashrc.sh >>"$target_rc"                      # Check is .gururc called from .bashrc, add call if not
