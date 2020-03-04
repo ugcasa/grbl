@@ -35,9 +35,14 @@ remote_main() {
                 push_config_files
                 ;;
         test)                
-                echo "TEST"
-                test_config "$@"
-                test_mounts "$@"
+                echo "# Test Report $0 $1 $(date)"
+                case "$1" in 
+                    1) test_config "$@" ;;
+                    2) test_mount "$@" ;;
+                    3) test_default_mounts "$@" ;;
+                    all|*)
+                         test_mount && test_config && test_default_mounts
+                esac
                 ;;
         help|*)
                 printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] <remote flag> \n"
@@ -58,6 +63,7 @@ remote_main() {
                 printf "                          'pro' send project files to server \n"
                 printf "                          'all' send all to server (not sure wha all mean for now) \n"
                 printf " install                  install requirements \n"   
+                printf " test <case_nr>           run test case number (be careful!) [1-3|all] \n"
                 printf "\nExample:\n"
                 printf "\t %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
                 printf "\t %s remote mount all remote \n\n" "$GURU_CALL"                
@@ -76,22 +82,14 @@ mount_sshfs() {
     
     local source_folder="$1"
     local target_folder="$2"    
-    local remote_flag="$3"  
+    #local remote_flag="$3"              
 
-    # be sure that mount point exist
-    [ -d "$target_folder" ] ||mkdir -p "$target_folder"                
+    [ -d "$target_folder" ] ||mkdir -p "$target_folder"                                 # be sure that mount point exist
+    grep "$target_folder" < /etc/mtab >/dev/null && fusermount -u "$target_folder"      # unmount target if mounted  
+    [ "$source_folder" == "unmount" ] && return 0                                       # if first argument is "unmount" all done for now, exit
+    [ "$(ls $target_folder)" ] && return 23                                             # Check that directory is empty
 
-    # unmount target if mounted  
-    grep "$target_folder" < /etc/mtab >/dev/null && fusermount -u "$target_folder"         
-
-    # if first argument is "unmount" all done for now, exit
-    [ "$source_folder" == "unmount" ] && return 0                                           
-
-    # Check that directory is empty
-    [ "$(ls $target_folder)" ] && return 23                                                
-
-    # mount
-    if [ "$remote_flag" ]; then 
+    if [ "$remote_flag" ]; then                                                         # mount
             server="$GURU_REMOTE_FILE_SERVER"             
             server_port="$GURU_REMOTE_FILE_SERVER_PORT"
             user="GURU_REMOTE_FILE_SERVER_USER"
@@ -100,20 +98,22 @@ mount_sshfs() {
             server_port="$GURU_LOCAL_FILE_SERVER_PORT"
             user="GURU_LOCAL_FILE_SERVER_USER"
     fi 
-    #echo sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$source_folder" "$target_folder"
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$USER@$server:$source_folder" "$target_folder" && echo "mounted $GURU_USER@$server:$source_folder to $target_folder"
+    #echo sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$USER@$server:$source_folder" "$target_folder" && echo "mounted $GURU_USER@$server:$source_folder to $target_folder"
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
+          -p "$server_port" "$USER@$server:$source_folder" "$target_folder" \
+          && echo "mounted $server:$source_folder to $target_folder"
     return "$?"
 }
 
 
 mount_guru_defaults() {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
-    mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" "$1" || return "$?"
-    mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" "$1" || return "$?"
-    mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" "$1" || return "$?"
-    mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" "$1" || return "$?"
-    mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" "$1" || return "$?"
-    mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" "$1" || return "$?"
+    mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" || return "$?"
+    mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" || return "$?"
+    mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" || return "$?"
+    mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" || return "$?"
+    mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" || return "$?"
+    mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" || return "$?"
     return 0
 }
 
@@ -146,25 +146,43 @@ push_config_files(){
 }
 
 
-test_mounts(){
+test_config(){
+
+    echo "## guru cloud configuration storage"
+    printf "configureation push "
+    push_config_files && echo "PASSED" || echo "FAILED"
+
+    printf "configureation pull "
+    pull_config_files && echo "PASSED" || echo "FAILED"
+    return 0
+}
+
     
-    echo "mount "; mount_guru_defaults && echo "PASSED" || echo "FAILED"
+test_mount() {
+
+    echo "## single file server sshfs mount "
+    mount_sshfs "/home/$GURU_USER/test" "$HOME/tmp/test_mount" && cat "$HOME/tmp/test_mount/test.md" || echo "FAILED"
     sleep 2
-    printf "un-mount "; unmount_guru_defaults && echo "PASSED" || echo "FAILED"
+    printf "un-mount "
+    mount_sshfs unmount "$HOME/tmp/test_mount" && echo "PASSED" || echo "FAILED"
+    rm -rf "$HOME/tmp/test_mount" || echo "ERROR"
     return 0
 }
 
 
-test_config(){
-    
-    printf "push "; push_config_files && echo "PASSED" || echo "FAILED"
-    printf "pull "; pull_config_files && echo "PASSED" || echo "FAILED"
+test_default_mounts(){
+
+    echo "## sshfs mount file server default folders"
+    mount_guru_defaults && echo "PASSED" || echo "FAILED"
+    sleep 3
+    printf "un-mount defaults "; unmount_guru_defaults && echo "PASSED" || echo "FAILED"
     return 0
 }
 
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    source "$HOME/.gururc"
     remote_main "$@"
     exit 0
 fi
