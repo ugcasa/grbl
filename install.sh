@@ -12,24 +12,28 @@ source src/keyboard.sh                                          # include keyboa
 target_rc="$HOME/.bashrc"                                       # environmental values rc file
 disabler_flag_file="$HOME/.gururc.disabled"                     # flag for disabling the rc file 
 
-case "$1" in
+case "$1" in                                                    # simple location pased argument parser
     server)
             platform="server"
-        ;;    
+            ;;    
     desktop)
             platform="desktop"
-        ;;        
+            ;;        
     force|-f|-y)
             force_overwrite=true
-        ;;        
+            ;;        
+    test)
+            echo "test cases not found"
+            exit 0
+            ;;
     help)
-                printf "\nguru tool-kit installer - help \n"
-                printf "\nUsage:\n\t ./install.sh [argument] \n"
-                printf "\nArguments:\n\n"
-                printf " force             force re-install \n" 
-                printf " desktop           desktop install for [ubuntu 18.04>, mint 19.1>19.3]\n"
-                printf " server            server install [ubuntu server 18.04>] \n\n"
-        ;;
+            printf "\nguru tool-kit installer - help \n"
+            printf "\nUsage:\n\t ./install.sh [argument] \n"
+            printf "\nArguments:\n\n"
+            printf " force             force re-install \n" 
+            printf " desktop           desktop install for [ubuntu 18.04>, mint 19.1>19.3]\n"
+            printf " server            server install [ubuntu server 18.04>] \n\n"
+            ;;
     *)
         platform="desktop"
 esac
