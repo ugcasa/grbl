@@ -23,7 +23,12 @@ case "$1" in
             force_overwrite=true
         ;;        
     help)
-        printf  "help your self"
+                printf "\nguru tool-kit installer - help \n"
+                printf "\nUsage:\n\t ./install.sh [argument] \n"
+                printf "\nArguments:\n\n"
+                printf " force             force re-install \n" 
+                printf " desktop           desktop install for [ubuntu 18.04>, mint 19.1>19.3]\n"
+                printf " server            server install [ubuntu server 18.04>] \n\n"
         ;;
     *)
         platform="desktop"
