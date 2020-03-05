@@ -1,6 +1,10 @@
 #!/bin/bash
 
-main () {
+uninstall_main () {
+	
+	command=$1
+	shift
+	
 	case "$command" in 
 		
 		software|sw)
@@ -14,7 +18,7 @@ main () {
 		cfg)
 			uninstall $@	
 			remove-sw $@
-			[ $GURU_CFG ] && rm -rf "$GURU_CFG"
+			[ "$GURU_CFG" ] && rm -rf "$GURU_CFG"
 			;;
 		*)	
 			uninstall $@
@@ -26,19 +30,19 @@ main () {
 uninstall () {	 
 
 	if [ ! -f "$HOME/.bashrc.giobackup" ]; then 
-		echo "not installed, aborting.." >>$GURU_ERROR_MSG
+		echo "not installed, aborting.." >"$GURU_ERROR_MSG"
 		return 135
 	fi		
 
-	if [ -f $HOME/.gururc ]; then 
-		 . $HOME/.gururc 
+	if [ -f "$HOME/.gururc" ]; then 
+		 source "$HOME/.gururc"
 	else
-		echo "$me no setup file exists, aborting.." >>$GURU_ERROR_MSG
+		echo "${BASH_SOURCE[0]} no setup file exists, aborting.." >"$GURU_ERROR_MSG"
 		return 136	
 	fi	
 
-	if [ $GURU_BIN == "" ]; then 
-		echo "no environment variables set, aborting.." >>$GURU_ERROR_MSG
+	if [ "$GURU_BIN" == "" ]; then 
+		echo "no environment variables set, aborting.." >"$GURU_ERROR_MSG"
 		return 137		
 	fi
 
@@ -46,10 +50,10 @@ uninstall () {
 	mv -f "$HOME/.bashrc.giobackup" "$HOME/.bashrc"		
 	rm -f "$HOME/.gururc"	
 	rm -f "$GURU_BIN/$GURU_CALL"		
-	[ $GURU_CFG ] && rm -f "$GURU_CFG/*"
+	[ "$GURU_CFG" ] && rm -f "$GURU_CFG/*"
 	
 	if [[ -f "$HOME/.kbbind.backup.cfg" ]]; then 
-		dconf load /org/cinnamon/desktop/keybindings/ < $GURU_CFG/kbbind.backup.cfg
+		dconf load /org/cinnamon/desktop/keybindings/ < "$GURU_CFG/$GURU_USER/kbbind.backup.cfg"
 	fi
 	
 	case "$GURU_INSTALL" in 			# Installation type 
@@ -74,7 +78,7 @@ remove-sw() {
 	#rm /usr/bin/mpsyt
 	#pip3 remove mps-youtube youtube_dl 
 
-	[ -d $GURU_APP ] || rm -fr $GURU_APP
+	[ -d "$GURU_APP" ] || rm -fr "$GURU_APP"
 		
 	if [ "$1" == "all" ]; then 
 		echo "sublime-text git setuptools "
@@ -84,11 +88,8 @@ remove-sw() {
 	fi
 }
 
-
-me=${BASH_SOURCE[0]}
-if [[ "$me" == "${0}" ]]; then
-	command=$1
-	shift
-	main $@
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	source "$HOME/.gururc"
+	uninstall_main "$@"
 fi
 

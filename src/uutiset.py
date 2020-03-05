@@ -69,7 +69,7 @@ class menu ():
 		self.resize( self.term_lines, self.term_columns )
 		os.system( 'clear' )
 
-		self.feed_list_file 	= open( os.environ["GURU_CFG"] + "/rss-feed.list", "r" )
+		self.feed_list_file 	= open( os.environ["GURU_CFG"] + "/" + os.environ["GURU_USER"] + "/rss-feed.list", "r" )
 		self.feed_list 			= self.feed_list_file.readlines()
 		self.feed_list_file.close()
 

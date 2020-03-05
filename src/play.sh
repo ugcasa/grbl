@@ -115,7 +115,7 @@ vt_player() {
         case "$1" in 
 
             list)
-                    more $GURU_CFG/vt.list                            
+                    more" $GURU_CFG/$GURU_USER/vt.list"                            
                     ;;
 
             locale|local)
@@ -132,7 +132,7 @@ vt_player() {
                     ;;
                 *)
                     if ! [ -f $video ]; then 
-                        cat $GURU_CFG/vt.list |grep $video_name && wget -N -P $GURU_VIDEO http://artscene.textfiles.com/vt100/$1.vt || echo "no video"
+                        cat" $GURU_CFG/$GURU_USER/vt.list" |grep $video_name && wget -N -P $GURU_VIDEO http://artscene.textfiles.com/vt100/$1.vt || echo "no video"
                     fi
                     
                     cat "$video" | pv -q -L 2000                         
@@ -147,12 +147,12 @@ run_demo() {
         clear                
 
         if $audio; then
-             $GURU_CALL fadedown
-             pkill mplayer
-             pkill xplayer
-             mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_MUSIC/fairlight.m4a </dev/null >/dev/null 2>&1 &
-             $GURU_CALL fadeup
-         fi
+            $GURU_CALL fadedown
+            pkill mplayer
+            pkill xplayer
+            mplayer >>/dev/null && mplayer -ss 2 -novideo $GURU_MUSIC/fairlight.m4a </dev/null >/dev/null 2>&1 &
+            $GURU_CALL fadeup
+        fi
 
         guru play vt twilight
         printf "\n                             akrasia.ujo.guru \n"
