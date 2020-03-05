@@ -2,27 +2,26 @@
 
 uninstall_main () {
 	
-	command=$1
+	command="$1"
 	shift
 	
 	case "$command" in 
 		
 		software|sw)
-			remove-sw $@
+			remove-sw "$@"
 			exit $?
 			;;
 		all)
-			uninstall $@	
-			remove-sw $@
+			uninstall "$@"	
+			remove-sw "$@"
 			;;
 		cfg)
-			uninstall $@	
-			remove-sw $@
+			uninstall "$@"	
 			[ "$GURU_CFG" ] && rm -rf "$GURU_CFG"
 			;;
 		*)	
-			uninstall $@
-			exit $?
+			uninstall "$@"
+			exit "$?"
 	esac
 }
 

@@ -21,9 +21,14 @@ else 												# Defaults
 	export GURU_USER_PHONE="-your phone number-"
 	export GURU_NOTE_HEADER="Daily notes $GURU_REAL_NAME" 				# TODO koostetaan valmiiksi sringi tässä
 
+# Server setup 
+	export GURU_ACCESS_POINT_SERVER_USER="$GURU_USER"
+	export GURU_ACCESS_POINT_SERVER="ujo.guru"
+	export GURU_ACCESS_POINT_SERVER_PORT="2010"
+
 # (to teamrc)
 	export GURU_TEAM="test"
-	export GURU_TEAM_NAME="tester-group"
+	export GURU_TEAM_NAME="tester"
 
 # Folders 
 	export GURU_NOTES="$HOME/Notes"
@@ -39,25 +44,7 @@ else 												# Defaults
 	export GURU_WORKTRACK="$HOME/Track/timetrack"
 	export GURU_COUNTER="$HOME/Track/counters"
 	export GURU_RECEIPTS="invoices"												# bad monkey!
-
-# Server setup 
-	export GURU_REMOTE_FILE_SERVER_USER="$USER"	
-	export GURU_LOCAL_FILE_SERVER="192.168.1.10"
-	export GURU_LOCAL_FILE_SERVER_PORT="22"
-	export GURU_REMOTE_FILE_SERVER="ujo.guru"
-	export GURU_REMOTE_FILE_SERVER_PORT="2010"
-	export GURU_ACCESS_POINT_SERVER="ujo.guru"
-	export GURU_ACCESS_POINT_SERVER_PORT="2010"
-
-	export GURU_CLOUD_NOTES="/home/$GURU_REMOTE_FILE_SERVER_USER/ujo.guru/Notes"
-	export GURU_CLOUD_PICTURES="/home/$GURU_REMOTE_FILE_SERVER_USER/ujo.guru/Pictures"
-	export GURU_CLOUD_TEMPLATES="/home/$GURU_REMOTE_FILE_SERVER_USER/Templates"
-	export GURU_CLOUD_VIDEO="/home/$GURU_REMOTE_FILE_SERVER_USER/bubble/Videos"
-	export GURU_CLOUD_AUDIO="/home/$GURU_REMOTE_FILE_SERVER_USER/bubble/Audio"
-	export GURU_CLOUD_MUSIC="/home/$GURU_REMOTE_FILE_SERVER_USER/bubble/Music"
-	export GURU_CLOUD_ACCOUNTING="/home/$GURU_REMOTE_FILE_SERVER_USER/ujo.guru/Accounting"
-	export GURU_CLOUD_RECEIPTS="invoices"										# bad monkey!
-
+	
 # Preferred applications
 	export GURU_TERMINAL="gnome-terminal"
 	export GURU_EDITOR="subl"
@@ -96,5 +83,5 @@ else 												# Defaults
 	export GURU_INSTALL="desktop"
 fi
 
-alias "$GURU_CALL"=$GURU_BIN/guru 					
+#alias "$GURU_CALL"=$GURU_BIN/guru 					
 

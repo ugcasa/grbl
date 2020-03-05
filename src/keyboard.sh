@@ -113,7 +113,7 @@ add_cinnamon_guru_shortcuts() {
         dconf help >/dev/null || sudo apt install dconf-cli
         
         new=$GURU_CFG/$GURU_USER/kbbind.guruio.cfg           
-        backup=$GURU_CFG/$GURU_USER/kbbind.backup.cfg
+        backup=$GURU_CFG/kbbind.backup.cfg
         
         if [ ! -f "$backup" ]; then       
             dconf dump /org/cinnamon/desktop/keybindings/ > "$backup" # && cat "$backup" | grep binding=

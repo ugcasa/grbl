@@ -112,7 +112,7 @@ esac
 
 counter add guru-installed >/dev/null                           # add installation counter
 
-echo "successfully installed"                                   # all fine
+echo "successfully installed for $GURU_USER"                                   # all fine
 exit 0
 
 

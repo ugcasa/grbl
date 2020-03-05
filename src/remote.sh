@@ -35,7 +35,7 @@ remote_main() {
                     1) test_config ;;
                     2) test_mount ;;                    
                     3) test_default_mounts ;;
-                    all) test_mount && test_config ;; 
+                    all) test_config && test_mount ;;
                     *) echo "no test case for $1"
                 esac
                 ;;
@@ -87,7 +87,7 @@ mount_sshfs() {
     fi
 
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
-          -p "$server_port" "$USER@$server:$source_folder" "$target_folder" \
+          -p "$server_port" "$user@$server:$source_folder" "$target_folder" \
           && echo "mounted $server:$source_folder to $target_folder"
     
     return "$?"
@@ -119,17 +119,17 @@ unmount_guru_defaults() {
 
 
 pull_config_files(){
-    rsync -ravz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
-        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/cfg" \
+    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
+        "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/cfg/" \
         "$GURU_CFG/$GURU_USER" 
     return "$?"
 }
 
 
 push_config_files(){
-    rsync -ravz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
-        "$GURU_CFG/$GURU_USER" \
-        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/cfg"
+    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
+        "$GURU_CFG/$GURU_USER/" \
+        "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/cfg/"
     return "$?"
 }
 
@@ -137,10 +137,10 @@ push_config_files(){
 test_config(){
 
     echo "## guru cloud configuration storage"
-    printf "configureation push "
+    printf "configuration push "
     push_config_files && echo "PASSED" || echo "FAILED"
 
-    printf "configureation pull "
+    printf "configuration pull "
     pull_config_files && echo "PASSED" || echo "FAILED"
     return 0
 }
@@ -149,7 +149,7 @@ test_config(){
 test_mount() {
 
     echo "## single file server sshfs mount "
-    mount_sshfs "/home/$GURU_USER/test" "$HOME/tmp/test_mount" && cat "$HOME/tmp/test_mount/test.md" || echo "FAILED"
+    mount_sshfs "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount" && cat "$HOME/tmp/test_mount/test.md" || echo "FAILED"
     sleep 2
     printf "un-mount "
     mount_sshfs unmount "$HOME/tmp/test_mount" && echo "PASSED" || echo "FAILED"
