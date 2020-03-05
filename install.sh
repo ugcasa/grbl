@@ -53,19 +53,20 @@ grep -q ".gururc" "$target_rc" || cat ./src/tobashrc.sh >>"$target_rc"          
 
 [ -f "$disabler_flag_file" ] && rm -f "$disabler_flag_file"     
 
-cp -f ./src/gururc.sh "$HOME/.gururc"                           # create folder structure 
-source "$HOME/.gururc"                                          # rise default environmental variables 
+cp -f ./src/gururc.sh "$HOME/.gururc"                            # create folder structure 
+source "$HOME/.gururc"                                           # rise default environmental variables 
 
-[ -d "$GURU_BIN" ] || mkdir -p "$GURU_BIN"                      # make bin folder for script files
-[ -d "$GURU_CFG" ] || mkdir -p "$GURU_CFG"                      # make cfg folder for configuration files
+[ -d "$GURU_BIN" ] || mkdir -p "$GURU_BIN"                       # make bin folder for script files
+[ -d "$GURU_CFG" ] || mkdir -p "$GURU_CFG"                       # make cfg folder for configuration files
 [ -d "$GURU_APP" ] || mkdir -p "$GURU_APP"
-cp -f ./cfg/* "$GURU_CFG"                                       # copy configuration files to configuration folder
-cp -f -r ./src/* -f "$GURU_BIN"                                 # copy script files to bin folder
-mv  "$GURU_BIN/guru.sh" "$GURU_BIN/guru"                        # rename guru.sh in bin folder to guru
-#cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"             # compatibility bubblegum: TEST is it needed before removing
+[ -d "$GURU_CFG/$GURU_USER" ] || mkdir -p "$GURU_CFG/$GURU_USER" # personal configurations
+cp -f ./cfg/* "$GURU_CFG/$GURU_USER"                             # copy configuration files to configuration folder
+cp -f -r ./src/* -f "$GURU_BIN"                                  # copy script files to bin folder
+mv  "$GURU_BIN/guru.sh" "$GURU_BIN/guru"                         # rename guru.sh in bin folder to guru
+#cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"              # compatibility bubblegum: TEST is it needed before removing
 
-platform=$(check_distro)                                        # check that distribution is compatible 
-case "$platform" in                                             # different dependent settings
+platform=$(check_distro)                                         # check that distribution is compatible 
+case "$platform" in                                              # different dependent settings
 
     linuxmint)      
         cinnamon_version=$(cinnamon --version |grep -o "[^ ]*$"|cut -f1 -d".")                      # check cinnamon main version number
