@@ -52,7 +52,7 @@ key_main() {
             printf " ps        list of keys \n"
             printf " ls        list of keys files\n"
             printf " add       adds keys to server [server_selection] [variables] \n"
-            printf " rm        remove from remote server server [key_file] \n"          
+            printf " rm        remove from remote server server [user_name@service_host] \n"          
             printf "\nExample:\n\t %s ssh key add %s \n\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER" 
             ;;
     esac
@@ -235,7 +235,7 @@ add_key_other() {
     [ "$2" ] && server_port="$2" ||read -r -p "port: " server_port  
     [ "$3" ] && user_name="$3" ||read -r -p "user name: " user_name
 
-    local key_file="$HOME/.ssh/$server_domain"'_id_rsa'
+    local key_file="$HOME/.ssh/$user_name@$server_domain"'_id_rsa'
 
     ## Generate keys
     ssh-keygen -t rsa -b 4096 -C "$user_name" -f "$key_file" && echo "Key OK" || return 22

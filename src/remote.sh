@@ -120,7 +120,7 @@ unmount_guru_defaults() {
 
 pull_config_files(){
     rsync -ravz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
-        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$USER/usr/cfg" \
+        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/cfg" \
         "$GURU_CFG/$GURU_USER" 
     return "$?"
 }
@@ -129,7 +129,7 @@ pull_config_files(){
 push_config_files(){
     rsync -ravz --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
         "$GURU_CFG/$GURU_USER" \
-        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$USER/usr/cfg"
+        "$USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/cfg"
     return "$?"
 }
 
