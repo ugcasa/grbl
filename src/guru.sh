@@ -18,7 +18,7 @@ source "$HOME/.gururc"                      # user and platform settings (implem
 source "$GURU_BIN/functions.sh"                 # common functions, if no ".sh", check here
 source "$(dirname "$0")/lib/common.sh"
 
-counter add guru-runned >/dev/null
+counter_main add guru-runned >/dev/null
 
 #$GURU_CALL counter add guru_runned
 
@@ -68,8 +68,14 @@ parse_argument () {
                 ;;  
 
             # bash scripts
-            project|keyboard|ssh|remote|input|counter|note|stamp|timer|phone|play|vol|install|scan|tag|yle)         
+            project|keyboard|remote|input|counter|note|stamp|timer|phone|play|vol|install|scan|tag|yle)         
                 $argument.sh "$@" 
+                return $?           
+                ;;
+
+            # direct lib calls
+            ssh|os|common|tme)         
+                lib/$argument.sh "$@" 
                 return $?           
                 ;;
 
