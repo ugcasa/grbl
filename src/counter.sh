@@ -41,7 +41,7 @@ counter_main () {
 				rm)				
 					id="counter $id_file removed"
 					[ -f "$id_file" ] && rm "$id_file" || id="$id_file not exist"
-					exit 0 
+					return 0 
 					;;	
 
 				help|"")			

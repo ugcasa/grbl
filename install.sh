@@ -8,6 +8,7 @@ GURU_CFG=$HOME/.config/guru
 
 source src/lib/common.sh                                        # include some common functions
 source src/keyboard.sh                                          # include keyboard functions
+source src/counter.sh                                           # include keyboard functions
 
 target_rc="$HOME/.bashrc"                                       # environmental values rc file
 disabler_flag_file="$HOME/.gururc.disabled"                     # flag for disabling the rc file 
@@ -110,7 +111,7 @@ case "$platform" in                                              # different dep
         exit 4
 esac
 
-counter add guru-installed >/dev/null                           # add installation counter
+counter_main add guru-installed >/dev/null                           # add installation counter
 
 echo "successfully installed for $GURU_USER"                                   # all fine
 exit 0

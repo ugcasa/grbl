@@ -2,7 +2,7 @@
 # sshfs mount functions for guru tool-kit
 # casa@ujo.guru 2020
 
-source "$(dirname "$0")/ssh.sh"
+source "$(dirname "$0")/lib/ssh.sh"
 
 remote_main() {
 
