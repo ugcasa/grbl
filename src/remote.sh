@@ -68,10 +68,10 @@ push_config_files(){
 test_config(){
 
     echo "## guru cloud configuration storage"
-    printf "configuration push "
+    printf "configuration push.. "
     push_config_files && printf "$PASSED" || printf "$FAILED"
 
-    printf "configuration pull "
+    printf "configuration pull.. "
     pull_config_files && printf "$PASSED" || printf "$FAILED"
     return 0
 }

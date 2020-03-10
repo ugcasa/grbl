@@ -15,6 +15,7 @@
 version="0.4.5"
 
 source "$HOME/.gururc"                      # user and platform settings (implement here, always up to date)
+source "$GURU_CFG/$GURU_USER/deco.cfg"
 source "$GURU_BIN/functions.sh"                 # common functions, if no ".sh", check here
 source "$(dirname "$0")/lib/common.sh"
 
