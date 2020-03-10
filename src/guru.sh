@@ -123,14 +123,14 @@ parse_argument () {
                 return $?           
                 ;;
 
-            radio)                      # leave backroind    
+            radio)                      # leave background    
                 DISPLAY=:0  
                 $argument.py "$@" &
                 return $?           
                 ;;
 
             # basic stuff
-            version|ver|-v|--ver)       # la versi on
+            version|ver|-v|--ver)       # version
                 printf "giocon.client v.$version installed to $0\n"
                 return 0
                 ;;
@@ -150,8 +150,18 @@ parse_argument () {
                     1|all )
                         test_all "$@"
                         ;;
+                    help|-h )
+                        printf "\nUsage:\n\t %s test [<tool>|all] <level> \n" "$GURU_CALL"
+                        printf "\nCommands:\n\n"
+                        printf " all           test all tools \n" 
+                        printf " <level>       numeral level of test detail \n"
+                        printf "\nExample:\n"
+                        printf "\t %s test remote 1 \n" "$GURU_CALL" 
+                        printf "\t %s test all \n\n" "$GURU_CALL" 
+                        echo 
+                        ;;
                     *) 
-                        test_module "$@"
+                        test_tool "$@"
                 esac
                 ;;
 
@@ -181,19 +191,21 @@ terminal() {
 
 
 test_all() {
-    unset status
     [ "$2" ] && level="$2" || level="all"
-    echo  "test all on level $1"
+    local test_id=$(counter_main add guru-ui_test_id)
+    printf "\nTEST $test_id: guru-ui $level $(date) \n" | tee -a "$GURU_LOG"
+    unset status
     source mount.sh; mount_main test $level; status=$((status+$?))      # TODO not really getting error this far, fix or
     source remote.sh; remote_main test $level; status=$((status+$?))    # find netter method
     return $status
 }
 
 
-test_module() {
-    source "$1.sh"
-    [ "$2" ] && level="$2" || level="all"
-    echo  "test module $1 on level $level"
+test_tool() {
+    [ "$2" ] && level="$2" || level="all"    
+    [ -f "$GURU_BIN/$1.sh" ] && source "$1.sh" || return 123
+    local test_id=$(counter_main add guru-ui_test_id)
+    printf "\nTEST $test_id: guru-ui $1 $(date) \n" | tee -a "$GURU_LOG"
     $1_main test $level
     return $?
 }

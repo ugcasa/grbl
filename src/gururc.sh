@@ -40,7 +40,7 @@ else 												# Defaults
 	export GURU_SCAN="$HOME/Documents" 		
 	export GURU_ACCOUNTING="$HOME/Economics"
 	export GURU_PERSONAL_ACCOUNTING="$HOME/Economics/Personal"
-
+	export GURU_LOG="$HOME/Track/log"
 	export GURU_WORKTRACK="$HOME/Track/timetrack"
 	export GURU_COUNTER="$HOME/Track/counters"
 	export GURU_RECEIPTS="invoices"												# bad monkey!

@@ -21,7 +21,6 @@ remote_main() {
                 install_requirements "$@"
                 ;;
         test)                
-                echo "# Test Report $0 $1 $(date)"
                 case "$1" in 
                     1) test_config; error=$? ;;
                     all) test_config; error=$? ;;
@@ -68,20 +67,19 @@ push_config_files(){
 test_config(){
 
     #echo "guru cloud configuration storage"
-    printf "configuration push.. "
-    push_config_files && printf "$PASSED" || printf "$FAILED"
+    printf "configuration push.. " | tee -a "$GURU_LOG"
+    push_config_files && PASSED || FAILED
 
-    printf "configuration pull.. "
-    pull_config_files && printf "$PASSED" || printf "$FAILED"
+    printf "configuration pull.. " | tee -a "$GURU_LOG"
+    pull_config_files && PASSED || FAILED
     return 0
 }
 
-    
 
-
-# if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc"
+    source "$GURU_CFG/$GURU_USER/deco.cfg"
+    source "$GURU_BIN/functions.sh"
     remote_main "$@"
     exit 0
 fi

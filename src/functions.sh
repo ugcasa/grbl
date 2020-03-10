@@ -3,18 +3,34 @@
 # Some prototype functions not complicate enough to write separate scripts
 # ujo.guru 2019 
 
+PASSED(){
+    printf "$PASSED" 
+    printf "[PASSED]\n" >>"$GURU_LOG" 
+}
+
+
+FAILED() {
+    printf "$FAILED" 
+    printf "[FAILED]\n" >>"$GURU_LOG" 
+}
+
+
+ERROR() {
+    printf "$ERROR"
+    printf "[ERROR]\n" >>"$GURU_LOG" 
+}
 
 
 tor() {
-        [ -d "$GURU_APP/tor-browser_en-US" ] || guru install tor
-        sh -c '"$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" --detach || ([ !  -x "$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" ] && "$(dirname "$*")"/Browser/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
-        error_code="$?"
-        if (( error_code == 127 )); then 
-            rm -rf "$GURU_APP/tor-browser_en-US"
-            echo "failed, try re-install"
-            return "$error_code"
-        fi
-        return 0
+    [ -d "$GURU_APP/tor-browser_en-US" ] || guru install tor
+    sh -c '"$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" --detach || ([ !  -x "$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" ] && "$(dirname "$*")"/Browser/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
+    error_code="$?"
+    if (( error_code == 127 )); then 
+        rm -rf "$GURU_APP/tor-browser_en-US"
+        echo "failed, try re-install"
+        return "$error_code"
+    fi
+    return 0
 }
 
 translate () {

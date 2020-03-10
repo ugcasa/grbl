@@ -2,83 +2,7 @@
 # mount tools for guru tool-kit
 # casa@ujo.guru 2020
 
-source "$(dirname "$0")/remote.sh"
-
-
-
-
-mount_main() {
-
-    help() {
-        printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] \n"
-        printf "\nCommands:\n\n"
-        printf " ls                       list of mounted folders \n" 
-        printf " mount [source] [target]  mount folder in file server to local folder \n"
-        printf " mount all                mount primary file server default folders \n"
-        printf "                          Warning! Mount point may be generic location as '~/Pictures' \n"
-        printf " unmount [mount_point]    unmount [mount_point] \n"
-        printf " unmount [all]            unmount all default folders \n"
-        printf " test <case_nr>|all       run given test case \n"
-        printf "\nExample:\n"
-        printf "\t %s remote mount /home/%s/share /home/%s/mount/%s/\n\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
-        
-        echo 
-    }
-    
-    argument="$1"; shift
-    
-    case "$argument" in
-    
-        ls|list)
-                grep "sshfs" < /etc/mtab
-                ;;
-
-        all|defaults|def) 
-            
-            case "$GURU_CMD" in             # get gurus first argument
-                mount)              
-                    mount_guru_defaults
-                    return "$?"
-                    ;;      
-                unmount) 
-                    unmount_guru_defaults
-                    return "$?"
-                    ;;
-                *) help
-            esac    
-            ;;  
-    
-        test)                
-            echo "# Test Report $0 $1 $(date)"
-            case "$1" in 
-                1) test_mount ;;                    
-                2) test_default_mounts ;;
-                all) test_mount && test_default_mounts ;;
-                *) echo "no test case for $1"
-            esac
-            ;;
-
-        *)
-            case "$GURU_CMD" in             
-
-                    mount)
-                        mount_sshfs "$argument" "$1"               
-                        ;;
-                    unmount)           
-                        mount_sshfs "unmount" "$argument"                           
-                        ;;
-                    *) help
-           esac
-            ;;
-
-        help )
-            help "$@"
-            ;;
-
-        *)  echo "unknown command"
-    esac
-}
-
+source "$(dirname "$0")/counter.sh"
 
 mount_sshfs() {
     #mount_sshfs remote_foder mount_point, servers are already known
@@ -136,28 +60,103 @@ unmount_guru_defaults() {
 
 test_mount() {
 
-    printf "single file server sshfs mount.. "
-    mount_sshfs "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount"  && printf "$PASSED" || printf "$FAILED"
+    printf "single file server sshfs mount.. " | tee -a "$GURU_LOG"
+    mount_sshfs "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount" && PASSED || FAILED
     sleep 2
-    printf "un-mount.. "
-    mount_sshfs unmount "$HOME/tmp/test_mount"                      && printf "$PASSED" || printf "$FAILED"
-    rm -rf "$HOME/tmp/test_mount"                                   || printf "$ERROR"
+    printf "un-mount.. " | tee -a "$GURU_LOG"
+    mount_sshfs unmount "$HOME/tmp/test_mount" && PASSED || FAILED
+    rm -rf "$HOME/tmp/test_mount" || ERROR
     return 0
 }
 
 
 test_default_mounts(){
 
-    printf "sshfs mount file server default folders.. "
-    mount_guru_defaults                                             && printf "$PASSED" || printf "$FAILED"
+    printf "sshfs mount file server default folders.. " | tee -a "$GURU_LOG"
+    mount_guru_defaults && PASSED || FAILED
     sleep 3
-    printf "un-mount defaults.. "; unmount_guru_defaults              && printf "$PASSED" || printf "$FAILED"
+    printf "un-mount defaults.. " | tee -a "$GURU_LOG"
+    unmount_guru_defaults && PASSED || FAILED
     return 0
+}
+
+
+mount_main() {
+
+    help() {
+        printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] \n"
+        printf "\nCommands:\n\n"
+        printf " ls                       list of mounted folders \n" 
+        printf " mount [source] [target]  mount folder in file server to local folder \n"
+        printf " mount all                mount primary file server default folders \n"
+        printf "                          Warning! Mount point may be generic location as '~/Pictures' \n"
+        printf " unmount [mount_point]    unmount [mount_point] \n"
+        printf " unmount [all]            unmount all default folders \n"
+        printf " test <case_nr>|all       run given test case \n"
+        printf "\nExample:\n"
+        printf "\t %s remote mount /home/%s/share /home/%s/mount/%s/\n\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
+        
+        echo 
+    }
+    
+    argument="$1"; shift
+    
+    case "$argument" in
+    
+        ls|list)
+            grep "sshfs" < /etc/mtab
+            ;;
+
+        all|defaults|def) 
+            
+            case "$GURU_CMD" in             # get gurus first argument
+                mount)              
+                    mount_guru_defaults
+                    return "$?"
+                    ;;      
+                unmount) 
+                    unmount_guru_defaults
+                    return "$?"
+                    ;;
+                *) help
+            esac    
+            ;;  
+    
+        test)                
+            case "$1" in 
+                1) test_mount ;;                    
+                2) test_default_mounts ;;
+                all) test_mount && test_default_mounts ;;
+                *) echo "no test case for $1"
+            esac
+            ;;
+
+        *)
+            case "$GURU_CMD" in             
+
+                    mount)
+                        mount_sshfs "$argument" "$1"               
+                        ;;
+                    unmount)           
+                        mount_sshfs "unmount" "$argument"                           
+                        ;;
+                    *) help
+            esac
+            ;;
+
+        help )
+            help "$@"
+            ;;
+
+        *)  echo "unknown command"
+    esac
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
     source "$HOME/.gururc"
+    source "$GURU_CFG/$GURU_USER/deco.cfg"
+    source "$GURU_BIN/functions.sh"
     mount_main "$@"
     exit "$?"
 fi
