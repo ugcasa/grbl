@@ -39,8 +39,9 @@ mount_main() {
             ;;
 
         unmount)           
-            mount_sshfs "unmount" "$1"   
+            mount_sshfs "unmount" "$1" || sudo fusermount -u "$1"
             ;;
+
 
         all|defaults|def) 
             
@@ -80,7 +81,7 @@ mount_main() {
                         mount_sshfs "$argument" "$1"               
                         ;;
                     unmount)           
-                        mount_sshfs "unmount" "$argument"                           
+                        mount_sshfs "unmount" "$argument" || sudo fusermount -u "$1"                       
                         ;;
                     *) help
             esac
