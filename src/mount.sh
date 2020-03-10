@@ -51,7 +51,7 @@ mount_main() {
                     return "$?"
                     ;;      
                 unmount) 
-                    unmount_guru_defaults
+                    unmount_guru_defaults 
                     return "$?"
                     ;;
                 *) help
