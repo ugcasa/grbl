@@ -81,6 +81,16 @@ else 												# Defaults
 # Flags
 	export GURU_AUDIO_ENABLED=true
 	export GURU_INSTALL="desktop"
+
+# Decorations
+    export RED='\033[0;31m'
+    export GRN='\033[0;32m'
+    export YEL='\033[0;33m'
+    export NC='\033[0m'                 # No Color
+    export PASSED="${GRN}PASSED${NC}\n"
+    export FAILED="${RED}FAILED${NC}\n"
+    export ERROR="${YEL}ERROR${NC}\n"
+
 fi
 
 #alias "$GURU_CALL"=$GURU_BIN/guru 					

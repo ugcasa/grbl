@@ -12,7 +12,7 @@
 # In case of IOTSIHTOTBACM (installation of this shit in hindsight turned out to be a colossal mistake) do:
 # guru uninstall; [ -d $GURU_CFG ] && rm /$GURU_CFG -rf     # to get totally rig of this worm and all your personal configs
 
-version="0.4.0"
+version="0.4.5"
 
 source "$HOME/.gururc"                      # user and platform settings (implement here, always up to date)
 source "$GURU_BIN/functions.sh"                 # common functions, if no ".sh", check here
@@ -24,7 +24,7 @@ counter_main add guru-runned >/dev/null
 
 main () {
 
-    if [ $1 ]; then                     # guru without parameters starts terminal loop
+    if [ "$1" ]; then                     # guru without parameters starts terminal loop
         parse_argument $@ 
         error_code=$?
     else
@@ -51,10 +51,10 @@ parse_argument () {
 
     argument="$1"                       # store original argument
     shift                               # shift arguments left
+    export GURU_CMD="$argument"
 
     case $argument in 
 
-    
             # os commands
             clear|ls|cd|echo) 
                 $argument "$@"
@@ -68,7 +68,7 @@ parse_argument () {
                 ;;  
 
             # bash scripts
-            mount|user|project|keyboard|remote|input|counter|note|stamp|timer|phone|play|vol|install|scan|tag|yle)         
+            unmount|mount|user|project|keyboard|remote|input|counter|note|stamp|timer|phone|play|vol|install|scan|tag|yle)         
                 $argument.sh "$@" 
                 return $?           
                 ;;
@@ -80,14 +80,14 @@ parse_argument () {
                 ;;
 
             # python scripts
-            radio)
-                DISPLAY=:0 
-                $argument.py "$@" &
-                return $?           
-                ;;
-                
             uutiset)
                 $argument.py "$@" 
+                return $?           
+                ;;
+
+            radio)                      # leave backroind    
+                DISPLAY=:0  
+                $argument.py "$@" &
                 return $?           
                 ;;
 
@@ -102,16 +102,26 @@ parse_argument () {
                 return $? 
                 ;;
 
+            test)
+                case "$1" in
+                    1|all )
+                        test_all "$@"
+                        ;;
+                    *) 
+                        test_module "$@"
+                esac
+                ;;
 
             help|-h|--help)             # hardly never updated help printout
-                printf "\n-- guru tool-kit linux client - v.$version ---------------- casa@ujo.guru - 2019 - 2020 \n"
+                printf "\n-- guru tool-kit linux client - v.$version ---------------- casa@ujo.guru - 2017 - 2020 \n"
                 printf "\nUsage:\n\t %s [tool] [command] [variables] \n\nCommand:\n\n" "$GURU_CALL"
                 printf 'timer           work track tools ("%s timer help" for more info) \n' "$GURU_CALL"
                 printf 'notes           open daily notes \n'
                 printf 'translate       google translator in terminal \n'
                 printf 'status          status of user \n'
-                printf 'ssh             for ssh functions \n'
-                printf 'remote          remote file functions \n'
+                printf 'ssh             basic ssh functions \n'
+                printf 'remote          remote file pulls and pushes \n'
+                printf 'mount|umount    mount remote locations \n'
                 printf 'document        compile markdown to .odt format \n'
                 printf 'keyboard        to setup keyboard shortcuts \n'
                 printf 'input           to control varies input devices (keyboard etc.) \n'
@@ -135,7 +145,7 @@ parse_argument () {
                 printf "\t %s ssh key add github \n" "$GURU_CALL"
                 printf "\t %s timer start at 12:00 \n" "$GURU_CALL"
                 printf "\t %s keyboard add-shortcut terminal %s F1\n" "$GURU_CALL" "$GURU_TERMINAL"
-                printf "\t %s remote mount /home/%s/share /home/%s/mount/%s/ \n\n"\
+                printf "\t %s mount /home/%s/share /home/%s/mount/%s/ \n\n"\
                        "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER" "$GURU_REMOTE_FILE_SERVER"
                 return 0
                 ;;
@@ -163,6 +173,21 @@ terminal() {
     return 123
 }
 
+
+test_all() {
+    [ "$2" ] && level="$2" || level="all"
+    echo  "test all on level $1"
+    source mount.sh; mount_main test $level
+    source remote.sh; remote_main test $level
+}
+
+
+test_module() {
+    source "$1.sh"
+    [ "$2" ] && level="$2" || level="all"
+    echo  "test module $1 on level $level"
+    $1_main test $level
+}
 
 ## main check (like like often in python)
 
