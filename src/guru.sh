@@ -50,6 +50,43 @@ main () {
 parse_argument () {
     # parse arguments and delivery variables to corresponding application, function, bash script, python.. whatever
 
+    help () {
+             printf "\n-- guru tool-kit linux client - v.$version ---------------- casa@ujo.guru - 2017 - 2020 \n"
+                printf "\nUsage:\n\t %s [tool] [command] [variables] \n\nCommand:\n\n" "$GURU_CALL"
+                printf 'timer           work track tools ("%s timer help" for more info) \n' "$GURU_CALL"
+                printf 'notes           open daily notes \n'
+                printf 'translate       google translator in terminal \n'
+                printf 'status          status of user \n'
+                printf 'ssh             basic ssh functions \n'
+                printf 'remote          remote file pulls and pushes \n'
+                printf 'mount|umount    mount remote locations \n'
+                printf 'document        compile markdown to .odt format \n'
+                printf 'keyboard        to setup keyboard shortcuts \n'
+                printf 'input           to control varies input devices (keyboard etc.) \n'
+                printf 'radio           fm-radio (hackrone rf) \n'
+                printf 'news            text-tv like news feed reader for terminal\n'
+                printf 'stamp           time stamp to clipboard and terminal\n'
+                printf 'counter         to count things \n'
+                printf 'play            play videos and music ("%s play help" for more info) \n' "$GURU_CALL"                           
+                printf 'phone           get data from android phone \n'
+                printf 'set             set options ("%s set help" for more information) \n' "$GURU_CALL" 
+                printf 'silence         kill all audio and lights \n'
+                printf 'install         install tools ("%s install help" for more info) \n' "$GURU_CALL"
+                printf 'upgrade         upgrade guru toolkit \n'
+                printf 'uninstall       remove guru toolkit \n'
+                printf 'terminal        start guru toolkit in terminal mode to exit terminal mode type "exit"\n'                
+                printf 'version         printout version \n'
+                printf "\nMost of tools has it own more detailed help page. pls review those before contacting me ;)\n"             
+                printf "\nExamples:\n"
+                printf "\t %s note yesterday ('%s note help' m morehelp)\n" "$GURU_CALL"
+                printf "\t %s install mqtt-server \n" "$GURU_CALL"
+                printf "\t %s ssh key add github \n" "$GURU_CALL"
+                printf "\t %s timer start at 12:00 \n" "$GURU_CALL"
+                printf "\t %s keyboard add-shortcut terminal %s F1\n" "$GURU_CALL" "$GURU_TERMINAL"
+                printf "\t %s mount /home/%s/share /home/%s/mount/%s/ \n\n"\
+                       "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER" "$GURU_REMOTE_FILE_SERVER"
+    }
+
     argument="$1"                       # store original argument
     shift                               # shift arguments left
     export GURU_CMD="$argument"
@@ -103,6 +140,11 @@ parse_argument () {
                 return $? 
                 ;;
 
+            help|-h|--help)             # hardly never updated help printout
+                help "$@"
+                return 0
+                ;;
+
             test)
                 case "$1" in
                     1|all )
@@ -113,43 +155,6 @@ parse_argument () {
                 esac
                 ;;
 
-            help|-h|--help)             # hardly never updated help printout
-                printf "\n-- guru tool-kit linux client - v.$version ---------------- casa@ujo.guru - 2017 - 2020 \n"
-                printf "\nUsage:\n\t %s [tool] [command] [variables] \n\nCommand:\n\n" "$GURU_CALL"
-                printf 'timer           work track tools ("%s timer help" for more info) \n' "$GURU_CALL"
-                printf 'notes           open daily notes \n'
-                printf 'translate       google translator in terminal \n'
-                printf 'status          status of user \n'
-                printf 'ssh             basic ssh functions \n'
-                printf 'remote          remote file pulls and pushes \n'
-                printf 'mount|umount    mount remote locations \n'
-                printf 'document        compile markdown to .odt format \n'
-                printf 'keyboard        to setup keyboard shortcuts \n'
-                printf 'input           to control varies input devices (keyboard etc.) \n'
-                printf 'radio           fm-radio (hackrone rf) \n'
-                printf 'news            text-tv like news feed reader for terminal\n'
-                printf 'stamp           time stamp to clipboard and terminal\n'
-                printf 'counter         to count things \n'
-                printf 'play            play videos and music ("%s play help" for more info) \n' "$GURU_CALL"                           
-                printf 'phone           get data from android phone \n'
-                printf 'set             set options ("%s set help" for more information) \n' "$GURU_CALL" 
-                printf 'silence         kill all audio and lights \n'
-                printf 'install         install tools ("%s install help" for more info) \n' "$GURU_CALL"
-                printf 'upgrade         upgrade guru toolkit \n'
-                printf 'uninstall       remove guru toolkit \n'
-                printf 'terminal        start guru toolkit in terminal mode to exit terminal mode type "exit"\n'                
-                printf 'version         printout version \n'
-                printf "\nMost of tools has it own more detailed help page. pls review those before contacting me ;)\n"             
-                printf "\nExamples:\n"
-                printf "\t %s note yesterday ('%s note help' m morehelp)\n" "$GURU_CALL"
-                printf "\t %s install mqtt-server \n" "$GURU_CALL"
-                printf "\t %s ssh key add github \n" "$GURU_CALL"
-                printf "\t %s timer start at 12:00 \n" "$GURU_CALL"
-                printf "\t %s keyboard add-shortcut terminal %s F1\n" "$GURU_CALL" "$GURU_TERMINAL"
-                printf "\t %s mount /home/%s/share /home/%s/mount/%s/ \n\n"\
-                       "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER" "$GURU_REMOTE_FILE_SERVER"
-                return 0
-                ;;
             
             "")                 
                 ;;
@@ -176,10 +181,12 @@ terminal() {
 
 
 test_all() {
+    unset status
     [ "$2" ] && level="$2" || level="all"
     echo  "test all on level $1"
-    source mount.sh; mount_main test $level
-    source remote.sh; remote_main test $level
+    source mount.sh; mount_main test $level; status=$((status+$?))      # TODO not really getting error this far, fix or
+    source remote.sh; remote_main test $level; status=$((status+$?))    # find netter method
+    return $status
 }
 
 
@@ -188,13 +195,12 @@ test_module() {
     [ "$2" ] && level="$2" || level="all"
     echo  "test module $1 on level $level"
     $1_main test $level
+    return $?
 }
 
-## main check (like like often in python)
 
-me=${BASH_SOURCE[0]}
-if [[ "$me" == "${0}" ]]; then
-    main $@
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
     exit $?
 fi
 
