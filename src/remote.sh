@@ -79,7 +79,7 @@ install_requirements() {
 pull_config_files(){
     local hostname=$(hostname)
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
-        "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/" \
+        "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER/" \
         "$GURU_CFG/$GURU_USER" 
     return $?
 }
@@ -89,7 +89,7 @@ push_config_files(){
     local hostname=$(hostname)
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
         "$GURU_CFG/$GURU_USER/" \
-        "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/"
+        "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER/"
     return $?
 }
 
