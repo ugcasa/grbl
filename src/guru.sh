@@ -12,14 +12,12 @@
 # In case of IOTSIHTOTBACM (installation of this shit in hindsight turned out to be a colossal mistake) do:
 # guru uninstall; [ -d $GURU_CFG ] && rm /$GURU_CFG -rf     # to get totally rig of this worm and all your personal configs
 
-version="0.4.5"
+version="0.4.6"
 
 source "$HOME/.gururc"                      # user and platform settings (implement here, always up to date)
 source "$GURU_CFG/$GURU_USER/deco.cfg"
 source "$GURU_BIN/functions.sh"                 # common functions, if no ".sh", check here
 source "$(dirname "$0")/lib/common.sh"
-
-counter_main add guru-runned >/dev/null
 
 #$GURU_CALL counter add guru_runned
 
@@ -30,14 +28,11 @@ main () {
         error_code=$?
     else
         terminal                        # rsplib-legacy-wrappers name collision, not big broblem i think
-        
         error_code=$?
     fi
 
     if (( error_code > 1 )); then
-        
         [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)
-        #error_message=$(cat -n 1 $GURU_ERROR_MSG)
         logger "$0 $argument: $error_code: $error_message"              # log errors
         echo "error: $error_code: $error_message"                       # print error
         rm -f $GURU_ERROR_MSG
@@ -91,7 +86,7 @@ parse_argument () {
     shift                               # shift arguments left
     export GURU_CMD="$argument"
 
-    case $argument in 
+    case "$argument" in 
 
             # os commands
             clear|ls|cd|echo) 
@@ -176,18 +171,18 @@ parse_argument () {
             *)  
                 printf "$argument: command not found\n"
     esac    
+    
 }
 
 
 terminal() { 
     # Terminal looper   
     echo $GURU_CALL' in terminal mode (type "help" enter for help)'
-    #$GURU_CALL counter add guru_terminal_runned
     while :                                         
         do
             . $HOME/.gururc
             read -e -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd" 
-            [ "$cmd" == "exit" ] && exit 0
+            [ "$cmd" == "exit" ] && return 0
             parse_argument $cmd
         done
     return 123
@@ -202,7 +197,7 @@ test_all() {
     
     source mount.sh; mount_main test $level; status=$((status+$?))      # TODO not really getting error this far, fix or
     source remote.sh; remote_main test $level; status=$((status+$?))    # find netter method
-    source note.sh; note_main test $level; status=$((status+$?))    # find netter method
+    source note.sh; note_main test $level; status=$((status+$?))        # find netter method
     
     return $status
 }
@@ -220,6 +215,8 @@ test_tool() {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
-    exit $?
+    error=$?
+    counter_main add guru-runned >/dev/null
+    exit $error
 fi
 

@@ -120,12 +120,14 @@ mount_sshfs() {
 mount_guru_defaults() {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
     local error=""
+    mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK" || error=100
+    mount_sshfs "$GURU_CLOUD_COMPANY" "$GURU_COMPANY" || error=100
     mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" || error=100
     mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" || error=100
+    mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" || error=100
     mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" || error=100
     mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" || error=100
     mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" || error=100
-    mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" || error=100
     return $error
 }
 
@@ -133,12 +135,15 @@ mount_guru_defaults() {
 unmount_guru_defaults() {
     # unmount all TODO do better
     local error=""
-    mount_sshfs "unmount" "$GURU_NOTES" || error=100
-    mount_sshfs "unmount" "$GURU_TEMPLATES" || error=100
-    mount_sshfs "unmount" "$GURU_PICTURES" || error=100
-    mount_sshfs "unmount" "$GURU_AUDIO" || error=100
     mount_sshfs "unmount" "$GURU_VIDEO" || error=100
+    mount_sshfs "unmount" "$GURU_AUDIO" || error=100
     mount_sshfs "unmount" "$GURU_MUSIC" || error=100
+    mount_sshfs "unmount" "$GURU_PICTURES" || error=100
+    mount_sshfs "unmount" "$GURU_TEMPLATES" || error=100
+    mount_sshfs "unmount" "$GURU_NOTES" || error=100
+    mount_sshfs "unmount" "$GURU_COMPANY" || error=100
+    mount_sshfs "unmount" "$GURU_TRACK" || error=100
+
     return $error
 }
 

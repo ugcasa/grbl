@@ -9,7 +9,7 @@ counter_main () {
 	value="$1"		; shift 		# input value	
 	id_file="$GURU_COUNTER/$id" 	# counter location
  	
- 	[ -d "$GURU_COUNTER" ] ||mkdir -p "$GURU_COUNTER"
+ 	[ -d "$GURU_COUNTER" ] || return 123 		# wont fuck up mount mkdir -p "$GURU_COUNTER"
 
 	case "$argument" in
 
