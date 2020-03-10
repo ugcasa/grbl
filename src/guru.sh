@@ -85,7 +85,7 @@ parse_argument () {
     argument="$1"                       # store original argument
     shift                               # shift arguments left
     export GURU_CMD="$argument"
-
+    
     case "$argument" in 
 
             # os commands
