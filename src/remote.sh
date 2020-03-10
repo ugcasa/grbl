@@ -11,6 +11,9 @@ remote_main() {
     
     case "$command" in
 
+        check)
+                check_connection "$@"
+                ;;
         push|send)
                 push_config_files
                 ;;
@@ -22,11 +25,12 @@ remote_main() {
                 ;;
         test)                
                 case "$1" in 
-                    1) test_config; error=$? ;;
+                    1) check_connection; error=$? ;;
+                    3) test_config; error=$? ;;
                     all) test_config; error=$? ;;
-                    *) echo "no test case for $1"
+                    *) echo "remote.sh no test case for $1"
                 esac
-                return "$error"
+                return $error
                 ;;
         help|*)
                 printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] \n"
@@ -40,6 +44,30 @@ remote_main() {
         
     esac
     return 0
+}
+
+
+check_connection(){
+    
+    local server="$GURU_LOCAL_FILE_SERVER"                                              # assume that server is in local network
+    local server_port="$GURU_LOCAL_FILE_SERVER_PORT"
+    local user="$GURU_LOCAL_FILE_SERVER_USER"
+
+    if ! ssh -q -p "$server_port" "$user@$server" exit; then                            # check local server connection 
+        server="$GURU_REMOTE_FILE_SERVER"                                               # if no connection try remote server connection
+        server_port="$GURU_REMOTE_FILE_SERVER_PORT"
+        user="$GURU_REMOTE_FILE_SERVER_USER"
+    fi
+
+    printf "testing connection to $user@$server.. " | tee -a "$GURU_LOG"
+
+    if ssh -q -p "$server_port" "$user@$server" exit; then        
+        PASSED 
+        return 0
+    else
+        FAILED
+        return 132
+    fi
 }
 
 

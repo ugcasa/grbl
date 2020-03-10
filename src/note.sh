@@ -2,45 +2,51 @@
 # note generator 2.0 
 
 source "$(dirname "$0")/lib/common.sh"
+source "$(dirname "$0")/mount.sh"
+
 
 note_main () {                                                                  
     # command parser        
         unset command argument user_input        
-        command="$1"; shift                                                         #; echo "command: $command"
-        argument="$1"; shift                                                        #; echo "argument: $argument"
-        user_input="$@"
+        command="$1"; shift                                                        
         
+        re-mount "$GURU_NOTES"
+
         case "$command" in
 
-                    list|ls)
-                        list_notes "$argument" "$user_input"
+                    list|ls )
+                        list_notes "$1" "$2"
                         ;;
 
-                    locate)
-                        set_for_date "$argument"                                    # set basic variables for functions
+                    locate )
+                        set_for_date "$1"                                    # set basic variables for functions
                         echo "$note"
                         ;;
 
-                    check)
-                        set_for_date "$argument"                                    # set basic variables for functions
-                        [ -f "$note" ] && exit 0 || exit 127
+                    check )
+                        set_for_date "$1"                                    # set basic variables for functions
+                        [ -f "$note" ] && return 0 || return 127
                         ;;
 
-                    open|edit)
+                    open|edit )
                         just_created=""
-                        open_note "$argument"
+                        open_note "$1"
                         ;;
 
-                    tag)
-                        set_for_date "$argument"                                    # set basic variables for functions
+                    tag )
+                        set_for_date "$1"                                    # set basic variables for functions
                         [ -f "$note" ] && $GURU_CALL "tag $note $user_input"        #|| echo "no such note"
                         ;;
 
-                    report)                 
+                    re-mount|re-connect)
+                        re-mount 
+                        ;;
+    
+                    report )                 
                         report 
                         ;;
 
-                    help)
+                    help )
                         printf "\nUsage:\n\t %s note [command] <date> \n\nCommands:\n\n" "$GURU_CALL"
                         printf 'check             check do note exist, returns 0 if i do \n' 
                         printf 'list              list of notes. first parameter is month (MM), second year (YYYY) \n' 
@@ -50,10 +56,16 @@ note_main () {
                         printf 'tag               read or add tags to note file \n' 
                         printf 'locate            returns file location of note given YYYYMMDD \n' 
                         printf "report            open note with template to %s \n" "$GURU_OFFICE_DOC"
+
                         printf '\nWithout command or input open todays notes, creates if if is not exist\n\n'
                         ;;
 
+                    test )
+                        test_note "$@"
+                        ;;
+
                     *)          
+                        try-mount && re-mount                         
                         if [ "$command" ]; then                         
                             open_note $(date +"$GURU_FILE_DATE_FORMAT" -d "$command")
                         else
@@ -61,7 +73,22 @@ note_main () {
                             open_note $(date +"$GURU_FILE_DATE_FORMAT")
                         fi
         esac
-        counter add note-runned >/dev/null                                          # Usage statistics
+        counter_main add note-runned >/dev/null                                          # Usage statistics
+}
+
+
+try-mount() {
+   [ -d "$1/$GURU_USER" ] && mount_point="$1/$GURU_USER" || return 123
+}
+
+
+re-mount() {
+
+    [ -d "$1/$GURU_USER" ] && return 123 || mount_point="$1/$GURU_USER"
+    mount_main mount "$GURU_CLOUND_NOTES" "$GURU_NOTES" || return $?
+    sleep 1
+    mount_main mount "$GURU_CLOUND_TEMPLATES" "$GURU_TEMPLATES" || return $?
+    return 0
 }
 
 
@@ -162,7 +189,7 @@ call_editor () {
                 [ -f $projectFolder ] || mkdir -p $projectFolder
                 
                 projectFile=$projectFolder/notes.sublime-project
-                [ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_NOTES/$GURU_USER'"'"\n\t\t}\n\t]\n}\n" >$projectFile
+                [ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_NOTES/$GURU_USER'"'"\n\t\t}\n\t]\n}\n" >$projectFile # Whatta ..?! TODO fix omg
                 
                 subl --project "$projectFile" -a 
                 subl "$note" --project "$projectFile" -a        
@@ -177,10 +204,10 @@ call_editor () {
 
 report () {
     # created odt with team template out of given days note 
-        [ "$argument" ] && notefile=$(get_from_array $(date +$GURU_FILE_DATE_FORMAT -d $argument)) || notefile=$(get_from_array $(date +$GURU_FILE_DATE_FORMAT))    #; echo "argument: "$argument"                  
+        [ "$argument" ] && notefile=$(get_from_array $(date +$GURU_FILE_DATE_FORMAT -d $argument)) || notefile=$(get_from_array $(date +$GURU_FILE_DATE_FORMAT))    
         
         if [ -f "$notefile" ]; then 
-            $GURU_CALL document "$notefile $user_input"                                                                                 #; echo "note file: "$notefile"
+            $GURU_CALL document "$notefile $user_input"                                                                                 
             $GURU_OFFICE_DOC ${notefile%%.*}.odt &                                                                              
             echo "report file: ${notefile%%.*}.odt"
         else
@@ -202,28 +229,49 @@ check_debian_repository () {
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then            # stand alone vs. include. main wont be called if included
-        
-    case "$1" in
 
-        install|remove)                                 # user needs to install first
 
-            case "$GURU_INSTALL" in 
+test_note() {
 
-                desktop)
-                    check_debian_repository             # if installed, do not add repositories
-                    sudo apt "$1" sublime-text          # install or remove sublime
-                    sudo apt "$1" pandoc                # install or remove pandoc
-                    ;; 
+    mount_test() {
+        printf "check mount point is free.. " | tee -a "$GURU_LOG"
+        try-mount "$GURU_NOTES" && printf "not free: " || printf "is free: "
+        PASSED
 
-                server)
-                    sudo apt "$1" joe               
-            esac
-            ;;      
+        printf "mounting to $GURU_TEST.. " | tee -a "$GURU_LOG"
+        mount_main mount "/home/$GURU_USER/usr/test" "$GURU_TEST" && PASSED || FAILED
 
-        *)
-            note_main "$@"
-            exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
+        printf "un-mount $GURU_TEST.. " | tee -a "$GURU_LOG"
+        mount_main unmount "$GURU_TEST" && PASSED || FAILED
+
+        printf "re-mount note mountpoints.. " | tee -a "$GURU_LOG"
+        re-mount "$GURU_NOTES" && PASSED || FAILED 
+    }
+
+    case "$1" in     # does not what i want when tunned vut level 3, "mount"
+        1)
+            mount_test 
+            return $?
+            ;;
+
+        all)
+            mount_test 
+            return $?
+            ;;
+
+        help)
+            ;;
+        *) echo "note.sh: No test case for $1"
     esac
+
+}
+
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then            # stand alone vs. include. main wont be called if included
+    source "$HOME/.gururc"
+    source "$GURU_CFG/$GURU_USER/deco.cfg"
+    source "$GURU_BIN/functions.sh"
+    note_main "$@"
+    exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
 fi
 

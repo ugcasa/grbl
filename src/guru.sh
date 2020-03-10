@@ -154,9 +154,13 @@ parse_argument () {
                         printf "\nUsage:\n\t %s test [<tool>|all] <level> \n" "$GURU_CALL"
                         printf "\nCommands:\n\n"
                         printf " all           test all tools \n" 
-                        printf " <level>       numeral level of test detail \n"
+                        printf " <level>       numeral level of test detail where: \n"
+                        printf "               1 = just a check \n"
+                        printf "               2 = tests with temp locations \n"
+                        printf "               3 = hot locations \n"
                         printf "\nExample:\n"
                         printf "\t %s test remote 1 \n" "$GURU_CALL" 
+                        printf "\t %s test mount 2 \n" "$GURU_CALL" 
                         printf "\t %s test all \n\n" "$GURU_CALL" 
                         echo 
                         ;;
@@ -195,8 +199,11 @@ test_all() {
     local test_id=$(counter_main add guru-ui_test_id)
     printf "\nTEST $test_id: guru-ui $level $(date) \n" | tee -a "$GURU_LOG"
     unset status
+    
     source mount.sh; mount_main test $level; status=$((status+$?))      # TODO not really getting error this far, fix or
     source remote.sh; remote_main test $level; status=$((status+$?))    # find netter method
+    source note.sh; note_main test $level; status=$((status+$?))    # find netter method
+    
     return $status
 }
 
