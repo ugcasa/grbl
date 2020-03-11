@@ -10,6 +10,8 @@ mount_main() {
         printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] \n"
         printf "\nCommands:\n\n"
         printf " ls                       list of mounted folders \n" 
+        printf " check [target]           check that mount point is mounted \n"
+        printf " check-system             check that guru system folders are mounted \n"
         printf " mount [source] [target]  mount folder in file server to local folder \n"
         printf " mount all                mount primary file server default folders \n"
         printf "                          Warning! Mount point may be generic location as '~/Pictures' \n"
@@ -17,15 +19,26 @@ mount_main() {
         printf " unmount [all]            unmount all default folders \n"
         printf " test <case_nr>|all       run given test case \n"
         printf "\nExample:\n"
-        printf "\t %s mount /home/%s/share /home/%s/mount/%s/\n\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
-        
+        printf "\t %s mount /home/%s/share /home/%s/test-mount/\n\n" "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER" 
+        printf "Statuses is located in environment variables 'GURU_SYSTEM_STATUS' and 'GURU_REMOTE_FILE_SERVER_STATUS'\n"
+        printf "Currently system mount status is '%s' and file server status is '%s'" "$GURU_SYSTEM_STATUS" "$GURU_FILESERVER_STATUS"
         echo 
+        return 0
     }
     
     argument="$1"; shift
    
     case "$argument" in
-    
+  
+        check)                        
+            [ "$1" ] && check_mount_status "$@" ||echo "pls input mount point"
+            return $?            
+            ;;
+        
+        check-system)
+            check_system_mount_status
+            ;;
+
         ls|list)
             grep "sshfs" < /etc/mtab
             ;;
@@ -39,7 +52,8 @@ mount_main() {
             ;;
 
         unmount)           
-            mount_sshfs "unmount" "$1" || sudo fusermount -u "$1"
+            mount_sshfs "unmount" "$1" 
+            [ "$2" == force ] && sudo fusermount -u "$1"
             ;;
 
 
@@ -90,6 +104,72 @@ mount_main() {
     esac
 }
 
+check_system_mount_status() {
+    # mountpoint 
+        printf "system mount status.. "
+        grep "sshfs" < /etc/mtab | grep "$GURU_TRACK" >/dev/null && status="mounted" || status="offline"
+
+        ls -1qA "$GURU_TRACK" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
+
+        if [ $status == "mounted" ] && [ "$contans_stuff" ]; then             
+            export GURU_SYSTEM_STATUS="mounted"
+            export GURU_FILESERVER_STATUS="online"
+            ONLINE
+            return 1
+        elif [ $status == "mounted" ]; then             
+            export GURU_SYSTEM_STATUS="mounted"
+            export GURU_FILESERVER_STATUS="unknown"            
+            printf "$ERROR mounted but empty system folder detected\n"         
+            return 1
+        elif [ $status == "offline" ]; then
+            printf "$OFFLINE"        # do not to like write logs if unmounted
+            export GURU_SYSTEM_STATUS="offline"
+            export GURU_FILESERVER_STATUS="offline"
+            return 0
+        else 
+            printf "$ERROR"        # do not to like write logs if unmounted
+            export GURU_SYSTEM_STATUS="error"
+            export GURU_FILESERVER_STATUS="unknown"
+            export 0
+        fi
+}
+
+
+check_mount_status() {
+    # mountpoint 
+        
+        local target_folder=$1; shift
+        local contans_stuff=""
+
+        if ! [ -d "$target_folder" ]; then 
+            printf "folder '$target_folder' does not exist" >$GURU_ERROR_MSG
+            return 123
+        fi
+
+        check_system_mount_status >/dev/null
+
+        if ! [ "$GURU_FILESERVER_STATUS"=="online" ]; then 
+            printf "$ERROR:\nFile server mount unstable \n"        # do not to like write logs if unmounted
+            printf "Mount $target_folder status $UNKNOWN \n"
+            return 0
+        fi
+
+        printf "checking $target_folder status.. " | tee -a "$GURU_LOG"
+        
+        grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null && local status="mounted" || local status="offline"
+
+
+        ls -1qA "$target_folder" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff="" 
+
+        if [ status=="mounted" ] && [ "$contans_stuff" ]; then
+            ONLINE
+            return 0
+        else
+            OFFLINE             # if here, Track is online feel free to log
+            return 1
+        fi
+
+}
 
 mount_sshfs() {
     #mount_sshfs remote_foder mount_point, servers are already known

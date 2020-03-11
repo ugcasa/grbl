@@ -3,6 +3,7 @@
 # Some prototype functions not complicate enough to write separate scripts
 # ujo.guru 2019 
 
+
 PASSED(){
     printf "$PASSED" 
     printf "[PASSED]\n" >>"$GURU_LOG" 
@@ -18,6 +19,30 @@ FAILED() {
 ERROR() {
     printf "$ERROR"
     printf "[ERROR]\n" >>"$GURU_LOG" 
+}
+
+
+ONLINE() {
+	printf "$ONLINE"
+	printf "[ONLINE]\n" >>"$GURU_LOG" 
+}
+
+
+OFFLINE() {
+	printf "$OFFLINE"
+	printf "[OFFLINE]\n" >>"$GURU_LOG" 
+}
+
+
+UNKNOWN() {
+	printf "$UNKNOWN"
+	printf "[UNKNOWN]\n" >>"$GURU_LOG" 
+}
+
+
+OK() {
+	printf "$OK"
+	printf "[OK]\n" >>"$GURU_LOG" 
 }
 
 

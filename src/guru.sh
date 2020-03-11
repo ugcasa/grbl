@@ -12,7 +12,7 @@
 # In case of IOTSIHTOTBACM (installation of this shit in hindsight turned out to be a colossal mistake) do:
 # guru uninstall; [ -d $GURU_CFG ] && rm /$GURU_CFG -rf     # to get totally rig of this worm and all your personal configs
 
-version="0.4.6"
+export GURU_VERSION="0.4.7"
 
 source "$HOME/.gururc"                      # user and platform settings (implement here, always up to date)
 source "$GURU_CFG/$GURU_USER/deco.cfg"
@@ -20,7 +20,9 @@ source "$GURU_BIN/functions.sh"                 # common functions, if no ".sh",
 source "$GURU_BIN/mount.sh"                 # common functions, if no ".sh", check here
 source "$(dirname "$0")/lib/common.sh"
 
-#$GURU_CALL counter add guru_runned
+export GURU_SYSTEM_STATUS="unknown"
+export GURU_FILESERVER_STATUS="unknown"
+check_system_mount_status >/dev/null
 
 main () {
 
@@ -35,7 +37,7 @@ main () {
     if (( error_code > 1 )); then
         [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)
         logger "$0 $argument: $error_code: $error_message"              # log errors
-        echo "error: $error_code: $error_message"                       # print error
+        printf "$ERROR $error_code $error_message\n"                       # print error
         rm -f $GURU_ERROR_MSG
     fi
 
@@ -47,7 +49,7 @@ parse_argument () {
     # parse arguments and delivery variables to corresponding application, function, bash script, python.. whatever
 
     help () {
-             printf "\n-- guru tool-kit linux client - v.$version ---------------- casa@ujo.guru - 2017 - 2020 \n"
+             printf "\n-- guru tool-kit linux client - v.$GURU_VERSION ---------------- casa@ujo.guru - 2017 - 2020 \n"
                 printf "\nUsage:\n\t %s [tool] [command] [variables] \n\nCommand:\n\n" "$GURU_CALL"
                 printf 'timer           work track tools ("%s timer help" for more info) \n' "$GURU_CALL"
                 printf 'notes           open daily notes \n'
@@ -127,7 +129,7 @@ parse_argument () {
 
             # basic stuff
             version|ver|-v|--ver)       # version
-                printf "giocon.client v.$version installed to $0\n"
+                printf "giocon.client v.$GURU_VERSION installed to $0\n"
                 return 0
                 ;;
 
@@ -198,9 +200,9 @@ test_all() {
     printf "\nTEST $test_id: guru-ui $level $(date) \n" | tee -a "$GURU_LOG"
     unset status
     
-    source mount.sh; mount_main test $level; status=$((status+$?))      # TODO not really getting error this far, fix or
-    source remote.sh; remote_main test $level; status=$((status+$?))    # find netter method
-    source note.sh; note_main test $level; status=$((status+$?))        # find netter method
+    source mount.sh;    mount_main  test $level; status=$((status+$?))      # TODO not really getting error this far, fix or
+    source remote.sh;   remote_main test $level; status=$((status+$?))      # find netter method
+    source note.sh;     note_main   test $level; status=$((status+$?))      # find netter method
     
     return $status
 }

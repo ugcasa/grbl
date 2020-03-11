@@ -86,7 +86,14 @@ pull_config_files(){
 
 
 push_config_files(){
+    
     local hostname=$(hostname)
+
+    ssh "$GURU_USER@$GURU_ACCESS_POINT_SERVER" -p "$GURU_ACCESS_POINT_SERVER_PORT" \
+         ls "/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER" >dev/null 2>&1 || \
+    ssh "$GURU_USER@$GURU_ACCESS_POINT_SERVER" -p "$GURU_ACCESS_POINT_SERVER_PORT" \
+         mkdir -p "/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER"
+
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
         "$GURU_CFG/$GURU_USER/" \
         "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER/"
