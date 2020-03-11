@@ -192,7 +192,7 @@ terminal() {
 
 test_all() {
     mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK" 
-    sleep 2
+
     [ "$2" ] && level="$2" || level="all"
     local test_id=$(counter_main add guru-ui_test_id)
     printf "\nTEST $test_id: guru-ui $level $(date) \n" | tee -a "$GURU_LOG"
@@ -207,8 +207,8 @@ test_all() {
 
 
 test_tool() {
-    
     mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK" 
+    
     [ "$2" ] && level="$2" || level="all"    
     [ -f "$GURU_BIN/$1.sh" ] && source "$1.sh" || return 123
     local test_id=$(counter_main add guru-ui_test_id)
