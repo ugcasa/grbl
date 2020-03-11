@@ -46,7 +46,11 @@ else 												# Defaults
 	export GURU_WORKTRACK="$HOME/Track/timetrack"
 	export GURU_COUNTER="$HOME/Track/counters"
 	export GURU_RECEIPTS="invoices"												# bad monkey!
+	export GURU_FAMILY="$HOME/bubble.bay"
+	export GURU_PHOTOS="$HOME/Photos"
 	
+
+
 # Preferred applications
 	export GURU_TERMINAL="gnome-terminal"
 	export GURU_EDITOR="subl"

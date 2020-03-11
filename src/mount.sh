@@ -200,30 +200,32 @@ mount_sshfs() {
 
 
 mount_guru_defaults() {
-    # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
-    local error=""
-    mount_sshfs "$GURU_CLOUD_COMPANY" "$GURU_COMPANY" || error=100
-    mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" || error=100
-    mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" || error=100
-    mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" || error=100
-    mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" || error=100
-    mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" || error=100
-    mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" || error=100
-    return $error
+    # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop    
+    [ "$GURU_CLOUD_COMPANY" ]   && mount_sshfs "$GURU_CLOUD_COMPANY" "$GURU_COMPANY" 
+    [ "$GURU_CLOUD_FAMILY" ]    && mount_sshfs "$GURU_CLOUD_FAMILY" "$GURU_FAMILY" 
+    [ "$GURU_CLOUD_NOTES" ]     && mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" 
+    [ "$GURU_CLOUD_TEMPLATES" ] && mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" 
+    [ "$GURU_CLOUD_MUSIC" ]     && mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" 
+    [ "$GURU_CLOUD_PICTURES" ]  && mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" 
+    [ "$GURU_CLOUD_PHOTOS" ]    && mount_sshfs "$GURU_CLOUD_PHOTOS" "$GURU_PHOTOS"
+    [ "$GURU_CLOUD_AUDIO" ]     && mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" 
+    [ "$GURU_CLOUD_VIDEO" ]     && mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO"     
+    return 0
 }
 
 
 unmount_guru_defaults() {
-    # unmount all TODO do better
-    local error=""
-    mount_sshfs "unmount" "$GURU_VIDEO" || error=100
-    mount_sshfs "unmount" "$GURU_AUDIO" || error=100
-    mount_sshfs "unmount" "$GURU_MUSIC" || error=100
-    mount_sshfs "unmount" "$GURU_PICTURES" || error=100
-    mount_sshfs "unmount" "$GURU_TEMPLATES" || error=100
-    mount_sshfs "unmount" "$GURU_NOTES" || error=100
-    mount_sshfs "unmount" "$GURU_COMPANY" || error=100
-    return $error
+    # unmount all TODO do better    
+    [ "$GURU_CLOUD_VIDEO" ]       && mount_sshfs "unmount" "$GURU_VIDEO" 
+    [ "$GURU_CLOUD_AUDIO" ]       && mount_sshfs "unmount" "$GURU_AUDIO" 
+    [ "$GURU_CLOUD_MUSIC" ]       && mount_sshfs "unmount" "$GURU_MUSIC" 
+    [ "$GURU_CLOUD_PICTURES" ]    && mount_sshfs "unmount" "$GURU_PICTURES" 
+    [ "$GURU_CLOUD_PHOTOS" ]      && mount_sshfs "unmount" "$GURU_PHOTOS" 
+    [ "$GURU_CLOUD_TEMPLATES" ]   && mount_sshfs "unmount" "$GURU_TEMPLATES" 
+    [ "$GURU_CLOUD_NOTES" ]       && mount_sshfs "unmount" "$GURU_NOTES" 
+    [ "$GURU_CLOUD_FAMILY" ]      && mount_sshfs "unmount" "$GURU_FAMILY" 
+    [ "$GURU_CLOUD_COMPANY" ]     && mount_sshfs "unmount" "$GURU_COMPANY" 
+    return 0
 }
 
 
