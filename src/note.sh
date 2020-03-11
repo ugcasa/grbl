@@ -233,33 +233,21 @@ check_debian_repository () {
 
 test_note() {
 
-    mount_test() {
-        printf "check mount point is free.. " | tee -a "$GURU_LOG"
-        try-mount "$GURU_NOTES" && printf "not free: " || printf "is free: "
-        PASSED
-
-        printf "mounting to $GURU_TEST.. " | tee -a "$GURU_LOG"
-        mount_main mount "/home/$GURU_USER/usr/test" "$GURU_TEST" && PASSED || FAILED
-
-        printf "un-mount $GURU_TEST.. " | tee -a "$GURU_LOG"
-        mount_main unmount "$GURU_TEST" && PASSED || FAILED
-
-        printf "re-mount note mountpoints.. " | tee -a "$GURU_LOG"
-        re-mount "$GURU_NOTES" && PASSED || FAILED 
-    }
-
     case "$1" in     # does not what i want when tunned vut level 3, "mount"
         1)
-            mount_test 
+            printf "check mount note points.. " | tee -a "$GURU_LOG"
+            try-mount "$GURU_NOTES" && ONLINE || OFFLINE
             return $?
             ;;
 
-        all)
-            mount_test 
+        2|all)
+            printf "re-mount note mountpoints.. " | tee -a "$GURU_LOG"
+            re-mount "$GURU_NOTES" && PASSED || FAILED 
             return $?
             ;;
 
         help)
+            echo "Test cases: 1) test mount points, 2|all) mount test re-mount if note folders."
             ;;
         *) echo "note.sh: No test case for $1"
     esac

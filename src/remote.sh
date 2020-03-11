@@ -25,12 +25,12 @@ remote_main() {
                 ;;
         test)                
                 case "$1" in 
-                    1) check_connection; error=$? ;;
-                    3) test_config; error=$? ;;
-                    all) test_config; error=$? ;;
+                    1) check_connection ;;
+                    3) test_config ;;
+                    all) test_config ;;
                     *) echo "remote.sh no test case for $1"
                 esac
-                return $error
+                
                 ;;
         help|*)
                 printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] \n"

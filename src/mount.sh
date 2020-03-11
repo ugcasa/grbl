@@ -62,6 +62,7 @@ mount_main() {
             case "$GURU_CMD" in             # get gurus first argument
                 mount)              
                     mount_guru_defaults
+
                     return "$?"
                     ;;      
                 unmount) 
@@ -72,15 +73,25 @@ mount_main() {
             esac    
             ;;  
     
+# echo "$1"
+# exit 0
         test)                
             mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK" || return 100
             case "$1" in 
-                1) test_mount ;;                    
-                2) test_default_mounts ;;
+                1) 
+                    check_system_mount_status
+                    check_mount_status
+                    test_mount 
+                    ;;
+                2) 
+                    test_default_mounts 
+                    ;;
                 all) 
-                     test_mount 
-                     test_default_mounts 
-                     ;;
+                    check_system_mount_status
+                    check_mount_status
+                    test_mount 
+                    test_default_mounts 
+                    ;;
                 *) 
                     echo "no test case for $1"
             esac
@@ -205,11 +216,11 @@ mount_guru_defaults() {
     [ "$GURU_CLOUD_FAMILY" ]    && mount_sshfs "$GURU_CLOUD_FAMILY" "$GURU_FAMILY" 
     [ "$GURU_CLOUD_NOTES" ]     && mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" 
     [ "$GURU_CLOUD_TEMPLATES" ] && mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" 
-    [ "$GURU_CLOUD_MUSIC" ]     && mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" 
     [ "$GURU_CLOUD_PICTURES" ]  && mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" 
     [ "$GURU_CLOUD_PHOTOS" ]    && mount_sshfs "$GURU_CLOUD_PHOTOS" "$GURU_PHOTOS"
     [ "$GURU_CLOUD_AUDIO" ]     && mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" 
     [ "$GURU_CLOUD_VIDEO" ]     && mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO"     
+    [ "$GURU_CLOUD_MUSIC" ]     && mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" 
     return 0
 }
 
@@ -235,6 +246,7 @@ test_mount() {
     sleep 2
     printf "testing un-mount.. " | tee -a "$GURU_LOG"
     mount_sshfs unmount "$HOME/tmp/test_mount" && PASSED || FAILED
+    sleep 2
     rm -rf "$HOME/tmp/test_mount" || ERROR
     return 0
 }

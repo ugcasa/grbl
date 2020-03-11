@@ -14,15 +14,22 @@
 
 export GURU_VERSION="0.4.7"
 
-source "$HOME/.gururc"                      # user and platform settings (implement here, always up to date)
+source "$HOME/.gururc"                          # user and platform settings (implement here, always up to date)
 source "$GURU_CFG/$GURU_USER/deco.cfg"
 source "$GURU_BIN/functions.sh"                 # common functions, if no ".sh", check here
-source "$GURU_BIN/mount.sh"                 # common functions, if no ".sh", check here
+source "$GURU_BIN/mount.sh"                     # common functions, if no ".sh", check here
 source "$(dirname "$0")/lib/common.sh"
 
-export GURU_SYSTEM_STATUS="unknown"
+rm -f "$GURU_ERROR_MSG"                         # Remove old error messages
+export GURU_SYSTEM_PLATFORM="$(check_distro)"   # run wide platform check 
+export GURU_SYSTEM_STATUS="starting.."          # needs to be "ready"
 export GURU_FILESERVER_STATUS="unknown"
-check_system_mount_status >/dev/null
+check_system_mount_status >/dev/null 
+
+if [ $GURU_FILESERVER_STATUS == "online" ] && [ "GURU_SYSTEM_STATUS" != "ready" ]; then
+    export GURU_SYSTEM_STATUS="ready"
+fi
+echo "status: $GURU_SYSTEM_STATUS $GURU_FILESERVER_STATUS"
 
 main () {
 
@@ -145,16 +152,20 @@ parse_argument () {
 
             test)
                 case "$1" in
-                    1|all )
-                        test_all "$@"
+                    
+                    1|2|3|4|5|all )
+                        test_tool mount "$1"
+                        test_tool remote "$1"
+                        test_tool note "$1"
+                        ;;
                         ;;
                     help|-h )
                         printf "\nUsage:\n\t %s test [<tool>|all] <level> \n" "$GURU_CALL"
                         printf "\nCommands:\n\n"
                         printf " all           test all tools \n" 
                         printf " <level>       numeral level of test detail where: \n"
-                        printf "               1 = just a check \n"
-                        printf "               2 = tests with temp locations \n"
+                        printf "               1 = mainly checks \n"
+                        printf "               2 = more tetailed tests \n"
                         printf "               3 = hot locations \n"
                         printf "\nExample:\n"
                         printf "\t %s test remote 1 \n" "$GURU_CALL" 
@@ -192,25 +203,8 @@ terminal() {
 }
 
 
-test_all() {
-    mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK" 
-
-    [ "$2" ] && level="$2" || level="all"
-    local test_id=$(counter_main add guru-ui_test_id)
-    printf "\nTEST $test_id: guru-ui $level $(date) \n" | tee -a "$GURU_LOG"
-    unset status
-    
-    source mount.sh;    mount_main  test $level; status=$((status+$?))      # TODO not really getting error this far, fix or
-    source remote.sh;   remote_main test $level; status=$((status+$?))      # find netter method
-    source note.sh;     note_main   test $level; status=$((status+$?))      # find netter method
-    
-    return $status
-}
-
-
 test_tool() {
-    mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK" 
-    
+    mount_main check "$GURU_TRACK" || mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK"    
     [ "$2" ] && level="$2" || level="all"    
     [ -f "$GURU_BIN/$1.sh" ] && source "$1.sh" || return 123
     local test_id=$(counter_main add guru-ui_test_id)
