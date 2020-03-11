@@ -121,7 +121,7 @@ set_for_date () {
             day=$(date +%d)
         fi
 
-        short_datestamp=$(date -d $year-$month-$day +%Y%m%d)            # issue #19 workaround needed before this can be set by user
+        short_datestamp=$(date -d $year-$month-$day +$GURU_FILE_DATE_FORMAT)            # hmm.. > issue #19 workaround needed before this can be set by user
         nice_datestamp=$(date -d $year-$month-$day +$GURU_DATE_FORMAT)  # nice date format 
 
         note_dir=$GURU_NOTES/$GURU_USER/$year/$month
