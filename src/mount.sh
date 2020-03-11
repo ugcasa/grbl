@@ -23,7 +23,7 @@ mount_main() {
     }
     
     argument="$1"; shift
-    
+   
     case "$argument" in
     
         ls|list)
@@ -59,6 +59,7 @@ mount_main() {
             ;;  
     
         test)                
+            mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK" || return 100
             case "$1" in 
                 1) test_mount ;;                    
                 2) test_default_mounts ;;
@@ -120,7 +121,6 @@ mount_sshfs() {
 mount_guru_defaults() {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
     local error=""
-    mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK" || error=100
     mount_sshfs "$GURU_CLOUD_COMPANY" "$GURU_COMPANY" || error=100
     mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" || error=100
     mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" || error=100
@@ -142,14 +142,11 @@ unmount_guru_defaults() {
     mount_sshfs "unmount" "$GURU_TEMPLATES" || error=100
     mount_sshfs "unmount" "$GURU_NOTES" || error=100
     mount_sshfs "unmount" "$GURU_COMPANY" || error=100
-    mount_sshfs "unmount" "$GURU_TRACK" || error=100
-
     return $error
 }
 
 
 test_mount() {
-
     printf "file server sshfs mount.. " | tee -a "$GURU_LOG"
     mount_sshfs "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount" && PASSED || FAILED
     sleep 2
@@ -161,7 +158,6 @@ test_mount() {
 
 
 test_default_mounts(){
-
     printf "testing sshfs file server default folder mount.. " | tee -a "$GURU_LOG"
     mount_guru_defaults && PASSED || FAILED
     sleep 3
