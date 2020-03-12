@@ -1,22 +1,23 @@
 #!/bin/bash
 # guru tool-kit - caa@ujo.guru 2020
-source "$HOME/.gururc"                          # user and platform settings (implement here, always up to date)
+
+source "$HOME/.gururc"                              # user and platform settings (implement here, always up to date)
 source "$GURU_CFG/$GURU_USER/deco.cfg"
-source "$GURU_BIN/functions.sh"                 # common functions, if no ".sh", check here
+source "$GURU_BIN/functions.sh"                     # common functions, if no ".sh", check here
 source "$GURU_BIN/remote.sh" 
 source "$GURU_BIN/note.sh" 
 source "$GURU_BIN/timer.sh" 
-source "$GURU_BIN/mount.sh"                     # common functions, if no ".sh", check here
+source "$GURU_BIN/mount.sh"                         # common functions, if no ".sh", check here
 source "$GURU_BIN/lib/common.sh"
 
-rm -f "$GURU_ERROR_MSG"                         # Remove old error messages
+[ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG" # Remove old error messages
 export GURU_VERSION="0.4.7"
-export GURU_SYSTEM_PLATFORM="$(check_distro)"   # run wide platform check 
-export GURU_SYSTEM_STATUS="starting.."          # needs to be "ready"
+export GURU_SYSTEM_PLATFORM="$(check_distro)"       # run wide platform check 
+export GURU_SYSTEM_STATUS="starting.."              # needs to be "ready"
 export GURU_FILESERVER_STATUS="unknown"
 mount.check_system >/dev/null 
 
-if [ $GURU_FILESERVER_STATUS == "online" ] && [ "GURU_SYSTEM_STATUS" != "ready" ]; then     # reguire Track mount
+if [ "$GURU_FILESERVER_STATUS" == "online" ] && [ "$GURU_SYSTEM_STATUS" != "ready" ]; then     # require track mount
     export GURU_SYSTEM_STATUS="ready"
 fi
 
@@ -28,6 +29,7 @@ main.parser () {
     # parse arguments and delivery variables to corresponding worker 
     tool="$1"; shift                                                                 # store tool call name and shift arguments left
     export GURU_CMD="$tool"                                                          # Store tool call name to other functions                              
+    export GURU_SYSTEM_STATUS="processing $tool"
     case "$tool" in 
         check|test)         main.$tool "$@" ; return $? ;;                           # check and test cases
         tor|trans|status|upgrade|document|terminal)                                  # function tools
@@ -45,6 +47,7 @@ main.parser () {
         ver|-v|--ver)       printf "guru tool-kit v.$GURU_VERSION \n" ; return 0 ;;  
         help|-h|--help)     main.help "$@" ; return 0 ;;                             # hardly never updated help printout                
         *)                  printf "$GURU_CMD: command not found\n"
+                            $tool
     esac    
 }
 
@@ -69,6 +72,7 @@ main.test() {
             return $?
     esac 
 }
+
 
 main.help () {
     echo "-- guru tool-kit main help ------------------------------------------"
@@ -134,22 +138,23 @@ main.test_help () {
     printf "              3 = hot locations \n"
     printf "Example:\n"
     printf "\t %s test remote 1 \n" "$GURU_CALL" 
-    printf "\t %s test mount 2 \n" "$GURU_CALL" 
-    printf "\t %s test all \n" "$GURU_CALL" 
+    printf "\t %s test mount 2 \n"  "$GURU_CALL" 
+    printf "\t %s test all \n"      "$GURU_CALL" 
 }
+
 
 main.check() {
     [ "$1" ] && tool=$1 ||read -r -p "select tool to test or all: " tool
     
-    if [ "$1" == "all" ] ; then 
-        printf "checking remote tools: "; remote.check
-        printf "checking note tools: "; note.check
-        printf "checking mount tools: "; mount.check
-        printf "checking timer tools: "; timer.check
+    if [ "$tool" == "all" ] ; then 
+        printf "checking remote tools: " ;  remote.check
+        printf "checking note tools: "   ;    note.check
+        printf "checking mount tools: "  ;   mount.check
+        printf "checking timer tools: "  ;   timer.check
         return 0
     fi
 
-    echo "no tool called '$1' found" >"$GURU_ERROR_MSG"
+    echo "no tool'$tool' found" >"$GURU_ERROR_MSG"
     [ -f "$GURU_BIN/$tool.sh" ] || return 12       
     $tool.check
 }
@@ -157,10 +162,10 @@ main.check() {
 
 main.terminal() { 
     # Terminal looper   
-    echo $GURU_CALL' in terminal mode (type "help" enter for help)'
-    while :                                      main.   main.
+    printf "$GURU_CALL in terminal mode (type 'help' enter for help)\n"
+    while : 
         do
-            . $HOME/.gururc
+            source $HOME/.gururc
             read -e -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd" 
             [ "$cmd" == "exit" ] && return 0
             main.parser $cmd
@@ -170,38 +175,41 @@ main.terminal() {
 
 
 main.test_tool() {
-
+    # Tool to test tools. Simply call sourced tool main function and parse normal commands
     mount.main check "$GURU_TRACK" || mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK"    
     [ "$2" ] && level="$2" || level="all"    
     [ -f "$GURU_BIN/$1.sh" ] && source "$1.sh" || return 123
     local test_id=$(counter.main add guru-ui_test_id)
     printf "\nTEST $test_id: guru-ui $1 $(date) \n" | tee -a "$GURU_LOG"
-    $1.main test $level
+    $1.main test "$level"
     return $?
 }
 
 
 main() {
 
-    if [ "$1" ]; then                     # guru without parameters starts terminal loop
-        main.parser $@ 
+    if [ "$1" ]; then                    
+        main.parser "$@"                  # with arguments go to parser
         error_code=$?
     else
-        main.terminal                        # rsplib-legacy-wrappers name collision, not big broblem i think
+        main.terminal                     # guru without parameters starts terminal loop
         error_code=$?
     fi
 
-    if (( error_code > 1 )); then
+    if (( error_code > 1 )); then         # 1 is warning, no error output TODO later less than 10 are warnings + list of them
         [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)
-        logger "$0 $GURU_CMD: $error_code: $error_message"              # log errors
-        printf "$ERROR $error_code $error_message\n"                       # print error
-        rm -f $GURU_ERROR_MSG
+        logger "[ERROR] $0 $GURU_CMD: $error_code: $error_message"                              # log errors
+        printf "$ERROR $error: $error_message. status: $GURU_SYSTEM_STATUS\n"        # print error
+        [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"
     fi
-    return "$error_code"
+
+    export GURU_SYSTEM_STATUS="done"
+    return $error_code
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main.parser "$@"
+    main "$@"
     exit $?    
 fi
+
