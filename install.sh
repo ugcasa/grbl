@@ -28,7 +28,7 @@ case "$1" in                                                    # simple locatio
             exit 0
             ;;
     help)
-            printf "\nguru tool-kit installer - help \n"
+            echo "-- guru tool-kit istall help -----------------------------------------------"
             printf "\nUsage:\n\t ./install.sh [argument] \n"
             printf "\nArguments:\n\n"
             printf " force             force re-install \n" 
@@ -111,7 +111,7 @@ case "$platform" in                                              # different dep
         exit 4
 esac
 
-counter_main add guru-installed >/dev/null                           # add installation counter
+counter.main add guru-installed >/dev/null                           # add installation counter
 
 echo "successfully installed for $GURU_USER"                                   # all fine
 exit 0

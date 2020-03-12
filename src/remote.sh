@@ -4,7 +4,7 @@
 
 source "$(dirname "$0")/lib/ssh.sh"
 
-remote_main() {
+remote.main() {
 
     command="$1"
     shift
@@ -12,42 +12,42 @@ remote_main() {
     case "$command" in
 
         check)
-                check_connection "$@"
+                remote.check "$@"
                 ;;
         push|send)
-                push_config_files
+                remote.push_config
                 ;;
         pull|get)
-                pull_config_files
+                remote.pull_config
                 ;;
         install)
-                install_requirements "$@"
+                remote.install "$@"
                 ;;
         test)                
                 case "$1" in 
-                    1) check_connection ;;
-                    3) test_config ;;
-                    all) test_config ;;
+                    1) remote.check ;;
+                    3) remote.test_config ;;
+                    all) remote.test_config ;;
                     *) echo "remote.sh no test case for $1"
                 esac
                 
                 ;;
         help|*)
-                printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] \n"
-                printf "\nCommands:\n\n"
+                echo "-- guru tool-kit remote help -----------------------------------------------"
+                printf "Usage:\t $0 [command] [arguments] \n\t $0 remote [source] [target] \n"
+                printf "\ncommands:\n"
                 printf " pull                     copy configuration files from access point server \n"
                 printf " push                     copy configuration files to access point server \n"
                 printf " install                  install requirements \n"   
                 printf " test <case_nr>|all       run given test case \n"
-                printf "\nExample:\n"
-                printf "\t %s remote mount /home/%s/share /home/%s/mount/%s/\n\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
-        
+                printf "\nExample:"
+                printf "    %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
     esac
     return 0
 }
 
 
-check_connection(){
+remote.check(){
     
     local server="$GURU_LOCAL_FILE_SERVER"                                              # assume that server is in local network
     local server_port="$GURU_LOCAL_FILE_SERVER_PORT"
@@ -71,12 +71,12 @@ check_connection(){
 }
 
 
-install_requirements() {
+remote.install() {
     sudo apt install sshfs
 }
 
 
-pull_config_files(){
+remote.pull_config(){
     local hostname=$(hostname)
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
         "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER/" \
@@ -85,7 +85,7 @@ pull_config_files(){
 }
 
 
-push_config_files(){
+remote.push_config(){
     
     local hostname=$(hostname)
 
@@ -101,14 +101,14 @@ push_config_files(){
 }
 
 
-test_config(){
+remote.test_config(){
 
     #echo "guru cloud configuration storage"
     printf "configuration push.. " | tee -a "$GURU_LOG"
-    push_config_files && PASSED || FAILED
+    remote.push_config && PASSED || FAILED
 
     printf "configuration pull.. " | tee -a "$GURU_LOG"
-    pull_config_files && PASSED || FAILED
+    remote.pull_config && PASSED || FAILED
     return 0
 }
 
@@ -117,7 +117,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc"
     source "$GURU_CFG/$GURU_USER/deco.cfg"
     source "$GURU_BIN/functions.sh"
-    remote_main "$@"
+    remote.main "$@"
     exit 0
 fi
 

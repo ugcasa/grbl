@@ -24,13 +24,14 @@ main () {
 			install_DS30_mint19 $@
 			;;
 
-		help|--help|-h)			
-		 	printf 'usage: '$GURU_CALL' scan command options \ncommands: \n'
-			printf 'receipt|rep|kuitti      scan receipt size grayscale \n'
-			printf 'invoice|inv|lasku       scan receipt A4 size optimized grayscale \noptions\n'
-			printf '-p 						owner is personal \n'
-			printf '-c 						owner is company/team \n'
-			error_code=0
+		help|--help|-h)		
+			echo "-- guru tool-kit scan help -----------------------------------------------"	
+		 	printf "usage: %s scan command options \ncommands: 							\n" "$GURU_CALL"
+			printf "receipt|rep|kuitti      scan receipt size grayscale 				\n"
+			printf "invoice|inv|lasku       scan receipt A4 size optimized grayscale    \n"
+			printf "-p 						owner is personal 							\n"
+			printf "-c 						owner is company/team 						\n"			
+			echo
 			;;		
 		*)
 			exit

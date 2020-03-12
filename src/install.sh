@@ -109,21 +109,22 @@ main () {
 				;;
 
 			help|-h|--help|*)       # hardly never updated help printout
-				printf "usage: guru install [MODULE] \nmobules: \n"
-				printf 'mqtt-client                 mosquitto client \n'
-				printf 'mqtt-server                 mosquitto server \n'
-				printf 'conda|anaconda              anaconda environment tool for python \n'
-				printf 'django|freeman              django platform for python web \n'
-				printf 'alpine|pine|email           email client install \n'
-				printf 'pk2                         pickit2 programmer interface \n'
-				printf 'st-link                     st-link programmer for SM32 \n'
-				printf 'mpsyt|player|play           text based youtube player \n'
-				printf 'kaldi|listener              speech to text ai \n'
-				printf 'tor|tor-browser             tor browser \n'
-				printf 'webmin                      webmin tool for server configuration\n'
-				printf 'scanner|DS30                Epson DS30 + scanner tools (mint19 only) \n'
-				printf 'edoypts|edi                 hmm. no clue\n'
-				printf 'pictures                    set ~/Pictures point to dropbox \n'
+				echo "-- guru tool-kit tool install help -----------------------------------------------"
+				printf "usage: guru install [MODULE] \n\nmobules:\n"
+				echo " mqtt-client                 mosquitto client"
+				echo " mqtt-server                 mosquitto server"
+				echo " conda|anaconda              anaconda environment tool for python"
+				echo " django|freeman              django platform for python web"
+				echo " alpine|pine|email           email client install"
+				echo " pk2                         pickit2 programmer interface"
+				echo " st-link                     st-link programmer for SM32"
+				echo " mpsyt|player|play           text based youtube player"
+				echo " kaldi|listener              speech to text ai"
+				echo " tor|tor-browser             tor browser"
+				echo " webmin                      webmin tool for server configuratio"
+				echo " scanner|DS30                Epson DS30 + scanner tools (mint19 only)"
+				echo " edoypts|edi                 hmm. no clue"
+				echo " pictures                    set ~/Pictures point to dropbox"
 				;;
 	esac
 

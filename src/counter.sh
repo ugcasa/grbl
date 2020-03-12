@@ -1,7 +1,7 @@
 #!/bin/bash
-# counters ans service functions for counting stuff. Not aritrehmxz but doing just 1, 2, 3..
+# simple file based counter for guru tool-kit
 
-counter_main () {
+counter.main () {
 	# Counter case statment  
 	
 	argument="$1"	; shift 		# arguments		
@@ -47,12 +47,12 @@ counter_main () {
 				help|"")			
 					printf "usage: $GURU_CALL counter [argument] [counter_name] <value>\n"
 					printf "arguments:\n"
-					printf "get                         get counter value \n"
-					printf "ls                          list of counters \n"
-					printf "inc                         increment counter value \n"                 
-					printf "add [counter_name] <value>  add to countre value (def 1)\n"
-					printf "set [counter_name] <value>  set and set counter preset value (def 0)\n"
-					printf "rm                          remove counter \n"  
+					printf " get                         get counter value \n"
+					printf " ls                          list of counters \n"
+					printf " inc                         increment counter value \n"                 
+					printf " add [counter_name] <value>  add to countre value (def 1)\n"
+					printf " set [counter_name] <value>  set and set counter preset value (def 0)\n"
+					printf " rm                          remove counter \n"  
 					printf "If no argument given returns counter value \n"	
 					return 0
 					;;
@@ -65,7 +65,6 @@ counter_main () {
 					fi
 					[ "$id" ] && echo "$id" >$id_file
 					id=$(($(cat $id_file)))
-					
 	esac
 
 	echo "$id" 		# is not exited before
@@ -74,30 +73,6 @@ counter_main () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  	counter_main "$@" 			# alternative values
+  	counter.main "$@" 			# alternative values
 fi
 
-
-# inc_counter () {
-
-# 	id_file="$GURU_COUNTER/$1"
-# 	[ -f $id_file ] || printf 1000 >$id_file
-# 	[ -z $2 ] && up=1 || up=$2
-# 	id=$(($(cat $id_file)+$up))
-# 	echo "$id" >$id_file
-# 	echo "$id" 
-# 	return 0
-# }
-
-
-# read_counter () {
-
-# 	id_file="$GURU_COUNTER/$1.id"
-# 	if ! [ -f $id_file ]; then 
-# 		echo "no such counter"		
-# 		return 138
-# 	fi
-# 	id=$(($(cat $id_file)))
-# 	echo "$id" 
-# 	return 0
-# }

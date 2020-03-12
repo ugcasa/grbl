@@ -2,18 +2,18 @@
 # guru tool-kit project tools
 # ujo.guru 2020 
 
-project_main() {
+project.main() {
 
     command="$1"; shift
     
     case "$command" in
 
         open)
-            open_project "$@"
+            project.open "$@"
             ;;
 
         test)
-            test "$@"
+            project.test "$@"
             ;;
 
         help)
@@ -27,7 +27,7 @@ project_main() {
             ;;
 
         *)
-            open_project "$command"
+            project.open "$command"
             ;;
     esac
 
@@ -35,7 +35,7 @@ project_main() {
 }
 
 
-open_project () {
+project.open () {
 
     [ "$1" ] && project_name="$1" ||read -p "plase enter project name : " project_name 
     shift
@@ -63,17 +63,17 @@ open_project () {
 }
 
 
-test() {
+project.test() {
 
     echo "TEST"
-    open_project "guru-ui" && echo "PASSED" || echo "FAILED"
+    project.open "guru-ui" && echo "PASSED" || echo "FAILED"
 }
 
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc"
-    project_main "$@"
+    project.main "$@"
     exit 0
 fi
 

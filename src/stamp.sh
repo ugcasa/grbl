@@ -44,7 +44,8 @@ stamp_main () {    # main command parser
                     ;;
 
                 *)
-                    printf "usage: guru stamp [COMMAND] \ncommands: \n"                
+                    echo "-- guru tool-kit stamp help -----------------------------------------------"   
+                    printf "usage: guru stamp [COMMAND] \n\ncommands: \n"                
                     printf "date              datestamp \n"
                     printf "time              timestamp \n"
                     printf "start             start time stamp in format HH:MM \n"                

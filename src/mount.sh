@@ -2,189 +2,151 @@
 # mount tools for guru tool-kit
 # casa@ujo.guru 2020
 
-source "$(dirname "$0")/counter.sh"
+source "$GURU_BIN/functions.sh"
+source "$GURU_BIN/counter.sh"
 
-mount_main() {
-
-    help() {
-        printf "\nUsage:\n\t $0 [command] [arguments] \n\t $0 mount [source] [target] \n"
-        printf "\nCommands:\n\n"
-        printf " ls                       list of mounted folders \n" 
-        printf " check [target]           check that mount point is mounted \n"
-        printf " check-system             check that guru system folders are mounted \n"
-        printf " mount [source] [target]  mount folder in file server to local folder \n"
-        printf " mount all                mount primary file server default folders \n"
-        printf "                          Warning! Mount point may be generic location as '~/Pictures' \n"
-        printf " unmount [mount_point]    unmount [mount_point] \n"
-        printf " unmount [all]            unmount all default folders \n"
-        printf " test <case_nr>|all       run given test case \n"
-        printf "\nExample:\n"
-        printf "\t %s mount /home/%s/share /home/%s/test-mount/\n\n" "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER" 
-        printf "Statuses is located in environment variables 'GURU_SYSTEM_STATUS' and 'GURU_REMOTE_FILE_SERVER_STATUS'\n"
-        printf "Currently system mount status is '%s' and file server status is '%s'" "$GURU_SYSTEM_STATUS" "$GURU_FILESERVER_STATUS"
-        echo 
-        return 0
-    }
-    
+mount.main() {
+    # mount tool command parser 
     argument="$1"; shift
-   
     case "$argument" in
-  
-        check)                        
-            [ "$1" ] && check_mount_status "$@" ||echo "pls input mount point"
-            return $?            
-            ;;
-        
-        check-system)
-            check_system_mount_status
-            ;;
-
-        ls|list)
-            grep "sshfs" < /etc/mtab
-            ;;
-
-        try|try-mount)
-            try-mount "$@"
-            ;;
-
-        mount)
-            mount_sshfs "$1" "$2"               
-            ;;
-
-        unmount)           
-            mount_sshfs "unmount" "$1" 
-            [ "$2" == force ] && sudo fusermount -u "$1"
-            ;;
-
-
+        check-system)   mount.check_system ;;
+        check)          [ "$1" ] && mount.check_mount "$@" ||echo "pls input mount point"; return $? ;;
+        ls|list)        grep "sshfs" < /etc/mtab ;;
+        mount)          mount.remote "$1" "$2" ;;
+        unmount)        mount.remote "unmount" "$1"; [ "$2" == force ] && sudo fusermount -u "$1" ;;
+        test)           mount.test "$@" ;;
+        help )          mount.help "$@" ;;
         all|defaults|def) 
-            
-            case "$GURU_CMD" in             # get gurus first argument
-                mount)              
-                    mount_guru_defaults
-
-                    return "$?"
-                    ;;      
-                unmount) 
-                    unmount_guru_defaults 
-                    return "$?"
-                    ;;
-                *) help
-            esac    
-            ;;  
-    
-# echo "$1"
-# exit 0
-        test)                
-            mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK" || return 100
-            case "$1" in 
-                1) 
-                    check_system_mount_status
-                    check_mount_status
-                    test_mount 
-                    ;;
-                2) 
-                    test_default_mounts 
-                    ;;
-                all) 
-                    check_system_mount_status
-                    check_mount_status
-                    test_mount 
-                    test_default_mounts 
-                    ;;
-                *) 
-                    echo "no test case for $1"
-            esac
-            ;;
-
-        help )
-            help "$@"
-            ;;
-        *)
-            case "$GURU_CMD" in             
-
-                    mount)
-                        mount_sshfs "$argument" "$1"               
-                        ;;
-                    unmount)           
-                        mount_sshfs "unmount" "$argument" 
-                        [ "$1" == "force" ] && sudo fusermount -u "$argument"                       
-                        ;;
-                    *) help
+            case "$GURU_CMD" in 
+                mount)      mount.defaults_raw; return "$?" ;;      
+                unmount)    unmount.defaults_raw; return "$?" ;;
+                *)          help
+            esac ;;  
+        *)  
+            case "$GURU_CMD" in   
+                mount)      mount.remote "$argument" "$1" ;;
+                unmount)    mount.remote "unmount" "$argument" 
+                            [ "$1" == "force" ] && sudo fusermount -u "$argument" ;;
+                *)          mount.help
             esac
     esac
 }
 
-check_system_mount_status() {
-    # mountpoint 
-        printf "system mount status.. "
-        grep "sshfs" < /etc/mtab | grep "$GURU_TRACK" >/dev/null && status="mounted" || status="offline"
 
-        ls -1qA "$GURU_TRACK" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
-
-        if [ $status == "mounted" ] && [ "$contans_stuff" ]; then             
-            export GURU_SYSTEM_STATUS="mounted"
-            export GURU_FILESERVER_STATUS="online"
-            ONLINE
-            return 1
-        elif [ $status == "mounted" ]; then             
-            export GURU_SYSTEM_STATUS="mounted"
-            export GURU_FILESERVER_STATUS="unknown"            
-            printf "$ERROR mounted but empty system folder detected\n"         
-            return 1
-        elif [ $status == "offline" ]; then
-            printf "$OFFLINE"        # do not to like write logs if unmounted
-            export GURU_SYSTEM_STATUS="offline"
-            export GURU_FILESERVER_STATUS="offline"
-            return 0
-        else 
-            printf "$ERROR"        # do not to like write logs if unmounted
-            export GURU_SYSTEM_STATUS="error"
-            export GURU_FILESERVER_STATUS="unknown"
-            export 0
-        fi
+mount.test () {
+    mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK" || return 100
+    case "$1" in 
+        1) 
+            mount.check_system
+            mount.check_mount
+            mount.test_mount 
+            ;;
+        2) 
+            mount.test_default_mount 
+            ;;
+        all) 
+            mount.check_system
+            mount.check_mount
+            mount.test_mount 
+            mount.test_default_mount 
+            ;;
+        *) 
+            echo "no test case for $1"
+    esac
 }
 
 
-check_mount_status() {
-    # mountpoint 
-        
-        local target_folder=$1; shift
-        local contans_stuff=""
-
-        if ! [ -d "$target_folder" ]; then 
-            printf "folder '$target_folder' does not exist" >$GURU_ERROR_MSG
-            return 123
-        fi
-
-        check_system_mount_status >/dev/null
-
-        if ! [ "$GURU_FILESERVER_STATUS"=="online" ]; then 
-            printf "$ERROR:\nFile server mount unstable \n"        # do not to like write logs if unmounted
-            printf "Mount $target_folder status $UNKNOWN \n"
-            return 0
-        fi
-
-        printf "checking $target_folder status.. " | tee -a "$GURU_LOG"
-        
-        grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null && local status="mounted" || local status="offline"
-
-
-        ls -1qA "$target_folder" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff="" 
-
-        if [ status=="mounted" ] && [ "$contans_stuff" ]; then
-            ONLINE
-            return 0
-        else
-            OFFLINE             # if here, Track is online feel free to log
-            return 1
-        fi
-
+mount.help() {
+    echo "-- guru tool-kit mount help -----------------------------------------------"
+    printf "Usage:\t $0 [command] [arguments] \n\t $0 mount [source] [target] \n"
+    printf "Commands:\n"
+    printf " ls                       list of mounted folders \n" 
+    printf " check [target]           check that mount point is mounted \n"
+    printf " check-system             check that guru system folders are mounted \n"
+    printf " mount [source] [target]  mount folder in file server to local folder \n"
+    printf " mount all                mount primary file server default folders \n"
+    printf "                          Warning! Mount point may be generic location\n"
+    printf " unmount [mount_point]    unmount [mount_point] \n"
+    printf " unmount [all]            unmount all default folders \n"
+    printf " test <case_nr>|all       run given test case \n"
+    printf "\nExample:"
+    printf "\t %s mount /home/%s/share /home/%s/test-mount/\n" "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER" 
+    return 0
 }
-
-mount_sshfs() {
-    #mount_sshfs remote_foder mount_point, servers are already known
     
+
+mount.check_system() {
+    printf "system mount status.. "
+    grep "sshfs" < /etc/mtab | grep "$GURU_TRACK" >/dev/null && status="mounted" || status="offline"
+
+    ls -1qA "$GURU_TRACK" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
+
+    if [ $status == "mounted" ] && [ "$contans_stuff" ]; then             
+        GURU_SYSTEM_STATUS="mounted"
+        GURU_FILESERVER_STATUS="online"
+        ONLINE
+        return 1
+    
+    elif [ $status == "mounted" ]; then             
+        GURU_SYSTEM_STATUS="mounted"
+        GURU_FILESERVER_STATUS="unknown"            
+        printf "$ERROR mounted but empty system folder detected\n"         
+        return 1
+    
+    elif [ $status == "offline" ]; then
+        printf "$OFFLINE"        # do not to like write logs if unmounted
+        GURU_SYSTEM_STATUS="offline"
+        GURU_FILESERVER_STATUS="offline"
+        return 0
+    
+    else 
+        printf "$ERROR"        # do not to like write logs if unmounted
+        GURU_SYSTEM_STATUS="error"
+        GURU_FILESERVER_STATUS="unknown"
+        return 0
+    fi
+}
+
+mount.check() {
+    mount.check_system 
+}
+
+mount.check_mount() {
+    # input: mount point folder. 
+    # returns: 0 if on line 1 of off line + log and nice colorful output for terminal
+    # usage: mount.check_mount mount_point && echo "mounted" || echo "not mounted"
+    #        mount.check_mount && OK || ERROR
+    local target_folder=$1; shift
+    local contans_stuff=""
+
+    if ! [ -d "$target_folder" ]; then 
+        printf "folder '$target_folder' does not exist" >$GURU_ERROR_MSG
+        return 123
+    fi
+
+    mount.check_system >/dev/null
+    if ! [ "$GURU_FILESERVER_STATUS"=="online" ]; then 
+        printf "$ERROR:\nFile server mount unstable \n"         # do not to like write logs if unmounted
+        printf "Mount $target_folder status $UNKNOWN \n"
+        return 0
+    fi
+
+    printf "checking $target_folder status.. " | tee -a "$GURU_LOG"
+    grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null && local status="mounted" || local status="offline"
+    ls -1qA "$target_folder" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff="" 
+
+    if [ status=="mounted" ] && [ "$contans_stuff" ]; then
+        ONLINE
+        return 0
+    else
+        OFFLINE                                                 # if here, Track is online feel free to log
+        return 1
+    fi
+}
+
+mount.remote() {
+    # input remote_foder and mount_point. servers are already known
+    # returns error code of sshfs mount, 0 is success. 
     local source_folder="$1"
     local target_folder="$2"    
 
@@ -205,70 +167,67 @@ mount_sshfs() {
 
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
           -p "$server_port" "$user@$server:$source_folder" "$target_folder"
-    return $?
-          #&& echo "mounted $server:$source_folder to $target_folder" || error="$?"    
+    return $?                                                                           #&& echo "mounted $server:$source_folder to $target_folder" || error="$?"    
 }
 
 
-mount_guru_defaults() {
+mount.defaults_raw() {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop    
-    [ "$GURU_CLOUD_COMPANY" ]   && mount_sshfs "$GURU_CLOUD_COMPANY" "$GURU_COMPANY" 
-    [ "$GURU_CLOUD_FAMILY" ]    && mount_sshfs "$GURU_CLOUD_FAMILY" "$GURU_FAMILY" 
-    [ "$GURU_CLOUD_NOTES" ]     && mount_sshfs "$GURU_CLOUD_NOTES" "$GURU_NOTES" 
-    [ "$GURU_CLOUD_TEMPLATES" ] && mount_sshfs "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" 
-    [ "$GURU_CLOUD_PICTURES" ]  && mount_sshfs "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" 
-    [ "$GURU_CLOUD_PHOTOS" ]    && mount_sshfs "$GURU_CLOUD_PHOTOS" "$GURU_PHOTOS"
-    [ "$GURU_CLOUD_AUDIO" ]     && mount_sshfs "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" 
-    [ "$GURU_CLOUD_VIDEO" ]     && mount_sshfs "$GURU_CLOUD_VIDEO" "$GURU_VIDEO"     
-    [ "$GURU_CLOUD_MUSIC" ]     && mount_sshfs "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" 
+    [ "$GURU_CLOUD_COMPANY" ]   && mount.remote "$GURU_CLOUD_COMPANY" "$GURU_COMPANY" 
+    [ "$GURU_CLOUD_FAMILY" ]    && mount.remote "$GURU_CLOUD_FAMILY" "$GURU_FAMILY" 
+    [ "$GURU_CLOUD_NOTES" ]     && mount.remote "$GURU_CLOUD_NOTES" "$GURU_NOTES" 
+    [ "$GURU_CLOUD_TEMPLATES" ] && mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" 
+    [ "$GURU_CLOUD_PICTURES" ]  && mount.remote "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" 
+    [ "$GURU_CLOUD_PHOTOS" ]    && mount.remote "$GURU_CLOUD_PHOTOS" "$GURU_PHOTOS"
+    [ "$GURU_CLOUD_AUDIO" ]     && mount.remote "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" 
+    [ "$GURU_CLOUD_VIDEO" ]     && mount.remote "$GURU_CLOUD_VIDEO" "$GURU_VIDEO"     
+    [ "$GURU_CLOUD_MUSIC" ]     && mount.remote "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" 
     return 0
 }
 
 
-unmount_guru_defaults() {
+unmount.defaults_raw() {
     # unmount all TODO do better    
-    [ "$GURU_CLOUD_VIDEO" ]       && mount_sshfs "unmount" "$GURU_VIDEO" 
-    [ "$GURU_CLOUD_AUDIO" ]       && mount_sshfs "unmount" "$GURU_AUDIO" 
-    [ "$GURU_CLOUD_MUSIC" ]       && mount_sshfs "unmount" "$GURU_MUSIC" 
-    [ "$GURU_CLOUD_PICTURES" ]    && mount_sshfs "unmount" "$GURU_PICTURES" 
-    [ "$GURU_CLOUD_PHOTOS" ]      && mount_sshfs "unmount" "$GURU_PHOTOS" 
-    [ "$GURU_CLOUD_TEMPLATES" ]   && mount_sshfs "unmount" "$GURU_TEMPLATES" 
-    [ "$GURU_CLOUD_NOTES" ]       && mount_sshfs "unmount" "$GURU_NOTES" 
-    [ "$GURU_CLOUD_FAMILY" ]      && mount_sshfs "unmount" "$GURU_FAMILY" 
-    [ "$GURU_CLOUD_COMPANY" ]     && mount_sshfs "unmount" "$GURU_COMPANY" 
+    [ "$GURU_CLOUD_VIDEO" ]       && mount.remote "unmount" "$GURU_VIDEO" 
+    [ "$GURU_CLOUD_AUDIO" ]       && mount.remote "unmount" "$GURU_AUDIO" 
+    [ "$GURU_CLOUD_MUSIC" ]       && mount.remote "unmount" "$GURU_MUSIC" 
+    [ "$GURU_CLOUD_PICTURES" ]    && mount.remote "unmount" "$GURU_PICTURES" 
+    [ "$GURU_CLOUD_PHOTOS" ]      && mount.remote "unmount" "$GURU_PHOTOS" 
+    [ "$GURU_CLOUD_TEMPLATES" ]   && mount.remote "unmount" "$GURU_TEMPLATES" 
+    [ "$GURU_CLOUD_NOTES" ]       && mount.remote "unmount" "$GURU_NOTES" 
+    [ "$GURU_CLOUD_FAMILY" ]      && mount.remote "unmount" "$GURU_FAMILY" 
+    [ "$GURU_CLOUD_COMPANY" ]     && mount.remote "unmount" "$GURU_COMPANY" 
     return 0
 }
 
 
-test_mount() {
+mount.test_mount() {
     printf "file server sshfs mount.. " | tee -a "$GURU_LOG"
-    mount_sshfs "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount" && PASSED || FAILED
+    mount.remote "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount" && PASSED || FAILED
     sleep 2
     printf "testing un-mount.. " | tee -a "$GURU_LOG"
-    mount_sshfs unmount "$HOME/tmp/test_mount" && PASSED || FAILED
+    mount.remote unmount "$HOME/tmp/test_mount" && PASSED || FAILED
     sleep 2
     rm -rf "$HOME/tmp/test_mount" || ERROR
     return 0
 }
 
 
-test_default_mounts(){
+mount.test_default_mount(){
     printf "testing sshfs file server default folder mount.. " | tee -a "$GURU_LOG"
-    mount_guru_defaults && PASSED || FAILED
+    mount.defaults_raw && PASSED || FAILED
     sleep 3
     printf "un-mount defaults.. " | tee -a "$GURU_LOG"
-    unmount_guru_defaults && PASSED || FAILED
+    unmount.defaults_raw && PASSED || FAILED
     return 0
 }
-
-
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
     source "$HOME/.gururc"
     source "$GURU_CFG/$GURU_USER/deco.cfg"
     source "$GURU_BIN/functions.sh"
-    mount_main "$@"
+    mount.main "$@"
     exit "$?"
 fi
 

@@ -1,39 +1,48 @@
 #!/bin/bash
 # giocon work time tracker casa@ujo.guru (c) 2019
+source "$GURU_BIN/mount.sh" 
 
-main () {
+timer.main () {
 	
-	case $command in
+	command="$1"; shift
+	case "$command" in
 
-		        status|start|change|cancel|end|stop|report|log|edit|last)
-					$command $@; return $? 
+		        check|status|start|change|cancel|end|stop|report|log|edit|last)
+					timer.$command "$@"
+					return $? 
 					;;				
-		       
 		        *)
-				 	printf 'Usage: '$GURU_CALL' timer [COMMAND] <at 00:00> [TASK] [PROJECT] [CUSTOMER] \nCommands:\n'            
-					printf 'start|change     start timer for target with last customer and project \n'
-					printf 'start at [TIME]  start timer at given time in format HH:MM \n'
-					printf 'end|stop         end current task \n'
-					printf 'end at [TIME]    end current task at given time in format HH:MM \n'
-					printf 'cancel           cancels the current task \n'
-					printf 'log              prints out 10 last tasks from log \n' 
-					printf 'edit             opens work time log with '$GURU_EDITOR'\n'
-					printf 'report           creates report in .csv format and opens it with '$GURU_OFFICE_DOC' \n' 
-					printf '\nIf PROJECT or CUSTOMER is not filled last used one will be used\n'
+				 	echo "-- guru tool-kit timer help -----------------------------------------------"	
+					printf "start|change     start timer for target with last customer and project \n"
+					printf "start at [TIME]  start timer at given time in format HH:MM \n"
+					printf "end|stop         end current task \n"
+					printf "end at [TIME]    end current task at given time in format HH:MM \n"
+					printf "cancel           cancels the current task \n"
+					printf "log              prints out 10 last tasks from log \n" 
+					printf "edit             opens work time log with %s \n" "$GURU_EDITOR"
+					printf "report           creates report in .csv format and opens it with %s \n" "$GURU_OFFICE_DOC"
 		            return 0
 		            ;;
 	esac
 }
 
 
-status() {
+timer.check() {
+	mount.check_mount "$GURU_TRACK"
+	timer.status human
+	}
 
-	if [ ! -f $GURU_TRACKSTATUS ]; then
+
+timer.status() {
+	echo "timer track mount lost" > "$GURU_ERROR_MSG"
+	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
+
+	if [ ! -f "$GURU_TRACKSTATUS" ]; then
 		printf "no timer tasks\n"
 		return 0
 	fi
 
- 	. $GURU_TRACKSTATUS 
+ 	source "$GURU_TRACKSTATUS" 
  	timer_now=$(date +%s)			 	
  	timer_state=$(($timer_now-$timer_start))
  	nice_start_date=$(date -d $start_date '+%d.%m.%Y')
@@ -45,7 +54,7 @@ status() {
  	[[ $minutes > 0 ]] && print_m=" $minutes minutes" || print_m=""	 	
  	[[ $hours > 0 ]] && print_s="" || print_s=" $seconds sesonds"
 
- 	case $1 in 
+ 	case "$1" in 
 
  		-h|human) 
 			printf "working for $customer from $start_time $nice_start_date, now spend:$print_h$print_m$print_s to $project $task \n"
@@ -76,17 +85,19 @@ status() {
 }
 
 
-last() {
-
+timer.last() {
     [ -f $GURU_TRACKLAST ] && cat $GURU_TRACKLAST || echo "no last task set"
-
-
 }
 
-start() {	
+
+timer.start() {	
+	echo "timer track mount lost" > "$GURU_ERROR_MSG"
+	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
 	
-	if [ -f $GURU_TRACKSTATUS ]; then 
-	 	end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
+	[ -d "$GURU_WORKTRACK" ] || mkdir -p "$GURU_WORKTRACK"
+
+	if [ -f "$GURU_TRACKSTATUS" ]; then 
+	 	timer.end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
 	fi 	
 
 	case "$1" in
@@ -98,7 +109,6 @@ start() {
 				echo "pls. input start time"
 				return 124
 			fi
-
 
 			if date -d "$1" '+%H:%M' >/dev/null 2>&1; then															
 				time=$(date -d "$1" '+%H:%M') 		
@@ -126,7 +136,7 @@ start() {
     nice_date=$(date -d $start_date '+%d.%m.%Y')									#; echo "nice_date: "$nice_date		   	
    	timer_start=$(date -d "$start_date $start_time" '+%s')							#; echo "timer_start: "$timer_start
     
-    [ -f $GURU_TRACKLAST ] && . $GURU_TRACKLAST	# customer, project, task only
+    [ -f $GURU_TRACKLAST ] && source $GURU_TRACKLAST	# customer, project, task only
    	[ "$1" ] &&	task="$1" || task="$last_task"		   	
 	[ "$2" ] &&	project="$2" || project="$last_project"
 	[ "$3" ] &&	customer="$3" || customer="$last_customer"
@@ -134,12 +144,14 @@ start() {
     printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_TRACKSTATUS     
     printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_TRACKSTATUS
     printf "start: $nice_date $start_time $customer $project $task\n"
-
     return 0
 }
 
 
-end() {
+timer.end() {
+
+	echo "timer track mount lost" > "$GURU_ERROR_MSG"
+	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
 
 	if [ -f $GURU_TRACKSTATUS ]; then 	
 		. $GURU_TRACKSTATUS 														#; echo "timer start "$timer_start
@@ -215,19 +227,22 @@ end() {
 }
 
 
-stop () {
-	end $@
+timer.stop () {
+	timer.end $@
 	return 0
 }
 
 
-change() {
-	start $@
+timer.change() {
+	timer.start $@
 	return $?
 }
 
 
-cancel() {
+timer.cancel() {
+
+	echo "timer track mount lost" > "$GURU_ERROR_MSG"
+	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
 
 	if [ -f $GURU_TRACKSTATUS ]; then			
 		rm $GURU_TRACKSTATUS
@@ -239,19 +254,23 @@ cancel() {
 }
 
 
-log () {
+timer.log () {
 	printf "last logged records:\n$(tail $GURU_TRACKDATA | tr ";" "  ")\n"
 	return 0
 }
 
 
-edit  () {
+timer.edit  () {
+	echo "timer track mount lost" >"$GURU_ERROR_MSG"
+	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
 	$GURU_EDITOR "$GURU_TRACKDATA" &
 	return $?
 }
 
 
-report() {
+timer.report() {
+	echo "timer track mount lost" > "$GURU_ERROR_MSG"
+	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
 
 	[ "$1" ] && team="$1" || team="$GURU_TEAM"								#; echo "team :"$team
 	report_file="work-track-report-$(date +%Y%m%d)-$team.csv" 				#; echo "report_file: "$report_file
@@ -264,8 +283,10 @@ report() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-	command=$1
-	shift
-	main $@
+    source "$HOME/.gururc"
+    source "$GURU_BIN/functions.sh"
+	source "$GURU_BIN/mount.sh" 
+	timer.main "$@"
+	exit $?
 fi
 
