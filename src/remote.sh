@@ -2,58 +2,40 @@
 # sshfs mount functions for guru tool-kit
 # casa@ujo.guru 2020
 
-source "$(dirname "$0")/lib/ssh.sh"
+source "$GURU_BIN/lib/ssh.sh"
 
 remote.main() {
-
-    command="$1"
-    shift
-    
+    command="$1"; shift
     case "$command" in
-
-        check)
-                remote.check "$@"
-                ;;
-        push|send)
-                remote.push_config
-                ;;
-        pull|get)
-                remote.pull_config
-                ;;
-        install)
-                remote.install "$@"
-                ;;
-        test)                
-                case "$1" in 
-                    1) remote.check ;;
-                    3) remote.test_config ;;
-                    all) remote.test_config ;;
-                    *) echo "remote.sh no test case for $1"
-                esac
-                
-                ;;
-        help|*)
-                echo "-- guru tool-kit remote help -----------------------------------------------"
-                printf "Usage:\t $0 [command] [arguments] \n\t $0 remote [source] [target] \n"
-                printf "\ncommands:\n"
-                printf " pull                     copy configuration files from access point server \n"
-                printf " push                     copy configuration files to access point server \n"
-                printf " install                  install requirements \n"   
-                printf " test <case_nr>|all       run given test case \n"
-                printf "\nExample:"
-                printf "    %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
+        check|test|help)   remote.$command "$@" ;;
+        push|pull)         remote.$command"_config" ;;
+        install|remove)    remote.needed "$command" ;;
+        *)                 remote.help ;;
     esac
     return 0
 }
 
 
+remote.help () {
+    echo "-- guru tool-kit remote help -----------------------------------------------"
+    printf "Usage:\t $0 [command] [arguments] \n\t $0 remote [source] [target] \n"
+    printf "\ncommands:\n"
+    printf " pull                     copy configuration files from access point server \n"
+    printf " push                     copy configuration files to access point server \n"
+    printf " install                  install requirements \n"
+    printf " test <case_nr>|all       run given test case \n"
+    printf "\nExample:"
+    printf "    %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
+}
+
+
 remote.check(){
-    
+
     local server="$GURU_LOCAL_FILE_SERVER"                                              # assume that server is in local network
     local server_port="$GURU_LOCAL_FILE_SERVER_PORT"
     local user="$GURU_LOCAL_FILE_SERVER_USER"
 
-    if ! ssh -q -p "$server_port" "$user@$server" exit; then                            # check local server connection 
+    if ! ssh -q -p "$server_port" "$user@$server" exit; then                            # check local server connection
         server="$GURU_REMOTE_FILE_SERVER"                                               # if no connection try remote server connection
         server_port="$GURU_REMOTE_FILE_SERVER_PORT"
         user="$GURU_REMOTE_FILE_SERVER_USER"
@@ -61,8 +43,8 @@ remote.check(){
 
     printf "testing connection to $user@$server.. " | tee -a "$GURU_LOG"
 
-    if ssh -q -p "$server_port" "$user@$server" exit; then        
-        PASSED 
+    if ssh -q -p "$server_port" "$user@$server" exit; then
+        PASSED
         return 0
     else
         FAILED
@@ -71,22 +53,17 @@ remote.check(){
 }
 
 
-remote.install() {
-    sudo apt install sshfs
-}
-
-
 remote.pull_config(){
     local hostname=$(hostname)
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
         "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER/" \
-        "$GURU_CFG/$GURU_USER" 
+        "$GURU_CFG/$GURU_USER"
     return $?
 }
 
 
 remote.push_config(){
-    
+
     local hostname=$(hostname)
 
     ssh "$GURU_USER@$GURU_ACCESS_POINT_SERVER" -p "$GURU_ACCESS_POINT_SERVER_PORT" \
@@ -98,6 +75,26 @@ remote.push_config(){
         "$GURU_CFG/$GURU_USER/" \
         "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER/"
     return $?
+}
+
+
+remote.needed() {
+    #install and remove needed applications. input "install" or "remove"
+    local action=$1
+    [ "$action" ] || read -r -p "install or remove? :" action
+    local require="ssh rsync"
+    printf "Need to install $require, ctrl+c? or input local "
+    sudo apt update && eval sudo apt "$action" "$require" && printf "\n guru is now ready to remote\n\n"
+}
+
+
+remote.test () {
+    case "$1" in
+        1) remote.check ;;
+        3) remote.test_config ;;
+        all) remote.test_config ;;
+        *) echo "remote.sh no test case for $1"
+    esac
 }
 
 
