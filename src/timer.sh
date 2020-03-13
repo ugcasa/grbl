@@ -28,14 +28,14 @@ timer.main () {
 
 
 timer.check() {
-	mount.check_mount "$GURU_TRACK"
+	mount.online "$GURU_TRACK"
 	timer.status human
 	}
 
 
 timer.status() {
 	echo "timer track mount lost" > "$GURU_ERROR_MSG"
-	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
+	mount.online "$GURU_TRACK" >/dev/null || return 127
 
 	if [ ! -f "$GURU_TRACKSTATUS" ]; then
 		printf "no timer tasks\n"
@@ -92,7 +92,7 @@ timer.last() {
 
 timer.start() {	
 	echo "timer track mount lost" > "$GURU_ERROR_MSG"
-	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
+	mount.online "$GURU_TRACK" >/dev/null || return 127
 	
 	[ -d "$GURU_WORKTRACK" ] || mkdir -p "$GURU_WORKTRACK"
 
@@ -151,7 +151,7 @@ timer.start() {
 timer.end() {
 
 	echo "timer track mount lost" > "$GURU_ERROR_MSG"
-	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
+	mount.online "$GURU_TRACK" >/dev/null || return 127
 
 	if [ -f $GURU_TRACKSTATUS ]; then 	
 		. $GURU_TRACKSTATUS 														#; echo "timer start "$timer_start
@@ -242,7 +242,7 @@ timer.change() {
 timer.cancel() {
 
 	echo "timer track mount lost" > "$GURU_ERROR_MSG"
-	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
+	mount.online "$GURU_TRACK" >/dev/null || return 127
 
 	if [ -f $GURU_TRACKSTATUS ]; then			
 		rm $GURU_TRACKSTATUS
@@ -262,7 +262,7 @@ timer.log () {
 
 timer.edit  () {
 	echo "timer track mount lost" >"$GURU_ERROR_MSG"
-	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
+	mount.online "$GURU_TRACK" >/dev/null || return 127
 	$GURU_EDITOR "$GURU_TRACKDATA" &
 	return $?
 }
@@ -270,7 +270,7 @@ timer.edit  () {
 
 timer.report() {
 	echo "timer track mount lost" > "$GURU_ERROR_MSG"
-	mount.check_mount "$GURU_TRACK" >/dev/null || return 127
+	mount.online "$GURU_TRACK" >/dev/null || return 127
 
 	[ "$1" ] && team="$1" || team="$GURU_TEAM"								#; echo "team :"$team
 	report_file="work-track-report-$(date +%Y%m%d)-$team.csv" 				#; echo "report_file: "$report_file

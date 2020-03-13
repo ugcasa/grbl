@@ -10,7 +10,7 @@ mount.main() {
     argument="$1"; shift
     case "$argument" in
         check-system)   mount.check_system ;;
-        check)          [ "$1" ] && mount.check_mount "$@" ||echo "pls input mount point"; return $? ;;
+        check)          [ "$1" ] && mount.online "$@" ||echo "pls input mount point"; return $? ;;
         ls|list)        grep "sshfs" < /etc/mtab ;;
         mount)          mount.remote "$1" "$2" ;;
         unmount)        mount.remote "unmount" "$1"; [ "$2" == force ] && sudo fusermount -u "$1" ;;
@@ -38,7 +38,7 @@ mount.test () {
     case "$1" in 
         1) 
             mount.check_system
-            mount.check_mount
+            mount.online
             mount.test_mount 
             ;;
         2) 
@@ -46,7 +46,7 @@ mount.test () {
             ;;
         all) 
             mount.check_system
-            mount.check_mount
+            mount.online
             mount.test_mount 
             mount.test_default_mount 
             ;;
@@ -111,11 +111,11 @@ mount.check() {
     mount.check_system 
 }
 
-mount.check_mount() {
+mount.online() {
     # input: mount point folder. 
     # returns: 0 if on line 1 of off line + log and nice colorful output for terminal
-    # usage: mount.check_mount mount_point && echo "mounted" || echo "not mounted"
-    #        mount.check_mount && OK || ERROR
+    # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
+    #        mount.online && OK || ERROR
     local target_folder=$1; shift
     local contans_stuff=""
 
@@ -173,15 +173,15 @@ mount.remote() {
 
 mount.defaults_raw() {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop    
-    [ "$GURU_CLOUD_COMPANY" ]   && mount.remote "$GURU_CLOUD_COMPANY" "$GURU_COMPANY" 
-    [ "$GURU_CLOUD_FAMILY" ]    && mount.remote "$GURU_CLOUD_FAMILY" "$GURU_FAMILY" 
-    [ "$GURU_CLOUD_NOTES" ]     && mount.remote "$GURU_CLOUD_NOTES" "$GURU_NOTES" 
-    [ "$GURU_CLOUD_TEMPLATES" ] && mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" 
-    [ "$GURU_CLOUD_PICTURES" ]  && mount.remote "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" 
-    [ "$GURU_CLOUD_PHOTOS" ]    && mount.remote "$GURU_CLOUD_PHOTOS" "$GURU_PHOTOS"
-    [ "$GURU_CLOUD_AUDIO" ]     && mount.remote "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" 
-    [ "$GURU_CLOUD_VIDEO" ]     && mount.remote "$GURU_CLOUD_VIDEO" "$GURU_VIDEO"     
-    [ "$GURU_CLOUD_MUSIC" ]     && mount.remote "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" 
+    if ! mount.online "$GURU_COMPANY"    && [ "$GURU_CLOUD_COMPANY" ];   then mount.remote "$GURU_CLOUD_COMPANY"   "$GURU_COMPANY"; fi 
+    if ! mount.online "$GURU_FAMILY"     && [ "$GURU_CLOUD_FAMILY" ];    then mount.remote "$GURU_CLOUD_FAMILY"    "$GURU_FAMILY"; fi
+    if ! mount.online "$GURU_NOTES"      && [ "$GURU_CLOUD_NOTES" ];     then mount.remote "$GURU_CLOUD_NOTES"     "$GURU_NOTES"; fi
+    if ! mount.online "$GURU_TEMPLATES"  && [ "$GURU_CLOUD_TEMPLATES" ]; then mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES"; fi
+    if ! mount.online "$GURU_PICTURES"   && [ "$GURU_CLOUD_PICTURES" ];  then mount.remote "$GURU_CLOUD_PICTURES"  "$GURU_PICTURES"; fi
+    if ! mount.online "$GURU_PHOTOS"     && [ "$GURU_CLOUD_PHOTOS" ];    then mount.remote "$GURU_CLOUD_PHOTOS"    "$GURU_PHOTOS"; fi
+    if ! mount.online "$GURU_AUDIO"      && [ "$GURU_CLOUD_AUDIO" ];     then mount.remote "$GURU_CLOUD_AUDIO"     "$GURU_AUDIO"; fi
+    if ! mount.online "$GURU_VIDEO"      && [ "$GURU_CLOUD_VIDEO" ];     then mount.remote "$GURU_CLOUD_VIDEO"     "$GURU_VIDEO"; fi
+    if ! mount.online "$GURU_MUSIC"      && [ "$GURU_CLOUD_MUSIC" ];     then mount.remote "$GURU_CLOUD_MUSIC"     "$GURU_MUSIC"; fi
     return 0
 }
 
