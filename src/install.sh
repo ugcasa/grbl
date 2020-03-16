@@ -297,7 +297,7 @@ install.visual_code () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc"
-    source "$GURU_CFG/$GURU_USER/deco.cfg"
+    source "$GURU_BIN/lib/deco.cfg"
     source "$GURU_BIN/functions.sh"
     install.main "$@"
     exit $?

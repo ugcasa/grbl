@@ -4,6 +4,7 @@
 
 source "$GURU_BIN/functions.sh"
 source "$GURU_BIN/counter.sh"
+source "$GURU_BIN/lib/deco.sh"
 
 mount.main() {
     # mount tool command parser
@@ -12,7 +13,7 @@ mount.main() {
         check-system)       mount.check_system ;;
         check)              [ "$1" ] && mount.online "$@" ||echo "pls input mount point"; return $? ;;
         ls|list)            grep "sshfs" < /etc/mtab ;;
-        mount)              mount.remote "$1" "$2" ;;
+        mount)              mount.remote "$1" "$2"; return $? ;;
         unmount)            mount.remote "unmount" "$1"; [ "$2" == force ] && sudo fusermount -u "$1" ;;
         test)               mount.test "$@" ;;
         help )              mount.help "$@" ;;
@@ -20,8 +21,8 @@ mount.main() {
         unistall|remove)    mount.needed remove ;;
         all|defaults|def)
             case "$GURU_CMD" in
-                mount)      mount.defaults_raw; return "$?" ;;
-                unmount)    unmount.defaults_raw; return "$?" ;;
+                mount)      mount.defaults_raw; return $? ;;
+                unmount)    unmount.defaults_raw; return $? ;;
                 *)          help
             esac ;;
         *)
@@ -37,6 +38,7 @@ mount.main() {
 
 mount.test () {
     mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK" || return 100
+    VERBOSE=true
     case "$1" in
         1)
             mount.check_system
@@ -78,7 +80,7 @@ mount.help() {
 
 
 mount.check_system() {
-    printf "system mount status.. "
+    [ $VERBOSE ] && printf "system mount status.. "
     grep "sshfs" < /etc/mtab | grep "$GURU_TRACK" >/dev/null && status="mounted" || status="offline"
 
     ls -1qA "$GURU_TRACK" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
@@ -86,7 +88,7 @@ mount.check_system() {
     if [ $status == "mounted" ] && [ "$contans_stuff" ]; then
         GURU_SYSTEM_STATUS="mounted"
         GURU_FILESERVER_STATUS="online"
-        ONLINE
+        [ $VERBOSE ] && ONLINE
         return 1
 
     elif [ $status == "mounted" ]; then
@@ -109,10 +111,10 @@ mount.check_system() {
     fi
 }
 
-
 mount.check() {
     mount.check_system
 }
+
 
 mount.online() {
     # input: mount point folder.
@@ -134,15 +136,15 @@ mount.online() {
         return 0
     fi
 
-    printf "checking $target_folder status.. " | tee -a "$GURU_LOG"
+    [ $VERBOSE ] && LOG "checking $target_folder status.. "
     grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null && local status="mounted" || local status="offline"
     ls -1qA "$target_folder" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
 
     if [ status=="mounted" ] && [ "$contans_stuff" ]; then
-        ONLINE
+        [ $VERBOSE ] && ONLINE
         return 0
     else
-        OFFLINE                                                 # if here, Track is online feel free to log
+        [ $VERBOSE ] && OFFLINE                                                 # if here, Track is online feel free to log
         return 1
     fi
 }
@@ -167,15 +169,27 @@ mount.remote() {
         server_port="$GURU_REMOTE_FILE_SERVER_PORT"
         user="$GURU_REMOTE_FILE_SERVER_USER"
     fi
+    [ $VERBOSE ] && printf "mounting $server $source_folder to $target_folder.. "
 
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
-          -p "$server_port" "$user@$server:$source_folder" "$target_folder"
-    return $?                                                                           #&& echo "mounted $server:$source_folder to $target_folder" || error="$?"
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$source_folder" "$target_folder"
+
+    error=$?;
+    if [ "$error" -lt "1" ]; then
+        GURU_FILESERVER_STATUS="online"
+        [ $VERBOSE ] && READY
+    else
+        GURU_FILESERVER_STATUS="offline"
+        GURU_SYSTEM_STATUS="offline"
+        [ $VERBOSE ] && ERROR ; printf " mounting failed. sshfs returned code $error\n"
+    fi
+
+    return $error                                                                           #&& echo "mounted $server:$source_folder to $target_folder" || error="$
 }
 
 
 mount.defaults_raw() {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
+    [ $VERBOSE ] && echo "mounting all user folders"
     if ! mount.online "$GURU_COMPANY"    && [ "$GURU_CLOUD_COMPANY" ];   then mount.remote "$GURU_CLOUD_COMPANY"   "$GURU_COMPANY"; fi
     if ! mount.online "$GURU_FAMILY"     && [ "$GURU_CLOUD_FAMILY" ];    then mount.remote "$GURU_CLOUD_FAMILY"    "$GURU_FAMILY"; fi
     if ! mount.online "$GURU_NOTES"      && [ "$GURU_CLOUD_NOTES" ];     then mount.remote "$GURU_CLOUD_NOTES"     "$GURU_NOTES"; fi
@@ -191,6 +205,7 @@ mount.defaults_raw() {
 
 unmount.defaults_raw() {
     # unmount all TODO do better
+    [ $VERBOSE ] && echo "un-mounting all user folders"
     [ "$GURU_CLOUD_VIDEO" ]       && mount.remote "unmount" "$GURU_VIDEO"
     [ "$GURU_CLOUD_AUDIO" ]       && mount.remote "unmount" "$GURU_AUDIO"
     [ "$GURU_CLOUD_MUSIC" ]       && mount.remote "unmount" "$GURU_MUSIC"
@@ -215,10 +230,10 @@ mount.needed() {
 
 
 mount.test_mount() {
-    printf "file server sshfs mount.. " | tee -a "$GURU_LOG"
+    [ $VERBOSE ] && LOG "file server sshfs mount.. "
     mount.remote "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount" && PASSED || FAILED
     sleep 2
-    printf "testing un-mount.. " | tee -a "$GURU_LOG"
+    [ $VERBOSE ] && printf "testing un-mount.. " | tee -a "$GURU_LOG"
     mount.remote unmount "$HOME/tmp/test_mount" && PASSED || FAILED
     sleep 2
     rm -rf "$HOME/tmp/test_mount" || ERROR
@@ -227,10 +242,10 @@ mount.test_mount() {
 
 
 mount.test_default_mount(){
-    printf "testing sshfs file server default folder mount.. " | tee -a "$GURU_LOG"
+   [ $VERBOSE ] && LOG  "testing sshfs file server default folder mount.. "
     mount.defaults_raw && PASSED || FAILED
     sleep 3
-    printf "un-mount defaults.. " | tee -a "$GURU_LOG"
+    [ $VERBOSE ] && LOG "un-mount defaults.. "
     unmount.defaults_raw && PASSED || FAILED
     return 0
 }
@@ -238,7 +253,7 @@ mount.test_default_mount(){
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
     source "$HOME/.gururc"
-    source "$GURU_CFG/$GURU_USER/deco.cfg"
+    source "$GURU_BIN/lib/deco.sh"
     source "$GURU_BIN/functions.sh"
     mount.main "$@"
     exit "$?"

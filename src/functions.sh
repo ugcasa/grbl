@@ -1,48 +1,13 @@
 #!/bin/bash
 # guru tool-kit prototypes
 # Some prototype functions not complicate enough to write separate scripts
-# ujo.guru 2019 
+# ujo.guru 2019
 
 
-PASSED(){
-    printf "$PASSED" 
-    printf "[PASSED]\n" >>"$GURU_LOG" 
-}
-
-
-FAILED() {
-    printf "$FAILED" 
-    printf "[FAILED]\n" >>"$GURU_LOG" 
-}
-
-
-ERROR() {
-    printf "$ERROR"
-    printf "[ERROR]\n" >>"$GURU_LOG" 
-}
-
-
-ONLINE() {
-	printf "$ONLINE"
-	printf "[ONLINE]\n" >>"$GURU_LOG" 
-}
-
-
-OFFLINE() {
-	printf "$OFFLINE"
-	printf "[OFFLINE]\n" >>"$GURU_LOG" 
-}
-
-
-UNKNOWN() {
-	printf "$UNKNOWN"
-	printf "[UNKNOWN]\n" >>"$GURU_LOG" 
-}
-
-
-OK() {
-	printf "$OK"
-	printf "[OK]\n" >>"$GURU_LOG" 
+LOG() {
+	[ "$GURU_SYSTEM_STATUS"=="online" ] || return 1
+	printf "$@" | tee -a "$GURU_LOG"
+	return $?
 }
 
 
@@ -50,7 +15,7 @@ tor() {
     [ -d "$GURU_APP/tor-browser_en-US" ] || guru install tor
     sh -c '"$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" --detach || ([ !  -x "$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" ] && "$(dirname "$*")"/Browser/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
     error_code="$?"
-    if (( error_code == 127 )); then 
+    if (( error_code == 127 )); then
         rm -rf "$GURU_APP/tor-browser_en-US"
         echo "failed, try re-install"
         return "$error_code"
@@ -61,7 +26,7 @@ tor() {
 translate () {
 	 # terminal based translator
 
-	 if ! [ -f $GURU_BIN/trans ]; then 
+	 if ! [ -f $GURU_BIN/trans ]; then
 	 	cd $GURU_BIN
 	 	wget git.io/trans
 	 	chmod +x ./trans
@@ -69,16 +34,16 @@ translate () {
 
 	if [[ $1 == *"-"* ]]; then
 		argument1=$1
-		shift		
+		shift
 	else
-	  	argument1=""	  	
+	  	argument1=""
 	fi
 
 	if [[ $1 == *"-"* ]]; then
 		argument2=$1
-		shift		
+		shift
 	else
-	  	argument2=""	  	
+	  	argument2=""
 	fi
 
 	if [[ $1 == *":"* ]]; then
@@ -117,8 +82,8 @@ set () {
 	argument="$1"
 	shift
 
-	case "$argument" in 
-			
+	case "$argument" in
+
 			current|status)
 				[ -f "$GURU_USER_RC" ] && source_rc="$GURU_USER_RC" || source_rc="$HOME/.gururc"
 				echo "current settings:"
@@ -127,19 +92,19 @@ set () {
 
 
 			editor)
-				[ "$1" ] && new_value=$1 ||	read -p "input preferred editor : " new_value				
-				set_value GURU_EDITOR "$new_value"					
+				[ "$1" ] && new_value=$1 ||	read -p "input preferred editor : " new_value
+				set_value GURU_EDITOR "$new_value"
 				;;
 
 			name)
-				[ "$1" ] && new_value=$1 ||	read -p "input new call name for $GURU_CALL : " new_value				
+				[ "$1" ] && new_value=$1 ||	read -p "input new call name for $GURU_CALL : " new_value
 				mv "$GURU_BIN/$GURU_CALL" "$GURU_BIN/$new_value"
 				set_value GURU_CALL "$new_value"
 				;;
 
 			audio)
 				[ "$1" ] &&	new_value=$1 || read -p "new value (true/false) : " new_value
-				set_value GURU_AUDIO_ENABLED "$new_value"				
+				set_value GURU_AUDIO_ENABLED "$new_value"
 				;;
 
 			conda)
@@ -154,17 +119,17 @@ set () {
             	printf "pre-made setup functions: \n"
 				printf 'conda                   setup conda installation \n'
 				printf 'audio <true/false>      set audio to "true" or "false" \n'
-				printf 'editor <editor>         wizard to set preferred editor \n'				
+				printf 'editor <editor>         wizard to set preferred editor \n'
 				;;
 
-			"")				
+			"")
 				;;
-			
-			*)				
+
+			*)
 				[ $1 ] || return 130
 				set_value GURU_${argument^^} '"'"$@"'"'
 				echo "setting GURU_${argument^^} to $@"
-	esac 
+	esac
 }
 
 
@@ -172,7 +137,7 @@ document () {
 
 	cfg=$HOME/.config/guru.io/noter.cfg
 	[[ -z "$2" ]] && template="ujo.guru.004" || template="$2"
-	[[ -f "$cfg" ]] && . $cfg || echo "cfg file missing $cfg" | exit 1 
+	[[ -f "$cfg" ]] && . $cfg || echo "cfg file missing $cfg" | exit 1
 	pandoc "$1" --reference-odt="$notes/$USER/template/$template-template.odt" -f markdown -o  $(echo "$1" |sed 's/\.md\>//g').odt
 	return 0
 }
@@ -182,12 +147,12 @@ upgrade() {
 
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-ui.git"
-    
+
     [ -d "$temp_dir" ] && rm -rf "$temp_dir"
-    mkdir "$temp_dir" 
+    mkdir "$temp_dir"
     cd "$temp_dir"
     git clone "$source" || exit 666
-    guru uninstall 
+    guru uninstall
     cd "$temp_dir/guru-ui"
     bash install.sh "$@"
     rm -rf "$temp_dir"
@@ -196,8 +161,8 @@ upgrade() {
 
 status () {
 
-	printf "\e[3mTimer\e[0m: $(guru timer status)\n" 
-	#printf "\e[1mConnect\e[0m: $(guru connect status)\n" 
+	printf "\e[3mTimer\e[0m: $(guru timer status)\n"
+	#printf "\e[1mConnect\e[0m: $(guru connect status)\n"
 	return 0
 }
 
@@ -206,11 +171,11 @@ slack () {
 	# open slack channel - bubblecum
 
 	if [ "$GURU_BROWSER" == "chromium-browser" ]; then 						# check browser and user data foler, if set
-		[ $GURU_CHROME_USER_DATA ] && GURU_BROWSER="$GURU_BROWSER --user-data-dir=$GURU_CHROME_USER_DATA" 
+		[ $GURU_CHROME_USER_DATA ] && GURU_BROWSER="$GURU_BROWSER --user-data-dir=$GURU_CHROME_USER_DATA"
 	fi
 
-	case $1 in 
-		
+	case $1 in
+
 		home|bubble|buble|kupla|koti|maea)
 			$GURU_BROWSER \
 			https://app.slack.com/client/T0DBYHPK6/G0DC74V0F \
@@ -236,7 +201,7 @@ slack () {
 			https://app.slack.com/client/T0DBYHPK6/GDVCYR4F7 \
 			>/dev/null &
 			;;
-		
+
 		duuni|work)
 			$GURU_BROWSER \
 			https://app.slack.com/client/T0DBYHPK6/G30H7RZLH \
@@ -254,9 +219,9 @@ slack () {
 			https://app.slack.com/client/T0DBYHPK6/GBJDUV50R \
 			https://app.slack.com/client/T0DBYHPK6/GGW451ECX \
 			https://app.slack.com/client/T0DBYHPK6/CHP2RK0FK \
-			>/dev/null & 
+			>/dev/null &
 			;;
-		
+
 		feed)
 			$GURU_BROWSER \
 			https://app.slack.com/client/T0DBYHPK6/G30H7RZLH \
