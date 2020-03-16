@@ -11,17 +11,19 @@ source "$GURU_BIN/mount.sh"                         # common functions, if no ".
 source "$GURU_BIN/lib/deco.sh"                      # text decorations, functions like PASSED, ONLINE ..
 source "$GURU_BIN/lib/common.sh"
 
+
 [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG" # Remove old error messages
 export GURU_VERSION="0.4.7"
 export GURU_SYSTEM_PLATFORM="$(check_distro)"       # run wide platform check
 export GURU_SYSTEM_STATUS="starting.."              # needs to be "ready"
 export GURU_FILESERVER_STATUS="unknown"
 
-export VERBOSE=""
-mount.check_system
+export VERBOSE=true
+export GURU_VERBOSE=true
+mount.check_system >/dev/null
 
 if ! [ "$GURU_FILESERVER_STATUS" == "online" ]; then
-    printf "mounting system folders.. "
+    msg "mounting system folders $GURU_TRACK.. "
     mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK"
 fi
 

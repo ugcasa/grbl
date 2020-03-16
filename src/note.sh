@@ -7,7 +7,6 @@ note.main () {
     # command parser
     unset command argument user_input
     command="$1"; shift
-    note.check_remount "$GURU_NOTES"
     case "$command" in
         test)       test_note "$@" ;;
         list|ls)    note.list "$1" "$2" ;;
@@ -28,7 +27,7 @@ note.main () {
                     printf " report         open note with template to %s                         \n" "$GURU_OFFICE_DOC"
                     ;;
         *)
-                    note.check_mount && note.check_remount
+                    note.remount
                     if [ "$command" ]; then
                         note.open $(date +"$GURU_FILE_DATE_FORMAT" -d "$command")
                     else
@@ -40,21 +39,17 @@ note.main () {
 }
 
 note.check() {
-   printf "check mount note points.. " | [ "$GURU_SYSTEM_STATUS"=="online" ] && [ "$GURU_SYSTEM_STATUS"=="online" ] && tee -a "$GURU_LOG"
-   note.check_mount "$GURU_NOTES" && ONLINE || OFFLINE
-}
-
-note.check_mount() {
-   [ -d "$1/$GURU_USER" ] && mount_point="$1/$GURU_USER" || return 123
-}
-
-
-note.check_remount() {
-    [ -d "$1/$GURU_USER" ] && return 123 || mount_point="$1/$GURU_USER"
-    mount.main mount "$GURU_CLOUND_NOTES" "$GURU_NOTES" || return $?
-    sleep 1
-    mount.main mount "$GURU_CLOUND_TEMPLATES" "$GURU_TEMPLATES" || return $?
+    msg "check note mount.. "
+    mount.online "$GURU_NOTES" #& ONLINE || OFFLINE
+    msg "check template mount.. "
+    mount.online "$GURU_TEMPLATES" #& ONLINE || OFFLINE
     return 0
+}
+
+
+note.remount() {
+    mount.online "$GURU_NOTES"      || mount.remote "$GURU_CLOUD_NOTES" "$GURU_NOTES"
+    mount.online "$GURU_TEMPLATES"  || mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES"
 }
 
 
@@ -199,19 +194,18 @@ test_note() {
 
     case "$1" in     # does not what i want when tunned vut level 3, "mount"
         1)
-            LOG "check mount note points.. "
-            note.check_mount "$GURU_NOTES" && ONLINE || OFFLINE
+            note.check
             return $?
             ;;
 
         2|all)
-            LOG "note.check_remount note mountpoints.. "
-            note.check_remount "$GURU_NOTES" && PASSED || FAILED
+            LOG "note.remount note mountpoints.. "
+            note.remount && PASSED || FAILED
             return $?
             ;;
 
         help)
-            echo "Test cases: 1) test mount points, 2|all) mount test note.check_remount if note folders."
+            echo "Test cases: 1) test mount points, 2|all) mount test note.remount if note folders."
             ;;
         *) echo "note.sh: No test case for $1"
     esac

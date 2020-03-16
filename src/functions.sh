@@ -4,6 +4,22 @@
 # ujo.guru 2019
 
 
+
+# msg() {
+# 	#function for ouput messages and make log notifications
+# 	# input -[flag] "message string"
+
+# 	if [ $logging ] && [ GURU_SYSTEM_STATUS=="online" ]; then
+# 		 printf "$@\n" | tee -a "$GURU_LOG"
+
+# 	if [ $GURU_VERBOSE ]; then
+# 		printf "$@"
+# 	fi
+
+# }
+
+
+
 LOG() {
 	[ "$GURU_SYSTEM_STATUS"=="online" ] || return 1
 	printf "$@" | tee -a "$GURU_LOG"

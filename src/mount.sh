@@ -80,7 +80,7 @@ mount.help() {
 
 
 mount.check_system() {
-    [ $VERBOSE ] && printf "system mount status.. "
+    msg "system mount status.. "
     grep "sshfs" < /etc/mtab | grep "$GURU_TRACK" >/dev/null && status="mounted" || status="offline"
 
     ls -1qA "$GURU_TRACK" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
@@ -88,23 +88,23 @@ mount.check_system() {
     if [ $status == "mounted" ] && [ "$contans_stuff" ]; then
         GURU_SYSTEM_STATUS="mounted"
         GURU_FILESERVER_STATUS="online"
-        [ $VERBOSE ] && ONLINE
+        msg "$ONLINE"
         return 1
 
     elif [ $status == "mounted" ]; then
         GURU_SYSTEM_STATUS="mounted"
         GURU_FILESERVER_STATUS="unknown"
-        printf "$ERROR mounted but empty system folder detected\n"
+        msg "$ERROR mounted but empty system folder detected\n"
         return 1
 
     elif [ $status == "offline" ]; then
-        printf "$OFFLINE"        # do not to like write logs if unmounted
+        msg "$OFFLINE"        # do not to like write logs if unmounted
         GURU_SYSTEM_STATUS="offline"
         GURU_FILESERVER_STATUS="offline"
         return 0
 
     else
-        printf "$ERROR"        # do not to like write logs if unmounted
+        msg "$ERROR"        # do not to like write logs if unmounted
         GURU_SYSTEM_STATUS="error"
         GURU_FILESERVER_STATUS="unknown"
         return 0
@@ -125,26 +125,26 @@ mount.online() {
     local contans_stuff=""
 
     if ! [ -d "$target_folder" ]; then
-        printf "folder '$target_folder' does not exist" >$GURU_ERROR_MSG
+        msg "folder '$target_folder' does not exist" >$GURU_ERROR_MSG
         return 123
     fi
 
     mount.check_system >/dev/null
     if ! [ "$GURU_FILESERVER_STATUS"=="online" ]; then
-        printf "$ERROR:\nFile server mount unstable \n"         # do not to like write logs if unmounted
-        printf "Mount $target_folder status $UNKNOWN \n"
+        msg "$ERROR:\nFile server mount unstable \n"         # do not to like write logs if unmounted
+        msg "Mount $target_folder status $UNKNOWN \n"
         return 0
     fi
 
-    [ $VERBOSE ] && LOG "checking $target_folder status.. "
+    msg "checking $target_folder status.. "
     grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null && local status="mounted" || local status="offline"
     ls -1qA "$target_folder" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
 
     if [ status=="mounted" ] && [ "$contans_stuff" ]; then
-        [ $VERBOSE ] && ONLINE
+        msg $ONLINE
         return 0
     else
-        [ $VERBOSE ] && OFFLINE                                                 # if here, Track is online feel free to log
+        msg $OFFLINE                                                 # if here, Track is online feel free to log
         return 1
     fi
 }
@@ -169,20 +169,19 @@ mount.remote() {
         server_port="$GURU_REMOTE_FILE_SERVER_PORT"
         user="$GURU_REMOTE_FILE_SERVER_USER"
     fi
-    [ $VERBOSE ] && printf "mounting $server $source_folder to $target_folder.. "
+    msg "mounting $server $source_folder to $target_folder.. "
 
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$source_folder" "$target_folder"
 
     error=$?;
     if [ "$error" -lt "1" ]; then
         GURU_FILESERVER_STATUS="online"
-        [ $VERBOSE ] && READY
+        msg "$READY"
     else
         GURU_FILESERVER_STATUS="offline"
         GURU_SYSTEM_STATUS="offline"
-        [ $VERBOSE ] && ERROR ; printf " mounting failed. sshfs returned code $error\n"
+        msg "$ERROR mounting failed. sshfs returned code $error\n"
     fi
-
     return $error                                                                           #&& echo "mounted $server:$source_folder to $target_folder" || error="$
 }
 
