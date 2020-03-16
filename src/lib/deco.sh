@@ -22,54 +22,38 @@ export UNKNOWN="${WHT}UNKNOWN${NC}\n"
 export OK="${WHT}OK!${NC}\n"
 
 
-PASSED(){
-    msg "$PASSED"
-    # [ "$GURU_FILESERVER_STATUS"="online" ] && msg "[PASSED]\n" >>"$GURU_LOG"
+PASSED() 	{
+	msg "$PASSED"
 }
 
-
-READY(){
-    msg "$READY"
-    # [ "$GURU_FILESERVER_STATUS"="online" ] && msg "[READY]\n" >>"$GURU_LOG"
+READY()		{
+	msg "$READY"
 }
 
-
-MOUNTED(){
-    msg "$MOUNTED"
-    # [ "$GURU_FILESERVER_STATUS"="online" ] && msg "[MOUNTED]\n" >>"$GURU_LOG"
+MOUNTED() 	{
+	msg "$MOUNTED"
 }
 
-FAILED() {
-    msg "$FAILED"
-    # [ "$GURU_FILESERVER_STATUS"="online" ] && msg "[FAILED]\n" >>"$GURU_LOG"
+FAILED() 	{
+	msg "$FAILED"
 }
 
-
-ERROR() {
-    msg "$ERROR"
-    # [ "$GURU_FILESERVER_STATUS"="online" ] && msg "[ERROR]\n" >>"$GURU_LOG"
+ERROR() 	{
+	msg "$ERROR"
 }
 
-
-ONLINE() {
+ONLINE() 	{
 	msg "$ONLINE"
-	# [ "$GURU_FILESERVER_STATUS"="online" ] && msg "[ONLINE]\n" >>"$GURU_LOG"
 }
 
-
-OFFLINE() {
+OFFLINE() 	{
 	msg "$OFFLINE"
-	# [ "$GURU_FILESERVER_STATUS"="online" ] && msg "[OFFLINE]\n" >>"$GURU_LOG"
 }
 
-
-UNKNOWN() {
+UNKNOWN() 	{
 	msg "$UNKNOWN"
-	# [ "$GURU_FILESERVER_STATUS"="online" ] && msg "[UNKNOWN]\n" >>"$GURU_LOG"
 }
 
-
-OK() {
+OK() 		{
 	msg "$OK"
-	# [ "$GURU_FILESERVER_STATUS"="online" ] && msg "[OK]\n" >>"$GURU_LOG"
 }

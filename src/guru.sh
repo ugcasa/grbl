@@ -13,13 +13,21 @@ source "$GURU_BIN/lib/common.sh"
 
 
 [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG" # Remove old error messages
-export GURU_VERSION="0.4.7"
+export GURU_VERSION="0.4.8"
 export GURU_SYSTEM_PLATFORM="$(check_distro)"       # run wide platform check
 export GURU_SYSTEM_STATUS="starting.."              # needs to be "ready"
 export GURU_FILESERVER_STATUS="unknown"
 
-export VERBOSE=true
-export GURU_VERBOSE=true
+export VERBOSE="$GURU_VERBOSE"                      # use verbose setting from personal config
+while getopts 'v' flag; do                          # if verbose flag given, overwrite personal config
+  case "${flag}" in
+    v)  export VERBOSE=true; shift ;;
+    *)  echo "invalid flag"
+        main.help
+        ;;
+  esac
+done
+
 mount.check_system >/dev/null
 
 if ! [ "$GURU_FILESERVER_STATUS" == "online" ]; then
@@ -42,7 +50,7 @@ main.parser () {
     export GURU_SYSTEM_STATUS="processing $tool"
     case "$tool" in
         check|test)         main.$tool "$@" ; return $? ;;                           # check and test cases
-        tor|trans|status|upgrade|document|terminal)                                  # function tools
+        tor|trans|upgrade|document|terminal)                                         # function tools
                             $tool "$@" ; return $? ;;
         unmount|mount|user|project|remote|counter|note|stamp|timer|tag|install)      # shell scrip tools
                             $tool.sh "$@" ; return $? ;;
@@ -54,7 +62,7 @@ main.parser () {
         keyboard|scan|input|phone|play|vol|yle)                                      # shell scipt prototypes
                             $tool.sh "$@" ; return $? ;;
         uninstall)          bash $GURU_BIN/uninstall.sh "$@" ; return $? ;;          # Get rid of this shit
-        ver|-v|--ver)       printf "guru tool-kit v.$GURU_VERSION \n" ; return 0 ;;
+        version|--ver)      printf "guru tool-kit v.$GURU_VERSION \n" ; return 0 ;;
         help|-h|--help)     main.help "$@" ; return 0 ;;                             # hardly never updated help printout
         *)                  printf "$GURU_CMD: command not found\n"
                             $tool
@@ -63,6 +71,8 @@ main.parser () {
 
 
 main.test() {
+
+    export VERBOSE="true"                                                           # dev test verbose is always on
 
     case "$1" in
 
@@ -154,13 +164,13 @@ main.test_help () {
 
 
 main.check() {
-    [ "$1" ] && tool=$1 ||read -r -p "select tool to test or all: " tool
+    [ "$1" ] && tool="$1" ||read -r -p "select tool to test or all: " tool
 
     if [ "$tool" == "all" ] ; then
-        printf "checking remote tools: " ;  remote.check
-        printf "checking note tools: "   ;    note.check
-        printf "checking mount tools: "  ;   mount.check
-        printf "checking timer tools: "  ;   timer.check
+        msg "checking remote tools: " ;  remote.check
+        msg "checking mount tools: "  ;   mount.check
+        msg "checking timer tools: "  ;   timer.check
+        msg "checking note tools: "   ;    note.check
         return 0
     fi
 
@@ -199,17 +209,17 @@ main.test_tool() {
 main() {
 
     if [ "$1" ]; then
-        main.parser "$@"                  # with arguments go to parser
+        main.parser "$@"                                                            # with arguments go to parser
         error_code=$?
     else
-        main.terminal                     # guru without parameters starts terminal loop
+        main.terminal                                                               # guru without parameters starts terminal loop
         error_code=$?
     fi
 
-    if (( error_code > 1 )); then         # 1 is warning, no error output TODO later less than 10 are warnings + list of them
-        [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)
-        logger "[ERROR] $0 $GURU_CMD: $error_code: $error_message"                              # log errors
-        printf "$ERROR $error: $error_message. status: $GURU_SYSTEM_STATUS\n"        # print error
+    if (( error_code > 1 )); then                                                   # 1 is warning, no error output
+        [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)      # TODO when re-write error less than 10 are warnings + list of them
+        logger "[ERROR] $0 $GURU_CMD: $error_code: $error_message"                  # log errors
+        printf "$ERROR $error: $error_message. status: $GURU_SYSTEM_STATUS\n"       # print error
         [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"
     fi
 
@@ -219,7 +229,6 @@ main() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    export VERBOSE="true"
     main "$@"
     exit $?
 fi

@@ -4,29 +4,6 @@
 # ujo.guru 2019
 
 
-
-# msg() {
-# 	#function for ouput messages and make log notifications
-# 	# input -[flag] "message string"
-
-# 	if [ $logging ] && [ GURU_SYSTEM_STATUS=="online" ]; then
-# 		 printf "$@\n" | tee -a "$GURU_LOG"
-
-# 	if [ $GURU_VERBOSE ]; then
-# 		printf "$@"
-# 	fi
-
-# }
-
-
-
-LOG() {
-	[ "$GURU_SYSTEM_STATUS"=="online" ] || return 1
-	printf "$@" | tee -a "$GURU_LOG"
-	return $?
-}
-
-
 tor() {
     [ -d "$GURU_APP/tor-browser_en-US" ] || guru install tor
     sh -c '"$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" --detach || ([ !  -x "$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" ] && "$(dirname "$*")"/Browser/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
@@ -46,7 +23,7 @@ translate () {
 	 	cd $GURU_BIN
 	 	wget git.io/trans
 	 	chmod +x ./trans
-	 fi
+	fi
 
 	if [[ $1 == *"-"* ]]; then
 		argument1=$1
@@ -172,14 +149,6 @@ upgrade() {
     cd "$temp_dir/guru-ui"
     bash install.sh "$@"
     rm -rf "$temp_dir"
-}
-
-
-status () {
-
-	printf "\e[3mTimer\e[0m: $(guru timer status)\n"
-	#printf "\e[1mConnect\e[0m: $(guru connect status)\n"
-	return 0
 }
 
 

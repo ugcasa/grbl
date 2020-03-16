@@ -11,10 +11,10 @@ mount.main() {
     argument="$1"; shift
     case "$argument" in
         check-system)       mount.check_system ;;
-        check)              [ "$1" ] && mount.online "$@" ||echo "pls input mount point"; return $? ;;
+        check)              mount.check "$@"; return $? ;;
         ls|list)            grep "sshfs" < /etc/mtab ;;
         mount)              mount.remote "$1" "$2"; return $? ;;
-        unmount)            mount.remote "unmount" "$1"; [ "$2" == force ] && sudo fusermount -u "$1" ;;
+        unmount)            mount.unmount "$1"; return $? ;;
         test)               mount.test "$@" ;;
         help )              mount.help "$@" ;;
         install)            mount.needed install ;;
@@ -125,7 +125,7 @@ mount.online() {
     local contans_stuff=""
 
     if ! [ -d "$target_folder" ]; then
-        msg "folder '$target_folder' does not exist" >$GURU_ERROR_MSG
+        printf "folder '$target_folder' does not exist" >$GURU_ERROR_MSG
         return 123
     fi
 
@@ -149,6 +149,16 @@ mount.online() {
     fi
 }
 
+
+mount.unmount () {
+    local target_folder="$1"
+    [ -d "$target_folder" ] || return 132
+    msg "un-mounting $target_folder.. "
+    grep "$target_folder" < /etc/mtab >/dev/null || msg "not mounted"
+    fusermount -u "$target_folder" && PASSED || FAILED     # unmount target if mounted
+}
+
+
 mount.remote() {
     # input remote_foder and mount_point. servers are already known
     # returns error code of sshfs mount, 0 is success.
@@ -156,7 +166,7 @@ mount.remote() {
     local target_folder="$2"
 
     [ -d "$target_folder" ] ||mkdir -p "$target_folder"                                 # be sure that mount point exist
-    grep "$target_folder" < /etc/mtab >/dev/null && fusermount -u "$target_folder"      # unmount target if mounted
+    mount.online "$target_folder" >/dev/null && mount.unmount "$target_folder"
     [ "$source_folder" == "unmount" ] && return 0                                       # if first argument is "unmount" all done for now, exit
     [ "$(ls $target_folder)" ] && return 23                                             # Check that directory is empty
 
@@ -188,7 +198,6 @@ mount.remote() {
 
 mount.defaults_raw() {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
-    [ $VERBOSE ] && echo "mounting all user folders"
     if ! mount.online "$GURU_COMPANY"    && [ "$GURU_CLOUD_COMPANY" ];   then mount.remote "$GURU_CLOUD_COMPANY"   "$GURU_COMPANY"; fi
     if ! mount.online "$GURU_FAMILY"     && [ "$GURU_CLOUD_FAMILY" ];    then mount.remote "$GURU_CLOUD_FAMILY"    "$GURU_FAMILY"; fi
     if ! mount.online "$GURU_NOTES"      && [ "$GURU_CLOUD_NOTES" ];     then mount.remote "$GURU_CLOUD_NOTES"     "$GURU_NOTES"; fi
@@ -204,24 +213,23 @@ mount.defaults_raw() {
 
 unmount.defaults_raw() {
     # unmount all TODO do better
-    [ $VERBOSE ] && echo "un-mounting all user folders"
-    [ "$GURU_CLOUD_VIDEO" ]       && mount.remote "unmount" "$GURU_VIDEO"
-    [ "$GURU_CLOUD_AUDIO" ]       && mount.remote "unmount" "$GURU_AUDIO"
-    [ "$GURU_CLOUD_MUSIC" ]       && mount.remote "unmount" "$GURU_MUSIC"
-    [ "$GURU_CLOUD_PICTURES" ]    && mount.remote "unmount" "$GURU_PICTURES"
-    [ "$GURU_CLOUD_PHOTOS" ]      && mount.remote "unmount" "$GURU_PHOTOS"
-    [ "$GURU_CLOUD_TEMPLATES" ]   && mount.remote "unmount" "$GURU_TEMPLATES"
-    [ "$GURU_CLOUD_NOTES" ]       && mount.remote "unmount" "$GURU_NOTES"
-    [ "$GURU_CLOUD_FAMILY" ]      && mount.remote "unmount" "$GURU_FAMILY"
-    [ "$GURU_CLOUD_COMPANY" ]     && mount.remote "unmount" "$GURU_COMPANY"
-    return 0
+    [ "$GURU_CLOUD_VIDEO" ]       && mount.remote "unmount" "$GURU_VIDEO"; error=$((error+10))
+    [ "$GURU_CLOUD_AUDIO" ]       && mount.remote "unmount" "$GURU_AUDIO"; error=$((error+10))
+    [ "$GURU_CLOUD_MUSIC" ]       && mount.remote "unmount" "$GURU_MUSIC"; error=$((error+10))
+    [ "$GURU_CLOUD_PICTURES" ]    && mount.remote "unmount" "$GURU_PICTURES"; error=$((error+10))
+    [ "$GURU_CLOUD_PHOTOS" ]      && mount.remote "unmount" "$GURU_PHOTOS"; error=$((error+10))
+    [ "$GURU_CLOUD_TEMPLATES" ]   && mount.remote "unmount" "$GURU_TEMPLATES"; error=$((error+10))
+    [ "$GURU_CLOUD_NOTES" ]       && mount.remote "unmount" "$GURU_NOTES"; error=$((error+10))
+    [ "$GURU_CLOUD_FAMILY" ]      && mount.remote "unmount" "$GURU_FAMILY"; error=$((error+10))
+    [ "$GURU_CLOUD_COMPANY" ]     && mount.remote "unmount" "$GURU_COMPANY"; error=$((error+10))
+    return $error
 }
 
 
 mount.needed() {
     #install and remove needed applications. input "install" or "remove"
     local action=$1
-    [ "$action" ] || read -r -p "install or remove? :" action
+    [ "$action" ] || read -r -p "install or remove? " action
     local require="ssh rsync"
     printf "Need to install $require, ctrl+c? or input local "
     sudo apt update && eval sudo apt "$action" "$require" && printf "\n guru is now ready to mount\n\n"
@@ -229,22 +237,21 @@ mount.needed() {
 
 
 mount.test_mount() {
-    [ $VERBOSE ] && LOG "file server sshfs mount.. "
-    mount.remote "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount" && PASSED || FAILED
-    sleep 2
-    [ $VERBOSE ] && printf "testing un-mount.. " | tee -a "$GURU_LOG"
-    mount.remote unmount "$HOME/tmp/test_mount" && PASSED || FAILED
-    sleep 2
+    mount.remote "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount"
+    sleep 1
+    msg "testing un-mount.. "
+    mount.unmount "$HOME/tmp/test_mount"
+    sleep 1
     rm -rf "$HOME/tmp/test_mount" || ERROR
     return 0
 }
 
 
 mount.test_default_mount(){
-   [ $VERBOSE ] && LOG  "testing sshfs file server default folder mount.. "
+   msg  "testing sshfs file server default folder mount.. "
     mount.defaults_raw && PASSED || FAILED
-    sleep 3
-    [ $VERBOSE ] && LOG "un-mount defaults.. "
+    sleep 1
+    msg "un-mount defaults.. "
     unmount.defaults_raw && PASSED || FAILED
     return 0
 }

@@ -41,7 +41,7 @@ remote.check(){
         user="$GURU_REMOTE_FILE_SERVER_USER"
     fi
 
-    printf "testing connection to $user@$server.. " | tee -a "$GURU_LOG"
+    msg "testing connection to $user@$server.. "
 
     if ssh -q -p "$server_port" "$user@$server" exit; then
         PASSED
