@@ -101,10 +101,10 @@ remote.test () {
 remote.test_config(){
 
     #echo "guru cloud configuration storage"
-    printf "configuration push.. " | tee -a "$GURU_LOG"
+    msg "configuration push.. "
     remote.push_config && PASSED || FAILED
 
-    printf "configuration pull.. " | tee -a "$GURU_LOG"
+    msg "configuration pull.. " | tee -a "$GURU_LOG"
     remote.pull_config && PASSED || FAILED
     return 0
 }
