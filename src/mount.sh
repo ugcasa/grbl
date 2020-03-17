@@ -27,8 +27,8 @@ mount.main() {
             esac ;;
         *)
             case "$GURU_CMD" in
-                mount)      mount.remote "$argument" "$1" ;;
-                unmount)    mount.remote "unmount" "$argument"
+                mount)      mount.remote "$argument" "$1" ; return $?  ;;
+                unmount)    mount.unmount "$argument" ; return $?
                             [ "$1" == "force" ] && sudo fusermount -u "$argument" ;;
                 *)          mount.help
             esac
@@ -152,10 +152,18 @@ mount.online() {
 
 mount.unmount () {
     local target_folder="$1"
-    [ -d "$target_folder" ] || return 132
+    # if ! [ -d "$target_folder" ]; then
+    #     msg "folder not exist $IGNORED"
+    #     return 132
+    # fi
     msg "un-mounting $target_folder.. "
-    grep "$target_folder" < /etc/mtab >/dev/null || msg "not mounted"
-    fusermount -u "$target_folder" && PASSED || FAILED     # unmount target if mounted
+    grep "$target_folder" < /etc/mtab >/dev/null || msg "not mounted: "
+
+    if [ $FORCE ]; then
+        sudo fusermount -u "$target_folder" >/dev/null && PASSED || FAILED
+    else
+        mount.online "$target_folder" >/dev/null && fusermount -u "$target_folder" && PASSED || IGNORED    # unmount target if mounted
+    fi
 }
 
 
@@ -213,16 +221,23 @@ mount.defaults_raw() {
 
 unmount.defaults_raw() {
     # unmount all TODO do better
-    [ "$GURU_CLOUD_VIDEO" ]       && mount.remote "unmount" "$GURU_VIDEO"; error=$((error+10))
-    [ "$GURU_CLOUD_AUDIO" ]       && mount.remote "unmount" "$GURU_AUDIO"; error=$((error+10))
-    [ "$GURU_CLOUD_MUSIC" ]       && mount.remote "unmount" "$GURU_MUSIC"; error=$((error+10))
-    [ "$GURU_CLOUD_PICTURES" ]    && mount.remote "unmount" "$GURU_PICTURES"; error=$((error+10))
-    [ "$GURU_CLOUD_PHOTOS" ]      && mount.remote "unmount" "$GURU_PHOTOS"; error=$((error+10))
-    [ "$GURU_CLOUD_TEMPLATES" ]   && mount.remote "unmount" "$GURU_TEMPLATES"; error=$((error+10))
-    [ "$GURU_CLOUD_NOTES" ]       && mount.remote "unmount" "$GURU_NOTES"; error=$((error+10))
-    [ "$GURU_CLOUD_FAMILY" ]      && mount.remote "unmount" "$GURU_FAMILY"; error=$((error+10))
-    [ "$GURU_CLOUD_COMPANY" ]     && mount.remote "unmount" "$GURU_COMPANY"; error=$((error+10))
-    return $error
+    unset error
+    [ "$GURU_CLOUD_VIDEO" ]       && mount.unmount "$GURU_VIDEO" ; error=$((error+$?))
+    [ "$GURU_CLOUD_AUDIO" ]       && mount.unmount "$GURU_AUDIO" ; error=$((error+$?))
+    [ "$GURU_CLOUD_MUSIC" ]       && mount.unmount "$GURU_MUSIC" ; error=$((error+$?))
+    [ "$GURU_CLOUD_PICTURES" ]    && mount.unmount "$GURU_PICTURES";  error=$((error+$?))
+    [ "$GURU_CLOUD_PHOTOS" ]      && mount.unmount "$GURU_PHOTOS" ; error=$((error+$?))
+    [ "$GURU_CLOUD_TEMPLATES" ]   && mount.unmount "$GURU_TEMPLATES" ; error=$((error+$?))
+    [ "$GURU_CLOUD_NOTES" ]       && mount.unmount "$GURU_NOTES" ; error=$((error+$?))
+    [ "$GURU_CLOUD_FAMILY" ]      && mount.unmount "$GURU_FAMILY" ; error=$((error+$?))
+    [ "$GURU_CLOUD_COMPANY" ]     && mount.unmount "$GURU_COMPANY" ; error=$((error+$?))
+
+    if [ "$error" -gt "0" ]; then
+        msg "Warning: $error of mounts were already unmounted\n" #>"$GURU_ERROR_MSG"
+        return 0
+    fi
+
+    return 0
 }
 
 
@@ -261,6 +276,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import fun
     source "$HOME/.gururc"
     source "$GURU_BIN/lib/deco.sh"
     source "$GURU_BIN/functions.sh"
+    source "$GURU_BIN/counter.sh"
     mount.main "$@"
     exit "$?"
 fi

@@ -14,6 +14,7 @@ fi
 export PASSED="${GRN}PASSED${NC}\n"
 export READY="${GRN}READY${NC}\n"
 export MOUNTED="${GRN}READY${NC}\n"
+export IGNORED="${BRN}IGNORED${NC}\n"
 export FAILED="${RED}FAILED${NC}\n"
 export ERROR="${YEL}ERROR${NC}:"
 export ONLINE="${GRN}ONLINE${NC}\n"
@@ -28,6 +29,10 @@ PASSED() 	{
 
 READY()		{
 	msg "$READY"
+}
+
+IGNORED()		{
+	msg "$IGNORED"
 }
 
 MOUNTED() 	{

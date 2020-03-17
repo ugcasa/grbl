@@ -19,12 +19,11 @@ export GURU_SYSTEM_STATUS="starting.."              # needs to be "ready"
 export GURU_FILESERVER_STATUS="unknown"
 
 export VERBOSE="$GURU_VERBOSE"                      # use verbose setting from personal config
-while getopts 'v' flag; do                          # if verbose flag given, overwrite personal config
+while getopts 'f:v' flag; do                          # if verbose flag given, overwrite personal config
   case "${flag}" in
+    f)  export FORCE=true; shift ;;
     v)  export VERBOSE=true; shift ;;
-    *)  echo "invalid flag"
-        main.help
-        ;;
+    *)  echo "invalid flag"; main.help ;;
   esac
 done
 
@@ -196,7 +195,7 @@ main.terminal() {
 
 main.test_tool() {
     # Tool to test tools. Simply call sourced tool main function and parse normal commands
-    mount.main check "$GURU_TRACK" || mount_sshfs "$GURU_CLOUD_TRACK" "$GURU_TRACK"
+    mount.main check "$GURU_TRACK" || mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK"
     [ "$2" ] && level="$2" || level="all"
     [ -f "$GURU_BIN/$1.sh" ] && source "$1.sh" || return 123
     local test_id=$(counter.main add guru-ui_test_id)

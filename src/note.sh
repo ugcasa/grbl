@@ -199,7 +199,7 @@ test_note() {
             ;;
 
         2|all)
-            LOG "note.remount note mountpoints.. "
+            msg "note.remount note mountpoints.. "
             note.remount && PASSED || FAILED
             return $?
             ;;
