@@ -47,11 +47,11 @@ install.question () {
 
 install.tor () { # fised to 8.5.4_en-US
 
-    echo "installing version 8.5.4_en-US, there might be more reacent release available"
-    [ -f /tmp/tor-browser-linux64-8.5.4_en-US.tar.xz ] || wget https://www.torproject.org/dist/torbrowser/8.5.4/tor-browser-linux64-8.5.4_en-US.tar.xz -P /tmp
+    echo "installing version 9.5a8_en-US, there might be more reacent release available"
+    [ -f /tmp/tor-browser-linux64-9.5a8_en-US.tar.xz ] || wget https://www.torproject.org/dist/torbrowser/9.5a8/tor-browser-linux64-9.5a8_en-US.tar.xz -P /tmp
     [ -d $GURU_APP ] || mkdir -p $GURU_APP
     [ -d $GURU_APP/tor-browser_en-US ] &&rm -rf $GURU_APP/tor-browser_en-US
-    tar xf /tmp/tor-browser-linux64-8.5.4_en-US.tar.xz -C $GURU_APP
+    tar xf /tmp/tor-browser-linux64-9.5a8_en-US.tar.xz -C $GURU_APP
     sh -c '"$(dirname "$*")"/Browser/start-tor-browser --detach || ([ ! -x "$(dirname "$*")"/Browser/start-tor-browser ] && "$(dirname "$*")"/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
 }
 
