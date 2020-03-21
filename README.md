@@ -1,4 +1,6 @@
-Guru io connector client and user tools
+guru tool-kit linux shell tools
 ---------------------------------------
 
-En la práctica es casi imposible detener el proyecto.
+- 'terminal' terminal intefase 
+
+*En la práctica es casi imposible detener el proyecto!*
