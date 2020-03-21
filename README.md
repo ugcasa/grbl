@@ -1,3 +1,5 @@
-guru tool-kit linux shell tools rollback #1 
+guru tool-kit linux shell tools 
 -------------------------------------------
-Frozen master 20200322
+
+*En la práctica es casi imposible detener el proyecto!*
+
