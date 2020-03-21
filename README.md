@@ -1,6 +1,3 @@
-guru tool-kit linux shell tools
----------------------------------------
-
-- 'terminal' terminal intefase 
-
-*En la práctica es casi imposible detener el proyecto!*
+guru tool-kit linux shell tools rollback 20200322
+-------------------------------------------------
+Frozen master 20200322
