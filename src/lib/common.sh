@@ -13,9 +13,9 @@ msg() {
     if ! [ -f "$GURU_LOG" ]; then return 0; fi
 
     if [ $LOGGING ]; then
-        printf "$(date +$GURU_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) " >>"$GURU_LOG"
-        printf "$@\n" |sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
+        printf "$@" |sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
     fi
 }
 
 export -f msg
+

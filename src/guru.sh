@@ -1,6 +1,6 @@
 #!/bin/bash
 # guru tool-kit - caa@ujo.guru 2020
-
+export GURU_VERSION="0.4.8"
 
 source "$HOME/.gururc"                              # user and platform settings (implement here, always up to date)
 source "$GURU_BIN/functions.sh"                     # common functions, if no ".sh", check here
@@ -38,31 +38,6 @@ main.parser () {
 
     esac
 }
-
-
-main.test() {
-
-    export VERBOSE="true"                                                           # dev test verbose is always on
-
-    case "$1" in
-
-        1|2|3|4|5|all )
-            main.test_tool mount "$1"
-            main.test_tool remote "$1"
-            main.test_tool note "$1"
-            return 0
-            ;;
-
-        help|-h )
-            main.test_help
-            return 0
-            ;;
-        *)
-            main.test_tool "$@"
-            return $?
-    esac
-}
-
 
 main.help () {
     echo "-- guru tool-kit main help ------------------------------------------"
@@ -152,7 +127,7 @@ main.check() {
 
 main.terminal() {
     # Terminal looper
-    printf "$GURU_CALL in terminal mode (type 'help' enter for help)\n"
+    msg "$GURU_CALL in terminal mode (type 'help' enter for help)\n"
     while :
         do
             source $HOME/.gururc
@@ -166,27 +141,54 @@ main.terminal() {
 
 main.test_tool() {
     # Tool to test tools. Simply call sourced tool main function and parse normal commands
+    [ "$1" ] && tool=$1 || read -r -p "imput tool name to teset: " tool
     [ "$2" ] && level="$2" || level="all"
     [ -f "$GURU_BIN/$1.sh" ] && source "$1.sh" || return 123
     local test_id=$(counter.main add guru-ui_test_id)
-    msg "\nTEST $test_id: guru-ui $1 $(date) \n"
-    $1.main test "$level"
-    return $?
+    msg "\nTEST $test_id: guru-ui $1 $level $(date)\n"
+    if $1.main test "$level"; then
+            TEST_PASSED "TEST $test_id $tool"
+            return 0
+        else
+            TEST_FAILED "TEST $test_id $tool"
+            return 25
+        fi
 }
 
+main.test() {
+
+    export VERBOSE="true"                                                           # dev test verbose is always on
+    export LOGGING="true"
+    case "$1" in
+
+        1|2|3|4|5|all )
+            main.test_tool mount "$1"
+            main.test_tool remote "$1"
+            main.test_tool note "$1"
+            exit 0
+            ;;
+
+        help|-h )
+            main.test_help
+            exit 0
+            ;;
+        *)
+            main.test_tool $@
+            exit $?
+    esac
+}
 
 main() {
 
+    local error_code=0
     [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG" # Remove old error messages
-    export GURU_VERSION="0.4.8"
     export GURU_SYSTEM_PLATFORM="$(check_distro)"       # run wide platform check
     export GURU_SYSTEM_STATUS="starting.."              # needs to be "ready"
     export GURU_FILESERVER_STATUS="unknown"
 
-    # if [ "$GURU_FILESERVER_STATUS" != "online" ]; then
-    #     printf "mounting system folders $GURU_TRACK.. "
-    #     mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK"
-    # fi
+    if [ "$GURU_FILESERVER_STATUS" != "online" ]; then
+        mount.system                                    # mount system mount point
+    fi
 
     if [ "$GURU_FILESERVER_STATUS" == "online" ] && [ "$GURU_SYSTEM_STATUS" != "ready" ]; then     # require track mount
         export GURU_SYSTEM_STATUS="ready"
@@ -204,7 +206,7 @@ main() {
 
     if (( error_code > 1 )); then                                                   # 1 is warning, no error output
         [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)      # TODO when re-write error less than 10 are warnings + list of them
-        msg "$ERROR$error $error_message while $GURU_SYSTEM_STATUS\n"       # print error
+        ERROR "$error_code while $GURU_SYSTEM_STATUS $error_message \n"       # print error
         [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"
     fi
 
