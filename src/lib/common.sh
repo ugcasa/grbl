@@ -1,19 +1,21 @@
 # guru tool-kit common functions for installer casa@ujo.guru 2020
 # echo "common.sh: included by: $0"
 
-source "$(dirname "${BASH_SOURCE[0]}")/os.sh"       # folder by caller bubblecum cause 'source "lib/counter.sh"' not worky
-source "counter.sh"                                 # TODO how to dirname brewious folder
-
+source "$GURU_BIN/lib/os.sh"       # folder by caller bubblecum cause 'source "lib/counter.sh"' not worky
+source "$GURU_BIN/counter.sh"
 
 msg() {
-    #function for ouput messages and make log notifications
-    # input -[flag] "message string"
+    #function for ouput messages and make log notifications. input "message string"
     [ "$1" ] || return 0
+    [ $VERBOSE ] && printf "$@"
 
-    case "$1" in
-        -l|--log)   [ "$GURU_SYSTEM_STATUS"=="online" ]  && shift; printf "$@" >>"$GURU_LOG" ;;
-        *)          [ "$VERBOSE" ]                       && printf "$@" ;;
-    esac
+    if ! [ "$GURU_SYSTEM_STATUS"=="ready" ]; then return 0; fi
+    if ! [ -f "$GURU_LOG" ]; then return 0; fi
+
+    if [ $LOGGING ]; then
+        printf "$(date +$GURU_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) " >>"$GURU_LOG"
+        printf "$@\n" |sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
+    fi
 }
 
 export -f msg

@@ -11,35 +11,6 @@ source "$GURU_BIN/mount.sh"                         # common functions, if no ".
 source "$GURU_BIN/lib/deco.sh"                      # text decorations, functions like PASSED, ONLINE ..
 source "$GURU_BIN/lib/common.sh"
 
-
-[ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG" # Remove old error messages
-export GURU_VERSION="0.4.8"
-export GURU_SYSTEM_PLATFORM="$(check_distro)"       # run wide platform check
-export GURU_SYSTEM_STATUS="starting.."              # needs to be "ready"
-export GURU_FILESERVER_STATUS="unknown"
-
-export VERBOSE="$GURU_VERBOSE"                      # use verbose setting from personal config
-while getopts 'f:v' flag; do                          # if verbose flag given, overwrite personal config
-  case "${flag}" in
-    f)  export FORCE=true; shift ;;
-    v)  export VERBOSE=true; shift ;;
-    *)  echo "invalid flag"; main.help ;;
-  esac
-done
-
-mount.check_system >/dev/null
-
-if ! [ "$GURU_FILESERVER_STATUS" == "online" ]; then
-    msg "mounting system folders $GURU_TRACK.. "
-    mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK"
-fi
-
-if [ "$GURU_FILESERVER_STATUS" == "online" ] && [ "$GURU_SYSTEM_STATUS" != "ready" ]; then     # require track mount
-    export GURU_SYSTEM_STATUS="ready"
-fi
-
-counter.main add guru-runned >/dev/null
-
 #echo "status: $GURU_SYSTEM_STATUS $GURU_FILESERVER_STATUS"
 
 main.parser () {
@@ -63,8 +34,8 @@ main.parser () {
         uninstall)          bash $GURU_BIN/uninstall.sh "$@" ; return $? ;;          # Get rid of this shit
         version|--ver)      printf "guru tool-kit v.$GURU_VERSION \n" ; return 0 ;;
         help|-h|--help)     main.help "$@" ; return 0 ;;                             # hardly never updated help printout
-        *)                  printf "$GURU_CMD: command not found\n"
-                            $tool
+        *)                  printf "$GURU_CMD: command %s not found \n" "$tool"
+
     esac
 }
 
@@ -195,17 +166,33 @@ main.terminal() {
 
 main.test_tool() {
     # Tool to test tools. Simply call sourced tool main function and parse normal commands
-    mount.main check "$GURU_TRACK" || mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK"
     [ "$2" ] && level="$2" || level="all"
     [ -f "$GURU_BIN/$1.sh" ] && source "$1.sh" || return 123
     local test_id=$(counter.main add guru-ui_test_id)
-    printf "\nTEST $test_id: guru-ui $1 $(date) \n" | tee -a "$GURU_LOG"
+    msg "\nTEST $test_id: guru-ui $1 $(date) \n"
     $1.main test "$level"
     return $?
 }
 
 
 main() {
+
+    [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG" # Remove old error messages
+    export GURU_VERSION="0.4.8"
+    export GURU_SYSTEM_PLATFORM="$(check_distro)"       # run wide platform check
+    export GURU_SYSTEM_STATUS="starting.."              # needs to be "ready"
+    export GURU_FILESERVER_STATUS="unknown"
+
+    # if [ "$GURU_FILESERVER_STATUS" != "online" ]; then
+    #     printf "mounting system folders $GURU_TRACK.. "
+    #     mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK"
+    # fi
+
+    if [ "$GURU_FILESERVER_STATUS" == "online" ] && [ "$GURU_SYSTEM_STATUS" != "ready" ]; then     # require track mount
+        export GURU_SYSTEM_STATUS="ready"
+    fi
+
+    counter.main add guru-runned >/dev/null
 
     if [ "$1" ]; then
         main.parser "$@"                                                            # with arguments go to parser
@@ -217,8 +204,7 @@ main() {
 
     if (( error_code > 1 )); then                                                   # 1 is warning, no error output
         [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)      # TODO when re-write error less than 10 are warnings + list of them
-        logger "[ERROR] $0 $GURU_CMD: $error_code: $error_message"                  # log errors
-        printf "$ERROR $error: $error_message. status: $GURU_SYSTEM_STATUS\n"       # print error
+        msg "$ERROR$error $error_message while $GURU_SYSTEM_STATUS\n"       # print error
         [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"
     fi
 
@@ -228,7 +214,20 @@ main() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+
+    export VERBOSE="$GURU_VERBOSE"                      # use verbose setting from personal config
+    while getopts 'lvf' flag; do                          # if verbose flag given, overwrite personal config
+        case "${flag}" in
+            l)  export LOGGING="true"; shift;;
+            v)  export VERBOSE="true"; shift ;;
+            f)  export FORCE="true"; shift ;;
+            *)  echo "invalid flag"
+                exit 1
+        esac
+    done
+
     main "$@"
     exit $?
+
 fi
 
