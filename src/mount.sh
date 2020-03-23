@@ -1,6 +1,5 @@
 #!/bin/bash
 # mount tools for guru tool-kit
-# casa@ujo.guru 2020
 
 source $GURU_BIN/functions.sh
 source $GURU_BIN/counter.sh

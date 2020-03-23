@@ -1,4 +1,6 @@
 #!/bin/bash
+# guru tool-kit decorations for terminal
+
 unset RED GRN YEL WHT BLU BRN NC
 
 if [ "$GURU_TERMINAL_COLOR" ]; then
@@ -27,63 +29,63 @@ export UNKNOWN="${WHT}UNKNOWN${NC}\n"
 export OK="${WHT}OK!${NC}\n"
 
 
-PASSED() 	{
+PASSED() {
 	msg "$PASSED"
 }
 
-READY()		{
+READY() {
 	msg "$READY"
 }
 
-IGNORED()		{
+IGNORED() {
 	msg "$IGNORED"
 }
 
 
-SUCCESS()		{
+SUCCESS() {
 	msg "$SUCCESS"
 }
 
-MOUNTED() 	{
+MOUNTED() {
 	msg "$MOUNTED"
 }
 
-UNMOUNTED() 	{
+UNMOUNTED() {
 	[ "$1" ] && msg "$1 $UNMOUNTED" || msg "$UNMOUNTED"
 }
 
-FAILED() 	{
+FAILED() {
 	msg "$FAILED"
 }
 
-TEST_FAILED() 	{
+TEST_FAILED() {
 	[ "$1" ] && msg "${WHT}$1 test result is:${NC} $FAILED" || msg "${WHT}test resul is:${NC} $FAILED"
 }
 
-TEST_PASSED() 	{
+TEST_PASSED() {
 	[ "$1" ] && msg "${WHT}$1 test result is:${NC} $PASSED" || msg "${WHT}test resul is:${NC} $PASSED"
 }
 
-ERROR() 	{
+ERROR() {
 	[ "$1" ] && msg "$ERROR ${WHT}$1${NC}" || msg "$ERROR"
 }
 
-WARNING() 	{
+WARNING() {
 	[ "$1" ] && msg "$WARNING ${WHT}$1${NC}" || msg "$WARNING"
 }
 
-ONLINE() 	{
+ONLINE() {
 	msg "$ONLINE"
 }
 
-OFFLINE() 	{
+OFFLINE() {
 	msg "$OFFLINE"
 }
 
-UNKNOWN() 	{
+UNKNOWN() {
 	msg "$UNKNOWN"
 }
 
-OK() 		{
+OK() {
 	msg "$OK"
 }

@@ -1,7 +1,10 @@
 #!/bin/bash
 # note tool for guru tool-kit
-source "$(dirname "$0")/lib/common.sh"
-source "$(dirname "$0")/mount.sh"
+
+source $GURU_BIN/lib/common.sh
+source $GURU_BIN/lib/deco.sh
+source $GURU_BIN/mount.sh
+
 
 note.main () {
     # command parser
@@ -189,7 +192,6 @@ check_debian_repository () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then            # stand alone vs. include. main wont be called if included
     source "$HOME/.gururc"
-#    source "$GURU_BIN/lib/deco.sh"
     source "$GURU_BIN/functions.sh"
     note.main "$@"
     exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?

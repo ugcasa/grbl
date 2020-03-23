@@ -1,11 +1,11 @@
 #!/bin/bash
 # sshfs mount functions for guru tool-kit
-# casa@ujo.guru 2020
 
 source $GURU_BIN/functions.sh
-source $GURU_BIN/counter.sh
+source $GURU_BIN/lib/common.sh
 source $GURU_BIN/lib/deco.sh
 source $GURU_BIN/lib/ssh.sh
+source $GURU_BIN/counter.sh
 
 remote.main() {
     command="$1"; shift

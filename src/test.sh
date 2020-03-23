@@ -1,11 +1,10 @@
 #!/bin/bash
-# testing functions for all modules
+# guru tool-kit testing functions for all modules
 
-source $HOME/.gururc                                    # source all
+source $GURU_BIN/lib/common.sh
+source $GURU_BIN/lib/deco.sh
 source $GURU_BIN/functions.sh
 source $GURU_BIN/counter.sh
-source $GURU_BIN/lib/deco.sh
-source $GURU_BIN/lib/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/remote.sh
 source $GURU_BIN/note.sh
@@ -84,10 +83,10 @@ mount.test_mount () {
 
 
 mount.test_unmount () {
-
-    if mount.unmount "$HOME/tmp/test_mount"; then
+    local _mount_point="$HOME/tmp/test_mount"
+    if mount.unmount "$_mount_point"; then
             TEST_PASSED ${FUNCNAME[0]}
-            rm -rf "$HOME/tmp/test_mount" || WARNING
+            rm -rf "$H_mount_point" || WARNING "error when removing $_mount_point "
             return 0
         else
             TEST_FAILED ${FUNCNAME[0]}
@@ -159,17 +158,18 @@ main.test_tool() {
 ## tool test parsers
 
 note.test() {
+    mount.system
     local test_case="$1"
     local _error=0
     case "$test_case" in
-                1)  note.check              ; return $? ;;
-                2)  test.note_mountpoint    ; return $? ;;
-                3)  note.list               ; return $? ;;
-              all)  test.note_mountpoint    || _error=42
-                    note.list               || _error=43
-                    return $_error          ;;
-               *)   msg "unknown test case $test_case\n"
-                    return 1
+                1) note.check               ; return $? ;;
+                2) test.note_mountpoint     ; return $? ;;
+                3) note.list                ; return $? ;;
+              all) test.note_mountpoint     || _error=42
+                   note.list                || _error=43
+                   return $_error           ;;
+               *)  msg "unknown test case $test_case\n"
+                   return 1
     esac
 }
 
@@ -233,12 +233,11 @@ test.main() {
     export VERBOSE="true"                                                           # dev test verbose is always on
     export LOGGING="true"
     case "$1" in
-
         1-100|all)  main.test_tool mount "$1"
                     main.test_tool remote "$1"
                     main.test_tool note "$1"
                     return 0 ;;
-        help|-h )   test.help
+        help|-h|"") test.help
                     return 0 ;;
         *)          main.test_tool $@
                     return $?
@@ -247,6 +246,7 @@ test.main() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
+    source $HOME/.gururc                                    # source all
     test.main "$@"
     exit "$?"
 fi
