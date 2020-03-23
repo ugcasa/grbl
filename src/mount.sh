@@ -270,7 +270,7 @@ mount.needed() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
-
+    source "$HOME/.gururc"
     mount.main "$@"
     exit "$?"
 fi
