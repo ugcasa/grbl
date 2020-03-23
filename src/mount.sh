@@ -47,19 +47,18 @@ mount.main() {
 
 mount.help() {
     echo "-- guru tool-kit mount help -----------------------------------------------"
-    printf "Usage:\t $0 [command] [arguments] \n\t $0 mount [source] [target] \n"
-    printf "Commands:\n"
-    printf " ls                       list of mounted folders \n"
-    printf " check [target]           check that mount point is mounted \n"
+    printf "usage:\t\t %s mount [source] [target] \n" "$GURU_CALL"
+    printf "\t\t %s mount [command] [known_mount_point|arguments] \n" "$GURU_CALL"
+    printf "commands:\n"
     printf " check-system             check that guru system folders are mounted \n"
+    printf " check [target]           check that mount point is mounted \n"
     printf " mount [source] [target]  mount folder in file server to local folder \n"
-    printf " mount all                mount primary file server default folders \n"
-    printf "                          Warning! Mount point may be generic location\n"
     printf " unmount [mount_point]    unmount [mount_point] \n"
+    printf " mount all                mount primary file server default folders \n"
     printf " unmount [all]            unmount all default folders \n"
-    printf " test <case_nr>|all       run given test case \n"
-    printf "\nExample:"
-    printf "\t %s mount /home/%s/share /home/%s/test-mount/\n" "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER"
+    printf " ls                       list of mounted folders \n"
+    printf "\nexample:"
+    printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER"
     return 0
 }
 
@@ -76,22 +75,22 @@ mount.check_system_mount() {
     elif [ "$status" == "mounted" ] && [ "$contans_stuff" ]; then
         GURU_SYSTEM_STATUS="validating system mount.. "
         GURU_FILESERVER_STATUS=".online file not found"
-        return 23
+        return 29
 
     elif [ "$status" == "mounted" ]; then
         GURU_SYSTEM_STATUS="validating system mount.."
         GURU_FILESERVER_STATUS="empty system mount point"
-        return 24
+        return 29
 
     elif [ "$status" == "offline" ]; then
         GURU_SYSTEM_STATUS="offline"
         GURU_FILESERVER_STATUS="offline"
-        return 25
+        return 29
 
     else
         GURU_SYSTEM_STATUS="error"
         GURU_FILESERVER_STATUS="unknown"
-        return 255
+        return 29
     fi
 }
 
@@ -163,7 +162,7 @@ mount.unmount () {
         return 132
     fi
     #msg "un-mounting $target_folder.. "
-    grep "$target_folder" < /etc/mtab >/dev/null || msg "$target_folder not mounted: "
+    grep "$target_folder" < /etc/mtab >/dev/null || msg "not mounted "
 
     if [ "$FORCE" ]; then
         sudo fusermount -u "$target_folder" && msg "force $UNMOUNTED $target_folder" || FAILED
@@ -237,7 +236,7 @@ mount.defaults_raw() {
     if [ "$GURU_CLOUD_VIDEO" ]; then     mount.remote "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" || _error="1"; fi
     if [ "$GURU_CLOUD_MUSIC" ]; then     mount.remote "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" || _error="1"; fi
 
-    [ "$_error" -gt "0" ] && return 25 || return 0
+    [ "$_error" -gt "0" ] && return 1 || return 0
 }
 
 

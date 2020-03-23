@@ -15,13 +15,14 @@ fi
 export PASSED="${GRN}PASSED${NC}\n"
 export READY="${GRN}READY${NC}\n"
 export MOUNTED="${GRN}MOUNTED${NC}\n"
-export UNMOUNTED="${GRN}UNMOUNTED${NC}\n"
+export SUCCESS="${GRN}SUCCESS${NC}\n"
+export UNMOUNTED="${BLU}UNMOUNTED${NC}\n"
 export IGNORED="${BRN}IGNORED${NC}\n"
 export FAILED="${RED}FAILED${NC}\n"
 export ERROR="${YEL}ERROR${NC}"
 export WARNING="${WHT}WARNING${NC}"
-export ONLINE="${WHT}ONLINE${NC}\n"
-export OFFLINE="${BLK}OFFLINE${NC}\n"
+export ONLINE="${GRN}ONLINE${NC}\n"
+export OFFLINE="${BLU}OFFLINE${NC}\n"
 export UNKNOWN="${WHT}UNKNOWN${NC}\n"
 export OK="${WHT}OK!${NC}\n"
 
@@ -36,6 +37,11 @@ READY()		{
 
 IGNORED()		{
 	msg "$IGNORED"
+}
+
+
+SUCCESS()		{
+	msg "$SUCCESS"
 }
 
 MOUNTED() 	{

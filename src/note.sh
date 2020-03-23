@@ -8,7 +8,6 @@ note.main () {
     unset command argument user_input
     command="$1"; shift
     case "$command" in
-        test)       test_note "$@" ;;
         list|ls)    note.list "$1" "$2" ;;
         report)     note.report ;;
         open|edit)  just_created=""     ; note.open "$1" ;;
@@ -63,7 +62,7 @@ note.list() {
         ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted"
     else
         printf "no folder exist" >>"$GURU_ERROR_MSG"
-        exit 126
+        return 126
     fi
 }
 
@@ -185,31 +184,6 @@ check_debian_repository () {
     echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
     sudo apt-get update
     return $?
-}
-
-
-
-
-test_note() {
-
-    case "$1" in     # does not what i want when tunned vut level 3, "mount"
-        1)
-            note.check
-            return $?
-            ;;
-
-        2|all)
-            msg "note.remount note mountpoints.. "
-            note.remount && PASSED || FAILED
-            return $?
-            ;;
-
-        help)
-            echo "Test cases: 1) test mount points, 2|all) mount test note.remount if note folders."
-            ;;
-        *) echo "note.sh: No test case for $1"
-    esac
-
 }
 
 

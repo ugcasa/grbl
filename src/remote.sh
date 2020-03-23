@@ -2,7 +2,10 @@
 # sshfs mount functions for guru tool-kit
 # casa@ujo.guru 2020
 
-source "$GURU_BIN/lib/ssh.sh"
+source $GURU_BIN/functions.sh
+source $GURU_BIN/counter.sh
+source $GURU_BIN/lib/deco.sh
+source $GURU_BIN/lib/ssh.sh
 
 remote.main() {
     command="$1"; shift
@@ -18,13 +21,12 @@ remote.main() {
 
 remote.help () {
     echo "-- guru tool-kit remote help -----------------------------------------------"
-    printf "Usage:\t $0 [command] [arguments] \n\t $0 remote [source] [target] \n"
+    printf "usage:\t %s remote [command] [arguments] \n\t $0 remote [source] [target] \n" "$GURU_CALL"
     printf "\ncommands:\n"
     printf " pull                     copy configuration files from access point server \n"
     printf " push                     copy configuration files to access point server \n"
     printf " install                  install requirements \n"
-    printf " test <case_nr>|all       run given test case \n"
-    printf "\nExample:"
+    printf "\nexample:"
     printf "    %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
 }
 
@@ -41,31 +43,40 @@ remote.check(){
         user="$GURU_REMOTE_FILE_SERVER_USER"
     fi
 
-    msg "testing connection to $user@$server.. "
+    msg "$user@$server status "
 
     if ssh -q -p "$server_port" "$user@$server" exit; then
-        PASSED
+        ONLINE
         return 0
     else
-        FAILED
+        OFFLINE
         return 132
     fi
 }
 
 
 remote.pull_config(){
+    msg "pulling configs.. "
+    local _error=0
     local hostname=$(hostname)
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
         "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER/" \
         "$GURU_CFG/$GURU_USER"
-    return $?
+    _error=$?
+
+    if ((_error<9)); then
+            SUCCESS
+        else
+            FAILED
+        fi
+    return $_error
 }
 
 
 remote.push_config(){
-
+    msg "pushing configs.. "
+    local _error=0
     local hostname=$(hostname)
-
     ssh "$GURU_USER@$GURU_ACCESS_POINT_SERVER" -p "$GURU_ACCESS_POINT_SERVER_PORT" \
          ls "/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER" >/dev/null 2>&1 || \
     ssh "$GURU_USER@$GURU_ACCESS_POINT_SERVER" -p "$GURU_ACCESS_POINT_SERVER_PORT" \
@@ -74,7 +85,14 @@ remote.push_config(){
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
         "$GURU_CFG/$GURU_USER/" \
         "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER/"
-    return $?
+    _error=$?
+
+    if ((_error<9)); then
+            SUCCESS
+        else
+            FAILED
+        fi
+    return $_error
 }
 
 
@@ -88,32 +106,8 @@ remote.needed() {
 }
 
 
-remote.test () {
-    case "$1" in
-        1) remote.check ;;
-        3) remote.test_config ;;
-        all) remote.test_config ;;
-        *) echo "remote.sh no test case for $1"
-    esac
-}
-
-
-remote.test_config(){
-
-    #echo "guru cloud configuration storage"
-    msg "configuration push.. "
-    remote.push_config && PASSED || FAILED
-
-    msg "configuration pull.. " | tee -a "$GURU_LOG"
-    remote.pull_config && PASSED || FAILED
-    return 0
-}
-
-
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc"
-    source "$GURU_CFG/$GURU_USER/deco.cfg"
-    source "$GURU_BIN/functions.sh"
     remote.main "$@"
     exit 0
 fi
