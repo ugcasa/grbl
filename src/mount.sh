@@ -2,9 +2,9 @@
 # mount tools for guru tool-kit
 # casa@ujo.guru 2020
 
-source "$GURU_BIN/functions.sh"
-source "$GURU_BIN/counter.sh"
-source "$GURU_BIN/lib/deco.sh"
+source $GURU_BIN/functions.sh
+source $GURU_BIN/counter.sh
+source $GURU_BIN/lib/deco.sh
 
 mount.main() {
     # mount tool command parser
@@ -270,10 +270,7 @@ mount.needed() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
-    source "$HOME/.gururc"
-    source "$GURU_BIN/lib/deco.sh"
-    source "$GURU_BIN/functions.sh"
-    source "$GURU_BIN/counter.sh"
+
     mount.main "$@"
     exit "$?"
 fi
