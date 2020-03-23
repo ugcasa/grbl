@@ -19,10 +19,10 @@ main.parser () {
     export GURU_CMD="$tool"                                                          # Store tool call name to other functions
     export GURU_SYSTEM_STATUS="processing $tool"
     case "$tool" in
-        check|test)         main.$tool "$@" ; return $? ;;                           # check and test cases
+        check)              main.$tool "$@" ; return $? ;;                           # check and test cases
         tor|trans|upgrade|document|terminal)                                         # function tools
                             $tool "$@" ; return $? ;;
-        unmount|mount|user|project|remote|counter|note|stamp|timer|tag|install)      # shell scrip tools
+        test|unmount|mount|user|project|remote|counter|note|stamp|timer|tag|install)      # shell scrip tools
                             $tool.sh "$@" ; return $? ;;
         clear|ls|cd|echo)   $tool "$@" ; return $? ;;                                # os command pass trough
         ssh|os|common|tme)  lib/$tool.sh "$@"; return $? ;;                          # direct lib calls
@@ -92,22 +92,6 @@ main.help () {
 }
 
 
-main.test_help () {
-    echo "-- guru tool-kit main test help -------------------------------------"
-    printf "Usage:\t %s test [<tool>|all] <level> \n" "$GURU_CALL"
-    printf "\nCommands:\n"
-    printf " all          test all tools on level all\n"
-    printf " <level>      numeral level of test detail where: \n"
-    printf "              1 = mainly checks \n"
-    printf "              2 = more tetailed tests \n"
-    printf "              3 = hot locations \n"
-    printf "Example:\n"
-    printf "\t %s test remote 1 \n" "$GURU_CALL"
-    printf "\t %s test mount 2 \n"  "$GURU_CALL"
-    printf "\t %s test all \n"      "$GURU_CALL"
-}
-
-
 main.check() {
     [ "$1" ] && tool="$1" ||read -r -p "select tool to test or all: " tool
 
@@ -138,45 +122,6 @@ main.terminal() {
     return 123
 }
 
-
-main.test_tool() {
-    # Tool to test tools. Simply call sourced tool main function and parse normal commands
-    [ "$1" ] && tool=$1 || read -r -p "imput tool name to teset: " tool
-    [ "$2" ] && level="$2" || level="all"
-    [ -f "$GURU_BIN/$1.sh" ] && source "$1.sh" || return 123
-    local test_id=$(counter.main add guru-ui_test_id)
-    msg "\nTEST $test_id: guru-ui $1 $level $(date)\n"
-    if $1.main test "$level"; then
-            TEST_PASSED "TEST $test_id $tool"
-            return 0
-        else
-            TEST_FAILED "TEST $test_id $tool"
-            return 25
-        fi
-}
-
-main.test() {
-
-    export VERBOSE="true"                                                           # dev test verbose is always on
-    export LOGGING="true"
-    case "$1" in
-
-        1|2|3|4|5|all )
-            main.test_tool mount "$1"
-            main.test_tool remote "$1"
-            main.test_tool note "$1"
-            exit 0
-            ;;
-
-        help|-h )
-            main.test_help
-            exit 0
-            ;;
-        *)
-            main.test_tool $@
-            exit $?
-    esac
-}
 
 main() {
 

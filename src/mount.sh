@@ -137,7 +137,7 @@ mount.online() {
         return 24
     fi
 
-    msg "$target_folder status.. "
+    msg "$target_folder status "
     grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null && local status="mounted" || local status="offline"
     ls -1qA "$target_folder" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
 
@@ -163,12 +163,12 @@ mount.unmount () {
         return 132
     fi
     #msg "un-mounting $target_folder.. "
-    grep "$target_folder" < /etc/mtab >/dev/null || msg "not mounted: "
+    grep "$target_folder" < /etc/mtab >/dev/null || msg "$target_folder not mounted: "
 
     if [ "$FORCE" ]; then
         sudo fusermount -u "$target_folder" && msg "force $UNMOUNTED $target_folder" || FAILED
     else
-        mount.online "$target_folder" >/dev/null && fusermount -u "$target_folder" && UNMOUNTED $target_folder || IGNORED    # unmount target if mounted
+        mount.online "$target_folder" >/dev/null && fusermount -u "$target_folder" && UNMOUNTED $target_folder || msg "$target_folder $IGNORED"    # unmount target if mounted
     fi
 }
 
@@ -201,7 +201,7 @@ mount.remote() {
         server_port="$GURU_REMOTE_FILE_SERVER_PORT"
         user="$GURU_REMOTE_FILE_SERVER_USER"
     fi
-    msg "mounting $server $source_folder to $target_folder.. "
+    msg "mounting $target_folder "
 
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$source_folder" "$target_folder"
     error=$?
@@ -266,101 +266,6 @@ mount.needed() {
     printf "Need to install $require, ctrl+c? or input local "
     sudo apt update && eval sudo apt "$action" "$require" && printf "\n guru is now ready to mount\n\n"
     return 0
-}
-
-
-mount.test () {
-    mount.system                                        # mount system mount point
-    local test_case="$1"
-    local _error=""
-    VERBOSE="true"
-    LOGGING="true"
-    case "$test_case" in
-               1) mount.online "$GURU_TRACK"   ; return $? ;;
-               2) mount.check_system           ; return $? ;;
-               3) mount.test_mount             ; return $? ;;
-               4) mount.test_unmount           ; return $? ;;
-               5) mount.test_default_mount     ; return $? ;;
-               6) mount.test_known_remote      ; return $? ;;
-         clean|7) mount.clean_test             ; return $? ;;
-             all) mount.check_system           || _error=22
-                  mount.test_mount             || _error=23
-                  mount.test_unmount           || _error=24
-                  mount.test_known_remote      || _error=26
-                  mount.clean_test             || _error=28
-
-                  return $_error               ;;
-               *) echo "no test case for $test_case"   ; return 0
-    esac
-}
-
-
-mount.clean_test () {
-    local error=0
-    if unmount.defaults_raw; then
-            TEST_PASSED "${FUNCNAME[0]} unmount"
-            error=0
-        else
-            TEST_FAILED "${FUNCNAME[0]} unmount"
-            error=10
-        fi
-
-    if mount.defaults_raw; then
-            TEST_PASSED "${FUNCNAME[0]} mount"
-            error=$((error))
-        else
-            TEST_FAILED "${FUNCNAME[0]} mount"
-            error=$((error+10))
-        fi
-    return $error
-}
-
-
-mount.test_mount() {
-    if mount.remote "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount"; then
-            TEST_PASSED ${FUNCNAME[0]}
-            return 0
-        else
-            TEST_FAILED ${FUNCNAME[0]}
-            return 10
-        fi
-}
-
-
-mount.test_unmount() {
-
-    if mount.unmount "$HOME/tmp/test_mount"; then
-            TEST_PASSED ${FUNCNAME[0]}
-            rm -rf "$HOME/tmp/test_mount" || WARNING
-            return 0
-        else
-            TEST_FAILED ${FUNCNAME[0]}
-            return 10
-        fi
-}
-
-
-mount.test_default_mount(){
-    msg "testing sshfs file server default folder mount.. \n "
-    mount.defaults_raw && TEST_PASSED ${FUNCNAME[0]} || TEST_FAILED ${FUNCNAME[0]}
-    sleep 1
-    msg "un-mount defaults.. "
-    unmount.defaults_raw && TEST_PASSED ${FUNCNAME[0]} || TEST_FAILED ${FUNCNAME[0]}
-    return 0
-}
-
-
-mount.test_known_remote () {
-    local _error=""
-    mount.unmount Audio
-    mount.known_remote Audio; _error=$?
-    if ((_error<10)); then
-            TEST_PASSED ${FUNCNAME[0]}
-            return 0
-        else
-            TEST_FAILED ${FUNCNAME[0]}
-            return 0
-        fi
 }
 
 

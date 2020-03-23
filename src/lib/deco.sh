@@ -8,6 +8,7 @@ if [ "$GURU_TERMINAL_COLOR" ]; then
 	export WHT='\033[1;37m'
 	export BLU='\033[0;34m'
 	export BRN='\033[0;33m'
+	export BLK='\033[0;90m'
 	export NC='\033[0m'
 fi
 
@@ -20,7 +21,7 @@ export FAILED="${RED}FAILED${NC}\n"
 export ERROR="${YEL}ERROR${NC}"
 export WARNING="${WHT}WARNING${NC}"
 export ONLINE="${WHT}ONLINE${NC}\n"
-export OFFLINE="${BRN}OFFLINE${NC}\n"
+export OFFLINE="${BLK}OFFLINE${NC}\n"
 export UNKNOWN="${WHT}UNKNOWN${NC}\n"
 export OK="${WHT}OK!${NC}\n"
 
