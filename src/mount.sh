@@ -61,14 +61,14 @@ mount.help() {
 
 
 mount.sshfs_info(){
-    local _error=100
-    msg "${WHT}user@server:source_folder   >   local_mount_point   uptime [day-h:m:s]${NC}\n"        # header (stdout when -v)
-    mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |                                       # get the mount data
-    while read mount; do                                                                             # Iterate over them
-        mount | grep -w "$mount" |                                                                   # Get the details of this mount
+    local _error=0
+    [ $TEST ] || msg "${WHT}user@server:source_folder   >   local_mount_point   uptime [day-h:m:s]${NC}\n"  # header (stdout when -v)
+    mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |                                              # get the mount data
+    while read mount; do                                                                                    # Iterate over them
+        mount | grep -w "$mount" |                                                                          # Get the details of this mount
         perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1:$2\  >  $3"'  # perl magic thanks terdon! https://unix.stackexchange.com/users/22222/terdon
-        _error=$?                                                                                    # last error, maily if perl is not installed
-        printf "%s\n" "$(ps -p $(pgrep -f "$mount") o etime=)"                                       # uptime
+        _error=$?                                                                                           # last error, maily if perl is not installed
+        printf "%s\n" "$(ps -p $(pgrep -f "$mount") o etime=)"                                              # uptime
     done
     ((_error>0)) && echo "perl not installed or internal error, pls try to install perl and try again." >$GURU_ERROR_MSG
     return $_error
@@ -76,7 +76,8 @@ mount.sshfs_info(){
 
 
 mount.list () {
-    mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)'
+    #mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)'       remote
+    mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
     return $?
 }
 

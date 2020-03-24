@@ -258,6 +258,7 @@ test.main() {
     # main test case parser
     export VERBOSE="true"                                                           # dev test verbose is always on
     export LOGGING="true"
+    export TEST="true"
     case "$1" in
         1-100|all)  main.test_tool mount "$1"
                     main.test_tool remote "$1"
