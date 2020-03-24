@@ -148,7 +148,7 @@ main.test_tool() {
         fi
 
     _test_id=$(counter.main add guru-ui_test_id)
-    msg "\nTEST $_test_id: guru-ui $1 $_case $(date)\n"
+    msg "\n${WHT}TEST $_test_id: guru-ui $1 $_case $(date)\n${NC}"
 
     source "$_tool.sh"
 
