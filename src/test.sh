@@ -135,17 +135,29 @@ mount.test_known_remote () {
 
 main.test_tool() {
     # Tool to test tools. Simply call sourced tool main function and parse normal commands
-    [ "$1" ] && tool=$1 || read -r -p "imput tool name to teset: " tool
-    [ "$2" ] && level="$2" || level="all"
-    [ -f "$GURU_BIN/$1.sh" ] && source "$1.sh" || return 123
-    local test_id=$(counter.main add guru-ui_test_id)
-    msg "\nTEST $test_id: guru-ui $1 $level $(date)\n"
-    if $1.test "$level"; then
-            TEST_PASSED "TEST $test_id $tool"
+    local _tool=""
+    local _case=""
+    local _test_id=""
+
+    [ "$1" ] && _tool=$1 || read -r -p "imput tool name to teset: " _tool
+    [ "$2" ] && _case="$2" || _case="all"
+
+    if ! [ -f "$GURU_BIN/$1.sh" ]; then
+            msg "non exiting '$_tool' test case '$_case' \n"
+            return 10
+        fi
+
+    _test_id=$(counter.main add guru-ui_test_id)
+    msg "\nTEST $_test_id: guru-ui $1 $_case $(date)\n"
+
+    source "$_tool.sh"
+
+    if $1.test "$_case"; then
+            TEST_PASSED "TEST $_test_id $_tool"
             return 0
         else
-            TEST_FAILED "TEST $test_id $tool"
-            return 25
+            TEST_FAILED "TEST $_test_id $_tool"
+            return 10
         fi
 }
 
@@ -164,7 +176,7 @@ note.test() {
               all) test.note_mountpoint     || _error=42
                    note.list                || _error=43
                    return $_error           ;;
-               *)  msg "unknown test case '$test_case'\n"
+               *)  msg "non exiting test case '$test_case'\n"
                    return 1
     esac
 }
@@ -192,7 +204,7 @@ remote.test () {
              all) remote.check              || _error=31
                   remote.test_config        || _error=32
                   return $_error            ;;
-               *) msg "unknown test case '$test_case'\n"
+               *) msg "non exiting test case '$test_case'\n"
                   return 1
     esac
 }
@@ -219,7 +231,7 @@ mount.test () {
                   mount.clean_test          || _error=28
                   ((_error>1)) && echo "error code: $_error"
                   return $_error ;;
-               *) msg "unknown test case '$test_case'\n"
+               *) msg "non exiting test case '$test_case'\n"
                   return 1
     esac
 }
@@ -267,23 +279,45 @@ test.help () {
     return 0
 }
 
+test.all() {
+    local _error=0
+    for _tool in ${all_tools[@]}; do
+        main.test_tool $_tool "$1" || _error=$?
+    done
+    return $_error
+}
+
+test.validate() {
+    local _error=0
+        msg "\nVALIDATION TEST $(date)\n"
+        test.all |grep --color=never "result is:" |grep "TEST" || _error=$?
+
+        if ((_error<9)); then
+                PASSED "VALIDATION RESULT"
+            else
+                msg "last error code were: $_error\n"
+                FAILED "VALIDATION RESULT"
+            fi
+        return $_error
+}
 
 test.main() {
     # main test case parser
-    export VERBOSE="true"                                                           # dev test verbose is always on
-    export LOGGING="true"
-    export TEST="true"
+    all_tools=("remote" "mount" "note")
+    export VERBOSE=true                                                           # dev test verbose is always on
+    export LOGGING=true
+    export TEST=true
     case "$1" in
-        1-100|all)  main.test_tool mount "$1"
-                    main.test_tool remote "$1"
-                    main.test_tool note "$1"
-                    return 0 ;;
-        help|-h|"") test.help
-                    return 0 ;;
-        *)          main.test_tool $@
-                    return $?
+        snap|quick) test.all 1              ; return $? ;;
+            *[1-9]) test.all "$1"           ; return $? ;;
+               all) test.all                ; return $? ;;
+          validate) test.validate           ; return 0 ;;
+        help|-h|"") test.help               ; return 0 ;;
+        *)          main.test_tool $@       ; return $? ;;
     esac
 }
+
+
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions

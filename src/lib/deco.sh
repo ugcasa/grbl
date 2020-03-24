@@ -30,24 +30,23 @@ export OK="${WHT}OK!${NC}\n"
 
 
 PASSED() {
-	msg "$PASSED"
+	[ "$1" ] && msg "${WHT}$1:${NC} $PASSED" || msg "$PASSED"
 }
 
 READY() {
-	msg "$READY"
+	[ "$1" ] && msg "${WHT}$1${NC} $READY" || msg "$READY"
 }
 
 IGNORED() {
-	msg "$IGNORED"
+	[ "$1" ] && msg "${WHT}$1${NC} $IGNORED" || msg "$IGNORED"
 }
 
-
 SUCCESS() {
-	msg "$SUCCESS"
+	[ "$1" ] && msg "${WHT}$1${NC} $SUCCESS" || msg "$SUCCESS"
 }
 
 MOUNTED() {
-	msg "$MOUNTED"
+	[ "$1" ] && msg "${WHT}$1${NC} $MOUNTED" || msg "$MOUNTED"
 }
 
 UNMOUNTED() {
@@ -55,7 +54,7 @@ UNMOUNTED() {
 }
 
 FAILED() {
-	msg "$FAILED"
+	[ "$1" ] && msg "${WHT}$1:${NC} $FAILED" || msg "$FAILED"
 }
 
 TEST_FAILED() {
