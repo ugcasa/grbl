@@ -168,7 +168,7 @@ note.test() {
               all) test.note_mountpoint     || _error=42
                    note.list                || _error=43
                    return $_error           ;;
-               *)  msg "unknown test case $test_case\n"
+               *)  msg "unknown test case '$test_case'\n"
                    return 1
     esac
 }
@@ -183,7 +183,7 @@ remote.test () {
              all) remote.check              || _error=31
                   remote.test_config        || _error=32
                   return $_error            ;;
-               *) msg "unknown test case $test_case\n"
+               *) msg "unknown test case '$test_case'\n"
                   return 1
     esac
 }
@@ -196,22 +196,52 @@ mount.test () {
                1) mount.check_system        ; return $? ;;
                2) mount.test_mount          ; return $? ;;
                3) mount.test_unmount        ; return $? ;;
-               4) mount.test_default_mount  ; return $? ;;
-               5) mount.test_known_remote   ; return $? ;;
-         clean|6) mount.clean_test          ; return $? ;;
+               4) mount.test_list           ; return $? ;;
+               5) mount.test_info           ; return $? ;;
+               6) mount.test_default_mount  ; return $? ;;
+               7) mount.test_known_remote   ; return $? ;;
+         clean|8) mount.clean_test          ; return $? ;;
              all) mount.check_system        || _error=21
                   mount.test_mount          || _error=22
-                  mount.test_unmount        || _error=24
-                  mount.test_known_remote   || _error=25
+                  mount.test_unmount        || _error=23
+                  mount.test_list           || _error=24
+                  mount.test_info           || _error=25
+                  mount.test_known_remote   || _error=27
                   mount.clean_test          || _error=28
                   return $_error                ;;
-               *) msg "unknown test case $test_case\n"
+               *) msg "unknown test case '$test_case'\n"
                   return 1
     esac
 }
 
 
 ## main test parser
+
+mount.test_info () {
+    msg "sshfs info test\n"
+    mount.system                                    # be sure that system is mounted to validate result
+    if mount.sshfs_info | grep "/Track"; then       # "Track" is on list if system is mounted
+        TEST_PASSED ${FUNCNAME[0]}
+        return 0
+    else
+        TEST_FAILED ${FUNCNAME[0]}
+        return 11
+    fi
+}
+
+
+mount.test_list () {
+    msg "sshfs list test\n"
+    mount.system                                    # be sure that system is mounted to validate result
+    if mount.list | grep "/Track"; then             # "Track" is on list if system is mounted
+        TEST_PASSED ${FUNCNAME[0]}
+        return 0
+    else
+        TEST_FAILED ${FUNCNAME[0]}
+        return 11
+    fi
+}
+
 
 test.help () {
     echo "-- guru tool-kit main test help -------------------------------------"

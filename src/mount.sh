@@ -9,40 +9,38 @@ mount.main() {
     # mount tool command parser
     argument="$1"; shift
     case "$argument" in
-        check-system)       mount.check_system ; return $? ;;
-        check)              mount.check "$@"; return $? ;;
-        ls|list)            grep "sshfs" < /etc/mtab ;;
-        mount)              mount.remote "$1" "$2" ; return $? ;;
-        unmount)            mount.unmount "$1" ; return $? ;;
-        test)               mount.test "$@" ; return ;;
-        help )              mount.help "$@" ; return ;;
-        install)            mount.needed install ; return ;;
-        unistall|remove)    mount.needed remove ; return ;;
-        all|defaults|def)
-                            case "$GURU_CMD" in
-                                mount)      mount.defaults_raw ; return $? ;;
-                                unmount)    unmount.defaults_raw ; return $? ;;
-                                *)          help
+            check-system)   mount.check_system      ; return $? ;;
+                   check)   mount.check "$@"        ; return $? ;;
+                 ls|list)   mount.list              ; return $? ;;
+                    info)   mount.sshfs_info        ; return $? ;;
+                   mount)   mount.remote "$1" "$2"  ; return $? ;;
+                 unmount)   mount.unmount "$1"      ; return $? ;;
+                 install)   mount.needed install    ; return $? ;;
+         unistall|remove)   mount.needed remove     ; return $? ;;
+                    help)   mount.help "$@"         ; return 0  ;;
+        all|defaults|def)   case "$GURU_CMD" in
+                               mount)   mount.defaults_raw      ; return $? ;;
+                             unmount)   unmount.defaults_raw    ; return $? ;;
+                                   *)   help
                             esac ;;
-        *)
-                            case "$GURU_CMD" in
-                                mount)      if [ "$1" ]; then
+                       *)   case "$GURU_CMD" in
+                               mount)   if [ "$1" ]; then
                                                 mount.remote "$argument" "$1"
                                                 return $?
                                             else
                                                 mount.known_remote "$argument"
                                                 return $?
-                                            fi ;;
-
-                                unmount)    mount.unmount "$argument" ; return $?
-                                            [ "$1" == "force" ] && sudo fusermount -u "$argument" ;;
-                                *)          mount.help
-                            esac
+                                            fi                              ;;
+                             unmount)   if [ $FORCE ]; then
+                                                sudo fusermount -u "$argument"
+                                                return $?
+                                            else
+                                                mount.unmount "$argument"
+                                             fi                              ;;
+                                    *)  mount.help
+                            esac ;;
     esac
 }
-
-
-
 
 mount.help() {
     echo "-- guru tool-kit mount help -----------------------------------------------"
@@ -59,6 +57,25 @@ mount.help() {
     printf "\nexample:"
     printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER"
     return 0
+}
+
+
+mount.sshfs_info(){
+    local _error=0
+    msg "${WHT}user@server:source_folder   >   local_mount_point   uptime [day-h:m:s]${NC}\n"        # header (stdout when -v)
+    mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |                                       # get the mount data
+    while read mount; do                                                                             # Iterate over them
+        mount | grep -w "$mount" |                                                                   # Get the details of this mount
+        perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1:$2\  >  $3"'  # perl magic thanks terdon! https://unix.stackexchange.com/users/22222/terdon
+        printf "%s\n" "$(ps -p $(pgrep -f "$mount") o etime=)"                                       # uptime
+    done
+    return 0
+}
+
+
+mount.list () {
+    mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)'
+    return $?
 }
 
 
