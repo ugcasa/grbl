@@ -2,14 +2,14 @@
 # guru tool-kit - caa@ujo.guru 2020
 export GURU_VERSION="0.4.8"
 
-source "$HOME/.gururc"                              # user and platform settings (implement here, always up to date)
-source "$GURU_BIN/functions.sh"                     # common functions, if no ".sh", check here
-source "$GURU_BIN/remote.sh"
-source "$GURU_BIN/note.sh"
-source "$GURU_BIN/timer.sh"
-source "$GURU_BIN/mount.sh"                         # common functions, if no ".sh", check here
-source "$GURU_BIN/lib/deco.sh"                      # text decorations, functions like PASSED, ONLINE ..
-source "$GURU_BIN/lib/common.sh"
+source $HOME/.gururc                              # user and platform settings (implement here, always up to date)
+source $GURU_BIN/functions.sh                     # common functions, if no .sh, check here
+source $GURU_BIN/remote.sh
+source $GURU_BIN/note.sh
+source $GURU_BIN/timer.sh
+source $GURU_BIN/mount.sh                         # common functions, if no .sh, check here
+source $GURU_BIN/lib/deco.sh                      # text decorations, functions like PASSED, ONLINE ..
+source $GURU_BIN/lib/common.sh
 
 #echo "status: $GURU_SYSTEM_STATUS $GURU_FILESERVER_STATUS"
 

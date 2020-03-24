@@ -61,15 +61,17 @@ mount.help() {
 
 
 mount.sshfs_info(){
-    local _error=0
+    local _error=100
     msg "${WHT}user@server:source_folder   >   local_mount_point   uptime [day-h:m:s]${NC}\n"        # header (stdout when -v)
     mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |                                       # get the mount data
     while read mount; do                                                                             # Iterate over them
         mount | grep -w "$mount" |                                                                   # Get the details of this mount
         perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1:$2\  >  $3"'  # perl magic thanks terdon! https://unix.stackexchange.com/users/22222/terdon
+        _error=$?                                                                                    # last error, maily if perl is not installed
         printf "%s\n" "$(ps -p $(pgrep -f "$mount") o etime=)"                                       # uptime
     done
-    return 0
+    ((_error>0)) && echo "perl not installed or internal error, pls try to install perl and try again." >$GURU_ERROR_MSG
+    return $_error
 }
 
 
@@ -91,22 +93,22 @@ mount.check_system_mount() {
     elif [ "$status" == "mounted" ] && [ "$contans_stuff" ]; then
         GURU_SYSTEM_STATUS="validating system mount.. "
         GURU_FILESERVER_STATUS=".online file not found"
-        return 29
+        return 20
 
     elif [ "$status" == "mounted" ]; then
         GURU_SYSTEM_STATUS="validating system mount.."
         GURU_FILESERVER_STATUS="empty system mount point"
-        return 29
+        return 20
 
     elif [ "$status" == "offline" ]; then
         GURU_SYSTEM_STATUS="offline"
         GURU_FILESERVER_STATUS="offline"
-        return 29
+        return 20
 
     else
         GURU_SYSTEM_STATUS="error"
         GURU_FILESERVER_STATUS="unknown"
-        return 29
+        return 20
     fi
 }
 
@@ -119,7 +121,7 @@ mount.check_system() {
         else
             FAILED
             echo "system status: $GURU_SYSTEM_STATUS"
-            echo "fileserver status: $GURU_FILESERVER_STATUS"
+            echo "file server status: $GURU_FILESERVER_STATUS"
             echo "system mount $GURU_FILESERVER_STATUS" >$GURU_ERROR_MSG
         fi
     return $result
@@ -223,6 +225,7 @@ mount.remote() {
 
     if ((error>0)); then
             WARNING "source folder not found, check $GURU_USER_RC\n"
+            [ -d "$target_folder" ] && rmdir "$target_folder"
             return 25
         else
             MOUNTED
@@ -285,6 +288,7 @@ mount.needed() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
+    source $GURU_BIN/lib/common.sh
     source "$HOME/.gururc"
     mount.main "$@"
     exit "$?"
