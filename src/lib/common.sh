@@ -7,6 +7,7 @@ source "$GURU_BIN/counter.sh"
 msg() {
     #function for ouput messages and make log notifications. input "message string"
     [ "$1" ] || return 0
+    printf "$@" >$GURU_ERROR_MSG
     [ $VERBOSE ] && printf "$@"
 
     if ! [ "$GURU_SYSTEM_STATUS"=="ready" ]; then return 0; fi

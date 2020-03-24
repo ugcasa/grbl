@@ -1,7 +1,8 @@
 #!/bin/bash
 # giocon work time tracker casa@ujo.guru (c) 2019
-source "$GURU_BIN/mount.sh"
-source "$GURU_BIN/lib/deco.sh"
+source $GURU_BIN/mount.sh
+source $GURU_BIN/lib/deco.sh
+source $GURU_BIN/lib/common.sh
 
 timer.main () {
 
@@ -35,8 +36,8 @@ timer.check() {
 
 
 timer.status() {
-	echo "timer track mount lost" > "$GURU_ERROR_MSG"
-	mount.online "$GURU_TRACK" >/dev/null || return 127
+
+	mount.system
 
 	if [ ! -f "$GURU_TRACKSTATUS" ]; then
 		msg "no timer tasks\n"
@@ -92,8 +93,8 @@ timer.last() {
 
 
 timer.start() {
-	echo "timer track mount lost" > "$GURU_ERROR_MSG"
-	mount.online "$GURU_TRACK" >/dev/null || return 127
+
+	mount.system
 
 	[ -d "$GURU_WORKTRACK" ] || mkdir -p "$GURU_WORKTRACK"
 
@@ -151,13 +152,12 @@ timer.start() {
 
 timer.end() {
 
-	echo "timer track mount lost" > "$GURU_ERROR_MSG"
-	mount.online "$GURU_TRACK" >/dev/null || return 127
+	mount.system
 
 	if [ -f $GURU_TRACKSTATUS ]; then
 		. $GURU_TRACKSTATUS 														#; echo "timer start "$timer_start
 	else
-		echo "timer not started" >>$GURU_ERROR_MSG
+		msg "timer not started"
 		return 13
 	fi
 
@@ -242,8 +242,7 @@ timer.change() {
 
 timer.cancel() {
 
-	echo "timer track mount lost" > "$GURU_ERROR_MSG"
-	mount.online "$GURU_TRACK" >/dev/null || return 127
+ 	mount.system
 
 	if [ -f $GURU_TRACKSTATUS ]; then
 		rm $GURU_TRACKSTATUS
@@ -262,16 +261,14 @@ timer.log () {
 
 
 timer.edit  () {
-	echo "timer track mount lost" >"$GURU_ERROR_MSG"
-	mount.online "$GURU_TRACK" >/dev/null || return 127
+	mount.system
 	$GURU_EDITOR "$GURU_TRACKDATA" &
 	return $?
 }
 
 
 timer.report() {
-	echo "timer track mount lost" > "$GURU_ERROR_MSG"
-	mount.online "$GURU_TRACK" >/dev/null || return 127
+	mount.system
 
 	[ "$1" ] && team="$1" || team="$GURU_TEAM"								#; echo "team :"$team
 	report_file="work-track-report-$(date +%Y%m%d)-$team.csv" 				#; echo "report_file: "$report_file

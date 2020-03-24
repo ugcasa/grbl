@@ -10,10 +10,11 @@ source $GURU_BIN/counter.sh
 remote.main() {
     command="$1"; shift
     case "$command" in
-        check|test|help)   remote.$command "$@" ;;
-        push|pull)         remote.$command"_config" ;;
-        install|remove)    remote.needed "$command" ;;
-        *)                 remote.help ;;
+              push|pull)    remote.$command"_config"                       ; return $? ;;
+             check|help)    remote.$command "$@"                           ; return $? ;;
+         install|remove)    remote.needed "$command"                       ; return $? ;;
+                   test)    source $GURU_BIN/test.sh; remote.test "$@"     ; return $? ;;
+                      *)    remote.help ;;
     esac
     return 0
 }
@@ -107,6 +108,7 @@ remote.needed() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    VERBOSE="true"
     source "$HOME/.gururc"
     remote.main "$@"
     exit 0

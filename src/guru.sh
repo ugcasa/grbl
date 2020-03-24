@@ -103,14 +103,19 @@ main.check() {
         return 0
     fi
 
-    echo "no tool'$tool' found" >"$GURU_ERROR_MSG"
-    [ -f "$GURU_BIN/$tool.sh" ] || return 12
+    if ! [ -f "$GURU_BIN/$tool.sh" ]; then
+            msg "no tool'$tool' found"
+            return 12
+        fi
+
     $tool.check
+    return $?
 }
 
 
 main.terminal() {
     # Terminal looper
+    VERBOSE=true
     msg "$GURU_CALL in terminal mode (type 'help' enter for help)\n"
     while :
         do

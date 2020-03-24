@@ -1,10 +1,6 @@
 #!/bin/bash
 # mount tools for guru tool-kit
 
-source $GURU_BIN/functions.sh
-source $GURU_BIN/counter.sh
-source $GURU_BIN/lib/deco.sh
-
 mount.main() {
     # mount tool command parser
     argument="$1"; shift
@@ -18,6 +14,7 @@ mount.main() {
                  install)   mount.needed install    ; return $? ;;
          unistall|remove)   mount.needed remove     ; return $? ;;
                     help)   mount.help "$@"         ; return 0  ;;
+                    test)   source $GURU_BIN/test.sh; mount.test "$@" ;;
         all|defaults|def)   case "$GURU_CMD" in
                                mount)   mount.defaults_raw      ; return $? ;;
                              unmount)   unmount.defaults_raw    ; return $? ;;
@@ -70,7 +67,7 @@ mount.sshfs_info(){
         _error=$?                                                                                           # last error, maily if perl is not installed
         printf "%s\n" "$(ps -p $(pgrep -f "$mount") o etime=)"                                              # uptime
     done
-    ((_error>0)) && echo "perl not installed or internal error, pls try to install perl and try again." >$GURU_ERROR_MSG
+    ((_error>0)) && msg "perl not installed or internal error, pls try to install perl and try again."
     return $_error
 }
 
@@ -123,7 +120,7 @@ mount.check_system() {
             FAILED
             echo "system status: $GURU_SYSTEM_STATUS"
             echo "file server status: $GURU_FILESERVER_STATUS"
-            echo "system mount $GURU_FILESERVER_STATUS" >$GURU_ERROR_MSG
+            msg "system mount $GURU_FILESERVER_STATUS"
         fi
     return $result
 }
@@ -143,7 +140,7 @@ mount.online() {
     local contans_stuff=""
 
     if ! [ -d "$target_folder" ]; then
-        msg "$WARNING folder '$target_folder' does not exist\n" >$GURU_ERROR_MSG
+        msg "folder '$target_folder' does not exist"
         return 123
     fi
 
@@ -177,8 +174,8 @@ mount.check() {
 mount.unmount () {
     local target_folder="$1"
     if ! [ -d "$target_folder" ]; then
-        WARNING "folder '$target_folder' dopes not exist\n"
-        return 132
+        WARNING "folder '$target_folder' does not exist\n"
+        return 23
     fi
     #msg "un-mounting $target_folder.. "
     grep "$target_folder" < /etc/mtab >/dev/null || msg "not mounted "
@@ -201,14 +198,11 @@ mount.remote() {
     [ "$1" ] && source_folder="$1" ||read -r -p "input source folder at server: " source_folder
     [ "$2" ] && target_folder="$2" ||read -r -p "input target mount point: " target_folder
 
-    printf "target folder crate problems" >$GURU_ERROR_MSG
     [ -d "$target_folder" ] ||mkdir -p "$target_folder"                 # be sure that mount point exist
-    echo >$GURU_ERROR_MSG
 
     mount.online "$target_folder" && return 1                           # mount.unmount "$target_folder"
     #[ "$source_folder" == "unmount" ] && return 0                      # if first argument is "unmount" all done for now, exit
-    printf "non empty target $target_folder" >$GURU_ERROR_MSG
-    [ "$(ls $target_folder)" ] && return 28                             # Check that directory is empty
+    [ "$(ls $target_folder)" ] && return 25                             # Check that directory is empty
 
     local server="$GURU_LOCAL_FILE_SERVER"                              # assume that server is in local network
     local server_port="$GURU_LOCAL_FILE_SERVER_PORT"
@@ -289,7 +283,7 @@ mount.needed() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
-    source $GURU_BIN/lib/common.sh
+    VERBOSE="true"
     source "$HOME/.gururc"
     mount.main "$@"
     exit "$?"

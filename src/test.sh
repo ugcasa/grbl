@@ -51,7 +51,7 @@ remote.test_config(){
 
 
 mount.clean_test () {
-    local error=0
+    local error=20
     if unmount.defaults_raw; then
             TEST_PASSED "${FUNCNAME[0]} unmount"
             error=0
@@ -65,7 +65,7 @@ mount.clean_test () {
             error=$((error))
         else
             TEST_FAILED "${FUNCNAME[0]} mount"
-            error=$((error+10))
+             error=21
         fi
     if ((_error>9)); then return 28; fi
     return 0

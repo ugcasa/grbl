@@ -64,7 +64,7 @@ note.list() {
     if [ -d "$directory" ]; then
         ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted"
     else
-        printf "no folder exist" >>"$GURU_ERROR_MSG"
+        msg "no folder exist"
         return 126
     fi
 }
