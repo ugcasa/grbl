@@ -289,7 +289,7 @@ test.all() {
 
 test.validate() {
     local _error=0
-        msg "\nVALIDATION TEST $(date)\n"
+        msg "\n${WHT}VALIDATION TEST $(date)${NC}\n"
         test.all |grep --color=never "result is:" |grep "TEST" || _error=$?
 
         if ((_error<9)); then
