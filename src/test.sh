@@ -45,8 +45,8 @@ remote.test_config(){
         else
             TEST_FAILED ${FUNCNAME[0]}
         fi
-
-    return $_error
+    if ((_error>9)); then return 32; fi
+    return 0
 }
 
 
@@ -67,7 +67,8 @@ mount.clean_test () {
             TEST_FAILED "${FUNCNAME[0]} mount"
             error=$((error+10))
         fi
-    return $error
+    if ((_error>9)); then return 28; fi
+    return 0
 }
 
 
@@ -77,7 +78,7 @@ mount.test_mount () {
             return 0
         else
             TEST_FAILED ${FUNCNAME[0]}
-            return 10
+            return 22
         fi
 }
 
@@ -90,7 +91,7 @@ mount.test_unmount () {
             return 0
         else
             TEST_FAILED ${FUNCNAME[0]}
-            return 10
+            return 23
         fi
 }
 
@@ -116,11 +117,8 @@ mount.test_default_mount (){
             _error=$((_error+1))
         fi
 
-    if ((_error>9)); then
-        return 29
-    else
-        return 0
-    fi
+    if ((_error>9)); then return 29; fi
+    return 0
 }
 
 
@@ -128,13 +126,10 @@ mount.test_known_remote () {
     local _error=""
     mount.unmount Audio
     mount.known_remote Audio; _error=$?
-    if ((_error<10)); then
-            TEST_PASSED ${FUNCNAME[0]}
-            return 0
-        else
-            TEST_FAILED ${FUNCNAME[0]}
-            return 0
-        fi
+
+    if ((_error>9)); then TEST_FAILED ${FUNCNAME[0]}; return 27; fi
+    TEST_PASSED ${FUNCNAME[0]}
+    return 0
 }
 
 
@@ -201,14 +196,15 @@ mount.test () {
                6) mount.test_default_mount  ; return $? ;;
                7) mount.test_known_remote   ; return $? ;;
          clean|8) mount.clean_test          ; return $? ;;
-             all) mount.check_system        || _error=21
+             all) mount.check_system        || _error=20        # last error until no error
                   mount.test_mount          || _error=22
                   mount.test_unmount        || _error=23
                   mount.test_list           || _error=24
                   mount.test_info           || _error=25
                   mount.test_known_remote   || _error=27
                   mount.clean_test          || _error=28
-                  return $_error                ;;
+                  ((_error>1)) && echo "error code: $_error"
+                  return $_error ;;
                *) msg "unknown test case '$test_case'\n"
                   return 1
     esac
@@ -225,7 +221,7 @@ mount.test_info () {
         return 0
     else
         TEST_FAILED ${FUNCNAME[0]}
-        return 11
+        return 25
     fi
 }
 
@@ -238,7 +234,7 @@ mount.test_list () {
         return 0
     else
         TEST_FAILED ${FUNCNAME[0]}
-        return 11
+        return 24
     fi
 }
 
