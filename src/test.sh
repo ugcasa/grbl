@@ -171,6 +171,7 @@ note.test() {
 
 
 note.test_create () {
+    echo tbd
     # note.contruct tomorrow
     # note_dir=$GURU_NOTES/$GURU_USER/$year/$month
     # note_file=$GURU_USER"_notes_"$short_datestamp.md
