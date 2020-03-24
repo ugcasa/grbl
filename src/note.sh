@@ -11,13 +11,14 @@ note.main () {
     unset command argument user_input
     command="$1"; shift
     case "$command" in
-        list|ls)    note.list "$1" "$2" ;;
-        report)     note.report ;;
-        open|edit)  just_created=""     ; note.open "$1" ;;
-        locate)     note.gen_var "$1"   ; echo "$note" ;;
-        exist)      note.gen_var "$1"   ; [ -f "$note" ] && return 0 || return 127 ;;
-        tag)        note.gen_var "$1"   ; [ -f "$note" ] && $GURU_CALL "tag $note $user_input"  ;;
-        help)       echo "-- guru tool-kit note help -----------------------------------------------"
+          list|ls)  note.list "$1" "$2"                   ; return $? ;;
+            touch)  note.contruct "$1"                    ; return $? ;;
+           report)  note.report                           ; return $? ;;
+        open|edit)  just_created=""     ; note.open "$1"  ; return $? ;;
+           locate)  note.gen_var "$1"   ; echo "$note"    ; return 0 ;;
+            exist)  note.gen_var "$1"   ; [ -f "$note" ] && return 0 || return 127 ;;
+              tag)  note.gen_var "$1"   ; [ -f "$note" ] && $GURU_CALL "tag $note $user_input"  ;;
+             help)  echo "-- guru tool-kit note help -----------------------------------------------"
                     printf "Usage:\t\t %s note [command] <date> \nCommands:                       \n" "$GURU_CALL"
                     printf " check          check do note exist, returns 0 if i do                \n"
                     printf " list           list of notes. first month (MM), then year (YYYY)     \n"
@@ -28,14 +29,13 @@ note.main () {
                     printf " locate         returns file location of note given YYYYMMDD          \n"
                     printf " report         open note with template to %s                         \n" "$GURU_OFFICE_DOC"
                     ;;
-        *)
-                    note.remount
+               *)   note.remount
                     if [ "$command" ]; then
-                        note.open $(date +"$GURU_FILE_DATE_FORMAT" -d "$command")
-                    else
-                        note.contruct $(date +"$GURU_FILE_DATE_FORMAT")
-                        note.open $(date +"$GURU_FILE_DATE_FORMAT")
-                    fi
+                            note.open $(date +"$GURU_FILE_DATE_FORMAT" -d "$command")
+                        else
+                            note.contruct $(date +"$GURU_FILE_DATE_FORMAT")
+                            note.open $(date +"$GURU_FILE_DATE_FORMAT")
+                        fi
     esac
     counter.main add note-runned >/dev/null                                          # Usage statistics
 }

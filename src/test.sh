@@ -160,6 +160,7 @@ note.test() {
                 1) note.check               ; return $? ;;
                 2) test.note_mountpoint     ; return $? ;;
                 3) note.list                ; return $? ;;
+                3) note.contruct tomorrow   ; return $? ;;
               all) test.note_mountpoint     || _error=42
                    note.list                || _error=43
                    return $_error           ;;
@@ -167,6 +168,18 @@ note.test() {
                    return 1
     esac
 }
+
+
+note.test_create () {
+    # note.contruct tomorrow
+    # note_dir=$GURU_NOTES/$GURU_USER/$year/$month
+    # note_file=$GURU_USER"_notes_"$short_datestamp.md
+    # month=$(date +%m)                                           # current day if no input
+    # year=$(date +%Y)
+    # day=$(date +%d)
+    # [ -f $GURU_NOTES/] > to sleep
+}
+
 
 remote.test () {
     mount.system
