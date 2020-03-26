@@ -4,6 +4,7 @@
 # ujo.guru 2019
 
 
+
 tor() {
     [ -d "$GURU_APP/tor-browser_en-US" ] || guru install tor
     sh -c '"$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" --detach || ([ !  -x "$GURU_APP/tor-browser_en-US/Browser/start-tor-browser" ] && "$(dirname "$*")"/Browser/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
@@ -62,69 +63,6 @@ trans (){
 }
 
 
-set_value () {
-
-	[ -f "$GURU_USER_RC" ] && target_rc="$GURU_USER_RC" || target_rc="$HOME/.gururc"
-	#[ $3 ] && target_rc=$3
-	sed -i -e "/$1=/s/=.*/=$2 $3 $4/" "$target_rc"
-}
-
-
-set () {
-	# set guru environmental funtions
-	argument="$1"
-	shift
-
-	case "$argument" in
-
-			current|status)
-				[ -f "$GURU_USER_RC" ] && source_rc="$GURU_USER_RC" || source_rc="$HOME/.gururc"
-				echo "current settings:"
-				cat "$source_rc" |grep "export"| cut -c13-
-				;;
-
-
-			editor)
-				[ "$1" ] && new_value=$1 ||	read -p "input preferred editor : " new_value
-				set_value GURU_EDITOR "$new_value"
-				;;
-
-			name)
-				[ "$1" ] && new_value=$1 ||	read -p "input new call name for $GURU_CALL : " new_value
-				mv "$GURU_BIN/$GURU_CALL" "$GURU_BIN/$new_value"
-				set_value GURU_CALL "$new_value"
-				;;
-
-			audio)
-				[ "$1" ] &&	new_value=$1 || read -p "new value (true/false) : " new_value
-				set_value GURU_AUDIO_ENABLED "$new_value"
-				;;
-
-			conda)
-				conda_setup
-				return $?
-				;;
-
-			help|-h|--help)
-		 		printf "usage: guru set <variable> <value> \narguments: \n"
-            	printf "current|status          list of values \n"
-            	printf "help|-h|--help          help \n"
-            	printf "pre-made setup functions: \n"
-				printf 'conda                   setup conda installation \n'
-				printf 'audio <true/false>      set audio to "true" or "false" \n'
-				printf 'editor <editor>         wizard to set preferred editor \n'
-				;;
-
-			"")
-				;;
-
-			*)
-				[ $1 ] || return 130
-				set_value GURU_${argument^^} '"'"$@"'"'
-				echo "setting GURU_${argument^^} to $@"
-	esac
-}
-
 
 document () {
 
@@ -136,20 +74,6 @@ document () {
 }
 
 
-upgrade() {
-
-    local temp_dir="/tmp/guru"
-    local source="git@github.com:ugcasa/guru-ui.git"
-
-    [ -d "$temp_dir" ] && rm -rf "$temp_dir"
-    mkdir "$temp_dir"
-    cd "$temp_dir"
-    git clone "$source" || exit 666
-    guru uninstall
-    cd "$temp_dir/guru-ui"
-    bash install.sh "$@"
-    rm -rf "$temp_dir"
-}
 
 
 slack () {

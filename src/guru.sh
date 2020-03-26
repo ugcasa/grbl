@@ -3,6 +3,7 @@
 export GURU_VERSION="0.4.9"
 
 source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
+source $GURU_BIN/system.sh                       # common functions, if no .sh, check here
 source $GURU_BIN/functions.sh                       # common functions, if no .sh, check here
 source $GURU_BIN/mount.sh                           # common functions, if no .sh, check here
 source $GURU_BIN/lib/deco.sh                        # text decorations, functions like PASSED, ONLINE ..
@@ -17,17 +18,17 @@ main.parser () {                                    # parse arguments and delive
                              check)  VERBOSE=true; main.$tool "$@"               ; return $? ;;  # check and test cases
                              radio)  DISPLAY=0; $tool.py "$@"                    ; return $? ;;  # leave background + set display
                            uutiset)  $tool.py "$@"                               ; return $? ;;  # python scripts
-                         uninstall)  bash $GURU_BIN/uninstall.sh "$@"            ; return $? ;;  # Get rid of this shit
+                         uninstall)  bash "$GURU_BIN/$tool.sh" "$@"              ; return $? ;;  # Get rid of this shit
                   clear|ls|cd|echo)  $tool "$@"                                  ; return $? ;;  # os command pass trough
                  ssh|os|common|tme)  lib/$tool.sh "$@"                           ; return $? ;;  # direct lib calls
-         upgrade|document|terminal)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
-        set|trans|project|tor|user)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
-              unmount|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
+                          document)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
+            trans|project|tor|user)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
+       system|unmount|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
            scan|input|counter|note)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
        keyboard|phone|play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
       test|stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
                     help|-h|--help)  main.help "$@"                              ; return 0  ;;  # help printout
-                     version|--ver)  printf "guru tool-kit v.$GURU_VERSION \n"               ;;  # version output
+                     version|--ver)  printf "guru tool-kit v.$GURU_VERSION\n"               ;;  # version output
                                  *)  printf "$GURU_CMD: command %s not found \n" "$tool"     ;;  # false user input
     esac
 }

@@ -192,8 +192,8 @@ check_debian_repository () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then            # stand alone vs. include. main wont be called if included
-    source "$HOME/.gururc"
-    source "$GURU_BIN/functions.sh"
+    source $HOME/.gururc
+    source $GURU_BIN/functions.sh
     note.main "$@"
     exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
 fi
