@@ -269,8 +269,7 @@ system.test() {
                    system.upgrade_test            || _err=("${_err[@]}" "47")  # 7) return
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
-          release)
-                   system.get_test                || _err=("${_err[@]}" "42")  # 1) quick check
+          release) system.get_test                || _err=("${_err[@]}" "42")  # 1) quick check
                    #system.set_test                || _err=("${_err[@]}" "43")  # 3) information or check
                    system.rollback_test           || _err=("${_err[@]}" "46")  # 6) action, touch hot files
                    system.upgrade_test            || _err=("${_err[@]}" "47")  # 7) return
@@ -391,7 +390,7 @@ test.tool() {
     local _test_id=""                    #
     local _error=0
 
-    [ "$1" ] && _tool=$1 || read -r -p "input tool name to test: " _tool
+    [ "$1" ] && _tool="$1" || read -r -p "input tool name to test: " _tool
     [ "$2" ] && _case="$2" || _case="all"
     _test_id=$(counter.main add guru-shell_test_id)
     msg "\n${WHT}TEST $_test_id: guru-shell $_tool #$_case - $(date)\n${NC}"
@@ -462,7 +461,7 @@ test.release() {
 
 test.main() {
     # main test case parser
-    all_tools=("remote" "mount" "note" "system")
+    export all_tools=("remote" "mount" "note" "system")
     export VERBOSE=true
     export LOGGING=true
     case "$1" in
