@@ -183,7 +183,7 @@ note.test() {
                    note.list                || _err=("${_err[@]}" "42")  # 2) list stuff
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
-         validate) note.test_online         || _err=("${_err[@]}" "43")  # 3) check
+          release) note.test_online         || _err=("${_err[@]}" "43")  # 3) check
                    note.list                || _err=("${_err[@]}" "42")  # 2) list stuff
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
@@ -207,7 +207,7 @@ remote.test () {
                   remote.test_config        || _err=34    # 4) out of system action
                   if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                   ;;
-        validate) remote.check              || _err=31    # 1) quick check
+         release) remote.check              || _err=31    # 1) quick check
                   remote.test_config        || _err=34    # 4) out of system action
                   if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                   ;;
@@ -241,7 +241,7 @@ mount.test () {
                   mount.clean_test          || _err=("${_err[@]}" "29")  # make clean
                   if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                   ;;
-        validate) mount.check_system        || _err=("${_err[@]}" "21")  # 1) quick check
+         release) mount.check_system        || _err=("${_err[@]}" "21")  # 1) quick check
                   mount.test_list           || _err=("${_err[@]}" "22")  # 2) list of stuff
                   mount.test_info           || _err=("${_err[@]}" "23")  # 3) information
                   mount.test_mount          || _err=("${_err[@]}" "24")  # 4) out of system action
@@ -258,15 +258,15 @@ mount.test () {
 
 test.help () {
     echo "-- guru tool-kit main test help -------------------------------------"
-    printf "usage:\t %s test <tool>|all|validate <tc_nr>|all   \n" "$GURU_CALL"
+    printf "usage:\t %s test <tool>|all|release <tc_nr>|all   \n" "$GURU_CALL"
     printf "\ntools:\n"
     printf " <tool> <tc_nr>|all     all test cases \n"
-    printf " <tool> validate        validation tests prints out only results \n"
-    printf " validate               run full validation test \n"
+    printf " <tool> release        validation tests prints out only results \n"
+    printf " release               run full validation test \n"
     printf "\nexample:"
     printf "\t %s test mount 1 \n" "$GURU_CALL"
     printf "\t\t %s test remote all \n" "$GURU_CALL"
-    printf "\t\t %s test validate \n" "$GURU_CALL"
+    printf "\t\t %s test release \n" "$GURU_CALL"
     return 0
 }
 
@@ -283,8 +283,8 @@ test.tool() {
     [ "$1" ] && _tool=$1 || read -r -p "input tool name to test: " _tool
     [ "$2" ] && _case="$2" || _case="all"
 
-    [ $SILENT ] && _test_id=$(counter.main add guru-shell_test_id)
-    [ $SILENT ] && msg "\n${WHT}TEST $_test_id: guru-shell $_tool #$_case - $(date)\n${NC}"
+     _test_id=$(counter.main add guru-shell_test_id)
+     msg "\n${WHT}TEST $_test_id: guru-shell $_tool #$_case - $(date)\n${NC}"
 
     if [ -f "$GURU_BIN/$_tool.sh" ]; then
                 _lang="sh"
@@ -292,7 +292,7 @@ test.tool() {
                 _lang="py"
         else
                 msg "tool '$_tool' not found\n"
-                [ $SILENT ] && TEST_FAILED "TEST $_test_id $_tool"
+                 TEST_FAILED "TEST $_test_id $_tool"
                 return 10
         fi
 
@@ -300,15 +300,15 @@ test.tool() {
     $1.test "$_case" ; _error=$?
 
     if ((_error==1)) ; then
-        [ $SILENT ] && TEST_IGNORED "TEST $_test_id $_tool.$_lang"
+         TEST_IGNORED "TEST $_test_id $_tool.$_lang"
         return 0
         fi
 
     if ((_error<1)) ; then
-            [ $SILENT ] && TEST_PASSED "TEST $_test_id $_tool.$_lang"
+             TEST_PASSED "TEST $_test_id $_tool.$_lang"
             return 0
         else
-            [ $SILENT ] && TEST_FAILED "TEST $_test_id $_tool.$_lang"
+             TEST_FAILED "TEST $_test_id $_tool.$_lang"
             return $_error
         fi
 }
@@ -332,19 +332,19 @@ test.all() {
 }
 
 
-test.validate() {
+test.release() {
     # validation test, tests all but prints out only module reports
     local _error=0
     local _test_id=$(counter.main add guru-shell_validation_test_id)
 
-        msg "\n${WHT}VALIDATION TEST $_test_id: guru-shell v.$GURU_VERSION $(date)${NC}\n"
+        msg "\n${WHT}RELEASE TEST $_test_id: guru-shell v.$GURU_VERSION $(date)${NC}\n"
         test.all |grep --color=never "result is:" |grep "TEST" || _error=$?
 
         if ((_error<9)); then
-                PASSED "VALIDATION $_test_id RESULT"
+                PASSED "RELEASE $_test_id RESULT"
             else
                 msg "last error code were: $_error\n"
-                FAILED "VALIDATION $_test_id RESULT"
+                FAILED "RELEASE $_test_id RESULT"
             fi
         return $_error
 }
@@ -355,12 +355,11 @@ test.main() {
     all_tools=("remote" "mount" "note")
     export VERBOSE=true
     export LOGGING=true
-    export SILENT=""
     case "$1" in
         snap|quick) test.all 1              ; return $? ;;
             *[1-9]) test.all "$1"           ; return $? ;;
                all) time test.all           ; return $? ;;
-          validate) test.validate           ; return 0  ;;
+           release) test.release            ; return 0  ;;
         help|-h|"") test.help               ; return 0  ;;
         *)          test.tool $@            ; return $? ;;
     esac
@@ -370,7 +369,6 @@ test.main() {
 test.loop() {
     export VERBOSE=true                             # reports unit test output
     export LOGGING=false                            # disables logging to file
-    export SILENT=true                              # disables test counter and header printout
     TIMEFORMAT='%R'
 
     msg "start '$1' case '$2' loop by pressing 'enter' (quit 'q'): "
