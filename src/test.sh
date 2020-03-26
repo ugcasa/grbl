@@ -177,7 +177,7 @@ system.upgrade_test () {
     local _target_version="$GURU_VERSION"
     local _error=0
 
-    system.upgrade || return $?
+    system.upgrade >/dev/null || return $?
     grep "$_target_version" <<< "$(bash $GURU_BIN/$GURU_CALL version)"; _error=$?
 
     if ((_error<1)) ; then
@@ -195,7 +195,7 @@ system.rollback_test () {
     local _target_version="0.4.8"
     local _error=0
 
-    system.rollback || return $?
+    system.rollback >>/dev/null || return $?
     grep "$_target_version" <<< "$(bash $GURU_BIN/$GURU_CALL version)"; _error=$?
 
     if ((_error<1)) ; then
@@ -205,7 +205,7 @@ system.rollback_test () {
         _error=$((_error+10))
       fi
 
-    system.upgrade || return $?
+    system.upgrade >/dev/null || return $?
 
     if ((_error<1)) ; then
         TEST_PASSED "${FUNCNAME[0]}"
@@ -218,7 +218,7 @@ system.rollback_test () {
 
 system.get_test () {
     # get system values test
-    if system.get "audio_enabled" | grep "true" >>/dev/null; then
+    if system.get "audio_enabled" | grep "true" >/dev/null; then
         TEST_PASSED "${FUNCNAME[0]}"
         return 0
     else
@@ -231,7 +231,7 @@ system.set_test () {
     # WILL FAIL sed broken fix later
     system.set "audio_enabled" "test"
     msg "return.. $(system.get audio_enabled)\n"
-    if system.get "audio_enabled" | grep "test" >>/dev/null; then
+    if system.get "audio_enabled" | grep "test" >/dev/null; then
             TEST_PASSED "${FUNCNAME[0]}"
             #system.set "audio_enabled" "true"
             return 0
@@ -493,7 +493,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source $HOME/.gururc
     source $GURU_BIN/lib/deco.sh
     export VERBOSE=true
-    export COUNTER=""
 
     case "$1" in
         loop) shift ; test.loop "$@" ; exit "$?" ;;
