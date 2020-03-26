@@ -14,13 +14,13 @@ system.test() {
                 3) system.set_test                ; return $? ;;  # 3) information or check
                 6) system.rollback_test           ; return $? ;;  # 6) action, touch hot files
           clean|7) system.upgrade_test            ; return $? ;;  # 7) return
-              all) system.get_test                || _err=("${_err[@]}" "41")  # 1) quick check
+            all|8) system.get_test                || _err=("${_err[@]}" "41")  # 1) quick check
                    #system.set_test                || _err=("${_err[@]}" "43")  # 3) information or check
                    system.rollback_test           || _err=("${_err[@]}" "46")  # 6) action, touch hot files
                    system.upgrade_test            || _err=("${_err[@]}" "47")  # 7) return
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
-          release) system.get_test                || _err=("${_err[@]}" "42")  # 1) quick check
+        release|9) system.get_test                || _err=("${_err[@]}" "42")  # 1) quick check
                    #system.set_test                || _err=("${_err[@]}" "43")  # 3) information or check
                    system.rollback_test           || _err=("${_err[@]}" "46")  # 6) action, touch hot files
                    system.upgrade_test            || _err=("${_err[@]}" "47")  # 7) return

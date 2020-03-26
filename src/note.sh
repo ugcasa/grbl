@@ -41,17 +41,25 @@ note.main () {
 }
 
 note.check() {
-    msg "check note mount.. "
-    mount.online "$GURU_NOTES" #& ONLINE || OFFLINE
-    msg "check template mount.. "
-    mount.online "$GURU_TEMPLATES" #& ONLINE || OFFLINE
+    mount.online "$GURU_NOTES"
+    mount.online "$GURU_TEMPLATES"
     return 0
 }
 
 
+note.online () {
+    if mount.online "$GURU_NOTES" >/dev/null && mount.online "$GURU_TEMPLATES" >/dev/null; then
+            return 0
+        else
+            return 1
+        fi
+}
+
+
 note.remount() {
-    mount.online "$GURU_NOTES"      || mount.remote "$GURU_CLOUD_NOTES" "$GURU_NOTES"
-    mount.online "$GURU_TEMPLATES"  || mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES"
+    mount.remote "$GURU_CLOUD_NOTES" "$GURU_NOTES" || return 100
+    mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" || return 100
+    return 0
 }
 
 
@@ -65,7 +73,7 @@ note.list() {
     if [ -d "$directory" ]; then
         ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted"
     else
-        msg "no folder exist"
+        msg "no folder exist\n"
         return 126
     fi
 }

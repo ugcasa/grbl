@@ -5,7 +5,7 @@ source $GURU_BIN/note.sh
 source $GURU_BIN/mount.sh
 
 note.test_online() {
-    if note.remount ; then
+    if note.online ; then
             TEST_PASSED "${FUNCNAME[0]}"
             return 0
         else
@@ -24,12 +24,12 @@ note.test() {
                 1) note.check               ; return $? ;;  # 1) quick check
                 2) note.list                ; return $? ;;  # 2) list stuff
                 3) note.test_online         ; return $? ;;  # 3) check
-                6) note.contruct "20191212" ; return $? ;;  # 6) action, touch hot files
-              all) note.test_online         || _err=("${_err[@]}" "43")  # 3) check
+                4) note.remount 		    ; return $? ;;  # 4) action, test locations
+            all|8) note.test_online         || _err=("${_err[@]}" "43")  # 3) check
                    note.list                || _err=("${_err[@]}" "42")  # 2) list stuff
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
-          release) note.test_online         || _err=("${_err[@]}" "43")  # 3) check
+        release|9) note.test_online         || _err=("${_err[@]}" "43")  # 3) check
                    note.list                || _err=("${_err[@]}" "42")  # 2) list stuff
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;

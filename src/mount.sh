@@ -159,15 +159,14 @@ mount.online() {
 
     if ! [ "$GURU_FILESERVER_STATUS"=="online" ] ; then
         msg "$WARNING system mount unstable \n"         # do not to like write logs if unmounted
-        #msg "Mount $target_folder status $UNKNOWN \n"
         return 24
     fi
 
     msg "$target_folder status "
-    grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null && status="mounted" || status="offline"
-    ls -1qA "$target_folder" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
+    #grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null || return 23
+    #ls -1qA "$target_folder" | grep -q . >/dev/null 2>&1 || return 23
 
-    if [ status=="mounted" ] && [ "$contans_stuff" ]; then
+    if [ -f "$target_folder/.online" ]; then
         ONLINE
         return 0
     else
