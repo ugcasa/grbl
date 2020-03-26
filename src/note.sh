@@ -56,6 +56,7 @@ note.remount() {
 
 
 note.list() {
+    note.remount
     # List of notes on this month and year or given in order and format YYYY MM
     [ "$1" ] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
     [ "$2" ] && year=$(date -d "$2"-1-1 +%Y) || year=$(date +%Y)                  #; echo "year: $year"

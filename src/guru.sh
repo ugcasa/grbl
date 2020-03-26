@@ -1,43 +1,37 @@
 #!/bin/bash
 # guru tool-kit - caa@ujo.guru 2020
-export GURU_VERSION="0.4.8"
+export GURU_VERSION="0.4.9"
 
-source $HOME/.gururc                              # user and platform settings (implement here, always up to date)
-source $GURU_BIN/functions.sh                     # common functions, if no .sh, check here
-source $GURU_BIN/remote.sh
-source $GURU_BIN/note.sh
-source $GURU_BIN/timer.sh
-source $GURU_BIN/mount.sh                         # common functions, if no .sh, check here
-source $GURU_BIN/lib/deco.sh                      # text decorations, functions like PASSED, ONLINE ..
+source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
+source $GURU_BIN/functions.sh                       # common functions, if no .sh, check here
+source $GURU_BIN/mount.sh                           # common functions, if no .sh, check here
+source $GURU_BIN/lib/deco.sh                        # text decorations, functions like PASSED, ONLINE ..
 source $GURU_BIN/lib/common.sh
 
-#echo "status: $GURU_SYSTEM_STATUS $GURU_FILESERVER_STATUS"
+main.parser () {                                    # parse arguments and delivery variables to corresponding worker
+    tool="$1"; shift                                # store tool call name and shift arguments left
+    export GURU_CMD="$tool"                         # Store tool call name to other functions
+    export GURU_SYSTEM_STATUS="processing $tool"    # system status can use as part of error exit message
 
-main.parser () {
-    # parse arguments and delivery variables to corresponding worker
-    tool="$1"; shift                                                                 # store tool call name and shift arguments left
-    export GURU_CMD="$tool"                                                          # Store tool call name to other functions
-    export GURU_SYSTEM_STATUS="processing $tool"
     case "$tool" in
-        check)              main.$tool "$@" ; return $? ;;                           # check and test cases
-        tor|trans|upgrade|document|terminal)                                         # function tools
-                            $tool "$@" ; return $? ;;
-        test|unmount|mount|user|project|remote|counter|note|stamp|timer|tag|install)      # shell scrip tools
-                            $tool.sh "$@" ; return $? ;;
-        clear|ls|cd|echo)   $tool "$@" ; return $? ;;                                # os command pass trough
-        ssh|os|common|tme)  lib/$tool.sh "$@"; return $? ;;                          # direct lib calls
-        uutiset)            $tool.py "$@" ; return $? ;;                             # python scripts
-        radio)              DISPLAY=:0 ; $tool.py "$@" & ;;                          # leave background + set display
-        slack|set)          $tool "$@" ; return $? ;;                                # function prototypes
-        keyboard|scan|input|phone|play|vol|yle)                                      # shell scipt prototypes
-                            $tool.sh "$@" ; return $? ;;
-        uninstall)          bash $GURU_BIN/uninstall.sh "$@" ; return $? ;;          # Get rid of this shit
-        version|--ver)      printf "guru tool-kit v.$GURU_VERSION \n" ; return 0 ;;
-        help|-h|--help)     main.help "$@" ; return 0 ;;                             # hardly never updated help printout
-        *)                  printf "$GURU_CMD: command %s not found \n" "$tool"
-
+                             check)  VERBOSE=true; main.$tool "$@"               ; return $? ;;  # check and test cases
+                             radio)  DISPLAY=0; $tool.py "$@"                    ; return $? ;;  # leave background + set display
+                           uutiset)  $tool.py "$@"                               ; return $? ;;  # python scripts
+                         uninstall)  bash $GURU_BIN/uninstall.sh "$@"            ; return $? ;;  # Get rid of this shit
+                  clear|ls|cd|echo)  $tool "$@"                                  ; return $? ;;  # os command pass trough
+                 ssh|os|common|tme)  lib/$tool.sh "$@"                           ; return $? ;;  # direct lib calls
+         upgrade|document|terminal)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
+        set|trans|project|tor|user)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
+              unmount|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
+           scan|input|counter|note)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
+       keyboard|phone|play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
+      test|stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
+                    help|-h|--help)  main.help "$@"                              ; return 0  ;;  # help printout
+                     version|--ver)  printf "guru tool-kit v.$GURU_VERSION \n"               ;;  # version output
+                                 *)  printf "$GURU_CMD: command %s not found \n" "$tool"     ;;  # false user input
     esac
 }
+
 
 main.help () {
     echo "-- guru tool-kit main help ------------------------------------------"
@@ -117,51 +111,50 @@ main.terminal() {
     # Terminal looper
     VERBOSE=true
     msg "$GURU_CALL in terminal mode (type 'help' enter for help)\n"
-    while :
-        do
+    while : ; do
             source $HOME/.gururc
             read -e -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd"
             [ "$cmd" == "exit" ] && return 0
             main.parser $cmd
         done
-    return 123
 }
 
 
 main() {
 
-    local error_code=0
-    [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG" # Remove old error messages
-    export GURU_SYSTEM_PLATFORM="$(check_distro)"       # run wide platform check
-    export GURU_SYSTEM_STATUS="starting.."              # needs to be "ready"
+    local _error_code=0
+    [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"                                 # Remove old error messages
+
+    export GURU_SYSTEM_PLATFORM="$(check_distro)"                                       # run wide platform check
+    export GURU_SYSTEM_STATUS="starting.."                                              # needs to be "ready"
     export GURU_FILESERVER_STATUS="unknown"
 
     if [ "$GURU_FILESERVER_STATUS" != "online" ]; then
-        mount.system                                    # mount system mount point
-    fi
+            mount.system                                                                # mount system mount point
+        fi
 
-    if [ "$GURU_FILESERVER_STATUS" == "online" ] && [ "$GURU_SYSTEM_STATUS" != "ready" ]; then     # require track mount
-        export GURU_SYSTEM_STATUS="ready"
-    fi
+    if [ "$GURU_FILESERVER_STATUS" == "online" ] && [ "$GURU_SYSTEM_STATUS" != "ready" ]; then
+            export GURU_SYSTEM_STATUS="ready"                                           # require track mount
+        fi
 
-    counter.main add guru-runned >/dev/null
+    counter.main add guru-runned >/dev/null                                             # run counter
 
     if [ "$1" ]; then
-        main.parser "$@"                                                            # with arguments go to parser
-        error_code=$?
-    else
-        main.terminal                                                               # guru without parameters starts terminal loop
-        error_code=$?
-    fi
+            main.parser "$@"                                                            # with arguments go to parser
+            _error_code=$?
+        else
+            main.terminal                                                               # guru without parameters starts terminal loop
+            _error_code=$?
+        fi
 
-    if (( error_code > 1 )); then                                                   # 1 is warning, no error output
-        [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)      # TODO when re-write error less than 10 are warnings + list of them
-        ERROR "$error_code while $GURU_SYSTEM_STATUS $error_message \n"       # print error
-        [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"
-    fi
+    if (( _error_code > 1 )); then                                                       # 1 is warning, no error output
+            [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)      # TODO when re-write error less than 10 are warnings + list of them
+            ERROR "$_error_code while $GURU_SYSTEM_STATUS $error_message \n"             # print error
+            [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"
+        fi
 
     export GURU_SYSTEM_STATUS="done"
-    return $error_code
+    return $_error_code
 }
 
 
@@ -170,9 +163,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     export VERBOSE="$GURU_VERBOSE"                      # use verbose setting from personal config
     while getopts 'lvf' flag; do                          # if verbose flag given, overwrite personal config
         case "${flag}" in
-            l)  export LOGGING="true"; shift;;
-            v)  export VERBOSE="true"; shift ;;
-            f)  export FORCE="true"; shift ;;
+            l)  export LOGGING="true" ; shift ;;
+            v)  export VERBOSE="true" ; shift ;;
+            f)  export FORCE="true"   ; shift ;;
             *)  echo "invalid flag"
                 exit 1
         esac
@@ -180,6 +173,5 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
     main "$@"
     exit $?
-
 fi
 

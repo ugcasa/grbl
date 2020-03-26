@@ -2,7 +2,7 @@
 # mount tools for guru tool-kit
 #source $GURU_BIN/functions.sh
 source $GURU_BIN/lib/common.sh
-#source $GURU_BIN/lib/deco.sh
+source $GURU_BIN/lib/deco.sh
 
 
 mount.main() {
@@ -10,7 +10,7 @@ mount.main() {
     argument="$1"; shift
     case "$argument" in
             check-system)   mount.check_system      ; return $? ;;
-                   check)   mount.check "$@"        ; return $? ;;
+                   check)   mount.online "$@"        ; return $? ;;
                  ls|list)   mount.list              ; return $? ;;
                     info)   mount.sshfs_info        ; return $? ;;
                    mount)   mount.remote "$1" "$2"  ; return $? ;;
@@ -65,7 +65,7 @@ mount.sshfs_get_info(){
     local _error=0
     [ $TEST ] || msg "${WHT}user@server remote_folder local_mountpoint  uptime ${NC}\n"                      # header (stdout when -v)
     mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |                                              # get the mount data
-    while read mount; do                                                                                    # Iterate over them
+    while read mount ; do                                                                                    # Iterate over them
         mount | grep -w "$mount" |                                                                          # Get the details of this mount
         perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1 $2 $3"'  # perl magic thanks terdon! https://unix.stackexchange.com/users/22222/terdon
         _error=$?                                                                                           # last error, maily if perl is not installed
@@ -77,7 +77,8 @@ mount.sshfs_get_info(){
 
 
 mount.sshfs_info() {
-    mount.sshfs_get_info |column -t -s $' '
+    mount.sshfs_get_info | column -t -s $' '
+    return $?
 }
 
 
@@ -102,12 +103,12 @@ mount.check_system_mount() {
         GURU_FILESERVER_STATUS=".online file not found"
         return 20
 
-    elif [ "$status" == "mounted" ]; then
+    elif [ "$status" == "mounted" ] ; then
         GURU_SYSTEM_STATUS="validating system mount.."
         GURU_FILESERVER_STATUS="empty system mount point"
         return 20
 
-    elif [ "$status" == "offline" ]; then
+    elif [ "$status" == "offline" ] ; then
         GURU_SYSTEM_STATUS="offline"
         GURU_FILESERVER_STATUS="offline"
         return 20
@@ -122,7 +123,7 @@ mount.check_system_mount() {
 
 mount.check_system() {
     msg "checking system mountpoint.. "
-    mount.check_system_mount;  result=$?
+    mount.check_system_mount ; result=$?
     if ((result<1)); then
             PASSED
         else
@@ -135,7 +136,7 @@ mount.check_system() {
 }
 
 mount.system () {
-    if ! mount.check_system_mount; then
+    if ! mount.check_system_mount ; then
             mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK"
         fi
 }
@@ -147,22 +148,23 @@ mount.online() {
     #        mount.online && OK || WARNING
     local target_folder=$1; shift
     local contans_stuff=""
+    local status=""
 
-    if ! [ -d "$target_folder" ]; then
-        msg "folder '$target_folder' does not exist"
+    if ! [ -d "$target_folder" ] ; then
+        msg "folder '$target_folder' does not exist\n"
         return 123
     fi
 
     mount.check_system_mount                                       # Check that system mount is ok
 
-    if ! [ "$GURU_FILESERVER_STATUS"=="online" ]; then
+    if ! [ "$GURU_FILESERVER_STATUS"=="online" ] ; then
         msg "$WARNING system mount unstable \n"         # do not to like write logs if unmounted
         #msg "Mount $target_folder status $UNKNOWN \n"
         return 24
     fi
 
     msg "$target_folder status "
-    grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null && local status="mounted" || local status="offline"
+    grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null && status="mounted" || status="offline"
     ls -1qA "$target_folder" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
 
     if [ status=="mounted" ] && [ "$contans_stuff" ]; then
@@ -209,7 +211,7 @@ mount.remote() {
 
     [ -d "$target_folder" ] ||mkdir -p "$target_folder"                 # be sure that mount point exist
 
-    mount.online "$target_folder" && return 1                           # mount.unmount "$target_folder"
+    mount.online "$target_folder" && return 0                           # already mounted
     #[ "$source_folder" == "unmount" ] && return 0                      # if first argument is "unmount" all done for now, exit
     [ "$(ls $target_folder)" ] && return 25                             # Check that directory is empty
 
@@ -246,7 +248,7 @@ mount.known_remote () {
 }
 
 
-mount.defaults_raw() {
+mount.defaults_raw () {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
    local _error="0"
     if [ "$GURU_CLOUD_COMPANY" ]; then   mount.remote "$GURU_CLOUD_COMPANY" "$GURU_COMPANY" || _error="1"; fi
@@ -263,7 +265,7 @@ mount.defaults_raw() {
 }
 
 
-unmount.defaults_raw() {
+unmount.defaults_raw () {
     # unmount all TODO do better
     local _error=0
     if [ "$GURU_CLOUD_VIDEO" ]; then      mount.unmount "$GURU_VIDEO" || _error="true"; fi
@@ -280,7 +282,7 @@ unmount.defaults_raw() {
 }
 
 
-mount.needed() {
+mount.needed () {
     #install and remove needed applications. input "install" or "remove"
     local action=$1
     [ "$action" ] || read -r -p "install or remove? " action
