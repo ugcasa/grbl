@@ -26,10 +26,11 @@ note.test() {
                 3) note.test_online         ; return $? ;;  # 3) check
                 4) note.remount 		    ; return $? ;;  # 4) action, test locations
             all|8) note.test_online         || _err=("${_err[@]}" "43")  # 3) check
+                   note.remount 			|| _err=("${_err[@]}" "44")  # 4) action, test locations
                    note.list                || _err=("${_err[@]}" "42")  # 2) list stuff
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
-        release|9) note.test_online         || _err=("${_err[@]}" "43")  # 3) check
+        release|9) note.remount 			|| _err=("${_err[@]}" "44")  # 4) action, test locations
                    note.list                || _err=("${_err[@]}" "42")  # 2) list stuff
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;

@@ -18,7 +18,7 @@ source $GURU_BIN/lib/deco.sh
 
 test.main() {
     # main test case parser
-    export all_tools=("system" "remote" "mount" "note")
+    export all_tools=("remote" "mount" "note" "system")
     export VERBOSE=true
     export LOGGING=true
     case "$1" in
@@ -54,7 +54,7 @@ test.tool() {
     local _tool=""
     local _case=""
     local _lang=""
-    local _test_id=""                    #
+    local _test_id=""
     local _error=0
 
     [ "$1" ] && _tool="$1" || read -r -p "input tool name to test: " _tool
