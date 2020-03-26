@@ -65,6 +65,10 @@ TEST_PASSED() {
 	[ "$1" ] && msg "${WHT}$1 test result is:${NC} $PASSED" || msg "${WHT}test resul is:${NC} $PASSED"
 }
 
+TEST_IGNORED() {
+	[ "$1" ] && msg "${WHT}$1 test is${NC} $IGNORED" || msg "${WHT}test resul is${NC} $IGNORED"
+}
+
 ERROR() {
 	[ "$1" ] && msg "$ERROR ${WHT}$1${NC}" || msg "$ERROR"
 }
