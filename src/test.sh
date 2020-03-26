@@ -13,11 +13,11 @@ source $GURU_BIN/timer.sh
 
 
 note.test_online() {
-    if note.remount; then
-            TEST_PASSED ${FUNCNAME[0]}
+    if note.remount ; then
+            TEST_PASSED "${FUNCNAME[0]}"
             return 0
         else
-            TEST_FAILED ${FUNCNAME[0]}
+            TEST_FAILED "${FUNCNAME[0]}"
             return 10
         fi
     return $?
@@ -26,32 +26,34 @@ note.test_online() {
 
 remote.test_config(){
     # test remote configuration pull and push
-    local _error=30
-    if remote.push_config; then
+    local _error=0
+
+    if remote.push_config ; then
             _error=0
         else
             _error=$((_error+1))
         fi
 
-    if remote.pull_config; then
+    if remote.pull_config ; then
             _error=$_error
         else
             _error=$((_error+1))
         fi
 
-    if ((_error<9)); then
-            TEST_PASSED ${FUNCNAME[0]}
+    if ((_error<9)) ; then
+            TEST_PASSED "${FUNCNAME[0]}"
         else
-            TEST_FAILED ${FUNCNAME[0]}
+            TEST_FAILED "${FUNCNAME[0]}"
         fi
-    if ((_error>9)); then return 32; fi
+    if ((_error>9)) ; then return 32 ; fi
     return 0
 }
 
 
 mount.clean_test () {
-    local error=20
-    if unmount.defaults_raw; then
+    local error=0
+
+    if unmount.defaults_raw ; then
             TEST_PASSED "${FUNCNAME[0]} unmount"
             error=0
         else
@@ -59,24 +61,25 @@ mount.clean_test () {
             error=10
         fi
 
-    if mount.defaults_raw; then
+    if mount.defaults_raw ; then
             TEST_PASSED "${FUNCNAME[0]} mount"
             error=$((error))
         else
             TEST_FAILED "${FUNCNAME[0]} mount"
              error=21
         fi
-    if ((_error>9)); then return 28; fi
+    if ((_error>9)) ; then return 28 ; fi
     return 0
 }
 
 
 mount.test_mount () {
-    if mount.remote "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount"; then
-            TEST_PASSED ${FUNCNAME[0]}
+
+    if mount.remote "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount" ; then
+            TEST_PASSED "${FUNCNAME[0]}"
             return 0
         else
-            TEST_FAILED ${FUNCNAME[0]}
+            TEST_FAILED "${FUNCNAME[0]}"
             return 22
         fi
 }
@@ -84,12 +87,13 @@ mount.test_mount () {
 
 mount.test_unmount () {
     local _mount_point="$HOME/tmp/test_mount"
-    if mount.unmount "$_mount_point"; then
-            TEST_PASSED ${FUNCNAME[0]}
+
+    if unmount.remote "$_mount_point" ; then
+            TEST_PASSED "${FUNCNAME[0]}"
             rm -rf "$H_mount_point" || WARNING "error when removing $_mount_point "
             return 0
         else
-            TEST_FAILED ${FUNCNAME[0]}
+            TEST_FAILED "${FUNCNAME[0]}"
             return 23
         fi
 }
@@ -97,8 +101,9 @@ mount.test_unmount () {
 
 mount.test_default_mount (){
     local _err=0
+
     msg "file server default folder mount \n"
-    if mount.defaults_raw; then
+    if mount.defaults_raw ; then
             TEST_PASSED "${FUNCNAME[0]} mount"
             _err=0
         else
@@ -108,34 +113,41 @@ mount.test_default_mount (){
 
     sleep 0.5
     msg "un-mount defaults  "
-    if unmount.defaults_raw; then
-            TEST_PASSED "${FUNCNAME[0]} unmount"
+    if unmount.defaults_raw ; then
+            TEST_PASSED "${ FUNCNAME[0]} unmount"
             _err=$_err
         else
             TEST_FAILED "${FUNCNAME[0]} unmount"
             _err=$((_err+1))
         fi
 
-    if ((_err>9)); then return 29; fi
+    if ((_err>9)) ; then return 29 ; fi
     return 0
 }
 
 
 mount.test_known_remote () {
-    local _error=""
-    mount.unmount Audio
-    mount.known_remote Audio; _error=$?
+    # Test that
+    local _err=("$0")
+    unmount.known_remote audio ; _err=("${_err[@]}" "$?")
+    mount.known_remote audio ;   _err=("${_err[@]}" "$?")        # Second error in list is to validate result
 
-    if ((_error>9)); then TEST_FAILED ${FUNCNAME[0]}; return 27; fi
-    TEST_PASSED ${FUNCNAME[0]}
-    return 0
+    if [[ ${_err[2]} -gt 0 ]]; then
+            echo "error: ${_err[@]}"
+            TEST_FAILED "${FUNCNAME[0]}"
+            return ${_err[2]};                                 # Return error
+        else
+            TEST_PASSED "${FUNCNAME[0]}"
+            return 0
+        fi
 }
 
 
 mount.test_list () {
     msg "sshfs list check: "
     mount.system || return 24                       # be sure that system is mounted
-    if mount.list | grep "/Track"; then             # if "Track" is in output pass
+
+   if mount.list | grep "/Track" ; then             # if "Track" is in output pass
         TEST_PASSED "${FUNCNAME[0]}"
         return 0
     else
@@ -148,7 +160,8 @@ mount.test_list () {
 mount.test_info () {
     msg "sshfs list check: "
     mount.system || return 25                       # be sure that system is mounted
-    if mount.sshfs_info | grep "/Track"; then       # if "Track" is in output pass
+
+    if mount.sshfs_info | grep "/Track" ; then       # if "Track" is in output pass
         TEST_PASSED "${FUNCNAME[0]}"
         return 0
     else
@@ -171,9 +184,9 @@ mount.test_info () {
 
 
 note.test() {
-    mount.system
     local test_case="$1"
     local _err=("$0")
+    mount.system
     case "$test_case" in
                 1) note.check               ; return $? ;;  # 1) quick check
                 2) note.list                ; return $? ;;  # 2) list stuff
@@ -218,7 +231,6 @@ remote.test () {
 }
 
 
-_err=("21" "${_err[@]}")
 
 mount.test () {
     mount.system
@@ -277,14 +289,13 @@ test.tool() {
     local _tool=""
     local _case=""
     local _lang=""
-    local _test_id=""
+    local _test_id=""                    #
     local _error=0
 
     [ "$1" ] && _tool=$1 || read -r -p "input tool name to test: " _tool
     [ "$2" ] && _case="$2" || _case="all"
-
-     _test_id=$(counter.main add guru-shell_test_id)
-     msg "\n${WHT}TEST $_test_id: guru-shell $_tool #$_case - $(date)\n${NC}"
+    _test_id=$(counter.main add guru-shell_test_id)
+    msg "\n${WHT}TEST $_test_id: guru-shell $_tool #$_case - $(date)\n${NC}"
 
     if [ -f "$GURU_BIN/$_tool.sh" ]; then
                 _lang="sh"
@@ -292,7 +303,7 @@ test.tool() {
                 _lang="py"
         else
                 msg "tool '$_tool' not found\n"
-                 TEST_FAILED "TEST $_test_id $_tool"
+                TEST_FAILED "TEST $_test_id $_tool"
                 return 10
         fi
 
@@ -367,23 +378,22 @@ test.main() {
 
 
 test.loop() {
-    export VERBOSE=true                             # reports unit test output
-    export LOGGING=false                            # disables logging to file
-    TIMEFORMAT='%R'
+    export VERBOSE=true                             # printout unit test output
+    export LOGGING=""                                # do not log to file
+    TIMEFORMAT='%R'                                 # time output format
 
     msg "start '$1' case '$2' loop by pressing 'enter' (quit 'q'): "
     while read -n 1 -e  cmd; do
             [ "$cmd" == "q" ] && return 0
             source $HOME/.gururc
-
-
-            [ $2 ] && time $1.test "$2" || time test.main "$@"
+            [ "$2" ] && time $1.test "$2" || time test.main "$@"
         done
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    VERBOSE="true"
+    export VERBOSE=true
+    export COUNTER=""
     source "$HOME/.gururc"
     case "$1" in
         loop) shift ; test.loop "$@" ; exit "$?" ;;

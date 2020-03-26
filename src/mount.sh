@@ -14,7 +14,7 @@ mount.main() {
                  ls|list)   mount.list              ; return $? ;;
                     info)   mount.sshfs_info        ; return $? ;;
                    mount)   mount.remote "$1" "$2"  ; return $? ;;
-                 unmount)   mount.unmount "$1"      ; return $? ;;
+                 unmount)   unmount.remote "$1"      ; return $? ;;
                  install)   mount.needed install    ; return $? ;;
          unistall|remove)   mount.needed remove     ; return $? ;;
                     help)   mount.help "$@"         ; return 0  ;;
@@ -36,7 +36,7 @@ mount.main() {
                                                 sudo fusermount -u "$argument"
                                                 return $?
                                             else
-                                                mount.unmount "$argument"
+                                                unmount.remote "$argument"
                                              fi                              ;;
                                     *)  mount.help
                             esac ;;
@@ -182,8 +182,9 @@ mount.check() {
 }
 
 
-mount.unmount () {
+unmount.remote () {
     local target_folder="$1"
+
     if ! [ -d "$target_folder" ]; then
         WARNING "folder '$target_folder' does not exist\n"
         return 23
@@ -201,19 +202,19 @@ mount.unmount () {
 
 
 mount.remote() {
-    # input remote_foder and mount_point. servers are already known
-    # returns error code of sshfs mount, 0 is success.
-    local source_folder=""
-    local target_folder=""
+    # input remote_foder and mount_point
+    local _source_folder=""
+    local _target_folder=""
 
-    [ "$1" ] && source_folder="$1" ||read -r -p "input source folder at server: " source_folder
-    [ "$2" ] && target_folder="$2" ||read -r -p "input target mount point: " target_folder
+    if [ "$1" ]; then _source_folder="$1"; else read -r -p "input source folder at server: " _source_folder; fi
+    if [ "$2" ]; then _target_folder="$2"; else read -r -p "input target mount point: " _target_folder; fi
 
-    [ -d "$target_folder" ] ||mkdir -p "$target_folder"                 # be sure that mount point exist
+    if ! [ -d "$_target_folder" ]; then
+        mkdir -p "$_target_folder"                                      # be sure that mount point exist
+        fi
 
-    mount.online "$target_folder" && return 0                           # already mounted
-    #[ "$source_folder" == "unmount" ] && return 0                      # if first argument is "unmount" all done for now, exit
-    [ "$(ls $target_folder)" ] && return 25                             # Check that directory is empty
+    mount.online "$_target_folder" && return 0                          # already mounted
+    [ "$(ls $_target_folder)" ] && return 25                            # Check that directory is empty
 
     local server="$GURU_LOCAL_FILE_SERVER"                              # assume that server is in local network
     local server_port="$GURU_LOCAL_FILE_SERVER_PORT"
@@ -224,18 +225,18 @@ mount.remote() {
         server_port="$GURU_REMOTE_FILE_SERVER_PORT"
         user="$GURU_REMOTE_FILE_SERVER_USER"
     fi
-    msg "mounting $target_folder "
+    msg "mounting $_target_folder "
 
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$source_folder" "$target_folder"
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$_source_folder" "$_target_folder"
     error=$?
 
     if ((error>0)); then
             WARNING "source folder not found, check $GURU_USER_RC\n"
-            [ -d "$target_folder" ] && rmdir "$target_folder"
+            [ -d "$_target_folder" ] && rmdir "$_target_folder"
             return 25
         else
             MOUNTED
-            return 0                                                                           #&& echo "mounted $server:$source_folder to $target_folder" || error="$
+            return 0                                                                           #&& echo "mounted $server:$_source_folder to $_target_folder" || error="$
         fi
 }
 
@@ -243,7 +244,14 @@ mount.remote() {
 mount.known_remote () {
     local _target=$(eval echo '$'"GURU_${1^^}")
     local _source=$(eval echo '$'"GURU_CLOUD_${1^^}")
-    mount.remote $_target $_source
+
+    mount.remote "$_target" "$_source"
+    return $?
+}
+
+unmount.known_remote () {
+    local _target=$(eval echo '$'"GURU_${1^^}")
+    unmount.remote "$_target"
     return $?
 }
 
@@ -268,15 +276,15 @@ mount.defaults_raw () {
 unmount.defaults_raw () {
     # unmount all TODO do better
     local _error=0
-    if [ "$GURU_CLOUD_VIDEO" ]; then      mount.unmount "$GURU_VIDEO" || _error="true"; fi
-    if [ "$GURU_CLOUD_AUDIO" ]; then      mount.unmount "$GURU_AUDIO" || _error="true"; fi
-    if [ "$GURU_CLOUD_MUSIC" ]; then      mount.unmount "$GURU_MUSIC" || _error="true"; fi
-    if [ "$GURU_CLOUD_PICTURES" ]; then   mount.unmount "$GURU_PICTURES" || _error="true"; fi
-    if [ "$GURU_CLOUD_PHOTOS" ]; then     mount.unmount "$GURU_PHOTOS" || _error="true"; fi
-    if [ "$GURU_CLOUD_TEMPLATES" ]; then  mount.unmount "$GURU_TEMPLATES" || _error="true"; fi
-    if [ "$GURU_CLOUD_NOTES" ]; then      mount.unmount "$GURU_NOTES" || _error="true"; fi
-    if [ "$GURU_CLOUD_FAMILY" ]; then     mount.unmount "$GURU_FAMILY" || _error="true"; fi
-    if [ "$GURU_CLOUD_COMPANY" ]; then    mount.unmount "$GURU_COMPANY" || _error="true"; fi
+    if [ "$GURU_CLOUD_VIDEO" ]; then      unmount.remote "$GURU_VIDEO" || _error="true"; fi
+    if [ "$GURU_CLOUD_AUDIO" ]; then      unmount.remote "$GURU_AUDIO" || _error="true"; fi
+    if [ "$GURU_CLOUD_MUSIC" ]; then      unmount.remote "$GURU_MUSIC" || _error="true"; fi
+    if [ "$GURU_CLOUD_PICTURES" ]; then   unmount.remote "$GURU_PICTURES" || _error="true"; fi
+    if [ "$GURU_CLOUD_PHOTOS" ]; then     unmount.remote "$GURU_PHOTOS" || _error="true"; fi
+    if [ "$GURU_CLOUD_TEMPLATES" ]; then  unmount.remote "$GURU_TEMPLATES" || _error="true"; fi
+    if [ "$GURU_CLOUD_NOTES" ]; then      unmount.remote "$GURU_NOTES" || _error="true"; fi
+    if [ "$GURU_CLOUD_FAMILY" ]; then     unmount.remote "$GURU_FAMILY" || _error="true"; fi
+    if [ "$GURU_CLOUD_COMPANY" ]; then    unmount.remote "$GURU_COMPANY" || _error="true"; fi
 
     [ "$_error" -gt "0" ] && return 0 || return 0           # do not care errors
 }
