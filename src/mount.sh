@@ -1,9 +1,7 @@
 #!/bin/bash
 # mount tools for guru tool-kit
-#source $GURU_BIN/functions.sh
-source $GURU_BIN/lib/common.sh
-source $GURU_BIN/lib/deco.sh
 
+source $GURU_BIN/lib/common.sh
 
 mount.main() {
     # mount tool command parser

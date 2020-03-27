@@ -1,11 +1,7 @@
 #!/bin/bash
 # sshfs mount functions for guru tool-kit
 
-source $GURU_BIN/functions.sh
 source $GURU_BIN/lib/common.sh
-source $GURU_BIN/lib/deco.sh
-source $GURU_BIN/lib/ssh.sh
-source $GURU_BIN/counter.sh
 
 remote.main() {
     command="$1"; shift
@@ -44,13 +40,12 @@ remote.check(){
         user="$GURU_REMOTE_FILE_SERVER_USER"
     fi
 
-    msg "$user@$server status "
-
+    msg "$user@$server status.. "
     if ssh -q -p "$server_port" "$user@$server" exit; then
-        ONLINE
+        msg "${GRN}ONLINE${NC}\n"
         return 0
     else
-        OFFLINE
+        msg "${RED}OFFLINE${NC}\n"
         return 132
     fi
 }
@@ -108,7 +103,6 @@ remote.needed() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    VERBOSE="true"
     source "$HOME/.gururc"
     remote.main "$@"
     exit 0

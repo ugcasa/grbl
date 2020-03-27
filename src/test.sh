@@ -18,7 +18,7 @@ source $GURU_BIN/lib/deco.sh
 
 test.main() {
     # main test case parser
-    export all_tools=("remote" "mount" "note" "system")
+    export all_tools=("mount" "remote" "note" "system")
     export VERBOSE=true
     export LOGGING=true
     case "$1" in

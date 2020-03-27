@@ -15,13 +15,11 @@ system.test() {
                 6) system.rollback_test           ; return $? ;;  # 6) action, touch hot files
           clean|7) system.upgrade_test            ; return $? ;;  # 7) return
             all|8) system.get_test                || _err=("${_err[@]}" "51")  # 1) quick check
-                   #system.set_test                || _err=("${_err[@]}" "53")  # 3) information or check
                    system.rollback_test           || _err=("${_err[@]}" "56")  # 6) action, touch hot files
                    system.upgrade_test            || _err=("${_err[@]}" "57")  # 7) return
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
         release|9) system.get_test                || _err=("${_err[@]}" "52")  # 1) quick check
-                   #system.set_test                || _err=("${_err[@]}" "53")  # 3) information or check
                    system.rollback_test           || _err=("${_err[@]}" "56")  # 6) action, touch hot files
                    system.upgrade_test            || _err=("${_err[@]}" "57")  # 7) return
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
@@ -34,11 +32,9 @@ system.test() {
 
 system.upgrade_test () {
     # input roll number
-    local _target_version="$GURU_VERSION"
     local _error=0
 
-    system.upgrade || return $?
-    grep "$_target_version" <<< "$(bash $GURU_BIN/$GURU_CALL version)"; _error=$?
+    system.upgrade ; _error=$?
 
     if ((_error<1)) ; then
         TEST_PASSED "${FUNCNAME[0]}"

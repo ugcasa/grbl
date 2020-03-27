@@ -3,6 +3,7 @@
 
 unset RED GRN YEL WHT BLU BRN NC
 
+
 if [ "$GURU_TERMINAL_COLOR" ]; then
 	export RED='\033[0;31m'
 	export GRN='\033[0;32m'
@@ -27,6 +28,8 @@ export ONLINE="${GRN}ONLINE${NC}\n"
 export OFFLINE="${BLU}OFFLINE${NC}\n"
 export UNKNOWN="${WHT}UNKNOWN${NC}\n"
 export OK="${WHT}OK!${NC}\n"
+
+
 
 
 PASSED() {

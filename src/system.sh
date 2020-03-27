@@ -1,9 +1,7 @@
 #!/bin/bash
 # system tools for guru tool-kit
-#source $GURU_BIN/functions.sh
-source $GURU_BIN/lib/common.sh
-source $GURU_BIN/lib/deco.sh
 
+source $GURU_BIN/lib/common.sh
 
 system.main() {
     local tool="$1"; shift
@@ -23,14 +21,14 @@ system.help () {
 system.upgrade() {
 
     local temp_dir="/tmp/guru"
-    local source="git@github.com:ugcasa/guru-ui.git"
+    local source="git@github.com:ugcasa/guru-shell.git"
 
     [ -d "$temp_dir" ] && rm -rf "$temp_dir"
     mkdir "$temp_dir"
     cd "$temp_dir"
     git clone "$source" || return 666
     bash $GURU_BIN/uninstall.sh
-    cd "$temp_dir/guru-ui"
+    cd "$temp_dir/guru-shell"
     bash install.sh "$@"
     cd
     # bash $GURU_BIN/$GURU_CALL version
@@ -41,7 +39,7 @@ system.upgrade() {
 system.rollback() {
 
     local temp_dir="/tmp/guru"
-    local source="git@github.com:ugcasa/guru-ui.git"
+    local source="git@github.com:ugcasa/guru-shell.git"
     local _roll_to="1"
     [ "$1" ] && _roll_to="$1"
 
@@ -50,7 +48,7 @@ system.rollback() {
     cd "$temp_dir"
     git clone -b "rollback$_roll_to" "$source" || exit 666
     bash $GURU_BIN/uninstall.sh
-    cd "$temp_dir/guru-ui"
+    cd "$temp_dir/guru-shell"
     bash install.sh "$@"
     cd
     # bash $GURU_BIN/$GURU_CALL version

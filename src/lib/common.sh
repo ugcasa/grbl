@@ -1,8 +1,4 @@
-# guru tool-kit common functions for installer casa@ujo.guru 2020
-# echo "common.sh: included by: $0"
-
-source "$GURU_BIN/lib/os.sh"       # folder by caller bubblecum cause 'source "lib/counter.sh"' not worky
-source "$GURU_BIN/counter.sh"
+# guru tool-kit common "libraries"
 
 msg() {
     #function for ouput messages and make log notifications. input "message string"
@@ -19,4 +15,7 @@ msg() {
 }
 
 export -f msg
+source $GURU_BIN/lib/os.sh
+source $GURU_BIN/lib/deco.sh
+source $GURU_BIN/counter.sh
 
