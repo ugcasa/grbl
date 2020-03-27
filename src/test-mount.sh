@@ -9,7 +9,7 @@ mount.test () {
     local test_case="$1"
     local _err=("$0")
     case "$test_case" in
-               1) mount.check_system        ; return $? ;;  # 1) quick check
+               1) mount.check               ; return $? ;;  # 1) quick check
                2) mount.test_list           ; return $? ;;  # 2) list of stuff
                3) mount.test_info           ; return $? ;;  # 3) information
                4) mount.test_mount          ; return $? ;;  # 4) out of system action

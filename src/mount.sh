@@ -10,11 +10,11 @@ mount.main() {
     argument="$1"; shift
     case "$argument" in
             check-system)   mount.check_system      ; return $? ;;
-                   check)   mount.online "$@"        ; return $? ;;
+                   check)   mount.online "$@"       ; return $? ;;
                  ls|list)   mount.list              ; return $? ;;
                     info)   mount.sshfs_info        ; return $? ;;
                    mount)   mount.remote "$1" "$2"  ; return $? ;;
-                 unmount)   unmount.remote "$1"      ; return $? ;;
+                 unmount)   unmount.remote "$1"     ; return $? ;;
                  install)   mount.needed install    ; return $? ;;
          unistall|remove)   mount.needed remove     ; return $? ;;
                     help)   mount.help "$@"         ; return 0  ;;
@@ -26,22 +26,18 @@ mount.main() {
                             esac ;;
                        *)   case "$GURU_CMD" in
                                mount)   if [ "$1" ]; then
-                                                mount.remote "$argument" "$1"
-                                                return $?
+                                                mount.remote "$argument" "$1"  ; return $?
                                             else
-                                                mount.known_remote "$argument"
-                                                return $?
-                                            fi                              ;;
+                                                mount.known_remote "$argument" ; return $? ; fi ;;
                              unmount)   if [ $FORCE ]; then
-                                                sudo fusermount -u "$argument"
-                                                return $?
+                                                sudo fusermount -u "$argument" ; return $?
                                             else
-                                                unmount.remote "$argument"
-                                             fi                              ;;
+                                                unmount.remote "$argument"     ; fi ;;
                                     *)  mount.help
                             esac ;;
     esac
 }
+
 
 mount.help() {
     echo "-- guru tool-kit mount help -----------------------------------------------"
@@ -83,12 +79,12 @@ mount.sshfs_info() {
 
 
 mount.list () {
-    #mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)'       remote
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
     return $?
 }
 
 
+## VVV paskaa
 mount.check_system_mount() {
     grep "sshfs" < /etc/mtab | grep "$GURU_TRACK" >/dev/null && status="mounted" || status="offline"
     ls -1qA "$GURU_TRACK" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
@@ -135,67 +131,81 @@ mount.check_system() {
     return $result
 }
 
+
+
 mount.system () {
     if ! mount.check_system_mount ; then
             mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK"
         fi
 }
 
+
 mount.online() {
     # input: mount point folder.
-    # returns: 0 if on line 1 of off line + log and nice colorful output for terminal
     # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
     #        mount.online && OK || WARNING
-    local target_folder=$1; shift
-    local contans_stuff=""
-    local status=""
+    local _target_folder="$1"
 
-    if ! [ -d "$target_folder" ] ; then
-        msg "folder '$target_folder' does not exist\n"
-        return 123
-    fi
-
-    mount.check_system_mount                                       # Check that system mount is ok
-
-    if ! [ "$GURU_FILESERVER_STATUS"=="online" ] ; then
-        msg "$WARNING system mount unstable \n"         # do not to like write logs if unmounted
-        return 24
-    fi
-
-    msg "$target_folder status "
-    #grep "sshfs" < /etc/mtab | grep "$target_folder" >/dev/null || return 23
-    #ls -1qA "$target_folder" | grep -q . >/dev/null 2>&1 || return 23
-
-    if [ -f "$target_folder/.online" ]; then
-        ONLINE
+    if [ -f "$_target_folder/.online" ] ; then
         return 0
     else
-        OFFLINE
-        return 23
+        return 1
     fi
 }
 
+
 mount.check() {
-    mount.online "$@"
-    return $?
+    # check mountpoint status with putput
+    local _target_folder="$1"
+    local _err=0
+    [ "$_target_folder" ] || _target_folder="$GURU_TRACK"
+
+    msg "$_target_folder status "
+    mount.online "$_target_folder" ; _err=$?
+
+    if [ $_err -gt 0 ] ; then
+            OFFLINE
+            return 1
+        fi
+    MOUNTED
+    return 0
+}
+
+
+unmount.force_remote () {
+    local target_folder="$1"
+    msg "need to force unmount.. "
+
+    if sudo fusermount -u "$target_folder" ; then
+            UNMOUNTED "$target_folder FORCE"
+            return 0
+        else
+            FAILED "$target_folder FORCE"
+            return 101
+        fi
 }
 
 
 unmount.remote () {
     local target_folder="$1"
 
-    if ! [ -d "$target_folder" ]; then
-        WARNING "folder '$target_folder' does not exist\n"
-        return 23
-    fi
-    #msg "un-mounting $target_folder.. "
-    grep "$target_folder" < /etc/mtab >/dev/null || msg "not mounted "
+    if ! mount.online "$target_folder" ; then
+            IGNORED "$target_folder not mounted"
+            return 0
+        fi
 
-    if [ "$FORCE" ]; then
-        sudo fusermount -u "$target_folder" && msg "force $UNMOUNTED $target_folder" || FAILED
-    else
-        mount.online "$target_folder" >/dev/null && fusermount -u "$target_folder" && UNMOUNTED $target_folder || msg "$target_folder $IGNORED"    # unmount target if mounted
-    fi
+    if fusermount -u "$target_folder"; then
+            UNMOUNTED "$target_folder"
+            return 0
+        else
+             unmount.force_remote "$target_folder"
+        fi
+
+    # once more or if force
+    if [ "$FORCE" ] && mount.online "$target_folder"; then
+        unmount.force_remote "$target_folder"
+        return $?
+        fi
 }
 
 
@@ -212,7 +222,10 @@ mount.remote() {
         mkdir -p "$_target_folder"                                      # be sure that mount point exist
         fi
 
-    mount.online "$_target_folder" && return 0                          # already mounted
+    if mount.online "$_target_folder"; then
+        ONLINE "$_target_folder"                                        # already mounted
+        return 0
+    fi
     [ "$(ls $_target_folder)" ] && return 25                            # Check that directory is empty
 
     local server="$GURU_LOCAL_FILE_SERVER"                              # assume that server is in local network

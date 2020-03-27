@@ -30,23 +30,23 @@ export OK="${WHT}OK!${NC}\n"
 
 
 PASSED() {
-	[ "$1" ] && msg "${WHT}$1:${NC} $PASSED" || msg "$PASSED"
+	[ "$1" ] && msg "$1: $PASSED" || msg "$PASSED"
 }
 
 READY() {
-	[ "$1" ] && msg "${WHT}$1${NC} $READY" || msg "$READY"
+	[ "$1" ] && msg "$1 $READY" || msg "$READY"
 }
 
 IGNORED() {
-	[ "$1" ] && msg "${WHT}$1${NC} $IGNORED" || msg "$IGNORED"
+	[ "$1" ] && msg "$1 $IGNORED" || msg "$IGNORED"
 }
 
 SUCCESS() {
-	[ "$1" ] && msg "${WHT}$1${NC} $SUCCESS" || msg "$SUCCESS"
+	[ "$1" ] && msg "$1$ $SUCCESS" || msg "$SUCCESS"
 }
 
 MOUNTED() {
-	[ "$1" ] && msg "${WHT}$1${NC} $MOUNTED" || msg "$MOUNTED"
+	[ "$1" ] && msg "$1 $MOUNTED" || msg "$MOUNTED"
 }
 
 UNMOUNTED() {
@@ -78,17 +78,17 @@ WARNING() {
 }
 
 ONLINE() {
-	msg "$ONLINE"
+	[ "$1" ] && msg "$1 $ONLINE" || msg "$ONLINE"
 }
 
 OFFLINE() {
-	msg "$OFFLINE"
+	[ "$1" ] && msg "$1 $OFFLINE" || msg "$OFFLINE"
 }
 
 UNKNOWN() {
-	msg "$UNKNOWN"
+	[ "$1" ] && msg "$1 $UNKNOWN" || msg "$UNKNOWN"
 }
 
 OK() {
-	msg "$OK"
+	[ "$1" ] && msg "$1 $OK" || msg "$OK"
 }
