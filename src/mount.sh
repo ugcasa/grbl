@@ -56,16 +56,19 @@ mount.help() {
 
 
 mount.sshfs_get_info(){
+    # nice list of information of sshfs mount points
     local _error=0
     [ $TEST ] || msg "${WHT}user@server remote_folder local_mountpoint  uptime ${NC}\n"                      # header (stdout when -v)
     mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |                                              # get the mount data
+
     while read mount ; do                                                                                    # Iterate over them
         mount | grep -w "$mount" |                                                                          # Get the details of this mount
         perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1 $2 $3"'  # perl magic thanks terdon! https://unix.stackexchange.com/users/22222/terdon
         _error=$?                                                                                           # last error, maily if perl is not installed
-        printf " %s\n" "$(ps -p $(pgrep -f $mount) -eo %t)"
-        #ps -p $(pgrep -f /home/casa/Track) -eo %t     # passed
+
+        printf " %s\n" "$(ps -p $(pgrep -f $mount) o etime |grep -v ELAPSED)"
     done
+
     ((_error>0)) && msg "perl not installed or internal error, pls try to install perl and try again."
     return $_error
 }
