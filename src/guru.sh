@@ -1,6 +1,6 @@
 #!/bin/bash
 # guru tool-kit - caa@ujo.guru 2020
-export GURU_VERSION="0.5.1"
+export GURU_VERSION="0.5.2"
 
 source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
 source $GURU_BIN/system.sh                          # common functions, if no .sh, check here

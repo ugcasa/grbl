@@ -63,7 +63,8 @@ mount.sshfs_get_info(){
         mount | grep -w "$mount" |                                                                          # Get the details of this mount
         perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1 $2 $3"'  # perl magic thanks terdon! https://unix.stackexchange.com/users/22222/terdon
         _error=$?                                                                                           # last error, maily if perl is not installed
-        printf " %s\n" "$(ps -p $(pgrep -f "$mount") o etime=)"                                              # uptime
+        printf " %s\n" "$(ps -p $(pgrep -f $mount) -eo %t)"
+        #ps -p $(pgrep -f /home/casa/Track) -eo %t     # passed
     done
     ((_error>0)) && msg "perl not installed or internal error, pls try to install perl and try again."
     return $_error
@@ -141,7 +142,6 @@ mount.system () {
 mount.online() {
     # input: mount point folder.
     # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
-    #        mount.online && OK || WARNING
     local _target_folder="$1"
 
     if [ -f "$_target_folder/.online" ] ; then
