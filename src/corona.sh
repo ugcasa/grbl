@@ -15,8 +15,10 @@ corona.main () {
     corona.update
 
     case ${1,,} in
-    display)  local _sleep_time=10 ; [ "$2" ] && _sleep_time=$2
-              while :; do corona.country_current_intrest; sleep "$_sleep_time"; done ;;
+    display)  tput civis -- invisible
+              local _sleep_time=10 ; [ "$2" ] && _sleep_time=$2
+              while :; do corona.country_current_intrest; sleep "$_sleep_time"; done
+              tput civis -- visible ;;
         all)  corona.country_current_intrest ;;
          uk)  corona.country_current_table "United_Kingdom" ;;
         web)  $GURU_BROWSER https://github.com/CSSEGISandData/COVID-19/blob/web-data/data/cases_country.csv ;;
