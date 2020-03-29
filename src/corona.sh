@@ -15,10 +15,11 @@ corona.main () {
     corona.update
 
     case ${1,,} in
-        all)  corona.print_country_intrest ;;
-         uk)  corona.print_country_table "United_Kingdom" ;;
-      short)  corona.print_country_oneline "$2";;
-          *)  corona.print_country_table "$1"
+        all)  corona.country_current_intrest ;;
+         uk)  corona.country_current_table "United_Kingdom" ;;
+        web)  $GURU_BROWSER https://github.com/CSSEGISandData/COVID-19/blob/web-data/data/cases_country.csv ;;
+      short)  corona.country_current_oneline "$2";;
+          *)  corona.country_current_table "$1"
 
     esac
 }
@@ -72,27 +73,45 @@ corona.get_data () {
 }
 
 
-corona.print_country_table () {
+corona.country_current_table () {
     [ "$1" ] && location="$1"
-    corona.get_data "$1"
+    corona.get_data "$location"
     printf "%s \t%s %s \t%s \n" "Confirmed" "Deaths" "Recovered" "Active" | column -t -s $" "
     printf "%s \t\t%s \t%s \t\t%s \n" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}" "${data_list[7]}" | column -t -s $" "
 }
 
 
-corona.print_country_oneline () {
+corona.country_current_oneline () {
+
     [ "$1" ] && location="$1"
-    corona.get_data "$1"
-    printf "${NC}$location ${WHT}%s ${RED}%s ${GRN}%s${NC}\n" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}"
+    _last_time="$GURU_TRACK/corona" ; [ -d "$_last_time" ] || mkdir "$_last_time"
+    _last_time="$_last_time/$location.last" ; [ -f "$_last_time" ] || touch "$_last_time"
+
+    corona.get_data "$location"
+    local _last_value="$(cat $_last_time)"
+    local _current_value=$(printf "%s%s%s" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}")
+    local _output=$(printf "${NC}$location ${WHT}%s ${RED}%s ${GRN}%s${NC}\n" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}")
+
+    #echo "'$_current_value' '$_last_value'"
+
+    printf "$_output"
+
+    if ((_current_value==_last_value))  ; then
+            printf "\n"
+        else
+            printf "${YEL} <-- changes ${NC}($(date -r $_last_time))\n"
+        fi
+
+    printf "$_current_value" > "$_last_time"
 }
 
 
-corona.print_country_intrest () {
+corona.country_current_intrest () {
 
     _country_list=("Finland" "Sweden" "Estonia" "Norway" "Russia" "Germany" "Spain" "France" "Italy" "Kingdom" "China" "US" )
 
     for _country in ${_country_list[@]}; do
-            corona.print_country_oneline "$_country" | column -t -s $":"
+            corona.country_current_oneline "$_country"
         done
 
 
