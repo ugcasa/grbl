@@ -18,7 +18,7 @@ corona.main () {
     case ${1,,} in
         all)  corona.country_current_intrest ;;
       short)  corona.country_current_oneline "$2";;
-    display)  corona.display ;;
+    display)  corona.display "$2" ;;
         web)  $GURU_BROWSER https://github.com/CSSEGISandData/COVID-19/blob/web-data/data/cases_country.csv ;;
           *)  corona.country_current_table "$1"
     esac
@@ -120,7 +120,7 @@ corona.country_current_intrest () {
 corona.display () {
 
     # tput civis -- invisible
-    local _sleep_time=10 ; [ "$2" ] && _sleep_time=$2
+    local _sleep_time=300 ; [ "$1" ] && _sleep_time=$1
     # trap '_pause' SIGINT
     while : ; do
             corona.country_current_intrest
