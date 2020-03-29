@@ -3,12 +3,21 @@
 
 unset RED GRN YEL WHT BLU BRN NC
 
+ansi()          { echo -e "\e[${1}m${*:2}\e[0m"; }
+bold()          { ansi 1 "$@"; }
+italic()        { ansi 3 "$@"; }
+underline()     { ansi 4 "$@"; }
+strikethrough() { ansi 9 "$@"; }
+red()           { ansi 31 "$@"; }
+
 
 if [ "$GURU_TERMINAL_COLOR" ]; then
 	export RED='\033[0;31m'
 	export GRN='\033[0;32m'
 	export YEL='\033[1;33m'
 	export WHT='\033[1;37m'
+	export CRY='\033[0;37m'
+	export CYA='\033[0;96m'
 	export BLU='\033[0;34m'
 	export BRN='\033[0;33m'
 	export BLK='\033[0;90m'

@@ -16,11 +16,11 @@ corona.main () {
     corona.update
 
     case ${1,,} in
-        all)  corona.country_current_intrest ;;
-      short)  corona.country_current_oneline "$2";;
-    display)  corona.display "$2" ;;
-        web)  $GURU_BROWSER https://github.com/CSSEGISandData/COVID-19/blob/web-data/data/cases_country.csv ;;
-          *)  corona.country_current_table "$1"
+                    all) corona.country_current_intrest ;;
+                  short) corona.country_current_oneline "$2";;
+    status|view|display) corona.display "$2" ;;
+                    web) $GURU_BROWSER https://github.com/CSSEGISandData/COVID-19/blob/web-data/data/cases_country.csv ;;
+                      *) corona.country_current_table "$1"
     esac
 }
 
@@ -83,33 +83,53 @@ corona.country_current_table () {
 
 corona.country_current_oneline () {
 
+
     [ "$1" ] && location="$1"
     _last_time="$GURU_TRACK/corona" ; [ -d "$_last_time" ] || mkdir "$_last_time"
     _last_time="$_last_time/$location.last" ; [ -f "$_last_time" ] || touch "$_last_time"
 
     #echo "'$_current_value' '$_last_value' '$_last_value' '$source_file'"
     corona.get_data "$location"
+    declare -a _last_list=($(cat $_last_time))
     local _last_value="$(cat $_last_time)"
     local _current_value=$(printf "%s%s%s" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}")
-    local _output=$(printf "${NC}$location ${WHT}%s ${RED}%s ${GRN}%s${NC}\n" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}")
+    declare -a _current_list=(${data_list[4]} ${data_list[5]} ${data_list[6]})
+    local _output=$(printf "${NC}$location\t${CRY}%s\t${RED}%s\t${GRN}%s${NC}\n" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}")
 
 
-    printf "$_output"
-    #exit 0
+   # echo "${_last_list[@]}" ; echo "${_current_list[@]}"
+    printf "$_output\t"
 
-    if ((_current_value==_last_value))  ; then
-            printf "\n"
-        else
-            printf "${YEL} changed${NC}\n" #($(date -r $_last_time))
+    local _change=""
+    if ! ((_current_list[0]==_last_list[0])) ; then
+            _change=$((_current_list[0]-_last_list[0]))
+            ((_current_list[0]>_last_list[0])) && _sing="+" || _sing=""
+            printf "${CRY}%s%s ${NC}" "$_sing" "$_change"
         fi
 
-    printf "$_current_value" > "$_last_time"
+    if ! ((_current_list[1]==_last_list[1])) ; then
+            _change=$((_current_list[1]-_last_list[1]))
+            ((_current_list[1]>_last_list[1])) && _sing="+" || _sing=""
+            printf "${RED}%s%s ${NC}" "$_sing" "$_change"
+        fi
+
+    if ! ((_current_list[2]==_last_list[2])) ; then
+            _change=$((_current_list[2]-_last_list[2]))
+            ((_current_list[2]>_last_list[2])) && _sing="+" || _sing=""
+            printf "${GRN}%s%s ${NC}" "$_sing" "$_change"
+        fi
+
+    printf "\n"
+    printf "%s %s %s"  "${_current_list[0]}" "${_current_list[1]}" "${_current_list[2]}" > "$_last_time"
 }
 
 
 corona.country_current_intrest () {
 
     _country_list=("Finland" "Sweden" "Estonia" "Russia" "Norway" "Germany" "Spain" "France" "Italy" "Kingdom" "China" "US" )
+    #tput smul
+    msg "${WHT}Country\tInfect\tDeath\tRecov\tchange${NC}\n"
+    #tput rmul
 
     for _country in ${_country_list[@]}; do
             corona.country_current_oneline "$_country"
