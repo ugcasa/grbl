@@ -15,6 +15,8 @@ corona.main () {
     corona.update
 
     case ${1,,} in
+    display)  local _sleep_time=10 ; [ "$2" ] && _sleep_time=$2
+              while :; do corona.country_current_intrest; sleep "$_sleep_time"; done ;;
         all)  corona.country_current_intrest ;;
          uk)  corona.country_current_table "United_Kingdom" ;;
         web)  $GURU_BROWSER https://github.com/CSSEGISandData/COVID-19/blob/web-data/data/cases_country.csv ;;
@@ -99,7 +101,7 @@ corona.country_current_oneline () {
     if ((_current_value==_last_value))  ; then
             printf "\n"
         else
-            printf "${YEL} <-- changes ${NC}($(date -r $_last_time))\n"
+            printf "${YEL} (changes)${NC}\n" #($(date -r $_last_time))
         fi
 
     printf "$_current_value" > "$_last_time"
