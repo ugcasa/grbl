@@ -155,7 +155,7 @@ mount.online() {
 }
 
 
-mount.check() {
+mount.check () {
     # check mountpoint status with putput
     local _target_folder="$1"
     local _err=0
@@ -173,21 +173,20 @@ mount.check() {
 }
 
 
-unmount.force_remote () {
-    local target_folder="$1"
-    msg "need to force unmount.. "
-
-    if sudo fusermount -u "$target_folder" ; then
-            UNMOUNTED "$target_folder FORCE"
-            return 0
-        else
-            FAILED "$target_folder FORCE"
-            return 101
-        fi
-}
-
-
 unmount.remote () {
+
+    force_remote () {
+        local target_folder="$1"
+        msg "need to force unmount.. "
+
+        if sudo fusermount -u "$target_folder" ; then
+                UNMOUNTED "$target_folder FORCE"
+                return 0
+            else
+                FAILED "$target_folder FORCE"
+                return 101
+            fi
+    }
     local target_folder="$1"
 
     if ! mount.online "$target_folder" ; then
@@ -199,12 +198,12 @@ unmount.remote () {
             UNMOUNTED "$target_folder"
             return 0
         else
-             unmount.force_remote "$target_folder"
+            force_remote "$target_folder"
         fi
 
     # once more or if force
     if [ "$FORCE" ] && mount.online "$target_folder"; then
-        unmount.force_remote "$target_folder"
+        force_remote "$target_folder"
         return $?
         fi
 }

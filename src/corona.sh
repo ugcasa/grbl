@@ -2,62 +2,58 @@
 
 source $GURU_BIN/lib/common.sh
 source $GURU_BIN/lib/deco.sh
+source $GURU_BIN/mount.sh
 
 corona.main () {
 
-    local _days=1 ; [ "$2" ] && _days="$2"
-
+    #local _days=1 ; [ "$2" ] && _days="$2"
+    mount.system
     #source_file="$(date --date="$_days days ago" +%m-%d-%Y).csv"
-    source_file="cases_country.csv"
+
     report_location="COVID-19/data"
     location="Finland"
 
     corona.update
 
     case ${1,,} in
-    display)  tput civis -- invisible
-              local _sleep_time=10 ; [ "$2" ] && _sleep_time=$2
-              while :; do corona.country_current_intrest; sleep "$_sleep_time"; done
-              tput civis -- visible ;;
         all)  corona.country_current_intrest ;;
-         uk)  corona.country_current_table "United_Kingdom" ;;
-        web)  $GURU_BROWSER https://github.com/CSSEGISandData/COVID-19/blob/web-data/data/cases_country.csv ;;
       short)  corona.country_current_oneline "$2";;
+    display)  corona.display ;;
+        web)  $GURU_BROWSER https://github.com/CSSEGISandData/COVID-19/blob/web-data/data/cases_country.csv ;;
           *)  corona.country_current_table "$1"
-
     esac
 }
 
 
 corona.update() {
 
-    local _clone_location="/tmp/guru/corona"
     msg "upadating data... "
+    local _clone_location="/tmp/guru/corona"
+    source_file="cases_country.csv"
+
     if ! [ -d "$_clone_location" ]; then
             mkdir -p "$_clone_location"
+            cd $_clone_location
+            git clone -b web-data https://github.com/CSSEGISandData/COVID-19.git
         fi
 
     source_file=$_clone_location/$report_location/$source_file
 
-    cd $_clone_location
-    if ! [ -f "$source_file" ]; then
-            rm -rf "$_clone_location/COVID-19"
-            if git clone -b web-data https://github.com/CSSEGISandData/COVID-19.git; then
-                    echo "SUCCESS"
-                    return 0
-                else
-                    echo "FAILED $source_file not found"
-                    return 10
-                fi
+    cd "$_clone_location/COVID-19"
+    if git pull >/dev/null 2>&1 ; then
+            UPDATED
+            #return 0
+        else
+            FAILED "repository not found"
+            return 10
         fi
 
     if [ -f "$source_file" ]; then
             return 0
         else
-            echo "FAILED $source_file not found"
+            FAILED "$source_file not found"
             return 10
         fi
-        exit 0
 
 }
 
@@ -91,19 +87,20 @@ corona.country_current_oneline () {
     _last_time="$GURU_TRACK/corona" ; [ -d "$_last_time" ] || mkdir "$_last_time"
     _last_time="$_last_time/$location.last" ; [ -f "$_last_time" ] || touch "$_last_time"
 
+    #echo "'$_current_value' '$_last_value' '$_last_value' '$source_file'"
     corona.get_data "$location"
     local _last_value="$(cat $_last_time)"
     local _current_value=$(printf "%s%s%s" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}")
     local _output=$(printf "${NC}$location ${WHT}%s ${RED}%s ${GRN}%s${NC}\n" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}")
 
-    #echo "'$_current_value' '$_last_value'"
 
     printf "$_output"
+    #exit 0
 
     if ((_current_value==_last_value))  ; then
             printf "\n"
         else
-            printf "${YEL} (changes)${NC}\n" #($(date -r $_last_time))
+            printf "${YEL} changed${NC}\n" #($(date -r $_last_time))
         fi
 
     printf "$_current_value" > "$_last_time"
@@ -112,23 +109,30 @@ corona.country_current_oneline () {
 
 corona.country_current_intrest () {
 
-    _country_list=("Finland" "Sweden" "Estonia" "Norway" "Russia" "Germany" "Spain" "France" "Italy" "Kingdom" "China" "US" )
+    _country_list=("Finland" "Sweden" "Estonia" "Russia" "Norway" "Germany" "Spain" "France" "Italy" "Kingdom" "China" "US" )
 
     for _country in ${_country_list[@]}; do
             corona.country_current_oneline "$_country"
         done
-
-
 }
 
-corona.all () {
-    cat "$source_file" | column -t -s $','
+
+corona.display () {
+
+    # tput civis -- invisible
+    local _sleep_time=10 ; [ "$2" ] && _sleep_time=$2
+    # trap '_pause' SIGINT
+    while : ; do
+            corona.country_current_intrest
+            sleep "$_sleep_time"
+            corona.update
+        done
+    # tput cnorm -- normal
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
     corona.main $@
-
 fi
 
 

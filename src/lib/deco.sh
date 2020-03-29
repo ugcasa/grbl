@@ -17,6 +17,8 @@ fi
 
 export PASSED="${GRN}PASSED${NC}\n"
 export READY="${GRN}READY${NC}\n"
+export UPTODATE="${GRN}UPTODATE${NC}\n"
+export UPDATED="${GRN}UPDATED${NC}\n"
 export MOUNTED="${GRN}MOUNTED${NC}\n"
 export SUCCESS="${GRN}SUCCESS${NC}\n"
 export UNMOUNTED="${BLU}UNMOUNTED${NC}\n"
@@ -38,6 +40,14 @@ PASSED() {
 
 READY() {
 	[ "$1" ] && msg "$1 $READY" || msg "$READY"
+}
+
+UPTODATE() {
+	[ "$1" ] && msg "$1 $UPTODATE" || msg "$UPTODATE"
+}
+
+UPDATED() {
+	[ "$1" ] && msg "$1 $UPDATED" || msg "$UPDATED"
 }
 
 IGNORED() {
