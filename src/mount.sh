@@ -80,7 +80,6 @@ mount.sshfs_get_info () {
 
 mount.sshfs_info () {
     mount.sshfs_get_info
-    system.core-dump
     return $?
 }
 
