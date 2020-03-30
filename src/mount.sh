@@ -335,7 +335,7 @@ mount.needed () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
-    VERBOSE=true
+    #GURU_VERBOSE=true
     #GURU_CMD=""
     source "$HOME/.gururc"
     mount.main "$@"

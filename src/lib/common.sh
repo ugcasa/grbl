@@ -4,7 +4,7 @@ msg() {
     #function for ouput messages and make log notifications. input "message string"
     [ "$1" ] || return 0
     printf "$@" >$GURU_ERROR_MSG
-    [ $VERBOSE ] && printf "$@"
+    [ $GURU_VERBOSE ] && printf "$@"
 
     if ! [ "$GURU_SYSTEM_STATUS"=="ready" ]; then return 0; fi
     if ! [ -f "$GURU_LOG" ]; then return 0; fi

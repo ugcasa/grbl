@@ -1,6 +1,6 @@
 #!/bin/bash
 # guru tool-kit - caa@ujo.guru 2020
-export GURU_VERSION="0.5.2."
+export GURU_VERSION="0.5.2"
 
 source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
 source $GURU_BIN/system.sh                          # common functions, if no .sh, check here
@@ -15,26 +15,34 @@ main.parser () {                                    # parse arguments and delive
     export GURU_SYSTEM_STATUS="processing $tool"    # system status can use as part of error exit message
 
     case "$tool" in
-                             check)  VERBOSE=true; main.$tool "$@"               ; return $? ;;  # check and test cases
-                             radio)  DISPLAY=0; $tool.py "$@"                    ; return $? ;;  # leave background + set display
+    # useful tools
+                              test)  bash "$GURU_BIN/test/test.sh" "$@"          ; return $? ;;  # tester
                            uutiset)  $tool.py "$@"                               ; return $? ;;  # python scripts
-                         uninstall)  bash "$GURU_BIN/$tool.sh" "$@"              ; return $? ;;  # Get rid of this shit
-                  clear|ls|cd|echo)  $tool "$@"                                  ; return $? ;;  # os command pass trough
-                 ssh|os|common|tme)  lib/$tool.sh "$@"                           ; return $? ;;  # direct lib calls
-                 input|hosts|phone)  trial/$tool.sh "$@"                         ; return $? ;;  # place for shell script prototypes and experiments
-             tme|fmradio|datestamp)  trial/$tool.py "$@"                         ; return $? ;;  # place for python script prototypes and experiments
+                    terminal|shell)  main.terminal "$@"                          ; return $? ;;  # guru in terminal mode
+                      play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
+           stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
+    # useful functions (TODO: get rid)
                           document)  $tool "$@"                                  ; return $? ;;  # one function prototypes are in 'function.sh'
             trans|project|tor|user)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
-               system|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
-                           unmount)  mount.main unmount "$@"                     ; return $? ;;  # alias for unmounting
-                              test)  bash "$GURU_BIN/test/test.sh" "$@"          ; return $? ;;  # tester
-    corona|scan|input|counter|note)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
-             keyboard|play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
-           stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
-                    help|-h|--help)  main.help "$@"                              ; return 0  ;;  # help printout
-                     version|--ver)  printf "guru tool-kit v.$GURU_VERSION\n"               ;;  # version output
-                                 *)  printf "$GURU_CMD: command %s not found \n" "$tool"     ;;  # false user input
+    # system tools
+                           unmount)  mount.main unmount "$@"                     ; return $? ;;  # alias for un-mounting
+      keyboard|system|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
+    # prototypes and trials
+                             radio)  DISPLAY=0; $tool.py "$@"                    ; return $? ;;  # leave background + set display
+                 input|hosts|phone)  trial/$tool.sh "$@"                         ; return $? ;;  # place for shell script prototypes and experiments
+             tme|fmradio|datestamp)  trial/$tool.py "$@"                         ; return $? ;;  # place for python script prototypes and experiments
+    corona|scan|input|counter|note)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
+    # way system pass system tools and call directly libraries (TODO: get rid)
+                  clear|ls|cd|echo)  $tool "$@"                                  ; return $? ;;  # os command pass trough
+                 ssh|os|common|tme)  lib/$tool.sh "$@"                           ; return $? ;;  # direct lib calls
+    # basics
+                         uninstall)  bash "$GURU_BIN/$tool.sh" "$@"              ; return $? ;;  # Get rid of this shit
+                       help|--help)  main.help "$@"                              ; return 0  ;;  # help printout
+                     version|--ver)  printf "guru tool-kit v.%s\n" "$GURU_VERSION"           ;;  # version output
+                                 *)  printf "%s confused: phrase '%s' unknown. you may try '%s help'\n" \
+                                            "$GURU_CALL" "$tool" "$GURU_CALL"                    # false user input
     esac
+    return 0
 }
 
 
@@ -85,36 +93,14 @@ main.help () {
     printf "\t %s ssh key add github \n" "$GURU_CALL"
     printf "\t %s timer start at 12:00 \n" "$GURU_CALL"
     printf "\t %s keyboard add-shortcut terminal %s F1\n" "$GURU_CALL" "$GURU_TERMINAL"
-    printf "\t %s mount /home/%s/share /home/%s/mount/%s/ \n"\
-           "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER" "$GURU_REMOTE_FILE_SERVER"
+    printf "\t %s -v mount notes" "$GURU_CALL"
     echo
-}
-
-
-main.check() {
-    [ "$1" ] && tool="$1" ||read -r -p "select tool to test or all: " tool
-
-    if [ "$tool" == "all" ] ; then
-        msg "checking remote tools: " ;  remote.check
-        msg "checking mount tools: "  ;   mount.check
-        msg "checking timer tools: "  ;   timer.check
-        msg "checking note tools: "   ;    note.check
-        return 0
-    fi
-
-    if ! [ -f "$GURU_BIN/$tool.sh" ]; then
-            msg "no tool'$tool' found"
-            return 12
-        fi
-
-    $tool.check
-    return $?
 }
 
 
 main.terminal() {
     # Terminal looper
-    VERBOSE=true
+    GURU_VERBOSE=true
     msg "$GURU_CALL in terminal mode (type 'help' enter for help)\n"
     while : ; do
             source $HOME/.gururc
@@ -122,11 +108,11 @@ main.terminal() {
             [ "$cmd" == "exit" ] && return 0
             main.parser $cmd
         done
+    return $?
 }
 
 
 main() {
-
     local _error_code=0
     [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"                                 # Remove old error messages
 
@@ -165,14 +151,16 @@ main() {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
-    export VERBOSE="$GURU_VERBOSE"                          # use verbose setting from personal config
+    export GURU_VERBOSE="$GURU_USER_VERBOSE"                          # use verbose setting from personal config
     while getopts 'lvf' flag; do                            # if verbose flag given, overwrite personal config
         case "${flag}" in
-            l)  export LOGGING=true     ; shift ;;
-            v)  export VERBOSE=true     ; shift ;;
-            f)  export GURU_FORCE=true  ; shift ;;
-            r)  export RAW=true         ; shift ;;
-            *)  echo "invalid flag"
+            l)  export LOGGING=true         ; shift ;;
+            v)  export GURU_VERBOSE=true    ; shift ;;
+            f)  export GURU_FORCE=true      ; shift ;;
+            *)  echo "invalid flag '$1' "
+                echo " -l   set logging on to file $GURU_LOG"
+                echo " -v   set verbose, headers and success are printed out"
+                echo " -f   set force mode on, be more aggressive. will still ask if removing something"
                 exit 1
         esac
     done

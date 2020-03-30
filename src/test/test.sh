@@ -19,7 +19,7 @@ source $GURU_BIN/lib/deco.sh
 test.main() {
     # main test case parser
     export all_tools=("mount" "remote" "note" "system")
-    export VERBOSE=true
+    export GURU_VERBOSE=true
     export LOGGING=true
     case "$1" in
         snap|quick) test.all 1              ; return $? ;;
@@ -131,7 +131,7 @@ test.release() {
 ## special functions or unit tests (when run as file)
 
 test.terminal () {
-    export VERBOSE=true                                     # printout unit test output
+    export GURU_VERBOSE=true                                     # printout unit test output
     export LOGGING=                                         # do not log to file
     local _tool="$1"
     local _case="$2"
@@ -167,7 +167,7 @@ test.terminal () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source $HOME/.gururc
     source $GURU_BIN/lib/deco.sh
-    export VERBOSE=true
+    export GURU_VERBOSE=true
 
     case "$1" in
         loop) shift ; test.terminal "$@" ; exit "$?" ;;
