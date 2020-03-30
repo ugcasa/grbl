@@ -102,7 +102,7 @@ corona.country_current_oneline () {
     declare -a _current_list=(${data_list[4]} ${data_list[5]} ${data_list[6]})
     local _change=""
 
-    printf "${NC}$location\t${CRY}%s\t${RED}%s\t${GRN}%s${NC}" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}"
+    printf "${NC}$location\t${CRY}%s\t${RED}%s\t${GRN}%s\t${NC}" "${data_list[4]}" "${data_list[5]}" "${data_list[6]}"
     if ! ((_current_list[0]==_last_list[0])) ; then
             _change=$((_current_list[0]-_last_list[0]))
 
