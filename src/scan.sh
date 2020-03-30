@@ -147,7 +147,7 @@ scan_invoice () {
 	. ./temp$stamp.sh
 
 	if [ $target_team == "p" ]; then
-		GURU_ACCOUNTING=$GURU_LOCAL_SCAN
+		GURU_ACCOUNTING=$GURU_LOCAL_PICTURES
 		GURU_RECEIPTS=$GURU_PERSONAL_RECEIPTS
 	fi
 

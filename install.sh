@@ -15,19 +15,6 @@ target_rc="$HOME/.bashrc"                                       # environmental 
 disabler_flag_file="$HOME/.gururc.disabled"                     # flag for disabling the rc file
 
 case "$1" in                                                    # simple location pased argument parser
-    server)
-            INSTALL_TYPE="server"
-            ;;
-    desktop)
-            INSTALL_TYPE="desktop"
-            ;;
-    force|-f|-y)
-            force_overwrite=true
-            ;;
-    test)
-            echo "test cases not found"
-            exit 0
-            ;;
     help)
             echo "-- guru tool-kit istall help -----------------------------------------------"
             printf "\nUsage:\n\t ./install.sh [argument] \n"
@@ -36,8 +23,6 @@ case "$1" in                                                    # simple locatio
             printf " desktop           desktop install for [ubuntu 18.04>, mint 19.1>19.3]\n"
             printf " server            server install [ubuntu server 18.04>] \n\n"
             ;;
-    *)
-        INSTALL_TYPE="desktop"
 esac
 
 if grep -q ".gururc" "$target_rc" ; then                                                            # already installed? reinstall?
@@ -66,12 +51,6 @@ cp -f ./cfg/* "$GURU_CFG/$GURU_USER"                                            
 cp -f -r ./src/* -f "$GURU_BIN"                                                                     # copy script files to bin folder
 mv  "$GURU_BIN/guru.sh" "$GURU_BIN/guru"                                                            # rename guru.sh in bin folder to guru
 
-case "$INSTALL_TYPE" in
-        server)     echo "$INSTALL_TYPE successfully installed"
-                    counter.main add guru-server-installed >/dev/null
-                    exit 0 ;;
-        #desktop)   echo "continue.. "  ;;
-    esac
 
 platform=$(check_distro)                                                                            # check that distribution is compatible
 case "$platform" in                                                                                 # different dependent settings

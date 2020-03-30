@@ -25,7 +25,7 @@ main.parser () {                                    # parse arguments and delive
                           document)  $tool "$@"                                  ; return $? ;;  # one function prototypes are in 'function.sh'
             trans|project|tor|user)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
     # system tools
-                           unmount)  mount.main unmount "$@"                     ; return $? ;;  # alias for un-mounting
+                           unmount)  mount.main "$1"                     ; return $? ;;  # alias for un-mounting
       keyboard|system|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
     # prototypes and trials
                              radio)  DISPLAY=0; $tool.py "$@"                    ; return $? ;;  # leave background + set display

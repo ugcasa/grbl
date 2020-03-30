@@ -26,7 +26,7 @@ remote.help () {
     printf " push                     copy configuration files to access point server \n"
     printf " install                  install requirements \n"
     printf "\nexample:"
-    printf "    %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
+    printf "    %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_USER" "$USER" "$GURU_ACCESS_POINT"
 }
 
 remote.warning () {
@@ -37,14 +37,14 @@ remote.warning () {
 
 remote.check(){
 
-    local server="$GURU_LOCAL_FILE_SERVER"                                              # assume that server is in local network
-    local server_port="$GURU_LOCAL_FILE_SERVER_PORT"
-    local user="$GURU_LOCAL_FILE_SERVER_USER"
+    local server="$GURU_CLOUD_NEAR"                                              # assume that server is in local network
+    local server_port="$GURU_CLOUD_NEAR_PORT"
+    local user="$GURU_CLOUD_NEAR_USER"
 
     if ! ssh -q -p "$server_port" "$user@$server" exit; then                            # check local server connection
-        server="$GURU_REMOTE_FILE_SERVER"                                               # if no connection try remote server connection
-        server_port="$GURU_REMOTE_FILE_SERVER_PORT"
-        user="$GURU_REMOTE_FILE_SERVER_USER"
+        server="$GURU_CLOUD_FAR"                                               # if no connection try remote server connection
+        server_port="$GURU_CLOUD_FAR_PORT"
+        user="$GURU_CLOUD_FAR_USER"
     fi
 
     msg "$user@$server status.. "
@@ -62,8 +62,8 @@ remote.pull_config(){
     msg "pulling configs.. "
     local _error=0
     local hostname=$(hostname)
-    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
-        "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER/" \
+    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_PORT" \
+        "$GURU_USER@$GURU_ACCESS_POINT:/home/$GURU_ACCESS_POINT_USER/usr/$hostname/$GURU_USER/" \
         "$GURU_CFG/$GURU_USER"
     _error=$?
 
@@ -80,14 +80,14 @@ remote.push_config(){
     msg "pushing configs.. "
     local _error=0
     local hostname=$(hostname)
-    ssh "$GURU_USER@$GURU_ACCESS_POINT_SERVER" -p "$GURU_ACCESS_POINT_SERVER_PORT" \
-         ls "/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER" >/dev/null 2>&1 || \
-    ssh "$GURU_USER@$GURU_ACCESS_POINT_SERVER" -p "$GURU_ACCESS_POINT_SERVER_PORT" \
-         mkdir -p "/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER"
+    ssh "$GURU_USER@$GURU_ACCESS_POINT" -p "$GURU_ACCESS_POINT_PORT" \
+         ls "/home/$GURU_ACCESS_POINT_USER/usr/$hostname/$GURU_USER" >/dev/null 2>&1 || \
+    ssh "$GURU_USER@$GURU_ACCESS_POINT" -p "$GURU_ACCESS_POINT_PORT" \
+         mkdir -p "/home/$GURU_ACCESS_POINT_USER/usr/$hostname/$GURU_USER"
 
-    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_SERVER_PORT" \
+    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_PORT" \
         "$GURU_CFG/$GURU_USER/" \
-        "$GURU_USER@$GURU_ACCESS_POINT_SERVER:/home/$GURU_ACCESS_POINT_SERVER_USER/usr/$hostname/$GURU_USER/"
+        "$GURU_USER@$GURU_ACCESS_POINT:/home/$GURU_ACCESS_POINT_USER/usr/$hostname/$GURU_USER/"
     _error=$?
 
     if ((_error<9)); then

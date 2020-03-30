@@ -10,6 +10,7 @@ mount.main () {
     argument="$1"; shift
     case "$argument" in
                       ls)   mount.list                                          ; return $? ;;
+                defaults)   mount.defaults                                      ; return $? ;;
                     info)   mount.sshfs_info | column -t -s $' '                ; return $? ;;
                   status)   mount.status                                        ; return $? ;;
                    check)   mount.online "$@"                                   ; return $? ;;
@@ -22,13 +23,42 @@ mount.main () {
                             case $GURU_CMD in
                                 mount|unmount)
                                     case $argument in
-                                    all) $GURU_CMD.defaults_raw                 ; return $? ;;
+                                    all) $GURU_CMD.defaults                     ; return $? ;;
                                       *) $GURU_CMD.known_remote "$argument"     ; return $? ;;
                                     esac                                                    ;;
                                 *) echo "$GURU_CMD: bad input '$argument' "     ; return 1  ;;
                                 esac                                                        ;;
                             esac
-        }
+}
+
+
+mount.defaults () {
+    local _target=""
+    local _source=""
+    #local _default_list=("company" "family" "notes" "templates" "pictures" "photos" "audio" "video" "music")
+    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
+
+    for _default_item in ${_default_list[@]}; do
+        # echo '$'"GURU_LOCAL_${_default_item^^}"
+        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
+        _source=$(eval echo '$'"GURU_CLOUD_${_default_item^^}")
+        [[ "$_source" ]] && [[ "$_target" ]] || continue             # skip if not defined in userrc
+        mount.remote "$_source" "$_target"
+    done
+}
+
+
+unmount.defaults () {
+    local _target=""
+    local _source=""
+    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
+
+    for _default_item in ${_default_list[@]}; do
+        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
+        [[ "$_target" ]] || [[ -d "$_target" ]] || continue             # skip if not defined in userrc or mount point does not exist
+        unmount.remote "$_target"
+    done
+}
 
 
 mount.help () {
@@ -44,7 +74,7 @@ mount.help () {
     printf " unmount [all]            unmount all default folders \n"
     printf " ls                       list of mounted folders \n"
     printf "\nexample:"
-    printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER"
+    printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_CLOUD_FAR_USER" "$USER"
     return 0
 }
 
@@ -64,7 +94,7 @@ mount.status () {
 }
 
 
-mount.sshfs_get_info () {
+mount.sshfs_info () {
     # nice list of information of sshfs mount points
     local _error=0
     [ $TEST ] || msg "${WHT}user@server remote_folder local_mountpoint  uptime ${NC}\n"                 # header (stdout when -v)
@@ -74,7 +104,7 @@ mount.sshfs_get_info () {
         mount | grep -w "$mount" |                                                                      # Get the details of this mount
         perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1 $2 $3"'   # perl magic thanks terdon! https://unix.stackexchange.com/users/22222/terdon
         _error=$?
-        local _mount_pid="$(pgrep -f $GURU_REMOTE_FILE_SERVER:$mount)"
+        local _mount_pid="$(pgrep -f $GURU_CLOUD_FAR:$mount)"
         _mount_age="$(ps -p $_mount_pid o etime |grep -v ELAPSED| xargs)"
         echo " $_mount_age"
 
@@ -82,12 +112,6 @@ mount.sshfs_get_info () {
 
     ((_error>0)) && msg "perl not installed or internal error, pls try to install perl and try again."
     return $_error
-}
-
-
-mount.sshfs_info () {
-    mount.sshfs_get_info
-    return $?
 }
 
 
@@ -169,7 +193,7 @@ mount.check () {
     # check mountpoint status with putput
     local _target_folder="$1"
     local _err=0
-    {[ "$_target_folder" ]} || _target_folder="$GURU_LOCAL_TRACK"
+    [[ "$_target_folder" ]] || _target_folder="$GURU_LOCAL_TRACK"
 
     msg "$_target_folder status "
     mount.online "$_target_folder" ; _err=$?
@@ -257,14 +281,14 @@ mount.remote () {
         mkdir -p "$_target_folder"                                          # be sure that mount point exist
         fi
 
-    local server="$GURU_LOCAL_FILE_SERVER"                                  # assume that server is in local network
-    local server_port="$GURU_LOCAL_FILE_SERVER_PORT"
-    local user="$GURU_LOCAL_FILE_SERVER_USER"
+    local server="$GURU_CLOUD_NEAR"                                  # assume that server is in local network
+    local server_port="$GURU_CLOUD_NEAR_PORT"
+    local user="$GURU_CLOUD_NEAR_USER"
 
     if ! ssh -q -p "$server_port" "$user@$server" exit; then                # check local server connection
-            server="$GURU_REMOTE_FILE_SERVER"                               # if no connection try remote server connection
-            server_port="$GURU_REMOTE_FILE_SERVER_PORT"
-            user="$GURU_REMOTE_FILE_SERVER_USER"
+            server="$GURU_CLOUD_FAR"                               # if no connection try remote server connection
+            server_port="$GURU_CLOUD_FAR_PORT"
+            user="$GURU_CLOUD_FAR_USER"
         fi
 
     msg "mounting $_target_folder "
@@ -297,6 +321,8 @@ unmount.known_remote () {
     unmount.remote "$_target"
     return $?
 }
+
+
 
 
 mount.defaults_raw () {

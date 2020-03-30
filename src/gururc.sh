@@ -22,9 +22,9 @@ else 												# Defaults
 	export GURU_NOTE_HEADER="Daily notes $GURU_REAL_NAME" 				# TODO koostetaan valmiiksi sringi tässä
 
 # Server setup
-	export GURU_ACCESS_POINT_SERVER_USER="$GURU_USER"
-	export GURU_ACCESS_POINT_SERVER="ujo.guru"
-	export GURU_ACCESS_POINT_SERVER_PORT="2010"
+	export GURU_ACCESS_POINT_USER="$GURU_USER"
+	export GURU_ACCESS_POINT="ujo.guru"
+	export GURU_ACCESS_POINT_PORT="2010"
 
 # (to teamrc)
 	export GURU_TEAM="test"
@@ -51,7 +51,8 @@ else 												# Defaults
 	export GURU_COUNTER="$HOME/Track/counters"
 	export GURU_RECEIPTS="invoices"												# bad monkey!
 
-
+# clound locations
+	export GURU_CLOUD_TRACK="$HOME/Track"
 
 # Preferred applications
 	export GURU_TERMINAL="gnome-terminal"
