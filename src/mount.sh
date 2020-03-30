@@ -7,15 +7,16 @@ mount.main() {
     # mount tool command parser
     argument="$1"; shift
     case "$argument" in
-            check-system)   mount.check_system      ; return $? ;;
-                   check)   mount.online "$@"       ; return $? ;;
-                 ls|list)   mount.list              ; return $? ;;
-                    info)   mount.sshfs_info        ; return $? ;;
-                   mount)   mount.remote "$1" "$2"  ; return $? ;;
-                 unmount)   unmount.remote "$1"     ; return $? ;;
-                 install)   mount.needed install    ; return $? ;;
-         unistall|remove)   mount.needed remove     ; return $? ;;
-                    help)   mount.help "$@"         ; return 0  ;;
+                  status)   mount.status                ; return $? ;;
+            check-system)   mount.check_system          ; return $? ;;
+                   check)   mount.online "$@"           ; return $? ;;
+                 ls|list)   mount.list                  ; return $? ;;
+                    info)   mount.sshfs_info            ; return $? ;;
+                   mount)   mount.remote "$1" "$2"      ; return $? ;;
+                 unmount)   unmount.known_remote "$@"   ; return $? ;;
+                 install)   mount.needed install        ; return $? ;;
+         unistall|remove)   mount.needed remove         ; return $? ;;
+                    help)   mount.help "$@"             ; return 0  ;;
                     test)   source $GURU_BIN/test.sh; mount.test "$@" ;;
         all|defaults|def)   case "$GURU_CMD" in
                                mount)   mount.defaults_raw      ; return $? ;;
@@ -54,6 +55,14 @@ mount.help() {
     return 0
 }
 
+mount.status() {
+    local _active_mount_points=$(mount.list)
+    local _error=0
+    for _mount_point in ${_active_mount_points[@]}; do
+        mount.check $_mount_point
+        done
+    return 0
+}
 
 mount.sshfs_get_info(){
     # nice list of information of sshfs mount points
@@ -187,6 +196,7 @@ unmount.remote () {
                 return 101
             fi
     }
+
     local target_folder="$1"
 
     if ! mount.online "$target_folder" ; then
@@ -194,7 +204,7 @@ unmount.remote () {
             return 0
         fi
 
-    if fusermount -u "$target_folder"; then
+    if fusermount -u "$target_folder" ; then
             UNMOUNTED "$target_folder"
             return 0
         else
@@ -202,7 +212,7 @@ unmount.remote () {
         fi
 
     # once more or if force
-    if [ "$FORCE" ] && mount.online "$target_folder"; then
+    if [ "$FORCE" ] && mount.online "$target_folder" ; then
         force_remote "$target_folder"
         return $?
         fi
@@ -262,7 +272,7 @@ mount.known_remote () {
 }
 
 unmount.known_remote () {
-    local _target=$(eval echo '$'"GURU_${1^^}")
+    local _target="$(eval echo '$'"GURU_${1^^}")"
     unmount.remote "$_target"
     return $?
 }
@@ -314,7 +324,8 @@ mount.needed () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then        # if sourced only import functions
-    VERBOSE="true"
+    VERBOSE=true
+    #GURU_CMD=""
     source "$HOME/.gururc"
     mount.main "$@"
     exit "$?"

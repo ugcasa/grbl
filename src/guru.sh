@@ -22,8 +22,9 @@ main.parser () {                                    # parse arguments and delive
                  ssh|os|common|tme)  lib/$tool.sh "$@"                           ; return $? ;;  # direct lib calls
                           document)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
             trans|project|tor|user)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
-       system|unmount|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
-    corona|scan|input|counter|note)  $tool.sh "$@"                              ; return $? ;;  # shell scipt tools
+               system|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
+                           unmount)  mount.unmount "$@"                          ; return $? ;;  # alias for unmounting
+    corona|scan|input|counter|note)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
        keyboard|phone|play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
       test|stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
                     help|-h|--help)  main.help "$@"                              ; return 0  ;;  # help printout
