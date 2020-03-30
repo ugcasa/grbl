@@ -5,12 +5,10 @@ source $GURU_BIN/lib/common.sh
 
 mount.main () {
     # mount tool command parser
-    [[ "$GURU_INSTALL" == "server" ]] && mount.warning
 
     argument="$1"; shift
     case "$argument" in
                       ls)   mount.list                                          ; return $? ;;
-                defaults)   mount.defaults                                      ; return $? ;;
                     info)   mount.sshfs_info | column -t -s $' '                ; return $? ;;
                   status)   mount.status                                        ; return $? ;;
                    check)   mount.online "$@"                                   ; return $? ;;
@@ -32,35 +30,6 @@ mount.main () {
 }
 
 
-mount.defaults () {
-    local _target=""
-    local _source=""
-    #local _default_list=("company" "family" "notes" "templates" "pictures" "photos" "audio" "video" "music")
-    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
-
-    for _default_item in ${_default_list[@]}; do
-        # echo '$'"GURU_LOCAL_${_default_item^^}"
-        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
-        _source=$(eval echo '$'"GURU_CLOUD_${_default_item^^}")
-        [[ "$_source" ]] && [[ "$_target" ]] || continue             # skip if not defined in userrc
-        mount.remote "$_source" "$_target"
-    done
-}
-
-
-unmount.defaults () {
-    local _target=""
-    local _source=""
-    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
-
-    for _default_item in ${_default_list[@]}; do
-        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
-        [[ "$_target" ]] || [[ -d "$_target" ]] || continue             # skip if not defined in userrc or mount point does not exist
-        unmount.remote "$_target"
-    done
-}
-
-
 mount.help () {
     echo "-- guru tool-kit mount help -----------------------------------------------"
     printf "usage:\t\t %s mount [source] [target] \n" "$GURU_CALL"
@@ -78,9 +47,37 @@ mount.help () {
     return 0
 }
 
-mount.warning () {
-    echo "running on server isntallation, mount is a client tool. exiting.."
-    exit 1
+
+mount.defaults () {
+    # mount all local/cloud pairs defined in userrc
+    local _target=""
+    local _source=""
+    #local _default_list=("company" "family" "notes" "templates" "pictures" "photos" "audio" "video" "music")
+    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
+
+    for _default_item in ${_default_list[@]}; do
+        # echo '$'"GURU_LOCAL_${_default_item^^}"
+        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
+        _source=$(eval echo '$'"GURU_CLOUD_${_default_item^^}")
+        [[ "$_source" ]] && [[ "$_target" ]] || continue                # skip if not defined in userrc
+        mount.remote "$_source" "$_target"
+    done
+}
+
+
+unmount.defaults () {
+    # unmount all local/cloud pairs defined in userrc
+    local _target=""
+    local _source=""
+    local _error=0
+    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
+
+    for _default_item in ${_default_list[@]}; do
+        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
+        [[ "$_target" ]] || [[ -d "$_target" ]] || continue             # skip if not defined in userrc or mount point does not exist
+        unmount.remote "$_target" || _error=$?
+    done
+    return $_error
 }
 
 
@@ -321,43 +318,6 @@ unmount.known_remote () {
     unmount.remote "$_target"
     return $?
 }
-
-
-
-
-mount.defaults_raw () {
-    # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
-   local _error="0"
-    if [[ "$GURU_CLOUD_COMPANY" ]] ; then   mount.remote "$GURU_CLOUD_COMPANY" "$GURU_LOCAL_COMPANY" || _error="1"; fi
-    if [[ "$GURU_CLOUD_FAMILY" ]] ; then    mount.remote "$GURU_CLOUD_FAMILY" "$GURU_LOCAL_FAMILY" || _error="1"; fi
-    if [[ "$GURU_CLOUD_NOTES" ]] ; then     mount.remote "$GURU_CLOUD_NOTES" "$GURU_LOCAL_NOTES" || _error="1"; fi
-    if [[ "$GURU_CLOUD_TEMPLATES" ]] ; then mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_LOCAL_TEMPLATES" || _error="1"; fi
-    if [[ "$GURU_CLOUD_PICTURES" ]] ; then  mount.remote "$GURU_CLOUD_PICTURES" "$GURU_LOCAL_PICTURES" || _error="1"; fi
-    if [[ "$GURU_CLOUD_PHOTOS" ]] ; then    mount.remote "$GURU_CLOUD_PHOTOS" "$GURU_LOCAL_PHOTOS" || _error="1"; fi
-    if [[ "$GURU_CLOUD_AUDIO" ]] ; then     mount.remote "$GURU_CLOUD_AUDIO" "$GURU_LOCAL_AUDIO" || _error="1"; fi
-    if [[ "$GURU_CLOUD_VIDEO" ]] ; then     mount.remote "$GURU_CLOUD_VIDEO" "$GURU_LOCAL_VIDEO" || _error="1"; fi
-    if [[ "$GURU_CLOUD_MUSIC" ]] ; then     mount.remote "$GURU_CLOUD_MUSIC" "$GURU_LOCAL_MUSIC" || _error="1"; fi
-
-    [ "$_error" -gt "0" ] && return 1 || return 0
-}
-
-
-unmount.defaults_raw () {
-    # unmount all TODO do better
-    local _error=0
-    if [[ "$GURU_CLOUD_VIDEO" ]] ; then      unmount.remote "$GURU_LOCAL_VIDEO" || _error="true"; fi
-    if [[ "$GURU_CLOUD_AUDIO" ]] ; then      unmount.remote "$GURU_LOCAL_AUDIO" || _error="true"; fi
-    if [[ "$GURU_CLOUD_MUSIC" ]] ; then      unmount.remote "$GURU_LOCAL_MUSIC" || _error="true"; fi
-    if [[ "$GURU_CLOUD_PICTURES" ]] ; then   unmount.remote "$GURU_LOCAL_PICTURES" || _error="true"; fi
-    if [[ "$GURU_CLOUD_PHOTOS" ]] ; then     unmount.remote "$GURU_LOCAL_PHOTOS" || _error="true"; fi
-    if [[ "$GURU_CLOUD_TEMPLATES" ]] ; then  unmount.remote "$GURU_LOCAL_TEMPLATES" || _error="true"; fi
-    if [[ "$GURU_CLOUD_NOTES" ]] ; then      unmount.remote "$GURU_LOCAL_NOTES" || _error="true"; fi
-    if [[ "$GURU_CLOUD_FAMILY" ]] ; then     unmount.remote "$GURU_LOCAL_FAMILY" || _error="true"; fi
-    if [[ "$GURU_CLOUD_COMPANY" ]] ; then    unmount.remote "$GURU_LOCAL_COMPANY" || _error="true"; fi
-
-    [ "$_error" -gt "0" ] && return 0 || return 0                               # do not care errors
-}
-
 
 mount.needed () {
     #install and remove needed applications. input "install" or "remove"

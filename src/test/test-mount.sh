@@ -42,7 +42,7 @@ mount.test () {
 mount.clean_test () {
     local error=0
 
-    if unmount.defaults_raw ; then
+    if unmount.defaults ; then
             TEST_PASSED "${FUNCNAME[0]} unmount"
             error=0
         else
@@ -50,7 +50,7 @@ mount.clean_test () {
             error=10
         fi
 
-    if mount.defaults_raw ; then
+    if mount.defaults ; then
             TEST_PASSED "${FUNCNAME[0]} mount"
             error=$((error))
         else
@@ -91,23 +91,33 @@ mount.test_unmount () {
 mount.test_default_mount (){
     local _err=0
 
-    msg "file server default folder mount \n"
-    if mount.defaults_raw ; then
+    msg "file server default folder mount \n"       # to test online ignore
+    if mount.defaults ; then
             TEST_PASSED "${FUNCNAME[0]} mount"
             _err=0
         else
             TEST_FAILED "${FUNCNAME[0]} mount"
             _err=$((_err+10))
         fi
+    sleep 1
 
-    sleep 0.5
-    msg "un-mount defaults  "
-    if unmount.defaults_raw ; then
+    msg "un-mount defaults \n"                      # to test unmount
+    if unmount.defaults ; then
             TEST_PASSED "${FUNCNAME[0]} unmount"
             _err=$_err
         else
             TEST_FAILED "${FUNCNAME[0]} unmount"
-            _err=$((_err+1))
+            _err=$((_err+10))
+        fi
+    sleep 1
+
+    msg "re-mount defaults \n"                      # to test re-mount
+    if mount.defaults ; then
+            TEST_PASSED "${FUNCNAME[0]} mount"
+            _err=$_err
+        else
+            TEST_FAILED "${FUNCNAME[0]} mount"
+            _err=$((_err+10))
         fi
 
     if ((_err>9)) ; then return 29 ; fi
