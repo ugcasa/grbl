@@ -7,7 +7,7 @@ GURU_BIN=$HOME/bin
 GURU_CFG=$HOME/.config/guru
 
 source src/lib/deco.sh                                          # include decorative functions
-source src/lib/lib/os.sh                                        # include os functions
+source src/lib/os.sh                                            # include os functions
 source src/keyboard.sh                                          # include keyboard functions
 source src/counter.sh                                           # include keyboard functions
 

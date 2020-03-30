@@ -5,6 +5,8 @@ source $GURU_BIN/lib/common.sh
 
 mount.main () {
     # mount tool command parser
+    [[ "$GURU_INSTALL" == "server" ]] && mount.warning
+
     argument="$1"; shift
     case "$argument" in
                       ls)   mount.list                                          ; return $? ;;
@@ -44,6 +46,11 @@ mount.help () {
     printf "\nexample:"
     printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_REMOTE_FILE_SERVER_USER" "$USER"
     return 0
+}
+
+mount.warning () {
+    echo "running on server isntallation, mount is a client tool. exiting.."
+    exit 1
 }
 
 

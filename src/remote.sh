@@ -4,6 +4,8 @@
 source $GURU_BIN/lib/common.sh
 
 remote.main() {
+    [[ "$GURU_INSTALL" == "server" ]] && remote.warning
+
     command="$1"; shift
     case "$command" in
               push|pull)    remote.$command"_config"                       ; return $? ;;
@@ -25,6 +27,11 @@ remote.help () {
     printf " install                  install requirements \n"
     printf "\nexample:"
     printf "    %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_SERVER_USER" "$USER" "$GURU_ACCESS_POINT_SERVER"
+}
+
+remote.warning () {
+    echo "running on server isntallation, remote is a client tool. exiting.."
+    exit 1
 }
 
 
