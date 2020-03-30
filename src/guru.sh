@@ -1,6 +1,6 @@
 #!/bin/bash
 # guru tool-kit - caa@ujo.guru 2020
-export GURU_VERSION="0.5.2"
+export GURU_VERSION="0.5.2."
 
 source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
 source $GURU_BIN/system.sh                          # common functions, if no .sh, check here
@@ -128,13 +128,13 @@ main() {
 
     export GURU_SYSTEM_PLATFORM="$(check_distro)"                                       # run wide platform check
     export GURU_SYSTEM_STATUS="starting.."                                              # needs to be "ready"
-    export GURU_FILESERVER_STATUS="unknown"
+    export GURU_CLOUD_STATUS="unknown"
 
-    if [ "$GURU_FILESERVER_STATUS" != "online" ]; then
+    if [ "$GURU_CLOUD_STATUS" != "online" ]; then
             mount.system                                                                # mount system mount point
         fi
 
-    if [ "$GURU_FILESERVER_STATUS" == "online" ] && [ "$GURU_SYSTEM_STATUS" != "ready" ]; then
+    if [ "$GURU_CLOUD_STATUS" == "online" ] && [ "$GURU_SYSTEM_STATUS" != "ready" ]; then
             export GURU_SYSTEM_STATUS="ready"                                           # require track mount
         fi
 

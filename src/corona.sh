@@ -93,7 +93,7 @@ corona.country_current_table () {
 
 corona.country_current_oneline () {
     [ "$1" ] && location="$1"
-    _last_time="$GURU_TRACK/corona" ; [ -d "$_last_time" ] || mkdir "$_last_time"
+    _last_time="$GURU_LOCAL_TRACK/corona" ; [ -d "$_last_time" ] || mkdir "$_last_time"
     _last_time="$_last_time/$location.last" ; [ -f "$_last_time" ] || touch "$_last_time"
 
     corona.get_data "$location"

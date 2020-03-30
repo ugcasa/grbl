@@ -30,7 +30,7 @@ timer.main () {
 
 
 timer.check() {
-	mount.online "$GURU_TRACK"
+	mount.online "$GURU_LOCAL_TRACK"
 	timer.status human
 	}
 

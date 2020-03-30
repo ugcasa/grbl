@@ -21,7 +21,7 @@ else 												# Defaults
 	export GURU_USER_PHONE="-your phone number-"
 	export GURU_NOTE_HEADER="Daily notes $GURU_REAL_NAME" 				# TODO koostetaan valmiiksi sringi tässä
 
-# Server setup 
+# Server setup
 	export GURU_ACCESS_POINT_SERVER_USER="$GURU_USER"
 	export GURU_ACCESS_POINT_SERVER="ujo.guru"
 	export GURU_ACCESS_POINT_SERVER_PORT="2010"
@@ -30,25 +30,27 @@ else 												# Defaults
 	export GURU_TEAM="test"
 	export GURU_TEAM_NAME="tester"
 
-# Folders 
-	export GURU_NOTES="$HOME/Notes"
-	export GURU_PICTURES="$HOME/Pictures"
-	export GURU_TEMPLATES="$HOME/Templates"
-	export GURU_VIDEO="$HOME/Videos"
-	export GURU_AUDIO="$HOME/Audio"
-	export GURU_MUSIC="$HOME/Music"
-	export GURU_SCAN="$HOME/Documents" 
-	export GURU_TRACK="$HOME/Track"
-	export GURU_TEST="$GURU_TRACK/Test-data" 
+# mountpoints
+	export GURU_LOCAL_NOTES="$HOME/Notes"
+	export GURU_LOCAL_PICTURES="$HOME/Pictures"
+	export GURU_LOCAL_TEMPLATES="$HOME/Templates"
+	export GURU_LOCAL_VIDEO="$HOME/Videos"
+	export GURU_LOCAL_AUDIO="$HOME/Audio"
+	export GURU_LOCAL_MUSIC="$HOME/Music"
+	export GURU_LOCAL_SCAN="$HOME/Documents"
+	export GURU_LOCAL_TRACK="$HOME/Track"
+	export GURU_LOCAL_FAMILY="$HOME/bubble.bay"
+	export GURU_LOCAL_PHOTOS="$HOME/Photos"
+
+#folders
+	export GURU_TEST="$GURU_LOCAL_TRACK/Test-data"
 	export GURU_ACCOUNTING="$HOME/Economics"
 	export GURU_PERSONAL_ACCOUNTING="$HOME/Economics/Personal"
 	export GURU_LOG="$HOME/Track/log"
 	export GURU_WORKTRACK="$HOME/Track/timetrack"
 	export GURU_COUNTER="$HOME/Track/counters"
 	export GURU_RECEIPTS="invoices"												# bad monkey!
-	export GURU_FAMILY="$HOME/bubble.bay"
-	export GURU_PHOTOS="$HOME/Photos"
-	
+
 
 
 # Preferred applications
@@ -58,7 +60,7 @@ else 												# Defaults
 	export GURU_OFFICE_DOC="libreoffice"
 	export GURU_OFFICE_SPR="libreoffice"
 
-# Keyboard bindings 
+# Keyboard bindings
 	export GURU_KEYBIND_TERMINAL="F1"
 	export GURU_KEYBIND_NOTE="<Ctrl>n"
 	export GURU_KEYBIND_DATESTAMP=""
@@ -92,5 +94,5 @@ else 												# Defaults
 	export GURU_TERMINAL_COLOR=""
 fi
 
-#alias "$GURU_CALL"=$GURU_BIN/guru 					
+#alias "$GURU_CALL"=$GURU_BIN/guru
 

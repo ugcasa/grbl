@@ -39,14 +39,14 @@ note.main () {
 }
 
 note.check() {
-    mount.online "$GURU_NOTES"
-    mount.online "$GURU_TEMPLATES"
+    mount.online "$GURU_LOCAL_NOTES"
+    mount.online "$GURU_LOCAL_TEMPLATES"
     return 0
 }
 
 
 note.online () {
-    if mount.online "$GURU_NOTES" >/dev/null && mount.online "$GURU_TEMPLATES" >/dev/null; then
+    if mount.online "$GURU_LOCAL_NOTES" >/dev/null && mount.online "$GURU_LOCAL_TEMPLATES" >/dev/null; then
             return 0
         else
             return 1
@@ -55,8 +55,8 @@ note.online () {
 
 
 note.remount() {
-    mount.remote "$GURU_CLOUD_NOTES" "$GURU_NOTES" || return 100
-    mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" || return 100
+    mount.remote "$GURU_CLOUD_NOTES" "$GURU_LOCAL_NOTES" || return 100
+    mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_LOCAL_TEMPLATES" || return 100
     return 0
 }
 
@@ -66,7 +66,7 @@ note.list() {
     # List of notes on this month and year or given in order and format YYYY MM
     [ "$1" ] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
     [ "$2" ] && year=$(date -d "$2"-1-1 +%Y) || year=$(date +%Y)                  #; echo "year: $year"
-    directory="$GURU_NOTES/$GURU_USER/$year/$month"
+    directory="$GURU_LOCAL_NOTES/$GURU_USER/$year/$month"
 
     if [ -d "$directory" ]; then
         ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted"
@@ -94,12 +94,12 @@ note.gen_var () {
     short_datestamp=$(date -d $year-$month-$day +$GURU_FILE_DATE_FORMAT)    # hmm.. > issue #19 workaround needed before this can be set by user
     nice_datestamp=$(date -d $year-$month-$day +$GURU_DATE_FORMAT)          # nice date format
 
-    note_dir=$GURU_NOTES/$GURU_USER/$year/$month
+    note_dir=$GURU_LOCAL_NOTES/$GURU_USER/$year/$month
     note_file=$GURU_USER"_notes_"$short_datestamp.md
     note="$note_dir/$note_file"                                      #; echo "note file "$note
 
     template_file_name="template.$GURU_USER.$GURU_TEAM.md"           #; echo "temp file name "$template_file_name
-    template="$GURU_TEMPLATES/$template_file_name"                   #; echo "template file "$template
+    template="$GURU_LOCAL_TEMPLATES/$template_file_name"                   #; echo "template file "$template
     }
 
 
@@ -107,7 +107,7 @@ note.contruct() {
     # creates notes and opens them to default editor
     note.gen_var "$1"                                               # set basic variables    for functions
     [[  -d "$note_dir" ]] || mkdir -p "$note_dir"
-    [[  -d "$GURU_TEMPLATES" ]] || mkdir -p "$GURU_TEMPLATES"
+    [[  -d "$GURU_LOCAL_TEMPLATES" ]] || mkdir -p "$GURU_LOCAL_TEMPLATES"
 
     if [[ ! -f "$note" ]]; then
         # header
@@ -153,11 +153,11 @@ note.editor () {
     # open note to preferred editor
     case "$GURU_EDITOR" in
         subl)
-            projectFolder=$GURU_NOTES/$GURU_USER/project
+            projectFolder=$GURU_LOCAL_NOTES/$GURU_USER/project
             [ -f $projectFolder ] || mkdir -p $projectFolder
 
             projectFile=$projectFolder/notes.sublime-project
-            [ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_NOTES/$GURU_USER'"'"\n\t\t}\n\t]\n}\n" >$projectFile # Whatta ..?! TODO fix omg
+            [ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_LOCAL_NOTES/$GURU_USER'"'"\n\t\t}\n\t]\n}\n" >$projectFile # Whatta ..?! TODO fix omg
 
             subl --project "$projectFile" -a
             subl "$note" --project "$projectFile" -a

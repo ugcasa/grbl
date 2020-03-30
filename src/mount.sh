@@ -97,32 +97,32 @@ mount.list () {
 
 ## VVV paskaa
 mount.check_system_mount() {
-    grep "sshfs" < /etc/mtab | grep "$GURU_TRACK" >/dev/null && status="mounted" || status="offline"
-    ls -1qA "$GURU_TRACK" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
+    grep "sshfs" < /etc/mtab | grep "$GURU_LOCAL_TRACK" >/dev/null && status="mounted" || status="offline"
+    ls -1qA "$GURU_LOCAL_TRACK" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
 
-    if [ "$status" == "mounted" ] && [ "$contans_stuff" ] && [ -f "$GURU_TRACK/.online" ]; then
+    if [ "$status" == "mounted" ] && [ "$contans_stuff" ] && [ -f "$GURU_LOCAL_TRACK/.online" ]; then
         GURU_SYSTEM_STATUS="ready"
-        GURU_FILESERVER_STATUS="online"
+        GURU_CLOUD_STATUS="online"
         return 0
 
     elif [ "$status" == "mounted" ] && [ "$contans_stuff" ]; then
         GURU_SYSTEM_STATUS="validating system mount.. "
-        GURU_FILESERVER_STATUS=".online file not found"
+        GURU_CLOUD_STATUS=".online file not found"
         return 20
 
     elif [ "$status" == "mounted" ] ; then
         GURU_SYSTEM_STATUS="validating system mount.."
-        GURU_FILESERVER_STATUS="empty system mount point"
+        GURU_CLOUD_STATUS="empty system mount point"
         return 20
 
     elif [ "$status" == "offline" ] ; then
         GURU_SYSTEM_STATUS="offline"
-        GURU_FILESERVER_STATUS="offline"
+        GURU_CLOUD_STATUS="offline"
         return 20
 
     else
         GURU_SYSTEM_STATUS="error"
-        GURU_FILESERVER_STATUS="unknown"
+        GURU_CLOUD_STATUS="unknown"
         return 20
     fi
 }
@@ -136,8 +136,8 @@ mount.check_system() {
         else
             FAILED
             echo "system status: $GURU_SYSTEM_STATUS"
-            echo "file server status: $GURU_FILESERVER_STATUS"
-            msg "system mount $GURU_FILESERVER_STATUS"
+            echo "file server status: $GURU_CLOUD_STATUS"
+            msg "system mount $GURU_CLOUD_STATUS"
         fi
     return $result
 }
@@ -146,7 +146,7 @@ mount.check_system() {
 
 mount.system () {
     if ! mount.check_system_mount ; then
-            mount.remote "$GURU_CLOUD_TRACK" "$GURU_TRACK"
+            mount.remote "$GURU_CLOUD_TRACK" "$GURU_LOCAL_TRACK"
         fi
 }
 
@@ -168,7 +168,7 @@ mount.check () {
     # check mountpoint status with putput
     local _target_folder="$1"
     local _err=0
-    [ "$_target_folder" ] || _target_folder="$GURU_TRACK"
+    [ "$_target_folder" ] || _target_folder="$GURU_LOCAL_TRACK"
 
     msg "$_target_folder status "
     mount.online "$_target_folder" ; _err=$?
@@ -272,7 +272,7 @@ mount.known_remote () {
 }
 
 unmount.known_remote () {
-    local _target="$(eval echo '$'"GURU_${1^^}")"
+    local _target="$(eval echo '$'"GURU_LOCAL_${1^^}")"
     unmount.remote "$_target"
     return $?
 }
@@ -281,15 +281,15 @@ unmount.known_remote () {
 mount.defaults_raw () {
     # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
    local _error="0"
-    if [ "$GURU_CLOUD_COMPANY" ]; then   mount.remote "$GURU_CLOUD_COMPANY" "$GURU_COMPANY" || _error="1"; fi
-    if [ "$GURU_CLOUD_FAMILY" ]; then    mount.remote "$GURU_CLOUD_FAMILY" "$GURU_FAMILY" || _error="1"; fi
-    if [ "$GURU_CLOUD_NOTES" ]; then     mount.remote "$GURU_CLOUD_NOTES" "$GURU_NOTES" || _error="1"; fi
-    if [ "$GURU_CLOUD_TEMPLATES" ]; then mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_TEMPLATES" || _error="1"; fi
-    if [ "$GURU_CLOUD_PICTURES" ]; then  mount.remote "$GURU_CLOUD_PICTURES" "$GURU_PICTURES" || _error="1"; fi
-    if [ "$GURU_CLOUD_PHOTOS" ]; then    mount.remote "$GURU_CLOUD_PHOTOS" "$GURU_PHOTOS" || _error="1"; fi
-    if [ "$GURU_CLOUD_AUDIO" ]; then     mount.remote "$GURU_CLOUD_AUDIO" "$GURU_AUDIO" || _error="1"; fi
-    if [ "$GURU_CLOUD_VIDEO" ]; then     mount.remote "$GURU_CLOUD_VIDEO" "$GURU_VIDEO" || _error="1"; fi
-    if [ "$GURU_CLOUD_MUSIC" ]; then     mount.remote "$GURU_CLOUD_MUSIC" "$GURU_MUSIC" || _error="1"; fi
+    if [ "$GURU_CLOUD_COMPANY" ]; then   mount.remote "$GURU_CLOUD_COMPANY" "$GURU_LOCAL_COMPANY" || _error="1"; fi
+    if [ "$GURU_CLOUD_FAMILY" ]; then    mount.remote "$GURU_CLOUD_FAMILY" "$GURU_LOCAL_FAMILY" || _error="1"; fi
+    if [ "$GURU_CLOUD_NOTES" ]; then     mount.remote "$GURU_CLOUD_NOTES" "$GURU_LOCAL_NOTES" || _error="1"; fi
+    if [ "$GURU_CLOUD_TEMPLATES" ]; then mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_LOCAL_TEMPLATES" || _error="1"; fi
+    if [ "$GURU_CLOUD_PICTURES" ]; then  mount.remote "$GURU_CLOUD_PICTURES" "$GURU_LOCAL_PICTURES" || _error="1"; fi
+    if [ "$GURU_CLOUD_PHOTOS" ]; then    mount.remote "$GURU_CLOUD_PHOTOS" "$GURU_LOCAL_PHOTOS" || _error="1"; fi
+    if [ "$GURU_CLOUD_AUDIO" ]; then     mount.remote "$GURU_CLOUD_AUDIO" "$GURU_LOCAL_AUDIO" || _error="1"; fi
+    if [ "$GURU_CLOUD_VIDEO" ]; then     mount.remote "$GURU_CLOUD_VIDEO" "$GURU_LOCAL_VIDEO" || _error="1"; fi
+    if [ "$GURU_CLOUD_MUSIC" ]; then     mount.remote "$GURU_CLOUD_MUSIC" "$GURU_LOCAL_MUSIC" || _error="1"; fi
 
     [ "$_error" -gt "0" ] && return 1 || return 0
 }
@@ -298,15 +298,15 @@ mount.defaults_raw () {
 unmount.defaults_raw () {
     # unmount all TODO do better
     local _error=0
-    if [ "$GURU_CLOUD_VIDEO" ]; then      unmount.remote "$GURU_VIDEO" || _error="true"; fi
-    if [ "$GURU_CLOUD_AUDIO" ]; then      unmount.remote "$GURU_AUDIO" || _error="true"; fi
-    if [ "$GURU_CLOUD_MUSIC" ]; then      unmount.remote "$GURU_MUSIC" || _error="true"; fi
-    if [ "$GURU_CLOUD_PICTURES" ]; then   unmount.remote "$GURU_PICTURES" || _error="true"; fi
-    if [ "$GURU_CLOUD_PHOTOS" ]; then     unmount.remote "$GURU_PHOTOS" || _error="true"; fi
-    if [ "$GURU_CLOUD_TEMPLATES" ]; then  unmount.remote "$GURU_TEMPLATES" || _error="true"; fi
-    if [ "$GURU_CLOUD_NOTES" ]; then      unmount.remote "$GURU_NOTES" || _error="true"; fi
-    if [ "$GURU_CLOUD_FAMILY" ]; then     unmount.remote "$GURU_FAMILY" || _error="true"; fi
-    if [ "$GURU_CLOUD_COMPANY" ]; then    unmount.remote "$GURU_COMPANY" || _error="true"; fi
+    if [ "$GURU_CLOUD_VIDEO" ]; then      unmount.remote "$GURU_LOCAL_VIDEO" || _error="true"; fi
+    if [ "$GURU_CLOUD_AUDIO" ]; then      unmount.remote "$GURU_LOCAL_AUDIO" || _error="true"; fi
+    if [ "$GURU_CLOUD_MUSIC" ]; then      unmount.remote "$GURU_LOCAL_MUSIC" || _error="true"; fi
+    if [ "$GURU_CLOUD_PICTURES" ]; then   unmount.remote "$GURU_LOCAL_PICTURES" || _error="true"; fi
+    if [ "$GURU_CLOUD_PHOTOS" ]; then     unmount.remote "$GURU_LOCAL_PHOTOS" || _error="true"; fi
+    if [ "$GURU_CLOUD_TEMPLATES" ]; then  unmount.remote "$GURU_LOCAL_TEMPLATES" || _error="true"; fi
+    if [ "$GURU_CLOUD_NOTES" ]; then      unmount.remote "$GURU_LOCAL_NOTES" || _error="true"; fi
+    if [ "$GURU_CLOUD_FAMILY" ]; then     unmount.remote "$GURU_LOCAL_FAMILY" || _error="true"; fi
+    if [ "$GURU_CLOUD_COMPANY" ]; then    unmount.remote "$GURU_LOCAL_COMPANY" || _error="true"; fi
 
     [ "$_error" -gt "0" ] && return 0 || return 0           # do not care errors
 }
