@@ -24,9 +24,10 @@ main.parser () {                                    # parse arguments and delive
             trans|project|tor|user)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
                system|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
                            unmount)  mount.unmount "$@"                          ; return $? ;;  # alias for unmounting
+                              test)  bash "$GURU_BIN/test/test.sh" "$@"          ; return $? ;;  # tester
     corona|scan|input|counter|note)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
        keyboard|phone|play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
-      test|stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
+           stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
                     help|-h|--help)  main.help "$@"                              ; return 0  ;;  # help printout
                      version|--ver)  printf "guru tool-kit v.$GURU_VERSION\n"               ;;  # version output
                                  *)  printf "$GURU_CMD: command %s not found \n" "$tool"     ;;  # false user input

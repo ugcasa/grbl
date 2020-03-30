@@ -74,7 +74,7 @@ test.tool() {
         fi
 
     source $GURU_BIN/$_tool.$_lang                              # source function under test
-    source $GURU_BIN/test-$_tool.$_lang                         # source tester functions
+    source $GURU_BIN/test/test-$_tool.$_lang                         # source tester functions
 
     $1.test "$_case" ; _error=$?                        # run test
 
@@ -152,7 +152,7 @@ test.terminal () {
 
           source $HOME/.gururc                              # source user settings
           source $GURU_BIN/$_tool.sh                        # source function under test
-          source $GURU_BIN/test-$_tool.sh                   # source tester functions
+          source $GURU_BIN/test/test-$_tool.sh                   # source tester functions
 
           if [ "$_case" ]; then                             # if case not given
               time "$_tool.test" "$_case"                   # run test tool directly
