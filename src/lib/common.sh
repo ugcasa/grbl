@@ -14,7 +14,12 @@ msg() {
     fi
 }
 
-export -f msg
+system.core-dump () {
+    echo "core dumped to $GURU_CORE_DUMP"
+    set > "$GURU_CORE_DUMP"
+}
+
+export -f msg system.core-dump
 source $GURU_BIN/lib/os.sh
 source $GURU_BIN/lib/deco.sh
 source $GURU_BIN/counter.sh

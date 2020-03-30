@@ -6,8 +6,8 @@ source $GURU_BIN/lib/common.sh
 system.main() {
     local tool="$1"; shift
     case "$tool" in
-       get|set|upgrade|rollback)  system.$tool   ; return $? ;;
-                              *)  system.help    ;;
+       core-dump|get|set|upgrade|rollback)  system.$tool   ; return $? ;;
+                                        *)  system.help    ;;
     esac
     return 0
 }
