@@ -7,6 +7,7 @@ source $GURU_BIN/system.sh                          # common functions, if no .s
 source $GURU_BIN/functions.sh                       # common functions, if no .sh, check here
 source $GURU_BIN/mount.sh                           # common functions, if no .sh, check here
 source $GURU_BIN/lib/common.sh
+temp_force=$FORCE ; FORCE=                          # store 'FORCE' status. is set will fuck up 'read' by letting them trough
 
 main.parser () {                                    # parse arguments and delivery variables to corresponding worker
     tool="$1"; shift                                # store tool call name and shift arguments left
@@ -20,13 +21,15 @@ main.parser () {                                    # parse arguments and delive
                          uninstall)  bash "$GURU_BIN/$tool.sh" "$@"              ; return $? ;;  # Get rid of this shit
                   clear|ls|cd|echo)  $tool "$@"                                  ; return $? ;;  # os command pass trough
                  ssh|os|common|tme)  lib/$tool.sh "$@"                           ; return $? ;;  # direct lib calls
-                          document)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
+                 input|hosts|phone)  trial/$tool.sh "$@"                         ; return $? ;;  # place for shell script prototypes and experiments
+             tme|fmradio|datestamp)  trial/$tool.py "$@"                         ; return $? ;;  # place for python script prototypes and experiments
+                          document)  $tool "$@"                                  ; return $? ;;  # one function prototypes are in 'function.sh'
             trans|project|tor|user)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
                system|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
-                           unmount)  mount.unmount "$@"                          ; return $? ;;  # alias for unmounting
+                           unmount)  mount.main unmount "$@"                     ; return $? ;;  # alias for unmounting
                               test)  bash "$GURU_BIN/test/test.sh" "$@"          ; return $? ;;  # tester
     corona|scan|input|counter|note)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
-       keyboard|phone|play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
+             keyboard|play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
            stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
                     help|-h|--help)  main.help "$@"                              ; return 0  ;;  # help printout
                      version|--ver)  printf "guru tool-kit v.$GURU_VERSION\n"               ;;  # version output
@@ -149,9 +152,9 @@ main() {
             _error_code=$?
         fi
 
-    if (( _error_code > 1 )); then                                                       # 1 is warning, no error output
+    if (( _error_code > 1 )); then                                                      # 1 is warning, no error output
             [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)      # TODO when re-write error less than 10 are warnings + list of them
-            ERROR "$_error_code while $GURU_SYSTEM_STATUS $error_message \n"             # print error
+            ERROR "$_error_code while $GURU_SYSTEM_STATUS $error_message \n"            # print error
             [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"
         fi
 
@@ -162,18 +165,20 @@ main() {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
-    export VERBOSE="$GURU_VERBOSE"                      # use verbose setting from personal config
-    while getopts 'lvf' flag; do                          # if verbose flag given, overwrite personal config
+    export VERBOSE="$GURU_VERBOSE"                          # use verbose setting from personal config
+    while getopts 'lvf' flag; do                            # if verbose flag given, overwrite personal config
         case "${flag}" in
-            l)  export LOGGING="true" ; shift ;;
-            v)  export VERBOSE="true" ; shift ;;
-            f)  export FORCE="true"   ; shift ;;
+            l)  export LOGGING=true     ; shift ;;
+            v)  export VERBOSE=true     ; shift ;;
+            f)  export GURU_FORCE=true  ; shift ;;
+            r)  export RAW=true         ; shift ;;
             *)  echo "invalid flag"
                 exit 1
         esac
     done
 
     main "$@"
+    FORCE=$temp_force                                        # return FORCE status
     exit $?
 fi
 

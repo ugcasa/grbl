@@ -7,35 +7,26 @@ mount.main() {
     # mount tool command parser
     argument="$1"; shift
     case "$argument" in
-                  status)   mount.status                ; return $? ;;
-            check-system)   mount.check_system          ; return $? ;;
-                   check)   mount.online "$@"           ; return $? ;;
-                 ls|list)   mount.list                  ; return $? ;;
-                    info)   mount.sshfs_info            ; return $? ;;
-                   mount)   mount.remote "$1" "$2"      ; return $? ;;
-                 unmount)   unmount.known_remote "$@"   ; return $? ;;
-                 install)   mount.needed install        ; return $? ;;
-         unistall|remove)   mount.needed remove         ; return $? ;;
-                    help)   mount.help "$@"             ; return 0  ;;
-                    test)   source $GURU_BIN/test.sh; mount.test "$@" ;;
-        all|defaults|def)   case "$GURU_CMD" in
-                               mount)   mount.defaults_raw      ; return $? ;;
-                             unmount)   unmount.defaults_raw    ; return $? ;;
-                                   *)   help
-                            esac ;;
-                       *)   case "$GURU_CMD" in
-                               mount)   if [ "$1" ]; then
-                                                mount.remote "$argument" "$1"  ; return $?
-                                            else
-                                                mount.known_remote "$argument" ; return $? ; fi ;;
-                             unmount)   if [ $FORCE ]; then
-                                                sudo fusermount -u "$argument" ; return $?
-                                            else
-                                                unmount.remote "$argument"     ; fi ;;
-                                    *)  mount.help
-                            esac ;;
-    esac
-}
+                      ls)   mount.list                                      ; return $? ;;
+                    info)   mount.sshfs_info                                ; return $? ;;
+                  status)   mount.status                                    ; return $? ;;
+                   check)   mount.online "$@"                               ; return $? ;;
+            check-system)   mount.check_system                              ; return $? ;;
+           mount|unmount)   $argument.remote "$@"                           ; return $? ;;
+                    help)   mount.help "$@"                                 ; return 0  ;;
+                 install)   mount.needed install                            ; return $? ;;
+         unistall|remove)   mount.needed remove                             ; return $? ;;
+                       *)   if [ "$1" ]; then mount.remote "$argument" "$1" ; return $? ; fi
+                            case $GURU_CMD in
+                                mount|unmount)
+                                    case $argument in
+                                    all) $GURU_CMD.defaults_raw             ; return $? ;;
+                                      *) $GURU_CMD.known_remote "$argument" ; return $? ;;
+                                    esac                                                ;;
+                                *) echo "$GURU_CMD: bad input '$argument' " ; return 1  ;;
+                                esac                                                    ;;
+                            esac
+        }
 
 
 mount.help() {
@@ -184,15 +175,15 @@ mount.check () {
 
 unmount.remote () {
 
-    force_remote () {
+    force_unmount () {
         local target_folder="$1"
-        msg "need to force unmount.. "
+        printf "need to force unmount.. "
 
         if sudo fusermount -u "$target_folder" ; then
-                UNMOUNTED "$target_folder FORCE"
+                UNMOUNTED "$target_folder force"
                 return 0
             else
-                FAILED "$target_folder FORCE"
+                FAILED "$target_folder force unmount"
                 return 101
             fi
     }
@@ -200,7 +191,7 @@ unmount.remote () {
     local target_folder="$1"
 
     if ! mount.online "$target_folder" ; then
-            IGNORED "$target_folder not mounted"
+            IGNORED "$target_folder is not mounted"
             return 0
         fi
 
@@ -208,12 +199,12 @@ unmount.remote () {
             UNMOUNTED "$target_folder"
             return 0
         else
-            force_remote "$target_folder"
+            force_unmount "$target_folder"
         fi
 
     # once more or if force
-    if [ "$FORCE" ] && mount.online "$target_folder" ; then
-        force_remote "$target_folder"
+    if [ "$GURU_FORCE" ] && mount.online "$target_folder" ; then
+        force_unmount "$target_folder"
         return $?
         fi
 }
@@ -228,25 +219,45 @@ mount.remote() {
     if [ "$1" ]; then _source_folder="$1"; else read -r -p "input source folder at server: " _source_folder; fi
     if [ "$2" ]; then _target_folder="$2"; else read -r -p "input target mount point: " _target_folder; fi
 
+    if mount.online "$_target_folder"; then
+            ONLINE "$_target_folder"                                    # already mounted
+            return 0
+        fi
+
+    if [ "$(ls -A $_target_folder)" ]; then                             # Check that targed directory is empty
+            WARNING "$_target_folder is not empty\n"
+
+            if [ $GURU_FORCE ]; then
+                    local _reply=""
+                    FORCE=                                              # Too dangerous to continue if set
+                    ls "$_target_folder"
+                    read -r -p "remove above files and folders?: " _reply
+                    if [[ $_reply == "y" ]]; then
+                            rm -r "$_target_folder"
+                        else
+                            ERROR "unable to mount $_target_folder, mount point contains files\n"
+                            return 25
+                        fi
+                else
+                    printf "try '-f' to force or: %s -f mount %s %s\n" "$GURU_CALL" "$_source_folder" "$_target_folder"
+                    return 25
+                fi
+        fi
+
     if ! [ -d "$_target_folder" ]; then
         mkdir -p "$_target_folder"                                      # be sure that mount point exist
         fi
-
-    if mount.online "$_target_folder"; then
-        ONLINE "$_target_folder"                                        # already mounted
-        return 0
-    fi
-    [ "$(ls $_target_folder)" ] && return 25                            # Check that directory is empty
 
     local server="$GURU_LOCAL_FILE_SERVER"                              # assume that server is in local network
     local server_port="$GURU_LOCAL_FILE_SERVER_PORT"
     local user="$GURU_LOCAL_FILE_SERVER_USER"
 
     if ! ssh -q -p "$server_port" "$user@$server" exit; then            # check local server connection
-        server="$GURU_REMOTE_FILE_SERVER"                               # if no connection try remote server connection
-        server_port="$GURU_REMOTE_FILE_SERVER_PORT"
-        user="$GURU_REMOTE_FILE_SERVER_USER"
-    fi
+            server="$GURU_REMOTE_FILE_SERVER"                               # if no connection try remote server connection
+            server_port="$GURU_REMOTE_FILE_SERVER_PORT"
+            user="$GURU_REMOTE_FILE_SERVER_USER"
+        fi
+
     msg "mounting $_target_folder "
 
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$_source_folder" "$_target_folder"
@@ -264,10 +275,10 @@ mount.remote() {
 
 
 mount.known_remote () {
-    local _target=$(eval echo '$'"GURU_${1^^}")
+    local _target=$(eval echo '$'"GURU_LOCAL_${1^^}")
     local _source=$(eval echo '$'"GURU_CLOUD_${1^^}")
 
-    mount.remote "$_target" "$_source"
+    mount.remote "$_source" "$_target"
     return $?
 }
 

@@ -1,5 +1,6 @@
 #!/bin/bash
 # install functions for giocon client ujo.guru / juha.palm 2019
+# TODO: move all these to guru-install
 
 install.main () {
     [ "$1" ] && argument="$1" || read -r -p "input module name: " argument
@@ -7,7 +8,7 @@ install.main () {
         java|webmin|conda|hackrf|st-link|mqtt-server|mqtt-client|visual-code|tor|django|help)
                                       install.$argument "$@" ;;
         kaldi|listener)               install.kaldi 4 ;; # number of cores used during compiling
-        pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/install-pk2.sh; exit; $SHELL; " ;;
+        pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/lib/install-pk2.sh; exit; $SHELL; " ;;
         spectrumanalyzer|SA)          install.spectrumanalyzer "$@"; install.fosphor "$@" ;;
         all)                          echo "TBD" ;;
         *)                            echo "no installer for '$argument'"; install.help
