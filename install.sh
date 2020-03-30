@@ -15,10 +15,10 @@ disabler_flag_file="$HOME/.gururc.disabled"                     # flag for disab
 
 case "$1" in                                                    # simple location pased argument parser
     server)
-            platform="server"
+            INSTALL_TYPE="server"
             ;;
     desktop)
-            platform="desktop"
+            INSTALL_TYPE="desktop"
             ;;
     force|-f|-y)
             force_overwrite=true
@@ -36,10 +36,10 @@ case "$1" in                                                    # simple locatio
             printf " server            server install [ubuntu server 18.04>] \n\n"
             ;;
     *)
-        platform="desktop"
+        INSTALL_TYPE="desktop"
 esac
 
-if grep -q ".gururc" "$target_rc" ; then                         # already installed? reinstall?
+if grep -q ".gururc" "$target_rc" ; then                                                            # already installed? reinstall?
     [ $force_overwrite ] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer
     if ! [[ "$answer" == "y" ]]; then
         echo "aborting.."
@@ -49,25 +49,31 @@ if grep -q ".gururc" "$target_rc" ; then                         # already insta
     [ -f "$GURU_BIN/uninstall.sh" ] && bash "$GURU_BIN/uninstall.sh" || echo "un-installer not found"
 fi
 
-[ -f "$HOME/.bashrc.giobackup" ] || cp -f "$target_rc" "$HOME/.bashrc.giobackup"            # Make a backup of original .bashrc but only if installed first time
-grep -q ".gururc" "$target_rc" || cat ./src/tobashrc.sh >>"$target_rc"                      # Check is .gururc called from .bashrc, add call if not
+[ -f "$HOME/.bashrc.giobackup" ] || cp -f "$target_rc" "$HOME/.bashrc.giobackup"                    # Make a backup of original .bashrc but only if installed first time
+grep -q ".gururc" "$target_rc" || cat ./src/tobashrc.sh >>"$target_rc"                              # Check is .gururc called from .bashrc, add call if not
 
 [ -f "$disabler_flag_file" ] && rm -f "$disabler_flag_file"
 
-cp -f ./src/gururc.sh "$HOME/.gururc"                            # create folder structure
-source "$HOME/.gururc"                                           # rise default environmental variables
+cp -f ./src/gururc.sh "$HOME/.gururc"                                                               # create folder structure
+source "$HOME/.gururc"                                                                              # rise default environmental variables
 
-[ -d "$GURU_BIN" ] || mkdir -p "$GURU_BIN"                       # make bin folder for script files
-[ -d "$GURU_CFG" ] || mkdir -p "$GURU_CFG"                       # make cfg folder for configuration files
+[ -d "$GURU_BIN" ] || mkdir -p "$GURU_BIN"                                                          # make bin folder for script files
+[ -d "$GURU_CFG" ] || mkdir -p "$GURU_CFG"                                                          # make cfg folder for configuration files
 [ -d "$GURU_APP" ] || mkdir -p "$GURU_APP"
-[ -d "$GURU_CFG/$GURU_USER" ] || mkdir -p "$GURU_CFG/$GURU_USER" # personal configurations
-cp -f ./cfg/* "$GURU_CFG/$GURU_USER"                             # copy configuration files to configuration folder
-cp -f -r ./src/* -f "$GURU_BIN"                                  # copy script files to bin folder
-mv  "$GURU_BIN/guru.sh" "$GURU_BIN/guru"                         # rename guru.sh in bin folder to guru
-#cp -f ./src/datestamp.py "$GURU_BIN/gio.datestamp"              # compatibility bubblegum: TEST is it needed before removing
+[ -d "$GURU_CFG/$GURU_USER" ] || mkdir -p "$GURU_CFG/$GURU_USER"                                    # personal configurations
+cp -f ./cfg/* "$GURU_CFG/$GURU_USER"                                                                # copy configuration files to configuration folder
+cp -f -r ./src/* -f "$GURU_BIN"                                                                     # copy script files to bin folder
+mv  "$GURU_BIN/guru.sh" "$GURU_BIN/guru"                                                            # rename guru.sh in bin folder to guru
 
-platform=$(check_distro)                                         # check that distribution is compatible
-case "$platform" in                                              # different dependent settings
+case "$INSTALL_TYPE" in
+        server)     echo "$INSTALL_TYPE successfully installed"
+                    counter.main add guru-server-installed >/dev/null
+                    exit 0 ;;
+        #desktop)   echo "continue.. "  ;;
+    esac
+
+platform=$(check_distro)                                                                            # check that distribution is compatible
+case "$platform" in                                                                                 # different dependent settings
 
     linuxmint)
         cinnamon_version=$(cinnamon --version |grep -o "[^ ]*$"|cut -f1 -d".")                      # check cinnamon main version number
@@ -79,8 +85,7 @@ case "$platform" in                                              # different dep
             echo "installed" | xclip -i -selection clipboard >/dev/null || sudo apt install xclip   # check is clipboard tools installed
             xterm -v >/dev/null || sudo apt install xterm                                           # check that xterm is installed
         fi
-        add_cinnamon_guru_shortcuts                             # add keyboard sort cuts for cinnamon
-
+        add_cinnamon_guru_shortcuts                                                                 # add keyboard sort cuts for cinnamon
         ;;
 
     ubuntu)
@@ -94,27 +99,16 @@ case "$platform" in                                              # different dep
             xterm -v >/dev/null || sudo apt install xterm                                           # check that xterm is installed
         fi
 
-        add_ubuntu_guru_shortcuts                               # add keyboard sort cuts for ubuntu
-        ;;
-
-    rpi)                                                        # non functional rasberry pi (rasbian)
-        echo "TODO"
-        ;;
-
-    other)
-        echo "non compatible operating system"                  # do not install if not fully compatible
-        exit 2
+        add_ubuntu_guru_shortcuts                                                                   # add keyboard sort cuts for ubuntu
         ;;
 
     *)
-        echo "non valid platform"                               # if returns something else
+        echo "non valid platform $platform"                                                         # if returns something else
         exit 4
 esac
 
-counter.main add guru-installed >/dev/null                      # add installation counter
-
-echo "successfully installed"                                   # all fine
+counter.main add guru-installed >/dev/null                                                          # add installation counter
+echo "successfully installed"                                                                       # all fine
 exit 0
-
 
 
