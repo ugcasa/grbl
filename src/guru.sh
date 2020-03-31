@@ -105,7 +105,7 @@ main.terminal() {
     while : ; do
             source $HOME/.gururc
             read -e -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd"
-            [ "$cmd" == "exit" ] && return 0
+            case "$cmd" in  exit|q) return 0 ;; esac
             main.parser $cmd
         done
     return $?
@@ -151,15 +151,15 @@ main() {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
-    export GURU_VERBOSE="$GURU_USER_VERBOSE"                          # use verbose setting from personal config
-    while getopts 'lvf' flag; do                            # if verbose flag given, overwrite personal config
+    export GURU_VERBOSE="$GURU_USER_VERBOSE"                   # use verbose setting from personal config
+    while getopts 'lvf' flag; do                               # if verbose flag given, overwrite personal config
         case "${flag}" in
             l)  export LOGGING=true         ; shift ;;
             v)  export GURU_VERBOSE=true    ; shift ;;
             f)  export GURU_FORCE=true      ; shift ;;
             *)  echo "invalid flag '$1' "
-                echo " -l   set logging on to file $GURU_LOG"
                 echo " -v   set verbose, headers and success are printed out"
+                echo " -l   set logging on to file $GURU_LOG"
                 echo " -f   set force mode on, be more aggressive. will still ask if removing something"
                 exit 1
         esac
