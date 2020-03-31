@@ -6,12 +6,12 @@ source $GURU_BIN/mount.sh
 
 note.main () {
     # command parser
-    unset command argument user_input
+    unset command user_input
     command="$1"; shift
     case "$command" in
           list|ls)  note.list "$1" "$2"                   ; return $? ;;
             touch)  note.contruct "$1"                    ; return $? ;;
-           report)  note.report                           ; return $? ;;
+           report)  note.make_odt "$@"                      ; return $? ;;
         open|edit)  just_created=""     ; note.open "$1"  ; return $? ;;
            locate)  note.gen_var "$1"   ; echo "$note"    ; return 0 ;;
             exist)  note.gen_var "$1"   ; [ -f "$note" ] && return 0 || return 127 ;;
@@ -170,17 +170,29 @@ note.editor () {
 }
 
 
-note.report () {
+note.make_odt () {
     # created odt with team template out of given days note
-    [ "$argument" ] && notefile=$(get_from_array $(date +$GURU_FILE_DATE_FORMAT -d $argument)) || notefile=$(get_from_array $(date +$GURU_FILE_DATE_FORMAT))
+    if [[ "$1" ]] ; then
+            _date=$(date +$GURU_FILE_DATE_FORMAT -d $1)
+        else
+            _date=$(date +$GURU_FILE_DATE_FORMAT)
+        fi
 
-    if [ -f "$notefile" ]; then
-        $GURU_CALL document "$notefile $user_input"
-        $GURU_OFFICE_DOC ${notefile%%.*}.odt &
-        echo "report file: ${notefile%%.*}.odt"
-    else
-        echo "no note for $(date +$GURU_DATE_FORMAT -d $argument)"
-    fi
+    note.gen_var "$_date"
+
+    echo "$_date:$note_file:$note:${note%%.*}.odt"
+
+    if [ -f "$note" ]; then
+            template="ujo.guru"
+            pandoc "$note" --reference-odt="$GURU_LOCAL_TEMPLATES/$template-template.odt" \
+                    -f markdown -o  "${note%%.*}.odt"
+        else
+            echo "no note for $(date +$GURU_DATE_FORMAT -d $1)"
+            return 123
+        fi
+
+    $GURU_OFFICE_DOC "${note%%.*}.odt" &
+    echo "report file: ${notefile%%.*}.odt"
 }
 
 
