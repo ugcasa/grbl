@@ -9,7 +9,7 @@ mount.main () {
     argument="$1"; shift
     case "$argument" in
                       ls)   mount.list                                          ; return $? ;;
-                    info)   mount.sshfs_info | column -t -s $' '                ; return $? ;;
+                    info)   mount.info | column -t -s $' '                      ; return $? ;;
                   status)   mount.status                                        ; return $? ;;
                    check)   mount.online "$@"                                   ; return $? ;;
             check-system)   mount.check_system                                  ; return $? ;;
@@ -48,38 +48,6 @@ mount.help () {
 }
 
 
-mount.defaults () {
-    # mount all local/cloud pairs defined in userrc
-    local _target=""
-    local _source=""
-    #local _default_list=("company" "family" "notes" "templates" "pictures" "photos" "audio" "video" "music")
-    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
-
-    for _default_item in ${_default_list[@]}; do
-        # echo '$'"GURU_LOCAL_${_default_item^^}"
-        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
-        _source=$(eval echo '$'"GURU_CLOUD_${_default_item^^}")
-        [[ "$_source" ]] && [[ "$_target" ]] || continue                # skip if not defined in userrc
-        mount.remote "$_source" "$_target"
-    done
-}
-
-
-unmount.defaults () {
-    # unmount all local/cloud pairs defined in userrc
-    local _target=""
-    local _source=""
-    local _error=0
-    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
-
-    for _default_item in ${_default_list[@]}; do
-        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
-        [[ "$_target" ]] || [[ -d "$_target" ]] || continue             # skip if not defined in userrc or mount point does not exist
-        unmount.remote "$_target" || _error=$?
-    done
-    return $_error
-}
-
 
 mount.status () {
     local _active_mount_points=$(mount.list)
@@ -91,7 +59,7 @@ mount.status () {
 }
 
 
-mount.sshfs_info () {
+mount.info () {
     # nice list of information of sshfs mount points
     local _error=0
     [ $TEST ] || msg "${WHT}user@server remote_folder local_mountpoint  uptime ${NC}\n"                 # header (stdout when -v)
@@ -206,19 +174,6 @@ mount.check () {
 
 unmount.remote () {
 
-    force_unmount () {
-        local target_folder="$1"
-        printf "need to force unmount.. "
-
-        if sudo fusermount -u "$target_folder" ; then
-                UNMOUNTED "$target_folder force"
-                return 0
-            else
-                FAILED "$target_folder force unmount"
-                return 101
-            fi
-    }
-
     local target_folder="$1"
 
     if ! mount.online "$target_folder" ; then
@@ -229,15 +184,20 @@ unmount.remote () {
     if fusermount -u "$target_folder" ; then
             UNMOUNTED "$target_folder"
             return 0
-        else
-            force_unmount "$target_folder"
         fi
 
     # once more or if force
-    if [ "$GURU_FORCE" ] && mount.online "$target_folder" ; then
-        force_unmount "$target_folder"
-        return $?
+    if [ "$GURU_FORCE" ] || mount.online "$target_folder" ; then
+            printf "force unmount.. "
+            if sudo fusermount -u "$target_folder" ; then
+                    UNMOUNTED "$target_folder force"
+                    return 0
+                else
+                    FAILED "$target_folder force unmount"
+                    return 101
+                fi
         fi
+    return 0
 }
 
 
@@ -304,6 +264,39 @@ mount.remote () {
 }
 
 
+mount.defaults () {
+    # mount all local/cloud pairs defined in userrc
+    local _target=""
+    local _source=""
+    #local _default_list=("company" "family" "notes" "templates" "pictures" "photos" "audio" "video" "music")
+    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
+
+    for _default_item in ${_default_list[@]}; do
+        # echo '$'"GURU_LOCAL_${_default_item^^}"
+        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
+        _source=$(eval echo '$'"GURU_CLOUD_${_default_item^^}")
+        [[ "$_source" ]] && [[ "$_target" ]] || continue                # skip if not defined in userrc
+        mount.remote "$_source" "$_target"
+    done
+}
+
+
+unmount.defaults () {
+    # unmount all local/cloud pairs defined in userrc
+    local _target=""
+    local _source=""
+    local _error=0
+    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
+
+    for _default_item in ${_default_list[@]}; do
+        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
+        [[ "$_target" ]] || [[ -d "$_target" ]] || continue             # skip if not defined in userrc or mount point does not exist
+        unmount.remote "$_target" || _error=$?
+    done
+    return $_error
+}
+
+
 mount.known_remote () {
     local _target=$(eval echo '$'"GURU_LOCAL_${1^^}")
     local _source=$(eval echo '$'"GURU_CLOUD_${1^^}")
@@ -318,6 +311,7 @@ unmount.known_remote () {
     unmount.remote "$_target"
     return $?
 }
+
 
 mount.needed () {
     #install and remove needed applications. input "install" or "remove"
