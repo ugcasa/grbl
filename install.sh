@@ -51,6 +51,11 @@ cp -f ./cfg/* "$GURU_CFG/$GURU_USER"                                            
 cp -f -r ./src/* -f "$GURU_BIN"                                                                     # copy script files to bin folder
 mv  "$GURU_BIN/guru.sh" "$GURU_BIN/guru"                                                            # rename guru.sh in bin folder to guru
 
+if ! dpkg -l |grep xserver-xorg >/dev/null; then
+        counter.main add "guru-headless-installed" >/dev/null                                             # add installation counter
+        echo "headless client successfully installed"
+        exit 0
+    fi
 
 platform=$(check_distro)                                                                            # check that distribution is compatible
 case "$platform" in                                                                                 # different dependent settings
@@ -88,6 +93,7 @@ case "$platform" in                                                             
 esac
 
 counter.main add guru-installed >/dev/null                                                          # add installation counter
+
 echo "successfully installed"                                                                       # all fine
 exit 0
 
