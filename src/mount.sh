@@ -12,7 +12,7 @@ mount.main () {
                     info)   mount.info | column -t -s $' '                      ; return $? ;;
                   status)   mount.status                                        ; return $? ;;
                    check)   mount.online "$@"                                   ; return $? ;;
-            check-system)   mount.check_system                                  ; return $? ;;
+            check-system)   mount.check "$GURU_LOCAL_TRACK"                     ; return $? ;;
            mount|unmount)   $argument.remote "$@"                               ; return $? ;;
                  install)   mount.needed install                                ; return $? ;;
          unistall|remove)   mount.needed remove                                 ; return $? ;;
@@ -85,53 +85,6 @@ mount.list () {
     return $?
 }
 
-
-## VVV paskaa
-mount.check_system_mount () {
-    grep "sshfs" < /etc/mtab | grep "$GURU_LOCAL_TRACK" >/dev/null && status="mounted" || status="offline"
-    ls -1qA "$GURU_LOCAL_TRACK" | grep -q . >/dev/null 2>&1 && contans_stuff="yes" || contans_stuff=""
-
-    if [[ "$status" == "mounted" ]] && [[ "$contans_stuff" ]] && [[ -f "$GURU_LOCAL_TRACK/.online" ]] ; then
-        GURU_SYSTEM_STATUS="ready"
-        GURU_CLOUD_STATUS="online"
-        return 0
-
-    elif [[ "$status" == "mounted" ]] && [[ "$contans_stuff" ]] ; then
-        GURU_SYSTEM_STATUS="validating system mount.. "
-        GURU_CLOUD_STATUS=".online file not found"
-        return 20
-
-    elif [[ "$status" == "mounted" ]] ; then
-        GURU_SYSTEM_STATUS="validating system mount.."
-        GURU_CLOUD_STATUS="empty system mount point"
-        return 20
-
-    elif [[ "$status" == "offline" ]] ; then
-        GURU_SYSTEM_STATUS="offline"
-        GURU_CLOUD_STATUS="offline"
-        return 20
-
-    else
-        GURU_SYSTEM_STATUS="error"
-        GURU_CLOUD_STATUS="unknown"
-        return 20
-    fi
-}
-
-
-mount.check_system () {
-    msg "checking system mountpoint.. "
-    mount.check_system_mount ; result=$?
-    if ((result<1)) ; then
-            PASSED
-        else
-            FAILED
-            echo "system status: $GURU_SYSTEM_STATUS"
-            echo "file server status: $GURU_CLOUD_STATUS"
-            msg "system mount $GURU_CLOUD_STATUS"
-        fi
-    return $result
-}
 
 
 mount.system () {
