@@ -135,7 +135,7 @@ mount.check_system () {
 
 
 mount.system () {
-    if ! mount.check_system_mount ; then
+    if ! mount.online "$GURU_LOCAL_TRACK"; then
             mount.remote "$GURU_CLOUD_TRACK" "$GURU_LOCAL_TRACK"
         fi
 }
