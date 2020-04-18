@@ -19,7 +19,7 @@ main.parser () {                                    # parse arguments and delive
                               test)  bash "$GURU_BIN/test/test.sh" "$@"          ; return $? ;;  # tester
                            uutiset)  $tool.py "$@"                               ; return $? ;;  # python scripts
                     terminal|shell)  main.terminal "$@"                          ; return $? ;;  # guru in terminal mode
-                      play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
+                phone|play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
            stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
     # useful functions (TODO: get rid)
                           document)  $tool "$@"                                  ; return $? ;;  # one function prototypes are in 'function.sh'
@@ -29,7 +29,7 @@ main.parser () {                                    # parse arguments and delive
       keyboard|system|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
     # prototypes and trials
                              radio)  DISPLAY=0; $tool.py "$@"                    ; return $? ;;  # leave background + set display
-                 input|hosts|phone)  trial/$tool.sh "$@"                         ; return $? ;;  # place for shell script prototypes and experiments
+                       input|hosts)  trial/$tool.sh "$@"                         ; return $? ;;  # place for shell script prototypes and experiments
              tme|fmradio|datestamp)  trial/$tool.py "$@"                         ; return $? ;;  # place for python script prototypes and experiments
     corona|scan|input|counter|note)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
     # way system pass system tools and call directly libraries (TODO: get rid)

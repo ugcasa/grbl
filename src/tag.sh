@@ -1,18 +1,19 @@
 #!/bin/bash
 # Mick Tagger - ujo.guru 2019
 
-tag_main () { 
+tag_main () {
 
 	# get arguments 							# debug
-	tag_file_name="$1"; shift 					#; echo "tag_file_name:$tag_file_name|"	
-	tag_action="$1"; shift 						#; echo "tag_action:$tag_action|"
-	
-	# parse file format
-	tag_file_format="${tag_file_name: -5}" 		#; echo "tag_file_format:$tag_file_format|"		# read last characters of filename
-	tag_file_format="${tag_file_format#*.}"		#; echo "tag_file_format:$tag_file_format|" 	# read after separator
-	tag_file_format="${tag_file_format^^}" 		#; echo "tag_file_format:$tag_file_format|" 	# upcase
+	tag_file_name="$1" ; shift 					#; echo "tag_file_name:$tag_file_name"
 
-	case "$tag_file_format" in 
+	tag_action="$1" ; shift 					#; echo "tag_action:$tag_action"
+
+	# parse file format
+	tag_file_format="${tag_file_name: -5}" 		#; echo "tag_file_format:$tag_file_format"		# read last characters of filename
+	tag_file_format="${tag_file_format#*.}"		#; echo "tag_file_format:$tag_file_format" 	# read after separator
+	tag_file_format="${tag_file_format^^}" 		#; echo "tag_file_format:$tag_file_format" 	# upcase
+
+	case "$tag_file_format" in
 
 		3G2|3GP2|3GP|3GPP|AAX|AI|AIT|ARQ|ARW|CR2|CR3|CRM|CRW|CIFF|\
 		CS1|DCP|DNG|DR4|DVB|EPS|EPSF|PS|ERF|EXIF|EXV|F4A|F4B|F4P|\
@@ -44,56 +45,56 @@ tag_main () {
 tag_text () {
 	# If file has more than two lines it's taggable
 
-	get_tags () { 
-		current_tags=$(sed -n '2p' $tag_file_name) 	
+	get_tags () {
+		current_tags=$(sed -n '2p' $tag_file_name)
 		current_tags=${current_tags##*": "} 			# Cut "tag:" text away
 	}
 
-	change_table () { 
+	change_table () {
 
  		#echo "|$current_tags|"
 		string=$(printf " $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | tags added")
-		printf "$string\n" >>$tag_file_name 
+		printf "$string\n" >>$tag_file_name
 	}
 
-	add_tags () { 
+	add_tags () {
 
-		get_tags 
+		get_tags
 
-		if [ "$current_tags" ]; then 
-			sed '2d' $tag_file_name  >temp_file.txt && mv -f temp_file.txt $tag_file_name 
+		if [ "$current_tags" ]; then
+			sed '2d' $tag_file_name  >temp_file.txt && mv -f temp_file.txt $tag_file_name
 		else
-			current_tags="text ${tag_file_format,,} $GURU_USER $GURU_TEAM" 
-		fi 
-		sed "2i\\tag: $current_tags $@" $tag_file_name >temp_file.txt && mv -f temp_file.txt $tag_file_name 
+			current_tags="text ${tag_file_format,,} $GURU_USER $GURU_TEAM"
+		fi
+		sed "2i\\tag: $current_tags $@" $tag_file_name >temp_file.txt && mv -f temp_file.txt $tag_file_name
 		change_table
 	}
 
-	rm_tags () { 
+	rm_tags () {
 
-		get_tags 
+		get_tags
 
-		if [ "$current_tags" ]; then 
-			sed '2d' $tag_file_name  >temp_file.txt && mv -f temp_file.txt $tag_file_name 
-		fi 
+		if [ "$current_tags" ]; then
+			sed '2d' $tag_file_name  >temp_file.txt && mv -f temp_file.txt $tag_file_name
+		fi
 	}
 
 
 	case "$tag_action" in
-	
-		ls|"")						
+
+		ls|"")
 			get_tags
 			[ "$current_tags" ] && echo $current_tags
 			;;
-		add)			
-			[[ "$@" ]] && add_tags "$@" 
+		add)
+			[[ "$@" ]] && add_tags "$@"
 			;;
 		rm)
-			rm_tags 
+			rm_tags
 			;;
-		*)			
+		*)
 			[[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
-			[[ "$tag_action" ]] && add_tags "$string" 			
+			[[ "$tag_action" ]] && add_tags "$string"
 			;;
 		esac
 }
@@ -104,9 +105,9 @@ tag_audio () {
 
 	tag_tool="mid3v2"
 	tag_container="TIT3" 			# Comment better? is shown by default in various programs
-	
-	get_tags () { 
-		current_tags=$($tag_tool -l $tag_file_name |grep $tag_container) 
+
+	get_tags () {
+		current_tags=$($tag_tool -l $tag_file_name |grep $tag_container)
 		current_tags=${current_tags##*=}
 		return 0
 	}
@@ -115,30 +116,30 @@ tag_audio () {
 		get_tags
 		[[ $current_tags == "" ]] && current_tags="audio ${tag_file_format,,} $GURU_USER $GURU_TEAM"
 		$tag_tool --$tag_container "${current_tags// /,},${@// /,}" "$tag_file_name" 					# use "," as separator to use multible tags
-	}	
+	}
 
-	rm_tags () { 	
-		$tag_tool --delete-frames="$tag_container" "$tag_file_name" 								
-	}						
-	
+	rm_tags () {
+		$tag_tool --delete-frames="$tag_container" "$tag_file_name"
+	}
+
 	case "$tag_action" in
-	
-		ls|"")						
-			get_tags 
+
+		ls|"")
+			get_tags
 			[ "$current_tags" ] && echo "${current_tags//,/ }"
 			;;
-		add)			
-			[[ "$@" ]] && add_tags "$@" 
+		add)
+			[[ "$@" ]] && add_tags "$@"
 			;;
 		rm)
-			rm_tags 
+			rm_tags
 			;;
-		*)			
+		*)
 			[[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
-			[[ "$tag_action" ]] && add_tags "$string" 			
+			[[ "$tag_action" ]] && add_tags "$string"
 			;;
 		esac
-		
+
 		return 0 			# Otherwice returns 1
 }
 
@@ -148,9 +149,9 @@ tag_mp4 () {
 
 	tag_tool="AtomicParsley"
 	tag_container="--comment"
-	
-	get_tags () { 
-		current_tags=$($tag_tool $tag_file_name -t |grep cmt) 
+
+	get_tags () {
+		current_tags=$($tag_tool $tag_file_name -t |grep cmt)
 		current_tags=${current_tags##*": "}
 		return 0
 	}
@@ -159,30 +160,30 @@ tag_mp4 () {
 		get_tags
 		[[ $current_tags == "" ]] && current_tags="video ${tag_file_format,,} $GURU_USER $GURU_TEAM"
 		$tag_tool "$tag_file_name" "$tag_container" "$current_tags $@" --overWrite  >/dev/null
-	}	
+	}
 
-	rm_tags () { 	
+	rm_tags () {
 		$tag_tool "$tag_file_name" "$tag_container" "" --overWrite	>/dev/null
-	}						
-	
+	}
+
 	case "$tag_action" in
-	
-		ls|"")						
-		   	get_tags 
-			[ "$current_tags" ] && echo "$current_tags" 
+
+		ls|"")
+		   	get_tags
+			[ "$current_tags" ] && echo "$current_tags"
 			;;
-		add)			
-			[[ "$@" ]] && add_tags "$@" 
+		add)
+			[[ "$@" ]] && add_tags "$@"
 			;;
 		rm)
-			rm_tags 
+			rm_tags
 			;;
-		*)			
+		*)
 			[[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
-			[[ "$tag_action" ]] && add_tags "$string" 			
+			[[ "$tag_action" ]] && add_tags "$string"
 			;;
 		esac
-		
+
 		return 0 			# Otherwice returns 1
 }
 
@@ -192,51 +193,51 @@ tag_picture () {
 	tag_tool="exiftool"
 	tag_container="Comment" 				# the title under which the information is stored in the image
 
-	get_tags () { 
-		current_tags=$($tag_tool -$tag_container "$tag_file_name") 
+	get_tags () {
+		current_tags=$($tag_tool -$tag_container "$tag_file_name")
 		current_tags=${current_tags##*": "}
 	}
-	
-	add_tags () { 
+
+	add_tags () {
 		get_tags
 		[[ "$current_tags" == "" ]] && current_tags="picture ${tag_file_format,,} $GURU_USER $GURU_TEAM"
-		$tag_tool -$tag_container="$current_tags $@" "$tag_file_name" -overwrite_original_in_place -q 	
+		$tag_tool -$tag_container="$current_tags $@" "$tag_file_name" -overwrite_original_in_place -q
 	}
 
-	rm_tags () { 	
-		$tag_tool -$tag_container= "$tag_file_name" -overwrite_original_in_place -q 							
+	rm_tags () {
+		$tag_tool -$tag_container= "$tag_file_name" -overwrite_original_in_place -q
 	}
 
 
 	case "$tag_action" in
-	
-		ls|"")						
-			get_tags 
+
+		ls|"")
+			get_tags
 			[ "$current_tags" ] && echo "$current_tags"
 			;;
-		add)			
-			[[ "$@" ]] && add_tags "$@" 
+		add)
+			[[ "$@" ]] && add_tags "$@"
 			;;
 		rm)
-			rm_tags 
+			rm_tags
 			;;
-		*)			
+		*)
 			[[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
-			[[ "$tag_action" ]] && add_tags "$string" 			
+			[[ "$tag_action" ]] && add_tags "$string"
 			;;
 		esac
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then				# run if called or act like lib is included
-	
-	case "$1" in 
+
+	case "$1" in
 
 		install|remove)
-			sudo apt $1 -y libimage-exiftool-perl easytag atomicparsley python-mutagen 		
+			sudo apt $1 -y libimage-exiftool-perl easytag atomicparsley python-mutagen
 			;;
 
-		*)	
+		*)
 			tag_main "$@"
 			exit $?
 	esac

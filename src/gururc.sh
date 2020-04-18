@@ -13,13 +13,11 @@ if [ -f "$GURU_USER_RC" ]; then 					# if user setting file exist
 else 												# Defaults
 	export GURU_BIN="$HOME/bin"
 	export GURU_CALL="guru"
-	export GURU_DOMAIN_NAME="ujo.guru"
-
-# userrc
 	export GURU_REAL_NAME="Roger von Gullit"
 	export GURU_USER_EMAIL="$GURU_USER@ujo.guru"
 	export GURU_USER_PHONE="+358 295 419 800"
 	export GURU_NOTE_HEADER="Daily notes $GURU_REAL_NAME"
+	export GURU_DOMAIN_NAME="ujo.guru"
 
 # Server setup
 	export GURU_ACCESS_POINT_USER="$GURU_USER"
@@ -65,13 +63,13 @@ else 												# Defaults
 	export GURU_CLOUD_SCAN=
 	export GURU_CLOUD_PHOTOS=
 	export GURU_CLOUD_FAMILY=
-	export GURU_CLOUD_COMPAN
+	export GURU_CLOUD_COMPANY=
 
 # Phone ssh connection (requres ssh server running on phone)
 	export GURU_PHONE_IP=
 	export GURU_PHONE_USER=
 	export GURU_PHONE_PORT=
-	export GURU_PHONE_PASSWORD=		# optinal
+	export GURU_PHONE_PASSWORD=		# optional
 
 # Preferred applications
 	export GURU_TERMINAL="gnome-terminal"
