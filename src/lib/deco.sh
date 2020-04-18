@@ -47,6 +47,10 @@ PASSED() {
 	[ "$1" ] && msg "$1: $PASSED" || msg "$PASSED"
 }
 
+DONE() {
+	[ "$1" ] && msg "$1: $DONE" || msg "$DONE"
+}
+
 READY() {
 	[ "$1" ] && msg "$1 $READY" || msg "$READY"
 }

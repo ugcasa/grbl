@@ -2,7 +2,6 @@
 # Mick Tagger - ujo.guru 2019
 
 tag_main () {
-
 	# get arguments 							# debug
 	tag_file_name="$1" ; shift 					#; echo "tag_file_name:$tag_file_name"
 
@@ -51,14 +50,12 @@ tag_text () {
 	}
 
 	change_table () {
-
  		#echo "|$current_tags|"
 		string=$(printf " $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | tags added")
 		printf "$string\n" >>$tag_file_name
 	}
 
 	add_tags () {
-
 		get_tags
 
 		if [ "$current_tags" ]; then
@@ -71,7 +68,6 @@ tag_text () {
 	}
 
 	rm_tags () {
-
 		get_tags
 
 		if [ "$current_tags" ]; then
@@ -102,12 +98,10 @@ tag_text () {
 
 tag_audio () {
 	# Audio tagging tools
-
-	tag_tool="mid3v2"
 	tag_container="TIT3" 			# Comment better? is shown by default in various programs
 
 	get_tags () {
-		current_tags=$($tag_tool -l $tag_file_name |grep $tag_container)
+		current_tags=$(mid3v2 -l $tag_file_name |grep $tag_container)
 		current_tags=${current_tags##*=}
 		return 0
 	}
@@ -115,11 +109,11 @@ tag_audio () {
 	add_tags () { 																						#; echo "current_tags:$current_tags|"; echo "new tags:$@|"
 		get_tags
 		[[ $current_tags == "" ]] && current_tags="audio ${tag_file_format,,} $GURU_USER $GURU_TEAM"
-		$tag_tool --$tag_container "${current_tags// /,},${@// /,}" "$tag_file_name" 					# use "," as separator to use multible tags
+		mid3v2 --$tag_container "${current_tags// /,},${@// /,}" "$tag_file_name" 					# use "," as separator to use multible tags
 	}
 
 	rm_tags () {
-		$tag_tool --delete-frames="$tag_container" "$tag_file_name"
+		mid3v2 --delete-frames="$tag_container" "$tag_file_name"
 	}
 
 	case "$tag_action" in
@@ -146,12 +140,10 @@ tag_audio () {
 
 tag_mp4 () {
 	# Video tagging tools
-
-	tag_tool="AtomicParsley"
 	tag_container="--comment"
 
 	get_tags () {
-		current_tags=$($tag_tool $tag_file_name -t |grep cmt)
+		current_tags=$(AtomicParsley $tag_file_name -t |grep cmt)
 		current_tags=${current_tags##*": "}
 		return 0
 	}
@@ -159,11 +151,11 @@ tag_mp4 () {
 	add_tags () { 																						#; echo "current_tags:$current_tags|"; echo "new tags:$@|"
 		get_tags
 		[[ $current_tags == "" ]] && current_tags="video ${tag_file_format,,} $GURU_USER $GURU_TEAM"
-		$tag_tool "$tag_file_name" "$tag_container" "$current_tags $@" --overWrite  >/dev/null
+		AtomicParsley "$tag_file_name" "$tag_container" "$current_tags $@" --overWrite  >/dev/null
 	}
 
 	rm_tags () {
-		$tag_tool "$tag_file_name" "$tag_container" "" --overWrite	>/dev/null
+		AtomicParsley "$tag_file_name" "$tag_container" "" --overWrite	>/dev/null
 	}
 
 	case "$tag_action" in
@@ -189,23 +181,21 @@ tag_mp4 () {
 
 tag_picture () {
 	# Picture tagging tools
-
-	tag_tool="exiftool"
-	tag_container="Comment" 				# the title under which the information is stored in the image
+		tag_container="Comment" 				# the title under which the information is stored in the image
 
 	get_tags () {
-		current_tags=$($tag_tool -$tag_container "$tag_file_name")
+		current_tags=$(exiftool -quiet -$tag_container "$tag_file_name")
 		current_tags=${current_tags##*": "}
 	}
 
 	add_tags () {
 		get_tags
 		[[ "$current_tags" == "" ]] && current_tags="picture ${tag_file_format,,} $GURU_USER $GURU_TEAM"
-		$tag_tool -$tag_container="$current_tags $@" "$tag_file_name" -overwrite_original_in_place -q
+		exiftool -quiet -$tag_container="$current_tags $@" "$tag_file_name" -overwrite_original_in_place -q
 	}
 
 	rm_tags () {
-		$tag_tool -$tag_container= "$tag_file_name" -overwrite_original_in_place -q
+		exiftool -quiet -$tag_container= "$tag_file_name" -overwrite_original_in_place -q
 	}
 
 
@@ -230,18 +220,10 @@ tag_picture () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then				# run if called or act like lib is included
-
 	case "$1" in
-
-		install|remove)
-			sudo apt $1 -y libimage-exiftool-perl easytag atomicparsley python-mutagen
-			;;
-
-		*)
-			tag_main "$@"
-			exit $?
-	esac
-
+		install|remove)  sudo apt $1 -y libimage-exiftool-perl easytag atomicparsley python-mutagen	;;
+					 *)	 tag_main "$@" ; exit $?
+		esac
 fi
 
 
