@@ -7,6 +7,9 @@ source $GURU_BIN/lib/common.sh
 source $GURU_BIN/tag.sh
 source $GURU_BIN/mount.sh
 
+temp_folder="/tmp/guru/photos"
+file_count=0
+
 #GURU_VERBOSE=true
 phone.main () {
 
@@ -24,10 +27,10 @@ phone.main () {
                      unmount)   phone.unmount "$1"      ;;
                   whatsup|wa)   phone.get_whatsapp      ;;
                  telegram|tg)   phone.get_telegram      ;;
-                      camera)   phone.get_camera        ;;
+                      camera)   phone.flush_camera      ;;
           download|downloads)   phone.get_download      ;;
-      screenshot|screenshots)   phone.get_screenshots      ;;
-                         all)   phone.get_camera
+      screenshot|screenshots)   phone.get_screenshots   ;;
+                         all)   phone.flush_camera
                                 phone.get_whatsapp
                                 phone.get_telegram
                                 phone.get_screenshots
@@ -57,7 +60,7 @@ phone.help () {
 
 
 phone.terminal () {
-    ssh -oHostKeyAlgorithms=+ssh-dss "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT"
+    sshpass -p "$GURU_PHONE_PASSWORD" ssh -oHostKeyAlgorithms=+ssh-dss "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT"
 }
 
 
@@ -73,7 +76,6 @@ phone.mount () {
 phone.unmount () {
     # input mount point (optional)
     local _mount_point="$HOME/phone-$GURU_PHONE_USER" ; [[ "$1" ]] && _mount_point="$1"
-
     fusermount -u "$_mount_point" || sudo fusermount -u "$_mount_point"
     [[ -d "$_mount_point" ]] && rmdir "$_mount_point"
     return $?
@@ -84,35 +86,47 @@ phone.remove_folder () {
     # makes empty folder in phone by removing and then creating target folder
     local _target_folder="$1"
     msg "${WHT}removing: $_target_folder${NC}\n"
-    sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -rf $_target_folder ; mkdir -p $_target_folder"
-
-    # sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "'rm -rf $_target_folder ; mkdir -p $_target_folder'"
+    sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -rf $_target_folder"
 }
 
 
-phone.get_camera () {
-    # get tag and place files
-    local _photo_format="jpg"
+phone.process_videos () {
     local _video_format="mp4"
-    local _temp_folder="/tmp/guru/photos"
-    local _file_count=0
-
-    mount.online $GURU_LOCAL_PHOTOS || mount.known_remote photos
     mount.online $GURU_LOCAL_VIDEO || mount.known_remote video
 
-    if ! [[ -d "$_temp_folder" ]] ; then  mkdir -p "$_temp_folder" ; fi
-    msg "${WHT}copying camera files from phone.. ${NC}\n"
+    # analyze, tag and relocate video files
+    _file_list=($(ls "$temp_folder" | grep ".$_video_format" ))                             # read file list
 
-    if [[ "$GURU_VERBOSE" ]] ; then _verb="-v" ; fi
-    # get all files from phone DCIM folder and place to temp
-    sshpass -p $GURU_PHONE_PASSWORD \
-    scp $_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/DCIM/Camera/* $_temp_folder #|| return 200
+    if [[ ${_file_list[@]} ]]; then
+            msg "${WHT}moving videos to $GURU_LOCAL_VIDEO ${NC}"
+            local _year=1970
 
-    #[[ -d $_temp_folder ]] && detox $_temp_folder/*
+            for _file in ${_file_list[@]}; do
+                    # count and printout
+                    file_count=$((file_count+1))
+                    [[ "$GURU_VERBOSE" ]] && printf "."
 
-    # analyze, tag and relocate photo files
-    _file_list=($(ls "$_temp_folder" | grep ".$_photo_format" ))                          # read file list
+                    # get date for location
+                    _date=${_file#*_} ; _date=${_date%_*}                                   #; echo "date: $_date"
+                    _year=$(date -d $_date +'%Y') || _year=$(date +'%Y')                    #; echo "year: $_year"
+
+                    # move file to target location
+                    if ! [[ -d $GURU_LOCAL_VIDEO/$_year ]] ; then mkdir -p "$GURU_LOCAL_VIDEO/$_year" ; fi
+                    mv "$temp_folder/$_file" "$GURU_LOCAL_VIDEO/$_year" || FAILED "phone.get_camera_files: file $temp_folder/$_file not found"            # place videos to right folders
+                done
+                [[ "$GURU_VERBOSE" ]] && echo
+        else
+            echo "no new videos"
+        fi
+}
+
+
+phone.process_photos () {
+    local _photo_format="jpg"
+    mount.online $GURU_LOCAL_PHOTOS || mount.known_remote photos
+
+     # analyze, tag and relocate photo files
+    _file_list=($(ls "$temp_folder" | grep ".$_photo_format" ))                                      # read file list
 
     if [[ ${_file_list[@]} ]]; then
             msg "${WHT}tagging and moving photos to $GURU_LOCAL_PHOTOS ${NC}"
@@ -123,7 +137,7 @@ phone.get_camera () {
 
             for _file in ${_file_list[@]}; do
                     # count and printout
-                    _file_count=$((_file_count+1))
+                    file_count=$((file_count+1))
                     [[ "$GURU_VERBOSE" ]] && printf "."
 
                     # get date for location
@@ -132,66 +146,58 @@ phone.get_camera () {
                     _month=$(date -d $_date +'%m' || date +'%m')                                    #; echo "month: $_month"
 
                     # tag file
-                    tag_main "$_temp_folder/$_file" add "phone photo $_date" >/dev/null 2>&1      # $_recognized
+                    tag_main "$temp_folder/$_file" add "phone photo $_date" >/dev/null 2>&1         # $_recognized
 
-                    # move file to targed location
+                    # move file to target location
                     if ! [[ -d $GURU_LOCAL_PHOTOS/$_year/$_month ]] ; then mkdir -p "$GURU_LOCAL_PHOTOS/$_year/$_month" ; fi
-                    mv "$_temp_folder/$_file" "$GURU_LOCAL_PHOTOS/$_year/$_month" || FAILED "phone.get_camera: file $_temp_folder/$_file nto found"  # place pictures to right folders
+                    mv "$temp_folder/$_file" "$GURU_LOCAL_PHOTOS/$_year/$_month" || FAILED "phone.get_camera_files: file $temp_folder/$_file nto found"  # place pictures to right folders
                 done
                 [[ "$GURU_VERBOSE" ]] && echo
         else
             echo "no new photos"
         fi
-
-    # analyze, tag and relocate video files
-    _file_list=($(ls "$_temp_folder" | grep ".$_video_format" ))                          # read file list
-
-    if [[ ${_file_list[@]} ]]; then
-            msg "${WHT}moving videos to $GURU_LOCAL_VIDEO ${NC}"
-            local _year=1970
-
-            for _file in ${_file_list[@]}; do
-                    # count and printout
-                    _file_count=$((_file_count+1))
-                    [[ "$GURU_VERBOSE" ]] && printf "."
-
-                    # get date for location
-                    _date=${_file#*_} ; _date=${_date%_*}                                   #; echo "date: $_date"
-                    _year=$(date -d $_date +'%Y') || _year=$(date +'%Y')                    #; echo "year: $_year"
-
-                    # tag file
-                    # tag_main "$_temp_folder/$_file" add "phone video $GURU_USER $_date"   #
-
-                    # move file to targed location
-                    if ! [[ -d $GURU_LOCAL_VIDEO/$_year ]] ; then mkdir -p "$GURU_LOCAL_VIDEO/$_year" ; fi
-                    mv "$_temp_folder/$_file" "$GURU_LOCAL_VIDEO/$_year" || FAILED "phone.get_camera: file $_temp_folder/$_file not found"            # place videos to right folders
-                done
-                [[ "$GURU_VERBOSE" ]] && echo
-        else
-            echo "no new videos"
-        fi
+}
 
 
-    local _left_over=$(ls $_temp_folder)
-    local _answ="y"
+phone.get_camera_files () {
+    # get tag and place files
+    if ! [[ -d "$temp_folder" ]] ; then  mkdir -p "$temp_folder" ; fi
+    msg "${WHT}copying camera files from phone.. ${NC}\n"
 
+    # get all files from phone DCIM folder and place to temp
+    if [[ "$GURU_VERBOSE" ]] ; then _verb="-v" ; fi
+    sshpass -p $GURU_PHONE_PASSWORD \
+    scp $_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
+    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/DCIM/Camera/* $temp_folder
+    return $?
+    #[[ -d $temp_folder ]] && detox $temp_folder/*
+}
+
+
+phone.flush_camera () {
+
+    phone.get_camera_files #|| return 200
+    phone.process_photos
+    phone.process_videos
+
+    local _left_over=$(ls $temp_folder)
     if [[ "$_left_over" ]] ; then
-            echo "leftover files: $(ls $_temp_folder)"
+            echo "leftover files: $(ls $temp_folder)"
             read -t 10 -p "remove leftovers from temp? : " _answ
             if [[ "$_answ" == "y" ]] ; then
                     # few checks to avoid 'rm -rf $HOME' or 'sudo rm -rf /' type if some of the variables are emty
-                    [[ ${#_temp_folder} > 5 ]] && [[ -d "$_temp_folder" ]] && rm -rf "$_temp_folder"
+                    [[ ${#temp_folder} > 5 ]] && [[ -d "$temp_folder" ]] && rm -rf "$temp_folder"
                 fi
         fi
-    _answ="y"
 
-    if (($_file_count<1)) ; then
+    if ((file_count<1)) ; then
             return 0
         fi
 
-    printf "${WHT}%s files processed${NC}\n" "$_file_count"
+    printf "${WHT}%s files processed${NC}\n" "$file_count"
     read -t 10 -p "remove source files from phone? : " _answ
     [[ "$_answ" != "y" ]] && return 0
+
     phone.remove_folder "/storage/emulated/0/DCIM/Camera"
 }
 
@@ -206,13 +212,10 @@ phone.get_telegram () {
 
 
 phone.get_whatsapp() {
-    # "WhatsApp/Media/WallPaper
     # "WhatsApp/Media/WhatsApp Animated Gifs"
     # "WhatsApp/Media/WhatsApp Audio"
     # "WhatsApp/Media/WhatsApp Documents"
     # "WhatsApp/Media/WhatsApp Images"
-    # "WhatsApp/Media/WhatsApp Profile Photos"
-    # "WhatsApp/Media/WhatsApp Stickers"
     # "WhatsApp/Media/WhatsApp Video"
     # "WhatsApp/Media/WhatsApp Voice Notes"
 
