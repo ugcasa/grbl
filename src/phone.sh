@@ -3,12 +3,13 @@
 # get files from phone by connecting phone sshd
 # install this to phone: https://play.google.com/store/apps/details?id=com.theolivetree.sshserver
 
-source $GURU_BIN/lib/common.sh
 source $GURU_BIN/tag.sh
 source $GURU_BIN/mount.sh
+source $GURU_BIN/lib/common.sh
 
 #GURU_VERBOSE=true
 #GURU_FORCE=true
+if [[ "$GURU_VERBOSE" ]] ; then phone_verb="-v" ; fi
 
 phone_temp_folder="/tmp/guru/phone"
 phone_file_count=0
@@ -24,14 +25,14 @@ phone.main () {
     local _cmd="$1" ; shift
 
     case "$_cmd" in
-                   telegram|whatsapp)  phone.$_cmd              ;;  # social media
+             slack|telegram|whatsapp)  phone.$_cmd              ;;  # social media
               mount|unmount|terminal)  phone.$_cmd "$1"         ;;  # tools
-        screenshots|downloads|camera)  phone.$_cmd              ;;  # phone locations
-                                 all)  phone.camera
-                                       phone.whatsapp
+           pictures|downloads|camera)  phone.$_cmd              ;;  # phone locations
+                                 all)  phone.whatsapp
                                        phone.telegram
-                                       phone.screenshots
-                                       phone.downloads          ;;
+                                       phone.slack
+                                       phone.pictures
+                                       phone.camera             ;;
                                 help)  phone.help               ;;
                       install|server)  $GURU_BROWSER $phone_server_url ;;
                                    *)  echo "unknown action $_cmd"
@@ -50,7 +51,7 @@ phone.help () {
     printf " whatsapp          get WhatsApp media from phone \n"
     printf " telegram          get Telegram media from phone \n"
     printf " downloads         get download folder from phone \n"
-    printf " screenshots       get screenshots from phone \n"
+    printf " pictures       get pictures from phone \n"
     printf " install           install server to phone (google play) \n"
     printf " help              help printout \n"
     printf "\nexample:     %s phone mount \n" "$GURU_CALL"
@@ -164,9 +165,9 @@ phone.get_camera_files () {
     msg "${WHT}copying camera files from phone.. ${NC}\n"
 
     # get all files from phone DCIM folder and place to temp
-    if [[ "$GURU_VERBOSE" ]] ; then _verb="-v" ; fi
+
     sshpass -p $GURU_PHONE_PASSWORD \
-    scp $_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
+    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
     $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/DCIM/Camera/* $phone_temp_folder
     return $?
     #[[ -d $phone_temp_folder ]] && detox $phone_temp_folder/*
@@ -206,9 +207,9 @@ phone.telegram () {
     # "Telegram/Telegram Documents"
     # "Telegram/Telegram Images"
     # "Telegram/Telegram Video"
-    if [[ "$GURU_VERBOSE" ]] ; then _verb="-v" ; fi
 
-    mount.online $GURU_LOCAL_PICTURES || return 100
+
+    mount.online $GURU_LOCAL_PICTURES || mount.known_remote pictures
 
     local _target_folder="$GURU_SOMEDIA/telegram-pictures"
 
@@ -216,7 +217,7 @@ phone.telegram () {
     if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
 
     sshpass -p $GURU_PHONE_PASSWORD \
-    scp $_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
+    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
     $GURU_PHONE_USER@$GURU_PHONE_IP':/storage/emulated/0/Telegram/Telegram Images/*' $_target_folder
 
     _target_folder="$GURU_SOMEDIA/telegram-videos"
@@ -225,8 +226,24 @@ phone.telegram () {
     if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
 
     sshpass -p $GURU_PHONE_PASSWORD \
-    scp $_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
+    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
     $GURU_PHONE_USER@$GURU_PHONE_IP':/storage/emulated/0/Telegram/Telegram Video/*' $_target_folder
+}
+
+
+phone.slack () {
+
+    local _target_folder="$GURU_SOMEDIA/slack"
+
+    mount.online $GURU_LOCAL_PICTURES || mount.known_remote pictures
+
+    msg "${WHT}copying Slack images to $_target_folder ${NC}\n"
+    if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
+
+    sshpass -p $GURU_PHONE_PASSWORD \
+    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
+    $GURU_PHONE_USER@$GURU_PHONE_IP':/storage/emulated/0/Slack/*' $_target_folder
+
 }
 
 
@@ -237,9 +254,9 @@ phone.whatsapp() {
     # "WhatsApp/Media/WhatsApp Images"
     # "WhatsApp/Media/WhatsApp Video"
     # "WhatsApp/Media/WhatsApp Voice Notes"
-    if [[ "$GURU_VERBOSE" ]] ; then _verb="-v" ; fi
 
-    mount.online $GURU_LOCAL_PICTURES || return 100
+
+    mount.online $GURU_LOCAL_PICTURES || mount.known_remote pictures
 
     local _target_folder="$GURU_SOMEDIA/whatsapp-pictures"
 
@@ -247,7 +264,7 @@ phone.whatsapp() {
     if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
 
     sshpass -p $GURU_PHONE_PASSWORD \
-    scp $_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
+    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
     $GURU_PHONE_USER@$GURU_PHONE_IP':/storage/emulated/0/WhatsApp/Media/WhatsApp Images/*' $_target_folder
 
     _target_folder="$GURU_SOMEDIA/whatsapp-videos"
@@ -256,35 +273,25 @@ phone.whatsapp() {
     if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
 
     sshpass -p $GURU_PHONE_PASSWORD \
-    scp $_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
+    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
     $GURU_PHONE_USER@$GURU_PHONE_IP':/storage/emulated/0/WhatsApp/Media/WhatsApp Video/*' $_target_folder
 
 }
 
 
-phone.downloads () {
+phone.pictures () {
 
-    local _target_folder="$HOME/Downloads"
+    local _target_folder="$GURU_LOCAL_PICTURES"
+    mount.online $GURU_LOCAL_PICTURES || mount.known_remote pictures
 
-    msg "${WHT}copying WhatsApp videos to $_target_folder ${NC}\n"
-    if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
+    msg "${WHT}copying Screenshots to $_target_folder ${NC}\n"
+    sshpass -p $GURU_PHONE_PASSWORD scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
+    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/Pictures/Screenshots/* $_target_folder
 
-    echo sshpass -p $GURU_PHONE_PASSWORD \
-    scp -p -oHostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/Download/* $_target_folder
+    msg "${WHT}copying send Telegram pictures to $_target_folder ${NC}\n"
+    sshpass -p $GURU_PHONE_PASSWORD scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
+    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/Pictures/Telegram/* $_target_folder
 
-    [ "$?" = "0" ] && phone.remove_folder "/storage/emulated/0/Download"
-}
-
-
-phone.screenshots () {
-
-    mount.online $GURU_LOCAL_PICTURES || return 100
-
-    msg "${WHT}copying pictures..${NC}\n"
-    echo sshpass -p $GURU_PHONE_PASSWORD scp -p -oHostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/Pictures/Screenshots/* $GURU_LOCAL_PICTURES
-    [ "$?" = "0" ] && phone.remove_folder "/storage/emulated/0/Pictures/Screenshots"
 }
 
 

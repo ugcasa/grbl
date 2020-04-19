@@ -34,7 +34,7 @@ main.parser () {                                    # parse arguments and delive
     corona|scan|input|counter|note)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
     # way system pass system tools and call directly libraries (TODO: get rid)
                   clear|ls|cd|echo)  $tool "$@"                                  ; return $? ;;  # os command pass trough
-                 ssh|os|common|tme)  lib/$tool.sh "$@"                           ; return $? ;;  # direct lib calls
+                 ssh|os|common|tme)  $GURU_BIN/lib/$tool.sh "$@"                 ; return $? ;;  # direct lib calls
     # basics
                          uninstall)  bash "$GURU_BIN/$tool.sh" "$@"              ; return $? ;;  # Get rid of this shit
                        help|--help)  main.help "$@"                              ; return 0  ;;  # help printout
