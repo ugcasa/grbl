@@ -26,6 +26,7 @@ fi
 
 export PASSED="${GRN}PASSED${NC}\n"
 export READY="${GRN}READY${NC}\n"
+export DONE="${GRN}DONE${NC}\n"
 export UPTODATE="${GRN}UPTODATE${NC}\n"
 export UPDATED="${GRN}UPDATED${NC}\n"
 export MOUNTED="${GRN}MOUNTED${NC}\n"

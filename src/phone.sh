@@ -7,13 +7,15 @@ source $GURU_BIN/tag.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/lib/common.sh
 
-#GURU_VERBOSE=true
+#GURU_VERBOSE=1
 #GURU_FORCE=true
-if [[ "$GURU_VERBOSE" ]] ; then phone_verb="-v" ; fi
+
+if ((GURU_VERBOSE>1)) ; then phone_verb="-v" ; fi
 
 phone_temp_folder="/tmp/guru/phone"
 phone_file_count=0
 phone_server_url="https://play.google.com/store/apps/details?id=com.theolivetree.sshserver"
+phone_config_file="$GURU_CFG/$GURU_USER/phone.locations.cfg"
 
 phone.main () {
 
@@ -23,20 +25,13 @@ phone.main () {
     [[ $GURU_PHONE_PASSWORD ]]  || read -p "password: "     GURU_PHONE_PASSWORD
 
     local _cmd="$1" ; shift
-
     case "$_cmd" in
-             slack|telegram|whatsapp)  phone.$_cmd              ;;  # social media
-              mount|unmount|terminal)  phone.$_cmd "$1"         ;;  # tools
-           pictures|downloads|camera)  phone.$_cmd              ;;  # phone locations
-                                 all)  phone.whatsapp
-                                       phone.telegram
-                                       phone.slack
-                                       phone.pictures
-                                       phone.camera             ;;
-                                help)  phone.help               ;;
-                      install|server)  sudo apt install sshpass sshfs fusermount
-                                       $GURU_BROWSER $phone_server_url ;;
-                                   *)  echo "unknown action $_cmd"
+                    mount|unmount|terminal)  phone.$_cmd "$1"         ;;  # tools
+                              flush|camera)  phone.$_cmd              ;;  # phone locations
+                                      help)  phone.help               ;;
+                            install|server)  sudo apt install sshpass sshfs fusermount
+                                             $GURU_BROWSER $phone_server_url ;;
+                                         *)  echo "unknown action $_cmd"
         esac
 }
 
@@ -153,7 +148,7 @@ phone.process_photos () {
                     if ! [[ -d $GURU_LOCAL_PHOTOS/$_year/$_month ]] ; then mkdir -p "$GURU_LOCAL_PHOTOS/$_year/$_month" ; fi
                     mv "$phone_temp_folder/$_file" "$GURU_LOCAL_PHOTOS/$_year/$_month" || FAILED "phone.get_camera_files: file $phone_temp_folder/$_file nto found"  # place pictures to right folders
                 done
-                [[ "$GURU_VERBOSE" ]] && echo
+                [[ "$GURU_VERBOSE" ]] && DONE
         else
             echo "no new photos"
         fi
@@ -162,15 +157,15 @@ phone.process_photos () {
 
 phone.get_camera_files () {
     # get tag and place files
-    if ! [[ -d "$phone_temp_folder" ]] ; then  mkdir -p "$phone_temp_folder" ; fi
+    if ! [[ -d "$phone_temp_folder" ]] ; then mkdir -p "$phone_temp_folder" ; fi
     msg "${WHT}copying camera files from phone.. ${NC}\n"
 
     # get all files from phone DCIM folder and place to temp
 
     sshpass -p $GURU_PHONE_PASSWORD \
     scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/DCIM/Camera/* $phone_temp_folder
-    return $?
+    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/DCIM/Camera/*.jpg $phone_temp_folder
+    case $? in 0) DONE ;; *) FAILED ; esac
     #[[ -d $phone_temp_folder ]] && detox $phone_temp_folder/*
 }
 
@@ -203,96 +198,30 @@ phone.camera () {
 }
 
 
-phone.telegram () {
-    # "Telegram/Telegram Audio"
-    # "Telegram/Telegram Documents"
-    # "Telegram/Telegram Images"
-    # "Telegram/Telegram Video"
-
+phone.flush () { # Get all audio files from phone
 
     mount.online $GURU_LOCAL_PICTURES || mount.known_remote pictures
+    mount.online $GURU_LOCAL_DOCUMENTS || mount.known_remote documents
+    mount.online $GURU_LOCAL_VIDEO || mount.known_remote video
+    mount.online $GURU_LOCAL_AUDIO || mount.known_remote audio
 
-    local _target_folder="$GURU_SOMEDIA/telegram-pictures"
+    while IFS= read -r _line ; do
+            IFS='>' ; _list=($_line) ; IFS=           #; echo "${_list[0]}:${_list[1]}:${_list[2]}"
+            _target=$(eval echo ${_list[2]})          # wont pass if spaces in folder names
+            _source=${_list[1]}
+            _title=${_list[0]}                        #; echo ":$_title:$_source:$_target:"
 
-    msg "${WHT}copying Telegram images to $_target_folder ${NC}\n"
-    if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
+            msg "${WHT}$_title > $_target.. ${NC}"
+            if ! [[ -d "$_target" ]] ; then mkdir -p "$_target" ; fi
 
-    sshpass -p $GURU_PHONE_PASSWORD \
-    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP':/storage/emulated/0/Telegram/Telegram Images/*' $_target_folder
+            sshpass -p $GURU_PHONE_PASSWORD \
+            scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
+            $GURU_PHONE_USER@$GURU_PHONE_IP:$_source $_target
+            case $? in 0) DONE ;; *) FAILED ; esac
 
-    _target_folder="$GURU_SOMEDIA/telegram-videos"
+        done < "$phone_config_file"
 
-    msg "${WHT}copying Telegram videos to $_target_folder ${NC}\n"
-    if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
-
-    sshpass -p $GURU_PHONE_PASSWORD \
-    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP':/storage/emulated/0/Telegram/Telegram Video/*' $_target_folder
-}
-
-
-phone.slack () {
-
-    local _target_folder="$GURU_SOMEDIA/slack"
-
-    mount.online $GURU_LOCAL_PICTURES || mount.known_remote pictures
-
-    msg "${WHT}copying Slack images to $_target_folder ${NC}\n"
-    if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
-
-    sshpass -p $GURU_PHONE_PASSWORD \
-    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP':/storage/emulated/0/Slack/*' $_target_folder
-
-}
-
-
-phone.whatsapp() {
-    # "WhatsApp/Media/WhatsApp Animated Gifs"
-    # "WhatsApp/Media/WhatsApp Audio"
-    # "WhatsApp/Media/WhatsApp Documents"
-    # "WhatsApp/Media/WhatsApp Images"
-    # "WhatsApp/Media/WhatsApp Video"
-    # "WhatsApp/Media/WhatsApp Voice Notes"
-
-
-    mount.online $GURU_LOCAL_PICTURES || mount.known_remote pictures
-
-    local _target_folder="$GURU_SOMEDIA/whatsapp-pictures"
-
-    msg "${WHT}copying WhatsApp images to $_target_folder ${NC}\n"
-    if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
-
-    sshpass -p $GURU_PHONE_PASSWORD \
-    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP':/storage/emulated/0/WhatsApp/Media/WhatsApp Images/*' $_target_folder
-
-    _target_folder="$GURU_SOMEDIA/whatsapp-videos"
-
-    msg "${WHT}copying WhatsApp videos to $_target_folder ${NC}\n"
-    if ! [[ -d "$_target_folder" ]] ; then mkdir -p "$_target_folder" ; fi
-
-    sshpass -p $GURU_PHONE_PASSWORD \
-    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP':/storage/emulated/0/WhatsApp/Media/WhatsApp Video/*' $_target_folder
-
-}
-
-
-phone.pictures () {
-
-    local _target_folder="$GURU_LOCAL_PICTURES"
-    mount.online $GURU_LOCAL_PICTURES || mount.known_remote pictures
-
-    msg "${WHT}copying Screenshots to $_target_folder ${NC}\n"
-    sshpass -p $GURU_PHONE_PASSWORD scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/Pictures/Screenshots/* $_target_folder
-
-    msg "${WHT}copying send Telegram pictures to $_target_folder ${NC}\n"
-    sshpass -p $GURU_PHONE_PASSWORD scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/Pictures/Telegram/* $_target_folder
-
+    phone.camera
 }
 
 
@@ -303,6 +232,17 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     fi
 
 
+
+# "Telegram/Telegram Audio"
+# "Telegram/Telegram Documents"
+# "WhatsApp/Media/WhatsApp Documents"
+# "Telegram/Telegram Images"
+# "Telegram/Telegram Video"
+# "WhatsApp/Media/WhatsApp Animated Gifs"
+# "WhatsApp/Media/WhatsApp Audio"
+# "WhatsApp/Media/WhatsApp Images"
+# "WhatsApp/Media/WhatsApp Video"
+# "WhatsApp/Media/WhatsApp Voice Notes"
 
 # if [[ "$GURU_PHONE_USER" = "casa" ]]; then
 #   sshpass -p $GURU_PHONE_PASSWORD scp -v -r -p -oHostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/MyTinyScan/Documents/* $HOME/Documents

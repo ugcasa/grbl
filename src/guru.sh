@@ -153,13 +153,15 @@ main() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
     export GURU_VERBOSE="$GURU_USER_VERBOSE"                   # use verbose setting from personal config
-    while getopts 'lvf' flag; do                               # if verbose flag given, overwrite personal config
+    while getopts 'lvVf' flag; do                               # if verbose flag given, overwrite personal config
         case "${flag}" in
-            l)  export LOGGING=true         ; shift ;;
-            v)  export GURU_VERBOSE=true    ; shift ;;
-            f)  export GURU_FORCE=true      ; shift ;;
+            l)  export LOGGING=true             ; shift ;;
+            v)  export GURU_VERBOSE=1           ; shift ;;
+            V)  export GURU_VERBOSE=2           ; shift ;;
+            f)  export GURU_FORCE=true          ; shift ;;
             *)  echo "invalid flag '$1' "
                 echo " -v   set verbose, headers and success are printed out"
+                echo " -V   more deep verbose"
                 echo " -l   set logging on to file $GURU_LOG"
                 echo " -f   set force mode on, be more aggressive. will still ask if removing something"
                 exit 1
