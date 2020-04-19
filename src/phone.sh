@@ -34,7 +34,8 @@ phone.main () {
                                        phone.pictures
                                        phone.camera             ;;
                                 help)  phone.help               ;;
-                      install|server)  $GURU_BROWSER $phone_server_url ;;
+                      install|server)  sudo apt install sshpass sshfs fusermount
+                                       $GURU_BROWSER $phone_server_url ;;
                                    *)  echo "unknown action $_cmd"
         esac
 }

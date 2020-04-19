@@ -149,7 +149,7 @@ add_key_accesspoint () {
 
 
     # add domain based rule to ssh config
-    if [ "$(grep -e ujo.guru < $HOME/.ssh/config)" ]; then
+    if [ "$(grep -e ujo.guru < $HOME/.ssh/config)" >/dev/null] ; then
         echo "Rule already exist OK"
     else
         printf "\nHost *ujo.guru \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
