@@ -16,7 +16,7 @@ mount.main () {
            mount|unmount)   $argument.remote "$@"                               ; return $? ;;
                  install)   mount.needed install                                ; return $? ;;
          unistall|remove)   mount.needed remove                                 ; return $? ;;
-                    help)   mount.help "$@"                                     ; return 0  ;;
+       help|help-default)   mount.$argument "$@"                                ; return 0  ;;
                        *)   if [ "$1" ] ; then mount.remote "$argument" "$1"    ; return $? ; fi
                             case $GURU_CMD in
                                 mount|unmount)
@@ -39,14 +39,40 @@ mount.help () {
     printf " check [target]           check that mount point is mounted \n"
     printf " mount [source] [target]  mount folder in file server to local folder \n"
     printf " unmount [mount_point]    unmount [mount_point] \n"
-    printf " mount all                mount primary file server default folders \n"
+    printf " mount all                mount primary file server default folders (*) \n"
     printf " unmount [all]            unmount all default folders \n"
     printf " ls                       list of mounted folders \n"
+    printf " more information of adding default mountpoint type '%s mount help-default' \n" "$GURU_CALL"
     printf "\nexample:"
     printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_CLOUD_FAR_USER" "$USER"
     return 0
 }
 
+mount.help-default () {
+    echo "-- guru tool-kit mount help-default --------------------------------------------"
+    printf "\nTo add default mount point type ${WHT}%s config user${NC} or edit user configuration \n" "$GURU_CALL"
+    printf "file: ${WHT}%s${NC} \n" "$GURU_USER_RC"
+
+    printf "\n${WHT}Step 1)${NC}\n On configuration dialog find settings named 'GURU_LOCAL_*' \n"
+    printf "and add new line: ${WHT}export GURU_LOCAL_<MOUNT_POINT>=${NC} where <MOUNT_POINT> \n"
+    peintf "is replaced with single word and up cased. Name will be used as mount point folder name"
+    printf "when mounting or un-mounting individual mount point \n"
+    printf "After equal sing specify mount point folder between quotation marks. \n"
+
+    printf "\n${WHT}Step 2)${NC}\n Then find on configuration dialog find settings named GURU_CLOUD_* \n"
+    printf "and add new line: ${WHT}eexport GURU_REMOTE_<MOUNT_POINT>=${NC} where <MOUNT_POINT> is replaced \n"
+    printf "with same word as used in local. Specify mount point folder between quotation marks. \n"
+    printf "\nSave and exit. Configuration is applied when next time %s is run. \n" "$GURU_CALL"
+    printf "\nPath to success: \n"
+    printf " - use single word up case for mount variable name \n"
+    printf " - do not use spaces around equal signs \n"
+    printf " - use '' quotation if path or filename name contains spaces \n"
+    printf " - environmental variables can be used, not then use single quotation \n"
+    printf " - use same word for local and cloud variable name \n"
+    printf "\nexample:\n GURU_LOCAL_PORN=\"/home/%s/porn\" \n GURU_REMOTE_PORN=\"/server/full/of/bon-jorno\" \n" "$USER"
+
+    return 0
+}
 
 
 mount.status () {

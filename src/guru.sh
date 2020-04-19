@@ -16,28 +16,29 @@ main.parser () {                                    # parse arguments and delive
 
     case "$tool" in
     # useful tools
-                              test)  bash "$GURU_BIN/test/test.sh" "$@"          ; return $? ;;  # tester
-                           uutiset)  $tool.py "$@"                               ; return $? ;;  # python scripts
-                    terminal|shell)  main.terminal "$@"                          ; return $? ;;  # guru in terminal mode
-                phone|play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
-           stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
+                              test)  bash "$GURU_BIN/test/test.sh" "$@" ; return $? ;;  # tester
+                           uutiset)  $tool.py "$@"                      ; return $? ;;  # python scripts
+                    terminal|shell)  main.terminal "$@"                 ; return $? ;;  # guru in terminal mode
+                phone|play|vol|yle)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
+           stamp|timer|tag|install)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
     # useful functions (TODO: get rid)
-                          document)  $tool "$@"                                  ; return $? ;;  # one function prototypes are in 'function.sh'
-            trans|project|tor|user)  $tool "$@"                                  ; return $? ;;  # function.sh prototypes
+                          document)  $tool "$@"                         ; return $? ;;  # one function prototypes are in 'function.sh'
+            trans|project|tor|user)  $tool "$@"                         ; return $? ;;  # function.sh prototypes
     # system tools
-                           unmount)  mount.main "$1"                     ; return $? ;;  # alias for un-mounting
-      keyboard|system|mount|remote)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
+      keyboard|system|mount|remote)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
+                           unmount)  mount.main "$1"                    ; return $? ;;  # alias for un-mounting
+                            config)  $tool.sh "$@"                      ; return $? ;;  # configuration tools
     # prototypes and trials
-                             radio)  DISPLAY=0; $tool.py "$@"                    ; return $? ;;  # leave background + set display
-                       input|hosts)  trial/$tool.sh "$@"                         ; return $? ;;  # place for shell script prototypes and experiments
-             tme|fmradio|datestamp)  trial/$tool.py "$@"                         ; return $? ;;  # place for python script prototypes and experiments
-    corona|scan|input|counter|note)  $tool.sh "$@"                               ; return $? ;;  # shell script tools
+                             radio)  DISPLAY=0; $tool.py "$@"           ; return $? ;;  # leave background + set display
+                       input|hosts)  trial/$tool.sh "$@"                ; return $? ;;  # place for shell script prototypes and experiments
+             tme|fmradio|datestamp)  trial/$tool.py "$@"                ; return $? ;;  # place for python script prototypes and experiments
+    corona|scan|input|counter|note)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
     # way system pass system tools and call directly libraries (TODO: get rid)
-                  clear|ls|cd|echo)  $tool "$@"                                  ; return $? ;;  # os command pass trough
-                 ssh|os|common|tme)  $GURU_BIN/lib/$tool.sh "$@"                 ; return $? ;;  # direct lib calls
+                 ssh|os|common|tme)  $GURU_BIN/lib/$tool.sh "$@"        ; return $? ;;  # direct lib calls
+                  clear|ls|cd|echo)  $tool "$@"                         ; return $? ;;  # os command pass trough
     # basics
-                         uninstall)  bash "$GURU_BIN/$tool.sh" "$@"              ; return $? ;;  # Get rid of this shit
-                       help|--help)  main.help "$@"                              ; return 0  ;;  # help printout
+                         uninstall)  bash "$GURU_BIN/$tool.sh" "$@"     ; return $? ;;  # Get rid of this shit
+                       help|--help)  main.help "$@"                     ; return 0  ;;  # help printout
                      version|--ver)  printf "guru tool-kit v.%s\n" "$GURU_VERSION"           ;;  # version output
                                  *)  printf "%s confused: phrase '%s' unknown. you may try '%s help'\n" \
                                             "$GURU_CALL" "$tool" "$GURU_CALL"                    # false user input
