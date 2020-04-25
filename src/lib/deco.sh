@@ -38,6 +38,7 @@ export ERROR="${YEL}ERROR${NC}"
 export WARNING="${WHT}WARNING${NC}"
 export ONLINE="${GRN}ONLINE${NC}\n"
 export OFFLINE="${BLU}OFFLINE${NC}\n"
+export REMOVED="${BLU}REMOVED${NC}\n"
 export UNKNOWN="${WHT}UNKNOWN${NC}\n"
 export OK="${WHT}OK!${NC}\n"
 
@@ -105,17 +106,21 @@ WARNING() {
 }
 
 ONLINE() {
-	[ "$1" ] && msg "$1 $ONLINE" || msg "$ONLINE"
+	[ "$1" ] && msg "$1 $ONLINE" || msg "$ONLINE"
 }
 
 OFFLINE() {
-	[ "$1" ] && msg "$1 $OFFLINE" || msg "$OFFLINE"
+	[ "$1" ] && msg "$1 $OFFLINE" || msg "$OFFLINE"
 }
 
 UNKNOWN() {
-	[ "$1" ] && msg "$1 $UNKNOWN" || msg "$UNKNOWN"
+	[ "$1" ] && msg "$1 $UNKNOWN" || msg "$UNKNOWN"
+}
+
+REMOVED() {
+	[ "$1" ] && msg "$1 $REMOVED" || msg "$REMOVED"
 }
 
 OK() {
-	[ "$1" ] && msg "$1 $OK" || msg "$OK"
+	[ "$1" ] && msg "$1 $OK" || msg "$OK"
 }

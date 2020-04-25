@@ -3,11 +3,11 @@
 # get files from phone by connecting phone sshd
 # install this to phone: https://play.google.com/store/apps/details?id=com.theolivetree.sshserver
 
-source $GURU_BIN/tag.sh
-source $GURU_BIN/mount.sh
 source $GURU_BIN/lib/common.sh
+source $GURU_BIN/mount.sh
+source $GURU_BIN/tag.sh
 
-#GURU_VERBOSE=1
+GURU_VERBOSE=1
 #GURU_FORCE=true
 
 if ((GURU_VERBOSE>1)) ; then phone_verb="-v" ; fi
@@ -27,8 +27,10 @@ phone.main () {
     local _cmd="$1" ; shift
     case "$_cmd" in
                     mount|unmount|terminal)  phone.$_cmd "$1"         ;;  # tools
-                              flush|camera)  phone.$_cmd              ;;  # phone locations
+                              media|camera)  phone.$_cmd              ;;  # phone locations
                                       help)  phone.help               ;;
+                                       all)  phone.media
+                                             phone.camera             ;;
                             install|server)  sudo apt install sshpass sshfs fusermount
                                              $GURU_BROWSER $phone_server_url ;;
                                          *)  echo "unknown action $_cmd"
@@ -57,7 +59,7 @@ phone.help () {
 
 
 phone.terminal () {
-    sshpass -p "$GURU_PHONE_PASSWORD" ssh -oHostKeyAlgorithms=+ssh-dss "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT"
+    sshpass -p "$GURU_PHONE_PASSWORD" ssh -o HostKeyAlgorithms=+ssh-dss "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT"
 }
 
 
@@ -78,50 +80,30 @@ phone.unmount () {
 }
 
 
-phone.remove_folder () {
-    # makes empty folder in phone by removing and then creating target folder
+phone.rmdir () {
+    # removes folder
     local _target_folder="$1"
-    msg "${WHT}removing: $_target_folder${NC}\n"
+    msg "\n${WHT}removing: $_target_folder ${NC}"
     sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -rf $_target_folder"
+    #return $?
 }
 
 
-phone.process_videos () {
-    local _video_format="mp4"
-    mount.online $GURU_LOCAL_VIDEO || mount.known_remote video
-
-    # analyze, tag and relocate video files
-    local _file_list=($(ls "$phone_temp_folder" | grep ".$_video_format" ))                             # read file list
-
-    if [[ ${_file_list[@]} ]]; then
-            msg "${WHT}moving videos to $GURU_LOCAL_VIDEO ${NC}"
-            local _year=1970
-
-            for _file in ${_file_list[@]}; do
-                    # count and printout
-                    phone_file_count=$((phone_file_count+1))
-                    [[ "$GURU_VERBOSE" ]] && printf "."
-
-                    # get date for location
-                    _date=${_file#*_} ; _date=${_date%_*}                                   #; echo "date: $_date"
-                    _year=$(date -d $_date +'%Y') || _year=$(date +'%Y')                    #; echo "year: $_year"
-
-                    # move file to target location
-                    if ! [[ -d $GURU_LOCAL_VIDEO/$_year ]] ; then mkdir -p "$GURU_LOCAL_VIDEO/$_year" ; fi
-                    mv "$phone_temp_folder/$_file" "$GURU_LOCAL_VIDEO/$_year" || FAILED "phone.get_camera_files: file $phone_temp_folder/$_file not found"            # place videos to right folders
-                done
-                [[ "$GURU_VERBOSE" ]] && echo
-        else
-            echo "no new videos"
-        fi
+phone.rm () {
+    # removes files  /storage/emulated/0/DCIM/Camera/*.jpg
+    local _target_files="$1"  # _target_files="/storage/emulated/0/DCIM/Camera/*.jpg"
+    msg "\n${WHT}removing: $_target_files ${NC}"
+    sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -f $_target_files" \
+        && REMOVED || IGNORED
+    #return $?
 }
 
 
 phone.process_photos () {
+     # analyze, tag and relocate photo files
     local _photo_format="jpg"
     mount.online $GURU_LOCAL_PHOTOS || mount.known_remote photos
 
-     # analyze, tag and relocate photo files
     local _file_list=($(ls "$phone_temp_folder" | grep ".$_photo_format" ))                                      # read file list
 
     if [[ ${_file_list[@]} ]]; then
@@ -155,24 +137,39 @@ phone.process_photos () {
 }
 
 
-phone.get_camera_files () {
-    # get tag and place files
-    if ! [[ -d "$phone_temp_folder" ]] ; then mkdir -p "$phone_temp_folder" ; fi
-    msg "${WHT}copying camera files from phone.. ${NC}\n"
+phone.process_videos () {
+    # analyze, tag and relocate video files
+    local _video_format="mp4"
+    mount.online $GURU_LOCAL_VIDEO || mount.known_remote video
 
-    # get all files from phone DCIM folder and place to temp
+    local _file_list=($(ls "$phone_temp_folder" | grep ".$_video_format" ))                             # read file list
 
-    sshpass -p $GURU_PHONE_PASSWORD \
-    scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-    $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/DCIM/Camera/*.jpg $phone_temp_folder
-    case $? in 0) DONE ;; *) FAILED ; esac
-    #[[ -d $phone_temp_folder ]] && detox $phone_temp_folder/*
+    if [[ ${_file_list[@]} ]]; then
+            msg "${WHT}moving videos to $GURU_LOCAL_VIDEO ${NC}"
+            local _year=1970
+
+            for _file in ${_file_list[@]}; do
+                    # count and printout
+                    phone_file_count=$((phone_file_count+1))
+                    [[ "$GURU_VERBOSE" ]] && printf "."
+
+                    # get date for location
+                    _date=${_file#*_} ; _date=${_date%_*}                                   #; echo "date: $_date"
+                    _year=$(date -d $_date +'%Y') || _year=$(date +'%Y')                    #; echo "year: $_year"
+
+                    # move file to target location
+                    if ! [[ -d $GURU_LOCAL_VIDEO/$_year ]] ; then mkdir -p "$GURU_LOCAL_VIDEO/$_year" ; fi
+                    mv "$phone_temp_folder/$_file" "$GURU_LOCAL_VIDEO/$_year" || FAILED "phone.get_camera_files: file $phone_temp_folder/$_file not found"            # place videos to right folders
+                done
+                [[ "$GURU_VERBOSE" ]] && echo
+        else
+            echo "no new videos"
+        fi
 }
 
 
 phone.camera () {
 
-    phone.get_camera_files
     phone.process_photos
     phone.process_videos
 
@@ -193,12 +190,12 @@ phone.camera () {
     printf "${WHT}%s files processed${NC}\n" "$phone_file_count"
     read -t 10 -p "remove source files from phone? : " _answ
     if [[ $GURU_FORCE ]] || [[ "$_answ" == "y" ]] ; then
-            phone.remove_folder "/storage/emulated/0/DCIM/Camera"
+            phone.rmdir "/storage/emulated/0/DCIM/Camera"
         fi
 }
 
 
-phone.flush () { # Get all audio files from phone
+phone.media () { # Get all audio files from phone
 
     mount.online $GURU_LOCAL_PICTURES || mount.known_remote pictures
     mount.online $GURU_LOCAL_DOCUMENTS || mount.known_remote documents
@@ -207,21 +204,25 @@ phone.flush () { # Get all audio files from phone
 
     while IFS= read -r _line ; do
             IFS='>' ; _list=($_line) ; IFS=           #; echo "${_list[0]}:${_list[1]}:${_list[2]}"
-            _target=$(eval echo ${_list[2]})          # wont pass if spaces in folder names
-            _source=${_list[1]}
-            _title=${_list[0]}                        #; echo ":$_title:$_source:$_target:"
+            _action=${_list[0]}                       #; echo ":$_action:"   # cp=copy, mv=move
+            _type=${_list[1]}                         #; echo ":$_type:"     # filetype
+            _title=${_list[2]}                        #; echo ":$_title:$_source:$_target:"
+            _source=${_list[3]}
+            _target=$(eval echo "${_list[4]}")
 
             msg "${WHT}$_title > $_target.. ${NC}"
             if ! [[ -d "$_target" ]] ; then mkdir -p "$_target" ; fi
 
             sshpass -p $GURU_PHONE_PASSWORD \
             scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-            $GURU_PHONE_USER@$GURU_PHONE_IP:$_source $_target
-            case $? in 0) DONE ;; *) FAILED ; esac
+            $GURU_PHONE_USER@$GURU_PHONE_IP:"$_source/*.$_type" $_target
+
+            case $? in
+                    0)  DONE ; [[ "$_action" == "mv" ]] && echo phone.rmdir "$_source" ;;  # /*.$_type" ;; # does not work cause *
+                    *)  FAILED
+                esac
 
         done < "$phone_config_file"
-
-    phone.camera
 }
 
 
@@ -274,4 +275,4 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 
 
 # _recognized="$(yolo.regonize $_file)"                                         # "a dig"
-# tag_main "$_target_folder/$_file" rm  >/dev/null 2>&1                         # remove current tag (debug, new files should not be tagged)
+# tag_main "$_target_files/$_file" rm  >/dev/null 2>&1                         # remove current tag (debug, new files should not be tagged)
