@@ -291,7 +291,9 @@ class menu ():
 		self.header( self.feed.feed.title, first = self.selection, second = self.list_length) 			# header
 		print( "\n\n " + bc.BOLD + title 	 + bc.ENDC + "\n" )											# titles
 		print( "\n "   + bc.ITAL + summary   + bc.ENDC + "\n" )
-		os.system('tiv -h '+str(menu.term_lines)+' -w '+str(menu.term_columns)+' '+image_link) 				# printout image in text mode
+		#os.system('tiv -h '+str(menu.term_lines)+' -w '+str(menu.term_columns)+' '+image_link) 				# printout image in text mode
+		#if terminal colors on < 256 (like phone terminal)
+		os.system('tiv -256 -h '+str(menu.term_lines)+' -w '+str(menu.term_columns)+' '+image_link) 				# printout image in text mode
 		print( "\n "   + content + "\n" )
 		print( "\n "   + bc.DARK + link 	 + bc.ENDC + "\n" )
 		#print( entry)
