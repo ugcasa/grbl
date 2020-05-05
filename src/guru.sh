@@ -1,13 +1,13 @@
 #!/bin/bash
 # guru tool-kit - caa@ujo.guru 2020
 export GURU_VERSION="0.5.2"
+export GURU_USER=$USER
 
-source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
 source $GURU_BIN/system.sh                          # common functions, if no .sh, check here
 source $GURU_BIN/functions.sh                       # common functions, if no .sh, check here
 source $GURU_BIN/mount.sh                           # common functions, if no .sh, check here
 source $GURU_BIN/lib/common.sh
-temp_force=$FORCE ; FORCE=                          # store 'FORCE' status. is set will fuck up 'read' by letting them trough
+FORCE=                                              # store 'FORCE' status. is set will fuck up 'read' by letting them trough (wont return orig status temp_force=$FORCE ;)
 
 main.parser () {                                    # parse arguments and delivery variables to corresponding worker
     tool="$1"; shift                                # store tool call name and shift arguments left
@@ -45,7 +45,6 @@ main.parser () {                                    # parse arguments and delive
     esac
     return 0
 }
-
 
 main.help () {
     echo "-- guru tool-kit main help ------------------------------------------"
@@ -96,8 +95,15 @@ main.help () {
     printf "\t %s keyboard add-shortcut terminal %s F1\n" "$GURU_CALL" "$GURU_TERMINAL"
     printf "\t %s -v mount notes" "$GURU_CALL"
     echo
-}
 
+    # FORCE=$temp_force                                        # return FORCE status
+    # echo "invalid flag '$1' "
+    # echo " -v   set verbose, headers and success are printed out"
+    # echo " -V   more deep verbose"
+    # echo " -l   set logging on to file $GURU_LOG"
+    # echo " -f   set force mode on, be more aggressive"
+    # echo " -u   tun as user"
+}
 
 main.terminal() {
     # Terminal looper
@@ -111,7 +117,6 @@ main.terminal() {
         done
     return $?
 }
-
 
 main() {
     local _error_code=0
@@ -129,7 +134,7 @@ main() {
             export GURU_SYSTEM_STATUS="ready"                                           # require track mount
         fi
 
-    counter.main add guru-runned >/dev/null                                             # run counter
+    counter.main add guru-runned >/dev/null                                             # add counter
 
     if [ "$1" ]; then
             main.parser "$@"                                                            # with arguments go to parser
@@ -149,27 +154,26 @@ main() {
     return $_error_code
 }
 
+process_opts () {
+    TEMP=`getopt --long -o "vVflu:h:" "$@"`
+    eval set -- "$TEMP"
+    while true ; do
+        case "$1" in
+            -v ) export GURU_VERBOSE=1  ; shift     ;;
+            -V ) export GURU_VERBOSE=2  ; shift     ;;
+            -f ) export GURU_FORCE=true ; shift     ;;
+            -l ) export LOGGING=true    ; shift     ;;
+            -u ) export GURU_USER=$2    ; shift 2   ;;
+             * ) break                  ;;
+        esac
+    done;
+    _arg="$@"
+    [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
+}
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-
-    export GURU_VERBOSE="$GURU_USER_VERBOSE"                   # use verbose setting from personal config
-    while getopts 'lvVf' flag; do                               # if verbose flag given, overwrite personal config
-        case "${flag}" in
-            l)  export LOGGING=true             ; shift ;;
-            v)  export GURU_VERBOSE=1           ; shift ;;
-            V)  export GURU_VERBOSE=2           ; shift ;;
-            f)  export GURU_FORCE=true          ; shift ;;
-            *)  echo "invalid flag '$1' "
-                echo " -v   set verbose, headers and success are printed out"
-                echo " -V   more deep verbose"
-                echo " -l   set logging on to file $GURU_LOG"
-                echo " -f   set force mode on, be more aggressive. will still ask if removing something"
-                exit 1
-        esac
-    done
-
-    main "$@"
-    FORCE=$temp_force                                        # return FORCE status
+    process_opts $@
+    source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
+    main $ARGUMENTS
     exit $?
 fi
-
