@@ -47,12 +47,13 @@ source "$HOME/.gururc"                                                          
 [ -d "$GURU_CFG" ] || mkdir -p "$GURU_CFG"                                                          # make cfg folder for configuration files
 [ -d "$GURU_APP" ] || mkdir -p "$GURU_APP"
 [ -d "$GURU_CFG/$GURU_USER" ] || mkdir -p "$GURU_CFG/$GURU_USER"                                    # personal configurations
-cp -f ./cfg/* "$GURU_CFG/$GURU_USER"                                                                # copy configuration files to configuration folder
+cp -f ./cfg/* "$GURU_CFG"                                                                # copy configuration files to configuration folder
 cp -f -r ./src/* -f "$GURU_BIN"                                                                     # copy script files to bin folder
 mv  "$GURU_BIN/guru.sh" "$GURU_BIN/guru"                                                            # rename guru.sh in bin folder to guru
 
 if ! dpkg -l |grep xserver-xorg >/dev/null; then
         counter.main add "guru-headless-installed" >/dev/null                                             # add installation counter
+
         echo "headless client successfully installed"
         exit 0
     fi
