@@ -159,11 +159,13 @@ process_opts () {
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
-            -v ) export GURU_VERBOSE=1  ; shift     ;;
-            -V ) export GURU_VERBOSE=2  ; shift     ;;
-            -f ) export GURU_FORCE=true ; shift     ;;
-            -l ) export LOGGING=true    ; shift     ;;
-            -u ) export GURU_USER=$2    ; shift 2   ;;
+            -v ) export GURU_VERBOSE=1      ; shift     ;;
+            -V ) export GURU_VERBOSE=2      ; shift     ;;
+            -f ) export GURU_FORCE=true     ; shift     ;;
+            -l ) export LOGGING=true        ; shift     ;;
+            -u ) export GURU_USER=$2        ; shift 2   ;;
+            -h ) export GURU_HOSTNAME=$2    ; shift 2   ;;
+
              * ) break                  ;;
         esac
     done;
@@ -172,6 +174,7 @@ process_opts () {
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    export GURU_HOSTNAME=$(hostname)
     process_opts $@
     source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
     main $ARGUMENTS

@@ -61,9 +61,8 @@ remote.check(){
 remote.pull_config(){
     msg "pulling configs.. "
     local _error=0
-    local hostname=$(hostname)
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_PORT" \
-        "$GURU_ACCESS_POINT_USER@$GURU_ACCESS_POINT:/home/$GURU_ACCESS_POINT_USER/usr/$hostname/$GURU_USER/" \
+        "$GURU_ACCESS_POINT_USER@$GURU_ACCESS_POINT:/home/$GURU_ACCESS_POINT_USER/usr/$GURU_HOSTNAME/$GURU_USER/" \
         "$GURU_CFG/$GURU_USER"
     _error=$?
 
@@ -79,15 +78,14 @@ remote.pull_config(){
 remote.push_config(){
     msg "pushing configs.. "
     local _error=0
-    local hostname=$(hostname)
     ssh "$GURU_ACCESS_POINT_USER@$GURU_ACCESS_POINT" -p "$GURU_ACCESS_POINT_PORT" \
-         ls "/home/$GURU_ACCESS_POINT_USER/usr/$hostname/$GURU_USER" >/dev/null 2>&1 || \
+         ls "/home/$GURU_ACCESS_POINT_USER/usr/$GURU_HOSTNAME/$GURU_USER" >/dev/null 2>&1 || \
     ssh "$GURU_ACCESS_POINT_USER@$GURU_ACCESS_POINT" -p "$GURU_ACCESS_POINT_PORT" \
-         mkdir -p "/home/$GURU_ACCESS_POINT_USER/usr/$hostname/$GURU_USER"
+         mkdir -p "/home/$GURU_ACCESS_POINT_USER/usr/$GURU_HOSTNAME/$GURU_USER"
 
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_PORT" \
         "$GURU_CFG/$GURU_USER/" \
-        "$GURU_ACCESS_POINT_USER@$GURU_ACCESS_POINT:/home/$GURU_ACCESS_POINT_USER/usr/$hostname/$GURU_USER/"
+        "$GURU_ACCESS_POINT_USER@$GURU_ACCESS_POINT:/home/$GURU_ACCESS_POINT_USER/usr/$GURU_HOSTNAME/$GURU_USER/"
     _error=$?
 
     if ((_error<9)); then
