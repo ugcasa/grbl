@@ -85,7 +85,6 @@ class menu ():
 		"resize terminal window"
 		os.system('resize -s '+str(lines)+' '+str(columns))
 
-
 	def get_size ( self ):
 		"get terminal window size"
 		self.term_lines   		= int( str( subprocess.check_output( 'resize -c', shell=True ) ).split( "LINES ",   1 )[1].split( "'" )[1].split( "'" )[ 0 ] )
@@ -249,6 +248,9 @@ class menu ():
 		title	= entry.title.replace( "&nbsp;", "" )
 		link 	= entry.link.replace( "&nbsp;", "" )
 
+		#image_link 	= entry.image.link
+		
+
 		if int( news_id ) < 0 or int( news_id ) > self.list_length :													# id 1 above
 			return 2
 
@@ -280,15 +282,21 @@ class menu ():
 			content = ""
 			print("Error")
 
+		# parse entry.image.link
+		image_link = 'https://images.cdn.yle.fi/image/upload//w_1200,h_800,f_auto,fl_lossy,q_auto:eco/13-3-11332872.jpg'
+
+
 		os.system( 'clear' ) 																			# clear terminal
 		self.clear()
 		self.header( self.feed.feed.title, first = self.selection, second = self.list_length) 			# header
-
 		print( "\n\n " + bc.BOLD + title 	 + bc.ENDC + "\n" )											# titles
 		print( "\n "   + bc.ITAL + summary   + bc.ENDC + "\n" )
+		#os.system('tiv -h '+str(menu.term_lines)+' -w '+str(menu.term_columns)+' '+image_link) 				# printout image in text mode
+		#if terminal colors on < 256 (like phone terminal)
+		os.system('tiv -256 -h '+str(menu.term_lines)+' -w '+str(menu.term_columns)+' '+image_link) 				# printout image in text mode
 		print( "\n "   + content + "\n" )
 		print( "\n "   + bc.DARK + link 	 + bc.ENDC + "\n" )
-
+		#print( entry)
 		answer = input(bc.OKBLUE+'Hit "o" to open news in browser, news id to jump to news or "Enter" to return to list: '+bc.ENDC)
 
 		if answer == "q" or answer == "exit" or answer == "99":
@@ -334,6 +342,12 @@ class menu ():
 ## MAN
 
 m = menu( 120, 24 )
+
+# sudo apt install imagemagick || yum install ImageMagick
+# git clone https://github.com/stefanhaustein/TerminalImageViewer.git
+# cd TerminalImageViewer/src/main/cpp
+# make
+# sudo make install
 
 while 1:
 	m.get_size()
