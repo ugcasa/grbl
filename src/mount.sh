@@ -88,22 +88,23 @@ mount.status () {
 mount.info () {
     # nice list of information of sshfs mount points
     local _error=0
-    [ $TEST ] || msg "${WHT}user@server remote_folder local_mountpoint  uptime ${NC}\n"                 # header (stdout when -v)
+    [ $TEST ] || msg "${WHT}user@server remote_folder local_mountpoint  uptime pid${NC}\n"                 # header (stdout when -v)
     mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |                                          # get the mount data
 
     while read mount ; do                                                                               # Iterate over them
         mount | grep -w "$mount" |                                                                      # Get the details of this mount
         perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1 $2 $3"'   # perl magic thanks terdon! https://unix.stackexchange.com/users/22222/terdon
         _error=$?
-        local _mount_pid="$(pgrep -f $GURU_CLOUD_FAR:$mount)"
-        _mount_age="$(ps -p $_mount_pid o etime |grep -v ELAPSED| xargs)"
-        echo " $_mount_age"
+        local _mount_pid="$(pgrep -f $mount | head -1)"
+        _mount_age="$(ps -p $_mount_pid o etime | grep -v ELAPSED | xargs)"
+        echo " $_mount_age $_mount_pid"
 
     done
 
     ((_error>0)) && msg "perl not installed or internal error, pls try to install perl and try again."
     return $_error
 }
+
 
 
 mount.list () {

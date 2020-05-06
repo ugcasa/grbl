@@ -41,7 +41,7 @@ remote.check() {
 
     msg "$user@$server status.. "
     if ! ssh -q -p "$server_port" "$user@$server" exit ; then                  # check local server connection
-        msg "${YEL}local server is not reachable.${NC} trying remote."
+        msg "${YEL}local fileserver is not reachable.${NC} trying remote."
         user="$GURU_CLOUD_FAR_USER"
         server="$GURU_CLOUD_FAR"                                               # if no connection try remote server connection
         server_port="$GURU_CLOUD_FAR_PORT"
