@@ -5,18 +5,28 @@
 # - to send configurations to server type 'guru remote push' and
 # - to get configurations from server type 'guru remote pull'
 # backup is kept at .config/guru/<user>/userrc.backup
-
 export GURU_CALL="guru"
-export GURU_REAL_NAME="Roger von Gullit"
+export GURU_DOMAIN_NAME="ujo.guru"
+
+export GURU_REAL_NAME="Your Full Name here"
 export GURU_USER_EMAIL="$GURU_USER@ujo.guru"
 export GURU_USER_PHONE="+358 295 419 800"
 export GURU_NOTE_HEADER="Daily notes $GURU_REAL_NAME"
-export GURU_DOMAIN_NAME="ujo.guru"
 
 # Server setup
 export GURU_ACCESS_POINT_USER="$GURU_USER"
 export GURU_ACCESS_POINT="ujo.guru"
 export GURU_ACCESS_POINT_PORT="2010"
+
+# Clound server on local newtwork
+export GURU_CLOUD_NEAR="192.168.1.XXX"
+export GURU_CLOUD_NEAR_USER="$GURU_USER"
+export GURU_CLOUD_NEAR_PORT="22"
+
+# Clound server on public route
+export GURU_CLOUD_FAR="ujo.guru"
+export GURU_CLOUD_FAR_USER="$GURU_USER"
+export GURU_CLOUD_FAR_PORT="22"
 
 # (to teamrc)
 export GURU_TEAM="test"

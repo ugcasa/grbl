@@ -14,13 +14,14 @@
 #  clean) make clean
 
 source $GURU_BIN/lib/common.sh
-source $GURU_BIN/lib/deco.sh
 
 test.main() {
     # main test case parser
     export all_tools=("mount" "remote" "note" "system")
+    export GURU_TERMINAL_COLOR=true
     export GURU_VERBOSE=true
     export LOGGING=true
+
     case "$1" in
         snap|quick) test.all 1              ; return $? ;;
             *[1-9]) test.all "$1"           ; return $? ;;
@@ -165,10 +166,6 @@ test.terminal () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $HOME/.gururc
-    source $GURU_BIN/lib/deco.sh
-    export GURU_VERBOSE=true
-
     case "$1" in
         loop) shift ; test.terminal "$@" ; exit "$?" ;;
         esac
