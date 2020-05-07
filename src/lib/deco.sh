@@ -1,6 +1,20 @@
 #!/bin/bash
 # guru tool-kit decorations for terminal
 
+msg() {
+    # function for ouput messages and make log notifications.
+    if ! [[ "$1" ]] ; then return 0 ; fi                            # if no message, just return
+    printf "$@" >"$GURU_ERROR_MSG" ;                                # keep last message to las error
+    if [[ "$GURU_VERBOSE" ]] ; then printf "$@" ; fi                # print out if verbose set
+    if ! [[ -f "$GURU_LOCAL_TRACK/.online" ]] ; then return 0 ; fi  # check that system mount is online before logging
+    if ! [[ -f "$GURU_LOG" ]] ; then return 0 ; fi                  # log inly is log exist (hmm.. this not really neede)
+    if [[ "$LOGGING" ]] ; then                                      # log without colorcodes ets.
+        printf "$@" | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
+    fi
+}
+export -f msg
+
+
 if [ "$GURU_TERMINAL_COLOR" ]; then
     export RED='\033[0;31m'
     export GRN='\033[0;32m'
@@ -15,13 +29,14 @@ if [ "$GURU_TERMINAL_COLOR" ]; then
 fi
 
 
+export OK="${GRN}OK${NC}\n"
 export PASSED="${GRN}PASSED${NC}\n"
 export READY="${GRN}READY${NC}\n"
 export DONE="${GRN}DONE${NC}\n"
 export UPTODATE="${GRN}UPTODATE${NC}\n"
 export UPDATED="${GRN}UPDATED${NC}\n"
 export MOUNTED="${GRN}MOUNTED${NC}\n"
-export SUCCESS="${GRN}SUCCESS${NC}\n"
+export SUCCESS="${GRN}SUCCEEDED${NC}\n"
 export UNMOUNTED="${BLU}UNMOUNTED${NC}\n"
 export IGNORED="${BRN}IGNORED${NC}\n"
 export FAILED="${RED}FAILED${NC}\n"
@@ -29,12 +44,12 @@ export ERROR="${YEL}ERROR${NC}"
 export WARNING="${WHT}WARNING${NC}"
 export ONLINE="${GRN}ONLINE${NC}\n"
 export OFFLINE="${BLU}OFFLINE${NC}\n"
+export NOTFOUND="${BLU}NOT FOUND${NC}\n"
 export REMOVED="${BLU}REMOVED${NC}\n"
 export UNKNOWN="${WHT}UNKNOWN${NC}\n"
-export OK="${WHT}OK!${NC}\n"
 
 
-OK() {              [ "$1" ] && msg "$1 $OK"        || msg "$OK" ; }
+OK() {              [ "$1" ] && msg "${WHT}$1 $OK"  || msg "$OK" ; }
 DONE() {            [ "$1" ] && msg "$1 $DONE"      || msg "$DONE" ; }
 READY() {           [ "$1" ] && msg "$1 $READY"     || msg "$READY" ; }
 PASSED() {          [ "$1" ] && msg "$1 $PASSED"    || msg "$PASSED" ; }
@@ -47,10 +62,12 @@ OFFLINE() {         [ "$1" ] && msg "$1 $OFFLINE"   || msg "$OFFLINE" ; }
 UNKNOWN() {         [ "$1" ] && msg "$1 $UNKNOWN"   || msg "$UNKNOWN" ; }
 REMOVED() {         [ "$1" ] && msg "$1 $REMOVED"   || msg "$REMOVED" ; }
 UPTODATE() {        [ "$1" ] && msg "$1 $UPTODATE"  || msg "$UPTODATE" ; }
+NOTFOUND() {        [ "$1" ] && msg "$1 $NOTFOUND"  || msg "$NOTFOUND" ; }
 UNMOUNTED() {       [ "$1" ] && msg "$1 $UNMOUNTED" || msg "$UNMOUNTED" ; }
-ERROR() {           [ "$1" ] && msg "$ERROR ${WHT}$1${NC}"      || msg "$ERROR" ; }
-FAILED() {          [ "$1" ] && msg "${WHT}$1:${NC} $FAILED"    || msg "$FAILED" ; }
-WARNING() {         [ "$1" ] && msg "$WARNING ${WHT}$1${NC}"    || msg "$WARNING" ; }
+ERROR() {           [ "$1" ] && msg "$ERROR ${WHT}$1"      || msg "$ERROR" ; }
+FAILED() {          [ "$1" ] && msg "${WHT}$1: $FAILED"    || msg "$FAILED" ; }
+WARNING() {         [ "$1" ] && msg "$WARNING ${WHT}$1"    || msg "$WARNING" ; }
 TEST_IGNORED() {    [ "$1" ] && msg "${WHT}$1 test is $IGNORED" || msg "${WHT}test resul is $IGNORED" ; }
 TEST_FAILED() {     [ "$1" ] && msg "${WHT}$1 test result is: $FAILED" || msg "${WHT}test resul is: $FAILED" ; }
 TEST_PASSED() {     [ "$1" ] && msg "${WHT}$1 test result is: $PASSED" || msg "${WHT}test resul is: $PASSED" ; }
+
