@@ -5,7 +5,7 @@
 install.main () {
     [ "$1" ] && argument="$1" || read -r -p "input module name: " argument
     case "$argument" in
-        java|webmin|conda|hackrf|st-link|mqtt-server|mqtt-client|visual-code|tor|django|help)
+        tiv|java|webmin|conda|hackrf|st-link|mqtt-server|mqtt-client|visual-code|tor|django|help)
                                       install.$argument "$@" ;;
         kaldi|listener)               install.kaldi 4 ;; # number of cores used during compiling
         pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/lib/install-pk2.sh; exit; $SHELL; " ;;
@@ -29,6 +29,22 @@ install.help () {
     echo " kaldi                       speech to text ai"
     echo " tor                         tor browser"
     echo " webmin                      webmin tool for server configuratio"
+}
+
+install.tiv () {
+    #install text mode picture viewer
+    GURU_VERBOSE=true
+    [[ -d /tmp/TerminalImageViewer ]] && rm /tmp/TerminalImageViewer -rf
+    cd /tmp
+    sudo apt update && OK "update" &&
+    sudo apt install imagemagick && OK "imagemagick" &&
+    git clone https://github.com/stefanhaustein/TerminalImageViewer.git && OK "git clone" &&
+    cd TerminalImageViewer/src/main/cpp &&
+    make && OK "compile" &&
+    sudo make install && OK "install" &&
+    rm /tmp/TerminalImageViewer -rf && OK "clean" &&
+    SUCCESS "installation" || FAILED "something fucked up"
+    GURU_VERBOSE=
 }
 
 
@@ -298,8 +314,8 @@ install.visual_code () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc"
-    source "$GURU_BIN/lib/deco.cfg"
-    source "$GURU_BIN/functions.sh"
+    source "$GURU_BIN/lib/common.sh"
+    #source "$GURU_BIN/lib/deco.sh"
     install.main "$@"
     exit $?
 fi
