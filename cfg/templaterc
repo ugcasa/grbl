@@ -91,7 +91,7 @@ export GURU_KEYBIND_SIGNATURE=
 export GURU_KEYBIND_PICTURE_MD=
 
 # Formats
-export GURU_DATE_FORMAT='%d.%-m.%Y'
+export GURU_DATE_FORMAT='%-d.%-m.%Y'
 export GURU_TIME_FORMAT='%H:%M:%S'
 export GURU_FILE_DATE_FORMAT='%Y%m%d'
 export GURU_FILE_TIME_FORMAT='%H%M%S'

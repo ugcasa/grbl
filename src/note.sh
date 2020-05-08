@@ -51,8 +51,8 @@ note.gen_var() {
         month=${input:4:2}
         day=${input:6:2}
     else
-        month=$(date +%m)                                           # current day if no input
         year=$(date +%Y)
+        month=$(date +%m)                                           # current day if no input
         day=$(date +%d)
     fi
 
@@ -69,7 +69,6 @@ note.gen_var() {
 
 
 note.check() {
-
     msg "checking note file exist.. "
 
     if [[ -f "$note" ]] ; then
@@ -79,19 +78,11 @@ note.check() {
             NOTFOUND
             return 127
         fi
-
 }
 
 
 note.online() {
-    mount.online "$GURU_LOCAL_NOTES"
-    mount.online "$GURU_LOCAL_TEMPLATES"
-    return 0
-}
-
-
-note.online() {
-    if mount.online "$GURU_LOCAL_NOTES" >/dev/null && mount.online "$GURU_LOCAL_TEMPLATES" >/dev/null; then
+    if mount.online "$GURU_LOCAL_NOTES" && mount.online "$GURU_LOCAL_TEMPLATES" ; then
             return 0
         else
             return 1
@@ -147,32 +138,27 @@ note.contruct() {
     [[  -d "$GURU_LOCAL_TEMPLATES" ]] || mkdir -p "$GURU_LOCAL_TEMPLATES"
 
     if [[ ! -f "$note" ]]; then
-        # header
-        printf "$note_file\n\n# $GURU_NOTE_HEADER $nice_datestamp\n\n" >$note
+            # header
+            printf "$note\n\n# $GURU_NOTE_HEADER $nice_datestamp\n\n" >$note
+            # template
+            [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note
+            # changes table
+            note.add_change "created"
+            # tags
+            tag.main "$note" add "note $(date +$GURU_FILE_DATE_FORMAT)"
 
-        # template
-        [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note
-
-        note.add_change "created"
-
-        # tags
-        tag.main "$note" "note $(date +$GURU_FILE_DATE_FORMAT)"
-
-        # flags
-        just_created="yep"
-    fi
+        fi
 }
 
 
 note.open() {
     # input format YYYYMMDD
-    #                                               # set basic variables for functions
     if [[ -f "$note" ]]; then
-        note.add_change "opened"
-    else
-        read -p "no note for target day, create? [y/n]: " answer
-        [ "$answer" == "y" ] && note.generate "$1" || exit 0
-    fi
+            note.add_change "opened"
+        else
+            read -p "no note for target day, create? [y/n]: " answer
+            [ "$answer" == "y" ] && note.generate "$1" || exit 0
+        fi
     note.editor "$note"                                             # variables are global dough
 }
 
