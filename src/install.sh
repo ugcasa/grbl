@@ -159,8 +159,9 @@ install.mqtt-server () {   #not tested
 
 
 install.hackrf () {
-
-    gnuradio-companion --help >/dev/null ||sudo apt-get install gnuradio gqrx-sdr hackrf gr-osmosdr -y
+    # full
+    # sudo apt install hackrf
+    gnuradio-companion --help >/dev/null ||sudo apt-get install build-essential python3-dev libqt4-dev gnuradio gqrx-sdr hackrf gr-osmosdr libusb-dev python-qwt5-qt4 -y
     read -r -p "Connect HacrkRF One and press anykey: " nouse
     hackrf_info && echo "successfully installed" ||echo "HackrRF One not found, pls. re-plug or re-install"
     mkdir -p $HOME/git/labtools/radio
@@ -169,8 +170,9 @@ install.hackrf () {
     git clone https://github.com/mossmann/hackrf.wiki.git
     git clone https://ujoguru@bitbucket.org/ugdev/radlab.git
     echo "Documentation file://$HOME/git/labtools/radio/hackrf.wiki"
+    printf "\n guru is now ready to radio\n\n"
     read -r -p "to start GNU radio press anykey (or CTRL+C to exit): " nouse
-    gnuradio-companion && printf "\n guru is now ready to radio\n\n"
+    gnuradio-companion &
     return 0
 }
 
