@@ -1,27 +1,28 @@
 #!/bin/bash
-# guru tool-kit - caa@ujo.guru 2020
+# guru tool-kit - main command parser
+# caa@ujo.guru 2020
+
 export GURU_VERSION="0.5.2"
-export GURU_USER=$USER
+export GURU_HOSTNAME="$(hostname)"
 
-source $GURU_BIN/system.sh                          # common functions, if no .sh, check here
-source $GURU_BIN/functions.sh                       # common functions, if no .sh, check here
-source $GURU_BIN/mount.sh                           # common functions, if no .sh, check here
-source $GURU_BIN/lib/common.sh
-FORCE=                                              # store 'FORCE' status. is set will fuck up 'read' by letting them trough (wont return orig status temp_force=$FORCE ;)
+source $GURU_BIN/system.sh                                              # guru toolkit upgrade etc.
+source $GURU_BIN/functions.sh                                           # quick try outs
+source $GURU_BIN/mount.sh                                               # needed to keep track tiles up to date
+source $GURU_BIN/lib/common.sh                                          # TODO remove need of this
 
-main.parser () {                                    # parse arguments and delivery variables to corresponding worker
-    tool="$1"; shift                                # store tool call name and shift arguments left
-    export GURU_CMD="$tool"                         # Store tool call name to other functions
-    export GURU_SYSTEM_STATUS="processing $tool"    # system status can use as part of error exit message
+main.parser () {                                                        # parse arguments and delivery variables to corresponding worker
+    tool="$1"; shift                                                    # store tool call name and shift arguments left
+    export GURU_CMD="$tool"                                             # Store tool call name to other functions
+    export GURU_SYSTEM_STATUS="processing $tool"                        # system status can use as part of error exit message
 
-    case "$tool" in
+    case "$tool" in                                                     # TODO re- categorize
     # useful tools
                               test)  bash "$GURU_BIN/test/test.sh" "$@" ; return $? ;;  # tester
                            uutiset)  $tool.py "$@"                      ; return $? ;;  # python scripts
                     terminal|shell)  main.terminal "$@"                 ; return $? ;;  # guru in terminal mode
                 phone|play|vol|yle)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
            stamp|timer|tag|install)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
-    # useful functions (TODO: get rid)
+    # useful functions
                           document)  $tool "$@"                         ; return $? ;;  # one function prototypes are in 'function.sh'
             trans|project|tor|user)  $tool "$@"                         ; return $? ;;  # function.sh prototypes
     # system tools
@@ -33,20 +34,23 @@ main.parser () {                                    # parse arguments and delive
                        input|hosts)  trial/$tool.sh "$@"                ; return $? ;;  # place for shell script prototypes and experiments
              tme|fmradio|datestamp)  trial/$tool.py "$@"                ; return $? ;;  # place for python script prototypes and experiments
     corona|scan|input|counter|note)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
-    # way system pass system tools and call directly libraries (TODO: get rid)
+    # libraries
                  ssh|os|common|tme)  $GURU_BIN/lib/$tool.sh "$@"        ; return $? ;;  # direct lib calls
+    # operating system command pass trough
                   clear|ls|cd|echo)  $tool "$@"                         ; return $? ;;  # os command pass trough
     # basics
                          uninstall)  bash "$GURU_BIN/$tool.sh" "$@"     ; return $? ;;  # Get rid of this shit
                        help|--help)  main.help "$@"                     ; return 0  ;;  # help printout
-                     version|--ver)  printf "guru tool-kit v.%s\n" "$GURU_VERSION"           ;;  # version output
+                     version|--ver)  printf "guru tool-kit v.%s\n" "$GURU_VERSION"  ;;  # version output
                                  *)  printf "%s confused: phrase '%s' unknown. you may try '%s help'\n" \
-                                            "$GURU_CALL" "$tool" "$GURU_CALL"                    # false user input
+                                            "$GURU_CALL" "$tool" "$GURU_CALL"           # false user input
     esac
     return 0
 }
 
+
 main.help () {
+    # TODO re-organize by function category
     echo "-- guru tool-kit main help ------------------------------------------"
     printf "usage:\t %s [tool] [argument] [variables]\n" "$GURU_CALL"
     printf "\nfile control:\n"
@@ -102,8 +106,9 @@ main.help () {
     # echo " -V   more deep verbose"
     # echo " -l   set logging on to file $GURU_LOG"
     # echo " -f   set force mode on, be more aggressive"
-    # echo " -u   tun as user"
+    # echo " -u   run as user"
 }
+
 
 main.terminal() {
     # Terminal looper
@@ -117,6 +122,7 @@ main.terminal() {
         done
     return $?
 }
+
 
 main() {
     local _error_code=0
@@ -154,6 +160,7 @@ main() {
     return $_error_code
 }
 
+
 process_opts () {
     TEMP=`getopt --long -o "vVflu:h:" "$@"`
     eval set -- "$TEMP"
@@ -173,10 +180,11 @@ process_opts () {
     [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
 }
 
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    export GURU_HOSTNAME=$(hostname)
     process_opts $@
     source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
+    [[ $GURU_USER_VERBOSE ]] && GURU_VERBOSE=1
     main $ARGUMENTS
     exit $?
 fi

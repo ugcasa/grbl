@@ -1,7 +1,7 @@
 #!/bin/bash
 # ujo.guru tool kit environmental variables
 # called from .bashrc every time bash session starts
-
+#export GURU_USER=casa
 # basic locations
 export GURU_BIN="$HOME/bin"
 export GURU_CFG="$HOME/.config/guru"
