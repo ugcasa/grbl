@@ -28,7 +28,7 @@ main.parser () {                                                        # parse 
     # system tools
       keyboard|system|mount|remote)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
                            unmount)  mount.main "$1"                    ; return $? ;;  # alias for un-mounting
-                            config)  $tool.sh "$@"                      ; return $? ;;  # configuration tools
+                       mqtt|config)  $tool.sh "$@"                      ; return $? ;;  # configuration tools
     # prototypes and trials
                              radio)  DISPLAY=0; $tool.py "$@"           ; return $? ;;  # leave background + set display
                        input|hosts)  $GURU_BIN/trial/$tool.sh "$@"      ; return $? ;;  # place for shell script prototypes and experiments

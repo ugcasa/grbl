@@ -3,10 +3,10 @@
 # TODO: move all these to guru-install
 
 install.main () {
-    [ "$1" ] && argument="$1" || read -r -p "input module name: " argument
+    [ "$1" ] && argument="$1" && shift || read -r -p "input module name: " argument
     local _temp_vebose=$GURU_VERBOSE ; GURU_VERBOSE=true
     case "$argument" in
-        tiv|java|webmin|conda|hackrf|st-link|mqtt-server|mqtt-client|visual-code|tor|django|help)
+        tiv|java|webmin|conda|hackrf|st-link|mqtt-client|visual-code|tor|django|help)
                                       install.$argument "$@" ;;
         kaldi|listener)               install.kaldi 4 ;; # number of cores used during compiling
         pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/lib/install-pk2.sh; exit; $SHELL; " ;;
@@ -111,75 +111,12 @@ install.java () {
 
 
 install.mqtt-client () {   #not tested
-    echo "TBD install client"           #whaat.. thod these were in use at some point, what happened?
-    # sudo apt-get update && sudo apt-get upgrade || return $?
-    # sudo apt install mosquitto-clients || return $?
-    # sudo add-apt-repository ppa:certbot/certbot || return $?
-    # sudo apt-get update || return $?
-    # sudo apt-get install certbot || return $?
-    # sudo ufw allow http
-    #continue: https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-ubuntu-16-04
-    #&& printf "\n guru is now ready to message\n\n"
-    return 0
-}
-
-
-install.mqtt-server () {   #not tested
-
-    # sudo apt-get update && sudo apt-get upgrade || return $?
-    # sudo apt install mosquitto mosquitto-clients || return $?
-
-    ln -s /etc/mosquitto/conf.d/default.conf $GURU_CFG/mosquitto.default.conf
-
-    if install.question "setup password login?"; then
-        pass=1
-        echo "setting up password login"
-        read -p "mqtt client username :" username
-        [ "$username" ] || return 123
-        # sudo mosquitto_passwd -c /etc/mosquitto/passwd $username && printf "allow_anonymous false\npassword_file /etc/mosquitto/passwd\n" >>/etc/mosquitto/conf.d/default.conf || return 668
-        # sudo systemctl restart mosquitto || return $?
-
-        read -p "password for testing :" password
-        [ "$password" ] || return 124
-        # mosquitto_pub -h localhost -t "test" -m "hello login" -p 1883 -u $username -P $password && echo "loalhost 1883 passed" || echo "failed loalhost 8883 "
-    fi
-
-    if install.question "setup encryption?"; then
-        enc=1
-        echo "setting up ssl encryption"
-        # sudo ufw allow 8883
-        # printf '# ujo.guru mqtt setup \nlistener 1883 localhost\n\nlistener 8883\ncertfile /etc/letsencrypt/live/mqtt.ujo.guru/cert.pem\ncafile /etc/letsencrypt/live/mqtt.ujo.guru/chain.pem\nkeyfile /etc/letsencrypt/live/mqtt.ujo.guru/privkey.pem' >/etc/mosquitto/conf.d/default.conf
-        # sudo systemctl restart mosquitto
-        if [ $pass ]; then
-            echo "pass"
-            # mosquitto_pub -h localhost -t "test" -m "hello encryption" -u $username P $password -p 8883 --capath /etc/ssl/certs/ && echo "localhost 8883 passed" || echo "localhost 8883 failed"
-        else
-            echo "pass"
-            # mosquitto_pub -h localhost -t "test" -m "hello encryption" -p 8883 --capath /etc/ssl/certs/ && echo "localhost 8883 passed" || echo "localhost 8883 failed"
-        fi
-    fi
-
-    if install.question "setup certificates?"; then
-        cert=1
-        echo "setting up certificate login"
-        # sudo add-apt-repository ppa:certbot/certbot || return $?
-        sudo apt-get update || return $?
-        # sudo apt-get install certbot || return $?
-        # sudo ufw allow http
-        # sudo certbot certonly --standalone --standalone-supported-challenges http-01 -d mqtt.ujo.guru
-        echo "to renew certs automatically add following line to crontab (needs to be done manually)"
-        echo '15 3 * * * certbot renew --noninteractive --post-hook "systemctl restart mosquitto"'
-        read -p "press any key to continue.. "
-        # sudo crontab -e
-
-        if [ $enc ]; then
-            echo "pass"
-        # mosquitto_pub -h localhost -t "test" -m "hello 8883" -p 8883 --capath /etc/ssl/certs/ && echo "loalhost 8883 passed" || echo "failed loalhost 8883 "
-        fi
-    fi
-    # Testing
+    
+    sudo apt-get update || return $?    
+    sudo apt install mosquitto-clients || return $?
+    #sudo add-apt-repository ppa:certbot/certbot || return $?
+    #sudo apt-get install certbot || return $?    
     printf "\n guru is now ready to mqtt\n\n"
-
     return 0
 }
 
