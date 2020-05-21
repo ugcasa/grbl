@@ -4,6 +4,7 @@
 
 install.main () {
     [ "$1" ] && argument="$1" || read -r -p "input module name: " argument
+    local _temp_vebose=$GURU_VERBOSE ; GURU_VERBOSE=true
     case "$argument" in
         tiv|java|webmin|conda|hackrf|st-link|mqtt-server|mqtt-client|visual-code|tor|django|help)
                                       install.$argument "$@" ;;
@@ -13,6 +14,7 @@ install.main () {
         all)                          echo "TBD" ;;
         *)                            echo "no installer for '$argument'"; install.help
     esac
+    GURU_VERBOSE=$_temp_vebose
 }
 
 
@@ -33,7 +35,6 @@ install.help () {
 
 install.tiv () {
     #install text mode picture viewer
-    GURU_VERBOSE=true
     [[ -d /tmp/TerminalImageViewer ]] && rm /tmp/TerminalImageViewer -rf
     cd /tmp
     sudo apt update && OK "update" &&
@@ -44,7 +45,6 @@ install.tiv () {
     sudo make install && OK "install" &&
     rm /tmp/TerminalImageViewer -rf && OK "clean" &&
     SUCCESS "installation" || FAILED "something fucked up"
-    GURU_VERBOSE=
 }
 
 
@@ -135,12 +135,12 @@ install.mqtt-server () {   #not tested
         pass=1
         echo "setting up password login"
         read -p "mqtt client username :" username
-        [ "$username" ] || return 668
+        [ "$username" ] || return 123
         # sudo mosquitto_passwd -c /etc/mosquitto/passwd $username && printf "allow_anonymous false\npassword_file /etc/mosquitto/passwd\n" >>/etc/mosquitto/conf.d/default.conf || return 668
         # sudo systemctl restart mosquitto || return $?
 
         read -p "password for testing :" password
-        [ "$password" ] || return 671
+        [ "$password" ] || return 124
         # mosquitto_pub -h localhost -t "test" -m "hello login" -p 1883 -u $username -P $password && echo "loalhost 1883 passed" || echo "failed loalhost 8883 "
     fi
 
@@ -178,7 +178,7 @@ install.mqtt-server () {   #not tested
         fi
     fi
     # Testing
-    printf "\n guru is now ready to service any message\n\n"
+    printf "\n guru is now ready to mqtt\n\n"
 
     return 0
 }
