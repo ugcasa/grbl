@@ -62,14 +62,35 @@ install.question () {
 }
 
 
-install.tor () { # fised to 8.5.4_en-US
 
-    echo "installing version 9.5a8_en-US, there might be more reacent release available"
-    [ -f /tmp/tor-browser-linux64-9.5a8_en-US.tar.xz ] || wget https://www.torproject.org/dist/torbrowser/9.5a8/tor-browser-linux64-9.5a8_en-US.tar.xz -P /tmp
-    [ -d $GURU_APP ] || mkdir -p $GURU_APP
-    [ -d $GURU_APP/tor-browser_en-US ] &&rm -rf $GURU_APP/tor-browser_en-US
-    tar xf /tmp/tor-browser-linux64-9.5a8_en-US.tar.xz -C $GURU_APP
-    sh -c '"$(dirname "$*")"/Browser/start-tor-browser --detach || ([ ! -x "$(dirname "$*")"/Browser/start-tor-browser ] && "$(dirname "$*")"/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
+install.tor () {     
+    unset _url _dir _file _form _lang
+    local _url="https://dist.torproject.org/torbrowser"
+    local _file="tor-browser-linux64-"
+    local _form=".tar.xz"
+    local _lang="_en-US" ; [[ "$1" ]] && _lan="_$1"
+    local _dir="/tmp/guru/tor" 
+    [[ -d "$_dir" ]] ||mkdir -p "$_dir" 
+    cd "$_dir"        # enter to temp folder
+
+    [[ -f torbrowser ]] && rm -fr torbrowser
+    wget "$_url"      # get verion folder list
+    
+    # get version and generate file and url 
+    local _ver=$(cat torbrowser | grep "/icons/folder.gif" | cut -d " " -f 5 )
+    _ver=${_ver%%'/"'*} 
+    _ver=${_ver#*'="'}                               #; echo $_ver    
+    _file="$_file$_ver$_lang$_form"                  #; echo $_file    
+    _url="$_url/$_ver/$_file"                        #; echo $_url    
+    
+    # get browser 
+    [[ -f "$_file" ]] && rm -fr "$_file"
+    wget "$_url"
+
+    [[ -d "$GURU_APP" ]] || mkdir -p "$GURU_APP"
+    [[ -d "$GURU_APP/tor-browser$_lang" ]] && rm -rf "$GURU_APP/tor-browser$_lang"
+    tar xf "$_file" -C "$GURU_APP"
+    printf "guru is ready to tor, type 'guru tor' to run browser\n\n"
 }
 
 
