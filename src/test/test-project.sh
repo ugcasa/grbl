@@ -9,13 +9,13 @@ project.test() {
     local _err=("$0")
     case "$test_case" in
                 1)  project.test_check       || return $? ;;
-                2)  project.test_add "test"  || return $? ;;
-                3)  project.test_open "test" || return $? ;;
-                4)  project.test_rm "test"   || return $? ;;
+                #2)  project.test_add "test"  || return $? ;;
+                #3)  project.test_open "test" || return $? ;;
+                #4)  project.test_rm "test"   || return $? ;;
       release|all)  project.test_check       || _err=("${_err[@]}" "41")  #
-                    project.test_add "test"  || _err=("${_err[@]}" "42")  #
-                    project.test_open "test" || _err=("${_err[@]}" "43")  #
-                    project.test_rm "test"   || _err=("${_err[@]}" "44")  #
+                    #project.test_add "test"  || _err=("${_err[@]}" "42")  #
+                    #project.test_open "test" || _err=("${_err[@]}" "43")  #
+                    #project.test_rm "test"   || _err=("${_err[@]}" "44")  #
                     if [[ ${_err[1]} -gt 0 ]]; then ERROR "${_err[@]}"; return ${_err[1]}; else return 0; fi ;;
                 *)  msg "test case '$test_case' not written\n"
                     return 1
