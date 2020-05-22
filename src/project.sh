@@ -2,15 +2,16 @@
 # guru tool-kit project tools
 # ujo.guru 2020
 
+source $GURU_BIN/lib/common.sh
+
 project.main() {
     # command paerser
-    command="$1" ; shift
+    local _cmd="$1" ; shift
 
-    case "$command" in
-        open) project.open $@            ;;
-        test) project.test $@            ;;
-        help) project.help               ;;
-           *) project.open "$command $@" ;;
+    case "$_cmd" in
+        add|open|rm|sublime|installed)  project.$_cmd $@           ;;
+                                 help)  project.help               ;;
+                                    *)  project.open "$command $@" ;;
     esac
 }
 
@@ -21,12 +22,27 @@ project.help () {
 }
 
 
+project.check() {
+    mount.online "$GURU_LOCAL_TRACK"
+    if [[ -d "$GURU_LOCAL_TRACK/project" ]] ; then
+            EXIST "project database"
+            return 0
+        else
+            NOTEXIST "project database"
+            return 41
+        fi
+    }
+
+
 project.open () {
     # open project with preferred editor
     [[ "$1" ]] && _project_name="$1" ||read -p "plase enter project name : " _project_name
     shift
 
-    [[ -d "$GURU_PROJECT" ]] ||mkdir -p "$GURU_PROJECT"
+    if ! [[ -d "$GURU_PROJECT/$_project_name" ]] ; then
+        NOTEXIST "_project_name"
+        return 43
+    fi
 
     case "$GURU_EDITOR" in
          subl|sublime|sublime-text|subl2|subl3|subl4)
@@ -34,6 +50,7 @@ project.open () {
                             *)  project.help
     esac
 }
+
 
 project.sublime () {
 
@@ -52,8 +69,7 @@ project.sublime () {
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    source "$HOME/.gururc"
+    if [[ "$1" == "test" ]] ; then shift ; echo "test $1" ; ./test/test.sh project $1 ; fi
     project.main "$@"
-    exit 0
 fi
 
