@@ -69,7 +69,7 @@ project.sublime () {
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    if [[ "$1" == "test" ]] ; then shift ; echo "test $1" ; ./test/test.sh project $1 ; fi
+    if [[ "$1" == "test" ]] ; then shift ; ./test/test.sh project $1 ; fi
     project.main "$@"
 fi
 
