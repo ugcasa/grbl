@@ -24,11 +24,11 @@ main.parser () {                                                        # parse 
            stamp|timer|tag|install)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
     # useful functions
                           document)  $tool "$@"                         ; return $? ;;  # one function prototypes are in 'function.sh'
-            trans|project|tor|user)  $tool "$@"                         ; return $? ;;  # function.sh prototypes
+                    trans|tor|user)  $tool "$@"                         ; return $? ;;  # function.sh prototypes
     # system tools
       keyboard|system|mount|remote)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
                            unmount)  mount.main "$1"                    ; return $? ;;  # alias for un-mounting
-                       mqtt|config)  $tool.sh "$@"                      ; return $? ;;  # configuration tools
+               project|mqtt|config)  $tool.sh "$@"                      ; return $? ;;  # configuration tools
     # prototypes and trials
                              radio)  DISPLAY=0; $tool.py "$@"           ; return $? ;;  # leave background + set display
                        input|hosts)  $GURU_BIN/trial/$tool.sh "$@"      ; return $? ;;  # place for shell script prototypes and experiments
