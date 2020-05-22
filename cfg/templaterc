@@ -33,6 +33,7 @@ export GURU_TEAM="test"
 export GURU_TEAM_NAME="test user"
 
 # mountpoints
+export GURU_LOCAL_TRACK="$HOME/Track"
 export GURU_LOCAL_NOTES="$HOME/Notes"
 export GURU_LOCAL_PICTURES="$HOME/Pictures"
 export GURU_LOCAL_TEMPLATES="$HOME/Templates"
@@ -40,13 +41,13 @@ export GURU_LOCAL_VIDEO="$HOME/Videos"
 export GURU_LOCAL_AUDIO="$HOME/Audio"
 export GURU_LOCAL_MUSIC="$HOME/Music"
 export GURU_LOCAL_SCAN="$HOME/Documents"
-export GURU_LOCAL_TRACK="$HOME/Track"
 export GURU_LOCAL_PHOTOS="$HOME/Photos"
 export GURU_LOCAL_FAMILY=
 export GURU_LOCAL_COMPANY=
 
 
 # locations
+export GURU_TRASH="GURU_LOCAL_TRACK/trash"
 export GURU_SOMEDIA="$GURU_LOCAL_PICTURES/some"
 export GURU_TEST="$GURU_LOCAL_TRACK/Test-data"
 export GURU_ACCOUNTING="$HOME/Economics"
