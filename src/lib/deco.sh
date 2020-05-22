@@ -43,7 +43,7 @@ export UNMOUNTED="${BLU}UN-MOUNTED${NC}\n"
 export IGNORED="${BRN}IGNORED${NC}\n"
 export FAILED="${RED}FAILED${NC}\n"
 export ERROR="${YEL}ERROR${NC}"
-export WARNING="${WHT}WARNING${NC}"
+export WARNING="${YEL}WARNING${NC}"
 export ONLINE="${GRN}ONLINE${NC}\n"
 export OFFLINE="${BLU}OFFLINE${NC}\n"
 export NOTFOUND="${BLU}NOT FOUND${NC}\n"
@@ -69,8 +69,8 @@ UPTODATE() {        [ "$1" ] && msg "$1 $UPTODATE"  || msg "$UPTODATE" ; }
 NOTFOUND() {        [ "$1" ] && msg "$1 $NOTFOUND"  || msg "$NOTFOUND" ; }
 UNMOUNTED() {       [ "$1" ] && msg "$1 $UNMOUNTED" || msg "$UNMOUNTED" ; }
 ERROR() {           [ "$1" ] && msg "$ERROR ${WHT}$1"      || msg "$ERROR" ; }
-FAILED() {          [ "$1" ] && msg "${WHT}$1: $FAILED"    || msg "$FAILED" ; }
 WARNING() {         [ "$1" ] && msg "$WARNING ${WHT}$1"    || msg "$WARNING" ; }
+FAILED() {          [ "$1" ] && msg "${WHT}$1: $FAILED"    || msg "$FAILED" ; }
 TEST_IGNORED() {    [ "$1" ] && msg "${WHT}$1 test is $IGNORED" || msg "${WHT}test resul is $IGNORED" ; }
 TEST_FAILED() {     [ "$1" ] && msg "${WHT}$1 test result is: $FAILED" || msg "${WHT}test resul is: $FAILED" ; }
 TEST_PASSED() {     [ "$1" ] && msg "${WHT}$1 test result is: $PASSED" || msg "${WHT}test resul is: $PASSED" ; }
