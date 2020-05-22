@@ -12,13 +12,12 @@
 #  all) run all valid tests (selected)
 #  release) release validation tests
 #  clean) make clean
-
+source $HOME/.gururc
 source $GURU_BIN/lib/common.sh
 
 test.main() {
     # main test case parser
     export all_tools=("mount" "remote" "note" "system")
-    export GURU_TERMINAL_COLOR=true
     export GURU_VERBOSE=true
     export LOGGING=true
 
@@ -167,7 +166,7 @@ test.terminal () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     case "$1" in
-        loop) shift ; test.terminal "$@" ; exit "$?" ;;
+        loop) shift ; test.terminal $@ ; exit $? ;;
         esac
     test.main "$@"
     exit "$?"
