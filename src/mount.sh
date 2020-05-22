@@ -154,29 +154,38 @@ mount.check () {
 
 unmount.remote () {
 
-    local target_folder="$1"
+    local _mountpoint="$1"
 
-    if ! mount.online "$target_folder" ; then
-            IGNORED "$target_folder is not mounted"
+    if ! mount.online "$_mountpoint" ; then
+            IGNORED "$_mountpoint is not mounted"
             return 0
         fi
 
-    if fusermount -u "$target_folder" ; then
-            UNMOUNTED "$target_folder"
+    if fusermount -u "$_mountpoint" ; then
+            UNMOUNTED "$_mountpoint"
             return 0
         fi
 
     # once more or if force
-    if [ "$GURU_FORCE" ] || mount.online "$target_folder" ; then
+    if [ "$GURU_FORCE" ] || mount.online "$_mountpoint" ; then
+
             printf "force unmount.. "
-            if sudo fusermount -u "$target_folder" ; then
-                    UNMOUNTED "$target_folder force"
+            if fusermount -u "$_mountpoint" ; then
+
+                    UNMOUNTED "$_mountpoint force"
                     return 0
                 else
-                    FAILED "$target_folder force unmount"
-                    return 101
-                fi
-        fi
+                    if sudo fusermount -u "$_mountpoint" ; then
+                            UNMOUNTED "$_mountpoint SUDO FORCE"
+                            return 0
+                        else
+                            FAILED "$_mountpoint SUDO FORCE unmount"
+                            printf "seems that some of open program like terminal or editor is blocking unmount, try to close those first"
+                            return 101
+                    fi
+            fi
+    fi
+
     return 0
 }
 
@@ -194,7 +203,7 @@ mount.remote () {
             return 0
         fi
 
-    if [[ "$(ls -A $_target_folder)" ]] ; then                              # Check that targed directory is empty
+    if [[ "$(ls -A $_target_folder >/dev/null)" ]] ; then                              # Check that targed directory is empty
             WARNING "$_target_folder is not empty\n"
 
             if [[ $GURU_FORCE ]] ; then
