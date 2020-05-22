@@ -62,31 +62,31 @@ install.question () {
 }
 
 
-install.tor () {     
+install.tor () {
     unset _url _dir _file _form _lang
-    [[ $GURU_APP ]] || GURU_APP="$HOME"             # if run outside of guru tool-kit
+    [[ $GURU_APP ]] || GURU_APP="$HOME"                     # if run outside of guru tool-kit
     local _url="https://dist.torproject.org/torbrowser"
     local _file="tor-browser-linux64-"
     local _form=".tar.xz"
-    local _lang="_en-US" ; [[ "$1" ]] && _lan="_$1"
-    local _dir="/tmp/guru/tor" 
-    
+    local _lang="_$LANGUAGE" ; [[ "$1" ]] && _lan="_$1"     # using system language
+    local _dir="/tmp/guru/tor"
+
     # enter to temp folder
-    [[ -d "$_dir" ]] ||mkdir -p "$_dir" 
-    cd "$_dir"                                      
+    [[ -d "$_dir" ]] ||mkdir -p "$_dir"
+    cd "$_dir"
 
     # get verion folder list
     [[ -f torbrowser ]] && rm -fr torbrowser
-    wget "$_url"                                    
-    
-    # get version and generate file and url 
+    wget "$_url"
+
+    # get version and generate file and url
     local _ver=$(cat torbrowser | grep "/icons/folder.gif" | cut -d " " -f 5 )
-    _ver=${_ver%%'/"'*} 
-    _ver=${_ver#*'="'}                              #; echo $_ver    
-    _file="$_file$_ver$_lang$_form"                 #; echo $_file    
-    _url="$_url/$_ver/$_file"                       #; echo $_url    
-    
-    # get browser 
+    _ver=${_ver%%'/"'*}
+    _ver=${_ver#*'="'}                              #; echo $_ver
+    _file="$_file$_ver$_lang$_form"                 #; echo $_file
+    _url="$_url/$_ver/$_file"                       #; echo $_url
+
+    # get browser
     [[ -f "$_file" ]] && rm -fr "$_file"
     wget "$_url"
 
@@ -94,7 +94,7 @@ install.tor () {
     [[ -d "$GURU_APP" ]] || mkdir -p "$GURU_APP"
     [[ -d "$GURU_APP/tor-browser$_lang" ]] && rm -rf "$GURU_APP/tor-browser$_lang"
     tar xf "$_file" -C "$GURU_APP"
-    
+
     printf "guru is ready to tor, type 'guru tor' to run browser\n\n"
 }
 
@@ -111,11 +111,11 @@ install.java () {
 
 
 install.mqtt-client () {   #not tested
-    
-    sudo apt-get update || return $?    
+
+    sudo apt-get update || return $?
     sudo apt install mosquitto-clients || return $?
     #sudo add-apt-repository ppa:certbot/certbot || return $?
-    #sudo apt-get install certbot || return $?    
+    #sudo apt-get install certbot || return $?
     printf "\n guru is now ready to mqtt\n\n"
     return 0
 }
