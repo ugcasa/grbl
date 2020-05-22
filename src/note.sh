@@ -1,6 +1,5 @@
 #!/bin/bash
 # note tool for guru tool-kit
-
 source $GURU_BIN/lib/common.sh
 source $GURU_BIN/lib/deco.sh
 source $GURU_BIN/mount.sh
@@ -13,13 +12,14 @@ note.main () {
     note.gen_var "$1"
 
     case "$command" in
-       open|check)  note.$command $@ ;;
+       open|check)  note.$command $@        ; return $? ;;
              edit)  note.open "$1"          ; return $? ;;
           list|ls)  note.list "$1" "$2"     ; return $? ;;
            locate)  echo "$note"            ; return 0  ;;
            report)  note.make_odt "$@"      ; return $? ;;
             touch)  note.contruct "$1"      ; return $? ;;
-              tag)  [ -f "$note" ]      && $GURU_CALL "tag $note $user_input"  ;;
+             # tag)  [ -f "$note" ]          && $GURU_CALL "tag $note $user_input"  ;;
+              tag)  [ -f "$note" ]          && tag.main "tag $note $user_input"  ;;
              help)  echo "-- guru tool-kit note help -----------------------------------------------"
                     printf "Usage:\t\t %s note [command] <date> \nCommands:                       \n" "$GURU_CALL"
                     printf " check          check do note exist, returns 0 if i do                \n"
@@ -70,13 +70,12 @@ note.gen_var() {
 
 note.check() {
     msg "checking note file exist.. "
-
     if [[ -f "$note" ]] ; then
             EXIST
             return 0
         else
             NOTFOUND
-            return 127
+            return 100
         fi
 }
 
@@ -106,6 +105,7 @@ note.list() {
 
     if [ -d "$directory" ]; then
         ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted"
+        return 0
     else
         msg "no folder exist\n"
         return 126
@@ -231,8 +231,7 @@ check_debian_repository () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then            # stand alone vs. include. main wont be called if included
-    source $HOME/.gururc
-    source $GURU_BIN/lib/common.sh
+    if [[ "$1" == "test" ]] ; then shift ; bash /test/test.sh note $1 ; fi
     #source $GURU_BIN/lib/deco.sh
     note.main "$@"
     exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
