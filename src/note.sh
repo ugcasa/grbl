@@ -8,39 +8,39 @@ source $GURU_BIN/tag.sh
 
 note.main () {
     # command parser
-    #unset command user_input
     command="$1" ; shift                #; echo "input: $command"
-    #note.gen_var "$1"                   #; echo "input: $1"
+    #note.gen_var "$1"                  #; echo "input: $1"
+
+    if ! note.online ; then
+        note.remount
+    fi
 
     case "$command" in
-       open|check)  note.$command "$1"                    ; return $? ;;
-             edit)  note.open "$1"                        ; return $? ;;
-          list|ls)  note.list "$1" "$2"                 ; return $? ;;
-           locate)  note.gen_var "$1" ; echo "$note"    ; return 0  ;;
-           report)  note.make_odt "$@"                  ; return $? ;;
-            touch)  note.add "$1"                  ; return $? ;;
-             # tag)  [ -f "$note" ]          && $GURU_CALL "tag $note $user_input"  ;;
-              tag)  [ -f "$note" ]          && tag.main "tag $note $user_input"  ;;
-             help)  echo "-- guru tool-kit note help -----------------------------------------------"
-                    printf "Usage:\t\t %s note [command] <date> \nCommands:                       \n" "$GURU_CALL"
-                    printf " check          check do note exist, returns 0 if i do                \n"
-                    printf " list           list of notes. first month (MM), then year (YYYY)     \n"
-                    printf " open|edit|*    open given date notes (use time format %s)            \n" "$GURU_FILE_DATE_FORMAT"
-                    printf "  <yesterday>    - open yesterdays notes                              \n"
-                    printf "  <tuesday>...   - open last week day notes                           \n"
-                    printf " tag            read or add tags to note file                         \n"
-                    printf " locate         returns file location of note given YYYYMMDD          \n"
-                    printf " report         open note with template to %s                         \n" "$GURU_OFFICE_DOC"
-                    ;;
-               *)   note.remount
-                    if [ "$command" ]; then
-                            note.open $(date +"$GURU_FILE_DATE_FORMAT" -d "$command")
-                        else
-                            note.add $(date +"$GURU_FILE_DATE_FORMAT")
-                            note.open $(date +"$GURU_FILE_DATE_FORMAT")
-                        fi
+       ls|add|open|rm|check)  note.$command $@  ;  return $? ;;
+                     report)  note.make_odt $@  ;  return $? ;;
+                      touch)  note.add "$1"     ;  return $? ;;
+                        tag)  [ -f "$note" ]    && tag.main "tag $note $user_input" ;;
+                     locate)  note.gen_var "$1"
+                              echo "$note"      ; return 0  ;;
+                       help)  note.help ;;
+                         "")  note.open $(date +"$GURU_FILE_DATE_FORMAT") ;;
+                          *)  note.open $(date +"$GURU_FILE_DATE_FORMAT" -d "$command")
     esac
     counter.main add note-runned >/dev/null                                          # Usage statistics
+}
+
+note.help () {
+    echo "-- guru tool-kit note help -----------------------------------------------"
+    printf "Usage:\t\t %s note [command] <date> \nCommands:                       \n" "$GURU_CALL"
+    printf " check          check do note exist, returns 0 if i do                \n"
+    printf " list           list of notes. first month (MM), then year (YYYY)     \n"
+    printf " open|edit|*    open given date notes (use time format %s)            \n" "$GURU_FILE_DATE_FORMAT"
+    printf "  <yesterday>    - open yesterdays notes                              \n"
+    printf "  <tuesday>...   - open last week day notes                           \n"
+    printf " tag            read or add tags to note file                         \n"
+    printf " locate         returns file location of note given YYYYMMDD          \n"
+    printf " report         open note with template to %s
+                          \n" "$GURU_OFFICE_DOC"
 }
 
 note.gen_var() {
@@ -71,7 +71,7 @@ note.gen_var() {
 
 note.check() {
     note.gen_var "$1"
-    msg "checking note file exist.. "
+    msg "checking note file.. "
     if [[ -f "$note" ]] ; then
             EXIST
             return 0
@@ -98,7 +98,7 @@ note.remount() {
 }
 
 
-note.list() {
+note.ls() {
     note.remount
     # List of notes on this month and year or given in order and format YYYY MM
     [ "$1" ] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"

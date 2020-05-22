@@ -180,8 +180,8 @@ unmount.remote () {
                             return 0
                         else
                             FAILED "$_mountpoint SUDO FORCE unmount"
-                            printf "seems that some of open program like terminal or editor is blocking unmount, try to close those first"
-                            return 101
+                            WARNING "seems that some of open program like terminal or editor is blocking unmount, try to close those first\n"
+                            return 1
                     fi
             fi
     fi

@@ -4,6 +4,8 @@
 
 export GURU_VERSION="0.5.2"
 export GURU_HOSTNAME="$(hostname)"
+export GURU_BIN="$HOME/bin"
+export GURU_CFG="$HOME/.config/guru"
 
 source $GURU_BIN/system.sh                                              # guru toolkit upgrade etc.
 source $GURU_BIN/functions.sh                                           # quick try outs
