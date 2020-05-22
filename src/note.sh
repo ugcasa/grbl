@@ -4,20 +4,21 @@ source $GURU_BIN/lib/common.sh
 source $GURU_BIN/lib/deco.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
+#GURU_USER=casa
 
 note.main () {
     # command parser
     #unset command user_input
-    command="$1"; shift
-    note.gen_var "$1"
+    command="$1" ; shift                #; echo "input: $command"
+    #note.gen_var "$1"                   #; echo "input: $1"
 
     case "$command" in
-       open|check)  note.$command $@        ; return $? ;;
-             edit)  note.open "$1"          ; return $? ;;
-          list|ls)  note.list "$1" "$2"     ; return $? ;;
-           locate)  echo "$note"            ; return 0  ;;
-           report)  note.make_odt "$@"      ; return $? ;;
-            touch)  note.contruct "$1"      ; return $? ;;
+       open|check)  note.$command "$1"                    ; return $? ;;
+             edit)  note.open "$1"                        ; return $? ;;
+          list|ls)  note.list "$1" "$2"                 ; return $? ;;
+           locate)  note.gen_var "$1" ; echo "$note"    ; return 0  ;;
+           report)  note.make_odt "$@"                  ; return $? ;;
+            touch)  note.add "$1"                  ; return $? ;;
              # tag)  [ -f "$note" ]          && $GURU_CALL "tag $note $user_input"  ;;
               tag)  [ -f "$note" ]          && tag.main "tag $note $user_input"  ;;
              help)  echo "-- guru tool-kit note help -----------------------------------------------"
@@ -35,7 +36,7 @@ note.main () {
                     if [ "$command" ]; then
                             note.open $(date +"$GURU_FILE_DATE_FORMAT" -d "$command")
                         else
-                            note.contruct $(date +"$GURU_FILE_DATE_FORMAT")
+                            note.add $(date +"$GURU_FILE_DATE_FORMAT")
                             note.open $(date +"$GURU_FILE_DATE_FORMAT")
                         fi
     esac
@@ -44,7 +45,7 @@ note.main () {
 
 note.gen_var() {
     # populates needed variables based on given date in format YYYMMDD
-    input=$1
+    input=$1                                                        #; echo "input: $1"
 
     if [ "$input" ]; then                                           # User inputs, no crash handling, mostly input is from other functions not from user
         year=${input::-4}                                           # crashes here if date input is not in correct format YYYYMMDD
@@ -69,13 +70,14 @@ note.gen_var() {
 
 
 note.check() {
+    note.gen_var "$1"
     msg "checking note file exist.. "
     if [[ -f "$note" ]] ; then
             EXIST
             return 0
         else
             NOTFOUND
-            return 100
+            return 41
         fi
 }
 
@@ -90,8 +92,8 @@ note.online() {
 
 
 note.remount() {
-    mount.remote "$GURU_CLOUD_NOTES" "$GURU_LOCAL_NOTES" || return 100
-    mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_LOCAL_TEMPLATES" || return 100
+    mount.remote "$GURU_CLOUD_NOTES" "$GURU_LOCAL_NOTES" || return 43
+    mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_LOCAL_TEMPLATES" || return 43
     return 0
 }
 
@@ -107,33 +109,17 @@ note.list() {
         ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted"
         return 0
     else
+
         msg "no folder exist\n"
-        return 126
+        return 45
     fi
 }
 
 
-note.add_change () {
-
-    _line(){ _len=$1 ; for ((i=1;i<=_len;i++)); do printf '-' ; done }
-
-    # printout change table
-    local _change="edited"      ; [[ "$1" ]] && _change="$1"
-    local _author="$GURU_USER"  ; [[ "$2" ]] && _author="$2"
-
-    if ! grep "## Change log" "$note" >/dev/null ; then                        # TODO make better someday or better, pyhtonize notes
-            printf  "\n\n## Change log\n\n" >>$note
-            printf  "%-17s | %-10s | %-30s \n" "Date" "Author" "Changes" >>$note
-            printf "%s|:%s:|%s\n" "$(_line 18)" "$(_line 10)" "$(_line 30)" >>$note
-        fi
-
-    printf  "%-17s | %-10s | %s \n" "$(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT)" "$_author" "$_change" >>$note
-}
-
-
-note.contruct() {
+note.add() {
     # creates notes and opens them to default editor
-                                                   # set basic variables for functions
+    note.gen_var "$1"                   #; echo "$1" # set basic variables for functions
+
     [[  -d "$note_dir" ]] || mkdir -p "$note_dir"
     [[  -d "$GURU_LOCAL_TEMPLATES" ]] || mkdir -p "$GURU_LOCAL_TEMPLATES"
 
@@ -153,13 +139,54 @@ note.contruct() {
 
 note.open() {
     # input format YYYYMMDD
+    note.gen_var "$1"                   #; echo "$1"
+
     if [[ -f "$note" ]]; then
             note.add_change "opened"
         else
-            read -p "no note for target day, create? [y/n]: " answer
-            [ "$answer" == "y" ] && note.generate "$1" || exit 0
+            NOTFOUND "'$note'"
+
+        if [[ $GURU_FORCE ]] ; then
+                msg "adding note.. "
+                note.add "$1" && OK || FAILED
+            else
+                read -n 1 -p "no note for target day, create? [y/n]: " _ans
+                case $_ans in y|Y|yes|Yes) msg "\nadding note.. " ; note.add "$1" && OK || FAILED "note opening" ;; esac
+            fi
         fi
     note.editor "$note"                                             # variables are global dough
+}
+
+
+note.rm () {
+    # input format YYYYMMDD
+    note.gen_var "$1"
+    if [[ $GURU_FORCE ]] ; then
+        [[ -d $GURU_TRASH ]] ||mkdir -p $GURU_TRASH || ERROR "creating trash "
+        mv -f "$note" "$GURU_TRASH" && return 0 || FAILED "note remove"
+    else
+        read -p "remove $note?: " _ans
+        case $_ans in y|Y|yes|Yes)  rm -rf "$note" && return 0 || FAILED "note remove" ;; esac
+    fi
+    return 47
+}
+
+
+note.add_change () {
+
+    _line(){ _len=$1 ; for ((i=1;i<=_len;i++)); do printf '-' ; done }
+
+    # printout change table
+    local _change="edited"      ; [[ "$1" ]] && _change="$1"
+    local _author="$GURU_USER"  ; [[ "$2" ]] && _author="$2"
+
+    if ! grep "## Change log" "$note" >/dev/null ; then                        # TODO make better someday or better, pyhtonize notes
+            printf  "\n\n## Change log\n\n" >>$note
+            printf  "%-17s | %-10s | %-30s \n" "Date" "Author" "Changes" >>$note
+            printf "%s|:%s:|%s\n" "$(_line 18)" "$(_line 10)" "$(_line 30)" >>$note
+        fi
+
+    printf  "%-17s | %-10s | %s \n" "$(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT)" "$_author" "$_change" >>$note
 }
 
 
@@ -182,14 +209,6 @@ note.editor () {
             return $?
     esac
 }
-
-
-note.generate() {
-    # creates and opens notes (often limited call options, combo needed)
-    note.contruct "$1"
-    note.open "$1"
-}
-
 
 note.make_odt () {
     # created odt with team template out of given days note
