@@ -44,8 +44,7 @@ mount.help () {
     printf " ls                       list of mounted folders \n"
     printf " more information of adding default mountpoint type '%s mount help-default' \n" "$GURU_CALL"
     printf "\nexample:"
-    printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_CLOUD_FAR_USER" "$USER"
-    return 0
+    printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_CLOUD_FAR_USER" "$GURU_USER"
 }
 
 mount.help-default () {

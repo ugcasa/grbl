@@ -9,16 +9,29 @@ project.main() {
     local _cmd="$1" ; shift
 
     case "$_cmd" in
-        add|open|rm|sublime|installed)  project.$_cmd $@           ;;
-                                 help)  project.help               ;;
-                                    *)  project.open "$command $@" ;;
+        add|open|rm|sublime)  project.$_cmd $@           ;;
+                       help)  project.help               ;;
+                          *)  project.open "$command $@" ;;
     esac
 }
 
 
 project.help () {
+    echo "-- guru tool-kit project help -----------------------------------------------"
+    printf "usage:\t\t %s project [command] project_name \n\n" "$GURU_CALL"
+    printf "commands:\n"
+    printf " add             add new projects \n"
+    printf " open            open project \n"
+    printf " close           close project, keep data \n"
+    printf " rm              move project files to trash \n"
+    printf " delete          remove project and files for good \n"
+    printf " help            this help \n\n"
     printf "project module works only with sublime.\n"
-    printf "Set preferred editor by typing: %s set editor subl, or edit '~/.gururc'. \n" "$GURU_CALL"
+    printf "set preferred editor by '%s set editor subl'\n" "$GURU_CALL"
+    printf "\nexample:"
+    printf "\t %s project add projet_name \n" "$GURU_CALL"
+    printf "\t\t %s project open project_name \n" "$GURU_CALL"
+
 }
 
 

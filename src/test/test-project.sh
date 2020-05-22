@@ -57,7 +57,29 @@ project.test_open () {
 }
 
 
+project.test_close () {
+    if project.close "test" ; then
+          PASSED "$0"
+          return 0
+      else
+          FAILED "$0"
+          return 43
+      fi
+}
+
+
 project.test_rm () {
+    if project.rm "test" ; then
+          PASSED "$0"
+          return 0
+      else
+          FAILED "$0"
+          return 44
+      fi
+}
+
+
+project.test_delete () {
     if project.rm "test" ; then
           PASSED "$0"
           return 0
