@@ -14,19 +14,17 @@ source src/counter.sh                                           # include counte
 target_rc="$HOME/.bashrc"                                       # environmental values rc file
 disabler_flag_file="$HOME/.gururc.disabled"                     # flag for disabling the rc file
 
-
 TEMP=`getopt --long -o "fu:" "$@"`
 eval set -- "$TEMP"
 while true ; do
     case "$1" in
         -f ) export force_overwrite=true ; shift ;;
-        -u ) export GURU_USER=$2 ; shift 2 ;;
-         * ) break                  ;;
+        -u ) export GURU_USER=$2         ; shift 2 ;;
+         * ) break
     esac
 done;
 _arg="$@"
 [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
-
 
 
 case "$1" in                                                    # simple location pased argument parser
