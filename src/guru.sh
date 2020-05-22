@@ -33,7 +33,7 @@ main.parser () {                                                        # parse 
                              radio)  DISPLAY=0; $tool.py "$@"           ; return $? ;;  # leave background + set display
                        input|hosts)  $GURU_BIN/trial/$tool.sh "$@"      ; return $? ;;  # place for shell script prototypes and experiments
              tme|fmradio|datestamp)  $GURU_BIN/trial/$tool.py "$@"      ; return $? ;;  # place for python script prototypes and experiments
-    corona|scan|input|counter|note)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
+           scan|input|counter|note)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
     # libraries
                  ssh|os|common|tme)  $GURU_BIN/lib/$tool.sh "$@"        ; return $? ;;  # direct lib calls
     # operating system command pass trough
