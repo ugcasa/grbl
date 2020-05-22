@@ -40,7 +40,7 @@ project.open () {
     shift
 
     if ! [[ -d "$GURU_PROJECT/$_project_name" ]] ; then
-        NOTEXIST "_project_name"
+        NOTEXIST "$_project_name"
         return 43
     fi
 

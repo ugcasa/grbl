@@ -17,7 +17,7 @@ source $GURU_BIN/lib/common.sh
 
 test.main() {
     # main test case parser
-    export all_tools=("mount" "remote" "note" "system")
+    export all_tools=("mount" "remote" "project" "note" "system")
     export GURU_VERBOSE=true
     export LOGGING=true
 
