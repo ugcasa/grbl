@@ -34,10 +34,12 @@ export PASSED="${GRN}PASSED${NC}\n"
 export READY="${GRN}READY${NC}\n"
 export DONE="${GRN}DONE${NC}\n"
 export UPTODATE="${GRN}UPTODATE${NC}\n"
+export EXIST="${GRN}EXIST${NC}\n"
+export NOTEXIST="${RED}DOES NOT EXIST${NC}\n"
 export UPDATED="${GRN}UPDATED${NC}\n"
 export MOUNTED="${GRN}MOUNTED${NC}\n"
 export SUCCESS="${GRN}SUCCEEDED${NC}\n"
-export UNMOUNTED="${BLU}UNMOUNTED${NC}\n"
+export UNMOUNTED="${BLU}UN-MOUNTED${NC}\n"
 export IGNORED="${BRN}IGNORED${NC}\n"
 export FAILED="${RED}FAILED${NC}\n"
 export ERROR="${YEL}ERROR${NC}"
@@ -57,6 +59,8 @@ ONLINE() {          [ "$1" ] && msg "$1 $ONLINE"    || msg "$ONLINE" ; }
 UPDATED() {         [ "$1" ] && msg "$1 $UPDATED"   || msg "$UPDATED" ; }
 SUCCESS() {         [ "$1" ] && msg "$1 $SUCCESS"   || msg "$SUCCESS" ; }
 IGNORED() {         [ "$1" ] && msg "$1 $IGNORED"   || msg "$IGNORED" ; }
+EXIST() {           [ "$1" ] && msg "$1 $EXIST"   || msg "$EXIST" ; }
+NOTEXIST() {        [ "$1" ] && msg "$1 $NOTEXIST"   || msg "$NOTEXIST" ; }
 MOUNTED() {         [ "$1" ] && msg "$1 $MOUNTED"   || msg "$MOUNTED" ; }
 OFFLINE() {         [ "$1" ] && msg "$1 $OFFLINE"   || msg "$OFFLINE" ; }
 UNKNOWN() {         [ "$1" ] && msg "$1 $UNKNOWN"   || msg "$UNKNOWN" ; }
