@@ -187,8 +187,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
     [[ $GURU_USER_VERBOSE ]] && GURU_VERBOSE=1
     process_opts $@
-    echo "before: $GURU_USER"
+    #echo "before: $GURU_USER"
     main $ARGUMENTS
-    echo "after: $GURU_USER"
+    #echo "after: $GURU_USER"
     exit $?
 fi
