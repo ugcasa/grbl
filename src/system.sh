@@ -3,7 +3,7 @@
 
 source $GURU_BIN/lib/common.sh
 
-system.main() {
+system.main() {             # system command parser
     local tool="$1"; shift
     case "$tool" in
        core-dump|get|set|upgrade|rollback)  system.$tool   ; return $? ;;
@@ -12,31 +12,32 @@ system.main() {
     return 0
 }
 
+system.help () {            # system help printout
 
-system.help () {
     echo "$GURU_CALL system upgrade|rollback|set"
 }
 
-
-system.upgrade() {
+system.upgrade() {          # upgrade guru tool-kit
 
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-shell.git"
+    local _banch="master" ;
+    [[ "$GURU_USE_VERSION" ]] && _branch="$GURU_USE_VERSION"
+    [[ "$1" ]] && _branch="$1"
 
     [ -d "$temp_dir" ] && rm -rf "$temp_dir"
     mkdir "$temp_dir"
     cd "$temp_dir"
-    git clone "$source" || return 666
+    git clone -b "$_branch" "$source" || return 100
     bash $GURU_BIN/uninstall.sh
     cd "$temp_dir/guru-shell"
     bash install.sh "$@"
     cd
     # bash $GURU_BIN/$GURU_CALL version
-    [ "$temp_dir" ] && [ -d "$temp_dir" ] && rm -rf "$temp_dir"
+    #[ "$temp_dir" ] && [ -d "$temp_dir" ] && rm -rf "$temp_dir"
 }
 
-
-system.rollback() {
+system.rollback() {         # rollback to version
 
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-shell.git"
@@ -46,7 +47,7 @@ system.rollback() {
     [ -d "$temp_dir" ] && rm -rf "$temp_dir"
     mkdir "$temp_dir"
     cd "$temp_dir"
-    git clone -b "rollback$_roll_to" "$source" || exit 666
+    git clone -b "rollback$_roll_to" "$source" || return 100
     bash $GURU_BIN/uninstall.sh
     cd "$temp_dir/guru-shell"
     bash install.sh "$@"
@@ -55,8 +56,7 @@ system.rollback() {
     [ "$temp_dir" ] && [ -d "$temp_dir" ] && rm -rf "$temp_dir"
 }
 
-
-system.get (){
+system.get (){              # get tool-kit environmental variable
 
     [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
     set |grep "GURU_${_setting^^}"
@@ -64,8 +64,7 @@ system.get (){
     return $?
 }
 
-
-system.set () {
+system.set () {             # set tool-kit environmental variable
     # set guru environmental funtions
     [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
     [ "$2" ] && _value="$2" || read -r -p "$_setting value: " _value
@@ -76,7 +75,7 @@ system.set () {
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     source "$HOME/.gururc"
     system.main "$@"
     exit $?
