@@ -7,51 +7,44 @@ export GURU_HOSTNAME="$(hostname)"
 export GURU_BIN="$HOME/bin"
 export GURU_CFG="$HOME/.config/guru"
 
-source $GURU_BIN/system.sh                                              # guru toolkit upgrade etc.
-source $GURU_BIN/functions.sh                                           # quick try outs
-source $GURU_BIN/mount.sh                                               # needed to keep track tiles up to date
-source $GURU_BIN/lib/common.sh                                          # TODO remove need of this
+source $GURU_BIN/system.sh                  # guru toolkit upgrade etc.
+source $GURU_BIN/functions.sh               # quick try outs
+source $GURU_BIN/mount.sh                   # needed to keep track tiles up to date
+source $GURU_BIN/lib/common.sh              # TODO remove need of this
 
-main.parser () {                                                        # parse arguments and delivery variables to corresponding worker
-    tool="$1"; shift                                                    # store tool call name and shift arguments left
-    export GURU_CMD="$tool"                                             # Store tool call name to other functions
-    export GURU_SYSTEM_STATUS="processing $tool"                        # system status can use as part of error exit message
 
-    case "$tool" in                                                     # TODO re- categorize
-    # useful tools
-                              test)  bash "$GURU_BIN/test/test.sh" "$@" ; return $? ;;  # tester
-                           uutiset)  $tool.py "$@"                      ; return $? ;;  # python scripts
-                    terminal|shell)  main.terminal "$@"                 ; return $? ;;  # guru in terminal mode
-                phone|play|vol|yle)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
-           stamp|timer|tag|install)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
-    # useful functions
-                          document)  $tool "$@"                         ; return $? ;;  # one function prototypes are in 'function.sh'
-                    trans|tor|user)  $tool "$@"                         ; return $? ;;  # function.sh prototypes
-    # system tools
-      keyboard|system|mount|remote)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
-                           unmount)  mount.main "$1"                    ; return $? ;;  # alias for un-mounting
-               project|mqtt|config)  $tool.sh "$@"                      ; return $? ;;  # configuration tools
-    # prototypes and trials
-                             radio)  DISPLAY=0; $tool.py "$@"           ; return $? ;;  # leave background + set display
-                       input|hosts)  $GURU_BIN/trial/$tool.sh "$@"      ; return $? ;;  # place for shell script prototypes and experiments
-             tme|fmradio|datestamp)  $GURU_BIN/trial/$tool.py "$@"      ; return $? ;;  # place for python script prototypes and experiments
-           scan|input|counter|note)  $tool.sh "$@"                      ; return $? ;;  # shell script tools
-    # libraries
-                 ssh|os|common|tme)  $GURU_BIN/lib/$tool.sh "$@"        ; return $? ;;  # direct lib calls
-    # operating system command pass trough
-                  clear|ls|cd|echo)  $tool "$@"                         ; return $? ;;  # os command pass trough
-    # basics
-                         uninstall)  bash "$GURU_BIN/$tool.sh" "$@"     ; return $? ;;  # Get rid of this shit
-                       help|--help)  main.help "$@"                     ; return 0  ;;  # help printout
-                     version|--ver)  printf "guru tool-kit v.%s\n" "$GURU_VERSION"  ;;  # version output
-                                 *)  printf "%s confused: phrase '%s' unknown. you may try '%s help'\n" \
-                                            "$GURU_CALL" "$tool" "$GURU_CALL"           # false user input
-    esac
+main.parser () {                                                                        # main command parser
+    tool="$1"; shift                                                                    # store tool call name and shift arguments left
+    export GURU_CMD="$tool"                                                             # Store tool call name to other functions
+    export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
+
+    case "$tool" in
+                      document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
+                trans|tor|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes
+              clear|ls|cd|echo)  $tool "$@"                             ; return $? ;;  # os command pass trough
+            phone|play|vol|yle)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
+       stamp|timer|tag|install)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
+           system|mount|remote)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
+       scan|input|counter|note)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
+           project|mqtt|config)  $tool.sh "$@"                          ; return $? ;;  # configuration tools
+              keyboard|uutiset)  $tool.py "$@"                          ; return $? ;;  # python scripts
+                         radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;  # leave background + set display
+                   help|--help)  main.help "$@"                         ; return 0  ;;  # help printout
+                       unmount)  mount.main "$1"                        ; return $? ;;  # alias for un-mounting
+                terminal|shell)  main.terminal "$@"                     ; return $? ;;  # guru in terminal mode
+             ssh|os|common|tme)  $GURU_BIN/lib/$tool.sh "$@"            ; return $? ;;  # direct lib calls
+                   input|hosts)  $GURU_BIN/trial/$tool.sh "$@"          ; return $? ;;  # place for shell script prototypes and experiments
+         tme|fmradio|datestamp)  $GURU_BIN/trial/$tool.py "$@"          ; return $? ;;  # place for python script prototypes and experiments
+                     uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;  # Get rid of this shit
+                          test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;  # tester
+                 version|--ver)  printf "guru tool-kit v.%s\n" "$GURU_VERSION"  ;;                      # version output
+                             *)  printf "%s confused: phrase '%s' unknown. you may try '%s help'\n" \
+                                        "$GURU_CALL" "$tool" "$GURU_CALL"                               # false user input
+        esac
     return 0
 }
 
-
-main.help () {
+main.help () {                                                          # help prinout TODO: re-write
     # TODO re-organize by function category
     echo "-- guru tool-kit main help ------------------------------------------"
     printf "usage:\t %s [tool] [argument] [variables]\n" "$GURU_CALL"
@@ -111,8 +104,7 @@ main.help () {
     # echo " -u   run as user"
 }
 
-
-main.terminal() {
+main.terminal () {                                                      # terminal loop
     # Terminal looper
     GURU_VERBOSE=true
     msg "$GURU_CALL in terminal mode (type 'help' enter for help)\n"
@@ -125,8 +117,28 @@ main.terminal() {
     return $?
 }
 
+main.process_opts () {                                                  # argument parser
 
-main() {
+    TEMP=`getopt --long -o "vVflu:h:" "$@"`
+    eval set -- "$TEMP"
+    while true ; do
+        case "$1" in
+            -v ) export GURU_VERBOSE=1      ; shift     ;;
+            -V ) export GURU_VERBOSE=2      ; shift     ;;
+            -f ) export GURU_FORCE=true     ; shift     ;;
+            -l ) export LOGGING=true        ; shift     ;;
+            -u ) export GURU_USER=$2        ; shift 2   ;;
+            -h ) export GURU_HOSTNAME=$2    ; shift 2   ;;
+
+             * ) break                  ;;
+        esac
+    done;
+    _arg="$@"
+    [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
+}
+
+main.main () {                                                          # main run trough
+
     local _error_code=0
     [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"                                 # Remove old error messages
 
@@ -163,32 +175,10 @@ main() {
 }
 
 
-process_opts () {
-    TEMP=`getopt --long -o "vVflu:h:" "$@"`
-    eval set -- "$TEMP"
-    while true ; do
-        case "$1" in
-            -v ) export GURU_VERBOSE=1      ; shift     ;;
-            -V ) export GURU_VERBOSE=2      ; shift     ;;
-            -f ) export GURU_FORCE=true     ; shift     ;;
-            -l ) export LOGGING=true        ; shift     ;;
-            -u ) export GURU_USER=$2        ; shift 2   ;;
-            -h ) export GURU_HOSTNAME=$2    ; shift 2   ;;
-
-             * ) break                  ;;
-        esac
-    done;
-    _arg="$@"
-    [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
-}
-
-
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
-    [[ $GURU_USER_VERBOSE ]] && GURU_VERBOSE=1
-    process_opts $@
-    #echo "before: $GURU_USER"
-    main $ARGUMENTS
-    #echo "after: $GURU_USER"
-    exit $?
-fi
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then                            # user and platform settings (implement here, always up to date)
+        source $HOME/.gururc
+        [[ $GURU_USER_VERBOSE ]] && GURU_VERBOSE=1
+        main.process_opts $@
+        main.main $ARGUMENTS
+        exit $?
+    fi

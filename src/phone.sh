@@ -7,9 +7,6 @@ source $GURU_BIN/lib/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
 
-GURU_VERBOSE=1
-#GURU_FORCE=true
-
 if ((GURU_VERBOSE>1)) ; then phone_verb="-v" ; fi
 
 phone_temp_folder="/tmp/guru/phone"
@@ -17,7 +14,8 @@ phone_file_count=0
 phone_server_url="https://play.google.com/store/apps/details?id=com.theolivetree.sshserver"
 phone_config_file="$GURU_CFG/$GURU_USER/phone.locations.cfg"
 
-phone.main () {
+
+phone.main () {                 # phone command parser
 
     [[ $GURU_PHONE_IP ]]        || read -p "phone ip: "     GURU_PHONE_IP
     [[ $GURU_PHONE_PORT ]]      || read -p "sshd port: "    GURU_PHONE_PORT
@@ -37,8 +35,7 @@ phone.main () {
         esac
 }
 
-
-phone.help () {
+phone.help () {                 # printout help
     echo "-- guru tool-kit phone help -----------------------------------------------"
     printf "usage:\t %s phone [action] \n" "$GURU_CALL"
     printf "\nactions:\n"
@@ -57,50 +54,52 @@ phone.help () {
     printf "             %s phone terminal \n" "$GURU_CALL"
 }
 
+phone.terminal () {             # open ssh terminal connection to phone
 
-phone.terminal () {
     sshpass -p "$GURU_PHONE_PASSWORD" ssh -o HostKeyAlgorithms=+ssh-dss "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT"
 }
 
-
-phone.mount () {
-    # mount phone folder set as in phone ssh server settings
+phone.mount () {                # mount phone folder set as in phone ssh server settings
     local _mount_point="$HOME/phone-$GURU_PHONE_USER" ; [[ "$1" ]] && _mount_point="$1"
     if [[ -d "$_mount_point" ]] ; then mkdir -p "$_mount_point" ; fi
     sshfs -o HostKeyAlgorithms=+ssh-dss -p "$GURU_PHONE_PORT" "$GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0" "$_mount_point"
     return $?
 }
 
-
-phone.unmount () {
+phone.unmount () {              # unmount folder
     local _mount_point="$HOME/phone-$GURU_PHONE_USER" ; [[ "$1" ]] && _mount_point="$1"
     fusermount -u "$_mount_point" || sudo fusermount -u "$_mount_point"
     [[ -d "$_mount_point" ]] && rmdir "$_mount_point"
     return $?
 }
 
+phone.rmdir () {                # remove folder in phone
 
-phone.rmdir () {
-    # removes folder
     local _target_folder="$1"
     msg "\n${WHT}removing: $_target_folder ${NC}"
-    sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -rf $_target_folder"
-    #return $?
+    if sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -rf $_target_folder" ; then
+            REMOVED
+            return 0
+        else
+            IGNORED
+            return 101
+        fi
 }
 
+phone.rm () {                   # remove files from phone
 
-phone.rm () {
-    # removes files  /storage/emulated/0/DCIM/Camera/*.jpg
-    local _target_files="$1"  # _target_files="/storage/emulated/0/DCIM/Camera/*.jpg"
+    local _target_files="$1"
     msg "\n${WHT}removing: $_target_files ${NC}"
-    sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -f $_target_files" \
-        && REMOVED || IGNORED
-    #return $?
+    if sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -f $_target_files" ; then
+            REMOVED
+            return 0
+        else
+            IGNORED
+            return 101
+        fi
 }
 
-
-phone.process_photos () {
-     # analyze, tag and relocate photo files
+phone.process_photos () {       # analyze, tag and relocate photo files
     local _photo_format="jpg"
     mount.online $GURU_LOCAL_PHOTOS || mount.known_remote photos
 
@@ -136,9 +135,7 @@ phone.process_photos () {
         fi
 }
 
-
-phone.process_videos () {
-    # analyze, tag and relocate video files
+phone.process_videos () {       # analyze, tag and relocate video files
     local _video_format="mp4"
     mount.online $GURU_LOCAL_VIDEO || mount.known_remote video
 
@@ -167,8 +164,7 @@ phone.process_videos () {
         fi
 }
 
-
-phone.camera () {
+phone.camera () {               # flush camera
 
     phone.process_photos
     phone.process_videos
@@ -194,8 +190,7 @@ phone.camera () {
         fi
 }
 
-
-phone.media () { # Get all audio files from phone
+phone.media () {                # Get all media files from phone
 
     mount.online $GURU_LOCAL_PICTURES || mount.known_remote pictures
     mount.online $GURU_LOCAL_DOCUMENTS || mount.known_remote documents

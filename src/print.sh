@@ -15,7 +15,6 @@ print.main() {
     return 0
 }
 
-
 print.help () {
     echo "-- guru tool-kit print help -----------------------------------------------"
     printf "usage:\t %s print [command] [arguments] \n\t $0 print [source] [target] \n" "$GURU_CALL"
@@ -25,10 +24,10 @@ print.help () {
     printf "    %s print mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_USER" "$USER" "$GURU_ACCESS_POINT"
 }
 
-
 print.label () {
     echo "printing label"
 }
+
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc"

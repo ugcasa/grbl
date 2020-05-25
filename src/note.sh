@@ -4,32 +4,26 @@ source $GURU_BIN/lib/common.sh
 source $GURU_BIN/lib/deco.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
-#GURU_USER=casa
 
-note.main () {
-    # command parser
-    command="$1" ; shift                #; echo "input: $command"
-    #note.gen_var "$1"                  #; echo "input: $1"
+note.main () {                                  # command parser
 
-    if ! note.online ; then
-        note.remount
-    fi
+    command="$1" ; shift                        # ; echo "input: $command"
+
+    if ! note.online ; then note.remount ; fi
 
     case "$command" in
        ls|add|open|rm|check)  note.$command $@  ;  return $? ;;
                      report)  note.make_odt $@  ;  return $? ;;
-                      touch)  note.add "$1"     ;  return $? ;;
+                     locate)  note.gen_var "$1" ;  echo "$note" ;;
                         tag)  [ -f "$note" ]    && tag.main "tag $note $user_input" ;;
-                     locate)  note.gen_var "$1"
-                              echo "$note"      ; return 0  ;;
                        help)  note.help ;;
                          "")  note.open $(date +"$GURU_FILE_DATE_FORMAT") ;;
                           *)  note.open $(date +"$GURU_FILE_DATE_FORMAT" -d "$command")
     esac
-    counter.main add note-runned >/dev/null                                          # Usage statistics
+    counter.main add note-runned >/dev/null     # Usage statistics
 }
 
-note.help () {
+note.help () {                                  # printout help
     echo "-- guru tool-kit note help -----------------------------------------------"
     printf "Usage:\t\t %s note [command] <date> \nCommands:                       \n" "$GURU_CALL"
     printf " check          check do note exist, returns 0 if i do                \n"
@@ -43,7 +37,7 @@ note.help () {
                           \n" "$GURU_OFFICE_DOC"
 }
 
-note.gen_var() {
+note.gen_var() {                                # fill variables for rest of functions
     # populates needed variables based on given date in format YYYMMDD
     input=$1                                                        #; echo "input: $1"
 
@@ -68,8 +62,7 @@ note.gen_var() {
     template="$GURU_LOCAL_TEMPLATES/$template_file_name"             #; echo "template file "$template
 }
 
-
-note.check() {
+note.check() {                                  # chech that given date note file exist
     note.gen_var "$1"
     msg "checking note file.. "
     if [[ -f "$note" ]] ; then
@@ -81,8 +74,7 @@ note.check() {
         fi
 }
 
-
-note.online() {
+note.online() {                                 # check that needed folders are mounted
     if mount.online "$GURU_LOCAL_NOTES" && mount.online "$GURU_LOCAL_TEMPLATES" ; then
             return 0
         else
@@ -90,15 +82,13 @@ note.online() {
         fi
 }
 
-
-note.remount() {
+note.remount() {                                # mount needed folders
     mount.remote "$GURU_CLOUD_NOTES" "$GURU_LOCAL_NOTES" || return 43
     mount.remote "$GURU_CLOUD_TEMPLATES" "$GURU_LOCAL_TEMPLATES" || return 43
     return 0
 }
 
-
-note.ls() {
+note.ls() {                                     # list of notes given month/year
     note.remount
     # List of notes on this month and year or given in order and format YYYY MM
     [ "$1" ] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
@@ -115,8 +105,7 @@ note.ls() {
     fi
 }
 
-
-note.add() {
+note.add() {                                    # make a note for given date
     # creates notes and opens them to default editor
     note.gen_var "$1"                   #; echo "$1" # set basic variables for functions
 
@@ -136,8 +125,7 @@ note.add() {
         fi
 }
 
-
-note.open() {
+note.open() {                                   # select note to open, call note.editor
     # input format YYYYMMDD
     note.gen_var "$1"                   #; echo "$1"
 
@@ -157,8 +145,7 @@ note.open() {
     note.editor "$note"                                             # variables are global dough
 }
 
-
-note.rm () {
+note.rm () {                                    # remove note of given date
     # input format YYYYMMDD
     note.gen_var "$1"
     if [[ $GURU_FORCE ]] ; then
@@ -171,8 +158,7 @@ note.rm () {
     return 47
 }
 
-
-note.add_change () {
+note.add_change () {                            # add line to chenge list
 
     _line(){ _len=$1 ; for ((i=1;i<=_len;i++)); do printf '-' ; done }
 
@@ -189,8 +175,7 @@ note.add_change () {
     printf  "%-17s | %-10s | %s \n" "$(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT)" "$_author" "$_change" >>$note
 }
 
-
-note.editor () {
+note.editor () {                                # open default/project default editor
     # open note to preferred editor
     case "$GURU_EDITOR" in
         subl)
@@ -210,7 +195,7 @@ note.editor () {
     esac
 }
 
-note.make_odt () {
+note.make_odt () {                              # open note on team office template
     # created odt with team template out of given days note
     if [[ "$1" ]] ; then
             _date=$(date +$GURU_FILE_DATE_FORMAT -d $1)
@@ -235,8 +220,7 @@ note.make_odt () {
     echo "report file: ${notefile%%.*}.odt"
 }
 
-
-check_debian_repository () {
+check_debian_repository () {                    # old way to install sublime
     # add sublime to repository list
     echo "cheking installation.."
     subl -v && return 1
@@ -249,10 +233,10 @@ check_debian_repository () {
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then            # stand alone vs. include. main wont be called if included
-    if [[ "$1" == "test" ]] ; then shift ; bash /test/test.sh note $1 ; fi
-    #source $GURU_BIN/lib/deco.sh
-    note.main "$@"
-    exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
-fi
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then    # stand alone vs. include. main wont be called if included
+        if [[ "$1" == "test" ]] ; then shift ; bash /test/test.sh note $1 ; fi
+        #source $GURU_BIN/lib/deco.sh
+        note.main "$@"
+        exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
+    fi
 

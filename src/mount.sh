@@ -3,8 +3,7 @@
 
 source $GURU_BIN/lib/common.sh
 
-mount.main () {
-    # mount tool command parser
+mount.main () {                         # mount command parser
 
     argument="$1"; shift
     case "$argument" in
@@ -14,9 +13,8 @@ mount.main () {
                    check)   mount.online "$@"                                   ; return $? ;;
             check-system)   mount.check "$GURU_LOCAL_TRACK"                     ; return $? ;;
            mount|unmount)   $argument.remote "$@"                               ; return $? ;;
-                 install)   mount.needed install                                ; return $? ;;
-         unistall|remove)   mount.needed remove                                 ; return $? ;;
-       help|help-default)   mount.$argument "$@"                                ; return 0  ;;
+          install|remove)   mount.install "$argument"                           ; return $? ;;
+       help|help-default)   mount.$argument "$1"                                ; return 0  ;;
                        *)   if [ "$1" ] ; then mount.remote "$argument" "$1"    ; return $? ; fi
                             case $GURU_CMD in
                                 mount|unmount)
@@ -29,8 +27,7 @@ mount.main () {
                             esac
 }
 
-
-mount.help () {
+mount.help () {                         # printout help
     echo "-- guru tool-kit mount help -----------------------------------------------"
     printf "usage:\t\t %s mount [source] [target] \n" "$GURU_CALL"
     printf "\t\t %s mount [command] [known_mount_point|arguments] \n" "$GURU_CALL"
@@ -48,7 +45,7 @@ mount.help () {
   z
 }
 
-mount.help-default () {
+mount.help-default () {                 # printout instructions to set/use GURU_CLOUD_* definations to userrc
     echo "-- guru tool-kit mount help-default --------------------------------------------"
     printf "\nTo add default mount point type ${WHT}%s config user${NC} or edit user configuration \n" "$GURU_CALL"
     printf "file: ${WHT}%s${NC} \n" "$GURU_USER_RC"
@@ -74,18 +71,18 @@ mount.help-default () {
     return 0
 }
 
-
-mount.status () {
+mount.status () {                       # check status of GURU_CLOUD_* mountpoints defined in userrc
+    local _verbose=$GURU_VERBOSE ; GURU_VERBOSE=true
     local _active_mount_points=$(mount.list)
     local _error=0
     for _mount_point in ${_active_mount_points[@]}; do
         mount.check $_mount_point
         done
+    GURU_VERBOSE=$_verbose
     return 0
 }
 
-
-mount.info () {
+mount.info () {                         # detailed list of mounted mountpoints
     # nice list of information of sshfs mount points
     local _error=0
     [ $TEST ] || msg "${WHT}user@server remote_folder local_mountpoint  uptime pid${NC}\n"                 # header (stdout when -v)
@@ -105,23 +102,18 @@ mount.info () {
     return $_error
 }
 
-
-
-mount.list () {
+mount.list () {                         # simple list of mounted mountpoints
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
     return $?
 }
 
-
-
-mount.system () {
+mount.system () {                       # mount system data
     if ! mount.online "$GURU_LOCAL_TRACK"; then
             mount.remote "$GURU_CLOUD_TRACK" "$GURU_LOCAL_TRACK"
         fi
 }
 
-
-mount.online () {
+mount.online () {                       # check if mountpoint "online", no printout, return code only
     # input: mount point folder.
     # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
     local _target_folder="$1"
@@ -133,9 +125,9 @@ mount.online () {
     fi
 }
 
-
-mount.check () {
+mount.check () {                        # check mountpoint is mounted, output status
     # check mountpoint status with putput
+    local _verbose=$GURU_VERBOSE ; GURU_VERBOSE=true
     local _target_folder="$1"
     local _err=0
     [[ "$_target_folder" ]] || _target_folder="$GURU_LOCAL_TRACK"
@@ -145,52 +137,15 @@ mount.check () {
 
     if [[ $_err -gt 0 ]] ; then
             OFFLINE
+            GURU_VERBOSE=$_verbose
             return 1
         fi
     MOUNTED
+    GURU_VERBOSE=$_verbose
     return 0
 }
 
-
-unmount.remote () {
-
-    local _mountpoint="$1"
-
-    if ! mount.online "$_mountpoint" ; then
-            IGNORED "$_mountpoint is not mounted"
-            return 0
-        fi
-
-    if fusermount -u "$_mountpoint" ; then
-            UNMOUNTED "$_mountpoint"
-            return 0
-        fi
-
-    # once more or if force
-    if [ "$GURU_FORCE" ] || mount.online "$_mountpoint" ; then
-
-            printf "force unmount.. "
-            if fusermount -u "$_mountpoint" ; then
-
-                    UNMOUNTED "$_mountpoint force"
-                    return 0
-                else
-                    if sudo fusermount -u "$_mountpoint" ; then
-                            UNMOUNTED "$_mountpoint SUDO FORCE"
-                            return 0
-                        else
-                            FAILED "$_mountpoint SUDO FORCE unmount"
-                            WARNING "seems that some of open program like terminal or editor is blocking unmount, try to close those first\n"
-                            return 1
-                    fi
-            fi
-    fi
-
-    return 0
-}
-
-
-mount.remote () {
+mount.remote () {                       # mount remote location
     # input remote_foder and mount_point
     local _source_folder=""
     local _target_folder=""
@@ -252,8 +207,44 @@ mount.remote () {
         fi
 }
 
+unmount.remote () {                     # unmount mountpoint
 
-mount.defaults () {
+    local _mountpoint="$1"
+
+    if ! mount.online "$_mountpoint" ; then
+            IGNORED "$_mountpoint is not mounted"
+            return 0
+        fi
+
+    if fusermount -u "$_mountpoint" ; then
+            UNMOUNTED "$_mountpoint"
+            return 0
+        fi
+
+    # once more or if force
+    if [ "$GURU_FORCE" ] || mount.online "$_mountpoint" ; then
+
+            printf "force unmount.. "
+            if fusermount -u "$_mountpoint" ; then
+
+                    UNMOUNTED "$_mountpoint force"
+                    return 0
+                else
+                    if sudo fusermount -u "$_mountpoint" ; then
+                            UNMOUNTED "$_mountpoint SUDO FORCE"
+                            return 0
+                        else
+                            FAILED "$_mountpoint SUDO FORCE unmount"
+                            WARNING "seems that some of open program like terminal or editor is blocking unmount, try to close those first\n"
+                            return 1
+                    fi
+            fi
+    fi
+
+    return 0
+}
+
+mount.defaults () {                     # mount all GURU_CLOUD_* defined in userrc
     # mount all local/cloud pairs defined in userrc
     local _target=""
     local _source=""
@@ -269,8 +260,7 @@ mount.defaults () {
     done
 }
 
-
-unmount.defaults () {
+unmount.defaults () {                   # unmount all GURU_CLOUD_* defined in userrc
     # unmount all local/cloud pairs defined in userrc
     local _target=""
     local _source=""
@@ -285,8 +275,7 @@ unmount.defaults () {
     return $_error
 }
 
-
-mount.known_remote () {
+mount.known_remote () {                 # mount single GURU_CLOUD_* defined in userrc
     local _target=$(eval echo '$'"GURU_LOCAL_${1^^}")
     local _source=$(eval echo '$'"GURU_CLOUD_${1^^}")
 
@@ -294,16 +283,14 @@ mount.known_remote () {
     return $?
 }
 
-
-unmount.known_remote () {
+unmount.known_remote () {               # unmount single GURU_CLOUD_* defined in userrc
     local _target="$(eval echo '$'"GURU_LOCAL_${1^^}")"
     unmount.remote "$_target"
     return $?
 }
 
-
-mount.needed () {
-    #install and remove needed applications. input "install" or "remove"
+mount.install () {                      # install needed software
+    #install and remove install applications. input "install" or "remove"
     local action="$1"
     [[ "$action" ]] || read -r -p "install or remove? " action
     local require="ssh rsync"
@@ -312,43 +299,38 @@ mount.needed () {
     return 0
 }
 
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then    # if sourced only import functions
+        source "$HOME/.gururc"
+        mount.main "$@"
+        exit "$?"
+    fi
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then                                   # if sourced only import functions
-    source "$HOME/.gururc"
-    mount.main "$@"
-    exit "$?"
-fi
-
-
-
-
-
-# case art
-# source $GURU_BIN/lib/common.sh
-#                                                      ####
-# mount.main () {                                     ######
-#     # mount tool command parser                       ##
-#                                                     ######
-#     argument="$1"; shift             ##################################
-#                                 ############################################
-#     case "$argument" in       # --------------------------------------------------
-#                     info)   mount.info | column -t -s $' '                    ; return $? ;;  ######
-#             check-system)   mount.check "$GURU_LOCAL_TRACK"                     ; return $? ;; ##  ###
-#          unistall|remove)   mount.needed remove                                    ; return $? ;;    ###
-#        help|help-default)   mount.$argument "$@"                                    ; return 0  ;;     ##
-#            mount|unmount)   $argument.remote "$@"                                    ; return $? ;;     ##
-#                  install)   mount.needed install                                    ; return $? ;;      ##
-#                   status)   mount.status                                         ; return $? ;;        ##
-#                    check)   mount.online "$@"                             ; return $? ;;             ###
-#                       ls)   mount.list                               ; return $? ;;               ####
-#                         *)   if [ "$1" ] ; then mount.remote "$argument" "$1"    ; return $? ; fi #
-#                             case $GURU_CMD in                            ############
-#                                 mount|unmount)                     #######
-#                                     case $argument in          ###
-#                                     all) $GURU_CMD.defaults      ; return $? ;;
-#                                       *) $GURU_CMD.known_remote "$argument" ; return $? ;;
-#                                     esac                                      ;;
-#                                 *) echo "$GURU_CMD: bad input '$argument' "   ; return 1  ;;
-#                                 esac                                      ;;
-#                          esac  # ------------------------------------------- ########
-# }
+# case art {
+    # source $GURU_BIN/lib/common.sh
+    #                                                      ####
+    # mount.main () {                                     ######
+    #     # mount tool command parser                       ##
+    #                                                     ######
+    #     argument="$1"; shift             ##################################
+    #                                 ############################################
+    #     case "$argument" in       # --------------------------------------------------
+    #                     info)   mount.info | column -t -s $' '                    ; return $? ;;  ######
+    #             check-system)   mount.check "$GURU_LOCAL_TRACK"                     ; return $? ;; ##  ###
+    #          unistall|remove)   mount.install remove                                    ; return $? ;;    ###
+    #        help|help-default)   mount.$argument "$@"                                    ; return 0  ;;     ##
+    #            mount|unmount)   $argument.remote "$@"                                    ; return $? ;;     ##
+    #                  install)   mount.install install                                    ; return $? ;;      ##
+    #                   status)   mount.status                                         ; return $? ;;        ##
+    #                    check)   mount.online "$@"                             ; return $? ;;             ###
+    #                       ls)   mount.list                               ; return $? ;;               ####
+    #                         *)   if [ "$1" ] ; then mount.remote "$argument" "$1"    ; return $? ; fi #
+    #                             case $GURU_CMD in                            ############
+    #                                 mount|unmount)                     #######
+    #                                     case $argument in          ###
+    #                                     all) $GURU_CMD.defaults      ; return $? ;;
+    #                                       *) $GURU_CMD.known_remote "$argument" ; return $? ;;
+    #                                     esac                                      ;;
+    #                                 *) echo "$GURU_CMD: bad input '$argument' "   ; return 1  ;;
+    #                                 esac                                      ;;
+    #                          esac  # ------------------------------------------- ########
+    # }
