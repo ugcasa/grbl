@@ -44,7 +44,8 @@ mount.help () {
     printf " ls                       list of mounted folders \n"
     printf " more information of adding default mountpoint type '%s mount help-default' \n" "$GURU_CALL"
     printf "\nexample:"
-    printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_CLOUD_FAR_USER" "$GURU_USER"
+    printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_CLOUD_FAR_USER" "$USER"
+  z
 }
 
 mount.help-default () {
@@ -319,3 +320,35 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then                                   
 fi
 
 
+
+
+
+# case art
+# source $GURU_BIN/lib/common.sh
+#                                                      ####
+# mount.main () {                                     ######
+#     # mount tool command parser                       ##
+#                                                     ######
+#     argument="$1"; shift             ##################################
+#                                 ############################################
+#     case "$argument" in       # --------------------------------------------------
+#                     info)   mount.info | column -t -s $' '                    ; return $? ;;  ######
+#             check-system)   mount.check "$GURU_LOCAL_TRACK"                     ; return $? ;; ##  ###
+#          unistall|remove)   mount.needed remove                                    ; return $? ;;    ###
+#        help|help-default)   mount.$argument "$@"                                    ; return 0  ;;     ##
+#            mount|unmount)   $argument.remote "$@"                                    ; return $? ;;     ##
+#                  install)   mount.needed install                                    ; return $? ;;      ##
+#                   status)   mount.status                                         ; return $? ;;        ##
+#                    check)   mount.online "$@"                             ; return $? ;;             ###
+#                       ls)   mount.list                               ; return $? ;;               ####
+#                         *)   if [ "$1" ] ; then mount.remote "$argument" "$1"    ; return $? ; fi #
+#                             case $GURU_CMD in                            ############
+#                                 mount|unmount)                     #######
+#                                     case $argument in          ###
+#                                     all) $GURU_CMD.defaults      ; return $? ;;
+#                                       *) $GURU_CMD.known_remote "$argument" ; return $? ;;
+#                                     esac                                      ;;
+#                                 *) echo "$GURU_CMD: bad input '$argument' "   ; return 1  ;;
+#                                 esac                                      ;;
+#                          esac  # ------------------------------------------- ########
+# }
