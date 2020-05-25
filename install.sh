@@ -85,7 +85,7 @@ case "$platform" in                                                             
             echo "installed" | xclip -i -selection clipboard >/dev/null || sudo apt install xclip   # check is clipboard tools installed
             xterm -v >/dev/null || sudo apt install xterm                                           # check that xterm is installed
         fi
-        add_cinnamon_guru_shortcuts                                                                 # add keyboard sort cuts for cinnamon
+        keyboard.set_cinnamon_guru_shortcuts                                                        # add keyboard sort cuts for cinnamon
         ;;
 
     ubuntu)
@@ -99,7 +99,7 @@ case "$platform" in                                                             
             xterm -v >/dev/null || sudo apt install xterm                                           # check that xterm is installed
         fi
 
-        add_ubuntu_guru_shortcuts                                                                   # add keyboard sort cuts for ubuntu
+        keyboard.set_ubuntu_guru_shortcuts                                                          # add keyboard sort cuts for ubuntu
         ;;
 
     *)
