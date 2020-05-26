@@ -4,8 +4,11 @@
 
 source $GURU_BIN/lib/common.sh
 
+if ! [[ $GURU_PROJECT ]] ; then echo no project
+
 project.main() {
     # command paerser
+
     local _cmd="$1" ; shift
 
     case "$_cmd" in
@@ -46,6 +49,20 @@ project.check() {
         fi
     }
 
+project.add () {
+
+    [[ "$1" ]] && _project_name="$1" ||read -p "plase enter project name : " _project_name
+    shift
+
+    if [[ -d "$GURU_PROJECT/$_project_name" ]] ; then
+        EXIST "$_project_name"
+        (( GURU_VERBOSE==2 )) && msg " try another name\n"
+        return 43
+    fi
+
+    mkdir -p $GURU_PROJECT/$_project_name
+
+}
 
 project.open () {
     # open project with preferred editor
@@ -67,14 +84,14 @@ project.open () {
 
 project.sublime () {
 
-    local _project_name="$1"                                          ; echo "$_project_name"
-    local _project_file=$GURU_PROJECT/$_project_name.sublime-project  ; echo "$_project_file"
+    local _project_name="$1"                                                              ; echo "$_project_name"
+    local _project_file=$GURU_LOCAL_TRACK/sublime-projects/$GURU_USER-$_project_name.sublime-project  ; echo "$_project_file"
 
-    if [ -f "$project_file" ]; then
+    if [[ -f "$_project_file" ]] ; then
         subl --project "$_project_file" -a
         subl --project "$_project_file" -a                              # Sublime how to open workpace?, this works anyway
     else
-        printf "no sublime project found" >"$GURU_ERROR_MSG"
+        WARNING "no sublime project found" #>"$GURU_ERROR_MSG"
         return 132
     fi
 }
