@@ -156,7 +156,7 @@ main.main () {                                                          # main r
             export GURU_SYSTEM_STATUS="ready"                                           # require track mount
         fi
 
-    counter.main add guru-runned >/dev/null                                             # add counter
+    counter.main add guru-runned                                                        # add counter
 
     if [ "$1" ]; then
             main.parser "$@"                                                            # with arguments go to parser

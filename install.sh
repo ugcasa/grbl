@@ -107,9 +107,8 @@ case "$platform" in                                                             
         exit 4
 esac
 
-counter.main add guru-installed >/dev/null                                                          # add installation counter
-
-echo "successfully installed"                                                                       # all fine
+counter.main add guru-installed                                                                 # add installation counter
+echo "$(guru version) successfully installed"                                                                       # all fine
 exit 0
 
 
