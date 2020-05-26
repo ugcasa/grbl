@@ -51,6 +51,7 @@ export REMOVED="${BLU}REMOVED${NC}\n"
 export UNKNOWN="${WHT}UNKNOWN${NC}\n"
 
 
+HEADER() {          msg "${WHT}$1${WHT}"; }
 OK() {              [ "$1" ] && msg "${WHT}$1 $OK"  || msg "$OK" ; }
 DONE() {            [ "$1" ] && msg "$1 $DONE"      || msg "$DONE" ; }
 READY() {           [ "$1" ] && msg "$1 $READY"     || msg "$READY" ; }
