@@ -4,7 +4,7 @@
 
 source $GURU_BIN/lib/common.sh
 
-if ! [[ $GURU_PROJECT ]] ; then echo no project
+if ! [[ $GURU_PROJECT ]] ; then echo "no project" ; fi
 
 project.main() {
     # command paerser
@@ -14,8 +14,8 @@ project.main() {
     case "$_cmd" in
         add|open|rm|sublime)  project.$_cmd $@           ;;
                        help)  project.help               ;;
-                          *)  project.open "$command $@" ;;
-    esac
+                          *)  project.open "$_cmd"
+        esac
 }
 
 
@@ -55,10 +55,10 @@ project.add () {
     shift
 
     if [[ -d "$GURU_PROJECT/$_project_name" ]] ; then
-        EXIST "$_project_name"
-        (( GURU_VERBOSE==2 )) && msg " try another name\n"
-        return 43
-    fi
+            EXIST "$_project_name"
+            (( GURU_VERBOSE==2 )) && msg " try another name\n"
+            return 43
+        fi
 
     mkdir -p $GURU_PROJECT/$_project_name
 
@@ -70,15 +70,15 @@ project.open () {
     shift
 
     if ! [[ -d "$GURU_PROJECT/$_project_name" ]] ; then
-        NOTEXIST "$_project_name"
-        return 43
-    fi
+            NOTEXIST "$_project_name"
+            return 43
+        fi
 
     case "$GURU_EDITOR" in
          subl|sublime|sublime-text|subl2|subl3|subl4)
                                 project.sublime $_project_name   ;;
                             *)  project.help
-    esac
+        esac
 }
 
 
@@ -88,18 +88,18 @@ project.sublime () {
     local _project_file=$GURU_LOCAL_TRACK/sublime-projects/$GURU_USER-$_project_name.sublime-project  ; echo "$_project_file"
 
     if [[ -f "$_project_file" ]] ; then
-        subl --project "$_project_file" -a
-        subl --project "$_project_file" -a                              # Sublime how to open workpace?, this works anyway
-    else
-        WARNING "no sublime project found" #>"$GURU_ERROR_MSG"
-        return 132
-    fi
+            subl --project "$_project_file" -a
+            subl --project "$_project_file" -a                              # Sublime how to open workpace?, this works anyway
+        else
+            WARNING "no sublime project found" #>"$GURU_ERROR_MSG"
+            return 132
+        fi
 }
 
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    if [[ "$1" == "test" ]] ; then shift ; ./test/test.sh project $1 ; fi
-    project.main "$@"
-fi
+        if [[ "$1" == "test" ]] ; then shift ; ./test/test.sh project $1 ; fi
+        project.main "$@"
+    fi
 
