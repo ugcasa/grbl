@@ -2,7 +2,6 @@
 # simple file based counter for guru tool-kit
 
 counter.main () {
-	# Counter case statment
 
 	argument="$1"	; shift 		# arguments
 	id="$1"			; shift 		# counter name
@@ -24,7 +23,7 @@ counter.main () {
 						return 72
 					fi
 					id=$(($(cat $id_file)))
-					GURU_VERBOSE=1
+					echo $id
 					;;
 
 				add|inc)
@@ -66,15 +65,14 @@ counter.main () {
 					fi
 					[[ "$id" ]] && echo "$id" >$id_file
 					id=$(($(cat $id_file)))
-					GURU_VERBOSE=1
-	esac
+					echo $id
 
-	msg "$id\n" 		# is not exited before
+		esac
 	return 0
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-  	counter.main "$@" 			# alternative values
+  	counter.main "$@"
 fi
 
