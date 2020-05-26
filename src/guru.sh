@@ -8,6 +8,7 @@ export GURU_BIN="$HOME/bin"
 export GURU_CFG="$HOME/.config/guru"
 
 source $GURU_BIN/system.sh                  # guru toolkit upgrade etc.
+source $GURU_BIN/config.sh
 source $GURU_BIN/functions.sh               # quick try outs
 source $GURU_BIN/mount.sh                   # needed to keep track tiles up to date
 source $GURU_BIN/lib/common.sh              # TODO remove need of this
@@ -22,7 +23,7 @@ main.parser () {                                                                
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
                 trans|tor|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes
               clear|ls|cd|echo)  $tool "$@"                             ; return $? ;;  # os command pass trough
-            phone|play|vol|yle)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
+      conda|phone|play|vol|yle)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
        stamp|timer|tag|install)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
            system|mount|remote)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
        scan|input|counter|note)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
@@ -109,13 +110,14 @@ main.terminal () {                                                      # termin
     GURU_VERBOSE=true
     msg "$GURU_CALL in terminal mode (type 'help' enter for help)\n"
     while : ; do
-            source $HOME/.gururc
+            config.load "$GURU_CFG/$GURU_USER/user.cfg" # source $HOME/.gururc
             read -e -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd"
             case "$cmd" in  exit|q) return 0 ;; esac
             main.parser $cmd
         done
     return $?
 }
+
 
 main.process_opts () {                                                  # argument parser
 
@@ -177,6 +179,7 @@ main.main () {                                                          # main r
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then                            # user and platform settings (implement here, always up to date)
         source $HOME/.gururc
+        #config.load "$GURU_CFG/$GURU_USER/user.cfg"
         [[ $GURU_USER_VERBOSE ]] && GURU_VERBOSE=1
         main.process_opts $@
         main.main $ARGUMENTS

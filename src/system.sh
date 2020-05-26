@@ -56,24 +56,6 @@ system.rollback() {         # rollback to version
     [ "$temp_dir" ] && [ -d "$temp_dir" ] && rm -rf "$temp_dir"
 }
 
-system.get (){              # get tool-kit environmental variable
-
-    [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
-    set |grep "GURU_${_setting^^}"
-    #set |grep "GURU_${_setting^^}" |cut -c13-
-    return $?
-}
-
-system.set () {             # set tool-kit environmental variable
-    # set guru environmental funtions
-    [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
-    [ "$2" ] && _value="$2" || read -r -p "$_setting value: " _value
-
-    [ -f "$GURU_USER_RC" ] && target_rc="$GURU_USER_RC" || target_rc="$HOME/.gururc"
-    sed -i -e "/$_setting=/s/=.*/=$_value/" "$target_rc"                               # Ähh..
-    msg "setting GURU_${_setting^^} to $_value\n"
-}
-
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     source "$HOME/.gururc"

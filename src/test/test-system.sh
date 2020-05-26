@@ -73,31 +73,4 @@ system.rollback_test () {
 }
 
 
-system.get_test () {
-    # get system values test
-    if system.get "audio_enabled" | grep "true" >/dev/null; then
-        TEST_PASSED "${FUNCNAME[0]}"
-        return 0
-    else
-        TEST_FAILED "${FUNCNAME[0]}"
-        return 101
-    fi
-}
-
-
-system.set_test () {
-    # WILL FAIL sed broken fix later
-    system.set "audio_enabled" "test"
-    msg "return.. $(system.get audio_enabled)\n"
-    if system.get "audio_enabled" | grep "test" >/dev/null; then
-            TEST_PASSED "${FUNCNAME[0]}"
-            #system.set "audio_enabled" "true"
-            return 0
-    else
-            TEST_FAILED "${FUNCNAME[0]}"
-            #system.set "audio_enabled" "true"
-            return 101
-    fi
-}
-
 

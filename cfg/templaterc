@@ -8,7 +8,7 @@
 export GURU_CALL="guru"
 export GURU_DOMAIN_NAME="ujo.guru"
 
-export GURU_REAL_NAME="Your Full Name here"
+export GURU_REAL_NAME="Your Full Name"
 export GURU_USER_EMAIL="$GURU_USER@ujo.guru"
 export GURU_USER_PHONE="+358 295 419 800"
 export GURU_NOTE_HEADER="Daily notes $GURU_REAL_NAME"
@@ -74,7 +74,7 @@ export GURU_CLOUD_COMPANY=
 export GURU_PHONE_IP=
 export GURU_PHONE_USER=
 export GURU_PHONE_PORT=
-export GURU_PHONE_PASSWORD=		# optional
+export GURU_PHONE_PASSWORD=
 
 # Preferred applications
 export GURU_TERMINAL="gnome-terminal"
@@ -110,8 +110,9 @@ export GURU_TRACKSTATUS="$GURU_WORKTRACK/timer.status"
 export GURU_ERROR_MSG="/tmp/guru-last.error"
 
 # Flags
+export GURU_TERMINAL_COLOR=
+export GURU_USER_VERBOSE=
 export GURU_AUDIO_ENABLED=true
 export GURU_INSTALL="desktop"
+export GURU_USE_VERSION="0.5.2"
 
-# Decorations
-export GURU_TERMINAL_COLOR=""

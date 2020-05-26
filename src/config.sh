@@ -5,14 +5,16 @@ source $GURU_BIN/tag.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/lib/common.sh
 
-
 config.main () {
 
     local _cmd="$1" ; shift
     case "$_cmd" in
-                user)  config.user  ;;  # social media
-                help)  config.help  ;;
-                   *)  echo "unknown action $_cmd"
+          get|set|user)  config.$_cmd $@ ; return $? ;;
+              personal)  config.load "$GURU_CFG/$GURU_USER/user.cfg" ; echo $GURU_REAL_NAME ;;
+                export)  config.export ;;
+                  help)  config.help  ;;
+                     *)  echo "unknown action $_cmd"
+                         config.help  ;;
         esac
 }
 
@@ -27,10 +29,50 @@ config.help () {
 }
 
 
-guru tool-kit user configuration file
-to send configurations to server type 'guru remote push' and
-to get configurations from server type 'guru remote pull'
-backup is kept at .config/guru/<user>/userrc.backup
+# guru tool-kit user configuration file
+# to send configurations to server type 'guru remote push' and
+# to get configurations from server type 'guru remote pull'
+# backup is kept at .config/guru/<user>/userrc.backup
+
+config.load () {
+    #shopt -s extglob
+    local _config_file="$1"       ; echo "input: $_config_file"
+    local _rc_file="$2"           ; echo "input: $_rc_file"
+
+    if ! [[ -f $_config_file ]] ; then NOTEXIST "$_config_file" ; return 100 ; fi
+    #if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
+
+    echo "#!/bin/bash" > $_rc_file
+    echo "export GURU_BIN=$HOME/bin" >> $_rc_file
+    echo "export GURU_CFG=$HOME/.config/guru" >> $_rc_file
+
+    #tr -d '\r' < $configfile > $_config_file.unix
+    while IFS='= ' read -r lhs rhs
+    do
+      if [[ ! $lhs =~ ^\ *# && -n $lhs ]]; then
+          rhs="${rhs%%\#*}"    # remove in line right comments
+          rhs="${rhs%%*( )}"   # remove trailing spaces
+          case "$lhs" in
+                *[*)  _chapter=${lhs//[}
+                      _chapter=${_chapter//]}  ;;
+                *)      echo "export GURU_${_chapter^^}_${lhs^^}=$rhs"
+            esac
+
+      fi
+    done < $_config_file >> $_rc_file
+}
+
+config.export () {
+    local _source_cfg="/home/casa/.config/guru/casa/user.cfg"
+    local _target_rc="/home/casa/.gururc2"
+    config.load "$_source_cfg" "$_target_rc"
+    chmod +x $_target_rc
+    source $_target_rc
+}
+
+
+
+
 
 config.user () {
     exec 3>&1                   # open temporary file handle and redirect it to stdout
@@ -49,8 +91,29 @@ config.user () {
 }
 
 
+config.get (){              # get tool-kit environmental variable
+
+    [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
+    set |grep "GURU_${_setting^^}"
+    #set |grep "GURU_${_setting^^}" |cut -c13-
+    return $?
+}
+
+
+config.set () {             # set tool-kit environmental variable
+    # set guru environmental funtions
+    [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
+    [ "$2" ] && _value="$2" || read -r -p "$_setting value: " _value
+
+    [ -f "$GURU_USER_RC" ] && target_rc="$GURU_USER_RC" || target_rc="$HOME/.gururc"
+
+    sed -i -e "/$_setting=/s/=.*/=$_value/" "$target_rc"                               # Ähh..
+    msg "setting GURU_${_setting^^} to $_value\n"
+}
+
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        source "$HOME/.gururc"
+        #source "$HOME/.gururc"
         config.main "$@"
     fi
 
@@ -75,3 +138,30 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
   # --textbox      <file> <height> <width>
   # --timebox      <text> <height> <width> <hour> <minute> <second>
   # --yesno        <text> <height> <width>
+
+
+
+
+# config.load () {
+#     #shopt -s extglob
+#     local _config_file="$1"       ; echo "input: $_config_file"
+#     local _rc_file="$2"           ; echo "input: $_rc_file"
+
+#     if ! [[ -f $_config_file ]] ; then NOTEXIST "$_config_file" ; return 100 ; fi
+#     if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
+#     #tr -d '\r' < $configfile > $_config_file.unix
+#     while IFS='= ' read -r lhs rhs
+#     do
+#       if [[ ! $lhs =~ ^\ *# && -n $lhs ]]; then
+#           rhs="${rhs%%\#*}"    # remove in line right comments
+#           rhs="${rhs%%*( )}"   # remove trailing spaces
+#           #rhs="${rhs%\"*}"     # remove opening string quotes
+#           #rhs="${rhs#\"*}"     # remove closing string quotes
+#           #echo "$lhs=$rhs"
+#           #declare -x $lhs="$rhs"
+
+#           echo "export $lhs=$rhs"
+
+#       fi
+#     done < $_config_file > $_rc_file
+# }
