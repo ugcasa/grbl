@@ -21,7 +21,7 @@ conda.install () {	# install anaconda
 
 	sudo apt-get install -y libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6 && OK || WARNING
 
-	[ "$1" ] && conda_version=$1 || conda_version="2019.03"
+	conda_version="2019.03"
 	conda_installer="Anaconda3-$conda_version-Linux-x86_64.sh"
 	conda_sum=45c851b7497cc14d5ca060064394569f724b67d9b5f98a926ed49b834a6bb73a
 
