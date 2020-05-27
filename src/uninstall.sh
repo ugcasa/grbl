@@ -66,7 +66,7 @@ uninstall () {
 	esac
 
 	#rm -fr "$GURU_BIN"				# TODO: own folder meaby?
-	echo "$uninstalling_version successfully un-installed"
+	echo "$uninstalling_version removed"
 	return 0
 }
 
