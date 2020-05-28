@@ -72,7 +72,7 @@ UNMOUNTED() {       [ "$1" ] && msg "$1 $UNMOUNTED" || msg "$UNMOUNTED" ; }
 ERROR() {           [ "$1" ] && msg "$ERROR ${WHT}$1"      || msg "$ERROR" ; }
 WARNING() {         [ "$1" ] && msg "$WARNING ${WHT}$1"    || msg "$WARNING" ; }
 FAILED() {          [ "$1" ] && msg "${WHT}$1: $FAILED"    || msg "$FAILED" ; }
-TEST_IGNORED() {    [ "$1" ] && msg "${WHT}$1 test is $IGNORED" || msg "${WHT}test resul is $IGNORED" ; }
-TEST_FAILED() {     [ "$1" ] && msg "${WHT}$1 test result is: $FAILED" || msg "${WHT}test resul is: $FAILED" ; }
-TEST_PASSED() {     [ "$1" ] && msg "${WHT}$1 test result is: $PASSED" || msg "${WHT}test resul is: $PASSED" ; }
+TEST_IGNORED() {    [ "$1" ] && msg "${WHT}$1 test is $IGNORED" || msg "${WHT}test resul is $IGNORED" ; return 1 ; }
+TEST_FAILED() {     [ "$1" ] && msg "${WHT}$1 test result is: $FAILED" || msg "${WHT}test resul is: $FAILED" ; return 100 ; }
+TEST_PASSED() {     [ "$1" ] && msg "${WHT}$1 test result is: $PASSED" || msg "${WHT}test resul is: $PASSED" ; return 0 ; }
 

@@ -1,18 +1,36 @@
 #!/bin/bash
 # mount tools for guru tool-kit
-
+source "$HOME/.gururc"
 source $GURU_BIN/lib/common.sh
+
+
+GURU_MOUNT_DOCUMENTS=("/home/casa/Documents" "/home/casa/Documents")
+GURU_MOUNT_TRACK=("/home/casa/Track" "/home/casa/Track")
+GURU_MOUNT_NOTES=("/home/casa/Notes" "/home/casa/Notes")
+GURU_MOUNT_TEMPLATES=("/home/casa/Templates" "/home/casa/Templates")
+GURU_MOUNT_COMPANY=("/home/casa/ujo.guru" "/home/casa/ujo.guru")
+GURU_MOUNT_FAMILY=("/home/casa/bubble" "/home/casa/bubble.bay")
+GURU_MOUNT_PICTURES=("/home/casa/Pictures" "/home/casa/Pictures")
+GURU_MOUNT_PHOTOS=("/home/casa/Photos" "/home/casa/Photos")
+GURU_MOUNT_AUDIO=("/home/casa/Videos" "/home/casa/Audio")
+GURU_MOUNT_VIDEO=("/home/casa/Audio" "/home/casa/Videos")
+GURU_MOUNT_MUSIC=("/home/casa/Music" "/home/casa/Music")
+
+
 
 mount.main () {                         # mount command parser
 
     argument="$1"; shift
     case "$argument" in
+                     all)   mount.defaults                                     ; return $? ;;
                       ls)   mount.list                                          ; return $? ;;
                     info)   mount.info | column -t -s $' '                      ; return $? ;;
                   status)   mount.status                                        ; return $? ;;
                    check)   mount.online "$@"                                   ; return $? ;;
             check-system)   mount.check "$GURU_LOCAL_TRACK"                     ; return $? ;;
-           mount|unmount)   $argument.remote "$@"                               ; return $? ;;
+           mount|unmount)   case "$1" in all) $argument.defaults $@ ; return $? ;;
+                                           *) $argument.remote $@ ; return $?   ;;
+                                esac                                            ; return $? ;;
           install|remove)   mount.install "$argument"                           ; return $? ;;
        help|help-default)   mount.$argument "$1"                                ; return 0  ;;
                        *)   if [ "$1" ] ; then mount.remote "$argument" "$1"    ; return $? ; fi
@@ -148,15 +166,17 @@ mount.check () {                        # check mountpoint is mounted, output st
 mount.remote () {                       # mount remote location
     # input remote_foder and mount_point
     local _source_folder=""
-    local _target_folder=""
+    if [[ "$1" ]] ; then _source_folder="$1"; else read -r -p "input source folder at server: " _source_folder ; fi
 
-    if [ "$1" ] ; then _source_folder="$1"; else read -r -p "input source folder at server: " _source_folder; fi
-    if [ "$2" ] ; then _target_folder="$2"; else read -r -p "input target mount point: " _target_folder; fi
+    local _target_folder=""
+    if [[ "$2" ]] ; then _target_folder="$2"; else read -r -p "input target mount point: " _target_folder ; fi
 
     if mount.online "$_target_folder"; then
             ONLINE "$_target_folder"                                        # already mounted
             return 0
         fi
+
+    # TODO important: clean-up messy and unclear now, can cause file losses
 
     if [[ "$(ls -A $_target_folder >/dev/null)" ]] ; then                              # Check that targed directory is empty
             WARNING "$_target_folder is not empty\n"
@@ -167,7 +187,11 @@ mount.remote () {                       # mount remote location
                     ls "$_target_folder"
                     read -r -p "remove above files and folders?: " _reply
                     if [[ $_reply == "y" ]] ; then
-                            rm -r "$_target_folder"
+
+                            if ! [[ -f "$_target_folder/.online" ]] ; then      # to be sure that non of other processes did just now mounted the folder
+                                    rm -r "$_target_folder"
+                                fi
+
                         else
                             ERROR "unable to mount $_target_folder, mount point contains files\n"
                             return 25
@@ -182,14 +206,14 @@ mount.remote () {                       # mount remote location
         mkdir -p "$_target_folder"                                          # be sure that mount point exist
         fi
 
-    local server="$GURU_CLOUD_NEAR"                                  # assume that server is in local network
-    local server_port="$GURU_CLOUD_NEAR_PORT"
-    local user="$GURU_CLOUD_NEAR_USER"
+    local server="GURU_CLOUD_LAN_IP"                                  # assume that server is in local network
+    local server_port="$GURU_CLOUD_PORT"
+    local user="$GURU_CLOUD_USERNAME"
 
-    if ! ssh -q -p "$server_port" "$user@$server" exit; then                # check local server connection
-            server="$GURU_CLOUD_FAR"                               # if no connection try remote server connection
-            server_port="$GURU_CLOUD_FAR_PORT"
-            user="$GURU_CLOUD_FAR_USER"
+    if ! ssh -q -p "$server_port" "$user@$server" exit ; then                # check local server connection
+            server="$GURU_CLOUD_DOMAIN"                               # if no connection try remote server connection
+            server_port="$GURU_CLOUD_LAN_PORT"
+            user="$GURU_CLOUD_USERNAME"
         fi
 
     msg "mounting $_target_folder "
@@ -246,18 +270,21 @@ unmount.remote () {                     # unmount mountpoint
 
 mount.defaults () {                     # mount all GURU_CLOUD_* defined in userrc
     # mount all local/cloud pairs defined in userrc
-    local _target=""
-    local _source=""
-    #local _default_list=("company" "family" "notes" "templates" "pictures" "photos" "audio" "video" "music")
-    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
 
-    for _default_item in ${_default_list[@]}; do
-        # echo '$'"GURU_LOCAL_${_default_item^^}"
-        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
-        _source=$(eval echo '$'"GURU_CLOUD_${_default_item^^}")
-        [[ "$_source" ]] && [[ "$_target" ]] || continue                # skip if not defined in userrc
-        mount.remote "$_source" "$_target"
+    declare -i _error=0
+    [[ -f ~/.gururc2 ]] && source ~/.gururc2 || echo "no file"
+
+    local _default_list=($(cat ~/.gururc2 |grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
+
+    msg "default list: ${_default_list[@],,}"
+
+    for _item in "${_default_list[@]}" ; do                       # go trough of found variables
+        _source=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
+        _target=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
+        msg "${_item,,} to "
+        mount.remote "$_source" "$_target" || _error=$?
     done
+
 }
 
 unmount.defaults () {                   # unmount all GURU_CLOUD_* defined in userrc

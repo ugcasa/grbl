@@ -2,7 +2,7 @@
 # guru tool-kit - main command parser
 # caa@ujo.guru 2020
 
-export GURU_VERSION="0.5.2"
+export GURU_VERSION="0.5.2.9"
 export GURU_HOSTNAME="$(hostname)"
 export GURU_BIN="$HOME/bin"
 export GURU_CFG="$HOME/.config/guru"
@@ -31,7 +31,7 @@ main.parser () {                                                                
               keyboard|uutiset)  $tool.py "$@"                          ; return $? ;;  # python scripts
                          radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;  # leave background + set display
                    help|--help)  main.help "$@"                         ; return 0  ;;  # help printout
-                       unmount)  mount.main "$1"                        ; return $? ;;  # alias for un-mounting
+                       unmount)  mount.main unmount "$1"                ; return $? ;;  # alias for un-mounting
                 terminal|shell)  main.terminal "$@"                     ; return $? ;;  # guru in terminal mode
              ssh|os|common|tme)  $GURU_BIN/lib/$tool.sh "$@"            ; return $? ;;  # direct lib calls
                    input|hosts)  $GURU_BIN/trial/$tool.sh "$@"          ; return $? ;;  # place for shell script prototypes and experiments
