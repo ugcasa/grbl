@@ -26,19 +26,19 @@ config.help () {
     printf " user          open user config in dialog \n"
     printf " help          help printout \n"
     printf "\nexample:     %s config user \n" "$GURU_CALL"
+    # guru tool-kit user configuration file
+    # to send configurations to server type 'guru remote push' and
+    # to get configurations from server type 'guru remote pull'
+    # backup is kept at .config/guru/<user>/userrc.backup
 }
 
 
-# guru tool-kit user configuration file
-# to send configurations to server type 'guru remote push' and
-# to get configurations from server type 'guru remote pull'
-# backup is kept at .config/guru/<user>/userrc.backup
-
 config.load () {
     #shopt -s extglob
-    local _config_file="$1"       ; echo "input: $_config_file"
-    local _rc_file="$2"           ; echo "input: $_rc_file"
+    local _config_file="$1"
+    local _rc_file="$2"
 
+    msg "input: $_config_file\noutput: $_rc_file\n"
     if ! [[ -f $_config_file ]] ; then NOTEXIST "$_config_file" ; return 100 ; fi
     #if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
 
@@ -62,6 +62,7 @@ config.load () {
     done < $_config_file >> $_rc_file
 }
 
+
 config.export () {
     local _source_cfg="/home/casa/.config/guru/casa/user.cfg"
     local _target_rc="/home/casa/.gururc2"
@@ -69,9 +70,6 @@ config.export () {
     chmod +x $_target_rc
     source $_target_rc
 }
-
-
-
 
 
 config.user () {

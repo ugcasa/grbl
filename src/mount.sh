@@ -3,19 +3,7 @@
 source "$HOME/.gururc"
 source $GURU_BIN/lib/common.sh
 
-
-GURU_MOUNT_DOCUMENTS=("/home/casa/Documents" "/home/casa/Documents")
-GURU_MOUNT_TRACK=("/home/casa/Track" "/home/casa/Track")
-GURU_MOUNT_NOTES=("/home/casa/Notes" "/home/casa/Notes")
-GURU_MOUNT_TEMPLATES=("/home/casa/Templates" "/home/casa/Templates")
-GURU_MOUNT_COMPANY=("/home/casa/ujo.guru" "/home/casa/ujo.guru")
-GURU_MOUNT_FAMILY=("/home/casa/bubble" "/home/casa/bubble.bay")
-GURU_MOUNT_PICTURES=("/home/casa/Pictures" "/home/casa/Pictures")
-GURU_MOUNT_PHOTOS=("/home/casa/Photos" "/home/casa/Photos")
-GURU_MOUNT_AUDIO=("/home/casa/Videos" "/home/casa/Audio")
-GURU_MOUNT_VIDEO=("/home/casa/Audio" "/home/casa/Videos")
-GURU_MOUNT_MUSIC=("/home/casa/Music" "/home/casa/Music")
-
+[[ -f ~/.gururc2 ]] && source ~/.gururc2 || echo "no file"
 
 
 mount.main () {                         # mount command parser
@@ -27,9 +15,9 @@ mount.main () {                         # mount command parser
                     info)   mount.info | column -t -s $' '                      ; return $? ;;
                   status)   mount.status                                        ; return $? ;;
                    check)   mount.online "$@"                                   ; return $? ;;
-            check-system)   mount.check "$GURU_LOCAL_TRACK"                     ; return $? ;;
+            check-system)   mount.check "$GURU_SYSTEM_MOUNT"                    ; return $? ;;
            mount|unmount)   case "$1" in all) $argument.defaults $@ ; return $? ;;
-                                           *) $argument.remote $@ ; return $?   ;;
+                                           *) $argument.remote $@   ; return $? ;;
                                 esac                                            ; return $? ;;
           install|remove)   mount.install "$argument"                           ; return $? ;;
        help|help-default)   mount.$argument "$1"                                ; return 0  ;;
@@ -92,7 +80,6 @@ mount.help-default () {                 # printout instructions to set/use GURU_
 mount.status () {                       # check status of GURU_CLOUD_* mountpoints defined in userrc
     local _verbose=$GURU_VERBOSE ; GURU_VERBOSE=true
     local _active_mount_points=$(mount.list)
-    local _error=0
     for _mount_point in ${_active_mount_points[@]}; do
         mount.check $_mount_point
         done
@@ -126,8 +113,8 @@ mount.list () {                         # simple list of mounted mountpoints
 }
 
 mount.system () {                       # mount system data
-    if ! mount.online "$GURU_LOCAL_TRACK"; then
-            mount.remote "$GURU_CLOUD_TRACK" "$GURU_LOCAL_TRACK"
+    if ! mount.online "${GURU_SYSTEM_MOUNT[1]}"; then
+            mount.remote "${GURU_SYSTEM_MOUNT[0]}" "${GURU_SYSTEM_MOUNT[1]}"
         fi
 }
 
@@ -148,7 +135,7 @@ mount.check () {                        # check mountpoint is mounted, output st
     local _verbose=$GURU_VERBOSE ; GURU_VERBOSE=true
     local _target_folder="$1"
     local _err=0
-    [[ "$_target_folder" ]] || _target_folder="$GURU_LOCAL_TRACK"
+    [[ "$_target_folder" ]] || _target_folder="${GURU_SYSTEM_MOUNT[1]}"
 
     msg "$_target_folder status "
     mount.online "$_target_folder" ; _err=$?
@@ -178,7 +165,7 @@ mount.remote () {                       # mount remote location
 
     # TODO important: clean-up messy and unclear now, can cause file losses
 
-    if [[ "$(ls -A $_target_folder >/dev/null)" ]] ; then                              # Check that targed directory is empty
+    if [[ "$(ls -A $_target_folder >/dev/null 2>&1)" ]] ; then                              # Check that targed directory is empty
             WARNING "$_target_folder is not empty\n"
 
             if [[ $GURU_FORCE ]] ; then
@@ -206,13 +193,13 @@ mount.remote () {                       # mount remote location
         mkdir -p "$_target_folder"                                          # be sure that mount point exist
         fi
 
-    local server="GURU_CLOUD_LAN_IP"                                  # assume that server is in local network
-    local server_port="$GURU_CLOUD_PORT"
+    local server="$GURU_CLOUD_LAN_IP"                                  # assume that server is in local network
+    local server_port="$GURU_CLOUD_LAN_PORT"
     local user="$GURU_CLOUD_USERNAME"
 
     if ! ssh -q -p "$server_port" "$user@$server" exit ; then                # check local server connection
             server="$GURU_CLOUD_DOMAIN"                               # if no connection try remote server connection
-            server_port="$GURU_CLOUD_LAN_PORT"
+            server_port="$GURU_CLOUD_PORT"
             user="$GURU_CLOUD_USERNAME"
         fi
 
@@ -226,6 +213,7 @@ mount.remote () {                       # mount remote location
             [[ -d "$_target_folder" ]] && rmdir "$_target_folder"
             return 25
         else
+            [[ -f "$_target_folder/.online" ]] && touch "$_target_folder/.online"
             MOUNTED
             return 0                                                         # && echo "mounted $server:$_source_folder to $_target_folder" || error="$
         fi
@@ -246,7 +234,7 @@ unmount.remote () {                     # unmount mountpoint
         fi
 
     # once more or if force
-    if [ "$GURU_FORCE" ] || mount.online "$_mountpoint" ; then
+    if [[ "$GURU_FORCE" ]] || mount.online "$_mountpoint" ; then
 
             printf "force unmount.. "
             if fusermount -u "$_mountpoint" ; then
@@ -272,46 +260,45 @@ mount.defaults () {                     # mount all GURU_CLOUD_* defined in user
     # mount all local/cloud pairs defined in userrc
 
     declare -i _error=0
+
     [[ -f ~/.gururc2 ]] && source ~/.gururc2 || echo "no file"
 
-    local _default_list=($(cat ~/.gururc2 |grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
-
-    msg "default list: ${_default_list[@],,}"
+    local _default_list=($(cat ~/.gururc2 | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _source=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
-        msg "${_item,,} to "
+        msg "${_item,,} "
         mount.remote "$_source" "$_target" || _error=$?
     done
 
+    return $_error
 }
 
 unmount.defaults () {                   # unmount all GURU_CLOUD_* defined in userrc
     # unmount all local/cloud pairs defined in userrc
-    local _target=""
-    local _source=""
-    local _error=0
-    local _default_list=($(cat "$GURU_USER_RC" |grep "export GURU_LOCAL" | sed 's/^.*LOCAL_//' | cut -d "=" -f1))
+    local _default_list=($(cat ~/.gururc2 | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
 
-    for _default_item in ${_default_list[@]}; do
-        _target=$(eval echo '$'"GURU_LOCAL_${_default_item^^}")
-        [[ "$_target" ]] || [[ -d "$_target" ]] || continue             # skip if not defined in userrc or mount point does not exist
+    for _item in "${_default_list[@]}" ; do                       # go trough of found variables
+        _target=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
+        msg "${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
+
     return $_error
 }
 
 mount.known_remote () {                 # mount single GURU_CLOUD_* defined in userrc
-    local _target=$(eval echo '$'"GURU_LOCAL_${1^^}")
-    local _source=$(eval echo '$'"GURU_CLOUD_${1^^}")
+
+    local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
+    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
 
     mount.remote "$_source" "$_target"
     return $?
 }
 
 unmount.known_remote () {               # unmount single GURU_CLOUD_* defined in userrc
-    local _target="$(eval echo '$'"GURU_LOCAL_${1^^}")"
+    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
     unmount.remote "$_target"
     return $?
 }
@@ -327,6 +314,7 @@ mount.install () {                      # install needed software
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then    # if sourced only import functions
+        # GURU_VERBOSE=1
         source "$HOME/.gururc"
         mount.main "$@"
         exit "$?"

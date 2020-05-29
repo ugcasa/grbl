@@ -82,7 +82,7 @@ case "$platform" in                                                             
             exit 2
         else                                                                                        # Install cinnamon tools
             dconf help >/dev/null || sudo apt install dconf-cli                                     # check that cinnamon setting tools is installed
-            echo "installed" | xclip -i -selection clipboard >/dev/null || sudo apt install xclip   # check is clipboard tools installed
+            [[ -f /usr/bin/xclip ]] || sudo apt install xclip
             xterm -v >/dev/null || sudo apt install xterm                                           # check that xterm is installed
         fi
         keyboard.set_cinnamon_guru_shortcuts                                                        # add keyboard sort cuts for cinnamon

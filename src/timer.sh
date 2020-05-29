@@ -30,8 +30,8 @@ timer.main () {
 
 
 timer.check() {
-	mount.online "$GURU_LOCAL_TRACK"
-	timer.status human
+	mount.system
+	timer.status human && return 0 || return 100
 	}
 
 
@@ -39,12 +39,12 @@ timer.status() {
 
 	mount.system
 
-	if [ ! -f "$GURU_TRACKSTATUS" ]; then
+	if [ ! -f "$GURU_FILE_TRACKSTATUS" ]; then
 		msg "no timer tasks\n"
 		return 0
 	fi
 
- 	source "$GURU_TRACKSTATUS"
+ 	source "$GURU_FILE_TRACKSTATUS"
  	timer_now=$(date +%s)
  	timer_state=$(($timer_now-$timer_start))
  	nice_start_date=$(date -d $start_date '+%d.%m.%Y')
@@ -88,7 +88,7 @@ timer.status() {
 
 
 timer.last() {
-    [ -f $GURU_TRACKLAST ] && cat $GURU_TRACKLAST || echo "no last task set"
+    [ -f $GURU_FILE_TRACKLAST ] && cat $GURU_FILE_TRACKLAST || echo "no last task set"
 }
 
 
@@ -96,9 +96,9 @@ timer.start() {
 
 	mount.system
 
-	[ -d "$GURU_WORKTRACK" ] || mkdir -p "$GURU_WORKTRACK"
+	[ -d "$GURU_LOCATION_WORKTRACK" ] || mkdir -p "$GURU_LOCATION_WORKTRACK"
 
-	if [ -f "$GURU_TRACKSTATUS" ]; then
+	if [ -f "$GURU_FILE_TRACKSTATUS" ]; then
 	 	timer.end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
 	fi
 
@@ -138,13 +138,13 @@ timer.start() {
     nice_date=$(date -d $start_date '+%d.%m.%Y')									#; echo "nice_date: "$nice_date
    	timer_start=$(date -d "$start_date $start_time" '+%s')							#; echo "timer_start: "$timer_start
 
-    [ -f $GURU_TRACKLAST ] && source $GURU_TRACKLAST	# customer, project, task only
+    [ -f $GURU_FILE_TRACKLAST ] && source $GURU_FILE_TRACKLAST	# customer, project, task only
    	[ "$1" ] &&	task="$1" || task="$last_task"
 	[ "$2" ] &&	project="$2" || project="$last_project"
 	[ "$3" ] &&	customer="$3" || customer="$last_customer"
 
-    printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_TRACKSTATUS
-    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_TRACKSTATUS
+    printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_FILE_TRACKSTATUS
+    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_FILE_TRACKSTATUS
     printf "start: $nice_date $start_time $customer $project $task\n"
     return 0
 }
@@ -154,8 +154,8 @@ timer.end() {
 
 	mount.system
 
-	if [ -f $GURU_TRACKSTATUS ]; then
-		. $GURU_TRACKSTATUS 														#; echo "timer start "$timer_start
+	if [ -f $GURU_FILE_TRACKSTATUS ]; then
+		source $GURU_FILE_TRACKSTATUS 														#; echo "timer start "$timer_start
 	else
 		msg "timer not started"
 		return 13
@@ -218,12 +218,12 @@ timer.end() {
 
 	printf "end: $nice_start_date $start_time - $end_time$option_end_date $hours h:$minutes $customer $project $task\n"
 
-	[ -f $GURU_TRACKDATA ] || printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n">$GURU_TRACKDATA
-	[[ $hours > 0.11 ]] && printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_TRACKDATA
+	[ -f $GURU_FILE_TRACKDATA ] || printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n">$GURU_FILE_TRACKDATA
+	[[ $hours > 0.11 ]] && printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_FILE_TRACKDATA
 
-	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_TRACKLAST
+	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_FILE_TRACKLAST
 
-	rm $GURU_TRACKSTATUS
+	rm $GURU_FILE_TRACKSTATUS
 	return 0
 }
 
@@ -244,8 +244,8 @@ timer.cancel() {
 
  	mount.system
 
-	if [ -f $GURU_TRACKSTATUS ]; then
-		rm $GURU_TRACKSTATUS
+	if [ -f $GURU_FILE_TRACKSTATUS ]; then
+		rm $GURU_FILE_TRACKSTATUS
 		echo "canceled"
 	else
 		echo "not active timer"
@@ -255,14 +255,14 @@ timer.cancel() {
 
 
 timer.log () {
-	printf "last logged records:\n$(tail $GURU_TRACKDATA | tr ";" "  ")\n"
+	printf "last logged records:\n$(tail $GURU_FILE_TRACKDATA | tr ";" "  ")\n"
 	return 0
 }
 
 
 timer.edit  () {
 	mount.system
-	$GURU_EDITOR "$GURU_TRACKDATA" &
+	$GURU_EDITOR "$GURU_FILE_TRACKDATA" &
 	return $?
 }
 
@@ -274,8 +274,8 @@ timer.report() {
 	report_file="work-track-report-$(date +%Y%m%d)-$team.csv" 				#; echo "report_file: "$report_file
 	output_folder=$HOME/Documents											#; echo "output_folder: $output_folder"
 	[ "$team" == "all" ] && team=""
-	[ -f $GURU_TRACKDATA ] || return 13
-	cat $GURU_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
+	[ -f $GURU_FILE_TRACKDATA ] || return 13
+	cat $GURU_FILE_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
 	$GURU_OFFICE_DOC $output_folder/$report_file &
 	timer.end $""
 }
