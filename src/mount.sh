@@ -3,7 +3,6 @@
 source "$HOME/.gururc"
 source $GURU_BIN/lib/common.sh
 
-[[ -f ~/.gururc2 ]] && source ~/.gururc2 || echo "no file"
 
 mount.main () {                         # mount command parser
 
@@ -47,7 +46,6 @@ mount.help () {                         # printout help
     printf " more information of adding default mountpoint type '%s mount help-default' \n" "$GURU_CALL"
     printf "\nexample:"
     printf "\t %s mount /home/%s/share /home/%s/test-mount\n" "$GURU_CALL" "$GURU_CLOUD_FAR_USER" "$USER"
-  z
 }
 
 mount.help-default () {                 # printout instructions to set/use GURU_CLOUD_* definations to userrc

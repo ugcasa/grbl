@@ -13,6 +13,7 @@
 #  release) release validation tests
 #  clean) make clean
 source $HOME/.gururc
+source $HOME/.gururc2
 source $GURU_BIN/lib/common.sh
 
 test.main() {

@@ -138,7 +138,7 @@ mount.test_list () {
     msg "sshfs list check: "
     mount.system || return 24                       # be sure that system is mounted
 
-   if mount.list | grep "/Track" >/dev/null; then             # if "Track" is in output pass
+   if mount.list | grep "/.data" >/dev/null; then             # if "Track" is in output pass
         PASSED "${FUNCNAME[0]}"
         return 0
     else

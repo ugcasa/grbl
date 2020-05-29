@@ -13,9 +13,9 @@ note.test() {
     local _err=("$0")
     mount.system
     case "$test_case" in
-                1)  note.test_check   ; return $? ;;  # 1) quick check
-                2)  note.test_online  ; return $? ;;  # 3) check
-                3)  note.remount      ; return $? ;;  # 5) action, remove
+                1)  note.test_online  ; return $? ;;  # 3) check
+                2)  note.remount      ; return $? ;;  # 5) action, remove
+                3)  note.test_check   ; return $? ;;  # 1) quick check
                 4)  note.test_list    ; return $? ;;  # 2) list stuff
                 5)  note.test_add     ; return $? ;;  # 5) action, add
                 6)  note.test_open    ; return $? ;;  # 5) action, open
@@ -37,11 +37,9 @@ note.test() {
 
 note.test_online() {
     if note.online ; then
-            PASSED "${FUNCNAME[0]}"
-            return 0
+            PASSED "${FUNCNAME[0]}" ; return 0
         else
-            FAILED "${FUNCNAME[0]}"
-            return 10
+            FAILED "${FUNCNAME[0]}" ; return 10
         fi
     return $?
 }
@@ -50,11 +48,9 @@ note.test_online() {
 note.test_list () {
     printf "note list test.. "
     if note.ls | grep $exist_note >/dev/null ; then
-      PASSED
-      return 0
+      PASSED ; return 0
     else
-      FAILED
-      return 44
+      FAILED ; return 44
     fi
 }
 
@@ -70,7 +66,6 @@ note.test_check () {
     printf "date %s (non exist) " "$(date -d $nonexist_note +$GURU_FORMAT_FILE_DATE)"
     if note.main check $nonexist_note ; then
             _err=("${_err[@]}" "101")
-            echo $GURU_USER_NAME
         fi
 
     if [[ ${_err[1]} -gt 0 ]] ; then return 41 ; else return 0 ; fi
@@ -91,7 +86,7 @@ note.test_add () {
 
 note.test_open () {
     printf "opening note %s.. " $test_note
-    export GURU_PREFERRED_EDITOR=cat
+    export GURU_PREFERRED_EDITOR="cat"
     if note.open $test_note | grep "18.5.2020" >/dev/null ; then
           PASSED
           return 0

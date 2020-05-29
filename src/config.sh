@@ -10,7 +10,7 @@ config.main () {
     local _cmd="$1" ; shift
     case "$_cmd" in
           get|set|user)  config.$_cmd $@ ; return $? ;;
-              personal)  config.load "$GURU_CFG/$GURU_USER/user.cfg" ; echo $GURU_REAL_NAME ;;
+              personal)  config.load "$GURU_CFG/$GURU_USER_NAME/user.cfg" ; echo $GURU_REAL_NAME ;;
                 export)  config.export ;;
                   help)  config.help  ;;
                      *)  echo "unknown action $_cmd"
@@ -43,8 +43,10 @@ config.load () {
     #if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
 
     echo "#!/bin/bash" > $_rc_file
+    echo "export GURU_CALL=guru" >> $_rc_file
     echo "export GURU_BIN=$HOME/bin" >> $_rc_file
     echo "export GURU_CFG=$HOME/.config/guru" >> $_rc_file
+    echo 'export GURU_HOSTNAME=$(hostname)' >> $_rc_file
 
     #tr -d '\r' < $configfile > $_config_file.unix
     while IFS='= ' read -r lhs rhs

@@ -17,8 +17,8 @@ note.main () {                                  # command parser
                      locate)  note.gen_var "$1" ;  echo "$note" ;;
                         tag)  [ -f "$note" ]    && tag.main "tag $note $user_input" ;;
                        help)  note.help ;;
-                         "")  note.open $(date +"$FORMAT_FILE_DATE") ;;
-                          *)  note.open $(date +"$FORMAT_FILE_DATE" -d "$command")
+                         "")  note.open $(date +"$GURU_FORMAT_FILE_DATE") ;;
+                          *)  note.open $(date +"$GURU_FORMAT_FILE_DATE" -d "$command")
     esac
     counter.main add note-runned >/dev/null     # Usage statistics
 }
@@ -28,7 +28,7 @@ note.help () {                                  # printout help
     printf "Usage:\t\t %s note [command] <date> \nCommands:                       \n" "$GURU_CALL"
     printf " check          check do note exist, returns 0 if i do                \n"
     printf " list           list of notes. first month (MM), then year (YYYY)     \n"
-    printf " open|edit|*    open given date notes (use time format %s)            \n" "$FORMAT_FILE_DATE"
+    printf " open|edit|*    open given date notes (use time format %s)            \n" "$GURU_FORMAT_FILE_DATE"
     printf "  <yesterday>    - open yesterdays notes                              \n"
     printf "  <tuesday>...   - open last week day notes                           \n"
     printf " tag            read or add tags to note file                         \n"
@@ -51,15 +51,15 @@ note.gen_var() {                                # fill variables for rest of fun
         day=$(date +%d)
     fi
 
-    short_datestamp=$(date -d $year-$month-$day +$FORMAT_FILE_DATE)    # hmm.. > issue #19 workaround needed before this can be set by user
-    nice_datestamp=$(date -d $year-$month-$day +$GURU_DATE_FORMAT)          # nice date format
+    short_datestamp=$(date -d $year-$month-$day +$GURU_FORMAT_FILE_DATE)    # hmm.. > issue #19 workaround needed before this can be set by user
+    nice_datestamp=$(date -d $year-$month-$day +$GURU_FORMAT_DATE)          # nice date format
 
-    note_dir=$GURU_LOCAL_NOTES/$GURU_USER_NAME/$year/$month
+    note_dir=$GURU_MOUNT_NOTES/$GURU_USER_NAME/$year/$month
     note_file=$GURU_USER_NAME"_notes_"$short_datestamp.md
     note="$note_dir/$note_file"                                      #; echo "note file "$note
 
-    template_file_name="template.$GURU_USER_NAME.$GURU_TEAM.md"           #; echo "temp file name "$template_file_name
-    template="$GURU_LOCAL_TEMPLATES/$template_file_name"             #; echo "template file "$template
+    template_file_name="template.$GURU_USER_NAME.$GURU_USER_TEAM.md"           #; echo "temp file name "$template_file_name
+    template="$GURU_MOUNT_TEMPLATES/$template_file_name"             #; echo "template file "$template
 }
 
 note.check() {                                  # chech that given date note file exist
@@ -75,7 +75,9 @@ note.check() {                                  # chech that given date note fil
 }
 
 note.online() {                                 # check that needed folders are mounted
-    if mount.online "$GURU_LOCAL_NOTES" && mount.online "$GURU_LOCAL_NOTES" ; then
+    echo "$GURU_MOUNT_NOTES-$GURU_MOUNT_TEMPLATES"
+    if mount.online "$GURU_MOUNT_NOTES" && mount.online "$GURU_MOUNT_TEMPLATES" ; then
+
             return 0
         else
             return 1
@@ -83,17 +85,18 @@ note.online() {                                 # check that needed folders are 
 }
 
 note.remount() {                                # mount needed folders
-    mount.remote "${GURU_MOUNT_NOTES[0]}" "${GURU_MOUNT_NOTES[1]}" || return 43
-    mount.remote "${GURU_MOUNT_TEMPLATES[0]}" "${GURU_MOUNT_TEMPLATES[1]}" || return 43
+    mount.known_remote notes || return 43
+    mount.known_remote templates || return 43
     return 0
 }
+
 
 note.ls() {                                     # list of notes given month/year
     note.remount
     # List of notes on this month and year or given in order and format YYYY MM
     [ "$1" ] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
     [ "$2" ] && year=$(date -d "$2"-1-1 +%Y) || year=$(date +%Y)                  #; echo "year: $year"
-    directory="$GURU_LOCAL_NOTES/$GURU_USER_NAME/$year/$month"
+    directory="$GURU_MOUNT_NOTES/$GURU_USER_NAME/$year/$month"
 
     if [ -d "$directory" ]; then
         ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted"
@@ -105,12 +108,13 @@ note.ls() {                                     # list of notes given month/year
     fi
 }
 
+
 note.add() {                                    # make a note for given date
     # creates notes and opens them to default editor
     note.gen_var "$1"                   #; echo "$1" # set basic variables for functions
 
     [[  -d "$note_dir" ]] || mkdir -p "$note_dir"
-    [[  -d "$GURU_LOCAL_TEMPLATES" ]] || mkdir -p "$GURU_LOCAL_TEMPLATES"
+    [[  -d "$GURU_MOUNT_TEMPLATES" ]] || mkdir -p "$GURU_MOUNT_TEMPLATES"
 
     if [[ ! -f "$note" ]]; then
             # header
@@ -120,10 +124,11 @@ note.add() {                                    # make a note for given date
             # changes table
             note.add_change "created"
             # tags
-            tag.main "$note" add "note $(date +$FORMAT_FILE_DATE)"
+            tag.main "$note" add "note $(date +$GURU_FORMAT_FILE_DATE)"
 
         fi
 }
+
 
 note.open() {                                   # select note to open, call note.editor
     # input format YYYYMMDD
@@ -145,18 +150,20 @@ note.open() {                                   # select note to open, call note
     note.editor "$note"                                             # variables are global dough
 }
 
+
 note.rm () {                                    # remove note of given date
     # input format YYYYMMDD
     note.gen_var "$1"
     if [[ $GURU_FORCE ]] ; then
-        [[ -d $GURU_LOCATION_TRASH ]] ||mkdir -p $GURU_LOCATION_TRASH || ERROR "creating trash "
-        mv -f "$note" "$GURU_LOCATION_TRASH" && return 0 || FAILED "note remove"
+        [[ -d $GURU_LOCAL_TRASH ]] ||mkdir -p $GURU_LOCAL_TRASH || ERROR "creating trash "
+        mv -f "$note" "$GURU_LOCAL_TRASH" && return 0 || FAILED "note remove"
     else
         read -p "remove $note?: " _ans
         case $_ans in y|Y|yes|Yes)  rm -rf "$note" && return 0 || FAILED "note remove" ;; esac
     fi
     return 47
 }
+
 
 note.add_change () {                            # add line to chenge list
 
@@ -172,35 +179,37 @@ note.add_change () {                            # add line to chenge list
             printf "%s|:%s:|%s\n" "$(_line 18)" "$(_line 10)" "$(_line 30)" >>$note
         fi
 
-    printf  "%-17s | %-10s | %s \n" "$(date +$FORMAT_FILE_DATE)-$(date +$GURU_TIME_FORMAT)" "$_author" "$_change" >>$note
+    printf  "%-17s | %-10s | %s \n" "$(date +$GURU_FORMAT_FILE_DATE)-$(date +$GURU_FORMAT_TIME)" "$_author" "$_change" >>$note
 }
+
 
 note.editor () {                                # open default/project default editor
     # open note to preferred editor
-    case "$GURU_EDITOR" in
+    case "$GURU_PREFERRED_EDITOR" in
         subl)
             projectFolder=$GURU_NOTE_PROJECTS
             [ -f $projectFolder ] || mkdir -p $projectFolder
 
             projectFile=$projectFolder/$GURU_USER_NAME.notes.sublime-project
-            [ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_LOCAL_NOTES/$GURU_USER_NAME'"'"\n\t\t}\n\t]\n}\n" >$projectFile # Whatta ..?! TODO fix omg
+            [ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_MOUNT_NOTES/$GURU_USER_NAME'"'"\n\t\t}\n\t]\n}\n" >$projectFile # Whatta ..?! TODO fix omg
 
             subl --project "$projectFile" -a
             subl "$note" --project "$projectFile" -a
             return $?
             ;;
         *)
-            $GURU_EDITOR "$1"
+            $GURU_PREFERRED_EDITOR "$1"
             return $?
     esac
 }
 
+
 note.make_odt () {                              # open note on team office template
     # created odt with team template out of given days note
     if [[ "$1" ]] ; then
-            _date=$(date +$FORMAT_FILE_DATE -d $1)
+            _date=$(date +$GURU_FORMAT_FILE_DATE -d $1)
         else
-            _date=$(date +$FORMAT_FILE_DATE)
+            _date=$(date +$GURU_FORMAT_FILE_DATE)
         fi
 
     note.gen_var "$_date"
@@ -209,16 +218,17 @@ note.make_odt () {                              # open note on team office templ
 
     if [ -f "$note" ]; then
             template="ujo.guru"
-            pandoc "$note" --reference-odt="$GURU_LOCAL_TEMPLATES/$template-template.odt" \
+            pandoc "$note" --reference-odt="$GURU_MOUNT_TEMPLATES/$template-template.odt" \
                     -f markdown -o  "${note%%.*}.odt"
         else
-            echo "no note for $(date +$GURU_DATE_FORMAT -d $1)"
+            echo "no note for $(date +$GURU_FORMAT_DATE -d $1)"
             return 123
         fi
 
     $GURU_OFFICE_DOC "${note%%.*}.odt" &
     echo "report file: ${notefile%%.*}.odt"
 }
+
 
 check_debian_repository () {                    # old way to install sublime
     # add sublime to repository list
@@ -235,7 +245,6 @@ check_debian_repository () {                    # old way to install sublime
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then    # stand alone vs. include. main wont be called if included
         if [[ "$1" == "test" ]] ; then shift ; bash /test/test.sh note $1 ; fi
-        source "$HOME/.gururc"
         note.main "$@"
         exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
     fi
