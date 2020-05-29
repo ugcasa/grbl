@@ -4,12 +4,15 @@
 
 export GURU_VERSION="0.5.2.9"
 export GURU_HOSTNAME="$(hostname)"
-export GURU_BIN="$HOME/bin"
-export GURU_CFG="$HOME/.config/guru"
+source $HOME/.gururc
+[[ $GURU_USER_NAME ]]       && export GURU_USER=$GURU_USER_NAME
+[[ $GURU_FLAG_VERBOSE ]]    && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
+[[ $GURU_FLAG_COLOR ]]      && export GURU_TERMINAL_COLOR=true
+
 
 source $GURU_BIN/system.sh                  # guru toolkit upgrade etc.
 source $GURU_BIN/config.sh
-source $GURU_BIN/functions.sh               # quick try outs
+source $GURU_BIN/functions.sh               # quick try outs TODO remove need of this
 source $GURU_BIN/mount.sh                   # needed to keep track tiles up to date
 source $GURU_BIN/lib/common.sh              # TODO remove need of this
 
@@ -128,8 +131,8 @@ main.process_opts () {                                                  # argume
             -v ) export GURU_VERBOSE=1      ; shift     ;;
             -V ) export GURU_VERBOSE=2      ; shift     ;;
             -f ) export GURU_FORCE=true     ; shift     ;;
-            -l ) export LOGGING=true        ; shift     ;;
-            -u ) export GURU_USER=$2        ; shift 2   ;;
+            -l ) export GURU_LOGGING=true   ; shift     ;;
+            -u ) export GURU_USER_NAME=$2   ; shift 2   ;;
             -h ) export GURU_HOSTNAME=$2    ; shift 2   ;;
 
              * ) break                  ;;
@@ -178,9 +181,7 @@ main.main () {                                                          # main r
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then                            # user and platform settings (implement here, always up to date)
-        source $HOME/.gururc
-        #config.load "$GURU_CFG/$GURU_USER/user.cfg"
-        [[ $GURU_USER_VERBOSE ]] && GURU_VERBOSE=1
+
         main.process_opts $@
         main.main $ARGUMENTS
         exit $?

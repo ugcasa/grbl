@@ -135,7 +135,7 @@ play.text() {
 
 play.demo() {
 
-    audio=$GURU_AUDIO_ENABLED
+    audio=$GURU_FLAG_AUDIO
     clear
 
     if $audio; then
@@ -171,7 +171,7 @@ play.beer () {
 
     resize -s 24 66
 
-    if $GURU_AUDIO_ENABLED; then
+    if $GURU_FLAG_AUDIO; then
         guru play volume 50
         guru play classical music valze
     fi
@@ -187,7 +187,7 @@ play.beer () {
 
     done
 
-    if $GURU_AUDIO_ENABLED; then
+    if $GURU_FLAG_AUDIO; then
         guru play stop
     fi
 

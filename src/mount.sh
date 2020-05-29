@@ -5,7 +5,6 @@ source $GURU_BIN/lib/common.sh
 
 [[ -f ~/.gururc2 ]] && source ~/.gururc2 || echo "no file"
 
-
 mount.main () {                         # mount command parser
 
     argument="$1"; shift
@@ -16,7 +15,7 @@ mount.main () {                         # mount command parser
                   status)   mount.status                                        ; return $? ;;
                    check)   mount.online "$@"                                   ; return $? ;;
             check-system)   mount.check "$GURU_SYSTEM_MOUNT"                    ; return $? ;;
-           mount|unmount)   case "$1" in all) $argument.defaults $@ ; return $? ;;
+           mount|unmount)   case "$1" in all) $argument.defaults    ; return $? ;;
                                            *) $argument.remote $@   ; return $? ;;
                                 esac                                            ; return $? ;;
           install|remove)   mount.install "$argument"                           ; return $? ;;
@@ -52,12 +51,13 @@ mount.help () {                         # printout help
 }
 
 mount.help-default () {                 # printout instructions to set/use GURU_CLOUD_* definations to userrc
+    # TODO update
     echo "-- guru tool-kit mount help-default --------------------------------------------"
     printf "\nTo add default mount point type ${WHT}%s config user${NC} or edit user configuration \n" "$GURU_CALL"
     printf "file: ${WHT}%s${NC} \n" "$GURU_USER_RC"
 
-    printf "\n${WHT}Step 1)${NC}\n On configuration dialog find settings named 'GURU_LOCAL_*' \n"
-    printf "and add new line: ${WHT}export GURU_LOCAL_<MOUNT_POINT>=${NC} where <MOUNT_POINT> \n"
+    printf "\n${WHT}Step 1)${NC}\n On configuration dialog find settings named 'GURU_LOCALMOUNT_*' \n"
+    printf "and add new line: ${WHT}export GURU_MOUNT_<MOUNT_POINT>=${NC} where <MOUNT_POINT> \n"
     peintf "is replaced with single word and up cased. Name will be used as mount point folder name"
     printf "when mounting or un-mounting individual mount point \n"
     printf "After equal sing specify mount point folder between quotation marks. \n"
@@ -113,8 +113,8 @@ mount.list () {                         # simple list of mounted mountpoints
 }
 
 mount.system () {                       # mount system data
-    if ! mount.online "${GURU_SYSTEM_MOUNT[1]}"; then
-            mount.remote "${GURU_SYSTEM_MOUNT[0]}" "${GURU_SYSTEM_MOUNT[1]}"
+    if ! mount.online "$GURU_SYSTEM_MOUNT"; then
+            mount.remote "${GURU_SYSTEM_MOUNT[1]}" "$GURU_SYSTEM_MOUNT"
         fi
 }
 
@@ -135,7 +135,7 @@ mount.check () {                        # check mountpoint is mounted, output st
     local _verbose=$GURU_VERBOSE ; GURU_VERBOSE=true
     local _target_folder="$1"
     local _err=0
-    [[ "$_target_folder" ]] || _target_folder="${GURU_SYSTEM_MOUNT[1]}"
+    [[ "$_target_folder" ]] || _target_folder="$GURU_SYSTEM_MOUNT"
 
     msg "$_target_folder status "
     mount.online "$_target_folder" ; _err=$?
@@ -221,7 +221,13 @@ mount.remote () {                       # mount remote location
 
 unmount.remote () {                     # unmount mountpoint
 
-    local _mountpoint="$1"
+    if [[ "$1" ]] ; then
+        local _mountpoint="$1"
+    else
+
+        mount.list | grep -v $GURU_SYSTEM_MOUNT
+        read -p "select mount point: " _mountpoint
+    fi
 
     if ! mount.online "$_mountpoint" ; then
             IGNORED "$_mountpoint is not mounted"
@@ -266,8 +272,8 @@ mount.defaults () {                     # mount all GURU_CLOUD_* defined in user
     local _default_list=($(cat ~/.gururc2 | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
-        _source=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        _target=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
+        _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
+        _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
         msg "${_item,,} "
         mount.remote "$_source" "$_target" || _error=$?
     done
@@ -280,7 +286,7 @@ unmount.defaults () {                   # unmount all GURU_CLOUD_* defined in us
     local _default_list=($(cat ~/.gururc2 | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
-        _target=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
+        _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
         msg "${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
@@ -290,15 +296,15 @@ unmount.defaults () {                   # unmount all GURU_CLOUD_* defined in us
 
 mount.known_remote () {                 # mount single GURU_CLOUD_* defined in userrc
 
-    local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
-    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
+    local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
+    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
 
     mount.remote "$_source" "$_target"
     return $?
 }
 
 unmount.known_remote () {               # unmount single GURU_CLOUD_* defined in userrc
-    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
+    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
     unmount.remote "$_target"
     return $?
 }

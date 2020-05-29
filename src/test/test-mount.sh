@@ -56,7 +56,7 @@ mount.clean_test () {
 
 mount.test_mount () {
 
-    if mount.remote "/home/$GURU_USER/usr/test" "$HOME/tmp/test_mount" ; then
+    if mount.remote "/home/$GURU_USER_NAME/usr/test" "$HOME/tmp/test_mount" ; then
             PASSED "${FUNCNAME[0]}"
             return 0
         else
@@ -152,7 +152,7 @@ mount.test_info () {
     msg "sshfs list check: "
     mount.system || return 25                       # be sure that system is mounted
 
-    if mount.info | grep "$GURU_LOCAL_TRACK" >/dev/null ; then      # if "Track" is in output pass
+    if mount.info | grep "$GURU_SYSTEM_MOUNT" >/dev/null ; then      # if "Track" is in output pass
         PASSED "${FUNCNAME[0]}"
         return 0
     else

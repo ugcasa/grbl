@@ -62,15 +62,15 @@ note.test_list () {
 note.test_check () {
     local _err=("$0")
 
-    printf "date %s (exist) " "$(date -d $exist_note +$GURU_DATE_FORMAT)"
+    printf "date %s (exist) " "$(date -d $exist_note +$GURU_FORMAT_FILE_DATE)"
     if ! note.main check $exist_note ; then
             _err=("${_err[@]}" "100")
         fi
 
-    printf "date %s (non exist) " "$(date -d $nonexist_note +$GURU_DATE_FORMAT)"
+    printf "date %s (non exist) " "$(date -d $nonexist_note +$GURU_FORMAT_FILE_DATE)"
     if note.main check $nonexist_note ; then
             _err=("${_err[@]}" "101")
-            echo $GURU_USER
+            echo $GURU_USER_NAME
         fi
 
     if [[ ${_err[1]} -gt 0 ]] ; then return 41 ; else return 0 ; fi
@@ -91,7 +91,7 @@ note.test_add () {
 
 note.test_open () {
     printf "opening note %s.. " $test_note
-    export GURU_EDITOR=cat
+    export GURU_PREFERRED_EDITOR=cat
     if note.open $test_note | grep "18.5.2020" >/dev/null ; then
           PASSED
           return 0
