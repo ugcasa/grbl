@@ -47,7 +47,9 @@ note.test_online() {
 
 note.test_list () {
     printf "note list test.. "
-    if note.ls | grep $exist_note >/dev/null ; then
+    local _should_contain=$(date -d $exist_note +$GURU_FORMAT_DATE)
+    echo $_should_contain
+    if note.ls | grep $_should_contain ; then
       PASSED ; return 0
     else
       FAILED ; return 44

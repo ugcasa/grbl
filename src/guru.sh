@@ -5,10 +5,14 @@
 export GURU_VERSION="0.5.2.9"
 export GURU_HOSTNAME="$(hostname)"
 
-  [[ -f $GURU_USER_RC ]] && source $GURU_USER_RC || source ~/.gururc2
+
+source ~/.gururc
+source ~/.gururc2
+#  [[ -f $GURU_USER_RC ]] && source $GURU_USER_RC || source ~/.gururc2
    [[ $GURU_USER_NAME ]] && export GURU_USER=$GURU_USER_NAME
   [[ $GURU_FLAG_COLOR ]] && export GURU_TERMINAL_COLOR=true
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
+
 
 source $GURU_BIN/system.sh                  # guru toolkit upgrade etc.
 source $GURU_BIN/config.sh

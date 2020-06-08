@@ -1,6 +1,6 @@
 #!/bin/bash
 # mount tools for guru tool-kit
-source "$HOME/.gururc"
+#source "$HOME/.gururc"
 source $GURU_BIN/lib/common.sh
 
 
@@ -102,7 +102,7 @@ mount.info () {                         # detailed list of mounted mountpoints
     done
 
     ((_error>0)) && msg "perl not installed or internal error, pls try to install perl and try again."
-    return $_error
+    return $_errorB
 }
 
 mount.list () {                         # simple list of mounted mountpoints
@@ -111,7 +111,7 @@ mount.list () {                         # simple list of mounted mountpoints
 }
 
 mount.system () {                       # mount system data
-    if ! mount.online "$GURU_SYSTEM_MOUNT"; then
+    if ! mount.online "$GURU_SYSTEM_MOUNT" ; then
             mount.remote "${GURU_SYSTEM_MOUNT[1]}" "$GURU_SYSTEM_MOUNT"
         fi
 }
@@ -294,8 +294,8 @@ unmount.defaults () {                   # unmount all GURU_CLOUD_* defined in us
 
 mount.known_remote () {                 # mount single GURU_CLOUD_* defined in userrc
 
-    local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
-    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
+    local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")      ; echo $_source
+    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")      ; echo $_target
 
     mount.remote "$_source" "$_target"
     return $?

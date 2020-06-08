@@ -1,9 +1,12 @@
 #!/bin/bash
 # note tool for guru tool-kit
+#source ~/.gururc
+source ~/.gururc2
 source $GURU_BIN/lib/common.sh
 source $GURU_BIN/lib/deco.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
+echo "$GURU_USER_NAME : ${GURU_MOUNT_NOTES[1]}"
 
 note.main () {                                  # command parser
 
@@ -75,9 +78,13 @@ note.check() {                                  # chech that given date note fil
 }
 
 note.online() {                                 # check that needed folders are mounted
-    echo "$GURU_MOUNT_NOTES-$GURU_MOUNT_TEMPLATES"
-    if mount.online "$GURU_MOUNT_NOTES" && mount.online "$GURU_MOUNT_TEMPLATES" ; then
 
+    if ! [[ "$GURU_MOUNT_NOTES" ]] && [[ "$GURU_MOUNT_TEMPLATES" ]] ; then
+            ERROR "variable emty: '$GURU_MOUNT_NOTES' , '$GURU_MOUNT_TEMPLATES'"
+            return 100
+        fi
+
+    if mount.online "$GURU_MOUNT_NOTES" && mount.online "$GURU_MOUNT_TEMPLATES" ; then
             return 0
         else
             return 1
@@ -97,6 +104,7 @@ note.ls() {                                     # list of notes given month/year
     [ "$1" ] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
     [ "$2" ] && year=$(date -d "$2"-1-1 +%Y) || year=$(date +%Y)                  #; echo "year: $year"
     directory="$GURU_MOUNT_NOTES/$GURU_USER_NAME/$year/$month"
+    echo $directory
 
     if [ -d "$directory" ]; then
         ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted"
