@@ -3,6 +3,8 @@
 # ujo.guru 2020
 
 source $GURU_BIN/lib/common.sh
+source ~/.gururc2
+echo "TEST: $GURU_SYSTEM_MOUNT"
 
 if ! [[ $GURU_PROJECT ]] ; then echo "no project" ; fi
 
@@ -39,8 +41,8 @@ project.help () {
 
 
 project.check() {
-    mount.online "$GURU_LOCAL_TRACK"
-    if [[ -d "$GURU_LOCAL_TRACK/project" ]] ; then
+    mount.online "$GURU_SYSTEM_MOUNT"
+    if [[ -d "$GURU_SYSTEM_MOUNT/project" ]] ; then
             EXIST "project database"
             return 0
         else
@@ -85,7 +87,7 @@ project.open () {
 project.sublime () {
 
     local _project_name="$1"                                                              ; echo "$_project_name"
-    local _project_file=$GURU_LOCAL_TRACK/sublime-projects/$GURU_USER-$_project_name.sublime-project  ; echo "$_project_file"
+    local _project_file=$GURU_SYSTEM_MOUNT/sublime-projects/$GURU_USER-$_project_name.sublime-project  ; echo "$_project_file"
 
     if [[ -f "$_project_file" ]] ; then
             subl --project "$_project_file" -a
