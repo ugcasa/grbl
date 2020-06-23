@@ -27,6 +27,7 @@ _arg="$@"
 [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
 
 
+
 case "$1" in                                                    # simple location pased argument parser
     help)
             echo "-- guru tool-kit istall help -----------------------------------------------"
@@ -64,6 +65,22 @@ source "$HOME/.gururc"                                                          
 cp -f ./cfg/* "$GURU_CFG"                                                                # copy configuration files to configuration folder
 cp -f -r ./src/* -f "$GURU_BIN"                                                                     # copy script files to bin folder
 mv  "$GURU_BIN/guru.sh" "$GURU_BIN/guru"                                                            # rename guru.sh in bin folder to guru
+
+# install daemons
+echo "installing guru.daemons module"
+_temp_dir="/tmp/guru"
+_source="git@github.com:ugcasa/guru-daemons.git"
+_banch="master"
+[ -d "$_temp_dir" ] && rm -rf "$_temp_dir"
+mkdir "$_temp_dir"
+cd "$_temp_dir"
+if git clone "$_source" >/dev/null 2>&1 ; then
+        cp -f guru-daemons/src/* "$GURU_BIN"
+        #cp -f guru-daemons/cfg/* "$GURU_CFG"
+    else
+        echo "error: non valid repository $_source"
+    fi
+
 
 if ! dpkg -l |grep xserver-xorg >/dev/null; then
         counter.main add "guru-headless-installed" >/dev/null                                             # add installation counter
@@ -110,6 +127,7 @@ esac
 counter.main add guru-installed                                                                 # add installation counter
 echo "$(guru version) installed"                                                                       # all fine
 exit 0
+
 
 
 
