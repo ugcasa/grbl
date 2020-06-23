@@ -27,7 +27,12 @@ main.parser () {                                                                
     export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
 
     case "$tool" in
-                         start)  $GURU_BIN/corsair.sh status &          ;;  # Start guru daemons
+                         start)  pkill corsair.sh ; $GURU_BIN/corsair.sh status &   ;;  # start guru daemon
+                          stop)  touch "$HOME/.guru-stop"
+                                 echo "rgb ffffffff" > "/tmp/ckbpipe001"
+                                 echo "rgb ffffffff" > "/tmp/ckbpipe002"
+                                ;;  # stop guru daemon
+
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
                 trans|tor|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes
               clear|ls|cd|echo)  $tool "$@"                             ; return $? ;;  # os command pass trough
