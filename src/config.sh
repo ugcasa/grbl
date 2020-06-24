@@ -34,11 +34,14 @@ config.help () {
 
 
 config.load () {
-    #shopt -s extglob
-    local _config_file="$1"
-    local _rc_file="$2"
+    #shopt -s extglob ?
+    local _config_file="$GURU_CFG/$GURU_USER/user.cfg"
+    [[ "$1" ]] && _config_file="$1"
 
-    msg "input: $_config_file\noutput: $_rc_file\n"
+    local _rc_file="$GURU_USER_RC"
+    [[ "$2" ]] && _rc_file="$2"
+
+    [[ $GURU_VERBOSE ]] && msg "$_config_file > $_rc_file\n"
     if ! [[ -f $_config_file ]] ; then NOTEXIST "$_config_file" ; return 100 ; fi
     #if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
 
