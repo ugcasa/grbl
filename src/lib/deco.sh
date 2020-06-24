@@ -15,7 +15,50 @@ msg() {         # function for ouput messages and make log notifications.
         printf "$@" | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
     fi
 }
+
 export -f msg
+
+
+gmsg() {  # function for ouput messages and make log notifications - revisited
+
+    local _verbose_trigger=0                        # prinout if verbose trigger is not set in options
+    local _timestamp=                               # timestamp is disabled by default
+    local _message=                                 # message container
+    local _logging=                                 # logging is disabled by default
+
+    TEMP=`getopt --long -o "tlv:" "$@"`
+    eval set -- "$TEMP"
+    while true ; do
+        case "$1" in
+            -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;            
+            -l ) _logging=true                              ; shift ;;            
+            -v ) _verbose_trigger=$2                        ; shift 2 ;;            
+             * ) break                                      ;;
+        esac
+    done;
+
+    # printf  "\ntrigger: $_verbose_trigger \nlogging: $_logging \ntimestamp: $_timestamp \nVERBOSE: $GURU_VERBOSE \n"
+
+    # check message
+    local _arg="$@"
+    [[ "$_arg" != "--" ]] && _message="${_arg#* }"       # there were reason for this
+    [[ "$_message" ]] || return 0                        # no message; return
+    
+    # echo "message: $_message"
+
+    # print to stdout
+    if  [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then printf "%s%s\n" "$_timestamp" "$_message" ; fi                  # print out if verbose set
+
+    # logging 
+    if [[ "$LOGGING" ]] || [[ "$_logging" ]] ; then                          # log without colorcodes ets.
+        [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] || return 0                        # check that system mount is online before logging    
+        [[ -f "$GURU_LOG" ]] || return 0                                     # log inly is log exist (hmm.. this not really neede)
+        printf "$@" | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
+    fi
+}
+
+export -f gmsg
+
 
 
 if [[ "$GURU_TERMINAL_COLOR" ]] ; then

@@ -19,11 +19,13 @@ remote.help () {
     echo "-- guru tool-kit remote help -----------------------------------------------"
     printf "usage:\t %s remote [command] [arguments] \n\t $0 remote [source] [target] \n" "$GURU_CALL"
     printf "\ncommands:\n"
+    printf " check      check that connection to accesspoint server is available \n"
+    printf " add_key    add key pair with %s and \n" "$(hostname)" "$GURU_ACCESS_DOMAIN"
     printf " pull       copy configuration files from access point server \n"
     printf " push       copy configuration files to access point server \n"
     printf " install    install requirements \n"
     printf "\nexample:"
-    printf "    %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_USER" "$USER" "$GURU_ACCESS_POINT"
+    printf "    %s remote mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_USERNAME" "$USER" "$GURU_ACCESS_DOMAIN"
 }
 
 
@@ -33,22 +35,37 @@ remote.warning () {
 }
 
 
+remote.online() {
+
+    local _user="$GURU_ACCESS_USERNAME"
+    local _server="$GURU_ACCESS_LAN_IP" ; [[ "$1" ]] && _server="$1" ; shift  
+    local _server_port="$GURU_ACCESS_LAN_PORT" ; [[ "$1" ]] && _server_port="$1" ; shift  
+
+    if ssh -q -p "$_server_port" "$_user@$_server" exit ; then
+        [[ "$GURU_VERBOSE" ]] && ONLINE "$_server"
+        return 0
+    else
+        [[ "$GURU_VERBOSE" ]] && OFFLINE "$_server"
+        return 132
+    fi
+}
+
+
 remote.check() {
 
-    local user="$GURU_CLOUD_NEAR_USER"
-    local server="$GURU_CLOUD_NEAR"                                            # assume that server is in local network
-    local server_port="$GURU_CLOUD_NEAR_PORT"
+    local _user="$GURU_ACCESS_USERNAME"
+    local _server="$GURU_ACCESS_LAN_IP"                                            # assume that _server is in local network
+    local _server_port="$GURU_ACCESS_LAN_PORT"
 
-    msg "$user@$server status.. "
-    if ! ssh -q -p "$server_port" "$user@$server" exit ; then                  # check local server connection
-        msg "${YEL}local fileserver is not reachable.${NC} trying remote."
-        user="$GURU_CLOUD_FAR_USER"
-        server="$GURU_CLOUD_FAR"                                               # if no connection try remote server connection
-        server_port="$GURU_CLOUD_FAR_PORT"
-        msg "\n$user@$server status.. "
+    msg "$_user@$_server status.. "
+    if ! ssh -q -p "$_server_port" "$_user@$_server" exit ; then                  # check local _server connection
+        msg "${YEL}local file_server is not reachable.${NC} trying remote."        
+        _server="$GURU_ACCESS_DOMAIN"                                               # if no connection try remote _server connection
+        _server_port="$GURU_ACCESS_PORT"
+        msg "\n$_user@$_server status.. "
     fi
 
-    if ssh -q -p "$server_port" "$user@$server" exit ; then
+    if ssh -q -p "$_server_port" "$_user@$_server" exit ; then
         ONLINE
         return 0
     else
@@ -62,8 +79,8 @@ remote.pull_config() {
     msg "pulling configs.. "
     local _error=0
 
-    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_PORT" \
-        "$GURU_ACCESS_POINT_USER@$GURU_ACCESS_POINT:/home/$GURU_ACCESS_POINT_USER/usr/$GURU_HOSTNAME/$GURU_USER/" \
+    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
+        "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/" \
         "$GURU_CFG/$GURU_USER"
     _error=$?
 
@@ -80,17 +97,17 @@ remote.push_config() {
     msg "pushing configs.. "
     local _error=0
 
-    ssh "$GURU_ACCESS_POINT_USER@$GURU_ACCESS_POINT" \
-        -p "$GURU_ACCESS_POINT_PORT" \
-        ls "/home/$GURU_ACCESS_POINT_USER/usr/$GURU_HOSTNAME/$GURU_USER" >/dev/null 2>&1 || \
+    ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
+        -p "$GURU_ACCESS_PORT" \
+        ls "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER" >/dev/null 2>&1 || \
 
-    ssh "$GURU_ACCESS_POINT_USER@$GURU_ACCESS_POINT" \
-        -p "$GURU_ACCESS_POINT_PORT" \
-        mkdir -p "/home/$GURU_ACCESS_POINT_USER/usr/$GURU_HOSTNAME/$GURU_USER"
+    ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
+        -p "$GURU_ACCESS_PORT" \
+        mkdir -p "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER"
 
-    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_POINT_PORT" \
+    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
         "$GURU_CFG/$GURU_USER/" \
-        "$GURU_ACCESS_POINT_USER@$GURU_ACCESS_POINT:/home/$GURU_ACCESS_POINT_USER/usr/$GURU_HOSTNAME/$GURU_USER/"
+        "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/"
 
     _error=$?
     if ((_error<9)) ; then

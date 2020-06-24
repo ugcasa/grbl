@@ -19,6 +19,7 @@ source $GURU_BIN/config.sh
 source $GURU_BIN/functions.sh               # quick try outs TODO remove need of this
 source $GURU_BIN/mount.sh                   # needed to keep track tiles up to date
 source $GURU_BIN/lib/common.sh              # TODO remove need of this
+source $GURU_BIN/corsair.sh                 # TODO name corsair -> status later
 
 
 main.parser () {                                                                        # main command parser
@@ -26,12 +27,13 @@ main.parser () {                                                                
     export GURU_CMD="$tool"                                                             # Store tool call name to other functions
     export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
 
+    #echo "GURU_VERBOSE: $GURU_VERBOSE"
+
     case "$tool" in
-                         start)  pkill corsair.sh ; $GURU_BIN/corsair.sh status &   ;;  # start guru daemon
-                          stop)  touch "$HOME/.guru-stop"
-                                 echo "rgb ffffffff" > "/tmp/ckbpipe001"
-                                 echo "rgb ffffffff" > "/tmp/ckbpipe002"
-                                ;;  # stop guru daemon
+                         start)  corsair.main status &                              ;;  # start guru daemon
+                          stop)  touch "$HOME/.guru-stop"                               # stop guru daemon
+                                 echo "rgb ffffffff" > "/tmp/ckbpipe001"            ;   # bubblecum, clean later
+                                 echo "rgb ffffffff" > "/tmp/ckbpipe002"            ;;  # bubblecum, clean later                                                                                      
 
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
                 trans|tor|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes
