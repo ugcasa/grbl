@@ -26,14 +26,19 @@ main.parser () {                                                                
     tool="$1"; shift                                                                    # store tool call name and shift arguments left
     export GURU_CMD="$tool"                                                             # Store tool call name to other functions
     export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
-
-    #echo "GURU_VERBOSE: $GURU_VERBOSE"
-
+    
+    
+    
     case "$tool" in
-                         start)  corsair.main status &                              ;;  # start guru daemon
-                          stop)  touch "$HOME/.guru-stop"                               # stop guru daemon
-                                 echo "rgb ffffffff" > "/tmp/ckbpipe001"            ;   # bubblecum, clean later
-                                 echo "rgb ffffffff" > "/tmp/ckbpipe002"            ;;  # bubblecum, clean later                                                                                      
+                         start)  
+                                local _old_daemon_pid=$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)
+                                export GURU_DAEMON_PID="$$"
+
+                                [[ "$_old_daemon_pid" ]] && kill -9 "$_old_daemon_pid" 
+                                corsair.main status &            ;;              # start guru daemon
+                          
+                          stop) [[ -f $GURU_SYSTEM_MOUNT/.daemon-pid ]] && rm -f "$GURU_SYSTEM_MOUNT/.daemon-pid"
+                                touch "$HOME/.guru-stop"               ;;              # stop guru daemon                                                                         
 
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
                 trans|tor|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes
