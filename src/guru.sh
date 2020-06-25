@@ -34,13 +34,13 @@ main.parser () {                                                                
     
     
     case "$tool" in
-                         start) gmsg -v 1 "starting daemon.."
-                                local _old_daemon_pid=$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)
-                                [[ "$_old_daemon_pid" ]] && kill -9 "$_old_daemon_pid" 
-                                corsair.main status &            ;;              # start guru daemon
+                         start)  gmsg -v 1 "starting daemon.."
+                                 [[ -f $GURU_SYSTEM_MOUNT/.daemon-pid ]] || echo > "$GURU_SYSTEM_MOUNT/.daemon-pid"
+                                 local _old_daemon_pid=$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)
+                                 [[ "$_old_daemon_pid" ]] && kill -9 "$_old_daemon_pid" 
+                                 corsair.main status &            ;;              # start guru daemon
                           
-                          stop) [[ -f $GURU_SYSTEM_MOUNT/.daemon-pid ]] && rm -f "$GURU_SYSTEM_MOUNT/.daemon-pid"
-                                touch "$HOME/.guru-stop"               ;;              # stop guru daemon                                                                         
+                          stop)  touch "$HOME/.guru-stop"               ;;              # stop guru daemon                                                                         
 
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
                 trans|tor|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes
