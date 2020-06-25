@@ -5,6 +5,10 @@
 export GURU_VERSION="0.5.2.9"
 export GURU_HOSTNAME="$(hostname)"
 
+# daemon pollers: 
+# while true ; do ps auxf |grep "guru" |grep "start" |grep -v "color=auto" ; sleep 1 ; clear ; done
+# while true ; do ls .guru-stop ; sleep 1 ; clear ; done
+# while true ; do cat $GURU_SYSTEM_MOUNT/.daemon-pid ; sleep 2 ; clear ; done
 
 source ~/.gururc
 source ~/.gururc2
@@ -30,10 +34,8 @@ main.parser () {                                                                
     
     
     case "$tool" in
-                         start)  
+                         start) gmsg -v 1 "starting daemon.."
                                 local _old_daemon_pid=$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)
-                                export GURU_DAEMON_PID="$$"
-
                                 [[ "$_old_daemon_pid" ]] && kill -9 "$_old_daemon_pid" 
                                 corsair.main status &            ;;              # start guru daemon
                           
