@@ -31,8 +31,6 @@ main.parser () {                                                                
     export GURU_CMD="$tool"                                                             # Store tool call name to other functions
     export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
 
-
-
     case "$tool" in
                          start)  daemon.main start guru-daemon          ; return $? ;;  # second parameter is a name for process
                           stop)  touch "$HOME/.guru-stop"               ;;              # stop guru daemon

@@ -8,7 +8,8 @@ mount.main () {                         # mount command parser
 
     argument="$1"; shift
     case "$argument" in
-                     all)   mount.defaults                                     ; return $? ;;
+               start|end)   echo "mount.sh: no $argument function"              ; return 0 ;;
+                     all)   mount.defaults                                      ; return $? ;;
                       ls)   mount.list                                          ; return $? ;;
                     info)   mount.info | column -t -s $' '                      ; return $? ;;
                   status)   mount.status                                        ; return $? ;;
