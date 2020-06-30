@@ -1,17 +1,45 @@
 #!/bin/bash
 # sshfs mount functions for guru tool-kit
 source $GURU_BIN/lib/common.sh
+source $GURU_BIN/corsair.sh
+
 
 remote.main() {
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
-
+    source $GURU_BIN/corsair.sh
     command="$1"; shift
     case "$command" in
               push|pull)    remote.$command"_config"    ; return $? ;;
              check|help)    remote.$command "$@"        ; return $? ;;
+       status|start|end)    remote.$command             ; return $? ;;
          install|remove)    remote.needed "$command"    ; return $? ;;
                       *)    remote.help ;;
         esac
+}
+
+
+remote.end () {                        # return normal, assuming that while is normal
+    gmsg -v 1 -t "F2 ${WHT}WHITE${NC}"
+    corsair.write $F2 $_WHITE
+}
+
+
+remote.start () {                      # set leds  F1 -> F4 off
+    gmsg -v 1 -t "F2 OFF"
+    corsair.write $F2 $_OFF
+}
+
+
+remote.status () {
+
+    # check remote is reachable. daemon poller will run this
+    if remote.online ; then
+            corsair.write $F2 $_GREEN ; gmsg -v 1 -t "F2 ${GRN}GREEN${NC}"
+        elif remote.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
+            corsair.write $F2 $_YELLOW ; gmsg -v 1 -t "F2 ${YEL}YELLOW${NC}"
+        else
+            corsair.write $F2 $_RED ; gmsg -v 1 -t "F2 ${RED}RED${NC}"
+        fi
 }
 
 
