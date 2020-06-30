@@ -5,7 +5,7 @@
 export GURU_VERSION="0.5.2.9"
 export GURU_HOSTNAME="$(hostname)"
 
-# daemon pollers: 
+# daemon pollers:
 # while true ; do ps auxf |grep "guru" |grep "start" |grep -v "color=auto" ; sleep 1 ; clear ; done
 # while true ; do ls .guru-stop ; sleep 1 ; clear ; done
 # while true ; do cat $GURU_SYSTEM_MOUNT/.daemon-pid ; sleep 2 ; clear ; done
@@ -23,24 +23,19 @@ source $GURU_BIN/config.sh
 source $GURU_BIN/functions.sh               # quick try outs TODO remove need of this
 source $GURU_BIN/mount.sh                   # needed to keep track tiles up to date
 source $GURU_BIN/lib/common.sh              # TODO remove need of this
-source $GURU_BIN/corsair.sh                 # TODO name corsair -> status later
+source $GURU_BIN/guru-daemon.sh             #
 
 
 main.parser () {                                                                        # main command parser
     tool="$1"; shift                                                                    # store tool call name and shift arguments left
     export GURU_CMD="$tool"                                                             # Store tool call name to other functions
     export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
-    
-    
-    
+
+
+
     case "$tool" in
-                         start)  gmsg -v 1 "starting daemon.."
-                                 [[ -f $GURU_SYSTEM_MOUNT/.daemon-pid ]] || echo > "$GURU_SYSTEM_MOUNT/.daemon-pid"
-                                 local _old_daemon_pid=$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)
-                                 [[ "$_old_daemon_pid" ]] && kill -9 "$_old_daemon_pid" 
-                                 corsair.main status &            ;;              # start guru daemon
-                          
-                          stop)  touch "$HOME/.guru-stop"               ;;              # stop guru daemon                                                                         
+                         start)  daemon.main start guru-daemon          ; return $? ;;  # second parameter is a name for process
+                          stop)  touch "$HOME/.guru-stop"               ;;              # stop guru daemon
 
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
                 trans|tor|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes

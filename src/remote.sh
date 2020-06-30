@@ -38,14 +38,14 @@ remote.warning () {
 remote.online() {
 
     local _user="$GURU_ACCESS_USERNAME"
-    local _server="$GURU_ACCESS_LAN_IP" ; [[ "$1" ]] && _server="$1" ; shift  
-    local _server_port="$GURU_ACCESS_LAN_PORT" ; [[ "$1" ]] && _server_port="$1" ; shift  
+    local _server="$GURU_ACCESS_LAN_IP" ; [[ "$1" ]] && _server="$1" ; shift
+    local _server_port="$GURU_ACCESS_LAN_PORT" ; [[ "$1" ]] && _server_port="$1" ; shift
 
     if ssh -q -p "$_server_port" "$_user@$_server" exit ; then
-        [[ "$GURU_VERBOSE" ]] && ONLINE "$_server"
+        gmsg -v 1 "$(ONLINE "$_server")"
         return 0
     else
-        [[ "$GURU_VERBOSE" ]] && OFFLINE "$_server"
+        gmsg -v 1  $(OFFLINE "$_server")
         return 132
     fi
 }
@@ -59,7 +59,7 @@ remote.check() {
 
     msg "$_user@$_server status.. "
     if ! ssh -q -p "$_server_port" "$_user@$_server" exit ; then                  # check local _server connection
-        msg "${YEL}local file_server is not reachable.${NC} trying remote."        
+        msg "${YEL}local file_server is not reachable.${NC} trying remote."
         _server="$GURU_ACCESS_DOMAIN"                                               # if no connection try remote _server connection
         _server_port="$GURU_ACCESS_PORT"
         msg "\n$_user@$_server status.. "
