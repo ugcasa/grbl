@@ -41,7 +41,7 @@ remote.online() {
     local _server="$GURU_ACCESS_LAN_IP" ; [[ "$1" ]] && _server="$1" ; shift
     local _server_port="$GURU_ACCESS_LAN_PORT" ; [[ "$1" ]] && _server_port="$1" ; shift
 
-    if ssh -q -p "$_server_port" "$_user@$_server" exit ; then
+    if ssh -o ConnectTimeout=3 -q -p "$_server_port" "$_user@$_server" exit ; then
         gmsg -v 1 "$(ONLINE "$_server")"
         return 0
     else

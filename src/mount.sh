@@ -137,12 +137,13 @@ mount.check () {                        # check mountpoint is mounted, output st
     mount.online "$_target_folder" ; _err=$?
 
     if [[ $_err -gt 0 ]] ; then
-            gmsg -v 1 $OFFLINE
+            gmsg -v 1 "$OFFLINE"
             return 1
         fi
-    gmsg -v 1 $MOUNTED
+    gmsg -v 1 "$MOUNTED"
     return 0
 }
+
 
 mount.remote () {                       # mount remote location
     # input remote_foder and mount_point
@@ -153,14 +154,14 @@ mount.remote () {                       # mount remote location
     if [[ "$2" ]] ; then _target_folder="$2"; else read -r -p "input target mount point: " _target_folder ; fi
 
     if mount.online "$_target_folder"; then
-            ONLINE "$_target_folder"                                        # already mounted
+            gmsg -v 1 "$_target_folder $ONLINE"                                        # already mounted
             return 0
         fi
 
     # TODO important: clean-up messy and unclear now, can cause file losses
 
     if [[ "$(ls -A $_target_folder >/dev/null 2>&1)" ]] ; then                              # Check that targed directory is empty
-            WARNING "$_target_folder is not empty\n"
+            gmsg -v 1 "$WARNING $_target_folder is not empty"
 
             if [[ $GURU_FORCE ]] ; then
                     local _reply=""
@@ -174,7 +175,7 @@ mount.remote () {                       # mount remote location
                                 fi
 
                         else
-                            ERROR "unable to mount $_target_folder, mount point contains files\n"
+                            gmsg -v 1 "$ERROR: unable to mount $_target_folder, mount point contains files"
                             return 25
                         fi
                 else
@@ -203,15 +204,16 @@ mount.remote () {                       # mount remote location
     error=$?
 
     if ((error>0)) ; then
-            WARNING "source folder not found, check $GURU_USER_RC\n"
+            gmsg -v 1 "$WARNING source folder not found, check $GURU_USER_RC"
             [[ -d "$_target_folder" ]] && rmdir "$_target_folder"
             return 25
         else
             [[ -f "$_target_folder/.online" ]] && touch "$_target_folder/.online"
-            MOUNTED
+            gmsg -v 1 "$MOUNTED"
             return 0                                                         # && echo "mounted $server:$_source_folder to $_target_folder" || error="$
         fi
 }
+
 
 unmount.remote () {                     # unmount mountpoint
 
@@ -224,12 +226,12 @@ unmount.remote () {                     # unmount mountpoint
     fi
 
     if ! mount.online "$_mountpoint" ; then
-            IGNORED "$_mountpoint is not mounted"
+            gmsg -v 1 "$_mountpoint is not mounted $IGNORED"
             return 0
         fi
 
     if fusermount -u "$_mountpoint" ; then
-            UNMOUNTED "$_mountpoint"
+            gmsg -v 1 "$_mountpoint $UNMOUNTED"
             return 0
         fi
 
@@ -239,15 +241,15 @@ unmount.remote () {                     # unmount mountpoint
             printf "force unmount.. "
             if fusermount -u "$_mountpoint" ; then
 
-                    UNMOUNTED "$_mountpoint force"
+                    gmsg -v 1 "$_mountpoint force $UNMOUNTED"
                     return 0
                 else
                     if sudo fusermount -u "$_mountpoint" ; then
-                            UNMOUNTED "$_mountpoint SUDO FORCE"
+                            gmsg -v 1 "$_mountpoint SUDO FORCE $UNMOUNTED"
                             return 0
                         else
-                            FAILED "$_mountpoint SUDO FORCE unmount"
-                            WARNING "seems that some of open program like terminal or editor is blocking unmount, try to close those first\n"
+                            gmsg -v 0 "$FAILED: $_mountpoint SUDO FORCE unmount"
+                            gmsg -v 1 "$WARNING: seems that some of open program like terminal or editor is blocking unmount, try to close those first\n"
                             return 1
                     fi
             fi
@@ -255,6 +257,7 @@ unmount.remote () {                     # unmount mountpoint
 
     return 0
 }
+
 
 mount.defaults () {                     # mount all GURU_CLOUD_* defined in userrc
     # mount all local/cloud pairs defined in userrc
@@ -268,12 +271,13 @@ mount.defaults () {                     # mount all GURU_CLOUD_* defined in user
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        msg "${_item,,} "
+        gmsg "${_item,,} "
         mount.remote "$_source" "$_target" || _error=$?
     done
 
     return $_error
 }
+
 
 unmount.defaults () {                   # unmount all GURU_CLOUD_* defined in userrc
     # unmount all local/cloud pairs defined in userrc
@@ -281,12 +285,13 @@ unmount.defaults () {                   # unmount all GURU_CLOUD_* defined in us
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        msg "${_item,,} "
+        gmsg "${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
 
     return $_error
 }
+
 
 mount.known_remote () {                 # mount single GURU_CLOUD_* defined in userrc
 
@@ -297,11 +302,13 @@ mount.known_remote () {                 # mount single GURU_CLOUD_* defined in u
     return $?
 }
 
+
 unmount.known_remote () {               # unmount single GURU_CLOUD_* defined in userrc
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
     unmount.remote "$_target"
     return $?
 }
+
 
 mount.install () {                      # install needed software
     #install and remove install applications. input "install" or "remove"
@@ -312,6 +319,7 @@ mount.install () {                      # install needed software
     sudo apt update && eval sudo apt "$action" "$require" && printf "\n guru is now ready to mount\n\n"
     return 0
 }
+
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then    # if sourced only import functions
         # GURU_VERBOSE=1

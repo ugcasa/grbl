@@ -63,39 +63,39 @@ export -f gmsg
 
 
 if [[ "$GURU_TERMINAL_COLOR" ]] ; then
-    export RED='\033[0;31m'
-    export GRN='\033[0;32m'
-    export YEL='\033[1;33m'
-    export WHT='\033[1;37m'
-    export CRY='\033[0;37m'
-    export CYA='\033[0;96m'
-    export BLU='\033[0;34m'
-    export BRN='\033[0;33m'
-    export BLK='\033[0;90m'
-    export NC='\033[0m'
+    export RED=$(printf '\033[0;31m')
+    export GRN=$(printf '\033[0;32m')
+    export YEL=$(printf '\033[1;33m')
+    export WHT=$(printf '\033[1;37m')
+    export CRY=$(printf '\033[0;37m')
+    export CYA=$(printf '\033[0;96m')
+    export BLU=$(printf '\033[0;34m')
+    export BRN=$(printf '\033[0;33m')
+    export BLK=$(printf '\033[0;90m')
+    export NC=$(printf '\033[0m')
 fi
 
 
-export OK="${GRN}OK${NC}\n"
-export PASSED="${GRN}PASSED${NC}\n"
-export READY="${GRN}READY${NC}\n"
-export DONE="${GRN}DONE${NC}\n"
-export UPTODATE="${GRN}UPTODATE${NC}\n"
-export EXIST="${GRN}EXIST${NC}\n"
-export NOTEXIST="${RED}DOES NOT EXIST${NC}\n"
-export UPDATED="${GRN}UPDATED${NC}\n"
-export MOUNTED="${GRN}MOUNTED${NC}\n"
-export SUCCESS="${GRN}SUCCEEDED${NC}\n"
-export UNMOUNTED="${BLU}UN-MOUNTED${NC}\n"
-export IGNORED="${BRN}IGNORED${NC}\n"
-export FAILED="${RED}FAILED${NC}\n"
-export ERROR="${YEL}ERROR${NC}"
-export WARNING="${YEL}WARNING${NC}"
-export ONLINE="${GRN}ONLINE${NC}\n"
-export OFFLINE="${BLU}OFFLINE${NC}\n"
-export NOTFOUND="${BLU}NOT FOUND${NC}\n"
-export REMOVED="${BLU}REMOVED${NC}\n"
-export UNKNOWN="${WHT}UNKNOWN${NC}\n"
+export OK=$(printf "${GRN}OK${NC}\n")
+export PASSED=$(printf "${GRN}PASSED${NC}\n")
+export READY=$(printf "${GRN}READY${NC}\n")
+export DONE=$(printf "${GRN}DONE${NC}\n")
+export UPTODATE=$(printf "${GRN}UPTODATE${NC}\n")
+export EXIST=$(printf "${GRN}EXIST${NC}\n")
+export NOTEXIST=$(printf "${RED}DOES NOT EXIST${NC}\n")
+export UPDATED=$(printf "${GRN}UPDATED${NC}\n")
+export MOUNTED=$(printf "${GRN}MOUNTED${NC}\n")
+export SUCCESS=$(printf "${GRN}SUCCEEDED${NC}\n")
+export UNMOUNTED=$(printf "${BLU}UN-MOUNTED${NC}\n")
+export IGNORED=$(printf "${BRN}IGNORED${NC}\n")
+export FAILED=$(printf "${RED}FAILED${NC}\n")
+export ERROR=$(printf "${YEL}ERROR${NC}")
+export WARNING=$(printf "${YEL}WARNING${NC}")
+export ONLINE=$(printf "${GRN}ONLINE${NC}\n")
+export OFFLINE=$(printf "${BLU}OFFLINE${NC}\n")
+export NOTFOUND=$(printf "${BLU}NOT FOUND${NC}\n")
+export REMOVED=$(printf "${BLU}REMOVED${NC}\n")
+export UNKNOWN=$(printf "${WHT}UNKNOWN${NC}\n")
 
 
 HEADER() {          gmsg "$(printf ${WHT})$1$(printf ${NC})" ; }
