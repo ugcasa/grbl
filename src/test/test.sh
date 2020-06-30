@@ -61,15 +61,17 @@ test.tool() {
     [ "$1" ] && _tool="$1" || read -r -p "input tool name to test: " _tool
     [ "$2" ] && _case="$2" || _case="all"
 
-    _test_id=$(counter.main add guru-shell_test_id)
-    msg "\n${WHT}TEST $_test_id: guru-shell $_tool #$_case - $(date)\n${NC}"
+    _test_id=$(counter.main get guru-shell_test_id)
+    counter.main add guru-shell_test_id
+    echo
+    HEADER "TEST $_test_id: guru-shell $_tool #$_case - $(date)"
 
     if [ -f "$GURU_BIN/$_tool.sh" ]; then
                 _lang="sh"
     elif [ -f "$GURU_BIN/$_tool.py" ]; then
                 _lang="py"
         else
-                msg "tool '$_tool' not found\n"
+                gmsg "tool '$_tool' not found\n"
                 TEST_FAILED "TEST $_test_id $_tool"
                 return 10
         fi
@@ -85,10 +87,10 @@ test.tool() {
         fi
 
     if ((_error<1)) ; then
-             TEST_PASSED "TEST $_test_id $_tool.$_lang"
+            TEST_PASSED "TEST $_test_id $_tool.$_lang"
             return 0
         else
-             TEST_FAILED "TEST $_test_id $_tool.$_lang"
+            TEST_FAILED "TEST $_test_id $_tool.$_lang"
             return $_error
         fi
 }

@@ -23,7 +23,8 @@ counter.main () {
 						return 72
 					fi
 					id=$(($(cat $id_file)))
-					echo $id
+					echo "$id"
+					return 0
 					;;
 
 				add|inc)
@@ -31,11 +32,14 @@ counter.main () {
 					[[ "$value" ]] && up="$value" || up=1
 					id=$(($(cat $id_file)+$up))
 					echo "$id" >"$id_file"
+					gmsg -v 1 "$id"
+					return 0
 					;;
 
 				set)
 					[[ -z "$value" ]] && id=0 || id=$value
 					[[ -f "$id_file" ]] && echo "$id" >"$id_file"
+					return 0
 					;;
 
 				rm)

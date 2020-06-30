@@ -8,7 +8,7 @@ mount.main () {                         # mount command parser
 
     argument="$1"; shift
     case "$argument" in
-               start|end)   echo "mount.sh: no $argument function"              ; return 0 ;;
+               start|end)   gmsg -v 1 "mount.sh: no $argument function"         ; return 0 ;;
                      all)   mount.defaults                                      ; return $? ;;
                       ls)   mount.list                                          ; return $? ;;
                     info)   mount.info | column -t -s $' '                      ; return $? ;;
@@ -77,12 +77,10 @@ mount.help-default () {                 # printout instructions to set/use GURU_
 }
 
 mount.status () {                       # check status of GURU_CLOUD_* mountpoints defined in userrc
-    local _verbose=$GURU_VERBOSE ; GURU_VERBOSE=true
     local _active_mount_points=$(mount.list)
     for _mount_point in ${_active_mount_points[@]}; do
         mount.check $_mount_point
         done
-    GURU_VERBOSE=$_verbose
     return 0
 }
 
@@ -131,21 +129,18 @@ mount.online () {                       # check if mountpoint "online", no print
 
 mount.check () {                        # check mountpoint is mounted, output status
     # check mountpoint status with putput
-    local _verbose=$GURU_VERBOSE ; GURU_VERBOSE=true
     local _target_folder="$1"
     local _err=0
     [[ "$_target_folder" ]] || _target_folder="$GURU_SYSTEM_MOUNT"
 
-    msg "$_target_folder status "
+    gmsg -n -v 1 "$_target_folder status "
     mount.online "$_target_folder" ; _err=$?
 
     if [[ $_err -gt 0 ]] ; then
-            OFFLINE
-            GURU_VERBOSE=$_verbose
+            gmsg -v 1 $OFFLINE
             return 1
         fi
-    MOUNTED
-    GURU_VERBOSE=$_verbose
+    gmsg -v 1 $MOUNTED
     return 0
 }
 

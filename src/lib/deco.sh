@@ -21,37 +21,38 @@ export -f msg
 
 gmsg() {  # function for ouput messages and make log notifications - revisited
 
+    # default
     local _verbose_trigger=0                        # prinout if verbose trigger is not set in options
     local _timestamp=                               # timestamp is disabled by default
     local _message=                                 # message container
     local _logging=                                 # logging is disabled by default
+    local _newline="\n"
 
-    TEMP=`getopt --long -o "tlv:" "$@"`
+    TEMP=`getopt --long -o "tlnv:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
-            -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;            
-            -l ) _logging=true                              ; shift ;;            
-            -v ) _verbose_trigger=$2                        ; shift 2 ;;            
-             * ) break                                      ;;
+            -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
+            -l ) _logging=true                              ; shift ;;
+            -n ) _newline=                                  ; shift ;;
+            -v ) _verbose_trigger=$2                        ; shift 2 ;;
+            -c ) _color=$2                                  ; shift 2 ;;
+             * ) break
         esac
-    done;
-
+    done
     # printf  "\ntrigger: $_verbose_trigger \nlogging: $_logging \ntimestamp: $_timestamp \nVERBOSE: $GURU_VERBOSE \n"
 
     # check message
     local _arg="$@"
     [[ "$_arg" != "--" ]] && _message="${_arg#* }"       # there were reason for this
     [[ "$_message" ]] || return 0                        # no message; return
-    
-    # echo "message: $_message"
 
     # print to stdout
-    if  [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then printf "%s%s\n" "$_timestamp" "$_message" ; fi                  # print out if verbose set
+    if  [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then printf "%s%s$_newline" "$_timestamp" "$_message" ; fi                  # print out if verbose set
 
-    # logging 
+    # logging
     if [[ "$LOGGING" ]] || [[ "$_logging" ]] ; then                          # log without colorcodes ets.
-        [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] || return 0                        # check that system mount is online before logging    
+        [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] || return 0                        # check that system mount is online before logging
         [[ -f "$GURU_LOG" ]] || return 0                                     # log inly is log exist (hmm.. this not really neede)
         printf "$@" | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
     fi
@@ -97,28 +98,28 @@ export REMOVED="${BLU}REMOVED${NC}\n"
 export UNKNOWN="${WHT}UNKNOWN${NC}\n"
 
 
-HEADER() {          msg "${WHT}$1${WHT}" ; }
-OK() {              [[ "$1" ]] && msg "${WHT}$1 $OK"  || msg "$OK" ; }
-DONE() {            [[ "$1" ]] && msg "$1 $DONE"      || msg "$DONE" ; }
-READY() {           [[ "$1" ]] && msg "$1 $READY"     || msg "$READY" ; }
-PASSED() {          [[ "$1" ]] && msg "$1 $PASSED"    || msg "$PASSED" ; }
-ONLINE() {          [[ "$1" ]] && msg "$1 $ONLINE"    || msg "$ONLINE" ; }
-UPDATED() {         [[ "$1" ]] && msg "$1 $UPDATED"   || msg "$UPDATED" ; }
-SUCCESS() {         [[ "$1" ]] && msg "$1 $SUCCESS"   || msg "$SUCCESS" ; }
-IGNORED() {         [[ "$1" ]] && msg "$1 $IGNORED"   || msg "$IGNORED" ; }
-EXIST() {           [[ "$1" ]] && msg "$1 $EXIST"     || msg "$EXIST" ; }
-NOTEXIST() {        [[ "$1" ]] && msg "$1 $NOTEXIST"  || msg "$NOTEXIST" ; }
-MOUNTED() {         [[ "$1" ]] && msg "$1 $MOUNTED"   || msg "$MOUNTED" ; }
-OFFLINE() {         [[ "$1" ]] && msg "$1 $OFFLINE"   || msg "$OFFLINE" ; }
-UNKNOWN() {         [[ "$1" ]] && msg "$1 $UNKNOWN"   || msg "$UNKNOWN" ; }
-REMOVED() {         [[ "$1" ]] && msg "$1 $REMOVED"   || msg "$REMOVED" ; }
-UPTODATE() {        [[ "$1" ]] && msg "$1 $UPTODATE"  || msg "$UPTODATE" ; }
-NOTFOUND() {        [[ "$1" ]] && msg "$1 $NOTFOUND"  || msg "$NOTFOUND" ; }
-UNMOUNTED() {       [[ "$1" ]] && msg "$1 $UNMOUNTED" || msg "$UNMOUNTED" ; }
-ERROR() {           [[ "$1" ]] && msg "$ERROR ${WHT}$1"      || msg "$ERROR" ; }
-WARNING() {         [[ "$1" ]] && msg "$WARNING ${WHT}$1"    || msg "$WARNING" ; }
-FAILED() {          [[ "$1" ]] && msg "${WHT}$1: $FAILED"    || msg "$FAILED" ; }
-TEST_IGNORED() {    [[ "$1" ]] && msg "${WHT}$1 test is $IGNORED" || msg "${WHT}test resul is $IGNORED" ; return 1 ; }
-TEST_FAILED() {     [[ "$1" ]] && msg "${WHT}$1 test result is: $FAILED" || msg "${WHT}test resul is: $FAILED" ; return 100 ; }
-TEST_PASSED() {     [[ "$1" ]] && msg "${WHT}$1 test result is: $PASSED" || msg "${WHT}test resul is: $PASSED" ; return 0 ; }
+HEADER() {          gmsg "$(printf ${WHT})$1$(printf ${NC})" ; }
+OK() {              [[ "$1" ]] && gmsg "$(printf ${WHT}$1 $OK)"  || gmsg "$(printf $OK)" ; }
+DONE() {            [[ "$1" ]] && gmsg "$1 $(printf $DONE)"      || gmsg "$(printf $DONE)" ; }
+READY() {           [[ "$1" ]] && gmsg "$1 $(printf $READY)"     || gmsg "$(printf $READY)" ; }
+PASSED() {          [[ "$1" ]] && gmsg "$1 $(printf $PASSED)"    || gmsg "$(printf $PASSED)" ; }
+ONLINE() {          [[ "$1" ]] && gmsg "$1 $(printf $ONLINE)"    || gmsg "$(printf $ONLINE)" ; }
+UPDATED() {         [[ "$1" ]] && gmsg "$1 $(printf $UPDATED)"   || gmsg "$(printf $UPDATED)" ; }
+SUCCESS() {         [[ "$1" ]] && gmsg "$1 $(printf $SUCCESS)"   || gmsg "$(printf $SUCCESS)" ; }
+IGNORED() {         [[ "$1" ]] && gmsg "$1 $(printf $IGNORED)"   || gmsg "$(printf $IGNORED)" ; }
+EXIST() {           [[ "$1" ]] && gmsg "$1 $(printf $EXIST)"     || gmsg "$(printf $EXIST)" ; }
+NOTEXIST() {        [[ "$1" ]] && gmsg "$1 $(printf $NOTEXIST)"  || gmsg "$(printf $NOTEXIST)" ; }
+MOUNTED() {         [[ "$1" ]] && gmsg "$1 $(printf $MOUNTED)"   || gmsg "$(printf $MOUNTED)" ; }
+OFFLINE() {         [[ "$1" ]] && gmsg "$1 $(printf $OFFLINE)"   || gmsg "$(printf $OFFLINE)" ; }
+UNKNOWN() {         [[ "$1" ]] && gmsg "$1 $(printf $UNKNOWN)"   || gmsg "$(printf $UNKNOWN)" ; }
+REMOVED() {         [[ "$1" ]] && gmsg "$1 $(printf $REMOVED)"   || gmsg "$(printf $REMOVED)" ; }
+UPTODATE() {        [[ "$1" ]] && gmsg "$1 $(printf $UPTODATE)"  || gmsg "$(printf $UPTODATE)" ; }
+NOTFOUND() {        [[ "$1" ]] && gmsg "$1 $(printf $NOTFOUND)"  || gmsg "$(printf $NOTFOUND)" ; }
+UNMOUNTED() {       [[ "$1" ]] && gmsg "$1 $(printf $UNMOUNTED)" || gmsg "$(printf $UNMOUNTED)" ; }
+ERROR() {           [[ "$1" ]] && gmsg "$(printf $ERROR ${WHT})$1"      || gmsg "$(printf $ERROR)" ; }
+WARNING() {         [[ "$1" ]] && gmsg "$(printf $WARNING ${WHT})$1"    || gmsg "$(printf $WARNING)" ; }
+FAILED() {          [[ "$1" ]] && gmsg "$(printf ${WHT})$1: $(printf $FAILED)"    || gmsg "$(printf $FAILED)" ; }
+TEST_IGNORED() {    [[ "$1" ]] && gmsg "$(printf ${WHT})$1 test is $(printf $IGNORED)" || gmsg "$(printf ${WHT}test resul is $IGNORED)" ; return 1 ; }
+TEST_FAILED() {     [[ "$1" ]] && gmsg "$(printf ${WHT})$1 test result is: $(printf $FAILED)" || gmsg "$(printf ${WHT}test resul is: $FAILED)" ; return 100 ; }
+TEST_PASSED() {     [[ "$1" ]] && gmsg "$(printf ${WHT})$1 test result is: $(printf $PASSED)" || gmsg "$(printf ${WHT}test resul is: $PASSED)" ; return 0 ; }
 
