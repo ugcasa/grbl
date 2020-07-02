@@ -9,10 +9,11 @@ GURU_CFG=$HOME/.config/guru
 source src/lib/deco.sh                                          # include decorative functions
 source src/lib/os.sh                                            # include os functions
 source src/keyboard.sh                                          # include keyboard functions
-source src/counter.sh                                           # include counter
 
 target_rc="$HOME/.bashrc"                                       # environmental values rc file
 disabler_flag_file="$HOME/.gururc.disabled"                     # flag for disabling the rc file
+
+
 
 TEMP=`getopt --long -o "fu:" "$@"`
 eval set -- "$TEMP"
@@ -26,43 +27,43 @@ done;
 _arg="$@"
 [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
 
-
-
-case "$1" in                                                    # simple location pased argument parser
-    help)
-            echo "-- guru tool-kit istall help -----------------------------------------------"
-            printf "\nUsage:\n\t ./install.sh [argument] \n"
-            printf "\nArguments:\n\n"
-            printf " force             force re-install \n"
-            printf " desktop           desktop install for [ubuntu 18.04>, mint 19.1>19.3]\n"
-            printf " server            server install [ubuntu server 18.04>] \n\n"
-            ;;
-
+# main command parser                                           # TODO - re-write whole installer, this is bullshit
+case "$1" in
+       help)    echo "-- guru tool-kit istall help -----------------------------------------------"
+                printf "\nUsage:\n\t ./install.sh [argument] \n"
+                printf "\nArguments:\n\n"
+                printf " force             force re-install \n"
+                printf " desktop           desktop install for [ubuntu 18.04>, mint 19.1>19.3]\n"
+                printf " headless          server install [tested in_ubuntu server 18.04>] \n\n"
+                ;;
 esac
 
+# check is it currently installed
 if grep -q ".gururc" "$target_rc" ; then                                                            # already installed? reinstall?
     [[ $force_overwrite ]] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer
     if ! [[ "$answer" == "y" ]]; then
         echo "aborting.."
         exit 2
     fi
-
     [[ -f "$GURU_BIN/uninstall.sh" ]] && bash "$GURU_BIN/uninstall.sh" || echo "un-installer not found"
 fi
 
-[[ -f "$HOME/.bashrc.giobackup" ]] || cp -f "$target_rc" "$HOME/.bashrc.giobackup"                    # Make a backup of original .bashrc but only if installed first time
+# Make a backup of original .bashrc only if installed first time
+[[ -f "$HOME/.bashrc.giobackup" ]] || cp -f "$target_rc" "$HOME/.bashrc.giobackup"                  # todo: better method -> add lines to .bashrc file, uninstaller removes added lines
 grep -q ".gururc" "$target_rc" || cat ./src/tobashrc.sh >>"$target_rc"                              # Check is .gururc called from .bashrc, add call if not
 
-[[ -f "$disabler_flag_file" ]] && rm -f "$disabler_flag_file"
+[[ -f "$disabler_flag_file" ]] && rm -f "$disabler_flag_file"                                       # todo: remove disabler function
 
-cp -f ./src/gururc.sh "$HOME/.gururc"                                                               # create folder structure
+# create folder structure
+cp -f ./src/gururc.sh "$HOME/.gururc"                                                               # todo: user settings should be exported from default user.cfg not like this (stupid)
 source "$HOME/.gururc"                                                                              # rise default environmental variables
 
-[[ -d "$GURU_BIN" ]] || mkdir -p "$GURU_BIN"                                                          # make bin folder for script files
-[[ -d "$GURU_CFG" ]] || mkdir -p "$GURU_CFG"                                                          # make cfg folder for configuration files
-[[ -d "$GURU_APP" ]] || mkdir -p "$GURU_APP"
-[[ -d "$GURU_CFG/$GURU_USER" ]] || mkdir -p "$GURU_CFG/$GURU_USER"                                    # personal configurations
-cp -f ./cfg/* "$GURU_CFG"                                                                # copy configuration files to configuration folder
+[[ -d "$GURU_BIN" ]] || mkdir -p "$GURU_BIN"                                                        # make bin folder for script files
+[[ -d "$GURU_CFG" ]] || mkdir -p "$GURU_CFG"                                                        # make cfg folder for configuration files
+[[ -d "$GURU_APP" ]] || mkdir -p "$GURU_APP"                                                        # todo: remove app folder, not really in use
+[[ -d "$GURU_CFG/$GURU_USER" ]] || mkdir -p "$GURU_CFG/$GURU_USER"                                  # personal configurations
+
+cp -f ./cfg/* "$GURU_CFG"                                                                           # copy configuration files to configuration folder
 cp -f -r ./src/* -f "$GURU_BIN"                                                                     # copy script files to bin folder
 mv  "$GURU_BIN/guru.sh" "$GURU_BIN/guru"                                                            # rename guru.sh in bin folder to guru
 
@@ -82,15 +83,22 @@ if git clone "$_source" >/dev/null 2>&1 ; then
     fi
 
 
-if ! dpkg -l |grep xserver-xorg >/dev/null; then
-        counter.main add "guru-headless-installed" >/dev/null                                             # add installation counter
-
+if ! dpkg -l | grep xserver-xorg >/dev/null ; then                                                 # End here if no X installed
         echo "headless client successfully installed"
         exit 0
     fi
 
 platform=$(check_distro)                                                                            # check that distribution is compatible
 case "$platform" in                                                                                 # different dependent settings
+
+    debian)
+        case "$NAME" in
+            devuan*)
+                    exit 0                                                                          # nothing to do for now
+                    ;;
+                  *)                                                                                # debian based other thing
+            esac
+        ;;
 
     linuxmint)
         cinnamon_version=$(cinnamon --version |grep -o "[^ ]*$"|cut -f1 -d".")                      # check cinnamon main version number
@@ -106,7 +114,7 @@ case "$platform" in                                                             
         ;;
 
     ubuntu)
-        gnome_version=$(gnome-shell --version |grep -o "[^ ]*$"|cut -f1 -d".")                      # check gnome main version number
+        gnome_version=$(gnome-shell --version |grep -o "[^ ]*$"|cut -f1 -d".")                      # check gnome main version  number
         if [ "$gnome_version" -lt "3" ]; then                                                       # compatible with gnome version 3+
             echo "not valid version of gnome environment, exiting.."
             exit 2
@@ -115,7 +123,6 @@ case "$platform" in                                                             
             [[ -f /usr/bin/xclip ]] || sudo apt install xclip
             xterm -v >/dev/null || sudo apt install xterm                                           # check that xterm is installed
         fi
-
         keyboard.set_ubuntu_guru_shortcuts                                                          # add keyboard sort cuts for ubuntu
         ;;
 
@@ -124,7 +131,6 @@ case "$platform" in                                                             
         exit 4
 esac
 
-counter.main add guru-installed                                                                 # add installation counter
 echo "$(guru version) installed"                                                                       # all fine
 exit 0
 
