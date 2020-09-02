@@ -9,46 +9,54 @@ play.main () {
     argument="$1"; shift
     show_video="True"                                           # mpsyt believes only "True" with the capital t
     search_music="True"
-    mpsyt=true                                                  # bash uses true lover case
 
     case "$argument" in
-            install)            play.install $@ ;;
-            help|h)             play.help $@ ;;
-            stop|end)           play.silence $@ ;;
-            vt|text|ascii)      play.text $@ ;;
-            demo)               play.demo ;;
-            beer_break)         play.beer ;;
-            enter)              cvlc $GURU_LOCAL_AUDIO/system/enter.mp4 --play-and-exit; exit 0;;
-            song|biisi|kappale) to_play="/$@, 1, q"; show_video="False"; ;;
-            karaoke|lyrics)     to_play="/$@ lyrics, 1, q" ;;
-            video|youtube)      to_play="/$@, 1-, q"; search_music="False" ;;
-            album|albumi)       to_play="album $@, 1-, q" ;;
-            url|id)             to_play="url $@, 1, q" ;;
-            world-news|news)    to_play="url $(cat $GURU_CFG/news-live.pl)"; search_music="False" ;;
-            bg|backroung)       to_play="//$@, $((1 + RANDOM % 6)), 1-, q" ; show_video="False" ;;
-            music-video)        to_play="/$@, 1-, q" ;;
-            upgrade)            sudo -H pip3 install --upgrade youtube_dl
-                                sudo apt-get install mpv    # change mplayer to mpv to
-                                mpsyt set player mpv        # prevent player premature coetus interraptus
-                                exit $? ;;
-            something|random)   random=$(shuf -n1  /usr/share/dict/words)
-                                $GURU_CALL trans -b -p "$random"
-                                to_play="/$random, 1-, q"; show_video="False" ;;
-            jotain)
-                                random=$($GURU_CALL trans -b -p en:fi "$(shuf -n1 /usr/share/dict/words)")
-                                echo "$random"
-                                to_play="/$random, 1-, q"; show_video="False" ;;
-            "")                 to_play="/nyan cat, 1, q" ;;
-            *)                  to_play="/$argument $@, 1-, q"; show_video="False" ;;
+
+            beer|demo|help|install|upgrade)
+                                    play.$argument $@               ; return 0 ;;
+            stop|end)               play.silence $@                 ; return 0 ;;
+            vt|text|ascii)          play.text $@                    ; return 0 ;;
+            api_key)                play.set_api_key $@             ; return 0 ;;
+            url|id)                 to_play="url $@, 1, q"          ;;
+            music-video)            to_play="/$@, 1-, q"            ;;
+            karaoke|lyrics)         to_play="/$@ lyrics, 1, q"      ;;
+            album)                  to_play="album $@, 1-, q"       ;;
+            song)                   to_play="/$@, 1, q"                         ; show_video="False"    ;;
+            video|youtube)          to_play="/$@, 1-, q"                        ; search_music="False"  ;;
+            world-news|news)        to_play="url $(cat $GURU_CFG/news-live.pl)" ; search_music="False"  ;;
+            bg|backroung)           to_play="//$@, $((1 + RANDOM % 6)), 1-, q"  ; show_video="False"    ;;
+            enter)                  cvlc $GURU_LOCAL_AUDIO/system/enter.mp4 --play-and-exit ; exit 0    ;;
+
+            something|random)       random=$(shuf -n1  /usr/share/dict/words)
+                                    to_play="/$random, 1-, q"
+                                    show_video="False" ;;
+
+            jotain)                 random=$($GURU_CALL trans -b -p en:fi "$(shuf -n1 /usr/share/dict/words)")
+                                    echo "$random"
+                                    to_play="/$random, 1-, q"
+                                    show_video="False" ;;
+
+            "")                     to_play="/nyan cat, 1, q" ;;
+            *)                      to_play="/$argument $@, 1-, q"
+                                    show_video="False" ;;
     esac
 
-    if [ $mpsyt ]; then
-        pkill mpsyt                                                                     #; echo to_play: $to_play
-        show_video="set show_video $(printf '%s' "${show_video[@]^}")"                 #; echo $show_video, (+re capital initial to be sure)
-        search_music="set search_music $(printf '%s' "${search_music[@]^}")"           #; echo $search_music (+re capital initial)
-        command="mpsyt $show_video, $search_music, $to_play"                            #; echo $command
-        gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
-    fi
+
+    pkill mpsyt                                                                     #; echo to_play: $to_play
+    show_video="set show_video $(printf '%s' "${show_video[@]^}")"                 #; echo $show_video, (+re capital initial to be sure)
+    search_music="set search_music $(printf '%s' "${search_music[@]^}")"           #; echo $search_music (+re capital initial)
+    command="mpsyt $show_video, $search_music, $to_play"                            #; echo $command
+    gnome-terminal --geometry=80x28 --zoom=0.75 -- /bin/bash -c "$command; exit; $SHELL; "
+
+}
+
+play.upgrade () {
+    gmsg -v1 "$( sudo -H pip3 install --upgrade youtube_dl )"
+    gmsg -v1 "$( sudo apt-get install )"
+    gmsg -v1 "$( mpsyt set player mpv, q )"
+    play.set_api_key
+
+    return 0
 }
 
 
@@ -65,11 +73,12 @@ play.help () {
     printf "  demo           run demo "
     printf "  vt|text        play vt100 animations \n"
     printf "  upgrade        upgrade player \n"
+    printf "  api_key <key>  set youtube api key. empty input uses config file data \n"
 }
 
 
 play.silence () {
-    exec 3>&2                        # This method removes all stdin messages when >/dev/null is not enough
+    exec 3>&2
     exec 2> /dev/null
         pkill mpsyt
         pkill pv
@@ -79,9 +88,21 @@ play.silence () {
 }
 
 
+play.set_api_key() {
+    # remove cache file
+    local api_key=""
+    [[ -f /.config/mps-youtube/cache_py_* ]] && rm -f -v "~/.config/mps-youtube/cache_py_*"
+    # resolve user input and set key
+    [[ "$1" ]] && api_key="$1" || api_key="$GURU_YOUTUBE_API_KEY"
+    [[ "$GURU_YOUTUBE_API_KEY" ]] || read -p "input api key: " api_key
+    if (( ${#api_key}<20 )); then echo "too short api key" ; return 100 ; fi
+    gmsg -v1 "$(mpsyt set api_key $api_key , q | grep -m1 $api_key | xargs)"
+    return 0
+}
+
+
 play.install () {
     # install
-
     sudo apt-get -y install mplayer python3-pip pulseaudio amixer pkill gnome-terminal
     sudo -H pip3 install --upgrade pip
     sudo -H pip3 install setuptools mps-youtube
@@ -92,6 +113,7 @@ play.install () {
     sudo ln -s /usr/local/bin/mpsyt /usr/bin/mpsyt    # hmm..
     mpsyt set player mpv                # prevent player premature coetus interraptus
     [ $error ] && echo $error
+    play.set_api_key
     return $error
 }
 
