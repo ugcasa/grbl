@@ -70,7 +70,7 @@ play.help () {
     printf "  background|bg  search and play play list without video output \n"
     printf "  karaoke        force to find lyrics for songs \n"
     printf "  stop|end       stop and kill player \n"
-    printf "  demo           run demo "
+    printf "  demo           run demo \n"
     printf "  vt|text        play vt100 animations \n"
     printf "  upgrade        upgrade player \n"
     printf "  api_key <key>  set youtube api key. empty input uses config file data \n"
