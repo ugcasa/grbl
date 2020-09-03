@@ -1,6 +1,7 @@
 #!/bin/bash
 # giocon work time tracker casa@ujo.guru (c) 2019
 source $GURU_BIN/mount.sh
+source $GURU_BIN/corsair.sh
 source $GURU_BIN/lib/deco.sh
 source $GURU_BIN/lib/common.sh
 
@@ -9,7 +10,7 @@ timer.main () {
 	command="$1"; shift
 	case "$command" in
 
-		        check|status|start|change|cancel|end|stop|report|log|edit|last)
+		        toggle|check|status|start|change|cancel|end|stop|report|log|edit|last)
 					timer.$command "$@"
 					return $?
 					;;
@@ -26,6 +27,17 @@ timer.main () {
 		            return 0
 		            ;;
 	esac
+}
+
+
+timer.toggle () {
+	mount.system
+	if timer.status ; then
+		timer.start
+	else
+		timer.end
+	fi
+	sleep 4
 }
 
 
@@ -83,7 +95,7 @@ timer.status() {
  			;;
  	esac
 
-	return 0
+	return 1
 }
 
 
@@ -95,12 +107,15 @@ timer.last() {
 timer.start() {
 
 	mount.system
+	gmsg -v1 "starting timer.."
 
-	[ -d "$GURU_LOCATION_WORKTRACK" ] || mkdir -p "$GURU_LOCATION_WORKTRACK"
+	[[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
 
-	if [ -f "$GURU_FILE_TRACKSTATUS" ]; then
+	if [[ -f "$GURU_FILE_TRACKSTATUS" ]] ; then
 	 	timer.end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
 	fi
+
+	corsair.write $F9 $_GREEN 	# signal user (with corsair rgb kb) that timer is on
 
 	case "$1" in
 
@@ -154,6 +169,7 @@ timer.end() {
 
 	mount.system
 
+	corsair.write $F9 $_WHITE
 	if [ -f $GURU_FILE_TRACKSTATUS ]; then
 		source $GURU_FILE_TRACKSTATUS 														#; echo "timer start "$timer_start
 	else
