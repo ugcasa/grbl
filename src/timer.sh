@@ -33,9 +33,9 @@ timer.main () {
 timer.toggle () {
 	mount.system
 	if timer.status ; then
-		timer.start
-	else
 		timer.end
+	else
+		timer.start
 	fi
 	sleep 4
 }
@@ -53,7 +53,7 @@ timer.status() {
 
 	if [ ! -f "$GURU_FILE_TRACKSTATUS" ]; then
 		msg "no timer tasks\n"
-		return 0
+		return 1
 	fi
 
  	source "$GURU_FILE_TRACKSTATUS"
@@ -95,7 +95,7 @@ timer.status() {
  			;;
  	esac
 
-	return 1
+	return 0
 }
 
 
