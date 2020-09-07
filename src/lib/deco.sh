@@ -28,13 +28,14 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
     local _logging=                                 # logging is disabled by default
     local _newline="\n"
 
-    TEMP=`getopt --long -o "tlnv:" "$@"`
+    TEMP=`getopt --long -o "tlnNv:c:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
             -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
             -l ) _logging=true                              ; shift ;;
             -n ) _newline=                                  ; shift ;;
+            -N ) _newline="\n"                              ; shift ;;
             -v ) _verbose_trigger=$2                        ; shift 2 ;;
             -c ) _color=$2                                  ; shift 2 ;;
              * ) break
@@ -48,7 +49,7 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
     [[ "$_message" ]] || return 0                        # no message; return
 
     # print to stdout
-    if  [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then printf "%s%s$_newline" "$_timestamp" "$_message" ; fi                  # print out if verbose set
+    if  [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then printf "%s%s$_newline" "$_timestamp" "$_message" ; fi
 
     # logging
     if [[ "$LOGGING" ]] || [[ "$_logging" ]] ; then                          # log without colorcodes ets.
