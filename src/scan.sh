@@ -1,7 +1,7 @@
 #!/bin/bash
 # guru shell scanner wrappers
 
-scanimage -V >/dev/null || scan.install
+scanimage -V >/dev/null 2>&1 || scan.install
 convert -version >/dev/null || sudo sudo apt install imagemagick-6.q16
 #gocr >/dev/null || sudo apt-get install -y gocr
 
@@ -13,6 +13,17 @@ scan.main () {
                     scan.$_cmd $@                   ; return $? ;;
             *)      gmsg "scan: unknown command"    ; return 1  ;;
         esac
+}
+
+
+scan.help () {
+    echo "-- guru tool-kit scan help ---------------------------------"
+    printf "usage: %s scan command options \ncommands:              \n" "$GURU_CALL"
+    printf "receipt   scan receipt size grayscale                 \n"
+    printf "invoice   scan receipt A4 size optimized grayscale    \n"
+    printf "install   install Epson DS30 driver and applications  \n"
+    printf "fix       to to fix access limitation problem         \n"
+    printf "example:\n\t  %s scan receipt motonet-tools          \n" "$GURU_CALL"
 }
 
 
@@ -66,7 +77,7 @@ scan.receipt() {
     local _target_file=$_name-$(date -d now +$GURU_FORMAT_FILE_DATE).pdf
 
     # scan file
-    gmsg -c white "please place the receipt to scanner and press push-button when green LED lights up"
+    gmsg "place the receipt to scanner feeder and press push-button when green LED lights up"
     scanimage -x 75 -y 300 --mode Gray --format=pgm -v >"$_temp/scan_$_stamp.pgm" || return 101
     while [ ! -f "$_temp/scan_$_stamp.pgm" ] ; do  printf "." ; sleep 2 ; done ; echo
 
@@ -77,7 +88,7 @@ scan.receipt() {
     # move to location
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
     cp "$_temp/scan_$_stamp.pdf" "$_target_folder/$_target_file" || return 104
-    gmsg -c white "scanned to $_target_folder/$_target_file"
+    gmsg "scanned to $_target_folder/$_target_file"
     echo "$_target_folder/$_target_file" | xclip
 
     # clean up
