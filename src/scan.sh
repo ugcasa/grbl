@@ -1,8 +1,9 @@
 #!/bin/bash
 # guru shell scanner wrappers
-scanimage -V >/dev/null || $GURU_CALL scan install
+
+scanimage -V >/dev/null || scan.install
 convert -version >/dev/null || sudo sudo apt install imagemagick-6.q16
-gocr >/dev/null || sudo apt-get install -y gocr
+#gocr >/dev/null || sudo apt-get install -y gocr
 
 
 scan.main () {
