@@ -183,7 +183,7 @@ main.main () {                                                          # main r
 
     if (( _error_code > 1 )); then                                                      # 1 is warning, no error output
             [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)      # TODO when re-write error less than 10 are warnings + list of them
-            ERROR "$_error_code while $GURU_SYSTEM_STATUS $error_message \n"            # print error
+            ERROR "$_error_code while $GURU_SYSTEM_STATUS $error_message"            # print error
             [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"
         fi
 
