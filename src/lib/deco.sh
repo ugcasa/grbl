@@ -1,7 +1,33 @@
 #!/bin/bash
 # guru tool-kit decorations for terminal
 
-msg() {         # function for ouput messages and make log notifications.
+if [[ "$GURU_TERMINAL_COLOR" ]] ; then  #TODO remove this ..
+    export RED=$(printf '\033[0;31m')
+    export GRN=$(printf '\033[0;32m')
+    export YEL=$(printf '\033[1;33m')
+    export WHT=$(printf '\033[1;37m')
+    export CRY=$(printf '\033[0;37m')
+    export CYA=$(printf '\033[0;96m')
+    export BLU=$(printf '\033[0;34m')
+    export BRN=$(printf '\033[0;33m')
+    export BLK=$(printf '\033[0;90m')
+    export NC=$(printf '\033[0m')
+fi
+
+if [[ "$GURU_TERMINAL_COLOR" ]] ; then # ..replace with this
+    export C_RED='\033[0;31m'
+    export C_GREEN='\033[0;32m'
+    export C_YELLOW='\033[1;33m'
+    export C_WHITE='\033[1;37m'
+    export C_CRAY='\033[0;37m'
+    export C_CYAN='\033[0;96m'
+    export C_BLUE='\033[0;34m'
+    export C_BROWN='\033[0;33m'
+    export C_BLACK='\033[0;90m'
+    export C_NORMAL='\033[0m'
+fi
+
+msg() {         # function for ouput messages and make log notifications. TODO remove this..
 
     if ! [[ "$1" ]] ; then return 0 ; fi                            # no message, just return
     # print to stdout
@@ -27,6 +53,7 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
     local _message=                                 # message container
     local _logging=                                 # logging is disabled by default
     local _newline="\n"
+    local _color=
 
     TEMP=`getopt --long -o "tlnNv:c:" "$@"`
     eval set -- "$TEMP"
@@ -37,11 +64,10 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
             -n ) _newline=                                  ; shift ;;
             -N ) _newline="\n"                              ; shift ;;
             -v ) _verbose_trigger=$2                        ; shift 2 ;;
-            -c ) _color=$2                                  ; shift 2 ;;
+            -c ) _c_var="C_${2^^}" ; _color=${!_c_var}      ; shift 2 ;;
              * ) break
         esac
     done
-    # printf  "\ntrigger: $_verbose_trigger \nlogging: $_logging \ntimestamp: $_timestamp \nVERBOSE: $GURU_VERBOSE \n"
 
     # check message
     local _arg="$@"
@@ -49,7 +75,13 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
     [[ "$_message" ]] || return 0                        # no message; return
 
     # print to stdout
-    if  [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then printf "%s%s$_newline" "$_timestamp" "$_message" ; fi
+    if  [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
+            if [[ $_color ]] ; then
+                    printf "$_color%s%s$_newline$C_NORMAL" "$_timestamp" "$_message"
+                else
+                    printf "%s%s$_newline" "$_timestamp" "$_message"
+                fi
+        fi
 
     # logging
     if [[ "$LOGGING" ]] || [[ "$_logging" ]] ; then                          # log without colorcodes ets.
@@ -60,22 +92,6 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
 }
 
 export -f gmsg
-
-
-
-if [[ "$GURU_TERMINAL_COLOR" ]] ; then
-    export RED=$(printf '\033[0;31m')
-    export GRN=$(printf '\033[0;32m')
-    export YEL=$(printf '\033[1;33m')
-    export WHT=$(printf '\033[1;37m')
-    export CRY=$(printf '\033[0;37m')
-    export CYA=$(printf '\033[0;96m')
-    export BLU=$(printf '\033[0;34m')
-    export BRN=$(printf '\033[0;33m')
-    export BLK=$(printf '\033[0;90m')
-    export NC=$(printf '\033[0m')
-fi
-
 
 export OK=$(printf "${GRN}OK${NC}\n")
 export PASSED=$(printf "${GRN}PASSED${NC}\n")
