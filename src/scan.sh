@@ -1,173 +1,100 @@
 #!/bin/bash
-# Neanderilainen skanneriscripti
-
+# guru shell scanner wrappers
 scanimage -V >/dev/null || $GURU_CALL scan install
 convert -version >/dev/null || sudo sudo apt install imagemagick-6.q16
 gocr >/dev/null || sudo apt-get install -y gocr
 
 
-main () {
-
-	case $command in
-
-		invoice|inv|lasku)
-			scan_invoice $@
-			error_code=$?
-			;;
-
-		receipt|rec|kuitti)
-			scan_receipt $@
-			error_code=$?
-			;;
-
-		install)
-			install_DS30_mint19 $@
-			;;
-
-		help|--help|-h)
-			echo "-- guru tool-kit scan help -----------------------------------------------"
-		 	printf "usage: %s scan command options \ncommands: 							\n" "$GURU_CALL"
-			printf "receipt|rep|kuitti      scan receipt size grayscale 				\n"
-			printf "invoice|inv|lasku       scan receipt A4 size optimized grayscale    \n"
-			printf "-p 						owner is personal 							\n"
-			printf "-c 						owner is company/team 						\n"
-			echo
-			;;
-		*)
-			exit
-			;;
-	esac
+scan.main () {
+    local _cmd=$1 ; shift
+    case $_cmd in
+            receipt|invoice|install|help)
+                    scan.$_cmd $@                   ; return $? ;;
+            *)      gmsg "scan: unknown command"    ; return 1  ;;
+        esac
 }
 
 
-install_DS30_mint19 () {
+scan.install () {
+    # http://download.ebz.epson.net/man/linux/iscan_e.html
+    read -p "installing EPSON DS30 driver, continue by anykey, ctrl-c to cancel :" null
 
-	# http://download.ebz.epson.net/man/linux/iscan_e.html#sec9
-	read -p "Installing DS30 - NEWER RUNNED, continue enter ctrl-c cancel" nothing
+    if [[ "$(ls /usr/bin/iscan >/dev/null)" -ne 0 ]]; then
+        cd /tmp
+        wget https://download2.ebz.epson.net/imagescanv3/linuxmint/lts1/deb/x64/imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz || return 101
+        tar -xvf  imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz || return 102
+        cd imagescan-bundle-linuxmint-19-3.59.2.x64.deb || return 102
+        sh install.sh
+        cd ..
+        rm imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz*
+        rm -rf imagescan-bundle-linuxmint-19-3.59.2.x64.deb
+        sudo apt update
+        sudo apt install xsane imagemagick gocr || return 103
+        # Test
+        sudo sane-find-scanner | grep "EPSON DS-30" && echo "Scanner found" || return 104
 
-	if [[ "$(ls /usr/bin/iscan >/dev/null)" -ne 0 ]]; then
-		cd /tmp
-		wget https://download2.ebz.epson.net/imagescanv3/linuxmint/lts1/deb/x64/imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz
-
-		tar -xvf  imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz
-		cd imagescan-bundle-linuxmint-19-3.59.2.x64.deb
-		sh install.sh
-		cd ..
-		rm imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz*
-		rm -rf imagescan-bundle-linuxmint-19-3.59.2.x64.deb
-		sudo apt update #&&sudo at upgrade -y
-		sudo apt install xsane imagemagick gocr
-		# Test
-		sudo sane-find-scanner|grep "EPSON DS-30"&&echo "Scanner found"
-
-		file=/etc/udev/rules.d/79-udev-epson.rules
-		#sudo rm $file
-		if [[ -f "$file" ]]; then
-			echo "$file exist"
-			else
-			echo 'SUBSYSTEM="usb_device", ACTION="add", GOTO="epson_rules_end"' | sudo tee --append  $file
-			echo 'ATTR{idVendor}="0x04b8", ATTR{idProduct}="0x012f", SYMLINK+="scan-epson", MODE="0666", OWNER="$USER", GROUP="scanner"' | sudo tee --append $file
-			echo 'LABEL="epson_rules_end"' | sudo tee --append $file
-		fi
-		read -p "modifying config files NOT TESTED! continue enter ctrl-c cancel" nothing
-		file=/etc/ImageMagick-6/policy.xml
-		sudo sed -i -e 's/policy domain="coder" rights="none" pattern="PDF"/policy domain="coder" rights="read|write" pattern="PDF"/g' $file
-	fi
-
+        local _file=/etc/udev/rules.d/79-udev-epson.rules
+        if [[ -f "$_file" ]] ; then
+            echo "$_file exist"
+            #sudo rm $_file?
+        else
+            echo 'SUBSYSTEM="usb_device", ACTION="add", GOTO="epson_rules_end"' | sudo tee --append  $_file
+            echo 'ATTR{idVendor}="0x04b8", ATTR{idProduct}="0x012f", SYMLINK+="scan-epson", MODE="0666", OWNER="$USER", GROUP="scanner"' | sudo tee --append $_file
+            echo 'LABEL="epson_rules_end"' | sudo tee --append $_file
+        fi
+        read -p "modifying config files continue enter ctrl-c cancel" null
+        sudo sed -i -e 's/policy domain="coder" rights="none" pattern="PDF"/policy domain="coder" rights="read|write" pattern="PDF"/g' /etc/ImageMagick-6/policy.xml
+    fi
 }
 
 
-scan_receipt() {
-
-	stamp=$(date +%s)
-	# Start scanner now to save time (scanner takes loooong tIme to start)
-	scanimage -x 75 -y 300 --mode Gray --format=pgm -v >tempimage$stamp.pgm && mv tempimage$stamp.pgm cropped$stamp.pgm & #|| echo "Error in scanning" | exit 2
-
-	echo "please place the receipt to scnner!"
-	if [[ -z "$1" ]]; then read -p "name for receipt: " name; else name=$1; fi
-	if [[ -z "$2" ]]; then read -p "company or personal account [c/p]: " target_team; else target_team=$2; fi
-
-	echo "press push-button when green LED lights up"
-
-	printf "waiting scanner."
-	while [ ! -f cropped$stamp.pgm ]
-		do
-		  printf "."
-		  sleep 2
-		done
-	printf "\n"
-
-	gocr -i cropped$stamp.pgm -f UTF8 -v >archive$stamp.txt
-	mogrify -resize 33% cropped$stamp.pgm
-	convert cropped$stamp.pgm archive$stamp.pdf && rm cropped$stamp.pgm
-
-	if [ $target_team == "p" ]; then
-		account_folder=$GURU_PERSONAL_ACCOUNTING
-	else
-		account_folder=$GURU_ACCOUNTING
-	fi
-
-	[[ -d "$account_folder/$(date +%Y)/$GURU_RECEIPTS" ]] || mkdir -p "$account_folder/$(date +%Y)/$GURU_RECEIPTS"
-
-	cp archive$stamp.pdf "$account_folder/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).pdf" || echo "Error in copy" && rm "archive$stamp.pdf"
-	cp archive$stamp.txt "$account_folder/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).txt" || echo "Error in ocr copy" && rm "archive$stamp.txt"
-
-	echo "Scanned to $account_folder/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).pdf"
-	# [[ -z "$1" ]] && nemo "$account_folder/$(date +%Y)/$GURU_RECEIPTS" # annoying
-
-	[ -f cropped$stamp.pgm ] && rm cropped$stamp.pgm
-	rm -f cropped-1.pgm image.pgm temp.sh tocompile
-	return 0
+scan.fix () {
+    # imagemagick eliminating all usage restrictions
+    sudo mv /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xmlout || return 101
+    # to revert to the original situation, rename back to the original
 }
 
 
-scan_invoice () {
+scan.receipt() {
+    # scan receipt size archive material
+    local _temp=/tmp/guru
+    local _name="scan"
+    local _stamp=$(date +%s)
+    local _target_folder="$GURU_LOCAL_ACCOUNTING/$(date +%Y)/$GURU_LOCAL_RECEIPTS"
+    [[ "$1" ]] && _name=$1 || read -p "_name for receipt: " _name
+    local _target_file=$_name-$(date -d now +$GURU_FORMAT_FILE_DATE).pdf
 
-	if [[ -z "$1" ]]; then read -p "name for receipt: " name; else name=$1; fi
-	if [[ -z "$2" ]]; then read -p "company or personal account [c/p]: " target_team; else target_team=$2; fi
-	if [ -z "$3" ]; then read -p "pages to scan: " pages; else target_team=$3; fi
-	if [[ $pages == "" ]]; then pages=1; fi
+    # scan file
+    gmsg -c white "please place the receipt to scanner and press push-button when green LED lights up"
+    scanimage -x 75 -y 300 --mode Gray --format=pgm -v >"$_temp/scan_$_stamp.pgm" || return 101
+    while [ ! -f "$_temp/scan_$_stamp.pgm" ] ; do  printf "." ; sleep 2 ; done ; echo
 
-	page=1
+    # modify file
+    mogrify -resize 33% "$_temp/scan_$_stamp.pgm" || return 102
+    convert "$_temp/scan_$_stamp.pgm" "$_temp/scan_$_stamp.pdf" || return 103
 
-	while [ "$page" -le "$pages" ]
-	    do
-		echo "press scanner push button when green LED lights up.."
-		scanimage -x 205 -y 292 --mode Gray --format=pgm -v >image$stamp.pgm
-		convert image$stamp.pgm -crop 2416x4338+55+120 cropped$stamp-$page.pgm
-		gocr -i cropped$stamp-$page.pgm -f UTF8 -v >>archive$stamp.txt
-		mogrify -resize 33% cropped$stamp-$page.pgm
-	    echo "cropped$stamp-$page.pgm" >>tocompile$stamp
-	    page=$(( page+1 ))
-	done
+    # move to location
+    [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
+    cp "$_temp/scan_$_stamp.pdf" "$_target_folder/$_target_file" || return 104
+    gmsg -c white "scanned to $_target_folder/$_target_file"
+    echo "$_target_folder/$_target_file" | xclip
 
-	fileItemString=$(cat tocompile$stamp |tr "\n" " ")
-	fileItemArray=($fileItemString)
-	echo "convert "$(echo ${fileItemArray[*]})" archive$stamp.pdf" >temp$stamp.sh
-	. ./temp$stamp.sh
+    # clean up
+    [[ -f "$_temp/scan_$_stamp*" ]] && rm "$_temp/scan_$_stamp*"
+    return 0
+}
 
-	if [ $target_team == "p" ]; then
-		GURU_ACCOUNTING=$GURU_LOCAL_PICTURES
-		GURU_RECEIPTS=$GURU_PERSONAL_RECEIPTS
-	fi
 
-	[[ -d "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS" ]] || mkdir -p "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS"
-
-	cp archive$stamp.pdf "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).pdf" || echo "Error in copy" && rm "archive$stamp.pdf"
-	cp archive$stamp.txt "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).txt" || echo "Error in ocr copy" && rm "archive$stamp.txt"
-
-	echo "Scanned to $GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS/$name-$(gio.datestamp ujo).pdf"
-	# [[ -z "$1" ]] && nemo "$GURU_ACCOUNTING/$(date +%Y)/$GURU_RECEIPTS" # annoying
-
-	[ -f cropped$stamp.pgm ] && rm cropped$stamp.pgm
-	rm -f cropped-1.pgm image.pgm temp.sh tocompile
-	return 0
+scan.invoice () {
+    echo "TBD"
+    # scanimage -x 205 -y 292 --mode Gray --format=pgm -v >image$stamp.pgm
+    # convert image$stamp.pgm -crop 2416x4338+55+120 scan_$stamp-$page.pgm
+    # #gocr -i scan_$stamp-$page.pgm -f UTF8 -v >>archive$stamp.txt
+    # mogrify -resize 33% scan_$stamp-$page.pgm
+    # echo "scan_$stamp-$page.pgm" >>tocompile$stamp
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-	command=$1
-	shift
-	main $@
-	exit $error_code
+    scan.main $@
 fi
