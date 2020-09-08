@@ -32,6 +32,10 @@ key_main() {
     shift
     case "$command" in
 
+        agent)
+            ssh.add_key_to_agent "$@"
+            ;;
+
         ps|active)
             ssh-add -l
             ;;
@@ -124,6 +128,14 @@ ssh_add_key(){
     esac
 
     return "$error"
+}
+
+
+ssh.add_key_to_agent () {
+	local key_file="$HOME/.ssh/$GURU_ACCESS_POINT"'_id_rsa'
+    [[ $1 ]] && key_file="$1"
+    eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
+    ssh-add "$key_file" && echo "Key add OK" || return 24
 }
 
 
