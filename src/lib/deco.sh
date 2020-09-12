@@ -52,7 +52,8 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
     local _timestamp=                               # timestamp is disabled by default
     local _message=                                 # message container
     local _logging=                                 # logging is disabled by default
-    local _newline="\n"
+    local _newline="\n"                             # newline is on by default
+    local _pre_newline=
     local _color=
 
     TEMP=`getopt --long -o "tlnNv:c:" "$@"`
@@ -61,8 +62,8 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
         case "$1" in
             -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
             -l ) _logging=true                              ; shift ;;
-            -n ) _newline=                                  ; shift ;;
-            -N ) _newline="\n"                              ; shift ;;
+            -n ) _newline=                                  ; shift ;;  # no newline
+            -N ) _pre_newline="\n"                          ; shift ;;  # newline before printout
             -v ) _verbose_trigger=$2                        ; shift 2 ;;
             -c ) _c_var="C_${2^^}" ; _color=${!_c_var}      ; shift 2 ;;
              * ) break
@@ -71,15 +72,13 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
 
     # check message
     local _arg="$@"
-    [[ "$_arg" != "--" ]] && _message="${_arg#* }"       # there were reason for this
-    [[ "$_message" ]] || return 0                        # no message; return
+    [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
-    # print to stdout
-    if  [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
+    if [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
             if [[ $_color ]] ; then
-                    printf "$_color%s%s$_newline$C_NORMAL" "$_timestamp" "$_message"
+                    printf "$_pre_newline$_color%s%s$_newline$C_NORMAL" "$_timestamp" "$_message"
                 else
-                    printf "%s%s$_newline" "$_timestamp" "$_message"
+                    printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
                 fi
         fi
 
