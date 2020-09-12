@@ -199,11 +199,11 @@ mount.remote () {
                                 fi
 
                         else
-                            gmsg -v 1 "$ERROR: unable to mount $_target_folder, mount point contains files"
+                            gmsg -v1 "$ERROR: unable to mount $_target_folder, mount point contains files"
                             return 25
                         fi
                 else
-                    printf "try '-f' to force or: %s -f mount %s %s\n" "$GURU_CALL" "$_source_folder" "$_target_folder"
+                    gmsg "try '-f' to force or: '$GURU_CALL -f mount $_source_folder $_target_folder"
                     return 25
                 fi
         fi
@@ -222,7 +222,7 @@ mount.remote () {
             user="$GURU_CLOUD_USERNAME"
         fi
 
-    gmsg "mounting $_target_folder "
+    gmsg -v1 -n "mounting $_target_folder "
 
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$_source_folder" "$_target_folder"
     error=$?
@@ -251,30 +251,30 @@ unmount.remote () {
     fi
 
     if ! mount.online "$_mountpoint" ; then
-            gmsg -v 1 "$_mountpoint is not mounted $IGNORED"
+            gmsg -v1 "$_mountpoint is not mounted $IGNORED"
             return 0
         fi
 
     if fusermount -u "$_mountpoint" ; then
-            gmsg -v 1 "$_mountpoint $UNMOUNTED"
+            gmsg -v1 "$_mountpoint $UNMOUNTED"
             return 0
         fi
 
     # once more or if force
     if [[ "$GURU_FORCE" ]] || mount.online "$_mountpoint" ; then
 
-            printf "force unmount.. "
+            gmsg -v1 "force unmount.. "
             if fusermount -u "$_mountpoint" ; then
 
-                    gmsg -v 1 "$_mountpoint force $UNMOUNTED"
+                    gmsg -v1 "$_mountpoint force $UNMOUNTED"
                     return 0
                 else
                     if sudo fusermount -u "$_mountpoint" ; then
-                            gmsg -v 1 "$_mountpoint SUDO FORCE $UNMOUNTED"
+                            gmsg -v1 "$_mountpoint SUDO FORCE $UNMOUNTED"
                             return 0
                         else
-                            gmsg -v 0 "$FAILED: $_mountpoint SUDO FORCE unmount"
-                            gmsg -v 1 "$WARNING: seems that some of open program like terminal or editor is blocking unmount, try to close those first\n"
+                            gmsg "$FAILED: sudo force unmount $_mountpoint."
+                            gmsg -v1 "seems that some of open program like terminal or editor is blocking unmount, try to close those first"
                             return 1
                     fi
             fi
@@ -297,7 +297,7 @@ mount.defaults () {
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        gmsg -v2 "${_item,,} "
+        #gmsg -v2 "${_item,,} "
         mount.remote "$_source" "$_target" || _error=$?
     done
 
@@ -312,7 +312,7 @@ unmount.defaults () {
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        gmsg -v2 "${_item,,} "
+        #gmsg -v2 "${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
 
