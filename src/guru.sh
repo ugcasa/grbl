@@ -54,8 +54,9 @@ main.parser () {                                                                
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;  # Get rid of this shit
                           test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;  # tester
                  version|--ver)  printf "guru tool-kit v.%s\n" "$GURU_VERSION"  ;;                      # version output
-                             *)  printf "%s confused: phrase '%s' unknown. you may try '%s help'\n" \
-                                        "$GURU_CALL" "$tool" "$GURU_CALL"                               # false user input
+                            "")  return 0 ;;
+                             *)  gmsg -v "passing request to os.."
+                                 $tool $@                               ; return $? ;;
         esac
     return 0
 }
@@ -120,13 +121,27 @@ main.help () {                                                          # help p
     # echo " -u   run as user"
 }
 
+
 main.terminal () {                                                      # terminal loop
     # Terminal looper
-    GURU_VERBOSE=true
+    render_path () {
+        local _path="$(pwd)"
+        if [[ "$_path" == "$HOME" ]] ; then _path='~' ; fi
+        _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
+        c_user=$(eval echo '$C_'"${GURU_COLOR_PATH_USER^^}")
+        c_at=$(eval echo '$C_'"${GURU_COLOR_PATH_AT^^}")
+        c_call=$(eval echo '$C_'"${GURU_COLOR_PATH_CALL^^}")
+        c_dir=$(eval echo '$C_'"${GURU_COLOR_PATH_DIR^^}")
+        printf "$c_user$GURU_USER$c_at@$c_call$GURU_CALL$c_dir:$_path> $C_NORMAL"
+    }
+
+    GURU_VERBOSE=1
     msg "$GURU_CALL in terminal mode (type 'help' enter for help)\n"
+
     while : ; do
-            config.load "$GURU_CFG/$GURU_USER/user.cfg" # source $HOME/.gururc
-            read -e -p "$(printf "\e[1m$GURU_USER@$GURU_CALL\\e[0m:>") " "cmd"
+            config.load "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
+            source ~/.gururc2
+            read -e -p "$(render_path)" "cmd"
             case "$cmd" in  exit|q) return 0 ;; esac
             main.parser $cmd
         done
@@ -157,23 +172,23 @@ main.process_opts () {                                                  # argume
 main.main () {                                                          # main run trough
 
     local _error_code=0
-    [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"                                 # Remove old error messages
+    [[ -f "$GURU_ERROR_MSG" ]] && rm -f "$GURU_ERROR_MSG"                                 # Remove old error messages
 
     export GURU_SYSTEM_PLATFORM="$(check_distro)"                                       # run wide platform check
     export GURU_SYSTEM_STATUS="starting.."                                              # needs to be "ready"
     export GURU_CLOUD_STATUS="unknown"
 
-    if [ "$GURU_CLOUD_STATUS" != "online" ]; then
+    if [[ "$GURU_CLOUD_STATUS" != "online" ]] ; then
             mount.system                                                                # mount system mount point
         fi
 
-    if [ "$GURU_CLOUD_STATUS" == "online" ] && [ "$GURU_SYSTEM_STATUS" != "ready" ]; then
+    if [[ "$GURU_CLOUD_STATUS" == "online" ]] && [[ "$GURU_SYSTEM_STATUS" != "ready" ]] ; then
             export GURU_SYSTEM_STATUS="ready"                                           # require track mount
         fi
 
     counter.main add guru-runned >/dev/null                                             # add counter
 
-    if [ "$1" ]; then
+    if [[ "$1" ]] ; then
             main.parser "$@"                                                            # with arguments go to parser
             _error_code=$?
         else
@@ -182,9 +197,9 @@ main.main () {                                                          # main r
         fi
 
     if (( _error_code > 1 )); then                                                      # 1 is warning, no error output
-            [ -f "$GURU_ERROR_MSG" ] && error_message=$(tail -n 1 $GURU_ERROR_MSG)      # TODO when re-write error less than 10 are warnings + list of them
+            [[ -f "$GURU_ERROR_MSG" ]] && error_message=$(tail -n 1 $GURU_ERROR_MSG)      # TODO when re-write error less than 10 are warnings + list of them
             ERROR "$_error_code while $GURU_SYSTEM_STATUS $error_message"            # print error
-            [ -f "$GURU_ERROR_MSG" ] && rm -f "$GURU_ERROR_MSG"
+            [[ -f "$GURU_ERROR_MSG" ]] && rm -f "$GURU_ERROR_MSG"
         fi
 
     export GURU_SYSTEM_STATUS="done"
@@ -192,7 +207,7 @@ main.main () {                                                          # main r
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then                            # user and platform settings (implement here, always up to date)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then                            # user and platform settings (implement here, always up to date)
 
         main.process_opts $@
         main.main $ARGUMENTS
