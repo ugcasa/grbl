@@ -70,12 +70,13 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
     local _pre_newline=
     local _color=
 
-    TEMP=`getopt --long -o "tlnNv:c:" "$@"`
+    TEMP=`getopt --long -o "tlnhNv:c:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
             -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
             -l ) _logging=true                              ; shift ;;
+            -h ) _color="$C_HEADER"                         ; shift ;;
             -n ) _newline=                                  ; shift ;;  # no newline
             -N ) _pre_newline="\n"                          ; shift ;;  # newline before printout
             -v ) _verbose_trigger=$2                        ; shift 2 ;;

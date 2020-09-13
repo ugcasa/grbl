@@ -2,7 +2,7 @@
 # guru tool-kit - main command parser
 # caa@ujo.guru 2020
 
-export GURU_VERSION="0.5.2.9"
+export GURU_VERSION="0.5.3"
 export GURU_HOSTNAME="$(hostname)"
 
 # daemon pollers:
@@ -16,7 +16,6 @@ source ~/.gururc2
    [[ $GURU_USER_NAME ]] && export GURU_USER=$GURU_USER_NAME
   [[ $GURU_FLAG_COLOR ]] && export GURU_TERMINAL_COLOR=true
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
-
 
 source $GURU_BIN/system.sh                  # guru toolkit upgrade etc.
 source $GURU_BIN/config.sh
@@ -35,7 +34,6 @@ main.parser () {                                                                
     case "$tool" in
                          start)  daemon.main start guru-daemon          ; return $? ;;  # second parameter is a name for process
                           stop)  touch "$HOME/.guru-stop"               ;;              # stop guru daemon
-
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
                 trans|tor|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes
               clear|ls|cd|echo)  $tool "$@"                             ; return $? ;;  # os command pass trough
@@ -126,16 +124,18 @@ main.help () {                                                          # help p
 
 main.terminal () {                                                      # terminal loop
     # Terminal looper
-    render_path () {
-        local _path="$(pwd)"
-        if [[ "$_path" == "$HOME" ]] ; then _path='~' ; fi
-        _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
-        c_user=$(eval echo '$C_'"${GURU_COLOR_PATH_USER^^}")
-        c_at=$(eval echo '$C_'"${GURU_COLOR_PATH_AT^^}")
-        c_call=$(eval echo '$C_'"${GURU_COLOR_PATH_CALL^^}")
-        c_dir=$(eval echo '$C_'"${GURU_COLOR_PATH_DIR^^}")
-        printf "$c_user$GURU_USER$c_at@$c_call$GURU_CALL$c_dir:$_path> $C_NORMAL"
-    }
+
+        render_path () {
+            local _path="$(pwd)"
+            if [[ "$_path" == "$HOME" ]] ; then _path='~' ; fi
+            local _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
+            local c_user=$(eval echo '$C_'"${GURU_COLOR_PATH_USER^^}")
+            local c_at=$(eval echo '$C_'"${GURU_COLOR_PATH_AT^^}")
+            local c_call=$(eval echo '$C_'"${GURU_COLOR_PATH_CALL^^}")
+            local c_dir=$(eval echo '$C_'"${GURU_COLOR_PATH_DIR^^}")
+
+            printf "$c_user$GURU_USER$c_at@$c_call$GURU_CALL$c_dir:$_path> $C_NORMAL"
+        }
 
     GURU_VERBOSE=1
     msg "$GURU_CALL in terminal mode (type 'help' enter for help)\n"

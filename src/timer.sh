@@ -1,5 +1,12 @@
 #!/bin/bash
-# giocon work time tracker casa@ujo.guru (c) 2019
+# guru shell work time tracker
+# casa@ujo.guru 2019-2020
+
+# todo:
+#		- epic time base time, rounding when reporting
+# 		- project module dependencies
+# 		- mqtt connection
+
 source $GURU_BIN/mount.sh
 source $GURU_BIN/corsair.sh
 source $GURU_BIN/lib/deco.sh
@@ -169,7 +176,6 @@ timer.end() {
 
 	mount.system
 
-	corsair.write $F9 $_WHITE
 	if [ -f $GURU_FILE_TRACKSTATUS ]; then
 		source $GURU_FILE_TRACKSTATUS 														#; echo "timer start "$timer_start
 	else
@@ -177,6 +183,7 @@ timer.end() {
 		return 13
 	fi
 
+	corsair.write $F9 $_WHITE														# disable timer status kb indicator
 
 	case "$1" in
 
@@ -262,6 +269,7 @@ timer.cancel() {
 
 	if [ -f $GURU_FILE_TRACKSTATUS ]; then
 		rm $GURU_FILE_TRACKSTATUS
+		corsair.write $F9 $_WHITE
 		echo "canceled"
 	else
 		echo "not active timer"
