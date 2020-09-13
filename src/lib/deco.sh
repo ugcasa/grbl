@@ -2,6 +2,7 @@
 # guru tool-kit decorations for terminal
 
 if [[ "$GURU_TERMINAL_COLOR" ]] ; then  #TODO remove this ..
+    # TODO make futile, then remove
     export RED=$(printf '\033[0;31m')
     export GRN=$(printf '\033[0;32m')
     export YEL=$(printf '\033[1;33m')
@@ -15,17 +16,30 @@ if [[ "$GURU_TERMINAL_COLOR" ]] ; then  #TODO remove this ..
 fi
 
 if [[ "$GURU_TERMINAL_COLOR" ]] ; then # ..replace with this
-    export C_RED='\033[0;31m'
-    export C_GREEN='\033[0;32m'
-    export C_YELLOW='\033[1;33m'
+
+    export C_NORMAL='\033[0m'
+    export C_HEADER='\033[1;37m'
+    #light colors
+    export C_LRED='\033[0;91m'
+    export C_LGREEN='\033[0;92m'
+    export C_LYELLOW='\033[0;93m'
+    export C_LMAGENTA='\033[1;35m'
+    export C_LCRAY='\033[0;37m'
+    export C_LCYAN='\033[0;96m'
+    export C_LBLUE='\033[1;94m'
     export C_WHITE='\033[1;37m'
-    export C_CRAY='\033[0;37m'
-    export C_CYAN='\033[0;96m'
-    export C_BLUE='\033[0;34m'
+    #dark colors
+    export C_RED='\033[0;31m'
     export C_BROWN='\033[0;33m'
     export C_BLACK='\033[0;90m'
-    export C_NORMAL='\033[0m'
+    export C_GREEN='\033[0;32m'
+    export C_YELLOW='\033[1;33m'
+    export C_BLUE='\033[0;34m'
+    export C_MAGENTA='\033[0;95m'
+    export C_CYAN='\033[0;36m'
+    export C_CRAY='\033[0;90m'
 fi
+
 
 msg() {         # function for ouput messages and make log notifications. TODO remove this..
 
