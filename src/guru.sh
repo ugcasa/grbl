@@ -27,6 +27,7 @@ source $GURU_BIN/guru-daemon.sh             #
 
 
 main.parser () {                                                                        # main command parser
+
     tool="$1"; shift                                                                    # store tool call name and shift arguments left
     export GURU_CMD="$tool"                                                             # Store tool call name to other functions
     export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
@@ -47,12 +48,13 @@ main.parser () {                                                                
                          radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;  # leave background + set display
                    help|--help)  main.help "$@"                         ; return 0  ;;  # help printout
                        unmount)  mount.main unmount "$1"                ; return $? ;;  # alias for un-mounting
-                terminal|shell)  main.terminal "$@"                     ; return $? ;;  # guru in terminal mode
+                      terminal)  main.terminal "$@"                     ; return $? ;;  # guru in terminal mode
              ssh|os|common|tme)  $GURU_BIN/lib/$tool.sh "$@"            ; return $? ;;  # direct lib calls
                    input|hosts)  $GURU_BIN/trial/$tool.sh "$@"          ; return $? ;;  # place for shell script prototypes and experiments
          tme|fmradio|datestamp)  $GURU_BIN/trial/$tool.py "$@"          ; return $? ;;  # place for python script prototypes and experiments
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;  # Get rid of this shit
                           test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;  # tester
+                          gmsg)  $tool "$@"                             ; return $? ;;  # direct access to core functions
                  version|--ver)  printf "guru tool-kit v.%s\n" "$GURU_VERSION"  ;;                      # version output
                             "")  return 0 ;;
                              *)  gmsg -v "passing request to os.."
