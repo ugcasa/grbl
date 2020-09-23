@@ -7,6 +7,14 @@
 # 		- project module dependencies
 # 		- mqtt connection
 
+
+
+# bash 2.th try - use date to make math
+date --date 'March 1, 2015 +7 days'
+date -d "$(date -d "2014-9-14 10:00:00") + 4 hours + 20 minutes - 0 seconds"
+
+date -d "$(date -d "2014-9-14 10:00:00") - $(date -d "2014-9-13 10:00:00")"
+
 source $GURU_BIN/mount.sh
 source $GURU_BIN/corsair.sh
 source $GURU_BIN/lib/deco.sh
@@ -22,15 +30,15 @@ timer.main () {
 					return $?
 					;;
 		        *)
-				 	echo "-- guru tool-kit timer help -----------------------------------------------"
-					printf "start|change     start timer for target with last customer and project \n"
-					printf "start at [TIME]  start timer at given time in format HH:MM \n"
-					printf "end|stop         end current task \n"
-					printf "end at [TIME]    end current task at given time in format HH:MM \n"
-					printf "cancel           cancels the current task \n"
-					printf "log              prints out 10 last tasks from log \n"
-					printf "edit             opens work time log with %s \n" "$GURU_EDITOR"
-					printf "report           creates report in .csv format and opens it with %s \n" "$GURU_OFFICE_DOC"
+				 	gmsg -v1 -h "-- guru tool-kit timer help -----------------------------------------------"
+					gmsg "start|change     start timer for target with last customer and project"
+					gmsg "start at [TIME]  start timer at given time in format HH:MM"
+					gmsg "end|stop         end current task"
+					gmsg "end at [TIME]    end current task at given time in format HH:MM"
+					gmsg "cancel           cancels the current task"
+					gmsg "log              prints out 10 last tasks from log"
+					gmsg "edit             opens work time log with $GURU_EDITOR"
+					gmsg "report           creates report in .csv format and opens it with $GURU_OFFICE_DOC"
 		            return 0
 		            ;;
 	esac
@@ -59,7 +67,7 @@ timer.status() {
 	mount.system
 
 	if [ ! -f "$GURU_FILE_TRACKSTATUS" ]; then
-		msg "no timer tasks\n"
+		gmsg "no timer tasks\n"
 		return 1
 	fi
 
