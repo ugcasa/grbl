@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit - main command parser
+# guru-client - main command parser
 # caa@ujo.guru 2020
 
 export GURU_VERSION="0.5.3"
@@ -53,7 +53,7 @@ main.parser () {                                                                
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;  # Get rid of this shit
                           test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;  # tester
                           gmsg)  $tool "$@"                             ; return $? ;;  # direct access to core functions
-                 version|--ver)  printf "guru tool-kit v.%s\n" "$GURU_VERSION"  ;;                      # version output
+                 version|--ver)  printf "guru-client v.%s\n" "$GURU_VERSION"  ;;                      # version output
                             "")  return 0 ;;
                              *)  gmsg -v "passing request to os.."
                                  $tool $@                               ; return $? ;;
@@ -63,7 +63,7 @@ main.parser () {                                                                
 
 main.help () {                                                          # help prinout TODO: re-write
     # TODO re-organize by function category
-    echo "-- guru tool-kit main help ------------------------------------------"
+    echo "-- guru-client main help ------------------------------------------"
     printf "usage:\t %s [tool] [argument] [variables]\n" "$GURU_CALL"
     printf "\nfile control:\n"
     echo "  mount|umount    mount remote locations"

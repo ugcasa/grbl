@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit phone tools
+# guru-client phone tools
 # get files from phone by connecting phone sshd
 # install this to phone: https://play.google.com/store/apps/details?id=com.theolivetree.sshserver
 
@@ -36,7 +36,7 @@ phone.main () {                 # phone command parser
 }
 
 phone.help () {                 # printout help
-    echo "-- guru tool-kit phone help -----------------------------------------------"
+    echo "-- guru-client phone help -----------------------------------------------"
     printf "usage:\t %s phone [action] \n" "$GURU_CALL"
     printf "\nactions:\n"
     printf " terminal          open terminal to phone \n"

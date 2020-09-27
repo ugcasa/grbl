@@ -1,5 +1,5 @@
 #!/bin/bash
-# mount tools for guru tool-kit
+# mount tools for guru-client
 #source "$HOME/.gururc"
 source $GURU_BIN/lib/common.sh
 
@@ -36,7 +36,7 @@ mount.main () {
 
 mount.help () {
     # printout help
-    gmsg -v1 -c white "guru tool-kit mount help -----------------------------------------------"
+    gmsg -v1 -c white "guru-client mount help -----------------------------------------------"
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL mount [source] [target]"
     gmsg -v1 "          $GURU_CALL mount [command] [known_mount_point|arguments]"
@@ -60,7 +60,7 @@ mount.help () {
 
 mount.help-default () {
     # printout instructions to set/use GURU_CLOUD_* definations to userrc
-    echo "guru tool-kit mount help-default --------------------------------------------"
+    echo "guru-client mount help-default --------------------------------------------"
     # TODO update
     gmsg -c yellow "update requested! remove bullshit instructions below.."
     printf "\nTo add default mount point type ${WHT}%s config user${NC} or edit user configuration \n" "$GURU_CALL"

@@ -38,7 +38,7 @@ timer.main () {
 					return $?
 					;;
 		        *)
-				 	gmsg -v1 -h "-- guru tool-kit timer help -----------------------------------------------"
+				 	gmsg -v1 -h "-- guru-client timer help -----------------------------------------------"
 					gmsg "start|change     start timer for target with last customer and project"
 					gmsg "start at [TIME]  start timer at given time in format HH:MM"
 					gmsg "end|stop         end current task"

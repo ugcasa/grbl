@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit user configuration file
+# guru-client user configuration file
 # to send configurations to server type 'guru remote push' and
 # to get configurations from server type 'guru remote pull'
 # backup is kept at .config/guru/<user>/userrc.backup

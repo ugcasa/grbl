@@ -1,5 +1,5 @@
 #!/bin/bash
-# system tools for guru tool-kit
+# system tools for guru-client
 
 source $GURU_BIN/lib/common.sh
 source $GURU_BIN/mount.sh
@@ -44,7 +44,7 @@ system.end () {                        # return normal, assuming that while is n
 
 
 
-system.upgrade() {          # upgrade guru tool-kit
+system.upgrade() {          # upgrade guru-client
 
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-shell.git"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit keyboard shortcut functions
+# guru-client keyboard shortcut functions
 # casa@ujo.guru 2020
 
 keyboard.main() {                           # keyboard command parser

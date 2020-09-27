@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit testing functions for all modules
+# guru-client testing functions for all modules
 #
 # Test case actions
 #  1) quick check
@@ -34,7 +34,7 @@ test.main() {
 
 
 test.help () {
-    echo "-- guru tool-kit main test help -------------------------------------"
+    echo "-- guru-client main test help -------------------------------------"
     printf "usage:\t %s test <tool>|all|release <tc_nr>|all   \n" "$GURU_CALL"
     printf "\ntools:\n"
     printf " <tool> <tc_nr>|all     all test cases \n"

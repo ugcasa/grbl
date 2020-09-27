@@ -1,5 +1,5 @@
 #!/bin/bash
-# simple file based counter for guru tool-kit
+# simple file based counter for guru-client
 
 counter.main () {
 

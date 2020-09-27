@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit project tools
+# guru-client project tools
 # ujo.guru 2020
 
 source $GURU_BIN/lib/common.sh
@@ -22,7 +22,7 @@ project.main() {
 
 
 project.help () {
-    echo "-- guru tool-kit project help -----------------------------------------------"
+    echo "-- guru-client project help -----------------------------------------------"
     printf "usage:\t\t %s project [command] project_name \n\n" "$GURU_CALL"
     printf "commands:\n"
     printf " add             add new projects \n"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit prototypes
+# guru-client prototypes
 # Some prototype functions not complicate enough to write separate scripts
 # ujo.guru 2019
 

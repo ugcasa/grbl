@@ -17,7 +17,7 @@ scan.main () {
 
 
 scan.help () {
-    echo "-- guru tool-kit scan help ---------------------------------"
+    echo "-- guru-client scan help ---------------------------------"
     printf "usage: %s scan command options \ncommands:              \n" "$GURU_CALL"
     printf "receipt   scan receipt size grayscale                 \n"
     printf "invoice   scan receipt A4 size optimized grayscale    \n"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit volume control functions. casa@ujo.guru 2020
+# guru-client volume control functions. casa@ujo.guru 2020
 
 volume_main () {
     # set volume
@@ -10,7 +10,7 @@ volume_main () {
 
     [ $(awk -F"[][]" '/dB/ { print $6 }' <(amixer sget Master)) == "off" ] && mute      # input anything removes mute if it is on
 
-    case "$command" in 
+    case "$command" in
 
             get)
                 get_volume
@@ -19,20 +19,20 @@ volume_main () {
 
             unmute|umute|silence)
                 return 0
-                ;; 
+                ;;
 
-            mute)   
+            mute)
                 mute
                 ;;
 
-            up|+)   
-                volume_up "$@" 
+            up|+)
+                volume_up "$@"
                 ;;
 
-            down|-) 
+            down|-)
                 volume_down "$@"
                 ;;
-            
+
             fadeup|fadedown)
                 $command "$@"
                 ;;
@@ -44,7 +44,7 @@ volume_main () {
                 else
                     echo "volume needs to be numeral" >$GURU_ERROR_MSG
                     return 100
-                fi  
+                fi
                 ;;
     esac
 }
@@ -73,26 +73,26 @@ get_volume() {
 
 
 mute() {
-    amixer -D pulse set Master toggle >/dev/null        
+    amixer -D pulse set Master toggle >/dev/null
 }
 
 
 fadedown () {
     get_volume
     volume=$((volume/5))
-    for (( i=0; i<=$volume; i++ )); do         
+    for (( i=0; i<=$volume; i++ )); do
         volume_down
         sleep 0.02
     done
 }
 
 
-fadeup () {    
-    get_volume;                                     # weird, without ;     
+fadeup () {
+    get_volume;                                     # weird, without ;
     [ "$1" ] && set_to="$1" || set_to=50
     volume=$(($set_to-volume))
     volume=$((volume/5))
-    for (( i=0; i<=$volume; i++ )); do 
+    for (( i=0; i<=$volume; i++ )); do
         volume_up
         sleep 0.02
     done
@@ -101,8 +101,8 @@ fadeup () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    volume_main "$@"     
-    exit "$?"      
+    volume_main "$@"
+    exit "$?"
 fi
 
 

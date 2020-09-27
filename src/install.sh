@@ -19,7 +19,7 @@ install.main () {
 
 
 install.help () {
-    echo "-- guru tool-kit tool install help -----------------------------------------------"
+    echo "-- guru-client tool install help -----------------------------------------------"
     printf "usage: %s install [keyword] \n" "$GURU_CALL"
     printf "\nkeywords:\n"
     echo " mqtt-client                 mosquitto client"
@@ -64,7 +64,7 @@ install.question () {
 
 install.tor () {
     unset _url _dir _file _form _lang
-    [[ $GURU_APP ]] || GURU_APP="$HOME"                     # if run outside of guru tool-kit
+    [[ $GURU_APP ]] || GURU_APP="$HOME"                     # if run outside of guru-client
     local _url="https://dist.torproject.org/torbrowser"
     local _file="tor-browser-linux64-"
     local _form=".tar.xz"

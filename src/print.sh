@@ -1,5 +1,5 @@
 #!/bin/bash
-# sshfs mount functions for guru tool-kit
+# sshfs mount functions for guru-client
 
 source $GURU_BIN/lib/common.sh
 
@@ -16,7 +16,7 @@ print.main() {
 }
 
 print.help () {
-    echo "-- guru tool-kit print help -----------------------------------------------"
+    echo "-- guru-client print help -----------------------------------------------"
     printf "usage:\t %s print [command] [arguments] \n\t $0 print [source] [target] \n" "$GURU_CALL"
     printf "\ncommands:\n"
     printf " label                     print label \n"

@@ -1,5 +1,5 @@
 
-# guru tool-kit launcher to bashrc
+# guru-client launcher to bashrc
 export GURU_USER=$USER
 if [[ -f ~/.gururc ]] ; then
     source ~/.gururc

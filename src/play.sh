@@ -61,7 +61,7 @@ play.upgrade () {
 
 
 play.help () {
-    echo "-- guru tool-kit play help -----------------------------------------------"
+    echo "-- guru-client play help -----------------------------------------------"
     printf "usage: %s play COMMAND what-to-play \n" "$GURU_CALL"
     printf "\ncommands: \n"
     printf "  url|id         play youtube ID or full url \n"

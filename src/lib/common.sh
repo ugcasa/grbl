@@ -1,4 +1,4 @@
-# guru tool-kit common functions
+# guru-client common functions
 # TODO remove common.sh, not practical way cause of namespacing
 
 system.core-dump () {

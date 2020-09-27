@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit config tools
+# guru-client config tools
 
 source $GURU_BIN/tag.sh
 source $GURU_BIN/mount.sh
@@ -20,13 +20,13 @@ config.main () {
 
 
 config.help () {
-    echo "-- guru tool-kit config help -----------------------------------------------"
+    echo "-- guru-client config help -----------------------------------------------"
     printf "usage:\t %s config [action] <target> \n" "$GURU_CALL"
     printf "\nactions:\n"
     printf " user          open user config in dialog \n"
     printf " help          help printout \n"
     printf "\nexample:     %s config user \n" "$GURU_CALL"
-    # guru tool-kit user configuration file
+    # guru-client user configuration file
     # to send configurations to server type 'guru remote push' and
     # to get configurations from server type 'guru remote pull'
     # backup is kept at .config/guru/<user>/userrc.backup

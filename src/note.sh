@@ -1,5 +1,5 @@
 #!/bin/bash
-# note tool for guru tool-kit
+# note tool for guru-client
 #source ~/.gururc
 source ~/.gururc2
 source $GURU_BIN/lib/common.sh
@@ -27,7 +27,7 @@ note.main () {                                  # command parser
 }
 
 note.help () {                                  # printout help
-    echo "-- guru tool-kit note help -----------------------------------------------"
+    echo "-- guru-client note help -----------------------------------------------"
     printf "Usage:\t\t %s note [command] <date> \nCommands:                       \n" "$GURU_CALL"
     printf " check          check do note exist, returns 0 if i do                \n"
     printf " list           list of notes. first month (MM), then year (YYYY)     \n"

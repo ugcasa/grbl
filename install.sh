@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installer for guru tool-kit. ujo.guru casa@ujo.guru 2017-2020
+# Installer for guru-client. ujo.guru casa@ujo.guru 2017-2020
 
 GURU_CALL="guru"                                                # default environment variables for installer
 GURU_USER="$USER"
@@ -29,7 +29,7 @@ _arg="$@"
 
 # main command parser                                           # TODO - re-write whole installer, this is bullshit
 case "$1" in
-       help)    echo "-- guru tool-kit istall help -----------------------------------------------"
+       help)    echo "-- guru-client istall help -----------------------------------------------"
                 printf "\nUsage:\n\t ./install.sh [argument] \n"
                 printf "\nArguments:\n\n"
                 printf " force             force re-install \n"

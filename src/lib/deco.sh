@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit decorations for terminal
+# guru-client decorations for terminal
 
 if [[ "$GURU_TERMINAL_COLOR" ]] ; then  #TODO remove this ..
     # TODO make futile, then remove

@@ -1,5 +1,5 @@
 #!/bin/bash
-# sshfs mount functions for guru tool-kit
+# sshfs mount functions for guru-client
 source $GURU_BIN/lib/common.sh
 source $GURU_BIN/corsair.sh
 
@@ -44,7 +44,7 @@ remote.status () {
 
 
 remote.help () {
-    echo "-- guru tool-kit remote help -----------------------------------------------"
+    echo "-- guru-client remote help -----------------------------------------------"
     printf "usage:\t %s remote [command] [arguments] \n\t $0 remote [source] [target] \n" "$GURU_CALL"
     printf "\ncommands:\n"
     printf " check      check that connection to accesspoint server is available \n"
