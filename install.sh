@@ -67,20 +67,20 @@ cp -f ./cfg/* "$GURU_CFG"                                                       
 cp -f -r ./src/* -f "$GURU_BIN"                                                                     # copy script files to bin folder
 mv  "$GURU_BIN/guru.sh" "$GURU_BIN/guru"                                                            # rename guru.sh in bin folder to guru
 
-# install daemons
-echo "installing guru.daemons module"
-_temp_dir="/tmp/guru"
-_source="git@github.com:ugcasa/guru-daemons.git"
-_banch="master"
-[ -d "$_temp_dir" ] && rm -rf "$_temp_dir"
-mkdir "$_temp_dir"
-cd "$_temp_dir"
-if git clone "$_source" >/dev/null 2>&1 ; then
-        cp -f guru-daemons/src/* "$GURU_BIN"
-        #cp -f guru-daemons/cfg/* "$GURU_CFG"
-    else
-        echo "error: non valid repository $_source"
-    fi
+# # install daemons
+# echo "installing guru.daemons module"
+# _temp_dir="/tmp/guru"
+# _source="git@github.com:ugcasa/guru-daemons.git"
+# _banch="master"
+# [ -d "$_temp_dir" ] && rm -rf "$_temp_dir"
+# mkdir "$_temp_dir"
+# cd "$_temp_dir"
+# if git clone "$_source" >/dev/null 2>&1 ; then
+#         cp -f guru-daemons/src/* "$GURU_BIN"
+#         #cp -f guru-daemons/cfg/* "$GURU_CFG"
+#     else
+#         echo "error: non valid repository $_source"
+#     fi
 
 
 if ! dpkg -l | grep xserver-xorg >/dev/null ; then                                                 # End here if no X installed
