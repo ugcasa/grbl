@@ -1,4 +1,4 @@
-guru tool-kit linux shell tools
+guru client linux shell tools
 ---------------------------------------
 - github board - https://github.com/users/ugcasa/projects/1
 - Kanban board - https://trello.com/b/qV7yPfGY/guru-tool-kit

@@ -1,29 +1,29 @@
 #!/bin/bash
-# guru tool-kit keyboard shortcut functions 
+# guru client keyboard shortcut functions
 # casa@ujo.guru 2020
 
 keyboard_main() {
 
     source "$(dirname "$0")/lib/common.sh"
     distro="$(check_distro)"    # lazy
-    
+
     command="$1"
     shift
 
     case "$command" in
 
         add-shortcut)
-                if [ "$1" == "all" ]; then  
-                     [ "$distro" == "linuxmint" ] && add_cinnamon_guru_shortcuts 
-                     [ "$distro" == "ubuntu" ] && add_ubuntu_guru_shortcuts 
+                if [ "$1" == "all" ]; then
+                     [ "$distro" == "linuxmint" ] && add_cinnamon_guru_shortcuts
+                     [ "$distro" == "ubuntu" ] && add_ubuntu_guru_shortcuts
                 else
                     [ "$distro" == "linuxmint" ] && echo "TBD set_cinnamon_keyboard_shortcut"
                     [ "$distro" == "ubuntu" ] && set_ubuntu_keyboard_shortcut "$@"
                 fi
                 ;;
-        
+
         release-shortcut)
-                if [ "$1" == "all" ]; then  
+                if [ "$1" == "all" ]; then
                     reset_ubuntu_keyboard_shortcuts
                     [ "$distro" == "linuxmint" ] && echo "TBD reset_cinnamon_keyboard_shortcuts"
                     [ "$distro" == "ubuntu" ] && reset_ubuntu_keyboard_shortcuts
@@ -46,7 +46,7 @@ keyboard_main() {
 }
 
 
-# Functions 
+# Functions
 set_ubuntu_keyboard_shortcut () {
     # usage: set_ubuntu_keyboard_shortcut [name] [command] [binding]
         compatible_with "ubuntu" || return 1
@@ -54,9 +54,9 @@ set_ubuntu_keyboard_shortcut () {
         current_keys=$(gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings)
         key_base="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom"
         key_number=$(echo $current_keys|grep -o "custom-keybindings/custom" | wc -l)
-     
-        if (($key_number > 0)); then 
-            current_keys=${current_keys//]}    
+
+        if (($key_number > 0)); then
+            current_keys=${current_keys//]}
             new_keys="$current_keys, '$key_base$key_number/']"
         else
             new_keys="['$key_base$key_number/']"
@@ -71,7 +71,7 @@ set_ubuntu_keyboard_shortcut () {
 
 
 reset_ubuntu_keyboard_shortcuts(){
-    # resets all custom shortcuts 
+    # resets all custom shortcuts
         compatible_with "ubuntu" || return 1
         gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings
 }
@@ -98,8 +98,8 @@ add_ubuntu_guru_shortcuts(){
         [ "$GURU_KEYBIND_PICTURE_MD" ]  && set_ubuntu_keyboard_shortcut picture_link  "guru stamp picture_md"     "$GURU_KEYBIND_PICTURE_MD"  ; error=$((error+$?))
 
         # sum errors
-        if [[ "$error" -gt "0" ]]; then 
-            echo "warning: $error in ${BASH_SOURCE[0]}, non defined shortcut keys in config file" 
+        if [[ "$error" -gt "0" ]]; then
+            echo "warning: $error in ${BASH_SOURCE[0]}, non defined shortcut keys in config file"
             return "$error"
         fi
         return 0
@@ -111,20 +111,20 @@ add_cinnamon_guru_shortcuts() {
         compatible_with "linuxmint" || return 1
 
         dconf help >/dev/null || sudo apt install dconf-cli
-        
-        new=$GURU_CFG/$GURU_USER/kbbind.guruio.cfg           
+
+        new=$GURU_CFG/$GURU_USER/kbbind.guruio.cfg
         backup=$GURU_CFG/kbbind.backup.cfg
-        
-        if [ ! -f "$backup" ]; then       
+
+        if [ ! -f "$backup" ]; then
             dconf dump /org/cinnamon/desktop/keybindings/ > "$backup" # && cat "$backup" | grep binding=
-            
+
         fi
-        
-        dconf load /org/cinnamon/desktop/keybindings/ < "$new"    
+
+        dconf load /org/cinnamon/desktop/keybindings/ < "$new"
 }
 
 
-# check is called by user of includet in scrip. 
+# check is called by user of includet in scrip.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         keyboard_main "$@"
         exit "$?"

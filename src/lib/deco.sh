@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit decorations for terminal
+# guru client decorations for terminal
 
 unset RED GRN YEL WHT BLU BRN NC
 

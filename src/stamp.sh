@@ -5,7 +5,7 @@ stamp_main () {    # main command parser
 
     case $command in
                 date)
-        			[ "$1" == "-h" ] && stamp=$(date +$GURU_DATE_FORMAT) || stamp=$(date +$GURU_FILE_DATE_FORMAT)			
+        			[ "$1" == "-h" ] && stamp=$(date +$GURU_DATE_FORMAT) || stamp=$(date +$GURU_FILE_DATE_FORMAT)
         			;;
 
         		time)
@@ -15,17 +15,17 @@ stamp_main () {    # main command parser
                 start)
                     stamp=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
                     ;;
-                 
+
                 end)
-                    stamp=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M")          
+                    stamp=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M")
                     ;;
-                 
+
                 round)
         			stamp=$(date -d @$(( (($(date +%s) + 450) / 900) * 900)) "+%H:%M")
                     ;;
 
                 transaction)
-                    stamp="## Transaction\n\tAccount\t\tAmount\t\tVAT\tto/frm\tDescription\n\t"            
+                    stamp="## Transaction\n\tAccount\t\tAmount\t\tVAT\tto/frm\tDescription\n\t"
                     ;;
 
                 signature)
@@ -36,24 +36,24 @@ stamp_main () {    # main command parser
                     weekplan $@
                     exit 0
                     ;;
-                 
+
                 picture-md)
                     [ "$1" ] && file="$GURU_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$1" || file="$GURU_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
                     [[ -f "$file" ]] || exit 234
-                    stamp="![]($file){ width=500px }" 
+                    stamp="![]($file){ width=500px }"
                     ;;
 
                 *)
-                    echo "-- guru tool-kit stamp help -----------------------------------------------"   
-                    printf "usage: guru stamp [COMMAND] \n\ncommands: \n"                
+                    echo "-- guru client stamp help -----------------------------------------------"
+                    printf "usage: guru stamp [COMMAND] \n\ncommands: \n"
                     printf "date              datestamp \n"
                     printf "time              timestamp \n"
-                    printf "start             start time stamp in format HH:MM \n"                
+                    printf "start             start time stamp in format HH:MM \n"
                     printf "end               end time stamp in format HH:MM \n"
-                    printf "round             rounded up time stamp \n"                            
-                    printf "signature         user signature \n"   
-                    printf "transaction       stansaction stamp for notes \n"   
-                    printf "weekplan          generates week plan (<from> <to> numeral week day) \n"   
+                    printf "round             rounded up time stamp \n"
+                    printf "signature         user signature \n"
+                    printf "transaction       stansaction stamp for notes \n"
+                    printf "weekplan          generates week plan (<from> <to> numeral week day) \n"
                     printf "all stamps is copied to the clipboard\n"
     esac
 
@@ -73,12 +73,12 @@ weekplan () {
     # [ -f "$target_file" ] || exit 123
 
     get_dates() {
-        for i in {1..7} ; do    
+        for i in {1..7} ; do
             day_dates[$i]=$(date --date="this ${day_names_en[$i]}" +$GURU_FILE_DATE_FORMAT)                 #;echo "day_dates[$i] : $i"
         done
     }
 
-    md_chapter () {     
+    md_chapter () {
         depth=$(eval $(echo printf '"#%0.s"' {1..$1}))
         printf "\n$depth $2\n\n"
     }
@@ -88,13 +88,13 @@ weekplan () {
     }
 
     week_plan () {
-        get_dates 
-        md_chapter 2 "Week plan"    
+        get_dates
+        md_chapter 2 "Week plan"
 
-        [ $1 ] && _from=$1 || _from=1 
-        [ $2 ] && _to=$2 || _to=5 
-        
-        for ((i = $_from ; i <= $_to ; i++)); do  
+        [ $1 ] && _from=$1 || _from=1
+        [ $2 ] && _to=$2 || _to=5
+
+        for ((i = $_from ; i <= $_to ; i++)); do
             md_chapter 3 "${day_names_en[$i]} ${day_dates[$i]}"
             #echo "- task:"                                                                         # Tähän myöhemmin taskit todo listalta jotka tägätty ko. päivämäärällä
         done

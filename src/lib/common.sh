@@ -1,4 +1,4 @@
-# guru tool-kit common "libraries"
+# guru client common "libraries"
 
 msg() {
     #function for ouput messages and make log notifications. input "message string"

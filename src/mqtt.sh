@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit corsair led notification functions
+# guru client corsair led notification functions
 # casa@ujo.guru 2020
 
 
@@ -22,7 +22,7 @@ mqtt.write () {
 
 
 mqtt.help () {
-    echo "-- guru tool-kit corsair help -----------------------------------------------"
+    echo "-- guru client corsair help -----------------------------------------------"
     printf "usage:\t\t %s corsair [command] \n\n" "$GURU_CALL"
     printf "commands:\n"
     printf " install         install requirements \n"

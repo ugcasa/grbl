@@ -16,7 +16,7 @@ install.main () {
 
 
 install.help () {
-    echo "-- guru tool-kit tool install help -----------------------------------------------"
+    echo "-- guru client tool install help -----------------------------------------------"
     printf "usage: %s install [keyword] \n" "$GURU_CALL"
     printf "\nkeywords:\n"
     echo " mqtt-client                 mosquitto client"

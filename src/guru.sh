@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit - caa@ujo.guru 2020
+# guru client - caa@ujo.guru 2020
 export GURU_VERSION="0.5.1"
 
 source $HOME/.gururc                                # user and platform settings (implement here, always up to date)
@@ -27,14 +27,14 @@ main.parser () {                                    # parse arguments and delive
        keyboard|phone|play|vol|yle)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
       test|stamp|timer|tag|install)  $tool.sh "$@"                               ; return $? ;;  # shell scipt tools
                     help|-h|--help)  main.help "$@"                              ; return 0  ;;  # help printout
-                     version|--ver)  printf "guru tool-kit v.$GURU_VERSION\n"               ;;  # version output
+                     version|--ver)  printf "guru client v.$GURU_VERSION\n"               ;;  # version output
                                  *)  printf "$GURU_CMD: command %s not found \n" "$tool"     ;;  # false user input
     esac
 }
 
 
 main.help () {
-    echo "-- guru tool-kit main help ------------------------------------------"
+    echo "-- guru client main help ------------------------------------------"
     printf "usage:\t %s [tool] [argument] [variables]\n" "$GURU_CALL"
     printf "\nfile control:\n"
     echo "  mount|umount    mount remote locations"

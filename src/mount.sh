@@ -1,5 +1,5 @@
 #!/bin/bash
-# mount tools for guru tool-kit
+# mount tools for guru client
 
 source $GURU_BIN/lib/common.sh
 
@@ -38,7 +38,7 @@ mount.main() {
 
 
 mount.help() {
-    echo "-- guru tool-kit mount help -----------------------------------------------"
+    echo "-- guru client mount help -----------------------------------------------"
     printf "usage:\t\t %s mount [source] [target] \n" "$GURU_CALL"
     printf "\t\t %s mount [command] [known_mount_point|arguments] \n" "$GURU_CALL"
     printf "commands:\n"
@@ -267,7 +267,7 @@ unmount.known_remote () {
 
 
 mount.defaults_raw () {
-    # mount guru tool-kit defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
+    # mount guru client defaults + backup method if sailing. TODO do better: list of key:variable pairs while/for loop
    local _error="0"
     if [ "$GURU_CLOUD_COMPANY" ]; then   mount.remote "$GURU_CLOUD_COMPANY" "$GURU_COMPANY" || _error="1"; fi
     if [ "$GURU_CLOUD_FAMILY" ]; then    mount.remote "$GURU_CLOUD_FAMILY" "$GURU_FAMILY" || _error="1"; fi

@@ -1,5 +1,5 @@
 #!/bin/bash
-# system tools for guru tool-kit
+# system tools for guru client
 
 source $GURU_BIN/lib/common.sh
 

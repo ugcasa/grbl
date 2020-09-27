@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru tool-kit background servicer
+# guru client background servicer
 # casa@ujo.guru 2020
 
 source $GURU_BIN/lib/common.sh

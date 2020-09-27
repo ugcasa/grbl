@@ -1,5 +1,5 @@
 #!/bin/bash
-# note tool for guru tool-kit
+# note tool for guru client
 
 source $GURU_BIN/lib/common.sh
 source $GURU_BIN/mount.sh
@@ -16,7 +16,7 @@ note.main () {
            locate)  note.gen_var "$1"   ; echo "$note"    ; return 0 ;;
             exist)  note.gen_var "$1"   ; [ -f "$note" ] && return 0 || return 127 ;;
               tag)  note.gen_var "$1"   ; [ -f "$note" ] && $GURU_CALL "tag $note $user_input"  ;;
-             help)  echo "-- guru tool-kit note help -----------------------------------------------"
+             help)  echo "-- guru client note help -----------------------------------------------"
                     printf "Usage:\t\t %s note [command] <date> \nCommands:                       \n" "$GURU_CALL"
                     printf " check          check do note exist, returns 0 if i do                \n"
                     printf " list           list of notes. first month (MM), then year (YYYY)     \n"

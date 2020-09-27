@@ -14,7 +14,7 @@ timer.main () {
 					return $?
 					;;
 		        *)
-				 	echo "-- guru tool-kit timer help -----------------------------------------------"
+				 	echo "-- guru client timer help -----------------------------------------------"
 					printf "start|change     start timer for target with last customer and project \n"
 					printf "start at [TIME]  start timer at given time in format HH:MM \n"
 					printf "end|stop         end current task \n"
