@@ -61,10 +61,10 @@ test.tool() {
     [ "$1" ] && _tool="$1" || read -r -p "input tool name to test: " _tool
     [ "$2" ] && _case="$2" || _case="all"
 
-    _test_id=$(counter.main get guru-shell_test_id)
-    counter.main add guru-shell_test_id
+    _test_id=$(counter.main get guru-client_test_id)
+    counter.main add guru-client_test_id
     echo
-    HEADER "TEST $_test_id: guru-shell $_tool #$_case - $(date)"
+    HEADER "TEST $_test_id: guru-client $_tool #$_case - $(date)"
 
     if [ -f "$GURU_BIN/$_tool.sh" ]; then
                 _lang="sh"
@@ -117,9 +117,9 @@ test.all() {
 test.release() {
     # validation test, tests all but prints out only module reports
     local _error=0
-    local _test_id=$(counter.main add guru-shell_validation_test_id)
+    local _test_id=$(counter.main add guru-client_validation_test_id)
 
-        msg "\n${WHT}RELEASE TEST $_test_id: guru-shell v.$GURU_VERSION $(date)${NC}\n"
+        msg "\n${WHT}RELEASE TEST $_test_id: guru-client v.$GURU_VERSION $(date)${NC}\n"
         test.all |grep --color=never "result is:" |grep "TEST" || _error=$?
 
         if ((_error<9)); then

@@ -108,8 +108,8 @@ export GURU_APP="$HOME/apps"
 export GURU_CHROME_USER_DATA="$HOME/.config/chromium/$GURU_USER_EMAIL"
 
 # Files
-export GURU_LOG="$GURU_LOCAL_TRACK/guru-shell.log"
-export GURU_CORE_DUMP="$GURU_LOCAL_TRACK/guru-shell.CORE_DUMP"
+export GURU_LOG="$GURU_LOCAL_TRACK/guru-client.log"
+export GURU_CORE_DUMP="$GURU_LOCAL_TRACK/guru-client.CORE_DUMP"
 export GURU_TRACKDATA="$GURU_WORKTRACK/current_work.csv"
 export GURU_TRACKLAST="$GURU_WORKTRACK/timer.last"
 export GURU_TRACKSTATUS="$GURU_WORKTRACK/timer.status"

@@ -4,7 +4,7 @@
     step_1 () {
     exec 3>&1                   # open temporary file handle and redirect it to stdout
     items=$(dialog --checklist "Select what to install " 0 0 6 \
-              1 "install guru-shell" on \
+              1 "install guru-client" on \
               2 "install guru-daemons" on \
               3 "desktop modifications" off \
               4 "install development tools" off \
@@ -19,7 +19,7 @@
         0)      echo "following modules selected:"
                 for _item in $items ; do
                     case $_item in
-                          1) install.guru-shell "$@"            ;;
+                          1) install.guru-client "$@"            ;;
                           2) install.guru-daemons "$@"          ;;
                           3) desktop.modifications "$@"         ;;
                           4) install.dev_tools "$@"             ;;
@@ -36,8 +36,8 @@
     esac
 }
 
-install.guru-shell () {
-    echo "install.guru-shell"
+install.guru-client () {
+    echo "install.guru-client"
 }
 
 install.guru-daemons () {

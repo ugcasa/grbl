@@ -47,7 +47,7 @@ system.end () {                        # return normal, assuming that while is n
 system.upgrade() {          # upgrade guru-client
 
     local temp_dir="/tmp/guru"
-    local source="git@github.com:ugcasa/guru-shell.git"
+    local source="git@github.com:ugcasa/guru-client.git"
     local _banch="master" ;
     [[ "$GURU_USE_VERSION" ]] && _branch="$GURU_USE_VERSION"
     [[ "$1" ]] && _branch="$1"
@@ -57,7 +57,7 @@ system.upgrade() {          # upgrade guru-client
     cd "$temp_dir"
     git clone -b "$_branch" "$source" || return 100
     bash $GURU_BIN/uninstall.sh
-    cd "$temp_dir/guru-shell"
+    cd "$temp_dir/guru-client"
     bash install.sh "$@"
     cd
     # bash $GURU_BIN/$GURU_CALL version
@@ -67,7 +67,7 @@ system.upgrade() {          # upgrade guru-client
 system.rollback() {         # rollback to version
 
     local temp_dir="/tmp/guru"
-    local source="git@github.com:ugcasa/guru-shell.git"
+    local source="git@github.com:ugcasa/guru-client.git"
     local _roll_to="1"
     [ "$1" ] && _roll_to="$1"
 
@@ -76,7 +76,7 @@ system.rollback() {         # rollback to version
     cd "$temp_dir"
     git clone -b "rollback$_roll_to" "$source" || return 100
     bash $GURU_BIN/uninstall.sh
-    cd "$temp_dir/guru-shell"
+    cd "$temp_dir/guru-client"
     bash install.sh "$@"
     cd
     # bash $GURU_BIN/$GURU_CALL version
