@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-shell corsair led notification functions
+# guru-client corsair led notification functions
 # casa@ujo.guru 2020
 
 # todo
@@ -46,7 +46,7 @@ corsair.main () {
 
 
 corsair.help () {
-    echo "-- guru guru-shell corsair help -----------------------------------------------"
+    echo "-- guru guru-client corsair help -----------------------------------------------"
     printf "usage:\t\t %s corsair [command] \n\n" "$GURU_CALL"
     printf "commands:\n"
     printf " install         install requirements \n"
