@@ -107,15 +107,19 @@ corsair.status () {
             corsair.write f4 green
             return 0
         else
-            corsair.write f4 yellow
+            corsair.write f4 red
             return 1
         fi
 }
 
 
 corsair.init () {
-   local _mode="status" ; [[ $1 ]] && _mode=$1
-   ckb-next -p guru -m $_mode && return 0 || gmsg -v -x $? -c yellow "corsair init failure"
+    # load default profile and set wanted mode
+    local _mode="status" ; [[ $1 ]] && _mode=$1
+    if ! ckb-next -p guru -m $_mode ; then
+            gmsg -v -x $? -c yellow "corsair init failure"
+        fi
+    return 0
 }
 
 
@@ -173,7 +177,7 @@ corsair.write () {
     # write color code to button pipe file and let device to receive and process command (surprisingly slow)
     if file $_button |grep fifo >/dev/null ; then
             echo "rgb $_color" > "$_button"
-            sleep 0.1
+            sleep 0.05
         else
             gmsg -c yellow -x 103 "io error, pipe file $_button is not set in cbk-next"
         fi
