@@ -10,19 +10,30 @@ export GURU_HOSTNAME="$(hostname)"
 # while true ; do ls .guru-stop ; sleep 1 ; clear ; done
 # while true ; do cat $GURU_SYSTEM_MOUNT/.daemon-pid ; sleep 2 ; clear ; done
 
+### configurations
+
+# export old configurations - TODO remove need of this
 source ~/.gururc
+# export current configuration - TODO fully implement!
 source ~/.gururc2
-#  [[ -f $GURU_USER_RC ]] && source $GURU_USER_RC || source ~/.gururc2
-   [[ $GURU_USER_NAME ]] && export GURU_USER=$GURU_USER_NAME
-  [[ $GURU_FLAG_COLOR ]] && export GURU_TERMINAL_COLOR=true
+[[ $GURU_USER_NAME ]] && export GURU_USER=$GURU_USER_NAME
+[[ $GURU_FLAG_COLOR ]] && export GURU_TERMINAL_COLOR=true
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
 
-source $GURU_BIN/system.sh                  # guru toolkit upgrade etc.
+### core modules
+
+# include client sytem tools
+source $GURU_BIN/system.sh
+# include configuration tools
 source $GURU_BIN/config.sh
-source $GURU_BIN/functions.sh               # quick try outs TODO remove need of this
-source $GURU_BIN/mount.sh                   # needed to keep track tiles up to date
-source $GURU_BIN/lib/common.sh              # TODO remove need of this
-source $GURU_BIN/guru-daemon.sh             #
+# include quick try outs - TODO remove need of this
+source $GURU_BIN/functions.sh
+# include mount tools
+source $GURU_BIN/mount.sh
+# import common functions - TODO remove need of this
+source $GURU_BIN/lib/common.sh
+# include daemon tools
+source $GURU_BIN/daemon.sh
 
 
 main.parser () {                                                                        # main command parser

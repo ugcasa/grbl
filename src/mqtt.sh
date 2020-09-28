@@ -5,54 +5,71 @@
 
 mqtt.main () {
     # corsair command parser
-    mqtt.check                   # check than ckb-next-darmon, ckb-next and pipes are started and start is not
+    #mqtt.check                   # check than ckb-next-darmon, ckb-next and pipes are started and start is not
     local _cmd="$1" ; shift
+
     case "$_cmd" in
-               start|end|status)  mqtt.$_cmd ; return $? ;;
-            help|install|remove)  mqtt.$_cmd ; return $? ;;
-                              *)  echo "mqtt.sh: unknown command"
+
+               start|end|status|help|install|remove)
+                            mqtt.$_cmd ; return $? ;;
+
+               check|write)
+                            mqtt.$_cmd ; return $? ;;
+
+               *)           echo "mqtt: unknown command"
         esac
+
     return 0
 }
 
 
 mqtt.write () {
+    gmsg -v 2 TBD
     return 0
 }
 
 
 mqtt.help () {
-    echo "-- guru client corsair help -----------------------------------------------"
-    printf "usage:\t\t %s corsair [command] \n\n" "$GURU_CALL"
-    printf "commands:\n"
-    printf " install         install requirements \n"
-    printf " status          launch keyboard status view \n"
-    printf " help            this help \n\n"
-    printf "\nexample:"
-    printf "\t %s corsair status \n" "$GURU_CALL"
+    gmsg -v 1 -c white "guru-client mqtt help -----------------------------------------------"
+    gmsg -v 2
+    gmsg -v 0 "usage:   $GURU_CALL mqtt [start|end|status|help|install|remove|check|write] "
+    gmsg -v 2
+    gmsg -v 1 -c white "commands:"
+    gmsg -v 1 " status          printout mqtt service status "
+    gmsg -v 1 " start           start status polling "
+    gmsg -v 1 " end             end status polling "
+    gmsg -v 1 " install         install requirements "
+    gmsg -v 1 " remove          remove installed requirements "
+    gmsg -v 2 " help            printout this help "
+    gmsg -v 2
+    gmsg -v 1 -c white "example:"
+    gmsg -v 1 "         $GURU_CALL mqtt status"
+    gmsg -v 2
 }
 
 
 mqtt.check () {
      # Check mqtt client tools are ok
+    gmsg -v 2 TBD
      return 1
 }
 
 
 mqtt.online () {
+    gmsg -v 2 TBD
     return 1
 }
 
 
-mqtt.end () {                        # return normal, assuming that while is normal
-    gmsg -v 1 -t "F3 ${WHT}WHITE${NC}"
-    corsair.write $F3 $_WHITE
+mqtt.start () {                      # set leds  F1 -> F4 off
+    gmsg -v 1 -t "starting message bus status poller"
+    corsair.write f3 off
 }
 
 
-mqtt.start () {                      # set leds  F1 -> F4 off
-    gmsg -v 1 -t "F3 OFF"
-    corsair.write $F3 $_OFF
+mqtt.end () {                        # return normal, assuming that while is normal
+    gmsg -v 1 -t "ending message bus status polling"
+    corsair.write f3 white
 }
 
 
@@ -62,14 +79,14 @@ mqtt.status () {
 
     # check mqtt is reachable
     if mqtt.online "$GURU_LOCAL_SERVER" "$GURU_MQTT_LOCAL_PORT" ; then
-            gmsg -v 1 -t "F3 ${GRN}GREEN${NC}"
-            corsair.write $F3 $_GREEN
+            gmsg -v 1 -t -c green "message server online"
+            corsair.write f3 green
         elif mqtt.online "$GURU_REMOTE_SERVER" "$GURU_MQTT_REMOTE_PORT" ; then
-            gmsg -v 1 -t "F3 ${YEL}YELLOW${NC}"
-            corsair.write $F3 $_YELLOW
+            gmsg -v 1 -t -c yellow "remote message server online "
+            corsair.write f3 yellow
         else
-            gmsg -v 1 -t "F3 ${RED}RED${NC}"
-            corsair.write $F3 $_RED
+            gmsg -v 1 -t -c red "message server offline"
+            corsair.write f3 red
         fi
 }
 
@@ -85,7 +102,10 @@ mqtt.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-        mqtt.main "$@"
-        exit "$?"
+    source "$HOME/.gururc2"
+    export GURU_VERBOSE=2
+    source "$GURU_BIN/lib/deco.sh"
+    mqtt.main "$@"
+    exit "$?"
 fi
 

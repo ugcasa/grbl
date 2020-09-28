@@ -138,7 +138,7 @@ timer.start() {
 	 	timer.end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
 	fi
 
-	corsair.write $F9 $_GREEN 	# signal user (with corsair rgb kb) that timer is on
+	corsair.write f9 green 	# signal user (with corsair rgb kb) that timer is on
 
 	case "$1" in
 
@@ -199,7 +199,7 @@ timer.end() {
 		return 13
 	fi
 
-	corsair.write $F9 $_WHITE														# disable timer status kb indicator
+	corsair.write f9 white														# disable timer status kb indicator
 
 	case "$1" in
 
@@ -285,7 +285,7 @@ timer.cancel() {
 
 	if [ -f $GURU_FILE_TRACKSTATUS ]; then
 		rm $GURU_FILE_TRACKSTATUS
-		corsair.write $F9 $_WHITE
+		corsair.write f9 white
 		echo "canceled"
 	else
 		echo "not active timer"

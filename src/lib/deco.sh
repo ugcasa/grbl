@@ -59,18 +59,18 @@ msg() {         # function for ouput messages and make log notifications. TODO r
 export -f msg
 
 
-gmsg() {  # function for ouput messages and make log notifications - revisited
-
-    # default
+gmsg() {
+    # function for ouput messages and make log notifications - revisited
     local _verbose_trigger=0                        # prinout if verbose trigger is not set in options
+    local _newline="\n"                             # newline is on by default
+    local _pre_newline=
     local _timestamp=                               # timestamp is disabled by default
     local _message=                                 # message container
     local _logging=                                 # logging is disabled by default
-    local _newline="\n"                             # newline is on by default
-    local _pre_newline=
     local _color=
+    local _exit=
 
-    TEMP=`getopt --long -o "tlnhNv:c:" "$@"`
+    TEMP=`getopt --long -o "tlnhNx:v:c:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
@@ -79,6 +79,7 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
             -h ) _color="$C_HEADER"                         ; shift ;;
             -n ) _newline=                                  ; shift ;;  # no newline
             -N ) _pre_newline="\n"                          ; shift ;;  # newline before printout
+            -x ) _exit=$2                                   ; shift 2 ;;
             -v ) _verbose_trigger=$2                        ; shift 2 ;;
             -c ) _c_var="C_${2^^}" ; _color=${!_c_var}      ; shift 2 ;;
              * ) break
@@ -103,6 +104,8 @@ gmsg() {  # function for ouput messages and make log notifications - revisited
         [[ -f "$GURU_LOG" ]] || return 0                                     # log inly is log exist (hmm.. this not really neede)
         printf "$@" | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
     fi
+
+    [[ $_exit ]] && exit $_exit
 }
 
 export -f gmsg

@@ -159,7 +159,7 @@ mount.check () {
     mount.online "$_target_folder" ; _err=$?
 
     if [[ $_err -gt 0 ]] ; then
-            gmsg -v1 "$OFFLINE"
+            gmsg -v 1 "$OFFLINE"
             return 1
         fi
     gmsg -v 1 "$MOUNTED"

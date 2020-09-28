@@ -19,14 +19,14 @@ remote.main() {
 
 
 remote.end () {                        # return normal, assuming that while is normal
-    gmsg -v 1 -t "F2 ${WHT}WHITE${NC}"
-    corsair.write $F2 $_WHITE
+    gmsg -v 1 -t "remote ended"
+    corsair.write f2 white
 }
 
 
 remote.start () {                      # set leds  F1 -> F4 off
-    gmsg -v 1 -t "F2 OFF"
-    corsair.write $F2 $_OFF
+    gmsg -v 1 -t "remote started"
+    corsair.write f2 off
 }
 
 
@@ -34,11 +34,14 @@ remote.status () {
 
     # check remote is reachable. daemon poller will run this
     if remote.online ; then
-            corsair.write $F2 $_GREEN ; gmsg -v 1 -t "F2 ${GRN}GREEN${NC}"
+            gmsg -v 1 -t -c green "local accesspoint connection"
+            corsair.write f2 green
         elif remote.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
-            corsair.write $F2 $_YELLOW ; gmsg -v 1 -t "F2 ${YEL}YELLOW${NC}"
+            gmsg -v 1 -t -c yellow "remote accesspoint connection"
+            corsair.write f2 yellow
         else
-            corsair.write $F2 $_RED ; gmsg -v 1 -t "F2 ${RED}RED${NC}"
+            gmsg -v 1 -t -c red "accesspoint offline"
+            corsair.write f2 red
         fi
 }
 
@@ -70,10 +73,10 @@ remote.online() {
     local _server_port="$GURU_ACCESS_LAN_PORT" ; [[ "$1" ]] && _server_port="$1" ; shift
 
     if ssh -o ConnectTimeout=3 -q -p "$_server_port" "$_user@$_server" exit ; then
-        gmsg -v 1 "$(ONLINE "$_server")"
+        gmsg -v 1 "$(ONLINE $_server)"
         return 0
     else
-        gmsg -v 1  $(OFFLINE "$_server")
+        gmsg -v 1 "$(OFFLINE $_server)"
         return 132
     fi
 }

@@ -8,7 +8,8 @@
 #   - more colors and key > pipe file bindings
 #   - shortcuts behind indicator key presses
 
-# key to pipe file
+# keys pipe files
+# NOTE: these need to correlate with cbk-next animation settings!
     ESC="/tmp/ckbpipe000"
      F1="/tmp/ckbpipe001"
      F2="/tmp/ckbpipe002"
@@ -24,7 +25,7 @@
     F12="/tmp/ckbpipe012"
    CPLC="/tmp/ckbpipe015"
 
-# color codes R|G|B|Brightness
+# rgb color codes [R|G|B|Brightness]
    _RED="ff0000ff"
  _GREEN="00ff00ff"
   _BLUE="0000ffff"
@@ -37,8 +38,8 @@ corsair.main () {
     # command parser
     corsair.check                   # check than ckb-next-darmon, ckb-next and pipes are started and start is not
     local _cmd="$1" ; shift         # get command
-    case "$_cmd" in start|end|status|help|install|write|remove)
-            corsair.$_cmd ; return $? ;;
+    case "$_cmd" in start|end|status|help|install|remove|write)
+            corsair.$_cmd $@ ; return $? ;;
         *)  echo "unknown command"
     esac
     return 0
@@ -46,23 +47,27 @@ corsair.main () {
 
 
 corsair.help () {
-    echo "-- guru guru-client corsair help -----------------------------------------------"
-    printf "usage:\t\t %s corsair [command] \n\n" "$GURU_CALL"
-    printf "commands:\n"
-    printf " install         install requirements \n"
-    printf " remove          remove corsair driver "
-    printf " help            this help \n"
-    printf " write           write key color (described below) \n "
-    printf "      <KEY>      up-case key name like 'F1' \n "
-    printf "   _<COLOR>      up-case color with '_' on front of it \n"     # todo: go better
-    #        start           starting procedure
-    #        end             ending procedure
+    gmsg -v 1 -c white "guru-client corsair driver help -----------------------------------------"
+    gmsg -v 2
+    gmsg -v 0 "usage:    $GURU_CALL corsair [start|end|status|help|install|remove|write <key> <color>]"
+    gmsg -v 2
+    gmsg -v 1 -c white "commands:"
+    gmsg -v 1 " install         install requirements "
+    gmsg -v 1 " remove          remove corsair driver "
+    gmsg -v 2 " help            this help "
+    gmsg -v 1 " write           write key color (described below)  "
+    gmsg -v 1 "    <KEY>        up-case key name like 'F1'  "
+    gmsg -v 1 " _<COLOR>        up-case color with '_' on front of it "     # todo: go better
+    gmsg -v 1 " start           starting procedure"
+    gmsg -v 1 " end             ending procedure"
     #        start_blink     make key to blink (details below)
     #           <freq>       frequency in milliseconds
     #           <ratio>      10 = 10 of freq/100
     #        status          launch keyboard status view for testing
-    printf "\n\n example:"
-    printf "\t %s corsair status \n" "$GURU_CALL"
+    gmsg -v 2
+    gmsg -v 1 -c white "example:"
+    gmsg -v 1 "          $GURU_CALL corsair status "
+    gmsg -v 2
 }
 
 
@@ -93,14 +98,12 @@ corsair.check () {
 
 
 corsair.status () {
-    # writes its in status to keyboard LED, no really other purpose then testing
+    # get status and print it out to kb leds
     if corsair.check ; then
-            gmsg -v1 -t "F4 $(OK)"
-            corsair.write $F4 $_GREEN
+            corsair.write f4 green
             return 0
         else
-            gmsg -v1 -t "F4 $(ERROR)"
-            corsair.write $F4 $_YELLOW
+            corsair.write f4 yellow
             return 1
         fi
 }
@@ -109,26 +112,56 @@ corsair.status () {
 corsair.start () {
     # reserve some keys for future purposes by coloring them now
     # todo: I think this can be removed, used to be test interface before daemon
+
     gmsg -v1 -t "starting corsair"
-    corsair.write $CPLC $_OFF           # reserved for future use as an guru super key
+    # reserved for future use as an guru super key
+    corsair.write cplc off
 }
 
 
 corsair.end () {
     # return normal, assuming that normal really exits
     gmsg -v1 -t "ending corsair"
-    corsair.write $F4 $_WHITE
-    corsair.write $CPLC $_WHITE
+    corsair.write f1 white
+    corsair.write f2 white
+    corsair.write f3 white
+    corsair.write f4 white
+    corsair.write f5 white
+    corsair.write cplc white
 }
 
 
+# corsair.write () {
+#     # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
+#     #corsair.check || return 100         # check is corsair up ünd running
+#     local _button=$1 ; shift            # get input key pipe file
+#     local _color=$1 ; shift             # get input color code
+#     echo "rgb $_color" > "$_button"     # write color code to button pipe file
+#     sleep 0.1                           # let device to receive and process command (surprisingly slow)
+#     return 0
+# }
+
+
 corsair.write () {
-    # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
-    #corsair.check || return 100         # check is corsair up ünd running
-    local _button=$1 ; shift            # get input key pipe file
-    local _color=$1 ; shift             # get input color code
-    echo "rgb $_color" > "$_button"     # write color code to button pipe file
-    sleep 0.1                           # let device to receive and process command (surprisingly slow)
+    # write color to key: input <key> <color>
+    local _button=${1^^}
+    local _color='_'"${2^^}"
+
+    gmsg -v1 -t "$_button to $2"
+    # get input key pipe file
+    _button=$(eval echo '$'$_button)
+    # get input color code
+    _color=$(eval echo '$'$_color)
+    gmsg -v2 -t "$_button <- $_color"
+
+    # write color code to button pipe file
+    [[ $_button ]] || gmsg -c yellow -x 101 "no such button"
+    [[ $_color ]] || gmsg  -c yellow -x 102 "no such color"
+
+    # write and let device to receive and process command (surprisingly slow)
+    echo "rgb $_color" > "$_button"
+    sleep 0.1
+
     return 0
 }
 
@@ -179,6 +212,7 @@ corsair.remove () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         source "$HOME/.gururc2"
+        export GURU_VERBOSE=2
         source "$GURU_BIN/lib/deco.sh"
         corsair.main "$@"
         exit "$?"
