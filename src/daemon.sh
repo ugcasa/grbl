@@ -141,9 +141,11 @@ daemon.poll () {
         for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
-                        $module.main status                         # ; echo "command: $module.main status"
+                        $module.main status
+                        gmsg -v2  "command: $module.main status"
                     else
-                        gmsg -v 1 "module $module not installed"    # ; echo "mobule: $GURU_BIN/${_poll_list[$_i]}.sh"
+                        gmsg -v1 -c yellow "module $module not installed"
+                        gmsg -v2 "mobule: $GURU_BIN/${_poll_list[$_i]}.sh"
                     fi
             done
         sleep $GURU_DAEMON_INTERVAL

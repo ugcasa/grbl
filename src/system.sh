@@ -5,7 +5,9 @@ source $GURU_BIN/lib/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/corsair.sh
 
-system.main() {             # system command parser
+system.main() {
+    # system command parser
+    indicator_key='F'"$(poll_order system)"
     local tool="$1"; shift
     case "$tool" in
        status|start|end)                    system.$tool   ; return $? ;;
@@ -15,8 +17,8 @@ system.main() {             # system command parser
     return 0
 }
 
-system.help () {            # system help printout
-
+system.help () {
+    # system help printout
     echo "$GURU_CALL system upgrade|rollback|set"
 }
 
@@ -24,28 +26,30 @@ system.help () {            # system help printout
 system.status () {
     if mount.online "$GURU_SYSTEM_MOUNT" ; then
         gmsg -v 1 -t -c green "guru on service"
-        corsair.write f1 green
+        corsair.write $indicator_key green
     else
         gmsg -v 1 -t -c red ".data is unmounted"
-        corsair.write f1 red
+        corsair.write $indicator_key red
     fi
 }
 
 
-system.start () {                      # set leds  F1 -> F4 off
+system.start () {
+    # set leds  F1 -> F4 off
     gmsg -v 1 -t "system status polling started"
-    corsair.write f1 off
+    corsair.write $indicator_key off
 }
 
-system.end () {                        # return normal, assuming that while is normal
+system.end () {
+    # return normal, assuming that while is normal
     gmsg -v 1 -t "system status polling ended"
-    corsair.write f1 white
+    corsair.write $indicator_key white
 }
 
 
 
-system.upgrade() {          # upgrade guru-client
-
+system.upgrade() {
+    # upgrade guru-client
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"
     local _banch="master" ;
@@ -64,7 +68,8 @@ system.upgrade() {          # upgrade guru-client
     #[ "$temp_dir" ] && [ -d "$temp_dir" ] && rm -rf "$temp_dir"
 }
 
-system.rollback() {         # rollback to version
+system.rollback() {
+    # rollback to version
 
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"

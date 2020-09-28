@@ -6,7 +6,7 @@ source $GURU_BIN/lib/common.sh
 
 mount.main () {
     # mount command parser
-
+    indicator_key='F'"$(poll_order mount)"
     argument="$1"; shift
     case "$argument" in
                start|end)   gmsg -v 1 "mount.sh: no $argument function"         ; return 0 ;;

@@ -6,6 +6,7 @@ source $GURU_BIN/corsair.sh
 
 remote.main() {
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
+    indicator_key='F'"$(poll_order remote)"
     source $GURU_BIN/corsair.sh
     command="$1"; shift
     case "$command" in
@@ -20,13 +21,13 @@ remote.main() {
 
 remote.end () {                        # return normal, assuming that while is normal
     gmsg -v 1 -t "remote ended"
-    corsair.write f2 white
+    corsair.write $indicator_key white
 }
 
 
 remote.start () {                      # set leds  F1 -> F4 off
     gmsg -v 1 -t "remote started"
-    corsair.write f2 off
+    corsair.write $indicator_key off
 }
 
 
@@ -35,13 +36,13 @@ remote.status () {
     # check remote is reachable. daemon poller will run this
     if remote.online ; then
             gmsg -v 1 -t -c green "local accesspoint connection"
-            corsair.write f2 green
+            corsair.write $indicator_key green
         elif remote.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
             gmsg -v 1 -t -c yellow "remote accesspoint connection"
-            corsair.write f2 yellow
+            corsair.write $indicator_key yellow
         else
             gmsg -v 1 -t -c red "accesspoint offline"
-            corsair.write f2 red
+            corsair.write $indicator_key red
         fi
 }
 

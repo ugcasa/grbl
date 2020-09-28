@@ -23,7 +23,7 @@
     F10="/tmp/ckbpipe010"
     F11="/tmp/ckbpipe011"
     F12="/tmp/ckbpipe012"
-   CPLC="/tmp/ckbpipe015"
+   CPLC="/tmp/ckbpipe059"
 
 # rgb color codes [R|G|B|Brightness]
    _RED="ff0000ff"
@@ -32,6 +32,9 @@
 _YELLOW="ffff00ff"
  _WHITE="ffffffff"
    _OFF="000000ff"
+
+# active key list
+key_list=$(file /tmp/ckbpipe0* |grep fifo |cut -f1 -d ":")
 
 
 corsair.main () {
@@ -87,9 +90,10 @@ corsair.check () {
         else gmsg -v1 -t "ckb-next $(OK)" ; fi
 
     # Check are pipes started, start if not
+
+    corsair.init status
     if ! ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep>/dev/null ; then
             gmsg "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
-            ckb-next -p guru >/dev/null
             return 100
         else gmsg -v1 -t "ckb-next pipes $(OK)" ; fi
 
@@ -109,37 +113,47 @@ corsair.status () {
 }
 
 
+corsair.init () {
+   local _mode="status" ; [[ $1 ]] && _mode=$1
+   ckb-next -p guru -m $_mode && return 0 || gmsg -v -x $? -c yellow "corsair init failure"
+}
+
+
 corsair.start () {
     # reserve some keys for future purposes by coloring them now
     # todo: I think this can be removed, used to be test interface before daemon
 
     gmsg -v1 -t "starting corsair"
-    # reserved for future use as an guru super key
-    corsair.write cplc off
+
+    for _key_pipe in $key_list ; do
+        gmsg -v2 -t "$_key_pipe off"
+        corsair.raw_write $_key_pipe $_OFF
+        sleep 0.1
+    done
 }
 
 
 corsair.end () {
     # return normal, assuming that normal really exits
-    gmsg -v1 -t "ending corsair"
-    corsair.write f1 white
-    corsair.write f2 white
-    corsair.write f3 white
-    corsair.write f4 white
-    corsair.write f5 white
-    corsair.write cplc white
+    gmsg -v1 "resetting keyboard indicators"
+
+    for _key_pipe in $key_list ; do
+        gmsg -v2 -t "$_key_pipe white"
+        corsair.raw_write $_key_pipe $_WHITE
+        sleep 0.1
+    done
 }
 
 
-# corsair.write () {
-#     # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
-#     #corsair.check || return 100         # check is corsair up ünd running
-#     local _button=$1 ; shift            # get input key pipe file
-#     local _color=$1 ; shift             # get input color code
-#     echo "rgb $_color" > "$_button"     # write color code to button pipe file
-#     sleep 0.1                           # let device to receive and process command (surprisingly slow)
-#     return 0
-# }
+corsair.raw_write () {
+    # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
+    #corsair.check || return 100         # check is corsair up ünd running
+    local _button=$1 ; shift            # get input key pipe file
+    local _color=$1 ; shift             # get input color code
+    echo "rgb $_color" > "$_button"     # write color code to button pipe file
+    sleep 0.1                           # let device to receive and process command (surprisingly slow)
+    return 0
+}
 
 
 corsair.write () {
@@ -148,19 +162,21 @@ corsair.write () {
     local _color='_'"${2^^}"
 
     gmsg -v1 -t "$_button to $2"
-    # get input key pipe file
+    # get input key pipe file location
     _button=$(eval echo '$'$_button)
+    [[ $_button ]] || gmsg -c yellow -x 101 "no such button"
     # get input color code
     _color=$(eval echo '$'$_color)
+    [[ $_color ]] || gmsg  -c yellow -x 102 "no such color"
     gmsg -v2 -t "$_button <- $_color"
 
-    # write color code to button pipe file
-    [[ $_button ]] || gmsg -c yellow -x 101 "no such button"
-    [[ $_color ]] || gmsg  -c yellow -x 102 "no such color"
-
-    # write and let device to receive and process command (surprisingly slow)
-    echo "rgb $_color" > "$_button"
-    sleep 0.1
+    # write color code to button pipe file and let device to receive and process command (surprisingly slow)
+    if file $_button |grep fifo >/dev/null ; then
+            echo "rgb $_color" > "$_button"
+            sleep 0.1
+        else
+            gmsg -c yellow -x 103 "io error, pipe file $_button is not set in cbk-next"
+        fi
 
     return 0
 }
