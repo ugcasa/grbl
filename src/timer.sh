@@ -1,6 +1,30 @@
 #!/bin/bash
-# giocon work time tracker casa@ujo.guru (c) 2019
+# guru shell work time tracker
+# casa@ujo.guru 2019-2020
+
+# todo:
+#		- python is more fluent in mathematics
+# 		- epic time base time, rounding when reporting
+# 		- project module dependencies
+# 		- mqtt connection
+
+
+
+# # bash 2.th try - use date to make math
+# date --date 'March 1, 2015 +7 days'
+# date -d "$(date -d "2014-9-14 10:00:00") + 4 hours + 20 minutes - 0 seconds"
+
+# date -d "$(date -d "2014-9-14 11:00:00") + $(date -d "2014-9-14 10:00:00")"
+# epic=$(($(date -d "2014-9-14 11:00:00" +%s) - $(date -d "2014-9-14 10:00:00" +%s)))
+# epic=4200
+# h=$((epic/3600))
+# m=$((epic%3600))
+# echo "$h:$m"
+
+# date -d $(($(date -d "2014-9-14 11:00:00" +%s) - $(date -d "2014-9-14 10:00:00" +%s)))
+
 source $GURU_BIN/mount.sh
+source $GURU_BIN/corsair.sh
 source $GURU_BIN/lib/deco.sh
 source $GURU_BIN/lib/common.sh
 
@@ -9,29 +33,42 @@ timer.main () {
 	command="$1"; shift
 	case "$command" in
 
-		        check|status|start|change|cancel|end|stop|report|log|edit|last)
+		        toggle|check|status|start|change|cancel|end|stop|report|log|edit|last)
 					timer.$command "$@"
 					return $?
 					;;
 		        *)
-				 	echo "-- guru client timer help -----------------------------------------------"
-					printf "start|change     start timer for target with last customer and project \n"
-					printf "start at [TIME]  start timer at given time in format HH:MM \n"
-					printf "end|stop         end current task \n"
-					printf "end at [TIME]    end current task at given time in format HH:MM \n"
-					printf "cancel           cancels the current task \n"
-					printf "log              prints out 10 last tasks from log \n"
-					printf "edit             opens work time log with %s \n" "$GURU_EDITOR"
-					printf "report           creates report in .csv format and opens it with %s \n" "$GURU_OFFICE_DOC"
+				 	gmsg -v1 -c white "guru-client timer help -----------------------------------------------"
+					gmsg -v2
+					gmsg -v0 "  start|change     start timer for target with last customer and project"
+					gmsg -v1 "  start at [TIME]  start timer at given time in format HH:MM"
+					gmsg -v1 "  end|stop         end current task"
+					gmsg -v1 "  end at [TIME]    end current task at given time in format HH:MM"
+					gmsg -v1 "  cancel           cancels the current task"
+					gmsg -v1 "  log              prints out 10 last tasks from log"
+					gmsg -v1 "  edit             opens work time log with $GURU_EDITOR"
+					gmsg -v1 "  report           creates report in .csv format and opens it with $GURU_OFFICE_DOC"
+		            gmsg -v2
 		            return 0
 		            ;;
 	esac
 }
 
 
+timer.toggle () {
+	mount.system
+	if timer.status ; then
+		timer.end
+	else
+		timer.start
+	fi
+	sleep 4
+}
+
+
 timer.check() {
-	mount.online "$GURU_TRACK"
-	timer.status human
+	mount.system
+	timer.status human && return 0 || return 100
 	}
 
 
@@ -39,12 +76,12 @@ timer.status() {
 
 	mount.system
 
-	if [ ! -f "$GURU_TRACKSTATUS" ]; then
-		msg "no timer tasks\n"
-		return 0
+	if [ ! -f "$GURU_FILE_TRACKSTATUS" ]; then
+		gmsg "no timer tasks\n"
+		return 1
 	fi
 
- 	source "$GURU_TRACKSTATUS"
+ 	source "$GURU_FILE_TRACKSTATUS"
  	timer_now=$(date +%s)
  	timer_state=$(($timer_now-$timer_start))
  	nice_start_date=$(date -d $start_date '+%d.%m.%Y')
@@ -88,19 +125,22 @@ timer.status() {
 
 
 timer.last() {
-    [ -f $GURU_TRACKLAST ] && cat $GURU_TRACKLAST || echo "no last task set"
+    [ -f $GURU_FILE_TRACKLAST ] && cat $GURU_FILE_TRACKLAST || echo "no last task set"
 }
 
 
 timer.start() {
 
 	mount.system
+	gmsg -v1 "starting timer.."
 
-	[ -d "$GURU_WORKTRACK" ] || mkdir -p "$GURU_WORKTRACK"
+	[[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
 
-	if [ -f "$GURU_TRACKSTATUS" ]; then
+	if [[ -f "$GURU_FILE_TRACKSTATUS" ]] ; then
 	 	timer.end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
 	fi
+
+	corsair.write f9 green 	# signal user (with corsair rgb kb) that timer is on
 
 	case "$1" in
 
@@ -138,13 +178,13 @@ timer.start() {
     nice_date=$(date -d $start_date '+%d.%m.%Y')									#; echo "nice_date: "$nice_date
    	timer_start=$(date -d "$start_date $start_time" '+%s')							#; echo "timer_start: "$timer_start
 
-    [ -f $GURU_TRACKLAST ] && source $GURU_TRACKLAST	# customer, project, task only
+    [ -f $GURU_FILE_TRACKLAST ] && source $GURU_FILE_TRACKLAST	# customer, project, task only
    	[ "$1" ] &&	task="$1" || task="$last_task"
 	[ "$2" ] &&	project="$2" || project="$last_project"
 	[ "$3" ] &&	customer="$3" || customer="$last_customer"
 
-    printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_TRACKSTATUS
-    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_TRACKSTATUS
+    printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_FILE_TRACKSTATUS
+    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_FILE_TRACKSTATUS
     printf "start: $nice_date $start_time $customer $project $task\n"
     return 0
 }
@@ -154,13 +194,14 @@ timer.end() {
 
 	mount.system
 
-	if [ -f $GURU_TRACKSTATUS ]; then
-		. $GURU_TRACKSTATUS 														#; echo "timer start "$timer_start
+	if [ -f $GURU_FILE_TRACKSTATUS ]; then
+		source $GURU_FILE_TRACKSTATUS 														#; echo "timer start "$timer_start
 	else
 		msg "timer not started"
 		return 13
 	fi
 
+	corsair.write f9 white														# disable timer status kb indicator
 
 	case "$1" in
 
@@ -218,12 +259,12 @@ timer.end() {
 
 	printf "end: $nice_start_date $start_time - $end_time$option_end_date $hours h:$minutes $customer $project $task\n"
 
-	[ -f $GURU_TRACKDATA ] || printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n">$GURU_TRACKDATA
-	[[ $hours > 0.11 ]] && printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_TRACKDATA
+	[ -f $GURU_FILE_TRACKDATA ] || printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n">$GURU_FILE_TRACKDATA
+	[[ $hours > 0.11 ]] && printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_FILE_TRACKDATA
 
-	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_TRACKLAST
+	printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_FILE_TRACKLAST
 
-	rm $GURU_TRACKSTATUS
+	rm $GURU_FILE_TRACKSTATUS
 	return 0
 }
 
@@ -244,8 +285,9 @@ timer.cancel() {
 
  	mount.system
 
-	if [ -f $GURU_TRACKSTATUS ]; then
-		rm $GURU_TRACKSTATUS
+	if [ -f $GURU_FILE_TRACKSTATUS ]; then
+		rm $GURU_FILE_TRACKSTATUS
+		corsair.write f9 white
 		echo "canceled"
 	else
 		echo "not active timer"
@@ -255,14 +297,14 @@ timer.cancel() {
 
 
 timer.log () {
-	printf "last logged records:\n$(tail $GURU_TRACKDATA | tr ";" "  ")\n"
+	printf "last logged records:\n$(tail $GURU_FILE_TRACKDATA | tr ";" "  ")\n"
 	return 0
 }
 
 
 timer.edit  () {
 	mount.system
-	$GURU_EDITOR "$GURU_TRACKDATA" &
+	$GURU_EDITOR "$GURU_FILE_TRACKDATA" &
 	return $?
 }
 
@@ -274,8 +316,8 @@ timer.report() {
 	report_file="work-track-report-$(date +%Y%m%d)-$team.csv" 				#; echo "report_file: "$report_file
 	output_folder=$HOME/Documents											#; echo "output_folder: $output_folder"
 	[ "$team" == "all" ] && team=""
-	[ -f $GURU_TRACKDATA ] || return 13
-	cat $GURU_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
+	[ -f $GURU_FILE_TRACKDATA ] || return 13
+	cat $GURU_FILE_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
 	$GURU_OFFICE_DOC $output_folder/$report_file &
 	timer.end $""
 }

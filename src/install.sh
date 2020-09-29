@@ -1,33 +1,53 @@
 #!/bin/bash
 # install functions for giocon client ujo.guru / juha.palm 2019
+# TODO: move all these to guru-install
 
 install.main () {
-    [ "$1" ] && argument="$1" || read -r -p "input module name: " argument
+    [ "$1" ] && argument="$1" && shift || read -r -p "input module name: " argument
+    local _temp_vebose=$GURU_VERBOSE ; GURU_VERBOSE=true
     case "$argument" in
-        java|webmin|conda|hackrf|st-link|mqtt-server|mqtt-client|visual-code|tor|django|help)
+        tiv|java|webmin|conda|hackrf|st-link|mqtt-client|visual-code|tor|django|help)
                                       install.$argument "$@" ;;
         kaldi|listener)               install.kaldi 4 ;; # number of cores used during compiling
-        pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/install-pk2.sh; exit; $SHELL; " ;;
+        pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/lib/install-pk2.sh; exit; $SHELL; " ;;
         spectrumanalyzer|SA)          install.spectrumanalyzer "$@"; install.fosphor "$@" ;;
         all)                          echo "TBD" ;;
         *)                            echo "no installer for '$argument'"; install.help
     esac
+    GURU_VERBOSE=$_temp_vebose
 }
 
 
 install.help () {
-    echo "-- guru client tool install help -----------------------------------------------"
-    printf "usage: %s install [keyword] \n" "$GURU_CALL"
-    printf "\nkeywords:\n"
-    echo " mqtt-client                 mosquitto client"
-    echo " mqtt-server                 mosquitto server"
-    echo " conda                       anaconda environment tool for python"
-    echo " django                      django platform for python web"
-    echo " pk2                         pickit2 programmer interface"
-    echo " st-link                     st_link programmer for SM32"
-    echo " kaldi                       speech to text ai"
-    echo " tor                         tor browser"
-    echo " webmin                      webmin tool for server configuratio"
+    gmsg -v1 -c white "guru-client dev tools installer help ------------------------"
+    gmsg -v2
+    gmsg -v0  "usage: $GURU_CALL install [keyword] "
+    gmsg -v2
+    gmsg -v1 -c white  "keywords:"
+    gmsg -v1  " mqtt-client                 mosquitto client"
+    gmsg -v1  " mqtt-server                 mosquitto server"
+    gmsg -v1  " conda                       anaconda environment tool for python"
+    gmsg -v1  " django                      django platform for python web"
+    gmsg -v1  " pk2                         pickit2 programmer interface"
+    gmsg -v1  " st-link                     st_link programmer for SM32"
+    gmsg -v1  " kaldi                       speech to text ai"
+    gmsg -v1  " tor                         tor browser"
+    gmsg -v1  " webmin                      webmin tool for server configuratio"
+    gmsg -v2
+}
+
+install.tiv () {
+    #install text mode picture viewer
+    [[ -d /tmp/TerminalImageViewer ]] && rm /tmp/TerminalImageViewer -rf
+    cd /tmp
+    sudo apt update && OK "update" &&
+    sudo apt install imagemagick && OK "imagemagick" &&
+    git clone https://github.com/stefanhaustein/TerminalImageViewer.git && OK "git clone" &&
+    cd TerminalImageViewer/src/main/cpp &&
+    make && OK "compile" &&
+    sudo make install && OK "install" &&
+    rm /tmp/TerminalImageViewer -rf && OK "clean" &&
+    SUCCESS "installation" || FAILED "something fucked up"
 }
 
 
@@ -45,14 +65,40 @@ install.question () {
 }
 
 
-install.tor () { # fised to 8.5.4_en-US
+install.tor () {
+    unset _url _dir _file _form _lang
+    [[ $GURU_APP ]] || GURU_APP="$HOME"                     # if run outside of guru-client
+    local _url="https://dist.torproject.org/torbrowser"
+    local _file="tor-browser-linux64-"
+    local _form=".tar.xz"
+    local _lang="_$LANGUAGE" ; [[ "$1" ]] && _lan="_$1"     # using system language
+    local _dir="/tmp/guru/tor"
 
-    echo "installing version 9.5a8_en-US, there might be more reacent release available"
-    [ -f /tmp/tor-browser-linux64-9.5a8_en-US.tar.xz ] || wget https://www.torproject.org/dist/torbrowser/9.5a8/tor-browser-linux64-9.5a8_en-US.tar.xz -P /tmp
-    [ -d $GURU_APP ] || mkdir -p $GURU_APP
-    [ -d $GURU_APP/tor-browser_en-US ] &&rm -rf $GURU_APP/tor-browser_en-US
-    tar xf /tmp/tor-browser-linux64-9.5a8_en-US.tar.xz -C $GURU_APP
-    sh -c '"$(dirname "$*")"/Browser/start-tor-browser --detach || ([ ! -x "$(dirname "$*")"/Browser/start-tor-browser ] && "$(dirname "$*")"/start-tor-browser --detach)' dummy %k X-TorBrowser-ExecShell=./Browser/start-tor-browser --detach
+    # enter to temp folder
+    [[ -d "$_dir" ]] ||mkdir -p "$_dir"
+    cd "$_dir"
+
+    # get verion folder list
+    [[ -f torbrowser ]] && rm -fr torbrowser
+    wget "$_url"
+
+    # get version and generate file and url
+    local _ver=$(cat torbrowser | grep "/icons/folder.gif" | cut -d " " -f 5 )
+    _ver=${_ver%%'/"'*}
+    _ver=${_ver#*'="'}                              #; echo $_ver
+    _file="$_file$_ver$_lang$_form"                 #; echo $_file
+    _url="$_url/$_ver/$_file"                       #; echo $_url
+
+    # get browser
+    [[ -f "$_file" ]] && rm -fr "$_file"
+    wget "$_url"
+
+    # install browser
+    [[ -d "$GURU_APP" ]] || mkdir -p "$GURU_APP"
+    [[ -d "$GURU_APP/tor-browser$_lang" ]] && rm -rf "$GURU_APP/tor-browser$_lang"
+    tar xf "$_file" -C "$GURU_APP"
+
+    printf "guru is ready to tor, type 'guru tor' to run browser\n"
 }
 
 
@@ -68,82 +114,20 @@ install.java () {
 
 
 install.mqtt-client () {   #not tested
-    echo "TBD install client"           #whaat.. thod these were in use at some point, what happened?
-    # sudo apt-get update && sudo apt-get upgrade || return $?
-    # sudo apt install mosquitto-clients || return $?
-    # sudo add-apt-repository ppa:certbot/certbot || return $?
-    # sudo apt-get update || return $?
-    # sudo apt-get install certbot || return $?
-    # sudo ufw allow http
-    #continue: https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-ubuntu-16-04
-    #&& printf "\n guru is now ready to message\n\n"
-    return 0
-}
 
-
-install.mqtt-server () {   #not tested
-
-    # sudo apt-get update && sudo apt-get upgrade || return $?
-    # sudo apt install mosquitto mosquitto-clients || return $?
-
-    ln -s /etc/mosquitto/conf.d/default.conf $GURU_CFG/mosquitto.default.conf
-
-    if install.question "setup password login?"; then
-        pass=1
-        echo "setting up password login"
-        read -p "mqtt client username :" username
-        [ "$username" ] || return 668
-        # sudo mosquitto_passwd -c /etc/mosquitto/passwd $username && printf "allow_anonymous false\npassword_file /etc/mosquitto/passwd\n" >>/etc/mosquitto/conf.d/default.conf || return 668
-        # sudo systemctl restart mosquitto || return $?
-
-        read -p "password for testing :" password
-        [ "$password" ] || return 671
-        # mosquitto_pub -h localhost -t "test" -m "hello login" -p 1883 -u $username -P $password && echo "loalhost 1883 passed" || echo "failed loalhost 8883 "
-    fi
-
-    if install.question "setup encryption?"; then
-        enc=1
-        echo "setting up ssl encryption"
-        # sudo ufw allow 8883
-        # printf '# ujo.guru mqtt setup \nlistener 1883 localhost\n\nlistener 8883\ncertfile /etc/letsencrypt/live/mqtt.ujo.guru/cert.pem\ncafile /etc/letsencrypt/live/mqtt.ujo.guru/chain.pem\nkeyfile /etc/letsencrypt/live/mqtt.ujo.guru/privkey.pem' >/etc/mosquitto/conf.d/default.conf
-        # sudo systemctl restart mosquitto
-        if [ $pass ]; then
-            echo "pass"
-            # mosquitto_pub -h localhost -t "test" -m "hello encryption" -u $username P $password -p 8883 --capath /etc/ssl/certs/ && echo "localhost 8883 passed" || echo "localhost 8883 failed"
-        else
-            echo "pass"
-            # mosquitto_pub -h localhost -t "test" -m "hello encryption" -p 8883 --capath /etc/ssl/certs/ && echo "localhost 8883 passed" || echo "localhost 8883 failed"
-        fi
-    fi
-
-    if install.question "setup certificates?"; then
-        cert=1
-        echo "setting up certificate login"
-        # sudo add-apt-repository ppa:certbot/certbot || return $?
-        sudo apt-get update || return $?
-        # sudo apt-get install certbot || return $?
-        # sudo ufw allow http
-        # sudo certbot certonly --standalone --standalone-supported-challenges http-01 -d mqtt.ujo.guru
-        echo "to renew certs automatically add following line to crontab (needs to be done manually)"
-        echo '15 3 * * * certbot renew --noninteractive --post-hook "systemctl restart mosquitto"'
-        read -p "press any key to continue.. "
-        # sudo crontab -e
-
-        if [ $enc ]; then
-            echo "pass"
-        # mosquitto_pub -h localhost -t "test" -m "hello 8883" -p 8883 --capath /etc/ssl/certs/ && echo "loalhost 8883 passed" || echo "failed loalhost 8883 "
-        fi
-    fi
-    # Testing
-    printf "\n guru is now ready to service any message\n\n"
-
+    sudo apt-get update || return $?
+    sudo apt install mosquitto-clients || return $?
+    #sudo add-apt-repository ppa:certbot/certbot || return $?
+    #sudo apt-get install certbot || return $?
+    printf "\n guru is now ready to mqtt\n\n"
     return 0
 }
 
 
 install.hackrf () {
-
-    gnuradio-companion --help >/dev/null ||sudo apt-get install gnuradio gqrx-sdr hackrf gr-osmosdr -y
+    # full
+    # sudo apt install hackrf
+    gnuradio-companion --help >/dev/null ||sudo apt-get install build-essential python3-dev libqt4-dev gnuradio gqrx-sdr hackrf gr-osmosdr libusb-dev python-qwt5-qt4 -y
     read -r -p "Connect HacrkRF One and press anykey: " nouse
     hackrf_info && echo "successfully installed" ||echo "HackrRF One not found, pls. re-plug or re-install"
     mkdir -p $HOME/git/labtools/radio
@@ -152,8 +136,9 @@ install.hackrf () {
     git clone https://github.com/mossmann/hackrf.wiki.git
     git clone https://ujoguru@bitbucket.org/ugdev/radlab.git
     echo "Documentation file://$HOME/git/labtools/radio/hackrf.wiki"
+    printf "\n guru is now ready to radio\n\n"
     read -r -p "to start GNU radio press anykey (or CTRL+C to exit): " nouse
-    gnuradio-companion && printf "\n guru is now ready to radio\n\n"
+    gnuradio-companion &
     return 0
 }
 
@@ -297,8 +282,8 @@ install.visual_code () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc"
-    source "$GURU_BIN/lib/deco.cfg"
-    source "$GURU_BIN/functions.sh"
+    source "$GURU_BIN/lib/common.sh"
+    #source "$GURU_BIN/lib/deco.sh"
     install.main "$@"
     exit $?
 fi

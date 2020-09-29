@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# ujo.guru rrs news feed 
+# ujo.guru rrs news feed
 
 import os
 import sys
@@ -61,7 +61,7 @@ class menu ():
 					 				'%Y-%m-%dT%H:%M:%S' ] 			# http://strftime.org/
 
 	def __init__ ( self, x, y ):
-		
+
 		self.term_columns 		= x
 		self.term_lines 		= y
 		self.list_length_max	= self.term_lines - 3
@@ -83,58 +83,57 @@ class menu ():
 
 	def resize ( self, lines, columns ):
 		"resize terminal window"
-		os.system('resize -s '+str(lines)+' '+str(columns)) 
-
+		os.system('resize -s '+str(lines)+' '+str(columns))
 
 	def get_size ( self ):
 		"get terminal window size"
-		self.term_lines   		= int( str( subprocess.check_output( 'resize -c', shell=True ) ).split( "LINES ",   1 )[1].split( "'" )[1].split( "'" )[ 0 ] ) 			
+		self.term_lines   		= int( str( subprocess.check_output( 'resize -c', shell=True ) ).split( "LINES ",   1 )[1].split( "'" )[1].split( "'" )[ 0 ] )
 		self.term_columns 		= int( str( subprocess.check_output( 'resize -c', shell=True ) ).split( "COLUMNS ", 1 )[1].split( "'" )[1].split( "'" )[ 0 ] )
-		self.list_length_max 	= self.term_lines - 3		
+		self.list_length_max 	= self.term_lines - 3
 
 
 	def header ( self, content , logo = "ujo.guru", first = 0, second = 0, separator = "/"):
 		"print out the header, title is needed, default logo and optional counter "
 
-		# build numbers 
+		# build numbers
 		counter = ""
-		if self.term_columns > 60 and len( content ) < self.term_columns - len( logo ):	
-			
-			if 	first:	
-				counter = str( first ) 
-			
-			if 	second:	
-				counter = counter + separator + str( second ) 
+		if self.term_columns > 60 and len( content ) < self.term_columns - len( logo ):
+
+			if 	first:
+				counter = str( first )
+
+			if 	second:
+				counter = counter + separator + str( second )
 
 			counter = counter + " |"
 
 		# build header bar center piece
 		bar = ' '+' ' * ( self.term_columns - len( content ) - 1 - len( counter) - 1 - len( logo ) - 1 )
-	
+
 		# build and raw header
 		print(bc.HEADER + content + bar + ' ' + counter + ' ' + logo + bc.ENDC)
 
 
 	def feeds ( self ):
 		"print out the list of feed fit in terminal size"
-		i = 0 
+		i = 0
 		for i in range( len( self.feed.entries ) ): 													# parse all titles in feed.entries list
 			entry = self.feed.entries[ i ]
-			
-			
+
+
 			for format_count in range( len( m.known_date_formats ) ): 									# check time stamp formats and select suitable and translate it to wanted format
 
-				try: 
+				try:
 					datestamp = datetime.strptime( entry.published.rsplit( ' ', 1 )[0].rsplit( '-', 1 )[0], m.known_date_formats[ format_count ] ).strftime( '%d.%m.%y %H:%M' )
 					break
 
 				except ValueError: 																		# what?
-					pass			
+					pass
 
 				except:
-					pass			
-			 																							
-			title = entry.title.replace( "&nbsp;", "" ).replace( " ,", ',' ).replace( ' –', ':' ).replace( ' –', ':' )	# Remove possible html left overs from titles, ugly lines and extra spaces	
+					pass
+
+			title = entry.title.replace( "&nbsp;", "" ).replace( " ,", ',' ).replace( ' –', ':' ).replace( ' –', ':' )	# Remove possible html left overs from titles, ugly lines and extra spaces
 
 			if self.term_columns > 90:																	# select details to be printed out
 				pass
@@ -144,14 +143,14 @@ class menu ():
 
 			else:
 				datestamp = ''
-						
+
 			base_size = 6 + len( datestamp ) 					 										# reserves space for spaces and line number
 
 			if len( title ) < self.term_columns - base_size: 											# space bar
 				title += ' ' * ( self.term_columns - base_size - len( title ))
 
 			if i < 9: 																					# intended lines 1 - 9
-				print(' ', end='')			
+				print(' ', end='')
 
 			title = title[ 0: self.term_columns - base_size ]											# cut to right length
 
@@ -159,13 +158,13 @@ class menu ():
 				lastword = title.split()[ -1 ]															# remove last word or piece of it
 				lastword_length = len( lastword )  														# check how long it was
 				title = title.rsplit( ' ', 1 )[0] + '.. '+ (' ' * ( lastword_length - 2 ) ) 			# place ".." to end of line
-		
+
 			if i > self.list_length_max:				 												# record all entries even there is no space in screen
-				continue	
+				continue
 
-			print( "[" + str( i + 1 ) + "]" + " " + title[ 0: self.term_columns - base_size ] + " " + datestamp)	# print out the line 
+			print( "[" + str( i + 1 ) + "]" + " " + title[ 0: self.term_columns - base_size ] + " " + datestamp)	# print out the line
 
-		if i < self.list_length_max:																	# print empty lines to fill the screen 
+		if i < self.list_length_max:																	# print empty lines to fill the screen
 				print( '\n' * ( ( self.list_length_max - i ) - 1 ) )
 
 		self.list_length = i 																			# update list length
@@ -186,44 +185,44 @@ class menu ():
 			self.quit()
 
 		elif answer == "n" and self.provider < len(self.feed_list) * 100:								# increment if nor last
-			self.provider =  self.provider + 100 
+			self.provider =  self.provider + 100
 			self.input ( str( self.provider ) )
 			return 0
 
 		elif answer == "b" and self.provider > 100 : 													# decrement if not first
-			self.provider =  self.provider - 100 
+			self.provider =  self.provider - 100
 			self.input ( str( self.provider ) )
 			return 0
-		
-		if not answer.isdigit() : 				 														# Numeral selections 
+
+		if not answer.isdigit() : 				 														# Numeral selections
 			return 2
 
 		selection = int( answer ) 																		# is digit can be taken as an select value
-		
+
 		if selection > 0 and selection < 100:															# is current publisher line number
 
-			self.selection = selection 
+			self.selection = selection
 			self.feeds()
 
 			if self.selection > self.list_length + 1 :
 				return 2
 
 			self.open( int( self.selection) - 1 )	 							 						# open the news
-		
+
 
 		if selection >= 100 :																			# other provider
-			provider = int( selection / 100 ) * 100  									 				# parse publisher main menu 
+			provider = int( selection / 100 ) * 100  									 				# parse publisher main menu
 			sub_selection = selection % 100							 									# Parse out possible sub sub_selection
-			
+
 			try:
 				self.feed = feedparser.parse( self.feed_list[ int( provider / 100 - 1 ) ] )				# try to parse a feed, if possible valid id
-			
+
 			except:	 																					# is not valid id
 				print("fukedid")
 				return 2
 
-			self.provider = provider 
-			
+			self.provider = provider
+
 			if sub_selection > 0: 													 					# is not negative
 				print(sub_selection)
 				self.selection = sub_selection
@@ -233,7 +232,7 @@ class menu ():
 					return 2
 
 				self.open( self.selection  - 1 )	 														# open the news
-		
+
 
 	def browser ( self, link ):
 		"open news link to guru default browser"
@@ -246,58 +245,67 @@ class menu ():
 		"open news if "
 		print("id: " + str( news_id ) )
 		entry 	= self.feed.entries[ int( news_id ) ]
-		title	= entry.title.replace( "&nbsp;", "" )	
-		link 	= entry.link.replace( "&nbsp;", "" )			
+		title	= entry.title.replace( "&nbsp;", "" )
+		link 	= entry.link.replace( "&nbsp;", "" )
+
+		#image_link 	= entry.image.link
+		
 
 		if int( news_id ) < 0 or int( news_id ) > self.list_length :													# id 1 above
-			return 2		
+			return 2
 
 		try :
-			summary = entry.summary.replace( "&nbsp;", "" )	
+			summary = entry.summary.replace( "&nbsp;", "" )
 
-		except AttributeError:		
+		except AttributeError:
 			print( "no summary data, opening link" )
 			self.browser( link )
 			return 2
 
-		except :	
+		except :
 			print( "erooer" )
 			return 3
 
-		summary = entry.summary.replace( "&nbsp;", "" )	
-		
+		summary = entry.summary.replace( "&nbsp;", "" )
+
 		try:
-			json = entry.content			
+			json = entry.content
 			json = str(json).replace( '<strong class="yle__article__strong">', '' ) 													# Yle purkka, nimet
 			content = ''.join( BeautifulSoup( str( json ), "html.parser" ).stripped_strings ).split( "'" )[13].replace( '\\n',"\n " ) 	# bubblecum
 			content = content.replace( ". ",".\n " )
-		
+
 		except AttributeError:
 			content = ""
 			print("attributeError")
-		
-		except:	
+
+		except:
 			content = ""
 			print("Error")
+
+		# parse entry.image.link
+		image_link = 'https://images.cdn.yle.fi/image/upload//w_1200,h_800,f_auto,fl_lossy,q_auto:eco/13-3-11332872.jpg'
+
 
 		os.system( 'clear' ) 																			# clear terminal
 		self.clear()
 		self.header( self.feed.feed.title, first = self.selection, second = self.list_length) 			# header
-
 		print( "\n\n " + bc.BOLD + title 	 + bc.ENDC + "\n" )											# titles
 		print( "\n "   + bc.ITAL + summary   + bc.ENDC + "\n" )
+		#os.system('tiv -h '+str(menu.term_lines)+' -w '+str(menu.term_columns)+' '+image_link) 				# printout image in text mode
+		#if terminal colors on < 256 (like phone terminal)
+		os.system('tiv -256 -h '+str(menu.term_lines)+' -w '+str(menu.term_columns)+' '+image_link) 				# printout image in text mode
 		print( "\n "   + content + "\n" )
-		print( "\n "   + bc.DARK + link 	 + bc.ENDC + "\n" ) 	
-		
+		print( "\n "   + bc.DARK + link 	 + bc.ENDC + "\n" )
+		#print( entry)
 		answer = input(bc.OKBLUE+'Hit "o" to open news in browser, news id to jump to news or "Enter" to return to list: '+bc.ENDC)
 
-		if answer == "q" or answer == "exit" or answer == "99": 
+		if answer == "q" or answer == "exit" or answer == "99":
 			self.quit()
 
 		elif answer == "o" :
 			self.browser( entry.link )
 
-		elif answer == "n" :		
+		elif answer == "n" :
 			self.selection = str( int( self.selection ) + 1 )
 			self.input( str( self.selection ) )
 
@@ -314,29 +322,35 @@ class menu ():
 		elif int(answer) < self.list_length + 1:
 			self.input( str( answer ) )
 			return 0
-		
+
 		elif int( answer ) > 99 :
 			self.input( str( answer ) )
 
 
 	def save_article( id ):
 		"save article to notes in markdown format"
-		print( open( os.environ["GURU_NOTES"] ) )
+		print( open( os.environ["GURU_LOCAL_NOTES"] ) )
 
 
 	def quit ( self ) :
 		"quit and return terminal size"
-		self.resize( 24, 80 )	
+		self.resize( 24, 80 )
 		os.system( 'clear' )
 		quit()
 
 
 ## MAN
 
-m = menu( 120, 24 ) 
+m = menu( 120, 24 )
+
+# sudo apt install imagemagick || yum install ImageMagick
+# git clone https://github.com/stefanhaustein/TerminalImageViewer.git
+# cd TerminalImageViewer/src/main/cpp
+# make
+# sudo make install
 
 while 1:
 	m.get_size()
-	m.header( content = m.feed.feed.title, first = m.provider) 
+	m.header( content = m.feed.feed.title, first = m.provider)
 	m.feeds()
 	m.input()

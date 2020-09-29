@@ -1,79 +1,111 @@
 #!/bin/bash
-# guru client project tools
+# guru-client project tools
 # ujo.guru 2020
 
+source $GURU_BIN/lib/common.sh
+source ~/.gururc2
+echo "TEST: $GURU_SYSTEM_MOUNT"
+
+if ! [[ $GURU_PROJECT ]] ; then echo "no project" ; fi
+
 project.main() {
+    # command paerser
 
-    command="$1"; shift
+    local _cmd="$1" ; shift
 
-    case "$command" in
-
-        open)
-            project.open "$@"
-            ;;
-
-        test)
-            project.test "$@"
-            ;;
-
-        help)
-            printf "\nguru client project tools - help \n"
-            printf "\nUsage:\n\t %s [command] <project_name> \n" "$GURU_CALL"
-            printf "\nCommands:\n"
-            printf " open            Open named projec \n"
-            printf "\nExample:\n"
-            printf "\t %s project open guru.ui \n" "$GURU_CALL"
-            echo
-            ;;
-
-        *)
-            project.open "$command"
-            ;;
-    esac
-
-    return 0
+    case "$_cmd" in
+        add|open|rm|sublime)  project.$_cmd $@           ;;
+                       help)  project.help               ;;
+                          *)  project.open "$_cmd"
+        esac
 }
 
 
-project.open () {
+project.help () {
+    gmsg -v1 -c white "guru-client project module help -----------------------------------------------"
+    gmsg -v2
+    gmsg -v0 "usage: $GURU_CALL project [command] project_name "
+    gmsg -v2
+    gmsg -v1 -c white "commands:"
+    gmsg -v1 "  add             add new projects "
+    gmsg -v1 "  open            open project "
+    gmsg -v1 "  close           close project, keep data "
+    gmsg -v1 "  rm              move project files to trash "
+    gmsg -v1 "  delete          remove project and files for good "
+    gmsg -v1 "  help            this help "
+    gmsg -v1
+    gmsg -v1 "project module works only with sublime."
+    gmsg -v1 "set preferred editor by '%s set editor subl'" "$GURU_CALL"
+    gmsg -v2
+    gmsg -v1 -c white "example:"
+    gmsg -v1 " $GURU_CALL project add projet_name "
+    gmsg -v1 " $GURU_CALL project open project_name "
+    gmsg -v2
 
-    [ "$1" ] && project_name="$1" ||read -p "plase enter project name : " project_name
+}
+
+
+project.check() {
+    mount.online "$GURU_SYSTEM_MOUNT"
+    if [[ -d "$GURU_SYSTEM_MOUNT/project" ]] ; then
+            EXIST "project database"
+            return 0
+        else
+            NOTEXIST "project database"
+            return 41
+        fi
+    }
+
+
+project.add () {
+
+    [[ "$1" ]] && _project_name="$1" ||read -p "plase enter project name : " _project_name
     shift
 
-    [ -d "$GURU_PROJECT_META" ] ||mkdir -p "$GURU_PROJECT_META"
+    if [[ -d "$GURU_PROJECT/$_project_name" ]] ; then
+            EXIST "$_project_name"
+            (( GURU_VERBOSE==2 )) && msg " try another name\n"
+            return 43
+        fi
+
+    mkdir -p $GURU_PROJECT/$_project_name
+}
+
+project.open () {
+    # open project with preferred editor
+    [[ "$1" ]] && _project_name="$1" ||read -p "plase enter project name : " _project_name
+    shift
+
+    if ! [[ -d "$GURU_PROJECT/$_project_name" ]] ; then
+            NOTEXIST "$_project_name"
+            return 43
+        fi
 
     case "$GURU_EDITOR" in
-
-            subl|sublime|sublime-text)
-                subl_project_file=$GURU_PROJECT_META/$project_name.sublime-project
-                if [ -f "$subl_project_file" ]; then
-                    subl --project "$subl_project_file" -a
-                    subl --project "$subl_project_file" -a                              # Sublime how to open workpace?, this works anyway
-                else
-                    printf "no sublime project found" >"$GURU_ERROR_MSG"
-                    return 132
-                fi
-                ;;
-            *)
-                printf "projects work only with sublime. Set preferred editor by typing: %s set editor subl, or edit '~/.gururc'. " "$GURU_CALL" >"$GURU_ERROR_MSG"
-                return 133
-    esac
-
-    return 0
+         subl|sublime|sublime-text|subl2|subl3|subl4)
+                                project.sublime $_project_name   ;;
+                            *)  project.help
+        esac
 }
 
 
-project.test() {
+project.sublime () {
 
-    echo "TEST"
-    project.open "guru-ui" && echo "PASSED" || echo "FAILED"
+    local _project_name="$1"                                                              ; echo "$_project_name"
+    local _project_file=$GURU_SYSTEM_MOUNT/sublime-projects/$GURU_USER-$_project_name.sublime-project  ; echo "$_project_file"
+
+    if [[ -f "$_project_file" ]] ; then
+            subl --project "$_project_file" -a
+            subl --project "$_project_file" -a                              # Sublime how to open workpace?, this works anyway
+        else
+            WARNING "no sublime project found" #>"$GURU_ERROR_MSG"
+            return 132
+        fi
 }
-
 
 # if not runned from terminal, use as library
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc"
-    project.main "$@"
-    exit 0
-fi
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
+        if [[ "$1" == "test" ]] ; then shift ; ./test/test.sh project $1 ; fi
+        project.main "$@"
+    fi
 

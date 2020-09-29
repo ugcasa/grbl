@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru client volume control functions. casa@ujo.guru 2020
+# guru-client volume control functions. casa@ujo.guru 2020
 
 volume_main () {
     # set volume

@@ -1,46 +1,51 @@
 #!/bin/bash
-# simple file based counter for guru client
+
+# simple file based counter for guru-client
 
 counter.main () {
-	# Counter case statment
 
 	argument="$1"	; shift 		# arguments
 	id="$1"			; shift 		# counter name
 	value="$1"		; shift 		# input value
 	id_file="$GURU_COUNTER/$id" 	# counter location
 
- 	[ -d "$GURU_COUNTER" ] || return 123 		# wont fuck up mount mkdir -p "$GURU_COUNTER"
+ 	[[ -d "$GURU_COUNTER" ]] || return 70 		# wont fuck up mount mkdir -p "$GURU_COUNTER"
 
 	case "$argument" in
 
 				ls)
 					echo "$(ls $GURU_COUNTER)"
-					exit 0
+					return 0
 					;;
 
 				get)
-					if ! [ -f "$id_file" ]; then
+					if ! [[ -f "$id_file" ]] ; then
 						echo "no such counter" >"$GURU_ERROR_MSG"
-						return 136
+						return 72
 					fi
 					id=$(($(cat $id_file)))
+					echo "$id"
+					return 0
 					;;
 
 				add|inc)
-					[ -f "$id_file" ] || echo "0" >"$id_file"
-					[ "$value" ] && up="$value" || up=1
+					[[ -f "$id_file" ]] || echo "0" >"$id_file"
+					[[ "$value" ]] && up="$value" || up=1
 					id=$(($(cat $id_file)+$up))
 					echo "$id" >"$id_file"
+					gmsg -v 1 "$id"
+					return 0
 					;;
 
 				set)
-					[ -z "$value" ] && id=0 || id=$value
-					[ -f "$id_file" ] && echo "$id" >"$id_file"
+					[[ -z "$value" ]] && id=0 || id=$value
+					[[ -f "$id_file" ]] && echo "$id" >"$id_file"
+					return 0
 					;;
 
 				rm)
 					id="counter $id_file removed"
-					[ -f "$id_file" ] && rm "$id_file" || id="$id_file not exist"
+					[[ -f "$id_file" ]] && rm "$id_file" || id="$id_file not exist"
 					return 0
 					;;
 
@@ -59,20 +64,20 @@ counter.main () {
 
 				*)
 					id_file="$GURU_COUNTER/$argument"
-					if ! [ -f $id_file ]; then
+					if ! [[ -f $id_file ]] ; then
 						echo "no such counter" >>$GURU_ERROR_MSG
-						return 137
+						return 73
 					fi
-					[ "$id" ] && echo "$id" >$id_file
+					[[ "$id" ]] && echo "$id" >$id_file
 					id=$(($(cat $id_file)))
-	esac
+					echo $id
 
-	echo "$id" 		# is not exited before
+		esac
 	return 0
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  	counter.main "$@" 			# alternative values
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
+  	counter.main "$@"
 fi
 

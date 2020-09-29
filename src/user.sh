@@ -1,5 +1,5 @@
 #!/bin/bash
-# user settings for guru client
+# user settings for guru-client
 # casa@ujo.guru 2020
 
 source "$(dirname "$0")/remote.sh"
@@ -81,10 +81,6 @@ change_user () {
 	# change environment values
 	return 0
 }
-
-
-
-
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru client testing functions for all modules
+# guru-client testing functions for all modules
 #
 # Test case actions
 #  1) quick check
@@ -12,15 +12,16 @@
 #  all) run all valid tests (selected)
 #  release) release validation tests
 #  clean) make clean
-
+source $HOME/.gururc
+source $HOME/.gururc2
 source $GURU_BIN/lib/common.sh
-source $GURU_BIN/lib/deco.sh
 
 test.main() {
     # main test case parser
-    export all_tools=("mount" "remote" "note" "system")
-    export VERBOSE=true
+    export all_tools=("mount" "remote" "project" "note" "system")
+    export GURU_VERBOSE=true
     export LOGGING=true
+
     case "$1" in
         snap|quick) test.all 1              ; return $? ;;
             *[1-9]) test.all "$1"           ; return $? ;;
@@ -33,16 +34,20 @@ test.main() {
 
 
 test.help () {
-    echo "-- guru client main test help -------------------------------------"
-    printf "usage:\t %s test <tool>|all|release <tc_nr>|all   \n" "$GURU_CALL"
-    printf "\ntools:\n"
-    printf " <tool> <tc_nr>|all     all test cases \n"
-    printf " <tool> release        validation tests prints out only results \n"
-    printf " release               run full validation test \n"
-    printf "\nexample:"
-    printf "\t %s test mount 1 \n" "$GURU_CALL"
-    printf "\t\t %s test remote all \n" "$GURU_CALL"
-    printf "\t\t %s test release \n" "$GURU_CALL"
+    gmsg -v1 -c white "guru-client main test help -------------------------------------"
+    gmsg -v2
+    gmsg -v0 "usage: $GURU_CALL test <tool>|all|release <tc_nr>|all "
+    gmsg -v2
+    gmsg -v1 -c white "tools:"
+    gmsg -v1 " <tool> <tc_nr>|all     all test cases "
+    gmsg -v1 " <tool> release        validation tests prints out only results "
+    gmsg -v1 " release               run full validation test "
+    gmsg -v2
+    gmsg -v1 -c white "example:"
+    gmsg -v1 " $GURU_CALL test mount 1 "
+    gmsg -v1 " $GURU_CALL test remote all "
+    gmsg -v1 " $GURU_CALL test release "
+    gmsg -v2
     return 0
 }
 
@@ -60,21 +65,23 @@ test.tool() {
     [ "$1" ] && _tool="$1" || read -r -p "input tool name to test: " _tool
     [ "$2" ] && _case="$2" || _case="all"
 
-    _test_id=$(counter.main add guru-client_test_id)
-    msg "\n${WHT}TEST $_test_id: guru-client $_tool #$_case - $(date)\n${NC}"
+    _test_id=$(counter.main get guru-client_test_id)
+    counter.main add guru-client_test_id
+    echo
+    HEADER "TEST $_test_id: guru-client $_tool #$_case - $(date)"
 
     if [ -f "$GURU_BIN/$_tool.sh" ]; then
                 _lang="sh"
     elif [ -f "$GURU_BIN/$_tool.py" ]; then
                 _lang="py"
         else
-                msg "tool '$_tool' not found\n"
+                gmsg "tool '$_tool' not found\n"
                 TEST_FAILED "TEST $_test_id $_tool"
                 return 10
         fi
 
     source $GURU_BIN/$_tool.$_lang                              # source function under test
-    source $GURU_BIN/test-$_tool.$_lang                         # source tester functions
+    source $GURU_BIN/test/test-$_tool.$_lang                         # source tester functions
 
     $1.test "$_case" ; _error=$?                        # run test
 
@@ -84,10 +91,10 @@ test.tool() {
         fi
 
     if ((_error<1)) ; then
-             TEST_PASSED "TEST $_test_id $_tool.$_lang"
+            TEST_PASSED "TEST $_test_id $_tool.$_lang"
             return 0
         else
-             TEST_FAILED "TEST $_test_id $_tool.$_lang"
+            TEST_FAILED "TEST $_test_id $_tool.$_lang"
             return $_error
         fi
 }
@@ -131,7 +138,7 @@ test.release() {
 ## special functions or unit tests (when run as file)
 
 test.terminal () {
-    export VERBOSE=true                                     # printout unit test output
+    export GURU_VERBOSE=true                                     # printout unit test output
     export LOGGING=                                         # do not log to file
     local _tool="$1"
     local _case="$2"
@@ -152,7 +159,7 @@ test.terminal () {
 
           source $HOME/.gururc                              # source user settings
           source $GURU_BIN/$_tool.sh                        # source function under test
-          source $GURU_BIN/test-$_tool.sh                   # source tester functions
+          source $GURU_BIN/test/test-$_tool.sh                   # source tester functions
 
           if [ "$_case" ]; then                             # if case not given
               time "$_tool.test" "$_case"                   # run test tool directly
@@ -165,12 +172,8 @@ test.terminal () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $HOME/.gururc
-    source $GURU_BIN/lib/deco.sh
-    export VERBOSE=true
-
     case "$1" in
-        loop) shift ; test.terminal "$@" ; exit "$?" ;;
+        loop) shift ; test.terminal $@ ; exit $? ;;
         esac
     test.main "$@"
     exit "$?"

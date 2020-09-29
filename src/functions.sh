@@ -1,9 +1,7 @@
 #!/bin/bash
-# guru client prototypes
+# guru-client prototypes
 # Some prototype functions not complicate enough to write separate scripts
 # ujo.guru 2019
-
-
 
 tor() {
     [ -d "$GURU_APP/tor-browser_en-US" ] || guru install tor
@@ -64,14 +62,14 @@ trans (){
 
 
 
-document () {
+# document () {
 
-	cfg=$HOME/.config/guru.io/noter.cfg
-	[[ -z "$2" ]] && template="ujo.guru.004" || template="$2"
-	[[ -f "$cfg" ]] && . $cfg || echo "cfg file missing $cfg" | exit 1
-	pandoc "$1" --reference-odt="$notes/$USER/template/$template-template.odt" -f markdown -o  $(echo "$1" |sed 's/\.md\>//g').odt
-	return 0
-}
+# 	cfg=$HOME/.config/guru.io/noter.cfg
+# 	[[ -z "$2" ]] && template="ujo.guru.004" || template="$2"
+# 	[[ -f "$cfg" ]] && . $cfg || echo "cfg file missing $cfg" | exit 1
+# 	pandoc "$1" --reference-odt="$notes/$USER/template/$template-template.odt" -f markdown -o  $(echo "$1" |sed 's/\.md\>//g').odt
+# 	return 0
+# }
 
 
 

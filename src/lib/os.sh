@@ -1,4 +1,4 @@
-# guru client os functions for installer casa@ujo.guru 2020
+# guru-client os functions for installer casa@ujo.guru 2020
 # echo "common.sh: included by: $0"
 
 compatible_with(){

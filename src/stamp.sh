@@ -38,13 +38,13 @@ stamp_main () {    # main command parser
                     ;;
 
                 picture-md)
-                    [ "$1" ] && file="$GURU_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$1" || file="$GURU_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
+                    [ "$1" ] && file="$GURU_LOCAL_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$1" || file="$GURU_LOCAL_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
                     [[ -f "$file" ]] || exit 234
                     stamp="![]($file){ width=500px }"
                     ;;
 
                 *)
-                    echo "-- guru client stamp help -----------------------------------------------"
+                    echo "-- guru-client stamp help -----------------------------------------------"
                     printf "usage: guru stamp [COMMAND] \n\ncommands: \n"
                     printf "date              datestamp \n"
                     printf "time              timestamp \n"
