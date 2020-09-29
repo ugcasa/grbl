@@ -65,7 +65,7 @@ source "$HOME/.gururc"                                                          
 
 cp -f cfg/* "$GURU_CFG"                                                                           # copy configuration files to configuration folder
 cp -f -r core/* -f "$GURU_BIN"                                                                     # copy script files to bin folder
-cp -f -r module/* -f "$GURU_BIN"
+cp -f -r modules/* -f "$GURU_BIN"
 cp -f -r test -f "$GURU_BIN"
 mv  "$GURU_BIN/core.sh" "$GURU_BIN/guru"                                                            # rename guru.sh in bin folder to guru
 
