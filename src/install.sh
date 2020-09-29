@@ -9,7 +9,7 @@ install.main () {
         tiv|java|webmin|conda|hackrf|st-link|mqtt-client|visual-code|tor|django|help)
                                       install.$argument "$@" ;;
         kaldi|listener)               install.kaldi 4 ;; # number of cores used during compiling
-        pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/lib/install-pk2.sh; exit; $SHELL; " ;;
+        pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/install-pk2.sh; exit; $SHELL; " ;;
         spectrumanalyzer|SA)          install.spectrumanalyzer "$@"; install.fosphor "$@" ;;
         all)                          echo "TBD" ;;
         *)                            echo "no installer for '$argument'"; install.help
@@ -282,8 +282,8 @@ install.visual_code () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc"
-    source "$GURU_BIN/lib/common.sh"
-    #source "$GURU_BIN/lib/deco.sh"
+    source "$GURU_BIN/common.sh"
+    #source "$GURU_BIN/deco.sh"
     install.main "$@"
     exit $?
 fi

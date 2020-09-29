@@ -2,7 +2,7 @@
 # guru client background servicer
 # casa@ujo.guru 2020
 
-source $GURU_BIN/lib/common.sh
+source $GURU_BIN/common.sh
 source $GURU_BIN/corsair.sh
 
 daemon.main () {

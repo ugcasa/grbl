@@ -1,7 +1,7 @@
 #!/bin/bash
 # anaconda installer
 
-source $GURU_BIN/lib/common.sh
+source $GURU_BIN/common.sh
 
 conda.main () { 	# anaconda main (do I really need this.. i doupt)
 

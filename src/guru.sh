@@ -31,7 +31,7 @@ source $GURU_BIN/functions.sh
 # include mount tools
 source $GURU_BIN/mount.sh
 # import common functions - TODO remove need of this
-source $GURU_BIN/lib/common.sh
+source $GURU_BIN/common.sh
 # include daemon tools
 source $GURU_BIN/daemon.sh
 
@@ -58,7 +58,7 @@ main.parser () {                                                                
                    help|--help)  main.help "$@"                         ; return 0  ;;  # help printout
                        unmount)  mount.main unmount "$1"                ; return $? ;;  # alias for un-mounting
                       terminal)  main.terminal "$@"                     ; return $? ;;  # guru in terminal mode
-             ssh|os|common|tme)  $GURU_BIN/lib/$tool.sh "$@"            ; return $? ;;  # direct lib calls
+             ssh|os|common|tme)  $GURU_BIN/$tool.sh "$@"            ; return $? ;;  # direct lib calls
                    input|hosts)  $GURU_BIN/trial/$tool.sh "$@"          ; return $? ;;  # place for shell script prototypes and experiments
          tme|fmradio|datestamp)  $GURU_BIN/trial/$tool.py "$@"          ; return $? ;;  # place for python script prototypes and experiments
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;  # Get rid of this shit

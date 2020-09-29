@@ -4,7 +4,7 @@
 
 keyboard.main() {                           # keyboard command parser
 
-    source "$GURU_BIN/lib/common.sh"
+    source "$GURU_BIN/common.sh"
     distro="$(check_distro)"    # lazy
 
     command="$1"

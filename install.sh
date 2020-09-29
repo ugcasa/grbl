@@ -6,8 +6,8 @@ GURU_USER="$USER"
 GURU_BIN=$HOME/bin
 GURU_CFG=$HOME/.config/guru
 
-source src/lib/deco.sh                                          # include decorative functions
-source src/lib/os.sh                                            # include os functions
+source src/deco.sh                                          # include decorative functions
+source src/os.sh                                            # include os functions
 source src/keyboard.sh                                          # include keyboard functions
 
 target_rc="$HOME/.bashrc"                                       # environmental values rc file

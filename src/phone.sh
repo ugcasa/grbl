@@ -3,7 +3,7 @@
 # get files from phone by connecting phone sshd
 # install this to phone: https://play.google.com/store/apps/details?id=com.theolivetree.sshserver
 
-source $GURU_BIN/lib/common.sh
+source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
 

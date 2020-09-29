@@ -2,8 +2,8 @@
 # note tool for guru-client
 #source ~/.gururc
 source ~/.gururc2
-source $GURU_BIN/lib/common.sh
-source $GURU_BIN/lib/deco.sh
+source $GURU_BIN/common.sh
+source $GURU_BIN/deco.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
 echo "$GURU_USER_NAME : ${GURU_MOUNT_NOTES[1]}"

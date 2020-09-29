@@ -1,7 +1,7 @@
 #!/bin/bash
 # sshfs mount functions for guru-client
 
-source $GURU_BIN/lib/common.sh
+source $GURU_BIN/common.sh
 
 print.main() {
     [[ "$GURU_INSTALL" == "server" ]] && print.warning

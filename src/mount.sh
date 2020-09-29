@@ -1,7 +1,7 @@
 #!/bin/bash
 # mount tools for guru-client
 #source "$HOME/.gururc"
-source $GURU_BIN/lib/common.sh
+source $GURU_BIN/common.sh
 
 
 mount.main () {

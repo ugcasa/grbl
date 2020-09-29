@@ -2,7 +2,7 @@
 # guru-client project tools
 # ujo.guru 2020
 
-source $GURU_BIN/lib/common.sh
+source $GURU_BIN/common.sh
 source ~/.gururc2
 echo "TEST: $GURU_SYSTEM_MOUNT"
 

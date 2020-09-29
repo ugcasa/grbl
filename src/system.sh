@@ -1,6 +1,6 @@
 #!/bin/bash
 # system tools for guru-client
-source $GURU_BIN/lib/common.sh
+source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/corsair.sh
 

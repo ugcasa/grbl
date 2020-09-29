@@ -25,8 +25,8 @@
 
 source $GURU_BIN/mount.sh
 source $GURU_BIN/corsair.sh
-source $GURU_BIN/lib/deco.sh
-source $GURU_BIN/lib/common.sh
+source $GURU_BIN/deco.sh
+source $GURU_BIN/common.sh
 
 timer.main () {
 

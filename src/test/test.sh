@@ -14,7 +14,7 @@
 #  clean) make clean
 source $HOME/.gururc
 source $HOME/.gururc2
-source $GURU_BIN/lib/common.sh
+source $GURU_BIN/common.sh
 
 test.main() {
     # main test case parser
