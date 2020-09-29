@@ -41,7 +41,7 @@ corsair.main () {
     # command parser
     corsair.check                   # check than ckb-next-darmon, ckb-next and pipes are started and start is not
     local _cmd="$1" ; shift         # get command
-    case "$_cmd" in start|end|status|help|install|remove|write)
+    case "$_cmd" in init|start|end|status|help|install|remove|write)
             corsair.$_cmd $@ ; return $? ;;
         *)  echo "unknown command"
     esac
@@ -77,25 +77,23 @@ corsair.help () {
 corsair.check () {
     # Check keyboard driver is available, app and pipes are started and executes if needed
     if ! ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-            gmsg -v1 -t "starting ckb-next-daemon.."
-            ckb-next-daemon --nonroot >/dev/null
-            sleep 2
+            gmsg -v0 "starting ckb-next-daemon.. sudo needed"
+            sudo ckb-next-daemon >/dev/null &
+            sleep 3
         else gmsg -v1 -t "ckb-next-daemon $(OK)" ; fi
 
     # Check is keyboard setup interface, start if not
-    if ! ps auxf |grep "ckb-next " | grep -v grep >/dev/null 2>&1 ; then
-            gmsg -v1 -t "starting ckb-next.."
-            ckb-next >/dev/null 2>&1 &
-            sleep 2
-        else gmsg -v1 -t "ckb-next $(OK)" ; fi
+    # if ! ps auxf |grep "ckb-next " | grep -v grep >/dev/null 2>&1 ; then
+    #         gmsg -v1 -t "starting ckb-next.."
+    #         ckb-next -b >/dev/null 2>&1 &
+    #         sleep 3
+    #     else gmsg -v1 -t "ckb-next $(OK)" ; fi
 
     # Check are pipes started, start if not
-
-    corsair.init status
-    if ! ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep>/dev/null ; then
-            gmsg "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
-            return 100
-        else gmsg -v1 -t "ckb-next pipes $(OK)" ; fi
+    # corsair.init status
+    # if ! ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then
+    #         gmsg -x 100 -c white "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
+    #     else gmsg -v1 -t "ckb-next pipes $(OK)" ; fi
 
     return 0
 }
@@ -116,7 +114,7 @@ corsair.status () {
 corsair.init () {
     # load default profile and set wanted mode
     local _mode="status" ; [[ $1 ]] && _mode=$1
-    if ! ckb-next -p guru -m $_mode ; then
+    if ! ckb-next -p guru -m $_mode 2>/dev/null ; then
             gmsg -v -x $? -c yellow "corsair init failure"
         fi
     return 0

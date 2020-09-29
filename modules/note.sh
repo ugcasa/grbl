@@ -6,7 +6,8 @@ source $GURU_BIN/common.sh
 source $GURU_BIN/deco.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
-echo "$GURU_USER_NAME : ${GURU_MOUNT_NOTES[1]}"
+source $GURU_BIN/corsair.sh
+#echo "$GURU_USER_NAME : ${GURU_MOUNT_NOTES[1]}"
 
 note.main () {                                  # command parser
 
@@ -75,10 +76,10 @@ note.check() {                                  # chech that given date note fil
     note.gen_var "$1"
     msg "checking note file.. "
     if [[ -f "$note" ]] ; then
-            EXIST
+            EXIST "$note"
             return 0
         else
-            NOTFOUND
+            NOTFOUND "$note"
             return 41
         fi
 }
@@ -141,28 +142,33 @@ note.add() {                                    # make a note for given date
             note.add_change "created"
             # tags
             tag.main "$note" add "note $(date +$GURU_FORMAT_FILE_DATE)"
-
+            return 0
         fi
 }
 
 
 note.open() {                                   # select note to open, call note.editor
     # input format YYYYMMDD
-    note.gen_var "$1"                   #; echo "$1"
+    local _date=$1
+    note.gen_var "$_date"                   #; echo "$1"
 
     if [[ -f "$note" ]]; then
             note.add_change "opened"
-        else
-            NOTFOUND "'$note'"
-
+    else
         if [[ $GURU_FORCE ]] ; then
-                msg "adding note.. "
-                note.add "$1" && OK || FAILED
+                gmsg -v 1 -c white "adding note, using force.. "
+                note.add "$_date" && OK || FAILED
             else
-                read -n 1 -p "no note for target day, create? [y/n]: " _ans
-                case $_ans in y|Y|yes|Yes) msg "\nadding note.. " ; note.add "$1" && OK || FAILED "note opening" ;; esac
+                corsair.main init yes-no
+                read -n 1 -p "no note for target day, create? [y/n]: " _ans ; echo
+
+                case $_ans in y|Y|yes|Yes)
+                        gmsg -N -v1 "adding note $note"
+                        note.add "$_date"
+                esac
+                corsair.main init status
             fi
-        fi
+    fi
     note.editor "$note"                                             # variables are global dough
 }
 
@@ -174,10 +180,14 @@ note.rm () {                                    # remove note of given date
         [[ -d $GURU_LOCAL_TRASH ]] ||mkdir -p $GURU_LOCAL_TRASH || ERROR "creating trash "
         mv -f "$note" "$GURU_LOCAL_TRASH" && return 0 || FAILED "note remove"
     else
+        corsair.main init yes-no
         read -p "remove $note?: " _ans
-        case $_ans in y|Y|yes|Yes)  rm -rf "$note" && return 0 || FAILED "note remove" ;; esac
+        case $_ans in y|Y|yes|Yes)
+            rm -rf "$note" || FAILED "note remove" ;;
+        esac
+        corsair.main init status
     fi
-    return 47
+    return 0
 }
 
 
