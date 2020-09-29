@@ -147,45 +147,32 @@ note.add() {                                    # make a note for given date
 }
 
 
-note.open() {                                   # select note to open, call note.editor
-    # input format YYYYMMDD
+note.open() {
+    # select note to open and call editor input date in format YYYYMMDD
     local _date=$1
-    note.gen_var "$_date"                   #; echo "$1"
+    note.gen_var "$_date"
 
     if [[ -f "$note" ]]; then
             note.add_change "opened"
-    else
-        if [[ $GURU_FORCE ]] ; then
-                gmsg -v 1 -c white "adding note, using force.. "
-                note.add "$_date" && OK || FAILED
-            else
-                corsair.main init yes-no
-                read -n 1 -p "no note for target day, create? [y/n]: " _ans ; echo
-
-                case $_ans in y|Y|yes|Yes)
-                        gmsg -N -v1 "adding note $note"
-                        note.add "$_date"
-                esac
-                corsair.main init status
-            fi
-    fi
-    note.editor "$note"                                             # variables are global dough
+        else
+                if gask "remove $note" ; then
+                    gmsg -N -v1 "no note for target day, create"
+                    note.add "$_date"
+                else
+                    return 0
+                fi
+            note.editor "$note"
+        fi
 }
 
 
 note.rm () {                                    # remove note of given date
     # input format YYYYMMDD
     note.gen_var "$1"
-    if [[ $GURU_FORCE ]] ; then
-        [[ -d $GURU_LOCAL_TRASH ]] ||mkdir -p $GURU_LOCAL_TRASH || ERROR "creating trash "
-        mv -f "$note" "$GURU_LOCAL_TRASH" && return 0 || FAILED "note remove"
-    else
-        corsair.main init yes-no
-        read -p "remove $note?: " _ans
-        case $_ans in y|Y|yes|Yes)
-            rm -rf "$note" || FAILED "note remove" ;;
-        esac
-        corsair.main init status
+    [[ -f $note ]] || gmsg -x 1 -c white "no note for date $(date -d $1 +$GURU_FORMAT_DATE)"
+
+    if gask "remove $note" ; then
+        rm -rf "$note" || msg -c yellow "note remove failed"
     fi
     return 0
 }

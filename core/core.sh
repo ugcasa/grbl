@@ -46,9 +46,9 @@ main.parser () {                                                                
                          start)  daemon.main start guru-daemon          ; return $? ;;  # second parameter is a name for process
                           stop)  touch "$HOME/.guru-stop"               ;;              # stop guru daemon
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
-                trans|tor|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes
+                    trans|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes
               clear|ls|cd|echo)  $tool "$@"                             ; return $? ;;  # os command pass trough
-      conda|phone|play|vol|yle)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
+  tor|conda|phone|play|vol|yle)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
        stamp|timer|tag|install)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
            system|mount|remote)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
        scan|input|counter|note)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
@@ -58,7 +58,7 @@ main.parser () {                                                                
                    help|--help)  main.help "$@"                         ; return 0  ;;  # help printout
                        unmount)  mount.main unmount "$1"                ; return $? ;;  # alias for un-mounting
                       terminal)  main.terminal "$@"                     ; return $? ;;  # guru in terminal mode
-             ssh|os|common|tme)  $GURU_BIN/$tool.sh "$@"            ; return $? ;;  # direct lib calls
+             ssh|os|common|tme)  $GURU_BIN/$tool.sh "$@"                ; return $? ;;  # direct lib calls
                    input|hosts)  $GURU_BIN/trial/$tool.sh "$@"          ; return $? ;;  # place for shell script prototypes and experiments
          tme|fmradio|datestamp)  $GURU_BIN/trial/$tool.py "$@"          ; return $? ;;  # place for python script prototypes and experiments
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;  # Get rid of this shit

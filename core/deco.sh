@@ -108,7 +108,25 @@ gmsg() {
     [[ $_exit ]] && exit $_exit
 }
 
+
+gask () {
+    local _ask="$1"
+    local _ans
+
+    corsair.main init yes-no               # TODO found need of question wrapper: gask
+    read -n 1 -p "$_ask? [y/n]: " _ans
+    echo
+    corsair.main init status
+
+    case $_ans in y|Y|yes|Yes)
+        return 0
+    esac
+    return 1
+}
+
+
 export -f gmsg
+export -f gask
 
 export OK=$(printf "${GRN}OK${NC}\n")
 export PASSED=$(printf "${GRN}PASSED${NC}\n")

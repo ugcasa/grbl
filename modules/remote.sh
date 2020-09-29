@@ -165,7 +165,7 @@ remote.needed() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc"
+    source "$HOME/.gururc2"
     remote.main "$@"
     exit 0
 fi

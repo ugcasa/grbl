@@ -65,43 +65,6 @@ install.question () {
 }
 
 
-install.tor () {
-    unset _url _dir _file _form _lang
-    [[ $GURU_APP ]] || GURU_APP="$HOME"                     # if run outside of guru-client
-    local _url="https://dist.torproject.org/torbrowser"
-    local _file="tor-browser-linux64-"
-    local _form=".tar.xz"
-    local _lang="_$LANGUAGE" ; [[ "$1" ]] && _lan="_$1"     # using system language
-    local _dir="/tmp/guru/tor"
-
-    # enter to temp folder
-    [[ -d "$_dir" ]] ||mkdir -p "$_dir"
-    cd "$_dir"
-
-    # get verion folder list
-    [[ -f torbrowser ]] && rm -fr torbrowser
-    wget "$_url"
-
-    # get version and generate file and url
-    local _ver=$(cat torbrowser | grep "/icons/folder.gif" | cut -d " " -f 5 )
-    _ver=${_ver%%'/"'*}
-    _ver=${_ver#*'="'}                              #; echo $_ver
-    _file="$_file$_ver$_lang$_form"                 #; echo $_file
-    _url="$_url/$_ver/$_file"                       #; echo $_url
-
-    # get browser
-    [[ -f "$_file" ]] && rm -fr "$_file"
-    wget "$_url"
-
-    # install browser
-    [[ -d "$GURU_APP" ]] || mkdir -p "$GURU_APP"
-    [[ -d "$GURU_APP/tor-browser$_lang" ]] && rm -rf "$GURU_APP/tor-browser$_lang"
-    tar xf "$_file" -C "$GURU_APP"
-
-    printf "guru is ready to tor, type 'guru tor' to run browser\n"
-}
-
-
 install.java () {
     #install and remove needed applications. input "install" or "remove"
     local action=$1
