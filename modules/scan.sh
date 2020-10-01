@@ -100,7 +100,7 @@ scan.receipt() {
 
 
 scan.invoice () {
-    echo "TBD"
+    gmsg -v2 -c black "${FUNCTION[0]} TBD"
     # scanimage -x 205 -y 292 --mode Gray --format=pgm -v >image$stamp.pgm
     # convert image$stamp.pgm -crop 2416x4338+55+120 scan_$stamp-$page.pgm
     # #gocr -i scan_$stamp-$page.pgm -f UTF8 -v >>archive$stamp.txt

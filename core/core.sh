@@ -43,8 +43,8 @@ main.parser () {                                                                
     export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
 
     case "$tool" in
-                         start)  daemon.main start guru-daemon          ; return $? ;;  # second parameter is a name for process
-                          stop)  touch "$HOME/.guru-stop"               ;;              # stop guru daemon
+        status|start|poll|kill)  daemon.$tool                           ; return $? ;;  # daemon controls
+                          stop)  touch "$HOME/.guru-stop"               ;;              # request daemon to stop ít self, use kill if need reltime
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
                     trans|user)  $tool "$@"                             ; return $? ;;  # function.sh prototypes
               clear|ls|cd|echo)  $tool "$@"                             ; return $? ;;  # os command pass trough

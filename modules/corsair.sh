@@ -76,11 +76,21 @@ corsair.help () {
 
 corsair.check () {
     # Check keyboard driver is available, app and pipes are started and executes if needed
+
+    if ! [[ $GURU_CORSAIR_ENABLED ]] ; then 
+            gmsg -v2 -c black "${FUNCNAME[0]}: disabled"
+            return 1 
+        fi
+
     if ! ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
             gmsg -v0 "starting ckb-next-daemon.. sudo needed"
             sudo ckb-next-daemon >/dev/null &
             sleep 3
-        else gmsg -v1 -t "ckb-next-daemon $(OK)" ; fi
+        else 
+            gmsg -v1 -t "ckb-next-daemon $(OK)" 
+        fi
+    
+    return 0
 
     # Check is keyboard setup interface, start if not
     # if ! ps auxf |grep "ckb-next " | grep -v grep >/dev/null 2>&1 ; then
@@ -95,12 +105,11 @@ corsair.check () {
     #         gmsg -x 100 -c white "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
     #     else gmsg -v1 -t "ckb-next pipes $(OK)" ; fi
 
-    return 0
 }
 
 
 corsair.status () {
-    # get status and print it out to kb leds
+    # get status and print it out to kb leds    
     if corsair.check ; then
             corsair.write f4 green
             return 0
@@ -148,6 +157,7 @@ corsair.end () {
 
 
 corsair.raw_write () {
+    if ! corsair.check ; then return 0 ; fi 
     # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
     #corsair.check || return 100         # check is corsair up ünd running
     local _button=$1 ; shift            # get input key pipe file
@@ -160,6 +170,8 @@ corsair.raw_write () {
 
 corsair.write () {
     # write color to key: input <key> <color>
+    if ! corsair.check ; then return 0 ; fi 
+
     local _button=${1^^}
     local _color='_'"${2^^}"
 
@@ -177,7 +189,8 @@ corsair.write () {
             echo "rgb $_color" > "$_button"
             sleep 0.05
         else
-            gmsg -c yellow -x 103 "io error, pipe file $_button is not set in cbk-next"
+            gmsg -c yellow "io error, pipe file $_button is not set in cbk-next"        
+            return 103
         fi
 
     return 0
@@ -186,13 +199,13 @@ corsair.write () {
 
 corsair.start_blink () {
     # ask daemon to blink a key
-    echo "TBD"
+    gmsg -v2 -c black "${FUNCNAME[0]} TBD"
 }
 
 
 corsair.stop_blink () {
     # ask daemon to stop to blink a key
-    echo "TBD"
+    gmsg -v2 -c black "${FUNCNAME[0]} TBD"
 }
 
 

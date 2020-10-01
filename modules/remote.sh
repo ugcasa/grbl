@@ -19,13 +19,13 @@ remote.main() {
 
 
 remote.end () {                        # return normal, assuming that while is normal
-    gmsg -v 1 -t "remote ended"
+    gmsg -v 1 -t "${FUNCNAME[0]}"
     corsair.write $indicator_key white
 }
 
 
 remote.start () {                      # set leds  F1 -> F4 off
-    gmsg -v 1 -t "remote started"
+    gmsg -v 1 -t "${FUNCNAME[0]}"
     corsair.write $indicator_key off
 }
 
@@ -34,14 +34,17 @@ remote.status () {
 
     # check remote is reachable. daemon poller will run this
     if remote.online ; then
-            gmsg -v 1 -t -c green "local accesspoint connection"
+            gmsg -v 1 -t -c green "${FUNCNAME[0]}: local accesspoint connection"
             corsair.write $indicator_key green
+            return 0 
         elif remote.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
-            gmsg -v 1 -t -c yellow "remote accesspoint connection"
+            gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote accesspoint connection"
             corsair.write $indicator_key yellow
+            return 0 
         else
-            gmsg -v 1 -t -c red "accesspoint offline"
+            gmsg -v 1 -t -c red "${FUNCNAME[0]}: accesspoint offline"
             corsair.write $indicator_key red
+            return 101 
         fi
 }
 
@@ -77,36 +80,19 @@ remote.online() {
     local _server_port="$GURU_ACCESS_LAN_PORT" ; [[ "$1" ]] && _server_port="$1" ; shift
 
     if ssh -o ConnectTimeout=3 -q -p "$_server_port" "$_user@$_server" exit ; then
-        gmsg -v 1 "$(ONLINE $_server)"
+        gmsg -v1 -t -c green "${FUNCNAME[0]} $_server"
         return 0
     else
-        gmsg -v 1 "$(OFFLINE $_server)"
+        gmsg -v0 -t -c red "${FUNCNAME[0]} $_server offline"
         return 132
     fi
 }
 
 
 remote.check() {
-
-    local _user="$GURU_ACCESS_USERNAME"
-    local _server="$GURU_ACCESS_LAN_IP"                                            # assume that _server is in local network
-    local _server_port="$GURU_ACCESS_LAN_PORT"
-
-    msg "$_user@$_server status.. "
-    if ! ssh -q -p "$_server_port" "$_user@$_server" exit ; then                  # check local _server connection
-        msg "${YEL}local file_server is not reachable.${NC} trying remote."
-        _server="$GURU_ACCESS_DOMAIN"                                               # if no connection try remote _server connection
-        _server_port="$GURU_ACCESS_PORT"
-        msg "\n$_user@$_server status.. "
-    fi
-
-    if ssh -q -p "$_server_port" "$_user@$_server" exit ; then
-        ONLINE
-        return 0
-    else
-        OFFLINE
-        return 132
-    fi
+    # same shit than onlin but silent (shortcut)
+    remote.online $@ >/dev/null 
+    return $?
 }
 
 
@@ -120,9 +106,9 @@ remote.pull_config() {
     _error=$?
 
     if ((_error<9)) ; then
-            SUCCESS
+            $SUCCESS
         else
-            FAILED
+            $FAILED
         fi
     return $_error
 }
