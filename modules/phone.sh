@@ -9,6 +9,8 @@ source $GURU_BIN/tag.sh
 
 if ((GURU_VERBOSE>1)) ; then phone_verb="-v" ; fi
 
+phone_first_time="$HOME/.data/phone-suveren"
+
 phone_temp_folder="/tmp/guru/phone"
 phone_file_count=0
 phone_server_url="https://play.google.com/store/apps/details?id=com.theolivetree.sshserver"
@@ -17,10 +19,10 @@ phone_config_file="$GURU_CFG/$GURU_USER/phone.locations.cfg"
 
 phone.main () {                 # phone command parser
 
-    [[ $GURU_PHONE_IP ]]        || read -p "phone ip: "     GURU_PHONE_IP
-    [[ $GURU_PHONE_PORT ]]      || read -p "sshd port: "    GURU_PHONE_PORT
-    [[ $GURU_PHONE_USER ]]      || read -p "ssh user: "     GURU_PHONE_USER
-    [[ $GURU_PHONE_PASSWORD ]]  || read -p "password: "     GURU_PHONE_PASSWORD
+    [[ $GURU_PHONE_LAN_IP ]]        || read -p "phone ip: "     GURU_PHONE_LAN_IP
+    [[ $GURU_PHONE_LAN_PORT ]]      || read -p "sshd port: "    GURU_PHONE_LAN_PORT
+    [[ $GURU_PHONE_USERNAME ]]      || read -p "ssh user: "     GURU_PHONE_USERNAME
+    [[ $GURU_PHONE_PASSWORD ]]      || read -p "password: "     GURU_PHONE_PASSWORD   
 
     local _cmd="$1" ; shift
     case "$_cmd" in
@@ -54,20 +56,27 @@ phone.help () {                 # printout help
     printf "             %s phone terminal \n" "$GURU_CALL"
 }
 
-phone.terminal () {             # open ssh terminal connection to phone
+phone.confirm_key () {
+    ssh -o HostKeyAlgorithms=+ssh-dss "$GURU_PHONE_USERNAME@$GURU_PHONE_LAN_IP" -p "$GURU_PHONE_LAN_PORT" &&  touch $phone_first_time
+}
 
-    sshpass -p "$GURU_PHONE_PASSWORD" ssh -o HostKeyAlgorithms=+ssh-dss "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT"
+
+phone.terminal () {             # open ssh terminal connection to phone
+    [[ -f $phone_first_time ]] || phone.confirm_key
+    sshpass -p "$GURU_PHONE_PASSWORD" ssh -o HostKeyAlgorithms=+ssh-dss "$GURU_PHONE_USERNAME@$GURU_PHONE_LAN_IP" -p "$GURU_PHONE_LAN_PORT"
+    echo $?
 }
 
 phone.mount () {                # mount phone folder set as in phone ssh server settings
-    local _mount_point="$HOME/phone-$GURU_PHONE_USER" ; [[ "$1" ]] && _mount_point="$1"
+    [[ -f $phone_first_time ]] || phone.confirm_key
+    local _mount_point="$HOME/phone-$GURU_PHONE_USERNAME" ; [[ "$1" ]] && _mount_point="$1"
     if [[ -d "$_mount_point" ]] ; then mkdir -p "$_mount_point" ; fi
-    sshfs -o HostKeyAlgorithms=+ssh-dss -p "$GURU_PHONE_PORT" "$GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0" "$_mount_point"
+    sshfs -o HostKeyAlgorithms=+ssh-dss -p "$GURU_PHONE_LAN_PORT" "$GURU_PHONE_USERNAME@$GURU_PHONE_LAN_IP:/storage/emulated/0" "$_mount_point"
     return $?
 }
 
 phone.unmount () {              # unmount folder
-    local _mount_point="$HOME/phone-$GURU_PHONE_USER" ; [[ "$1" ]] && _mount_point="$1"
+    local _mount_point="$HOME/phone-$GURU_PHONE_USERNAME" ; [[ "$1" ]] && _mount_point="$1"
     fusermount -u "$_mount_point" || sudo fusermount -u "$_mount_point"
     [[ -d "$_mount_point" ]] && rmdir "$_mount_point"
     return $?
@@ -77,7 +86,7 @@ phone.rmdir () {                # remove folder in phone
 
     local _target_folder="$1"
     msg "\n${WHT}removing: $_target_folder ${NC}"
-    if sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -rf $_target_folder" ; then
+    if sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USERNAME@$GURU_PHONE_LAN_IP" -p "$GURU_PHONE_LAN_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -rf $_target_folder" ; then
             REMOVED
             return 0
         else
@@ -90,7 +99,7 @@ phone.rm () {                   # remove files from phone
 
     local _target_files="$1"
     msg "\n${WHT}removing: $_target_files ${NC}"
-    if sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USER@$GURU_PHONE_IP" -p "$GURU_PHONE_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -f $_target_files" ; then
+    if sshpass -p "$GURU_PHONE_PASSWORD" ssh "$GURU_PHONE_USERNAME@$GURU_PHONE_LAN_IP" -p "$GURU_PHONE_LAN_PORT" -o "HostKeyAlgorithms=+ssh-dss" "rm -f $_target_files" ; then
             REMOVED
             return 0
         else
@@ -209,8 +218,8 @@ phone.media () {                # Get all media files from phone
             if ! [[ -d "$_target" ]] ; then mkdir -p "$_target" ; fi
 
             sshpass -p $GURU_PHONE_PASSWORD \
-            scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT \
-            $GURU_PHONE_USER@$GURU_PHONE_IP:"$_source/*.$_type" $_target
+            scp $phone_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_LAN_PORT \
+            $GURU_PHONE_USERNAME@$GURU_PHONE_LAN_IP:"$_source/*.$_type" $_target
 
             case $? in
                     0)  DONE ; [[ "$_action" == "mv" ]] && echo phone.rmdir "$_source" ;;  # /*.$_type" ;; # does not work cause *
@@ -240,20 +249,20 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 # "WhatsApp/Media/WhatsApp Video"
 # "WhatsApp/Media/WhatsApp Voice Notes"
 
-# if [[ "$GURU_PHONE_USER" = "casa" ]]; then
-#   sshpass -p $GURU_PHONE_PASSWORD scp -v -r -p -oHostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_PORT $GURU_PHONE_USER@$GURU_PHONE_IP:/storage/emulated/0/MyTinyScan/Documents/* $HOME/Documents
+# if [[ "$GURU_PHONE_USERNAME" = "casa" ]]; then
+#   sshpass -p $GURU_PHONE_PASSWORD scp -v -r -p -oHostKeyAlgorithms=+ssh-dss -P $GURU_PHONE_LAN_PORT $GURU_PHONE_USERNAME@$GURU_PHONE_LAN_IP:/storage/emulated/0/MyTinyScan/Documents/* $HOME/Documents
 # fi
 #${WHT}Timer${NC}
 
-# rsync  -avzr -h --progress -e "ssh -oHostKeyAlgorithms=+ssh-dss -p$GURU_PHONE_PORT" maea@192.168.1.50:/storage/emulated/0/WhatsApp/Media/* $GURU_LOCAL_PHOTOS/2019/wa
-# rsync  -avzr -h --progress -e "ssh -oHostKeyAlgorithms=+ssh-dss -p$GURU_PHONE_PORT" casa@192.168.1.29:/storage/emulated/0/WhatsApp/Media/* $GURU_LOCAL_PHOTOS/2019/wa
+# rsync  -avzr -h --progress -e "ssh -oHostKeyAlgorithms=+ssh-dss -p$GURU_PHONE_LAN_PORT" maea@192.168.1.50:/storage/emulated/0/WhatsApp/Media/* $GURU_LOCAL_PHOTOS/2019/wa
+# rsync  -avzr -h --progress -e "ssh -oHostKeyAlgorithms=+ssh-dss -p$GURU_PHONE_LAN_PORT" casa@192.168.1.29:/storage/emulated/0/WhatsApp/Media/* $GURU_LOCAL_PHOTOS/2019/wa
 #   casa@192.168.1.29's password:
 #   exec request failed on channel 0
 #   rsync: connection unexpectedly closed (0 bytes received so far) [Receiver]
 #   rsync error: unexplained error (code 255) at io.c(235) [Receiver=3.1.2]
 
 
-# ssh -oHostKeyAlgorithms=+ssh-dss -p$GURU_PHONE_PORT casa@192.168.1.29
+# ssh -oHostKeyAlgorithms=+ssh-dss -p$GURU_PHONE_LAN_PORT casa@192.168.1.29
 #   casa@192.168.1.29's password:
 #   PTY allocation request failed on channel 0
 #   /system/bin/sh: can't find tty fd: No such device or address
