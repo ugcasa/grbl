@@ -10,6 +10,7 @@ GURU_CFG=$HOME/.config/guru
 source core/deco.sh
 # include os functions
 source core/os.sh
+source core/config.sh
 
 # Environmental values rc file
 target_rc="$HOME/.bashrc"
@@ -22,29 +23,33 @@ modules_to_install=(corsair counter keyboard mount mqtt note phone poller print 
 
 install.main () {
     gmsg -v1 -c white "installing guru-client.."
-    # parse arguments
+    # 1) parse arguments
     install.arguments $@ || gmsg -x 100 "argumentation error"
 
-    # check previous installation
+    # 2) check previous installation
     install.check || gmsg -x 110 "check caused exit"
 
-    # modify and add .rc files
+    # 3) modify and add .rc files
     install.rcfiles && install.check_rcfiles || gmsg -x 120 "rc file modification error"
 
-    # take default settings in use
-    source "$HOME/.gururc" || gmsg -x 130 "configuration file missing"
+    # # 4) take default settings in use
+    # source "$HOME/.gururc2" || gmsg -x 130 "configuration file missing"
 
-    # create folder structure
+    # 5) create folder structure
     install.folders && install.check_folders || gmsg -x 140 "error during creating folders"
 
-    # install core
+    # 6) install core
     install.core_files && install.check_core || gmsg -x 150 "error during installing core"
 
-    #install modules
+    # 7) install modules
     install.modules && install.check_modules || gmsg -x 160 "error when installing modules"
 
-    # rename core to
-    ln -s "$GURU_BIN/core.sh" "$GURU_BIN/$GURU_CALL" || gmsg -x 170 "core linking error"
+    # 8) set up launcher
+    ln -f -s "$GURU_BIN/core.sh" "$GURU_BIN/$GURU_CALL" || gmsg -x 170 "core linking error"
+
+    # 9) export user configuration
+    install.config || gmsg -x 180 "user configuration error"
+
 
     # done
     echo "$($GURU_BIN/core.sh version) installed"
@@ -101,15 +106,19 @@ install.arguments () {
 install.check () {
     ## Check installation, reinstall if -f or user input
     gmsg  -v1 -c white "checking current installation.. "
-    if grep -q ".gururc" "$target_rc" ; then
+    if grep -q ".gururc2" "$target_rc" ; then
         [[ $force_overwrite ]] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer
 
         if ! [[ "$answer" == "y" ]]; then
-            gmsg -c yellow -x 2 "aborting.."
-        fi
+                gmsg -c yellow -x 2 "aborting.."
+            fi
 
-        [[ -f "$GURU_BIN/uninstall.sh" ]] && bash "$GURU_BIN/uninstall.sh" || gmsg -c yellow "un-installer not found"
-    fi
+        if [[ -f "$GURU_BIN/uninstall.sh" ]] ; then
+                $GURU_BIN/uninstall.sh
+            else
+                gmsg -c yellow "some un-installer problems.."
+            fi
+        fi
     return 0
 }
 
@@ -125,9 +134,6 @@ install.rcfiles () {
 
     # todo: remove disabler function, just un install if need to disable the shit
     [[ -f "$disabler_flag_file" ]]      && rm -f "$disabler_flag_file"
-
-    # default environmental variables
-    cp -f core/gururc.sh "$HOME/.gururc"
 
     # pass
     gmsg -v1 -c green "DONE"
@@ -191,7 +197,6 @@ install.check_rcfiles () {
     # test
     gmsg -n -v1 -c white "checking launchers.. "
     grep -q "guru" "$target_rc"         || gmsg -c red -x 122 ".bashrc modification error"
-    [[ -f "$HOME/.gururc" ]]            || gmsg -c red -x 124 ".gururc file creation error"
     [[ -f "$HOME/.bashrc.giobackup" ]]  || gmsg "warning: .bashrc backup file creation failure"
     [[ -f "$disabler_flag_file" ]]      && gmsg "warning: disabler flag file creation failure"
 
@@ -264,6 +269,20 @@ install.check_modules () {
     # pass
     return 0
 }
+
+
+install.config () {
+
+    gmsg -v1 -c white "setting user configurations "
+    if ! [[ -f "$GURU_CFG/$GURU_USER/user.cfg" ]] ; then
+         gmsg -c yellow "user specific configuration not found, using default.."
+         cp -f $GURU_CFG/$GURU_USER/user-default.cfg "$GURU_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
+    fi
+    config.export && source $HOME/.gururc2 || gmsg -c red -x 182 ".gururc2 file error"
+    #config.main pull || gmsg -x 182 "remote user configuration failed"
+    return 0
+}
+
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

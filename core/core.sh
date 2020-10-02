@@ -9,12 +9,12 @@ export GURU_HOSTNAME="$(hostname)"
 
 # export old configurations - TODO remove need of this
 # edit should be removed already, but not tested
-source ~/.gururc
+#source ~/.gururc
 
 # export current configuration - TODO fully implement finally, you lazy hippy!
 source ~/.gururc2
 
-# user configuration overwrites 
+# user configuration overwrites
 [[ $GURU_USER_NAME ]] && export GURU_USER=$GURU_USER_NAME
 [[ $GURU_FLAG_COLOR ]] && export GURU_TERMINAL_COLOR=true
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
@@ -27,7 +27,7 @@ source $GURU_BIN/system.sh
 source $GURU_BIN/config.sh
 # include mount tools
 source $GURU_BIN/mount.sh
-# import common functions 
+# import common functions
 source $GURU_BIN/common.sh
 # include daemon tools
 source $GURU_BIN/daemon.sh
@@ -39,12 +39,12 @@ core.parser () {                                                                
     export GURU_CMD="$tool"                                                             # Store tool call name to other functions
     export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
 
-    case "$tool" in 
-        # Core commands                                                                 # core and module scripts are combined to one folder during installation 
-                        status)  core.$tool                             ; return $? ;;  # core controls    
+    case "$tool" in
+        # Core commands                                                                 # core and module scripts are combined to one folder during installation
+                        status)  core.$tool                             ; return $? ;;  # core controls
                start|poll|kill)  daemon.$tool                           ; return $? ;;  # daemon controls
                           stop)  touch "$HOME/.guru-stop"               ;;              # request daemon to stop ít self, use kill if need reltime
-        # Module calls         
+        # Module calls
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
   tor|conda|phone|play|vol|yle)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
        stamp|timer|tag|install)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
@@ -59,7 +59,7 @@ core.parser () {                                                                
              ssh|os|common|tme)  $GURU_BIN/$tool.sh "$@"                ; return $? ;;  # direct lib calls
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;  # Get rid of this shit
 
-        # launch tests 
+        # launch tests
                           test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;  # tester
 
 
@@ -130,7 +130,7 @@ core.help () {                                                          # help p
     gmsg -v0 "  $GURU_CALL note yesterday           open yesterdays notes"
     gmsg -v2 "  $GURU_CALL install mqtt-server      isntall mqtt server"
     gmsg -v1 "  $GURU_CALL ssh key add github       addssh keys to github server"
-    gmsg -v0 "  $GURU_CALL timer start at 12:00     start work time timer"    
+    gmsg -v0 "  $GURU_CALL timer start at 12:00     start work time timer"
     gmsg -v0
     gmsg -v1 "More detailed help, try '$GURU_CALL <tool> help'"
     gmsg -v0 "Use verbose mode -v to get more information in help printout. Even more detailed, try -V"
