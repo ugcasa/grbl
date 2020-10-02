@@ -13,7 +13,7 @@ config.main () {
           get|set|user)  config.$_cmd $@                                  ; return $? ;;
               personal)  config.load "$GURU_CFG/$GURU_USER_NAME/user.cfg" ; echo $GURU_REAL_NAME ;;
                 export)  config.export $@                                 ; return $? ;;
-             pull|push)  remote.$_cmd $@                                  ; return $? ;;
+             pull|push)  remote."$_cmd"_config $@                                  ; return $? ;;
                   help)  config.help $@                                   ; return $? ;;
                      *)  echo "unknown config action '$_cmd'"
                          GURU_VERBOSE=1
