@@ -36,15 +36,15 @@ remote.status () {
     if remote.online ; then
             gmsg -v 1 -t -c green "${FUNCNAME[0]}: local accesspoint connection"
             corsair.write $indicator_key green
-            return 0 
+            return 0
         elif remote.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
             gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote accesspoint connection"
             corsair.write $indicator_key yellow
-            return 0 
+            return 0
         else
             gmsg -v 1 -t -c red "${FUNCNAME[0]}: accesspoint offline"
             corsair.write $indicator_key red
-            return 101 
+            return 101
         fi
 }
 
@@ -52,7 +52,7 @@ remote.status () {
 remote.help () {
     gmsg -v1 -c white "guru-client remote help ----------------------------------------------- "
     gmsg -v2
-    gmsg -v1 "usage: $GURU_CALL remote [command] [arguments] "
+    gmsg -v0 "usage:    $GURU_CALL remote [push|pull|check|help|status|start|end|install|remove] "
     gmsg -v2
     gmsg -v1 -c white  "commands:"
     gmsg -v1 " check      check that connection to accesspoint server is available "
@@ -91,7 +91,7 @@ remote.online() {
 
 remote.check() {
     # same shit than onlin but silent (shortcut)
-    remote.online $@ >/dev/null 
+    remote.online $@ >/dev/null
     return $?
 }
 

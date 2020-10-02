@@ -11,6 +11,7 @@ conda.main () { 	# anaconda main (do I really need this.. i doupt)
 	        update|install)  conda.$_cmd ; return $? ;;
 			       project)  case $1 in add|active|rm) conda.$1_project ;; *) echo "uknown command" ; esac ; return $? ;;
 			    run|launch)  conda.launch $@ ; return $? ;;
+					  help)  echo "usage:    conda [project|update|install|run|help]" ;;
 						 *)  printf "uknown command, try install or launch"
 		esac
 }
@@ -70,7 +71,7 @@ conda.update () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then    # if sourced only import functions
         if [[ "$1" == "test" ]] ; then shift ; bash /test/test.sh conda $1 ; fi
-        source "$HOME/.gururc"
+        source "$HOME/.gururc2"
         conda.main "$@"
         exit "$?"
     fi

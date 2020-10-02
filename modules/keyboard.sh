@@ -33,7 +33,7 @@ keyboard.main() {                           # keyboard command parser
                 fi
                 ;;
 
-            *)
+            *|help)
                 printf "\nUsage:\n\t %s keyboard [command] [variables]\n" "$GURU_CALL"
                 printf "\nCommands:\n\n"
                 printf " add-shortcut [all]             add shortcut\n"

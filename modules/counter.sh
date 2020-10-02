@@ -50,15 +50,20 @@ counter.main () {
 					;;
 
 				help|"")
-					printf "usage: $GURU_CALL counter [argument] [counter_name] <value>\n"
-					printf "arguments:\n"
-					printf " get                         get counter value \n"
-					printf " ls                          list of counters \n"
-					printf " inc                         increment counter value \n"
-					printf " add [counter_name] <value>  add to countre value (def 1)\n"
-					printf " set [counter_name] <value>  set and set counter preset value (def 0)\n"
-					printf " rm                          remove counter \n"
-					printf "If no argument given returns counter value \n"
+					gmsg -v1 -c white "guru-client counter help ----------------------------------------------- "
+					gmsg -v2
+					gmsg -v0 "usage:    $GURU_CALL counter [argument] [counter_name] <value>"
+					gmsg -v2
+					gmsg -v1 -c white "arguments:"
+					gmsg -v1 " get                         get counter value "
+					gmsg -v1 " ls                          list of counters "
+					gmsg -v1 " inc                         increment counter value "
+					gmsg -v1 " add [counter_name] <value>  add to countre value (def 1)"
+					gmsg -v1 " set [counter_name] <value>  set and set counter preset value (def 0)"
+					gmsg -v1 " rm                          remove counter "
+					gmsg -v2
+					gmsg -v1 "If no argument given returns counter value "
+					gmsg -v2
 					return 0
 					;;
 

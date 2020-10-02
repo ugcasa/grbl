@@ -43,23 +43,31 @@ stamp_main () {    # main command parser
                     stamp="![]($file){ width=500px }"
                     ;;
 
-                *)
-                    echo "-- guru-client stamp help -----------------------------------------------"
-                    printf "usage: guru stamp [COMMAND] \n\ncommands: \n"
-                    printf "date              datestamp \n"
-                    printf "time              timestamp \n"
-                    printf "start             start time stamp in format HH:MM \n"
-                    printf "end               end time stamp in format HH:MM \n"
-                    printf "round             rounded up time stamp \n"
-                    printf "signature         user signature \n"
-                    printf "transaction       stansaction stamp for notes \n"
-                    printf "weekplan          generates week plan (<from> <to> numeral week day) \n"
-                    printf "all stamps is copied to the clipboard\n"
+                help|*) stamp.help ; return 0 ;;
+
     esac
 
     printf "$stamp\n"
     printf "$stamp" | xclip -i -selection clipboard
 
+}
+
+stamp.help () {
+    gmsg -v1 -c white "guru-client stamp help -----------------------------------------------"
+    gmsg -v2
+    gmsg -v0  "usage:    guru stamp [date|time|start|end|round|transaction|signature|picture-md] "
+    gmsg -v2
+    gmsg -v1 -c white  "commands: "
+    gmsg -v1  "date              datestamp "
+    gmsg -v1  "time              timestamp "
+    gmsg -v1  "start             start time stamp in format HH:MM "
+    gmsg -v1  "end               end time stamp in format HH:MM "
+    gmsg -v1  "round             rounded up time stamp "
+    gmsg -v1  "signature         user signature "
+    gmsg -v1  "transaction       stansaction stamp for notes "
+    gmsg -v1  "weekplan          generates week plan (<from> <to> numeral week day) "
+    gmsg -v1  "all stamps is copied to the clipboard"
+    gmsg -v2
 }
 
 

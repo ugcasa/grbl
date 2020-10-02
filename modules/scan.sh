@@ -18,7 +18,7 @@ scan.main () {
 scan.help () {
     gmsg -v1 -c white "guru-client scan help --------------------------------- "
     gmsg -v2
-    gmsg -v0 "usage: $GURU_CALL scan command options commands: "
+    gmsg -v0 "usage:    $GURU_CALL scan [receipt|invoice|install] "
     gmsg -v2
     gmsg -v1 "receipt   scan receipt size grayscale                 "
     gmsg -v1 "invoice   scan receipt A4 size optimized grayscale    "

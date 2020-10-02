@@ -22,7 +22,7 @@ phone.main () {                 # phone command parser
     [[ $GURU_PHONE_LAN_IP ]]        || read -p "phone ip: "     GURU_PHONE_LAN_IP
     [[ $GURU_PHONE_LAN_PORT ]]      || read -p "sshd port: "    GURU_PHONE_LAN_PORT
     [[ $GURU_PHONE_USERNAME ]]      || read -p "ssh user: "     GURU_PHONE_USERNAME
-    [[ $GURU_PHONE_PASSWORD ]]      || read -p "password: "     GURU_PHONE_PASSWORD   
+    [[ $GURU_PHONE_PASSWORD ]]      || read -p "password: "     GURU_PHONE_PASSWORD
 
     local _cmd="$1" ; shift
     case "$_cmd" in
@@ -37,23 +37,29 @@ phone.main () {                 # phone command parser
         esac
 }
 
-phone.help () {                 # printout help
-    echo "-- guru-client phone help -----------------------------------------------"
-    printf "usage:\t %s phone [action] \n" "$GURU_CALL"
-    printf "\nactions:\n"
-    printf " terminal          open terminal to phone \n"
-    printf " mount             mount phone user folder \n"
-    printf " unmount           unmount phone \n"
-    printf " camera            get, tag and relocate photos and videos from phone \n"
-    printf " whatsapp          get WhatsApp media from phone \n"
-    printf " telegram          get Telegram media from phone \n"
-    printf " downloads         get download folder from phone \n"
-    printf " pictures       get pictures from phone \n"
-    printf " install           install server to phone (google play) \n"
-    printf " help              help printout \n"
-    printf "\nexample:     %s phone mount \n" "$GURU_CALL"
-    printf "             %s phone camera \n" "$GURU_CALL"
-    printf "             %s phone terminal \n" "$GURU_CALL"
+phone.help () {
+    # printout help
+    gmsg -v2
+    gmsg -v1 -c white "guru-client phone help -----------------------------------------------"
+    gmsg -v0  "usage:    $GURU_CALL phone [s|add|open|rm|check|media|camera|all|install] "
+    gmsg -v2
+    gmsg -v1 -c white "commands:"
+    gmsg -v1  " terminal          open terminal to phone "
+    gmsg -v1  " mount             mount phone user folder "
+    gmsg -v1  " unmount           unmount phone "
+    gmsg -v1  " camera            get, tag and relocate photos and videos from phone "
+    gmsg -v1  " whatsapp          get WhatsApp media from phone "
+    gmsg -v1  " telegram          get Telegram media from phone "
+    gmsg -v1  " downloads         get download folder from phone "
+    gmsg -v1  " pictures          get pictures from phone "
+    gmsg -v1  " install           install server to phone (google play) "
+    gmsg -v1  " help              help printout "
+    gmsg -v2
+    gmsg -v1 -c white "example: "
+    gmsg -v1  "             $GURU_CALL phone mount "
+    gmsg -v1  "             $GURU_CALL phone camera "
+    gmsg -v1  "             $GURU_CALL phone terminal "
+    gmsg -v2
 }
 
 phone.confirm_key () {
@@ -232,7 +238,7 @@ phone.media () {                # Get all media files from phone
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         sshpass -V >/dev/null || sudo apt install sshpass
-        source "$HOME/.gururc"
+        source "$HOME/.gururc2"
         phone.main "$@"
     fi
 

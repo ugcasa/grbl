@@ -13,11 +13,22 @@ ssh_main() {
             ;;
 
         help)
-            printf "guru ssh tools\n\nUsage:\n\t$0 [command] [variables]\n"
-            printf "\nCommands:\n"
-            printf " key|keys    key management tools, try '%s ssh key help' for more info.\n" "$GURU_CALL"
-            printf "\nAny on known ssh command is passed trough to open-ssh client\n"
-            printf "\nExample:\n\t %s ssh key add %s \n" "$GURU_CALL" "$GURU_ACCESS_POINT"
+            gmsg -v1 -c white "guru-client ssh help -----------------------------------------------"
+            gmsg -v2
+            gmsg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help]"
+            gmsg -v2
+            gmsg -v1 -c white "Commands:"
+            gmsg -v1 " key|keys        key management tools, try '$GURU_CALL ssh key help' for more info."
+            gmsg -v1 "   key ps        list of activekeys "
+            gmsg -v1 "   key ls        list of keys files"
+            gmsg -v1 "   key add       adds keys to server [server_selection] [variables] "
+            gmsg -v1 "   key rm        remove from remote server server [user_name@service_host] "
+            gmsg -v2
+            gmsg -v1 -c white "Example: "
+            gmsg -v1 "      $GURU_CALL ssh key add $GURU_ACCESS_POINT"
+            gmsg -v1
+            gmsg -v1 "Any on known ssh command is passed trough to open-ssh client"
+            gmsg -v2
             ;;
         *)
         ssh "$@"
@@ -51,13 +62,19 @@ key_main() {
             ssh_rm_key "$@"
             ;;
         help|*)
-            printf "guru ssh key tools\n\nUsage:\n\t$0 [command] [variables]\n"
-            printf "\nCommands:\n"
-            printf " ps        list of keys \n"
-            printf " ls        list of keys files\n"
-            printf " add       adds keys to server [server_selection] [variables] \n"
-            printf " rm        remove from remote server server [user_name@service_host] \n"
-            printf "\nExample:\n\t %s ssh key add %s \n\n" "$GURU_CALL" "$GURU_ACCESS_POINT"
+            gmsg -v1 -c white "guru-client ssh key help -----------------------------------------------"
+            gmsg -v2
+            gmsg -v0 " Usage:    $GURU_CALL [agent|ps|ls|add|rm|help]"
+            gmsg -v2
+            gmsg -v1 -c white "Commands:"
+            gmsg -v1 " ps        list of keys "
+            gmsg -v1 " ls        list of keys files"
+            gmsg -v1 " add       adds keys to server [server_selection] [variables] "
+            gmsg -v1 " rm        remove from remote server server [user_name@service_host] "
+            gmsg -v2
+            gmsg -v1 -c white  "Example:"
+            gmsg -v1  "       $GURU_CALL ssh key add $GURU_ACCESS_POINT"
+            gmsg -v2
             ;;
     esac
 

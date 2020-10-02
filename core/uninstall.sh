@@ -1,18 +1,19 @@
 #!/bin/bash
 uninstalling_version=$($GURU_BIN/core.sh version)
 
-uninstall_main () {
+uninstall.main () {
 
 	command="$1" ; shift
 	case "$command" in
-		config) uninstall "$@" ; [[ "$GURU_CFG" ]] && rm -rf "$GURU_CFG" ;;
-			 *) uninstall "$@"
+		config) uninstall.remove "$@" ; [[ "$GURU_CFG" ]] && rm -rf "$GURU_CFG" ;;
+		  help) gmsg -v0 "usage:    $GURU_CALL uninstall [config|help]" ;;
+			 *) uninstall.remove "$@"
 				exit "$?"
 	esac
 }
 
 
-uninstall () {
+uninstall.remove () {
 
 	if [ ! -f "$HOME/.bashrc.giobackup" ]; then
 		echo "not installed, aborting.."
@@ -44,8 +45,9 @@ uninstall () {
 	return 0
 }
 
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 	source "$HOME/.gururc2"
-	uninstall_main "$@"
+	uninstall.main "$@"
 fi
 

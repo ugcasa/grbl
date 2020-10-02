@@ -40,6 +40,7 @@ core.parser () {                                                                
     export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
     case "$tool" in
         # Core commands                                                                 # core and module scripts are combined to one folder during installation
+                           all)  core.run_module_function "$@"          ; return $? ;;
                         status)  core.$tool                             ; return $? ;;  # core controls
                start|poll|kill)  daemon.$tool                           ; return $? ;;  # daemon controls
                           stop)  touch "$HOME/.guru-stop"               ;;              # request daemon to stop ít self, use kill if need reltime
@@ -59,20 +60,29 @@ core.parser () {                                                                
 
 
 core.select_module () {
+    # check is given tool in module list and lauch first hit
     local tool=$1 ; shift
     for _module in ${GURU_MODULES[@]} ; do
         if [[ "$_module" == "$tool" ]] ; then
-            gmsg -v2 -c green "$tool:$_module"
-            [[ -f $GURU_BIN/$_module.sh ]] && $_module.sh "$@"  || gmsg -v2 -c black "no match: $_module.sh"
-            [[ -f $GURU_BIN/$_module.py ]] && $_module.py "$@"  || gmsg -v2 -c black "no match: $_module.py"
-            [[ -f $GURU_BIN/$_module ]] && $_module "$@"        || gmsg -v2 -c black "no match: $_module"
-            return $?
-         else
-             gmsg -v3 -c red "$tool:$_module"
-        fi
+                [[ -f "$GURU_BIN/$_module.sh" ]] && $_module.sh "$@"
+                [[ -f "$GURU_BIN/$_module.py" ]] && $_module.py "$@"
+                [[ -f "$GURU_BIN/$_module" ]] && $_module "$@"
+                return $?
+            fi
     done
     gmsg -v1 "passing request to os.."
     $tool "$@"
+}
+
+core.run_module_function () {
+    # run module command for all
+    local function_to_run=$1 ; shift
+    for _module in ${GURU_MODULES[@]} ; do
+                gmsg -c brown "## $_module $function_to_run"
+                [[ -f "$GURU_BIN/$_module.sh" ]] && $_module.sh "$function_to_run" "$@"
+                [[ -f "$GURU_BIN/$_module.py" ]] && $_module.py "$function_to_run" "$@"
+                [[ -f "$GURU_BIN/$_module" ]] && $_module "$function_to_run" "$@"
+    done
 }
 
 
@@ -80,60 +90,60 @@ core.help () {                                                          # help p
     # TODO re-organize by function category
     gmsg -v1 -c white "guru-client help ------------------------------------------"
     gmsg -v2
-    gmsg -v0  "usage:   $GURU_CALL [-flags] [tool] [argument] [variables]"
+    gmsg -v0  "usage:    $GURU_CALL [-flags] [tool] [argument] [variables]"
     gmsg -v1
-    gmsg -v0 -c white  "Flags"
-    gmsg -v0 " -v   set verbose, headers and success are printed out"
-    gmsg -v0 " -V   more deep verbose"
-    gmsg -v0 " -l   set logging on to file $GURU_LOG"
-    gmsg -v0 " -f   set force mode on, be more aggressive"
-    gmsg -v0 " -u   run as user"
+    gmsg -v1 -c white  "Flags"
+    gmsg -v1 " -v   set verbose, headers and success are printed out"
+    gmsg -v1 " -V   more deep verbose"
+    gmsg -v1 " -l   set logging on to file $GURU_LOG"
+    gmsg -v1 " -f   set force mode on, be more aggressive"
+    gmsg -v1 " -u   run as user"
     gmsg -v2
-    gmsg -v0 -c white  "connection tools"
-    gmsg -v0 "  remote          accesspoint access tools"
-    gmsg -v0 "  ssh             ssh key'and connection tools"
-    gmsg -v0 "  mount|umount    mount remote locations"
-    gmsg -v0 "  phone           get data from android phone"
+    gmsg -v1 -c white  "connection tools"
+    gmsg -v1 "  remote          accesspoint access tools"
+    gmsg -v1 "  ssh             ssh key'and connection tools"
+    gmsg -v1 "  mount|umount    mount remote locations"
+    gmsg -v1 "  phone           get data from android phone"
     gmsg -v2
-    gmsg -v0 -c white  "work track and documentation"
-    gmsg -v0 "  note            greate and edit daily notes"
-    gmsg -v0 "  timer           work track tools"
-    gmsg -v0 "  translate       google translator in terminal"
-    gmsg -v0 "  document        compile markdown to .odt format"
-    gmsg -v0 "  scan            sane scanner tools"
+    gmsg -v1 -c white  "work track and documentation"
+    gmsg -v1 "  note            greate and edit daily notes"
+    gmsg -v1 "  timer           work track tools"
+    gmsg -v1 "  translate       google translator in terminal"
+    gmsg -v1 "  document        compile markdown to .odt format"
+    gmsg -v1 "  scan            sane scanner tools"
     gmsg -v2
     gmsg -v1 -c white  "clipboard tools"
     gmsg -v1 "  stamp           time stamp to clipboard and terminal"
     gmsg -v2
-    gmsg -v0 -c white  "entertainment"
-    gmsg -v0 "  news|uutiset    text tv type reader for rss news feeds"
-    gmsg -v0 "  play            play videos and music"
-    gmsg -v0 "  silence         kill all audio and lights "
+    gmsg -v1 -c white  "entertainment"
+    gmsg -v1 "  news|uutiset    text tv type reader for rss news feeds"
+    gmsg -v1 "  play            play videos and music"
+    gmsg -v1 "  silence         kill all audio and lights "
     gmsg -v2
     gmsg -v1 -c white  "hardware and io devices"
     gmsg -v1 "  input           to control varies input devices (keyboard etc)"
     gmsg -v1 "  keyboard        to setup keyboard shortcuts"
     gmsg -v1 "  radio           listen FM- radio (HW required)"
     gmsg -v2
-    gmsg -v0 -c white  "system tools"
-    gmsg -v0 "  install         install tools "
-    gmsg -v0 "  uninstall       remove guru toolkit "
+    gmsg -v1 -c white  "system tools"
+    gmsg -v1 "  install         install tools "
+    gmsg -v1 "  uninstall       remove guru toolkit "
     gmsg -v1 "  set             set options "
     gmsg -v1 "  counter         to count things"
-    gmsg -v0 "  status          status of stuff"
-    gmsg -v0 "  upgrade         upgrade guru toolkit "
+    gmsg -v1 "  status          status of stuff"
+    gmsg -v1 "  upgrade         upgrade guru toolkit "
     gmsg -v1 "  shell           start guru shell"
-    gmsg -v0 "  version         printout version "
+    gmsg -v1 "  version         printout version "
     gmsg -v2 "  os              basic operating system library"
     gmsg -v2
-    gmsg -v0 -c white  "examples"
-    gmsg -v0 "  $GURU_CALL note yesterday           open yesterdays notes"
+    gmsg -v1 -c white  "examples"
+    gmsg -v1 "  $GURU_CALL note yesterday           open yesterdays notes"
     gmsg -v2 "  $GURU_CALL install mqtt-server      isntall mqtt server"
     gmsg -v1 "  $GURU_CALL ssh key add github       addssh keys to github server"
-    gmsg -v0 "  $GURU_CALL timer start at 12:00     start work time timer"
-    gmsg -v0
+    gmsg -v1 "  $GURU_CALL timer start at 12:00     start work time timer"
+    gmsg -v1
     gmsg -v1 "More detailed help, try '$GURU_CALL <tool> help'"
-    gmsg -v0 "Use verbose mode -v to get more information in help printout. Even more detailed, try -V"
+    gmsg -v1 "Use verbose mode -v to get more information in help printout. Even more detailed, try -V"
     gmsg -v1
 }
 

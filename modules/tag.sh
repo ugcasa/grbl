@@ -3,6 +3,8 @@
 
 tag.main () {
     # get arguments                             # debug
+    if [[ "$1" == "help" ]] ; then tag.help ; return 0 ; fi
+
     tag_file_name="$1" ; shift                  #; echo "tag_file_name:$tag_file_name"
 
     tag_action="$1" ; shift                     #; echo "tag_action:$tag_action"
@@ -29,6 +31,11 @@ tag.main () {
 }                                                               ####################
                                                                  ####################
                                                                   #################
+tag.help () {
+    echo "usage:    $GURU_CALL tag [add|rm|get] <file>"
+}
+
+
 tag.text () {                                                      ##############  #
     # If file has more than two lines it's taggable                  ##########  ##
 

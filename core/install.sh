@@ -21,7 +21,7 @@ install.main () {
 install.help () {
     gmsg -v1 -c white "guru-client dev tools installer help ------------------------"
     gmsg -v2
-    gmsg -v0  "usage: $GURU_CALL install [keyword] "
+    gmsg -v0  "usage:    $GURU_CALL install [keyword] "
     gmsg -v2
     gmsg -v1 -c white  "keywords:"
     gmsg -v1  " mqtt-client                 mosquitto client"
@@ -244,7 +244,7 @@ install.visual_code () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc"
+    source "$HOME/.gururc2"
     source "$GURU_BIN/common.sh"
     #source "$GURU_BIN/deco.sh"
     install.main "$@"

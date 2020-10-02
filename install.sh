@@ -17,8 +17,10 @@ target_rc="$HOME/.bashrc"
 # Flag for disabling the rc file
 disabler_flag_file="$HOME/.gururc.disabled"
 
+# core modules what need sto access by user from terminal
+core_modules=(config core daemon install system uninstall)
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(corsair counter mount mqtt note phone poller print project remote scan ssh stamp tag timer tor trans user news vol yle)
+modules_to_install=(corsair counter mount mqtt note phone print project remote scan ssh stamp tag timer tor trans user vol yle news)
 
 
 install.main () {
@@ -48,7 +50,9 @@ install.main () {
     install.config || gmsg -x 180 "user configuration error"
 
     # Step 9) save information and done
+    modules_to_install=("${modules_to_install[@]}" "${core_modules[@]}")
     echo "${modules_to_install[@]}" > $GURU_CFG/installed.modules
+
     echo "$($GURU_BIN/core.sh version) installed"
 }
 

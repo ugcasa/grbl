@@ -47,3 +47,8 @@ trans (){
 	# alias, ot just use trans whitout "guru" on front of it
 	translate $@
 }
+
+
+if [[ "$1" = "help" ]] ; then
+	echo "usage:    $GURU_CALL trans source_l:targed_l <text>"
+fi

@@ -82,6 +82,9 @@ yle_main () {
 				done
 			;;
 
+			help)
+				echo "usage:    $GURU_CALL yle [install|uninstall|play|get|news|episodes|play|subtitle|weekly|meta]" ;;
+
 		*)
 			for item in "$@"
 				do

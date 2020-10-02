@@ -31,7 +31,7 @@ note.main () {                                  # command parser
 note.help () {                                  # printout help
     gmsg -v1 -c white "guru-client note help -----------------------------------------------"
     gmsg -v2
-    gmsg -v0 "Usage:     $GURU_CALL note [command] <date> "
+    gmsg -v0 "Usage:    $GURU_CALL note [ls|add|open|rm|check|report|locate|tag] <date> "
     gmsg -v1 -c white "Commands:"
     gmsg -v2
     gmsg -v1 " check          check do note exist, returns 0 if i do "

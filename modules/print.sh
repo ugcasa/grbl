@@ -1,6 +1,5 @@
 #!/bin/bash
 # sshfs mount functions for guru-client
-
 source $GURU_BIN/common.sh
 
 print.main() {
@@ -15,14 +14,15 @@ print.main() {
     return 0
 }
 
+
 print.help () {
-    echo "-- guru-client print help -----------------------------------------------"
-    printf "usage:\t %s print [command] [arguments] \n\t $0 print [source] [target] \n" "$GURU_CALL"
-    printf "\ncommands:\n"
-    printf " label                     print label \n"
-    printf "\nexample:"
-    printf "    %s print mount /home/%s/share /home/%s/mount/%s/\n" "$GURU_CALL" "$GURU_ACCESS_POINT_USER" "$USER" "$GURU_ACCESS_POINT"
+    gmsg -v1 -c white "guru-client print help -----------------------------------------------"
+    gmsg -v0  "usage:    $GURU_CALL print [label] "
+    gmsg -v1 -c white "commands:"
+    gmsg -v1  " label                     print label "
+    gmsg -v2
 }
+
 
 print.label () {
     echo "printing label"
@@ -30,7 +30,7 @@ print.label () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc"
+    source "$HOME/.gururc2"
     print.main "$@"
     exit 0
 fi

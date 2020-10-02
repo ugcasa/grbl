@@ -36,7 +36,9 @@ volume_main () {
             fadeup|fadedown)
                 $command "$@"
                 ;;
-
+            help)
+                echo "usage:    $GURU_CALL vol [get|mute|unmute|up|down|fadeup|fadedown|help]"
+                ;;
             *)
                 if [[ "$command" =~ ^[0-9]+$ ]]; then
                     set_volume "$command"

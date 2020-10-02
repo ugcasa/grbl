@@ -1,7 +1,7 @@
 #!/bin/bash
 # guru client corsair led notification functions
 # casa@ujo.guru 2020
-
+source $GURU_BIN/common.sh
 
 mqtt.main () {
     # corsair command parser
@@ -30,21 +30,21 @@ mqtt.write () {
 
 
 mqtt.help () {
-    gmsg -v 1 -c white "guru-client mqtt help -----------------------------------------------"
-    gmsg -v 2
-    gmsg -v 0 "usage:   $GURU_CALL mqtt [start|end|status|help|install|remove|check|write] "
-    gmsg -v 2
-    gmsg -v 1 -c white "commands:"
-    gmsg -v 1 " status          printout mqtt service status "
-    gmsg -v 1 " start           start status polling "
-    gmsg -v 1 " end             end status polling "
-    gmsg -v 1 " install         install requirements "
-    gmsg -v 1 " remove          remove installed requirements "
-    gmsg -v 2 " help            printout this help "
-    gmsg -v 2
-    gmsg -v 1 -c white "example:"
-    gmsg -v 1 "         $GURU_CALL mqtt status"
-    gmsg -v 2
+    gmsg -v1 -c white "guru-client mqtt help -----------------------------------------------"
+    gmsg -v2
+    gmsg -v0 "usage:    $GURU_CALL mqtt [start|end|status|help|install|remove|check|write] "
+    gmsg -v2
+    gmsg -v1 -c white "commands:"
+    gmsg -v1 " status          printout mqtt service status "
+    gmsg -v1 " start           start status polling "
+    gmsg -v1 " end             end status polling "
+    gmsg -v1 " install         install requirements "
+    gmsg -v1 " remove          remove installed requirements "
+    gmsg -v2 " help            printout this help "
+    gmsg -v2
+    gmsg -v1 -c white "example:"
+    gmsg -v1 "         $GURU_CALL mqtt status"
+    gmsg -v2
 }
 
 
@@ -81,15 +81,15 @@ mqtt.status () {
     if mqtt.online "$GURU_LOCAL_SERVER" "$GURU_MQTT_LOCAL_PORT" ; then
             gmsg -v 1 -t -c green "${FUNCNAME[0]}: message server online"
             corsair.write $indicator_key green
-            return 0 
+            return 0
         elif mqtt.online "$GURU_REMOTE_SERVER" "$GURU_MQTT_REMOTE_PORT" ; then
             gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote message server online "
             corsair.write $indicator_key yellow
-            return 0 
+            return 0
         else
             gmsg -v 1 -t -c red "${FUNCNAME[0]}: message server offline"
             corsair.write $indicator_key red
-            return 101 
+            return 101
         fi
 }
 
@@ -108,7 +108,6 @@ mqtt.remove () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc2"
-    export GURU_VERBOSE=2
     source "$GURU_BIN/deco.sh"
     mqtt.main "$@"
     exit "$?"

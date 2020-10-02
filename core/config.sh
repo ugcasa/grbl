@@ -13,7 +13,7 @@ config.main () {
           get|set|user)  config.$_cmd $@                                  ; return $? ;;
               personal)  config.load "$GURU_CFG/$GURU_USER_NAME/user.cfg" ; echo $GURU_REAL_NAME ;;
                 export)  config.export $@                                 ; return $? ;;
-             pull|push)  remote."$_cmd"_config $@                                  ; return $? ;;
+             pull|push)  remote."$_cmd"_config $@                         ; return $? ;;
                   help)  config.help $@                                   ; return $? ;;
                      *)  echo "unknown config action '$_cmd'"
                          GURU_VERBOSE=1
@@ -25,7 +25,7 @@ config.main () {
 config.help () {
     gmsg -v1 -c white "guru-client config help -----------------------------------------------"
     gmsg -v2
-    gmsg -v0 "usage: $GURU_CALL config [action] <target> "
+    gmsg -v0 "usage:    $GURU_CALL config [action] <target> "
     gmsg -v2
     gmsg -v1 "actions:"
     gmsg -v1 " export        export userconfiguration to encironment"
@@ -130,7 +130,7 @@ config.set () {             # set tool-kit environmental variable
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        #source "$HOME/.gururc"
+        source "$HOME/.gururc2"
         config.main "$@"
     fi
 

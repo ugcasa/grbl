@@ -4,7 +4,7 @@
 
 source $GURU_BIN/common.sh
 source ~/.gururc2
-echo "TEST: $GURU_SYSTEM_MOUNT"
+# echo "TEST: $GURU_SYSTEM_MOUNT"
 
 if ! [[ $GURU_PROJECT ]] ; then echo "no project" ; fi
 
@@ -24,7 +24,7 @@ project.main() {
 project.help () {
     gmsg -v1 -c white "guru-client project module help -----------------------------------------------"
     gmsg -v2
-    gmsg -v0 "usage: $GURU_CALL project [command] project_name "
+    gmsg -v0 "usage:    $GURU_CALL project [add|open|rm|sublime] <project_name>"
     gmsg -v2
     gmsg -v1 -c white "commands:"
     gmsg -v1 "  add             add new projects "

@@ -21,6 +21,7 @@ user_main() {
 			rm_user "$@"
 			;;
 		help)
+			echo "usage:    $GURU_CALL user [add|rm|change|help]"
 			;;
 		change|*)
 			change_user "$@"
@@ -84,7 +85,7 @@ change_user () {
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc"
+    source "$HOME/.gururc2"
     user_main "$@"
     exit 0
 fi

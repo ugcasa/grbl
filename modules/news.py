@@ -11,6 +11,7 @@ from datetime import datetime
 import readline
 import subprocess
 
+
 try:
 	import feedparser
 except ModuleNotFoundError:
@@ -249,7 +250,7 @@ class menu ():
 		link 	= entry.link.replace( "&nbsp;", "" )
 
 		#image_link 	= entry.image.link
-		
+
 
 		if int( news_id ) < 0 or int( news_id ) > self.list_length :													# id 1 above
 			return 2
@@ -340,6 +341,11 @@ class menu ():
 
 
 ## MAN
+
+if len(sys.argv) > 1:
+	if sys.argv[1] == "help":
+		print("usage:    news")
+		quit()
 
 m = menu( 120, 24 )
 

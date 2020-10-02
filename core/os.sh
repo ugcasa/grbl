@@ -35,3 +35,4 @@ check_python_module () {                                      # Does work, but r
    python -c "import $1"
    return "$?"
 }
+

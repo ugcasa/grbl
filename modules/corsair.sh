@@ -77,19 +77,19 @@ corsair.help () {
 corsair.check () {
     # Check keyboard driver is available, app and pipes are started and executes if needed
 
-    if ! [[ $GURU_CORSAIR_ENABLED ]] ; then 
+    if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
             gmsg -v2 -c black "${FUNCNAME[0]}: disabled"
-            return 1 
+            return 1
         fi
 
     if ! ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
             gmsg -v0 "starting ckb-next-daemon.. sudo needed"
             sudo ckb-next-daemon >/dev/null &
             sleep 3
-        else 
-            gmsg -v1 -t "ckb-next-daemon $(OK)" 
+        else
+            gmsg -v1 -t "ckb-next-daemon $(OK)"
         fi
-    
+
     return 0
 
     # Check is keyboard setup interface, start if not
@@ -109,7 +109,7 @@ corsair.check () {
 
 
 corsair.status () {
-    # get status and print it out to kb leds    
+    # get status and print it out to kb leds
     if corsair.check ; then
             corsair.write f4 green
             return 0
@@ -157,7 +157,7 @@ corsair.end () {
 
 
 corsair.raw_write () {
-    if ! corsair.check ; then return 0 ; fi 
+    if ! corsair.check ; then return 0 ; fi
     # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
     #corsair.check || return 100         # check is corsair up ünd running
     local _button=$1 ; shift            # get input key pipe file
@@ -170,7 +170,7 @@ corsair.raw_write () {
 
 corsair.write () {
     # write color to key: input <key> <color>
-    if ! corsair.check ; then return 0 ; fi 
+    if ! corsair.check ; then return 0 ; fi
 
     local _button=${1^^}
     local _color='_'"${2^^}"
@@ -189,7 +189,7 @@ corsair.write () {
             echo "rgb $_color" > "$_button"
             sleep 0.05
         else
-            gmsg -c yellow "io error, pipe file $_button is not set in cbk-next"        
+            gmsg -c yellow "io error, pipe file $_button is not set in cbk-next"
             return 103
         fi
 
@@ -243,7 +243,7 @@ corsair.remove () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         source "$HOME/.gururc2"
-        export GURU_VERBOSE=2
+        # export GURU_VERBOSE=2
         source "$GURU_BIN/deco.sh"
         corsair.main "$@"
         exit "$?"

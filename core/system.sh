@@ -11,6 +11,7 @@ system.main() {
     case "$tool" in
        status|start|end)                    system.$tool   ; return $? ;;
        core-dump|get|set|upgrade|rollback)  system.$tool   ; return $? ;;
+                                     help)  system.help    ;;
                                         *)  system.help    ;;
     esac
     return 0
@@ -19,7 +20,7 @@ system.main() {
 
 system.help () {
     # system help printout
-    echo "$GURU_CALL system upgrade|rollback|set"
+    gmsg -v0 "usage:    $GURU_CALL system [core-dump|get|set|upgrade|rollback|status|start|end]"
 }
 
 
@@ -27,11 +28,11 @@ system.status () {
     if mount.online "$GURU_SYSTEM_MOUNT" ; then
         gmsg -v 1 -t -c green "${FUNCNAME[0]}: guru on service"
         corsair.write $indicator_key green
-        return 0 
+        return 0
     else
         gmsg -v 1 -t -c red "${FUNCNAME[0]}: .data is unmounted"
         corsair.write $indicator_key red
-        return 101 
+        return 101
     fi
 }
 
@@ -93,7 +94,7 @@ system.rollback() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    source "$HOME/.gururc"
+    source "$HOME/.gururc2"
     system.main "$@"
     exit $?
 fi
