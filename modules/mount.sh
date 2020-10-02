@@ -353,7 +353,7 @@ mount.install () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then    # if sourced only import functions
-        source "$HOME/.gururc"
+        source "$HOME/.gururc2"
         mount.main "$@"
         exit "$?"
     fi
