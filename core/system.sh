@@ -25,26 +25,28 @@ system.help () {
 
 system.status () {
     if mount.online "$GURU_SYSTEM_MOUNT" ; then
-        gmsg -v 1 -t -c green "guru on service"
+        gmsg -v 1 -t -c green "${FUNCNAME[0]}: guru on service"
         corsair.write $indicator_key green
+        return 0 
     else
-        gmsg -v 1 -t -c red ".data is unmounted"
+        gmsg -v 1 -t -c red "${FUNCNAME[0]}: .data is unmounted"
         corsair.write $indicator_key red
+        return 101 
     fi
 }
 
 
 system.start () {
     # set leds  F1 -> F4 off
-    gmsg -v 1 -t "system status polling started"
-    corsair.write $indicator_key off
+    gmsg -v 1 -t "${FUNCNAME[0]}: system status polling started"
+    corsair.write $indicator_key off || return 101
 }
 
 
 system.end () {
     # return normal, assuming that while is normal
-    gmsg -v 1 -t "system status polling ended"
-    corsair.write $indicator_key white
+    gmsg -v 1 -t "${FUNCNAME[0]}: system status polling ended"
+    corsair.write $indicator_key white || return 101
 }
 
 

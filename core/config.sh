@@ -4,28 +4,41 @@
 source $GURU_BIN/tag.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/common.sh
+source $GURU_BIN/remote.sh
 
 config.main () {
 
     local _cmd="$1" ; shift
     case "$_cmd" in
-          get|set|user)  config.$_cmd $@ ; return $? ;;
+          get|set|user)  config.$_cmd $@                                  ; return $? ;;
               personal)  config.load "$GURU_CFG/$GURU_USER_NAME/user.cfg" ; echo $GURU_REAL_NAME ;;
-                export)  config.export ;;
-                  help)  config.help  ;;
-                     *)  echo "unknown action $_cmd"
-                         config.help  ;;
+                export)  config.export $@                                 ; return $? ;;
+             pull|push)  remote."$_cmd"_config $@                                  ; return $? ;;
+                  help)  config.help $@                                   ; return $? ;;
+                     *)  echo "unknown config action '$_cmd'"
+                         GURU_VERBOSE=1
+                         config.help $@                                   ; return $? ;;
         esac
 }
 
 
 config.help () {
-    echo "-- guru-client config help -----------------------------------------------"
-    printf "usage:\t %s config [action] <target> \n" "$GURU_CALL"
-    printf "\nactions:\n"
-    printf " user          open user config in dialog \n"
-    printf " help          help printout \n"
-    printf "\nexample:     %s config user \n" "$GURU_CALL"
+    gmsg -v1 -c white "guru-client config help -----------------------------------------------"
+    gmsg -v2 
+    gmsg -v0 "usage: $GURU_CALL config [action] <target> " 
+    gmsg -v2 
+    gmsg -v1 "actions:"
+    gmsg -v1 " export        export userconfiguration to encironment"
+    gmsg -v2 "               (run this every time configuration is changed) "
+    gmsg -v1 " pull          poll user configuration from server "
+    gmsg -v1 " push          push user configuration to server "
+    gmsg -v2 " user          open user config in dialog "
+    gmsg -v2 " help          help printout "
+    gmsg -v2 
+    gmsg -v1 -c white "examples:"
+    gmsg -v1 "     '$GURU_CALL config'                                 get current host and user settings" 
+    gmsg -v1 "     '$GURU_CALL pull -h <host_name> -u <user_name>'     get user and host spesific setting from server  " 
+    gmsg -v2 "                                                   useful when porting setting from computer to another or adding users" 
     # guru-client user configuration file
     # to send configurations to server type 'guru remote push' and
     # to get configurations from server type 'guru remote pull'

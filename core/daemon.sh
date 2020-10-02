@@ -40,16 +40,16 @@ daemon.status () {
 
     if [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
             local _pid="$GURU_SYSTEM_MOUNT/.daemon-pid"
-            gmsg -v 1 "$_pid"
+            gmsg -v 1 -c green "${FUNCNAME[0]}: $_pid"
         else
-            gmsg -v 1 "no pid reserved"
+            gmsg -v 1 -c black "${FUNCNAME[0]}: no pid reserved"
             _err=$((_err+10))
         fi
 
     if ps auxf | grep "guru-daemon" | grep -v "grep"  | grep -v "status" >/dev/null ; then
-            gmsg -v 1 "running"
+            gmsg -v 1 -c green "${FUNCNAME[0]}: running"
         else
-            gmsg -v 1 "not running"
+            gmsg -v 1 -c red "${FUNCNAME[0]}: not running"
             _err=$((_err+10))
         fi
 
@@ -62,7 +62,7 @@ daemon.start () {
 
     if [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
             local _pid=$(cat "$GURU_SYSTEM_MOUNT/.daemon-pid")
-            gmsg -v 1 "killing $_pid"
+            gmsg -v 1 "${FUNCNAME[0]}:  killing $_pid"
             kill -9 $_pid
         fi
 
@@ -73,7 +73,7 @@ daemon.start () {
                 source "$GURU_BIN/$module.sh"               # ; echo "module: $GURU_BIN/$GURU_BIN/$module.sh"
                 $module.main start                          # ; echo "command: $module.main start"
             else
-                gmsg -v1 "module $module not installed"
+                gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
             fi
 
         done
@@ -86,7 +86,7 @@ daemon.stop () {
     [[ -f "$HOME/.guru-stop" ]] && rm "$HOME/.guru-stop"     # remove action
 
     if ! [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then   # if pid file is not exist
-            gmsg "daemon not running"
+            gmsg "${FUNCNAME[0]}: daemon not running"
             gmsg -v1 "start daemon by typing 'guru start'"
             return 0
         fi
@@ -100,7 +100,7 @@ daemon.stop () {
                 source "$GURU_BIN/$module.sh"               # ; echo "module: $GURU_BIN/$GURU_BIN/$module.sh"
                 $module.main end                            # ; echo "command: $module.main end"
             else
-                gmsg -v 1 "module '$module' not installed"
+                gmsg -v 1 "${FUNCNAME[0]}: module '$module' not installed"
             fi
 
         done
@@ -114,17 +114,17 @@ daemon.stop () {
 
 
 daemon.kill () {
-    if pkill guru-daemon ; then
-            gmsg -v1 "guru-daemon killed.."
+    if pkill guru ; then
+            gmsg -v1 "${FUNCNAME[0]}: guru-daemon killed.."
         else
-            gmsg -v1 "guru-daemon not running"
+            gmsg -v1 "${FUNCNAME[0]}: guru-daemon not running"
         fi
 
-    if ps auxf | grep "guru-daemon" | grep -v "grep" >/dev/null ; then
-            gmsg -v1 "$ERROR guru-daemon cannot be killed, try to 'sudo guru kill'"
+    if ps auxf | grep "$GURU_BIN/guru" | grep "start" | grep -v "grep" >/dev/null ; then
+            gmsg -v1 -c yellow "${FUNCNAME[0]}: daemon still running, try to 'sudo guru kill'"
             return 100
         else
-            gmsg -v1 "kill verified"
+            gmsg -v1 -c white "${FUNCNAME[0]}: kill verified"
             [[ -f $GURU_SYSTEM_MOUNT/.daemon-pid ]] && rm -f $GURU_SYSTEM_MOUNT/.daemon-pid
             return 0
         fi
@@ -144,10 +144,10 @@ daemon.poll () {
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
                         $module.main status
-                        gmsg -v2  "command: $module.main status"
+                        gmsg -v2 -t "${FUNCNAME[0]}: $module status $?"
                     else
-                        gmsg -v1 -c yellow "module $module not installed"
-                        gmsg -v2 "mobule: $GURU_BIN/${_poll_list[$_i]}.sh"
+                        gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
+                        gmsg -v2 "${FUNCNAME[0]}: $GURU_BIN/${_poll_list[$_i]}.sh"
                     fi
                 done
         corsair.main write esc white

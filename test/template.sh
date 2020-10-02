@@ -25,7 +25,7 @@ module.test() {
 }
 
 module.cleanup () {
-    echo "still TBD?, you filthy bastard!"
+    gmsg -v2 -c black "${FUNCTION[0]} TBD.. still TBD?, you filthy bastard!"
 }
 
 module.test_check () {
