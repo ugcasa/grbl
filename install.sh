@@ -66,25 +66,26 @@ cp -f core/gururc.sh "$HOME/.gururc"
 source "$HOME/.gururc"                                                                              
 
 ## Make folde tructure
-# make bin folder for script files
+# make bin folder for script and app files
 [[ -d "$GURU_BIN" ]] || mkdir -p "$GURU_BIN"                                                        
-# personal configurations
 [[ -d "$GURU_APP" ]] || mkdir -p "$GURU_APP"                                                        
-# make cfg folder for configuration files
+# personal configurations
 [[ -d "$GURU_CFG/$GURU_USER" ]] || mkdir -p "$GURU_CFG/$GURU_USER"                                  
 
 ## Copy files
+
 # copy configuration files to configuration folder
 cp -f cfg/* "$GURU_CFG"                                                                           
 # copy script files to bin folder
 cp -f -r core/* -f "$GURU_BIN"                                                                     
 cp -f -r modules/* -f "$GURU_BIN"
 cp -f -r test -f "$GURU_BIN"
-cp -f -r foray -f "$GURU_BIN"                                   # TODO make a flag -d as developlemt to active this
+cp -f -r foray/* -f "$GURU_BIN"                                   # TODO make a flag -d as development to active this
 # rename guru.sh in bin folder to guru
 mv  "$GURU_BIN/core.sh" "$GURU_BIN/$GURU_CALL"                                                            
 
 ## End and clean 
+
 # all fine
 echo "$(guru version) installed"                                                                       
 exit 0
