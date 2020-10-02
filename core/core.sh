@@ -35,44 +35,44 @@ source $GURU_BIN/daemon.sh
 
 core.parser () {                                                                        # main command parser
 
-    tool="$1"; shift                                                                    # store tool call name and shift arguments left
+    tool="$1" ; shift                                                                   # store tool call name and shift arguments left
     export GURU_CMD="$tool"                                                             # Store tool call name to other functions
     export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
-
     case "$tool" in
         # Core commands                                                                 # core and module scripts are combined to one folder during installation
                         status)  core.$tool                             ; return $? ;;  # core controls
                start|poll|kill)  daemon.$tool                           ; return $? ;;  # daemon controls
                           stop)  touch "$HOME/.guru-stop"               ;;              # request daemon to stop ít self, use kill if need reltime
-        # Module calls
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
-  tor|conda|phone|play|vol|yle)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
-       stamp|timer|tag|install)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
-           system|mount|remote)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
-       scan|input|counter|note)  $tool.sh "$@"                          ; return $? ;;  # shell script tools
-           project|mqtt|config)  $tool.sh "$@"                          ; return $? ;;  # configuration tools
-              keyboard|uutiset)  $tool.py "$@"                          ; return $? ;;  # python scripts
                          radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;  # leave background + set display
                    help|--help)  core.help "$@"                         ; return 0  ;;  # help printout
                        unmount)  mount.main unmount "$1"                ; return $? ;;  # alias for un-mounting
                          shell)  core.shell "$@"                        ; return $? ;;  # guru in terminal mode
-             ssh|os|common|tme)  $GURU_BIN/$tool.sh "$@"                ; return $? ;;  # direct lib calls
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;  # Get rid of this shit
-
-        # launch tests
                           test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;  # tester
-
-
-#TODO remove foray stuff from releaseses manually
-                   input|hosts)  $GURU_BIN/$tool.sh "$@"          ; return $? ;;  # place for shell script prototypes and experiments
-         tme|fmradio|datestamp)  $GURU_BIN/$tool.py "$@"          ; return $? ;;  # place for python script prototypes and experiments
-
-                 version|--ver)  printf "guru-client v.%s\n" "$GURU_VERSION"  ;;                      # version output
-                            "")  return 0 ;;
-                             *)  gmsg -v1 "passing request to os.."
-                                 $tool "$@"                               ; return $? ;;
+                 version|--ver)  printf "guru-client v.%s\n" "$GURU_VERSION"        ;;  # version output
+                            "")  core.shell ;;
+                             *)  core.select_module "$tool" "$@"          ; return $? ;;
         esac
     return 0
+}
+
+
+core.select_module () {
+    local tool=$1 ; shift
+    for _module in ${GURU_MODULES[@]} ; do
+        if [[ "$_module" == "$tool" ]] ; then
+            gmsg -v2 -c green "$tool:$_module"
+            [[ -f $GURU_BIN/$_module.sh ]] && $_module.sh "$@"  || gmsg -v2 -c black "no match: $_module.sh"
+            [[ -f $GURU_BIN/$_module.py ]] && $_module.py "$@"  || gmsg -v2 -c black "no match: $_module.py"
+            [[ -f $GURU_BIN/$_module ]] && $_module "$@"        || gmsg -v2 -c black "no match: $_module"
+            return $?
+         else
+             gmsg -v3 -c red "$tool:$_module"
+        fi
+    done
+    gmsg -v1 "passing request to os.."
+    $tool "$@"
 }
 
 

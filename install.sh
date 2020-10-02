@@ -18,60 +18,57 @@ target_rc="$HOME/.bashrc"
 disabler_flag_file="$HOME/.gururc.disabled"
 
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(corsair counter keyboard mount mqtt note phone poller print project remote scan ssh stamp tag timer tor trans user uutiset vol yle)
+modules_to_install=(corsair counter mount mqtt note phone poller print project remote scan ssh stamp tag timer tor trans user news vol yle)
 
 
 install.main () {
     gmsg -v1 -c white "installing guru-client.."
-    # 1) parse arguments
+    # Step 1) parse arguments
     install.arguments $@ || gmsg -x 100 "argumentation error"
 
-    # 2) check previous installation
+    # Step 2) check previous installation
     install.check || gmsg -x 110 "check caused exit"
 
-    # 3) modify and add .rc files
+    # Step 3) modify and add .rc files
     install.rcfiles && install.check_rcfiles || gmsg -x 120 "rc file modification error"
 
-    # # 4) take default settings in use
-    # source "$HOME/.gururc2" || gmsg -x 130 "configuration file missing"
-
-    # 5) create folder structure
+    # Step 4) create folder structure
     install.folders && install.check_folders || gmsg -x 140 "error during creating folders"
 
-    # 6) install core
+    # Step 5) install core
     install.core_files && install.check_core || gmsg -x 150 "error during installing core"
 
-    # 7) install modules
+    # Step 6) install modules
     install.modules && install.check_modules || gmsg -x 160 "error when installing modules"
 
-    # 8) set up launcher
+    # Step 7) set up launcher
     ln -f -s "$GURU_BIN/core.sh" "$GURU_BIN/$GURU_CALL" || gmsg -x 170 "core linking error"
 
-    # 9) export user configuration
+    # Step 8) export user configuration
     install.config || gmsg -x 180 "user configuration error"
 
-
-    # done
+    # Step 9) save information and done
+    echo "${modules_to_install[@]}" > $GURU_CFG/installed.modules
     echo "$($GURU_BIN/core.sh version) installed"
 }
 
 
 install.help () {
-    gmsg -c white "guru-client istall help "
+    gmsg -c white "guru-client install help "
     gmsg
-    gmsg "usage:    ./install.sh -f|-r|-d|-v|-V|-h|-u <username> "
+    gmsg "usage:    ./install.sh -f|-r|-d|-v|-V|-h|-u <user> "
     gmsg
     gmsg -c white "flags:"
     gmsg " -f               force re-install "
     gmsg " -v               low verbose (normally quite silent) "
     gmsg " -V               high verbose "
     gmsg " -h               print this help "
-    gmsg " -u <username>    set user name "
+    gmsg " -u <user>        set user name "
     gmsg " -d               install also development stuff "
     gmsg " -r               install all module requirements (experimental)"
     gmsg
-    gmsg -c white "exsample:"
-    gmsg "          ./install.sh -df -u $USER"
+    gmsg -c white "example:"
+    gmsg "          ./install.sh -dfV -u $USER"
     gmsg -x 0
 }
 
@@ -192,6 +189,7 @@ install.modules () {
 
     return 0
 }
+
 
 install.check_rcfiles () {
     # test

@@ -24,9 +24,9 @@ config.main () {
 
 config.help () {
     gmsg -v1 -c white "guru-client config help -----------------------------------------------"
-    gmsg -v2 
-    gmsg -v0 "usage: $GURU_CALL config [action] <target> " 
-    gmsg -v2 
+    gmsg -v2
+    gmsg -v0 "usage: $GURU_CALL config [action] <target> "
+    gmsg -v2
     gmsg -v1 "actions:"
     gmsg -v1 " export        export userconfiguration to encironment"
     gmsg -v2 "               (run this every time configuration is changed) "
@@ -34,11 +34,11 @@ config.help () {
     gmsg -v1 " push          push user configuration to server "
     gmsg -v2 " user          open user config in dialog "
     gmsg -v2 " help          help printout "
-    gmsg -v2 
+    gmsg -v2
     gmsg -v1 -c white "examples:"
-    gmsg -v1 "     '$GURU_CALL config'                                 get current host and user settings" 
-    gmsg -v1 "     '$GURU_CALL pull -h <host_name> -u <user_name>'     get user and host spesific setting from server  " 
-    gmsg -v2 "                                                   useful when porting setting from computer to another or adding users" 
+    gmsg -v1 "     '$GURU_CALL config'                                 get current host and user settings"
+    gmsg -v1 "     '$GURU_CALL pull -h <host_name> -u <user_name>'     get user and host spesific setting from server  "
+    gmsg -v2 "                                                   useful when porting setting from computer to another or adding users"
     # guru-client user configuration file
     # to send configurations to server type 'guru remote push' and
     # to get configurations from server type 'guru remote pull'
@@ -63,6 +63,7 @@ config.load () {
     echo "export GURU_BIN=$HOME/bin" >> $_rc_file
     echo "export GURU_CFG=$HOME/.config/guru" >> $_rc_file
     echo 'export GURU_HOSTNAME=$(hostname)' >> $_rc_file
+    echo 'export GURU_MODULES=($(cat $GURU_CFG/installed.modules))' >> $_rc_file
 
     #tr -d '\r' < $configfile > $_config_file.unix
     while IFS='= ' read -r lhs rhs
