@@ -90,6 +90,9 @@ gmsg() {
     local _arg="$@"
     [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
+    # add exit code to message
+    [[ $_exit -gt 9 ]] && _message="$_exit: $_message"
+
     if [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
             if [[ $_color ]] ; then
                     printf "$_pre_newline$_color%s%s$_newline$C_NORMAL" "$_timestamp" "$_message"
@@ -113,10 +116,10 @@ gask () {
     local _ask="$1"
     local _ans
 
-    corsair.main init yes-no               # TODO found need of question wrapper: gask
+    #corsair.main init yes-no               # TODO found need of question wrapper: gask
     read -n 1 -p "$_ask? [y/n]: " _ans
     echo
-    corsair.main init status
+    #corsair.main init status
 
     case $_ans in y|Y|yes|Yes)
         return 0

@@ -1,5 +1,5 @@
 #!/bin/bash
-uninstalling_version=$(guru version)
+uninstalling_version=$($GURU_BIN/core.sh version)
 
 uninstall_main () {
 
