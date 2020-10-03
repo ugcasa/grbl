@@ -13,7 +13,7 @@ ssh_main() {
             ;;
 
         help)
-            gmsg -v1 -c white "guru-client ssh help -----------------------------------------------"
+            gmsg -v1 -c white "guru-client ssh help "
             gmsg -v2
             gmsg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help]"
             gmsg -v2

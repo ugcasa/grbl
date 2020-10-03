@@ -24,7 +24,7 @@ config.main () {
 
 
 config.help () {
-    gmsg -v1 -c white "guru-client config help -----------------------------------------------"
+    gmsg -v1 -c white "guru-client config help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL config [action] <target> "
     gmsg -v2

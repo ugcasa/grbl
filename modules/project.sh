@@ -24,7 +24,7 @@ project.main() {
 
 
 project.help () {
-    gmsg -v1 -c white "guru-client project module help -----------------------------------------------"
+    gmsg -v1 -c white "guru-client project module help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL project [add|open|rm|sublime] <project_name>"
     gmsg -v2

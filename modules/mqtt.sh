@@ -30,7 +30,7 @@ mqtt.write () {
 
 
 mqtt.help () {
-    gmsg -v1 -c white "guru-client mqtt help -----------------------------------------------"
+    gmsg -v1 -c white "guru-client mqtt help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL mqtt [start|end|status|help|install|remove|check|write] "
     gmsg -v2

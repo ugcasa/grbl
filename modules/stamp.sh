@@ -55,7 +55,7 @@ stamp_main () {    # main command parser
 }
 
 stamp.help () {
-    gmsg -v1 -c white "guru-client stamp help -----------------------------------------------"
+    gmsg -v1 -c white "guru-client stamp help "
     gmsg -v2
     gmsg -v0  "usage:    guru stamp [date|time|start|end|round|transaction|signature|picture-md] "
     gmsg -v2

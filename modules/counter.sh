@@ -56,7 +56,7 @@ counter.main () {
 					;;
 
 				help|"")
-					gmsg -v1 -c white "guru-client counter help ----------------------------------------------- "
+					gmsg -v1 -c white "guru-client counter help "
 					gmsg -v2
 					gmsg -v0 "usage:    $GURU_CALL counter [argument] [counter_name] <value>"
 					gmsg -v2

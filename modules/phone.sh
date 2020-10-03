@@ -41,7 +41,7 @@ phone.main () {                 # phone command parser
 phone.help () {
     # printout help
     gmsg -v2
-    gmsg -v1 -c white "guru-client phone help -----------------------------------------------"
+    gmsg -v1 -c white "guru-client phone help "
     gmsg -v0  "usage:    $GURU_CALL phone [s|add|open|rm|check|media|camera|all|install] "
     gmsg -v2
     gmsg -v1 -c white "commands:"

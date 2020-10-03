@@ -36,7 +36,7 @@ mount.main () {
 
 mount.help () {
     # printout help
-    gmsg -v1 -c white "guru-client mount help -----------------------------------------------"
+    gmsg -v1 -c white "guru-client mount help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL mount [source] [target]"
     gmsg -v1 "          $GURU_CALL mount [command] [known_mount_point|arguments]"

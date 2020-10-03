@@ -81,8 +81,11 @@ core.run_module_function () {
 
 
 core.help () {                                                          # help prinout TODO: re-write
+
+    case $1 in  all) core.run_module_function help ; gmsg -c brown "## main help" ; esac
+
     # TODO re-organize by function category
-    gmsg -v1 -c white "guru-client help ------------------------------------------"
+    gmsg -v1 -c white "guru-client help "
     gmsg -v2
     gmsg -v0  "usage:    $GURU_CALL [-flags] [tool] [argument] [variables]"
     gmsg -v1
@@ -137,8 +140,8 @@ core.help () {                                                          # help p
     gmsg -v1 "  $GURU_CALL timer start at 12:00     start work time timer"
     gmsg -v1
     gmsg -v1 "More detailed help, try '$GURU_CALL <tool> help'"
-    gmsg -v1 "Use verbose mode -v to get more information in help printout. Even more detailed, try -V"
-    gmsg -v1
+    gmsg -v1 "Use verbose mode -v to get more information in help printout. "
+    gmsg -v1 "Even more detailed, try -V"
 }
 
 

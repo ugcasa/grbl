@@ -45,7 +45,7 @@ timer.main () {
 
 
 timer.help () {
-    gmsg -v1 -c white "guru-client timer help -----------------------------------------------"
+    gmsg -v1 -c white "guru-client timer help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL timer [start|end|cancel|log|edit|report|] "
     gmsg -v2

@@ -16,7 +16,7 @@ scan.main () {
 
 
 scan.help () {
-    gmsg -v1 -c white "guru-client scan help --------------------------------- "
+    gmsg -v1 -c white "guru-client scan help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL scan [receipt|invoice|install] "
     gmsg -v2

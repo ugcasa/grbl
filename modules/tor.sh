@@ -17,7 +17,7 @@ tor.main() {
 
 
 tor.help () {
-    gmsg -v1 -c white "guru-client tor browser help --------------------------- "
+    gmsg -v1 -c white "guru-client tor browser help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL tor [help|check|status|start|kill|install|remove]"
     gmsg -v2

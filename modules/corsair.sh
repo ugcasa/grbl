@@ -50,7 +50,7 @@ corsair.main () {
 
 
 corsair.help () {
-    gmsg -v 1 -c white "guru-client corsair driver help -----------------------------------------"
+    gmsg -v 1 -c white "guru-client corsair driver help"
     gmsg -v 2
     gmsg -v 0 "usage:    $GURU_CALL corsair [start|end|status|help|install|remove|write <key> <color>]"
     gmsg -v 2

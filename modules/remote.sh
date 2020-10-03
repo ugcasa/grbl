@@ -50,7 +50,7 @@ remote.status () {
 
 
 remote.help () {
-    gmsg -v1 -c white "guru-client remote help ----------------------------------------------- "
+    gmsg -v1 -c white "guru-client remote help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL remote [push|pull|check|help|status|start|end|install|remove] "
     gmsg -v2

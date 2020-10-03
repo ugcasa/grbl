@@ -20,7 +20,7 @@ install.main () {
 
 
 install.help () {
-    gmsg -v1 -c white "guru-client dev tools installer help ------------------------"
+    gmsg -v1 -c white "guru-client dev tools installer help "
     gmsg -v2
     gmsg -v0  "usage:    $GURU_CALL install [keyword] "
     gmsg -v2

@@ -17,7 +17,7 @@ print.main() {
 
 
 print.help () {
-    gmsg -v1 -c white "guru-client print help -----------------------------------------------"
+    gmsg -v1 -c white "guru-client print help "
     gmsg -v0  "usage:    $GURU_CALL print [label] "
     gmsg -v1 -c white "commands:"
     gmsg -v1  " label                     print label "
