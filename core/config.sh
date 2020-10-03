@@ -47,14 +47,14 @@ config.help () {
 
 config.load () {
     #shopt -s extglob ?
-    local _config_file="$GURU_CFG/$GURU_USER/user.cfg"
+    local _config_file="$GURU_CFG/$GURU_USER_NAME/user.cfg"
     [[ "$1" ]] && _config_file="$1"
 
     local _rc_file="$GURU_SYSTEM_RC"
     [[ "$2" ]] && _rc_file="$2"
 
     [[ $GURU_VERBOSE ]] && msg "$_config_file > $_rc_file\n"
-    _config_file=$HOME/.config/guru/casa/user.cfg
+    _config_file=$HOME/.config/guru/$GURU_USER_NAME/user.cfg
     if ! [[ -f $_config_file ]] ; then gmsg -c yellow "$_config_file not found" ; return 100 ; fi
     #if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
 
