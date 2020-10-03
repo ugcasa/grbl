@@ -1,8 +1,6 @@
 #!/bin/bash
 # guru-client config tools
 
-source $GURU_BIN/tag.sh
-source $GURU_BIN/mount.sh
 source $GURU_BIN/common.sh
 source $GURU_BIN/remote.sh
 

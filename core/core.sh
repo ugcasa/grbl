@@ -6,8 +6,11 @@ export GURU_VERSION="0.6.1"
 export GURU_HOSTNAME="$(hostname)"
 
 # export configuration
+if ! [[ -f ~/.gururc2 ]] ; then
+        [[ -f $HOME/bin/config.sh ]] && $HOME/bin/config.sh export
+        [[ -f ~/.gururc2 ]] || exit 101
+    fi
 
-GURU_USER="$USER"
 source ~/.gururc2
 
 # user configuration overwrites

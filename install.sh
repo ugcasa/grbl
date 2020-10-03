@@ -1,15 +1,18 @@
 #!/bin/bash
 # installer for guru-client. ujo.guru casa@ujo.guru 2017-2020
 
-# default environment variables and included functions
+
 GURU_CALL="guru"
 GURU_USER="$USER"
-GURU_BIN=$HOME/bin
+export GURU_BIN="./core"
 GURU_CFG=$HOME/.config/guru
-# include decorative functions
+
+# target locations
+TARGET_BIN=$HOME/bin
+
 source core/common.sh
 source core/config.sh
-source modules/keyboard.sh
+source core/keyboard.sh
 
 # to where add gururc call
 target_rc="$HOME/.bashrc"
@@ -17,9 +20,9 @@ core_rc="$HOME/.gururc2"
 # # flag for disabling the# disabler_flag_file="$HOME/.gururc.disabled"
 
 # core modules what need sto access by user from terminal
-core_modules=(config core daemon install system uninstall)
+core_modules=(corsair config remote counter core daemon install system uninstall)
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(corsair counter mount mqtt note phone print project remote scan ssh stamp tag timer tor trans user vol yle news)
+modules_to_install=(mount mqtt note phone print project scan ssh stamp tag timer tor trans user vol yle news)
 
 
 install.main () {
@@ -44,7 +47,7 @@ install.main () {
     install.modules && install.check_modules || gmsg -x 160 "error when installing modules"
 
     # Step 7) set up launcher
-    ln -f -s "$GURU_BIN/core.sh" "$GURU_BIN/$GURU_CALL" || gmsg -x 170 "core linking error"
+    ln -f -s "$TARGET_BIN/core.sh" "$TARGET_BIN/$GURU_CALL" || gmsg -x 170 "core linking error"
 
     # Step 8) export user configuration
     install.config || gmsg -x 180 "user configuration error"
@@ -53,7 +56,7 @@ install.main () {
     modules_to_install=("${modules_to_install[@]}" "${core_modules[@]}")
     echo "${modules_to_install[@]}" > $GURU_CFG/installed.modules
 
-    echo "$($GURU_BIN/core.sh version) installed"
+    echo "$($TARGET_BIN/core.sh version) installed"
 }
 
 
@@ -114,10 +117,11 @@ install.check () {
                 gmsg -c red -x 2 "aborting.."
             fi
 
-        if [[ -f "$GURU_BIN/uninstall.sh" ]] ; then
-                $GURU_BIN/uninstall.sh
+        if [[ -f "$TARGET_BIN/uninstall.sh" ]] ; then
+                $TARGET_BIN/uninstall.sh
             else
-                gmsg -c yellow "some un-installer problems.."
+                gmsg "using package uninstaller"
+                $GURU_BIN/uninstall.sh
             fi
         fi
     return 0
@@ -145,7 +149,7 @@ install.rcfiles () {
 install.folders () {
     gmsg -n -v1 -c white "setting up folder structure.. "
     # make bin folder for scripts, configs and and apps
-    [[ -d "$GURU_BIN" ]] || mkdir -p "$GURU_BIN"
+    [[ -d "$TARGET_BIN" ]] || mkdir -p "$TARGET_BIN"
     # personal configurations
     [[ -d "$GURU_CFG/$GURU_USER" ]] || mkdir -p "$GURU_CFG/$GURU_USER"
 
@@ -160,17 +164,16 @@ install.core_files () {
     # copy configuration files to configuration folder
     cp -f cfg/* "$GURU_CFG"
     # copy script files to bin folder
-    cp -f -r core/* -f "$GURU_BIN"
-    # copy tester folder
-    cp -f -r test -f "$GURU_BIN"
-
+    cp -f -r core/* -f "$TARGET_BIN"
     gmsg -v1 -c green "DONE"
 
     # if development, install trials and all modules
     if [[ $development ]] ; then
+            # copy tester folder
+            cp -f -r test -f "$TARGET_BIN"
             gmsg -n -v1 -c white "installing development trials.."
             modules_to_install=$(ls modules |cut -f1 -d ".")
-            cp -f -r foray/* -f "$GURU_BIN" && gmsg -v1 -c green "DONE"
+            cp -f -r foray/* -f "$TARGET_BIN" && gmsg -v1 -c green "DONE"
         fi
 
     return 0
@@ -184,7 +187,7 @@ install.modules () {
             gmsg -n -v2 "installing $_module.. "
             module_file=$(ls modules/$_module.*)
             if [[ -f $module_file ]] ; then
-                cp -f -r modules/$_module.* "$GURU_BIN" && gmsg -v2 -c green "DONE"
+                cp -f -r modules/$_module.* "$TARGET_BIN" && gmsg -v2 -c green "DONE"
                 [[ $install_requiremets ]] && gask "install module $_module requirements" && $module_file install
             fi
         done
@@ -207,7 +210,7 @@ install.check_rcfiles () {
 install.check_folders () {
     # test
     gmsg -n -v1 -c white "checking created folders.. "
-    [[ -d "$GURU_BIN" ]] || gmsg -x 141 -c red "bin folder creation error"
+    [[ -d "$TARGET_BIN" ]] || gmsg -x 141 -c red "bin folder creation error"
     [[ -d "$GURU_CFG/$GURU_USER" ]] || gmsg -x 143 -c red "configuration folder creation error"
 
     gmsg -v1 -c green "PASSED"
@@ -220,7 +223,7 @@ install.check_core () {
     gmsg -v1 -c white "checking core modules"
     for _file in $(ls core) ; do
             gmsg -n -v2 "$_file.. "
-            if [[ -f $GURU_BIN/$_file ]] ; then
+            if [[ -f $TARGET_BIN/$_file ]] ; then
                 gmsg -v2 -c green "OK"
             else
                 gmsg -c red "core module $_file missing"
@@ -237,11 +240,14 @@ install.check_core () {
             fi
         done
 
+    # end here if development files were not included
+    [[ $development ]] || return 0
+
     # check installed tester files
     gmsg -v1 -c white "checking tester module"
     for _file in $(ls test) ; do
             gmsg -n -v2 "$_file.. "
-            if [[ -f $GURU_BIN/test/$_file ]] ; then
+            if [[ -f $TARGET_BIN/test/$_file ]] ; then
                 gmsg -v2 -c green "OK"
             else
                 gmsg -c yellow "tester file $_file missing"
@@ -258,7 +264,7 @@ install.check_modules () {
     gmsg -v1 -c white "checking installed modules"
     for _file in  ${modules_to_install[@]} ; do
             gmsg -n -v2 "$_file.. "
-            if ls $GURU_BIN/$_file* >/dev/null ; then
+            if ls $TARGET_BIN/$_file* >/dev/null ; then
                 gmsg -v2 -c green "OK"
             else
                 gmsg -c yellow "module $_file missing"

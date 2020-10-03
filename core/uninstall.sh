@@ -1,8 +1,6 @@
 #!/bin/bash
 source $GURU_BIN/keyboard.sh
 
-uninstalling_version=$($GURU_BIN/core.sh version)
-
 uninstall.main () {
 
     command="$1" ; shift
@@ -37,16 +35,16 @@ uninstall.remove () {
 
     mv -f "$HOME/.bashrc.giobackup" "$HOME/.bashrc"
     rm -f "$HOME/.gururc2"
-    rm -f "$GURU_BIN/$GURU_CALL"
+    rm -fr "$GURU_BIN"
     [ "$GURU_CFG" ] && rm -f "$GURU_CFG/*"
     keyboard.main rm all
-    echo "$uninstalling_version removed"
+    echo "guru-client removed"
     return 0
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc2"
+    #source "$HOME/.gururc2"
     uninstall.main "$@"
 fi
 
