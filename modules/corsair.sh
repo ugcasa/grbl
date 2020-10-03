@@ -88,7 +88,7 @@ corsair.check () {
             sudo ckb-next-daemon >/dev/null &
             sleep 3
         else
-            gmsg -v2 -t "ckb-next-daemon $(OK)"
+            gmsg -n -v2 -t "ckb-next-daemon " ; gmsg -v2 -c green "OK"
         fi
 
     return 0

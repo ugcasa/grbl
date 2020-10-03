@@ -11,8 +11,8 @@ GURU_USER="$USER"
 source ~/.gururc2
 
 # user configuration overwrites
+[[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
 [[ $GURU_USER_NAME ]] && export GURU_USER=$GURU_USER_NAME
-[[ $GURU_FLAG_COLOR ]] && export GURU_TERMINAL_COLOR=true
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
 
 # include client sytem tools

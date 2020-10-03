@@ -64,7 +64,7 @@ mount.help-default () {
     # TODO update
     gmsg -c yellow "update requested! remove bullshit instructions below.."
     printf "\nTo add default mount point type ${WHT}%s config user${NC} or edit user configuration \n" "$GURU_CALL"
-    printf "file: ${WHT}%s${NC} \n" "$GURU_USER_RC"
+    printf "file: ${WHT}%s${NC} \n" "$GURU_SYSTEM_RC"
 
     printf "\n${WHT}Step 1)${NC}\n On configuration dialog find settings named 'GURU_LOCALMOUNT_*' \n"
     printf "and add new line: ${WHT}export GURU_MOUNT_<MOUNT_POINT>=${NC} where <MOUNT_POINT> \n"
@@ -230,7 +230,7 @@ mount.remote () {
     error=$?
 
     if ((error>0)) ; then
-            gmsg -v1 "$WARNING source folder not found, check $GURU_USER_RC"
+            gmsg -v1 "$WARNING source folder not found, check $GURU_SYSTEM_RC"
             [[ -d "$_target_folder" ]] && rmdir "$_target_folder"
             return 25
         else

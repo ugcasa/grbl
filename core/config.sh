@@ -52,12 +52,12 @@ config.load () {
     local _config_file="$GURU_CFG/$GURU_USER/user.cfg"
     [[ "$1" ]] && _config_file="$1"
 
-    local _rc_file="$GURU_USER_RC"
+    local _rc_file="$GURU_SYSTEM_RC"
     [[ "$2" ]] && _rc_file="$2"
 
     [[ $GURU_VERBOSE ]] && msg "$_config_file > $_rc_file\n"
     _config_file=$HOME/.config/guru/casa/user.cfg
-    if ! [[ -f $_config_file ]] ; then NOTEXIST "$_config_file" ; return 100 ; fi
+    if ! [[ -f $_config_file ]] ; then gmsg -c yellow "$_config_file not found" ; return 100 ; fi
     #if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
 
     echo "#!/bin/bash" > $_rc_file
@@ -95,13 +95,13 @@ config.export () {
 
 config.user () {
     exec 3>&1                   # open temporary file handle and redirect it to stdout
-    _new_file="$(dialog --editbox "$GURU_USER_RC" "0" "0" 2>&1 1>&3)"
+    _new_file="$(dialog --editbox "$GURU_SYSTEM_RC" "0" "0" 2>&1 1>&3)"
     return_code=$?              # store result value
     exec 3>&-                   # close new file handle
 
     read -n 1 -r -p "overwrite settings? : " _answ
-    case "$_answ" in y) cp "$GURU_USER_RC" "$GURU_USER_RC.backup"
-                        echo "$_new_file" >"$GURU_USER_RC"
+    case "$_answ" in y) cp "$GURU_SYSTEM_RC" "$GURU_SYSTEM_RC.backup"
+                        echo "$_new_file" >"$GURU_SYSTEM_RC"
                         printf "\nsaved\n"
                         echo "to save new configuration also to sever type: 'guru remote push'" ;;
                      *) printf "\nignored\n"
@@ -124,7 +124,7 @@ config.set () {             # set tool-kit environmental variable
     [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
     [ "$2" ] && _value="$2" || read -r -p "$_setting value: " _value
 
-    [ -f "$GURU_USER_RC" ] && target_rc="$GURU_USER_RC" || target_rc="$HOME/.gururc"
+    [ -f "$GURU_SYSTEM_RC" ] && target_rc="$GURU_SYSTEM_RC" || target_rc="$HOME/.gururc"
 
     sed -i -e "/$_setting=/s/=.*/=$_value/" "$target_rc"                               # Ähh..
     msg "setting GURU_${_setting^^} to $_value\n"

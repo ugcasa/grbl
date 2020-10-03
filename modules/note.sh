@@ -74,10 +74,10 @@ note.check() {                                  # chech that given date note fil
     note.gen_var "$1"
     msg "checking note file.. "
     if [[ -f "$note" ]] ; then
-            EXIST "$note"
+            gmsg -v2 -c yellow  "$note"
             return 0
         else
-            NOTFOUND "$note"
+            gmsg -v2 -c yellow "$note not found"
             return 41
         fi
 }

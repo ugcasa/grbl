@@ -37,7 +37,7 @@ user_main() {
 
 set_value () {
 
-    [ -f "$GURU_USER_RC" ] && target_rc="$GURU_USER_RC" || target_rc="$HOME/.gururc2"        #
+    [ -f "$GURU_SYSTEM_RC" ] && target_rc="$GURU_SYSTEM_RC" || target_rc="$HOME/.gururc2"        #
     #[ $3 ] && target_rc=$3
     sed -i -e "/$1=/s/=.*/=$2 $3 $4/" "$target_rc"
 

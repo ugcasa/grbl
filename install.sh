@@ -7,10 +7,9 @@ GURU_USER="$USER"
 GURU_BIN=$HOME/bin
 GURU_CFG=$HOME/.config/guru
 # include decorative functions
-source core/deco.sh
-# include os functions
-source core/os.sh
+source core/common.sh
 source core/config.sh
+
 
 # to where add gururc call
 target_rc="$HOME/.bashrc"

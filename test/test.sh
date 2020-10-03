@@ -12,7 +12,7 @@
 #  all) run all valid tests (selected)
 #  release) release validation tests
 #  clean) make clean
-source $HOME/.gururc
+#source $HOME/.gururc
 source $HOME/.gururc2
 source $GURU_BIN/common.sh
 
