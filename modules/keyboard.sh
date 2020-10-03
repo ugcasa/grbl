@@ -34,13 +34,18 @@ keyboard.main() {                           # keyboard command parser
                 ;;
 
             *|help)
-                printf "\nUsage:\n\t %s keyboard [command] [variables]\n" "$GURU_CALL"
-                printf "\nCommands:\n\n"
-                printf " add-shortcut [all]             add shortcut\n"
-                printf "                                [all] add shortcuts set in '~/.config/guru/$GURU_USER/userrc'\n"
-                printf " release-shortcut [all]         releases shortcut [name]\n"
-                printf "                                [all] release all custom shortcuts\n"
-                printf "\nExample:\n\t %s keyboard add-shortcut terminal %s F1\n\n" "$GURU_CALL" "$GURU_TERMINAL"
+                gmsg -v1 -c white "guru-client keyboard help "
+                gmsg -v2
+                gmsg -v0 "usage:    $GURU_CALL keyboard [command] [variables]"
+                gmsg -v2
+                gmsg -v1 -c white "commands:"
+                gmsg -v1 " add-shortcut [all]             add shortcut"
+                gmsg -v1 "                                [all] add shortcuts set in '~/.config/guru/$GURU_USER/userrc'"
+                gmsg -v1 " release-shortcut [all]         releases shortcut [name]"
+                gmsg -v1 "                                [all] release all custom shortcuts"
+                gmsg -v1 -c white  "example:"
+                gmsg -v1 "      $GURU_CALL keyboard add-shortcut terminal $GURU_TERMINAL F1"
+                gmsg -v2
                 ;;
     esac
 }

@@ -1,16 +1,16 @@
 #!/bin/bash
 # timer for giocon client ujo.guru / juha.palm 2019
 
-stamp_main () {    # main command parser
+stamp.main () {    # main command parser
 
     case $command in
                 date)
-        			[ "$1" == "-h" ] && stamp=$(date +$GURU_DATE_FORMAT) || stamp=$(date +$GURU_FILE_DATE_FORMAT)
-        			;;
+                    [ "$1" == "-h" ] && stamp=$(date +$GURU_DATE_FORMAT) || stamp=$(date +$GURU_FILE_DATE_FORMAT)
+                    ;;
 
-        		time)
-        			stamp=$(date +$GURU_TIME_FORMAT)
-        			;;
+                time)
+                    stamp=$(date +$GURU_TIME_FORMAT)
+                    ;;
 
                 start)
                     stamp=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
@@ -21,7 +21,7 @@ stamp_main () {    # main command parser
                     ;;
 
                 round)
-        			stamp=$(date -d @$(( (($(date +%s) + 450) / 900) * 900)) "+%H:%M")
+                    stamp=$(date -d @$(( (($(date +%s) + 450) / 900) * 900)) "+%H:%M")
                     ;;
 
                 transaction)
@@ -29,11 +29,11 @@ stamp_main () {    # main command parser
                     ;;
 
                 signature)
-        			stamp="$GURU_REAL_NAME, $GURU_TEAM_NAME, $GURU_USER_PHONE, $GURU_USER_EMAIL"
+                    stamp="$GURU_REAL_NAME, $GURU_TEAM_NAME, $GURU_USER_PHONE, $GURU_USER_EMAIL"
                     ;;
 
-                weekplan)
-                    weekplan $@
+                sweekplan)
+                    stamp.weekplan $@
                     exit 0
                     ;;
 
@@ -57,7 +57,7 @@ stamp_main () {    # main command parser
 stamp.help () {
     gmsg -v1 -c white "guru-client stamp help "
     gmsg -v2
-    gmsg -v0  "usage:    guru stamp [date|time|start|end|round|transaction|signature|picture-md] "
+    gmsg -v0  "usage:    $GURU_CALL stamp [date|time|start|end|round|transaction|signature|picture-md] "
     gmsg -v2
     gmsg -v1 -c white  "commands: "
     gmsg -v1  "date              datestamp "
@@ -73,7 +73,7 @@ stamp.help () {
 }
 
 
-weekplan () {
+stamp.weekplan () {
 
     declare -a day_dates day_names_en day_names_fi
     day_names_en=("Week" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
@@ -116,9 +116,9 @@ weekplan () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    command=$1
-    shift
-    stamp_main $@
+    source "$HOME/.gururc2"
+    command=$1 ; shift
+    stamp.main $@
     exit $?
 fi
 

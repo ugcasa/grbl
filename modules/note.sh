@@ -1,9 +1,9 @@
 #!/bin/bash
 # note tool for guru-client
 #source ~/.gururc
-source ~/.gururc2
+#source ~/.gururc2
 source $GURU_BIN/common.sh
-source $GURU_BIN/deco.sh
+#source $GURU_BIN/deco.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
 source $GURU_BIN/corsair.sh
@@ -12,14 +12,11 @@ source $GURU_BIN/corsair.sh
 note.main () {                                  # command parser
 
     command="$1" ; shift                        # ; echo "input: $command"
-
-    if ! note.online ; then note.remount ; fi
-
     case "$command" in
        ls|add|open|rm|check)  note.$command $@  ;  return $? ;;
                      report)  note.make_odt $@  ;  return $? ;;
                      locate)  note.gen_var "$1" ;  echo "$note" ;;
-                        tag)  [ -f "$note" ]    && tag.main "tag $note $user_input" ;;
+                        tag)  tag.main "tag $note $user_input" ;;
                        help)  note.help ;;
                          "")  note.open $(date +"$GURU_FORMAT_FILE_DATE") ;;
                           *)  note.open $(date +"$GURU_FORMAT_FILE_DATE" -d "$command")
@@ -73,6 +70,7 @@ note.gen_var() {                                # fill variables for rest of fun
 
 
 note.check() {                                  # chech that given date note file exist
+    if ! note.online ; then note.remount ; fi
     note.gen_var "$1"
     msg "checking note file.. "
     if [[ -f "$note" ]] ; then
@@ -93,8 +91,10 @@ note.online() {                                 # check that needed folders are 
         fi
 
     if mount.online "$GURU_MOUNT_NOTES" && mount.online "$GURU_MOUNT_TEMPLATES" ; then
+            gmsg -v2 -c green "note database mounted"
             return 0
         else
+            gmsg -v2 -c red "note database not mounted"
             return 1
         fi
 }
@@ -128,6 +128,7 @@ note.ls() {                                     # list of notes given month/year
 
 note.add() {                                    # make a note for given date
     # creates notes and opens them to default editor
+    if ! note.online ; then note.remount ; fi
     note.gen_var "$1"                   #; echo "$1" # set basic variables for functions
 
     [[  -d "$note_dir" ]] || mkdir -p "$note_dir"
@@ -149,6 +150,7 @@ note.add() {                                    # make a note for given date
 
 note.open() {
     # select note to open and call editor input date in format YYYYMMDD
+    if ! note.online ; then note.remount ; fi
     local _date=$1
     note.gen_var "$_date"
 
@@ -168,6 +170,7 @@ note.open() {
 
 note.rm () {                                    # remove note of given date
     # input format YYYYMMDD
+    if ! note.online ; then note.remount ; fi
     note.gen_var "$1"
     [[ -f $note ]] || gmsg -x 1 -c white "no note for date $(date -d $1 +$GURU_FORMAT_DATE)"
 
@@ -181,7 +184,7 @@ note.rm () {                                    # remove note of given date
 note.add_change () {                            # add line to chenge list
 
     _line(){ _len=$1 ; for ((i=1;i<=_len;i++)); do printf '-' ; done }
-
+    if ! note.online ; then note.remount ; fi
     # printout change table
     local _change="edited"      ; [[ "$1" ]] && _change="$1"
     local _author="$GURU_USER_NAME"  ; [[ "$2" ]] && _author="$2"
@@ -198,6 +201,7 @@ note.add_change () {                            # add line to chenge list
 
 note.editor () {                                # open default/project default editor
     # open note to preferred editor
+    if ! note.online ; then note.remount ; fi
     case "$GURU_PREFERRED_EDITOR" in
         subl)
             projectFolder=$GURU_NOTE_PROJECTS
@@ -219,6 +223,7 @@ note.editor () {                                # open default/project default e
 
 note.make_odt () {                              # open note on team office template
     # created odt with team template out of given days note
+    if ! note.online ; then note.remount ; fi
     if [[ "$1" ]] ; then
             _date=$(date +$GURU_FORMAT_FILE_DATE -d $1)
         else
@@ -257,7 +262,7 @@ check_debian_repository () {                    # old way to install sublime
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then    # stand alone vs. include. main wont be called if included
-        if [[ "$1" == "test" ]] ; then shift ; bash /test/test.sh note $1 ; fi
+        source "$HOME/.gururc2"
         note.main "$@"
         exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
     fi

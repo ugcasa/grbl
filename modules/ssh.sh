@@ -2,14 +2,14 @@
 ## bash script to add SSH key to remote service provider
 # tested: 2/2020 ubuntu desktop 18.04 and mint cinnamon 19.2
 
-ssh_main() {
+ssh.main() {
     # main selector off ssh functions
     command="$1"
     shift
     case "$command" in
 
         key|keys)
-            key_main "$@"
+            ssh.key "$@"
             ;;
 
         help)
@@ -41,7 +41,7 @@ ssh_main() {
 }
 
 
-key_main() {
+ssh.key() {
     # ssh key tools
     local command="$1"
     shift
@@ -63,7 +63,7 @@ key_main() {
             ssh_add_key "$@"
             ;;
         rm)
-            ssh_rm_key "$@"
+            ssh.rm_key "$@"
             ;;
         help|*)
             gmsg -v1 -c white "guru-client ssh key help -----------------------------------------------"
@@ -84,7 +84,8 @@ key_main() {
 
 }
 
-ssh_rm_key() {
+
+ssh.rm_key() {
     # remove local keyfiles (not from server known hosts) TODO
     echo "key file not found" > "$GURU_ERROR_MSG"
     [ -f "$HOME/.ssh/$input""_id_rsa" ] && [ -f "$HOME/.ssh/$input""_id_rsa.pub" ] || exit 127
@@ -116,23 +117,23 @@ ssh_add_key(){
     case "$remote" in
 
         1|ujo.guru)
-            add_key_accesspoint "$@"
+            ssh.add_key_accesspoint "$@"
             error="$?"
             ;;
         2|git.ujo.guru)
-            add_key_my-git "$@"
+            ssh.add_key_my_git "$@"
             error="$?"
             ;;
         3|github)
-            add_key_github "$@"
+            ssh.add_key_github "$@"
             error="$?"
             ;;
         4|bitbucket)
-            add_key_bitbucket "$@"
+            ssh.add_key_bitbucket "$@"
             error="$?"
             ;;
         5|other)
-            add_key_other "$@"
+            ssh.add_key_other "$@"
             error="$?"
             ;;
         help|*)
@@ -160,7 +161,7 @@ ssh.add_key_to_agent () {
 }
 
 
-add_key_accesspoint () {
+ssh.add_key_accesspoint () {
     # function to add keys to ujo.guru access point server
 
     local key_file="$HOME/.ssh/$GURU_ACCESS_POINT"'_id_rsa'
@@ -192,7 +193,7 @@ add_key_accesspoint () {
 }
 
 
-add_key_github () {
+ssh.add_key_github () {
     # function to setup ssh key login with github
 
     local key_file="$HOME/.ssh/github_id_rsa"
@@ -227,7 +228,7 @@ add_key_github () {
 }
 
 
-add_key_bitbucket () {
+ssh.add_key_bitbucket () {
     # function to setup ssh key login with bitbucket.
 
     local key_file="$HOME/.ssh/bitbucket_id_rsa"
@@ -262,7 +263,12 @@ add_key_bitbucket () {
 }
 
 
-add_key_other() {
+ssh.add_key_my_git () {
+    gmsg -v1 "TBD"
+}
+
+
+ssh.add_key_other() {
 
     [ "$1" ] && server_domain="$1" ||read -r -p "domain: " server_domain
     [ "$2" ] && server_port="$2" ||read -r -p "port: " server_port
@@ -293,7 +299,8 @@ add_key_other() {
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    ssh_main "$@"
+    source "$HOME/.gururc2"
+    ssh.main "$@"
     exit "$?"
 fi
 

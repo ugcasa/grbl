@@ -56,6 +56,7 @@ config.load () {
     [[ "$2" ]] && _rc_file="$2"
 
     [[ $GURU_VERBOSE ]] && msg "$_config_file > $_rc_file\n"
+    _config_file=$HOME/.config/guru/casa/user.cfg
     if ! [[ -f $_config_file ]] ; then NOTEXIST "$_config_file" ; return 100 ; fi
     #if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
 

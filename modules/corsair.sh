@@ -10,6 +10,8 @@
 
 # keys pipe files
 # NOTE: these need to correlate with cbk-next animation settings!
+source $GURU_BIN/common.sh
+
     ESC="/tmp/ckbpipe000"
      F1="/tmp/ckbpipe001"
      F2="/tmp/ckbpipe002"
@@ -39,7 +41,6 @@ key_list=$(file /tmp/ckbpipe0* |grep fifo |cut -f1 -d ":")
 
 corsair.main () {
     # command parser
-    corsair.check                   # check than ckb-next-darmon, ckb-next and pipes are started and start is not
     local _cmd="$1" ; shift         # get command
     case "$_cmd" in init|start|end|status|help|install|remove|write)
             corsair.$_cmd $@ ; return $? ;;
@@ -135,7 +136,6 @@ corsair.init () {
 corsair.start () {
     # reserve some keys for future purposes by coloring them now
     # todo: I think this can be removed, used to be test interface before daemon
-
     gmsg -v1 -t "starting corsair"
 
     for _key_pipe in $key_list ; do
@@ -149,7 +149,6 @@ corsair.start () {
 corsair.end () {
     # return normal, assuming that normal really exits
     gmsg -v1 "resetting keyboard indicators"
-
     for _key_pipe in $key_list ; do
         gmsg -v2 -t "$_key_pipe white"
         corsair.raw_write $_key_pipe $_WHITE
@@ -173,11 +172,12 @@ corsair.raw_write () {
 corsair.write () {
     # write color to key: input <key> <color>
     if ! corsair.check ; then return 0 ; fi
-
     local _button=${1^^}
     local _color='_'"${2^^}"
 
-    gmsg -v1 -t "$_button to $2"
+    gmsg -n -v1 -t "set $_button color to "
+    gmsg -v1 -c $2 "$2"
+
     # get input key pipe file location
     _button=$(eval echo '$'$_button)
     [[ $_button ]] || gmsg -c yellow -x 101 "no such button"
@@ -245,8 +245,6 @@ corsair.remove () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         source "$HOME/.gururc2"
-        # export GURU_VERBOSE=2
-        source "$GURU_BIN/deco.sh"
         corsair.main "$@"
         exit "$?"
 fi

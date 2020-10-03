@@ -12,10 +12,10 @@ source core/deco.sh
 source core/os.sh
 source core/config.sh
 
-# Environmental values rc file
+# to where add gururc call
 target_rc="$HOME/.bashrc"
-# Flag for disabling the rc file
-disabler_flag_file="$HOME/.gururc.disabled"
+core_rc="$HOME/.gururc2"
+# # flag for disabling the# disabler_flag_file="$HOME/.gururc.disabled"
 
 # core modules what need sto access by user from terminal
 core_modules=(config core daemon install system uninstall)
@@ -25,6 +25,7 @@ modules_to_install=(corsair counter mount mqtt note phone print project remote s
 
 install.main () {
     gmsg -v1 -c white "installing guru-client.."
+
     # Step 1) parse arguments
     install.arguments $@ || gmsg -x 100 "argumentation error"
 
@@ -83,14 +84,14 @@ install.arguments () {
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
-            -d )       development=true         ; shift ;;
-            -f )       force_overwrite=true     ; shift ;;
-            -r )       install_requiremets=true ; shift ;;
-            -v )       export GURU_VERBOSE=1    ; shift ;;
-            -V )       export GURU_VERBOSE=2    ; shift ;;
-            -h )       install.help             ; shift ;;
-            -u )       export GURU_USER=$2      ; shift 2 ;;
-             * ) break
+            -d) development=true         ; shift ;;
+            -f) force_overwrite=true     ; shift ;;
+            -r) install_requiremets=true ; shift ;;
+            -v) export GURU_VERBOSE=1    ; shift ;;
+            -V) export GURU_VERBOSE=2    ; shift ;;
+            -h) install.help             ; shift ;;
+            -u) export GURU_USER=$2      ; shift 2 ;;
+             *) break
         esac
     done
     _arg="$@"
@@ -107,7 +108,7 @@ install.arguments () {
 install.check () {
     ## Check installation, reinstall if -f or user input
     gmsg  -v1 -c white "checking current installation.. "
-    if grep -q ".gururc2" "$target_rc" ; then
+    if grep -q "gururc" "$target_rc" ; then
         [[ $force_overwrite ]] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer
 
         if ! [[ "$answer" == "y" ]]; then
@@ -127,14 +128,13 @@ install.check () {
 install.rcfiles () {
     ## Set up dot rc files
     gmsg -n -v1 -c white "setting up launchers.. "
-    # Check is .gururc called in .bashrc, add call if not
+    # Check is .gururc called in .bashrc, add call if not # /etc/skel/.bashrc
     [[ -f "$HOME/.bashrc.giobackup" ]]  || cp -f "$target_rc" "$HOME/.bashrc.giobackup"
 
     # make a backup of original .bashrc only if installed first time
-    grep -q ".gururc" "$target_rc"      || cat core/tobashrc.sh >>"$target_rc"
-
-    # todo: remove disabler function, just un install if need to disable the shit
-    [[ -f "$disabler_flag_file" ]]      && rm -f "$disabler_flag_file"
+    if ! grep -q ".gururc" "$target_rc" ; then
+            printf "# guru-client launcher to bashrc \n\nif [[ -f ~/.gururc2 ]] ; then \n    source ~/.gururc2\nfi\n" >>"$target_rc"
+        fi
 
     # pass
     gmsg -v1 -c green "DONE"
@@ -147,7 +147,6 @@ install.folders () {
     gmsg -n -v1 -c white "setting up folder structure.. "
     # make bin folder for scripts, configs and and apps
     [[ -d "$GURU_BIN" ]] || mkdir -p "$GURU_BIN"
-    [[ -d "$GURU_APP" ]] || mkdir -p "$GURU_APP"
     # personal configurations
     [[ -d "$GURU_CFG/$GURU_USER" ]] || mkdir -p "$GURU_CFG/$GURU_USER"
 
@@ -198,9 +197,8 @@ install.modules () {
 install.check_rcfiles () {
     # test
     gmsg -n -v1 -c white "checking launchers.. "
-    grep -q "guru" "$target_rc"         || gmsg -c red -x 122 ".bashrc modification error"
+    grep -q "gururc" "$target_rc"       || gmsg -c red -x 122 ".bashrc modification error"
     [[ -f "$HOME/.bashrc.giobackup" ]]  || gmsg "warning: .bashrc backup file creation failure"
-    [[ -f "$disabler_flag_file" ]]      && gmsg "warning: disabler flag file creation failure"
 
     gmsg -v1 -c green "PASSED"
     return 0
@@ -211,7 +209,6 @@ install.check_folders () {
     # test
     gmsg -n -v1 -c white "checking created folders.. "
     [[ -d "$GURU_BIN" ]] || gmsg -x 141 -c red "bin folder creation error"
-    [[ -d "$GURU_APP" ]] || gmsg -x 142 -c red "app folder creation error"
     [[ -d "$GURU_CFG/$GURU_USER" ]] || gmsg -x 143 -c red "configuration folder creation error"
 
     gmsg -v1 -c green "PASSED"
@@ -280,7 +277,7 @@ install.config () {
          gmsg -c yellow "user specific configuration not found, using default.."
          cp -f $GURU_CFG/$GURU_USER/user-default.cfg "$GURU_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
     fi
-    config.export && source $HOME/.gururc2 || gmsg -c red -x 182 ".gururc2 file error"
+    config.export && source "$HOME/.gururc2" || gmsg -c red -x 182 ".gururc2 file error"
     #config.main pull || gmsg -x 182 "remote user configuration failed"
     return 0
 }

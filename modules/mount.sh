@@ -127,7 +127,9 @@ mount.list () {                         # simple list of mounted mountpoints
 
 
 mount.system () {                       # mount system data
+    gmsg -v2 "checking system folder"
     if ! mount.online "$GURU_SYSTEM_MOUNT" ; then
+            gmsg -v2 "mounting system folder"
             mount.remote "${GURU_SYSTEM_MOUNT[1]}" "$GURU_SYSTEM_MOUNT"
         fi
 }
@@ -155,14 +157,14 @@ mount.check () {
     local _err=0
     [[ "$_target_folder" ]] || _target_folder="$GURU_SYSTEM_MOUNT"
 
-    gmsg -n -v 1 "$_target_folder status "
+    gmsg -t -n -v 1 "$_target_folder status "
     mount.online "$_target_folder" ; _err=$?
 
     if [[ $_err -gt 0 ]] ; then
-            gmsg -v 1 "$OFFLINE"
+            gmsg -v 1 -c red "OFFLINE"
             return 1
         fi
-    gmsg -v 1 "$MOUNTED"
+    gmsg -v 1 -c green "MOUNTED"
     return 0
 }
 

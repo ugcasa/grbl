@@ -4,7 +4,7 @@
 
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
-source ~/.gururc2
+#source ~/.gururc2
 # echo "TEST: $GURU_SYSTEM_MOUNT"
 
 
@@ -120,7 +120,7 @@ project.sublime () {
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        if [[ "$1" == "test" ]] ; then shift ; ./test/test.sh project $1 ; fi
+        source "$HOME/.gururc2"
         project.main "$@"
     fi
 

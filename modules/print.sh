@@ -31,7 +31,7 @@ print.label () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc2"
+    #source "$HOME/.gururc2"
     print.main "$@"
     exit 0
 fi

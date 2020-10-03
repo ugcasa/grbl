@@ -1,6 +1,7 @@
 #!/bin/bash
 # install functions for giocon client ujo.guru / juha.palm 2019
 # TODO: move all these to guru-install
+source $GURU_BIN/common.sh
 
 install.main () {
     [ "$1" ] && argument="$1" && shift || read -r -p "input module name: " argument
@@ -246,8 +247,6 @@ install.visual_code () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$HOME/.gururc2"
-    source "$GURU_BIN/common.sh"
-    #source "$GURU_BIN/deco.sh"
     install.main "$@"
     exit $?
 fi

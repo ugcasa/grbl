@@ -219,6 +219,7 @@ play.beer () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    source "$GURU_BIN/deco.sh"
     play.main "$@"
     exit $?
 fi

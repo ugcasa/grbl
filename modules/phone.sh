@@ -237,8 +237,12 @@ phone.media () {                # Get all media files from phone
 }
 
 
+phone.install () {
+    sshpass -V >/dev/null || sudo apt install sshpass
+}
+
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        sshpass -V >/dev/null || sudo apt install sshpass
         source "$HOME/.gururc2"
         phone.main "$@"
     fi
