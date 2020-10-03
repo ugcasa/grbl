@@ -217,7 +217,7 @@ install.check_folders () {
 
 install.check_core () {
 
-    gmsg -v1 -c white "checking installed core modules"
+    gmsg -v1 -c white "checking core modules"
     for _file in $(ls core) ; do
             gmsg -n -v2 "$_file.. "
             if [[ -f $GURU_BIN/$_file ]] ; then
@@ -227,7 +227,7 @@ install.check_core () {
             fi
         done
 
-    gmsg -v1 -c white "checking installed configuration files"
+    gmsg -v1 -c white "checking configuration files"
     for _file in $(ls cfg) ; do
             gmsg -n -v2 "$_file.. "
             if [[ -f $GURU_CFG/$_file ]] ; then

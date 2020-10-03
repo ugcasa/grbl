@@ -1,7 +1,6 @@
 #!/bin/bash
 # guru-client tor browser ujo.guru 2020
 source $GURU_BIN/common.sh
-source $GURU_BIN/deco.sh
 
 tor.main() {
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning

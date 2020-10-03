@@ -7,9 +7,6 @@
 #       - epic time base time, rounding when reporting
 #       - project module dependencies
 #       - mqtt connection
-
-
-
 # # bash 2.th try - use date to make math
 # date --date 'March 1, 2015 +7 days'
 # date -d "$(date -d "2014-9-14 10:00:00") + 4 hours + 20 minutes - 0 seconds"
@@ -23,10 +20,9 @@
 
 # date -d $(($(date -d "2014-9-14 11:00:00" +%s) - $(date -d "2014-9-14 10:00:00" +%s)))
 
+source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/corsair.sh
-source $GURU_BIN/deco.sh
-source $GURU_BIN/common.sh
 
 timer.main () {
 

@@ -38,8 +38,7 @@ mount.help () {
     # printout help
     gmsg -v1 -c white "guru-client mount help "
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL mount [source] [target]"
-    gmsg -v1 "          $GURU_CALL mount [command] [known_mount_point|arguments]"
+    gmsg -v0 "usage:    $GURU_CALL mount|unount|check|check-system <source> <target>"
     gmsg -v2
     gmsg -v1 -c white "commands:"
     gmsg -v1 " ls                       list of mounted folders "
@@ -55,36 +54,8 @@ mount.help () {
     gmsg -v2
     gmsg -v1 -c white "example:"
     gmsg -v1 "      $GURU_CALL mount /home/$GURU_CLOUD_USERNAME/share /home/$USER/test-mount"
-}
+    gmsg -v1 "      $GURU_CALL umount /home/$USER/test-mount"
 
-
-mount.help-default () {
-    # printout instructions to set/use GURU_CLOUD_* definations to userrc
-    echo "guru-client mount help-default --------------------------------------------"
-    # TODO update
-    gmsg -c yellow "update requested! remove bullshit instructions below.."
-    printf "\nTo add default mount point type ${WHT}%s config user${NC} or edit user configuration \n" "$GURU_CALL"
-    printf "file: ${WHT}%s${NC} \n" "$GURU_SYSTEM_RC"
-
-    printf "\n${WHT}Step 1)${NC}\n On configuration dialog find settings named 'GURU_LOCALMOUNT_*' \n"
-    printf "and add new line: ${WHT}export GURU_MOUNT_<MOUNT_POINT>=${NC} where <MOUNT_POINT> \n"
-    peintf "is replaced with single word and up cased. Name will be used as mount point folder name"
-    printf "when mounting or un-mounting individual mount point \n"
-    printf "After equal sing specify mount point folder between quotation marks. \n"
-
-    printf "\n${WHT}Step 2)${NC}\n Then find on configuration dialog find settings named GURU_CLOUD_* \n"
-    printf "and add new line: ${WHT}export GURU_REMOTE_<MOUNT_POINT>=${NC} where <MOUNT_POINT> is replaced \n"
-    printf "with same word as used in local. Specify mount point folder between quotation marks. \n"
-    printf "\nSave and exit. Configuration is applied when next time %s is run. \n" "$GURU_CALL"
-    printf "\nPath to success: \n"
-    printf " - use single word up case for mount variable name \n"
-    printf " - do not use spaces around equal signs \n"
-    printf " - use '' quotation if path or filename name contains spaces \n"
-    printf " - environmental variables can be used, not then use single quotation \n"
-    printf " - use same word for local and cloud variable name \n"
-    printf "\nexample:\n GURU_LOCAL_PORN=\"/home/%s/porn\" \n GURU_REMOTE_PORN=\"/server/full/of/bon-jorno\" \n" "$USER"
-
-    return 0
 }
 
 
