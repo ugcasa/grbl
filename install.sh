@@ -280,7 +280,7 @@ install.config () {
     gmsg -v1 -c white "setting user configurations "
     if ! [[ -f "$GURU_CFG/$GURU_USER/user.cfg" ]] ; then
          gmsg -c yellow "user specific configuration not found, using default.."
-         cp -f $GURU_CFG/$GURU_USER/user-default.cfg "$GURU_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
+         cp -f $GURU_CFG/user-default.cfg "$GURU_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
     fi
     config.export && source "$HOME/.gururc2" || gmsg -c red -x 182 ".gururc2 file error"
     #config.main pull || gmsg -x 182 "remote user configuration failed"
