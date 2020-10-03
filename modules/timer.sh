@@ -83,7 +83,7 @@ timer.status() {
     mount.system
 
     if [ ! -f "$GURU_FILE_TRACKSTATUS" ]; then
-        gmsg "no timer tasks\n"
+        gmsg "no timer tasks"
         return 1
     fi
 

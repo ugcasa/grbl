@@ -5,21 +5,13 @@
 export GURU_VERSION="0.6.0"
 export GURU_HOSTNAME="$(hostname)"
 
-## configurations
-
-# export old configurations - TODO remove need of this
-# edit should be removed already, but not tested
-#source ~/.gururc
-
-# export current configuration - TODO fully implement finally, you lazy hippy!
+# export configuration
 source ~/.gururc2
 
 # user configuration overwrites
 [[ $GURU_USER_NAME ]] && export GURU_USER=$GURU_USER_NAME
 [[ $GURU_FLAG_COLOR ]] && export GURU_TERMINAL_COLOR=true
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
-
-### include core modules
 
 # include client sytem tools
 source $GURU_BIN/system.sh
@@ -32,30 +24,30 @@ source $GURU_BIN/common.sh
 # include daemon tools
 source $GURU_BIN/daemon.sh
 
+## core functions
+core.parser () {
+    # main command parser
+    tool="$1" ; shift
+    export GURU_CMD="$tool"
 
-core.parser () {                                                                        # main command parser
-
-    tool="$1" ; shift                                                                   # store tool call name and shift arguments left
-    export GURU_CMD="$tool"                                                             # Store tool call name to other functions
-    export GURU_SYSTEM_STATUS="processing $tool"                                        # system status can use as part of error exit message
     case "$tool" in
-        # Core commands                                                                 # core and module scripts are combined to one folder during installation
                            all)  core.run_module_function "$@"          ; return $? ;;
                         status)  gmsg -c green "installed"              ; return 0 ;;
-               start|poll|kill)  daemon.$tool                           ; return $? ;;  # daemon controls
-                          stop)  touch "$HOME/.guru-stop"               ;;              # request daemon to stop ít self, use kill if need reltime
-                      document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
-                         radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;  # leave background + set display
-                   help|--help)  core.help "$@"                         ; return 0  ;;  # help printout
-                       unmount)  mount.main unmount "$1"                ; return $? ;;  # alias for un-mounting
-                         shell)  core.shell "$@"                        ; return $? ;;  # guru in terminal mode
+               start|poll|kill)  daemon.$tool                           ; return $? ;;
+                          stop)  touch "$HOME/.guru-stop"               ;;
+                      document)  $tool "$@"                             ; return $? ;;
+                         radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;
+                   help|--help)  core.help "$@"                         ; return 0  ;;
+                       unmount)  mount.main unmount "$1"                ; return $? ;;
+                         shell)  core.shell "$@"                        ; return $? ;;
                         status)  echo "TBD" ;;
-                     uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;  # Get rid of this shit
-                          test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;  # tester
-                 version|--ver)  printf "guru-client v.%s\n" "$GURU_VERSION"        ;;  # version output
+                     uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;
+                          test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;
+                 version|--ver)  printf "guru-client v.%s\n" "$GURU_VERSION"        ;;
                             "")  core.shell ;;
                              *)  core.select_module "$tool" "$@"          ; return $? ;;
         esac
+
     return 0
 }
 
@@ -74,6 +66,7 @@ core.select_module () {
     gmsg -v1 "passing request to os.."
     $tool "$@"
 }
+
 
 core.run_module_function () {
     # run module command for all
@@ -198,6 +191,7 @@ core.process_opts () {                                                  # argume
     _arg="$@"
     [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
 }
+
 
 core.main () {                                                          # main run trough
 

@@ -3,10 +3,11 @@
 # ujo.guru 2020
 
 source $GURU_BIN/common.sh
+source $GURU_BIN/mount.sh
 source ~/.gururc2
 # echo "TEST: $GURU_SYSTEM_MOUNT"
 
-if ! [[ $GURU_PROJECT ]] ; then echo "no project" ; fi
+
 
 project.main() {
     # command paerser
@@ -16,6 +17,7 @@ project.main() {
     case "$_cmd" in
         add|open|rm|sublime)  project.$_cmd $@           ;;
                        help)  project.help               ;;
+                     status)  project.status             ;;
                           *)  project.open "$_cmd"
         esac
 }
@@ -46,15 +48,28 @@ project.help () {
 
 
 project.check() {
+    gmsg -n -v1 "project database.. "
     mount.online "$GURU_SYSTEM_MOUNT"
     if [[ -d "$GURU_SYSTEM_MOUNT/project" ]] ; then
-            EXIST "project database"
+            gmsg -c green "MOUNTED"
             return 0
         else
-            NOTEXIST "project database"
+            gmsg -c red "NOT MOUNTED"
             return 41
         fi
     }
+
+
+project.ls () {
+    gmsg -c cyan "$(ls $GURU_SYSTEM_MOUNT/project)"
+}
+
+
+project.status () {
+    project.check
+    project.ls
+    [[ -f $GURU_PROJECT/active ]] && gmsg -c lcyan "currently active $(cat $GURU_PROJECT/active)"  || gmsg -c black "no active projects"
+}
 
 
 project.add () {

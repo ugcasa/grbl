@@ -9,7 +9,7 @@ print.main() {
     case "$command" in
              label|help)    print.$command "$@"                           ; return $? ;;
                    test)    source $GURU_BIN/test.sh; print.test "$@"     ; return $? ;;
-                 status)    echo "printer not connected" ;;
+                 status)    gmsg -c black "printer not connected" ;;
                       *)    print.help ;;
     esac
     return 0

@@ -84,7 +84,7 @@ config.load () {
 
 
 config.export () {
-    local _source_cfg="$GURU_CFG/GURU_USER_NAME/user.cfg"
+    local _source_cfg="$GURU_CFG/$GURU_USER_NAME/user.cfg"
     local _target_rc="$HOME/.gururc2"
     config.load "$_source_cfg" "$_target_rc"
     chmod +x $_target_rc
