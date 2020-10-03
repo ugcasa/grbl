@@ -1,4 +1,6 @@
 #!/bin/bash
+source $GURU_BIN/keyboard.sh
+
 uninstalling_version=$($GURU_BIN/core.sh version)
 
 uninstall.main () {
@@ -37,11 +39,7 @@ uninstall.remove () {
     rm -f "$HOME/.gururc2"
     rm -f "$GURU_BIN/$GURU_CALL"
     [ "$GURU_CFG" ] && rm -f "$GURU_CFG/*"
-
-    if [[ -f "$HOME/.kbbind.backup.cfg" ]]; then
-        dconf load /org/cinnamon/desktop/keybindings/ < "$GURU_CFG/$GURU_USER_NAME/kbbind.backup.cfg"
-    fi
-
+    keyboard.main rm all
     echo "$uninstalling_version removed"
     return 0
 }

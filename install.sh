@@ -9,7 +9,7 @@ GURU_CFG=$HOME/.config/guru
 # include decorative functions
 source core/common.sh
 source core/config.sh
-
+source modules/keyboard.sh
 
 # to where add gururc call
 target_rc="$HOME/.bashrc"
@@ -111,7 +111,7 @@ install.check () {
         [[ $force_overwrite ]] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer
 
         if ! [[ "$answer" == "y" ]]; then
-                gmsg -c yellow -x 2 "aborting.."
+                gmsg -c red -x 2 "aborting.."
             fi
 
         if [[ -f "$GURU_BIN/uninstall.sh" ]] ; then
@@ -278,6 +278,10 @@ install.config () {
     fi
     config.export && source "$HOME/.gururc2" || gmsg -c red -x 182 ".gururc2 file error"
     #config.main pull || gmsg -x 182 "remote user configuration failed"
+
+    # set keyboard shortcuts
+    keyboard.main add all
+
     return 0
 }
 

@@ -5,14 +5,14 @@
 keyboard.main() {                           # keyboard command parser
 
     source "$GURU_BIN/common.sh"
-    distro="$(check_distro)"    # lazy
+    distro="$(check_distro)"
 
     command="$1"
     shift
 
     case "$command" in
 
-        add-shortcut)
+        add)
                 if [ "$1" == "all" ]; then
                      [ "$distro" == "linuxmint" ] && keyboard.set_cinnamon_guru_shortcuts
                      [ "$distro" == "ubuntu" ] && keyboard.set_ubuntu_guru_shortcuts
@@ -22,11 +22,10 @@ keyboard.main() {                           # keyboard command parser
                 fi
                 ;;
 
-        release-shortcut)
+        rm)
                 if [ "$1" == "all" ]; then
-                    keyboard.reset_ubuntu_shortcuts
-                    [ "$distro" == "linuxmint" ] && echo "TBD reset_cinnamon_keyboard_shortcuts"
-                    [ "$distro" == "ubuntu" ] && keyboard.reset_ubuntu_shortcuts
+                    [ "$distro" == "linuxmint" ] && keyboard.reset_cinnamon
+                    [ "$distro" == "ubuntu" ] && keyboard.reset_ubuntu
                 else
                     [ "$distro" == "linuxmint" ] && echo "TBD release_cinnamon_guru_shortcut" "$@"
                     [ "$distro" == "ubuntu" ] && echo "TBD keyboard.release_ubuntu_shortcuts"
@@ -39,12 +38,14 @@ keyboard.main() {                           # keyboard command parser
                 gmsg -v0 "usage:    $GURU_CALL keyboard [command] [variables]"
                 gmsg -v2
                 gmsg -v1 -c white "commands:"
-                gmsg -v1 " add-shortcut [all]             add shortcut"
-                gmsg -v1 "                                [all] add shortcuts set in '~/.config/guru/$GURU_USER/userrc'"
-                gmsg -v1 " release-shortcut [all]         releases shortcut [name]"
-                gmsg -v1 "                                [all] release all custom shortcuts"
+                gmsg -v1 " add [all]        add shortcut"
+                gmsg -v1 "                  [all] add shortcuts set in '~/.config/guru/$GURU_USER/userrc'"
+                gmsg -v1 " rm [all]         releases shortcut [name]"
+                gmsg -v1 "                  [all] release all custom shortcuts"
                 gmsg -v1 -c white  "example:"
-                gmsg -v1 "      $GURU_CALL keyboard add-shortcut terminal $GURU_TERMINAL F1"
+                gmsg -v1 "      $GURU_CALL keyboard add terminal $GURU_TERMINAL F1"
+                gmsg -v1 "      $GURU_CALL keyboard add all"
+                gmsg -v1 "      $GURU_CALL keyboard rm all"
                 gmsg -v2
                 ;;
     esac
@@ -72,7 +73,7 @@ keyboard.set_ubuntu_shortcut () {           # set ubuntu keyboard shorcuts
         return 0
 }
 
-keyboard.reset_ubuntu_shortcuts () {        # resets all custom shortcuts to default
+keyboard.reset_ubuntu () {        # resets all custom shortcuts to default
         compatible_with "ubuntu" || return 1
         gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings
 }
@@ -85,7 +86,7 @@ keyboard.release_ubuntu_shortcuts(){        # release single shortcut
 keyboard.set_ubuntu_guru_shortcuts(){       # set guru defaults
 
         compatible_with "ubuntu" || return 1
-        keyboard.reset_ubuntu_shortcuts
+        keyboard.reset_ubuntu
 
         [ "$GURU_KEYBIND_TERMINAL" ]    && keyboard.set_ubuntu_shortcut terminal      "$GURU_TERMINAL"            "$GURU_KEYBIND_TERMINAL"    ; error=$((error+$?))
         [ "$GURU_KEYBIND_NOTE" ]        && keyboard.set_ubuntu_shortcut notes         "guru note"                 "$GURU_KEYBIND_NOTE"        ; error=$((error+$?))
@@ -116,6 +117,20 @@ keyboard.set_cinnamon_guru_shortcuts() {    # ser cinnamon chortcut
         fi
 
         dconf load /org/cinnamon/desktop/keybindings/ < "$new"
+}
+
+
+keyboard.reset_cinnamon() {    # ser cinnamon chortcut
+
+        compatible_with "linuxmint" || return 1
+
+        backup=$GURU_CFG/kbbind.backup.cfg
+
+        if [ -f "$backup" ]; then
+            dconf load /org/cinnamon/desktop/keybindings/ < "$backup"
+        else
+            gmsg -c yellow "no backup found"
+        fi
 }
 
 
