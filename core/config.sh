@@ -50,7 +50,7 @@ config.load () {
     local _config_file="$GURU_CFG/$GURU_USER_NAME/user.cfg"
     [[ "$1" ]] && _config_file="$1"
 
-    local _rc_file="$GURU_SYSTEM_RC"
+    local _rc_file="$HOME/.gururc2"
     [[ "$2" ]] && _rc_file="$2"
 
     [[ $GURU_VERBOSE ]] && msg "$_config_file > $_rc_file\n"

@@ -7,12 +7,12 @@ export GURU_HOSTNAME="$(hostname)"
 
 # export configuration
 
-if ! [[ -f ~/.gururc2 ]] ; then
+if ! [[ -f $HOME/.gururc2 ]] ; then
         [[ -f $HOME/bin/config.sh ]] && $HOME/bin/config.sh export
-        [[ -f ~/.gururc2 ]] || exit 101
+        [[ -f $HOME/.gururc2 ]] || exit 101
     fi
 
-source ~/.gururc2
+source $HOME/.gururc2
 
 # user configuration overwrites
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
@@ -271,7 +271,7 @@ core.shell () {                                                      # terminal 
     local _verbose=1
     while : ; do
             config.load "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
-            source ~/.gururc2
+            source $HOME/.gururc2
             GURU_VERBOSE=$_verbose
             # set call name off, affects help print out
             _GURU_CALL="$GURU_CALL" ; GURU_CALL=

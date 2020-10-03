@@ -24,8 +24,7 @@ uninstall.remove () {
     if [ -f "$HOME/.gururc2" ]; then
          source "$HOME/.gururc2"
     else
-        echo "${BASH_SOURCE[0]} no setup file exists, aborting.."
-        return 136
+        echo "${BASH_SOURCE[0]} no setup file exists"
     fi
 
     if [ "$GURU_BIN" == "" ]; then

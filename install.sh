@@ -1,7 +1,6 @@
 #!/bin/bash
 # installer for guru-client. ujo.guru casa@ujo.guru 2017-2020
 
-
 GURU_CALL="guru"
 GURU_USER="$USER"
 export GURU_BIN="./core"
@@ -282,7 +281,8 @@ install.config () {
          gmsg -c yellow "user specific configuration not found, using default.."
          cp -f $GURU_CFG/user-default.cfg "$GURU_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
     fi
-    config.export && source "$HOME/.gururc2" || gmsg -c red -x 182 ".gururc2 file error"
+    config.export || gmsg -c red -x 182 "user config export error"
+    source "$HOME/.gururc2" || gmsg -c red -x 183 ".gururc2 file error"
     #config.main pull || gmsg -x 182 "remote user configuration failed"
 
     # set keyboard shortcuts
@@ -290,7 +290,6 @@ install.config () {
 
     return 0
 }
-
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

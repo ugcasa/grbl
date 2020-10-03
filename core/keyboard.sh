@@ -8,7 +8,7 @@ keyboard.main() {
     distro="$(check_distro)" #; gmsg -v2 "$distro"
     command="$1" ; shift
     case "$command" in
-        add)  [[ "$1" == "all" ]] && keyboard.set_guru_$distro || keyboard.set_$distro_shortcut "$@" ;;
+        add)  [[ "$1" == "all" ]] && keyboard.set_guru_$distro || keyboard.set_shortcut_$distro "$@" ;;
          rm)  [[ "$1" == "all" ]] && keyboard.reset_$distro || keyboard.release_$distro "$@" ;;
      *|help) keyboard.help
             ;;
@@ -36,12 +36,9 @@ keyboard.help () {
 }
 
 
-keyboard.set_ubuntu_shortcut () {           # set ubuntu keyboard shorcuts
-    gmsg -v1 -x 101 "TBD ${FUNCNAME[0]}"
-}
 
 
-keyboard.set_ubuntu_shortcut () {           # set ubuntu keyboard shorcuts
+keyboard.set_shortcut_ubuntu () {           # set ubuntu keyboard shorcuts
     # usage: keyboard.set_ubuntu_shortcut [name] [command] [binding]
     compatible_with "ubuntu" || return 1
 
@@ -95,6 +92,9 @@ keyboard.set_guru_ubuntu(){       # set guru defaults
     return 0
 }
 
+keyboard.set_shortcut_linuxmint () {
+    gmsg -v1 -x 101 "TBD ${FUNCNAME[0]}"
+}
 
 keyboard.reset_linuxmint() {
     # ser cinnamon chortcut

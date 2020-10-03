@@ -1,6 +1,7 @@
 #!/bin/bash
 ## bash script to add SSH key to remote service provider
 # tested: 2/2020 ubuntu desktop 18.04 and mint cinnamon 19.2
+source $GURU_BIN/common.sh
 
 ssh.main() {
     # main selector off ssh functions
