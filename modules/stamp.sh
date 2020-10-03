@@ -43,6 +43,8 @@ stamp_main () {    # main command parser
                     stamp="![]($file){ width=500px }"
                     ;;
 
+                status)  echo "no status data" ; exit 0 ;;
+
                 help|*) stamp.help ; return 0 ;;
 
     esac

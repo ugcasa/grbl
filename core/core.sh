@@ -41,7 +41,7 @@ core.parser () {                                                                
     case "$tool" in
         # Core commands                                                                 # core and module scripts are combined to one folder during installation
                            all)  core.run_module_function "$@"          ; return $? ;;
-                        status)  core.$tool                             ; return $? ;;  # core controls
+                        status)  gmsg -c green "installed"              ; return 0 ;;
                start|poll|kill)  daemon.$tool                           ; return $? ;;  # daemon controls
                           stop)  touch "$HOME/.guru-stop"               ;;              # request daemon to stop ít self, use kill if need reltime
                       document)  $tool "$@"                             ; return $? ;;  # one function prototypes are in 'function.sh'
@@ -49,6 +49,7 @@ core.parser () {                                                                
                    help|--help)  core.help "$@"                         ; return 0  ;;  # help printout
                        unmount)  mount.main unmount "$1"                ; return $? ;;  # alias for un-mounting
                          shell)  core.shell "$@"                        ; return $? ;;  # guru in terminal mode
+                        status)  echo "TBD" ;;
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;  # Get rid of this shit
                           test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;  # tester
                  version|--ver)  printf "guru-client v.%s\n" "$GURU_VERSION"        ;;  # version output

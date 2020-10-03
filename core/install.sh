@@ -11,6 +11,7 @@ install.main () {
         kaldi|listener)               install.kaldi 4 ;; # number of cores used during compiling
         pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/install-pk2.sh; exit; $SHELL; " ;;
         spectrumanalyzer|SA)          install.spectrumanalyzer "$@"; install.fosphor "$@" ;;
+        status)                       echo "no status data" ;;
         all)                          echo "TBD" ;;
         *)                            echo "no installer for '$argument'"; install.help
     esac

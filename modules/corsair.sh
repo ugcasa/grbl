@@ -87,7 +87,7 @@ corsair.check () {
             sudo ckb-next-daemon >/dev/null &
             sleep 3
         else
-            gmsg -v1 -t "ckb-next-daemon $(OK)"
+            gmsg -v2 -t "ckb-next-daemon $(OK)"
         fi
 
     return 0
@@ -112,9 +112,11 @@ corsair.status () {
     # get status and print it out to kb leds
     if corsair.check ; then
             corsair.write f4 green
+            gmsg -v1 -c green "corsair on service"
             return 0
         else
             corsair.write f4 red
+            gmsg -v1 -c black "corsair not on service"
             return 1
         fi
 }

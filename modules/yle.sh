@@ -73,6 +73,7 @@ yle_main () {
 			exit 0
 			;;
 
+		status)  echo "no status data" ;;
 
 		meta|data|metadata|information|info)
 			shift

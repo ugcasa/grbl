@@ -23,6 +23,9 @@ user_main() {
 		help)
 			echo "usage:    $GURU_CALL user [add|rm|change|help]"
 			;;
+		status)
+			[[ $GURU_USER == $GURU_USER_NAME ]] && echo "user status OK"
+			;;
 		change|*)
 			change_user "$@"
 			;;

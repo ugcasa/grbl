@@ -31,6 +31,7 @@ phone.main () {                 # phone command parser
                                       help)  phone.help               ;;
                                        all)  phone.media
                                              phone.camera             ;;
+                                    status)  gmsg -c black "not connected" ;;
                             install|server)  sudo apt install sshpass sshfs fusermount
                                              $GURU_BROWSER $phone_server_url ;;
                                          *)  echo "unknown action $_cmd"

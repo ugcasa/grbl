@@ -15,6 +15,7 @@ config.main () {
                 export)  config.export $@                                 ; return $? ;;
              pull|push)  remote."$_cmd"_config $@                         ; return $? ;;
                   help)  config.help $@                                   ; return $? ;;
+                status)  echo "no status data" ;;
                      *)  echo "unknown config action '$_cmd'"
                          GURU_VERBOSE=1
                          config.help $@                                   ; return $? ;;
@@ -63,7 +64,7 @@ config.load () {
     echo "export GURU_BIN=$HOME/bin" >> $_rc_file
     echo "export GURU_CFG=$HOME/.config/guru" >> $_rc_file
     echo 'export GURU_HOSTNAME=$(hostname)' >> $_rc_file
-    echo 'export GURU_MODULES=($(cat $GURU_CFG/installed.modules))' >> $_rc_file
+    echo 'export GURU_MODULES=$(cat $GURU_CFG/installed.modules)' >> $_rc_file
 
     #tr -d '\r' < $configfile > $_config_file.unix
     while IFS='= ' read -r lhs rhs
@@ -83,8 +84,8 @@ config.load () {
 
 
 config.export () {
-    local _source_cfg="/home/casa/.config/guru/casa/user.cfg"
-    local _target_rc="/home/casa/.gururc2"
+    local _source_cfg="$GURU_CFG/GURU_USER_NAME/user.cfg"
+    local _target_rc="$HOME/.gururc2"
     config.load "$_source_cfg" "$_target_rc"
     chmod +x $_target_rc
     source $_target_rc

@@ -7,6 +7,7 @@ uninstall.main () {
 	case "$command" in
 		config) uninstall.remove "$@" ; [[ "$GURU_CFG" ]] && rm -rf "$GURU_CFG" ;;
 		  help) gmsg -v0 "usage:    $GURU_CALL uninstall [config|help]" ;;
+        status) echo TBD ;;
 			 *) uninstall.remove "$@"
 				exit "$?"
 	esac

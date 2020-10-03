@@ -39,14 +39,14 @@ daemon.status () {
     local _err=0
 
     if [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
-            local _pid="$GURU_SYSTEM_MOUNT/.daemon-pid"
+            local _pid="$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)"
             gmsg -v 1 -c green "${FUNCNAME[0]}: $_pid"
         else
             gmsg -v 1 -c black "${FUNCNAME[0]}: no pid reserved"
             _err=$((_err+10))
         fi
 
-    if ps auxf | grep "guru-daemon" | grep -v "grep"  | grep -v "status" >/dev/null ; then
+    if ps auxf | grep "guru start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
             gmsg -v 1 -c green "${FUNCNAME[0]}: running"
         else
             gmsg -v 1 -c red "${FUNCNAME[0]}: not running"

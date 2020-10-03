@@ -346,6 +346,9 @@ if len(sys.argv) > 1:
 	if sys.argv[1] == "help":
 		print("usage:    news")
 		quit()
+	if sys.argv[1] == "status":
+		print("no status data")
+		quit()
 
 m = menu( 120, 24 )
 

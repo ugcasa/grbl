@@ -12,7 +12,7 @@ volume_main () {
 
     case "$command" in
 
-            get)
+            get|status)
                 get_volume
                 echo "$volume"
                 ;;

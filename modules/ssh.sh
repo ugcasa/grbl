@@ -30,8 +30,12 @@ ssh_main() {
             gmsg -v1 "Any on known ssh command is passed trough to open-ssh client"
             gmsg -v2
             ;;
+
+        status)
+            echo TBD
+            ;;
         *)
-        ssh "$@"
+            ssh "$@"
 
     esac
 }

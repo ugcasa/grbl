@@ -7,20 +7,26 @@ counter.main () {
 	argument="$1"	; shift 		# arguments
 	id="$1"			; shift 		# counter name
 	value="$1"		; shift 		# input value
-	id_file="$GURU_COUNTER/$id" 	# counter location
+	id_file="$GURU_LOCAL_COUNTER/$id" 	# counter location
 
- 	[[ -d "$GURU_COUNTER" ]] || return 70 		# wont fuck up mount mkdir -p "$GURU_COUNTER"
+ 	[[ -d "$GURU_LOCAL_COUNTER" ]] || return 70 		# wont fuck up mount mkdir -p "$GURU_LOCAL_COUNTER"
 
 	case "$argument" in
 
+				status)
+					for _counter in $(ls $GURU_LOCAL_COUNTER/*) ; do
+							gmsg "${_counter//"$GURU_LOCAL_COUNTER/"/""} : $(cat $_counter)"
+						done
+						;;
+
 				ls)
-					echo "$(ls $GURU_COUNTER)"
+					echo "$(ls $GURU_LOCAL_COUNTER)"
 					return 0
 					;;
 
 				get)
 					if ! [[ -f "$id_file" ]] ; then
-						echo "no such counter" >"$GURU_ERROR_MSG"
+						echo "no such counter"
 						return 72
 					fi
 					id=$(($(cat $id_file)))
@@ -68,7 +74,7 @@ counter.main () {
 					;;
 
 				*)
-					id_file="$GURU_COUNTER/$argument"
+					id_file="$GURU_LOCAL_COUNTER/$argument"
 					if ! [[ -f $id_file ]] ; then
 						echo "no such counter" >>$GURU_ERROR_MSG
 						return 73
