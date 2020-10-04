@@ -115,15 +115,13 @@ install.check () {
                 gmsg -c red -x 2 "aborting.."
             fi
 
-        export GURU_BIN=".$HOME/bin"
         if [[ -f "$TARGET_BIN/uninstall.sh" ]] ; then
                 $TARGET_BIN/uninstall.sh
-
             else
                 gmsg "using package uninstaller"
-                ./core/uninstall.sh            fi
-        export GURU_BIN="./core"
-        fi
+                ./core/uninstall.sh
+            fi
+    fi
     return 0
 }
 
