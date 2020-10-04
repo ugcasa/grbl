@@ -43,7 +43,7 @@ uninstall.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$HOME/.gururc2"
+    [[ -f "$HOME/.gururc2" ]] && source "$HOME/.gururc2"
     uninstall.main "$@"
 fi
 

@@ -9,7 +9,7 @@ config.main () {
     local _cmd="$1" ; shift
     case "$_cmd" in
           get|set|user)  config.$_cmd $@                                  ; return $? ;;
-              personal)  config.load "$GURU_CFG/$GURU_USER_NAME/user.cfg" ; echo $GURU_REAL_NAME ;;
+              personal)  config.make_rc "$GURU_CFG/$GURU_USER_NAME/user.cfg" ; echo $GURU_REAL_NAME ;;
                 export)  config.export $@                                 ; return $? ;;
              pull|push)  remote."$_cmd"_config $@                         ; return $? ;;
                   help)  config.help $@                                   ; return $? ;;
@@ -45,27 +45,23 @@ config.help () {
 }
 
 
-config.load () {
-    #shopt -s extglob ?
-    local _config_file="$GURU_CFG/$GURU_USER_NAME/user.cfg"
-    [[ "$1" ]] && _config_file="$1"
+config.make_rc () {
+    # make rc file out of configuration file
 
-    local _rc_file="$HOME/.gururc2"
-    [[ "$2" ]] && _rc_file="$2"
+    local user_source_cfg="$1"
+    local _target_rc="$2"
+    local _append_rc="$3"
 
-    [[ $GURU_VERBOSE ]] && msg "$_config_file > $_rc_file\n"
-    _config_file=$HOME/.config/guru/$GURU_USER_NAME/user.cfg
-    if ! [[ -f $_config_file ]] ; then gmsg -c yellow "$_config_file not found" ; return 100 ; fi
-    #if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
 
-    echo "#!/bin/bash" > $_rc_file
-    echo "export GURU_CALL=guru" >> $_rc_file
-    echo "export GURU_BIN=$HOME/bin" >> $_rc_file
-    echo "export GURU_CFG=$HOME/.config/guru" >> $_rc_file
-    echo 'export GURU_HOSTNAME=$(hostname)' >> $_rc_file
-    echo 'export GURU_MODULES=$(cat $GURU_CFG/installed.modules)' >> $_rc_file
+    [[ $GURU_VERBOSE ]] && gmsg -v2 "$user_source_cfg > $_target_rc"
+    user_source_cfg=$HOME/.config/guru/$GURU_USER_NAME/user.cfg
+    if ! [[ -f $user_source_cfg ]] ; then gmsg -c yellow "$user_source_cfg not found" ; return 100 ; fi
+    #if [[ -f $_target_rc ]] ; then rm -f $_target_rc ; fi
 
-    #tr -d '\r' < $configfile > $_config_file.unix
+    # write system configs to rc file
+    [[ $_append_rc ]] || echo "#!/bin/bash" > $_target_rc
+
+    # read config file, use chapter name as second part of variable name
     while IFS='= ' read -r lhs rhs
     do
       if [[ ! $lhs =~ ^\ *# && -n $lhs ]]; then
@@ -78,16 +74,31 @@ config.load () {
             esac
 
       fi
-    done < $_config_file >> $_rc_file
+    done < $user_source_cfg >> $_target_rc
+
+    #tr -d '\r' < $configfile > $user_source_cfg.unix
 }
 
 
 config.export () {
-    local _source_cfg="$GURU_CFG/$GURU_USER_NAME/user.cfg"
+    # export configuration to use
     local _target_rc="$HOME/.gururc2"
-    config.load "$_source_cfg" "$_target_rc"
-    chmod +x $_target_rc
-    source $_target_rc
+    gmsg -v1 "exporting user configuration.. "
+    # make backup
+    [[ -f "$_target_rc" ]] && mv -f "$_target_rc" "$_target_rc.old"
+    # make config<
+    config.make_rc "$GURU_CFG/system.cfg" "$_target_rc"
+    config.make_rc "$GURU_CFG/$GURU_USER_NAME/user.cfg" "$_target_rc" append
+    # check config
+    if [[ "$_target_rc" ]] ; then
+            # export configure
+            chmod +x "$_target_rc"
+            source "$_target_rc"
+        else
+            gmsg -c yellow "somethign went wrong, recovering old user configuration"
+            [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" || gmsg -x 100 -c red "no old backup found, unable to recover"
+            return 10
+        fi
 }
 
 
@@ -159,7 +170,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 
 
 
-# config.load () {
+# config.make_rc () {
 #     #shopt -s extglob
 #     local _config_file="$1"       ; echo "input: $_config_file"
 #     local _rc_file="$2"           ; echo "input: $_rc_file"

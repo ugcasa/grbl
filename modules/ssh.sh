@@ -8,81 +8,51 @@ ssh.main() {
     command="$1"
     shift
     case "$command" in
-
-        key|keys)
-            ssh.key "$@"
-            ;;
-
-        help)
-            gmsg -v1 -c white "guru-client ssh help "
-            gmsg -v2
-            gmsg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help]"
-            gmsg -v2
-            gmsg -v1 -c white "Commands:"
-            gmsg -v1 " key|keys        key management tools, try '$GURU_CALL ssh key help' for more info."
-            gmsg -v1 "   key ps        list of activekeys "
-            gmsg -v1 "   key ls        list of keys files"
-            gmsg -v1 "   key add       adds keys to server [server_selection] [variables] "
-            gmsg -v1 "   key rm        remove from remote server server [user_name@service_host] "
-            gmsg -v2
-            gmsg -v1 -c white "Example: "
-            gmsg -v1 "      $GURU_CALL ssh key add $GURU_ACCESS_POINT"
-            gmsg -v1
-            gmsg -v1 "Any on known ssh command is passed trough to open-ssh client"
-            gmsg -v2
-            ;;
-
-        status)
-            echo TBD
-            ;;
-        *)
-            ssh "$@"
-
+      key|keys)     ssh.key "$@"            ;;
+          help)     ssh.help ; return 0     ;;
+        status)     ssh.status              ;;
+        *)          ssh "$@"
     esac
 }
-
 
 ssh.key() {
     # ssh key tools
     local command="$1"
     shift
     case "$command" in
-
-        agent)
-            ssh.add_key_to_agent "$@"
-            ;;
-
-        ps|active)
-            ssh-add -l
-            ;;
-
-        ls|files)
-            ls "$HOME/.ssh" |grep "rsa" |grep -v "pub"
-            ;;
-
-        add)
-            ssh_add_key "$@"
-            ;;
-        rm)
-            ssh.rm_key "$@"
-            ;;
-        help|*)
-            gmsg -v1 -c white "guru-client ssh key help -----------------------------------------------"
-            gmsg -v2
-            gmsg -v0 " Usage:    $GURU_CALL [agent|ps|ls|add|rm|help]"
-            gmsg -v2
-            gmsg -v1 -c white "Commands:"
-            gmsg -v1 " ps        list of keys "
-            gmsg -v1 " ls        list of keys files"
-            gmsg -v1 " add       adds keys to server [server_selection] [variables] "
-            gmsg -v1 " rm        remove from remote server server [user_name@service_host] "
-            gmsg -v2
-            gmsg -v1 -c white  "Example:"
-            gmsg -v1  "       $GURU_CALL ssh key add $GURU_ACCESS_POINT"
-            gmsg -v2
-            ;;
+        agent)      ssh.add_key_to_agent "$@" ;;
+        ps|active)  ssh-add -l  ;;
+        ls|files)   ls "$HOME/.ssh" |grep "rsa" |grep -v "pub" ;;
+        add)        ssh.add_key "$@" ;;
+        rm)         ssh.rm_key "$@" ;;
+        help|*)     ssh.help ;;
     esac
 
+}
+
+ssh.status () {
+    gmsg -v1 "current keys"
+    ls $HOME/.ssh/ |grep _id_rsa|grep -v pub)
+}
+
+ssh.help ()  {
+    gmsg -v1 -c white "guru-client ssh help "
+    gmsg -v2
+    gmsg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help]"
+    gmsg -v2
+    gmsg -v1 -c white "Commands:"
+    gmsg -v1 " key|keys             key management tools, try '$GURU_CALL ssh key help' for more info."
+    gmsg -v1 "   key ps             list of activekeys "
+    gmsg -v1 "   key ls             list of keys files"
+    gmsg -v1 "   key rm             remove from remote server server [user_name@service_host] "
+    gmsg -v1 "   key add <...>      add keys to server <domain> <port> <user_name> or"
+    gmsg -v1 "   key add <server>   add keys to known server: ujo.guru, git.ujo.guru, github, bitbucket"
+    gmsg -v2
+    gmsg -v1 -c white "Example: "
+    gmsg -v1 "      $GURU_CALL ssh key add $GURU_ACCESS_POINT"
+    gmsg -v1
+    gmsg -v1 "Any on known ssh command is passed trough to open-ssh client"
+    gmsg -v2
 }
 
 
@@ -102,54 +72,38 @@ ssh.rm_key() {
 }
 
 
-ssh_add_key(){
+ssh.add_key(){
     # [1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket
-
-    # Install requirements
     xclip -help >/dev/null 2>&1 ||sudo apt install xclip
-
     [ -d "$HOME/.ssh" ] || mkdir "$HOME/.ssh"
-    error="1"  # Warning "1" is default exit code
-
+    error="1"
     # Select git service provider
-    [ "$1" ] && remote="$1" ||read -r -p "[1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket, [5] other: " remote
+    [ "$1" ] && remote="$1" ||read -r -p "[1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket, [5] other or help: " remote
     shift
 
     case "$remote" in
-
-        1|ujo.guru)
-            ssh.add_key_accesspoint "$@"
-            error="$?"
-            ;;
-        2|git.ujo.guru)
-            ssh.add_key_my_git "$@"
-            error="$?"
-            ;;
-        3|github)
-            ssh.add_key_github "$@"
-            error="$?"
-            ;;
-        4|bitbucket)
-            ssh.add_key_bitbucket "$@"
-            error="$?"
-            ;;
-        5|other)
-            ssh.add_key_other "$@"
-            error="$?"
-            ;;
+        1|ujo.guru)     ssh.add_key_accesspoint "$@"    ; error="$?" ;;
+        2|git.ujo.guru) ssh.add_key_my_git "$@"         ; error="$?" ;;
+        3|github)       ssh.add_key_github "$@"         ; error="$?" ;;
+        4|bitbucket)    ssh.add_key_bitbucket "$@"      ; error="$?" ;;
+        5|other)        ssh.add_key_other "$@"          ; error="$?" ;;
         help|*)
-           printf "Add key to server and rule to '~/.ssh/config' \n\nUsage:\t%s ssh key add [selection] [variables]\n" "$GURU_CALL"
-           printf "\nSelections:\n"
-           printf " 1|%s    \t add key to access point server \n" "$GURU_ACCESS_POINT"
-           printf " 2|git.ujo.guru  add key to own git server \n"
-           printf " 3|github        add key to github.com [user_email] \n"
-           printf " 4|bitbucket     add key to bitbucket.org [user_email] \n"
-           printf " 5|other         add key to any server [domain] [port] [user_name] \n"
-           printf "\nWithout variables script asks input during process\n"
-           printf "\nExample: %s ssh key add github \n" "$GURU_CALL"
-           printf "\t %s ssh key add other %s %s %s\n\n" "$GURU_CALL" "$GURU_ACCESS_POINT" "$GURU_ACCESS_POINT_PORT" "$GURU_USER"
-    esac
-
+           gmsg -v1 "Add key to server and rule to '~/.ssh/config'"
+           gmsg -v2
+           gmsg -v0 "Usage:    $GURU_CALL ssh key add [ujo.guru|git.ujo.guru|github|bitbucket] or [domain] [port] [user_name]"
+           gmsg -v2
+           gmsg -v1 "providers:"
+           gmsg -v1 " 1|ujo.guru        add key to access $GURU_ACCESS_POINT "
+           gmsg -v1 " 2|git.ujo.guru    add key to own git server "
+           gmsg -v1 " 3|github          add key to github.com [user_email] "
+           gmsg -v1 " 4|bitbucket       add key to bitbucket.org [user_email] "
+           gmsg -v1 " 5|other           add key to any server [domain] [port] [user_name] "
+           gmsg -v1
+           gmsg -v1 "Without variables script asks input during process"
+           gmsg -v1
+           gmsg -v1 "Example: "
+           gmsg -v1 "       $GURU_CALL ssh key add github "
+        esac
     return "$error"
 }
 

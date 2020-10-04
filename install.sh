@@ -5,7 +5,6 @@ GURU_CALL="guru"
 GURU_USER="$USER"
 export GURU_BIN="./core"
 GURU_CFG=$HOME/.config/guru
-
 # target locations
 TARGET_BIN=$HOME/bin
 
@@ -53,7 +52,7 @@ install.main () {
 
     # Step 9) save information and done
     modules_to_install=("${modules_to_install[@]}" "${core_modules[@]}")
-    echo "${modules_to_install[@]}" > $GURU_CFG/installed.modules
+    echo "${modules_to_install[@]}" >"$GURU_CFG/installed.modules"
 
     echo "$($TARGET_BIN/core.sh version) installed"
 }
@@ -116,12 +115,14 @@ install.check () {
                 gmsg -c red -x 2 "aborting.."
             fi
 
+        export GURU_BIN=".$HOME/bin"
         if [[ -f "$TARGET_BIN/uninstall.sh" ]] ; then
                 $TARGET_BIN/uninstall.sh
+
             else
                 gmsg "using package uninstaller"
-                $GURU_BIN/uninstall.sh
-            fi
+                ./core/uninstall.sh            fi
+        export GURU_BIN="./core"
         fi
     return 0
 }
@@ -282,12 +283,11 @@ install.config () {
          cp -f $GURU_CFG/user-default.cfg "$GURU_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
     fi
     config.export || gmsg -c red -x 182 "user config export error"
+    export GURU_BIN=$HOME/bin
     source "$HOME/.gururc2" || gmsg -c red -x 183 ".gururc2 file error"
     #config.main pull || gmsg -x 182 "remote user configuration failed"
-
     # set keyboard shortcuts
     keyboard.main add all
-
     return 0
 }
 
