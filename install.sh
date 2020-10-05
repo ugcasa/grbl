@@ -5,7 +5,6 @@ GURU_CALL="guru"
 GURU_USER="$USER"
 export GURU_BIN="./core"
 GURU_CFG=$HOME/.config/guru
-# target locations
 TARGET_BIN=$HOME/bin
 
 source core/common.sh
@@ -15,7 +14,6 @@ source core/keyboard.sh
 # to where add gururc call
 target_rc="$HOME/.bashrc"
 core_rc="$HOME/.gururc2"
-# # flag for disabling the# disabler_flag_file="$HOME/.gururc.disabled"
 
 # core modules what need sto access by user from terminal
 core_modules=(corsair config remote counter core daemon install system uninstall)
@@ -24,13 +22,13 @@ modules_to_install=(mount mqtt note phone print project scan ssh stamp tag timer
 
 
 install.main () {
-    gmsg -v1 -c white "installing guru-client.."
-
     # Step 1) parse arguments
     install.arguments $@ || gmsg -x 100 "argumentation error"
 
     # Step 2) check previous installation
     install.check || gmsg -x 110 "check caused exit"
+    gmsg -v1 -c white "installing guru-client"
+    gmsg -v2 "user: $GURU_USER"
 
     # Step 3) modify and add .rc files
     install.rcfiles && install.check_rcfiles || gmsg -x 120 "rc file modification error"
@@ -51,8 +49,8 @@ install.main () {
     install.config || gmsg -x 180 "user configuration error"
 
     # Step 9) save information and done
-    modules_to_install=("${modules_to_install[@]}" "${core_modules[@]}")
-    echo "${modules_to_install[@]}" >"$GURU_CFG/installed.modules"
+    installed_modules=("${modules_to_install[@]}" "${core_modules[@]}")
+    echo "${installed_modules[@]}" > "$GURU_CFG/installed.modules"
 
     echo "$($TARGET_BIN/core.sh version) installed"
 }
@@ -128,7 +126,7 @@ install.check () {
 
 install.rcfiles () {
     ## Set up dot rc files
-    gmsg -n -v1 -c white "setting up launchers.. "
+    gmsg -n -v1 "setting up launchers.. "
     # Check is .gururc called in .bashrc, add call if not # /etc/skel/.bashrc
     [[ -f "$HOME/.bashrc.giobackup" ]]  || cp -f "$target_rc" "$HOME/.bashrc.giobackup"
 
@@ -145,7 +143,7 @@ install.rcfiles () {
 
 
 install.folders () {
-    gmsg -n -v1 -c white "setting up folder structure.. "
+    gmsg -n -v1 "setting up folder structure.. "
     # make bin folder for scripts, configs and and apps
     [[ -d "$TARGET_BIN" ]] || mkdir -p "$TARGET_BIN"
     # personal configurations
@@ -158,20 +156,27 @@ install.folders () {
 
 install.core_files () {
 
-    gmsg -n -v1 -c white "installing core.. "
+    gmsg -n -v1 "copying core files.. "
     # copy configuration files to configuration folder
     cp -f cfg/* "$GURU_CFG"
     # copy script files to bin folder
     cp -f -r core/* -f "$TARGET_BIN"
+
     gmsg -v1 -c green "DONE"
 
     # if development, install trials and all modules
     if [[ $development ]] ; then
-            # copy tester folder
-            cp -f -r test -f "$TARGET_BIN"
-            gmsg -n -v1 -c white "installing development trials.."
+            gmsg -n -v1 -c white "copying development files.."
+
+            # include all modules to install list
             modules_to_install=$(ls modules |cut -f1 -d ".")
+
+            # copy trials
             cp -f -r foray/* -f "$TARGET_BIN" && gmsg -v1 -c green "DONE"
+
+            # copy test folder
+            gmsg -n -v1 -c white "copying test system.."
+            cp -f -r test -f "$TARGET_BIN" && gmsg -v1 -c green "DONE"
         fi
 
     return 0
@@ -196,7 +201,7 @@ install.modules () {
 
 install.check_rcfiles () {
     # test
-    gmsg -n -v1 -c white "checking launchers.. "
+    gmsg -n -v1 "checking launchers.. "
     grep -q "gururc" "$target_rc"       || gmsg -c red -x 122 ".bashrc modification error"
     [[ -f "$HOME/.bashrc.giobackup" ]]  || gmsg "warning: .bashrc backup file creation failure"
 
@@ -207,7 +212,7 @@ install.check_rcfiles () {
 
 install.check_folders () {
     # test
-    gmsg -n -v1 -c white "checking created folders.. "
+    gmsg -n -v1 "checking created folders.. "
     [[ -d "$TARGET_BIN" ]] || gmsg -x 141 -c red "bin folder creation error"
     [[ -d "$GURU_CFG/$GURU_USER" ]] || gmsg -x 143 -c red "configuration folder creation error"
 
@@ -280,8 +285,7 @@ install.config () {
          gmsg -c yellow "user specific configuration not found, using default.."
          cp -f $GURU_CFG/user-default.cfg "$GURU_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
     fi
-    config.export || gmsg -c red -x 182 "user config export error"
-    export GURU_BIN=$HOME/bin
+    config.export "$GURU_USER" || gmsg -c red -x 182 "user config export error"
     source "$HOME/.gururc2" || gmsg -c red -x 183 ".gururc2 file error"
     #config.main pull || gmsg -x 182 "remote user configuration failed"
     # set keyboard shortcuts

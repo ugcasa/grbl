@@ -42,7 +42,7 @@ key_list=$(file /tmp/ckbpipe0* |grep fifo |cut -f1 -d ":")
 corsair.main () {
     # command parser
     local _cmd="$1" ; shift         # get command
-    case "$_cmd" in init|start|end|status|help|install|remove|write)
+    case "$_cmd" in init|start|clear|status|help|install|remove|write|yes-no|end)
             corsair.$_cmd $@ ; return $? ;;
         *)  echo "unknown command"
     esac
@@ -53,7 +53,7 @@ corsair.main () {
 corsair.help () {
     gmsg -v 1 -c white "guru-client corsair driver help"
     gmsg -v 2
-    gmsg -v 0 "usage:    $GURU_CALL corsair [start|end|status|help|install|remove|write <key> <color>]"
+    gmsg -v 0 "usage:    $GURU_CALL corsair [start|end|status|help|install|remove|write|yes-no|end <key> <color>]"
     gmsg -v 2
     gmsg -v 1 -c white "commands:"
     gmsg -v 1 " install         install requirements "
@@ -62,15 +62,16 @@ corsair.help () {
     gmsg -v 1 " write           write key color (described below)  "
     gmsg -v 1 "    <KEY>        up-case key name like 'F1'  "
     gmsg -v 1 " _<COLOR>        up-case color with '_' on front of it "     # todo: go better
-    gmsg -v 1 " start           starting procedure"
-    gmsg -v 1 " end             ending procedure"
-    #        start_blink     make key to blink (details below)
-    #           <freq>       frequency in milliseconds
-    #           <ratio>      10 = 10 of freq/100
-    #        status          launch keyboard status view for testing
-    gmsg -v 2
-    gmsg -v 1 -c white "example:"
+    gmsg -v 1 " start           init guru base layout"
+    gmsg -v 1 " end             end animation"
+    gmsg -v 1 " clear           clear without init (status mode)"
+    gmsg -v 1 " init <mode>     init keyboard mode"
+    gmsg -v 2 "                 status|trippy|yes-no|rainbow"
+    gmsg -v 2 "                 default is status "
+    gmsg -v 1 -c white "examples:"
     gmsg -v 1 "          $GURU_CALL corsair status "
+    gmsg -v 1 "          $GURU_CALL corsair init trippy "
+    gmsg -v 1 "          $GURU_CALL corsair end "
     gmsg -v 2
 }
 
@@ -79,6 +80,7 @@ corsair.check () {
     # Check keyboard driver is available, app and pipes are started and executes if needed
 
     if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
+            corsair.end
             gmsg -v2 -c black "${FUNCNAME[0]}: disabled"
             return 1
         fi
@@ -137,22 +139,27 @@ corsair.start () {
     # reserve some keys for future purposes by coloring them now
     # todo: I think this can be removed, used to be test interface before daemon
     gmsg -v1 -t "starting corsair"
-
+    corsair.init status
     for _key_pipe in $key_list ; do
         gmsg -v2 -t "$_key_pipe off"
         corsair.raw_write $_key_pipe $_OFF
-        sleep 0.1
     done
 }
 
 
 corsair.end () {
+    # reserve some keys for future purposes by coloring them now
+    gmsg -v1 -t "starting corsair"
+    corsair.init status
+}
+
+
+corsair.clear () {
     # return normal, assuming that normal really exits
     gmsg -v1 "resetting keyboard indicators"
     for _key_pipe in $key_list ; do
         gmsg -v2 -t "$_key_pipe white"
         corsair.raw_write $_key_pipe $_WHITE
-        sleep 0.1
     done
 }
 
@@ -196,18 +203,6 @@ corsair.write () {
         fi
 
     return 0
-}
-
-
-corsair.start_blink () {
-    # ask daemon to blink a key
-    gmsg -v2 -c black "${FUNCNAME[0]} TBD"
-}
-
-
-corsair.stop_blink () {
-    # ask daemon to stop to blink a key
-    gmsg -v2 -c black "${FUNCNAME[0]} TBD"
 }
 
 

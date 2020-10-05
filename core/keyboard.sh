@@ -119,7 +119,7 @@ keyboard.set_guru_linuxmint() {
     # ser cinnamon chortcut
     compatible_with "linuxmint" || return 1
 
-    new=$GURU_CFG/$GURU_USER/kbbind.guruio.cfg
+    new=$GURU_CFG/kbbind.guruio.cfg
     backup=$GURU_CFG/kbbind.backup.cfg
 
     if [ ! -f "$backup" ]; then

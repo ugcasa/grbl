@@ -48,18 +48,20 @@ config.help () {
 config.make_rc () {
     # make rc file out of configuration file
 
-    local user_source_cfg="$1"
+    local _source_cfg="$1"
     local _target_rc="$2"
     local _append_rc="$3"
+    local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
 
+    gmsg -v2 "$_source_cfg $_mode $_target_rc"
 
-    [[ $GURU_VERBOSE ]] && gmsg -v2 "$user_source_cfg > $_target_rc"
-    user_source_cfg=$HOME/.config/guru/$GURU_USER_NAME/user.cfg
-    if ! [[ -f $user_source_cfg ]] ; then gmsg -c yellow "$user_source_cfg not found" ; return 100 ; fi
+    #_source_cfg=$HOME/.config/guru/$GURU_USER_NAME/user.cfg
+
+    if ! [[ -f $_source_cfg ]] ; then gmsg -c yellow "$_source_cfg not found" ; return 100 ; fi
     #if [[ -f $_target_rc ]] ; then rm -f $_target_rc ; fi
 
     # write system configs to rc file
-    [[ $_append_rc ]] || echo "#!/bin/bash" > $_target_rc
+    [[ $_append_rc ]] || printf "#!/bin/bash \nexport GURU_USER=$GURU_USER\n" > $_target_rc
 
     # read config file, use chapter name as second part of variable name
     while IFS='= ' read -r lhs rhs
@@ -69,12 +71,13 @@ config.make_rc () {
           rhs="${rhs%%*( )}"   # remove trailing spaces
           case "$lhs" in
                 *[*)  _chapter=${lhs//[}
-                      _chapter=${_chapter//]}  ;;
-                *)      echo "export GURU_${_chapter^^}_${lhs^^}=$rhs"
+                      _chapter=${_chapter//]}
+                      [[ $_chapter ]] && _chapter="$_chapter""_" ;;
+                *)    echo "export GURU_${_chapter^^}${lhs^^}=$rhs"
             esac
 
       fi
-    done < $user_source_cfg >> $_target_rc
+    done < $_source_cfg >> $_target_rc
 
     #tr -d '\r' < $configfile > $user_source_cfg.unix
 }
@@ -83,12 +86,13 @@ config.make_rc () {
 config.export () {
     # export configuration to use
     local _target_rc="$HOME/.gururc2"
-    gmsg -v1 "exporting user configuration.. "
+    local _target_user=$GURU_USER ; [[ "$1" ]] && _target_user="$1"
+
     # make backup
     [[ -f "$_target_rc" ]] && mv -f "$_target_rc" "$_target_rc.old"
     # make config<
     config.make_rc "$GURU_CFG/system.cfg" "$_target_rc"
-    config.make_rc "$GURU_CFG/$GURU_USER_NAME/user.cfg" "$_target_rc" append
+    config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append
     # check config
     if [[ "$_target_rc" ]] ; then
             # export configure
@@ -141,7 +145,7 @@ config.set () {             # set tool-kit environmental variable
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        source "$HOME/.gururc2"
+        #source "$HOME/.gururc2"
         config.main "$@"
     fi
 

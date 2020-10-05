@@ -70,7 +70,7 @@ install.question () {
 install.java () {
     #install and remove needed applications. input "install" or "remove"
     local action=$1
-    local require="nodejs"
+    local require="nodejs"w
 
     [ "$action" ] || read -r -p "install or remove?: " action
     printf "need to install $require, ctrl+c or enter local "

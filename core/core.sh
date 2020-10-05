@@ -2,7 +2,7 @@
 # guru-client - main command parser
 # caa@ujo.guru 2020
 
-export GURU_VERSION="0.6.1"
+export GURU_VERSION="0.6.2"
 export GURU_HOSTNAME="$(hostname)"
 
 # export configuration
@@ -163,7 +163,7 @@ core.process_opts () {                                                  # argume
             -V ) export GURU_VERBOSE=2      ; shift     ;;
             -f ) export GURU_FORCE=true     ; shift     ;;
             -l ) export GURU_LOGGING=true   ; shift     ;;
-            -u ) export GURU_USER_NAME=$2   ; shift 2   ;;
+            -u ) export GURU_USER=$2  ; export GURU_USER_NAME=$2 ; shift 2   ;;
             -h ) export GURU_HOSTNAME=$2    ; shift 2   ;;
 
              * ) break                  ;;
@@ -270,7 +270,7 @@ core.shell () {                                                      # terminal 
 
     local _verbose=1
     while : ; do
-            config.load "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
+            config.export "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
             source $HOME/.gururc2
             GURU_VERBOSE=$_verbose
             # set call name off, affects help print out
