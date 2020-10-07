@@ -127,7 +127,10 @@ corsair.status () {
 
 corsair.init () {
     # load default profile and set wanted mode
-    local _mode="status" ; [[ $1 ]] && _mode=$1
+    local _mode="status"
+    [[ $GURU_CORSAIR_MODE ]] && _mode="$GURU_CORSAIR_MODE"
+    [[ $1 ]] && _mode="$1"
+
     if ! ckb-next -p guru -m $_mode 2>/dev/null ; then
             gmsg -v -x $? -c yellow "corsair init failure"
         fi
