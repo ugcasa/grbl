@@ -18,7 +18,7 @@ core_rc="$HOME/.gururc2"
 # core modules what need sto access by user from terminal
 core_modules=(corsair config remote counter core daemon install system uninstall)
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(mount mqtt note phone print project scan ssh stamp tag timer tor trans user vol yle news)
+modules_to_install=(mount mqtt note android print project scan ssh stamp tag timer tor trans user vol yle news)
 
 
 install.main () {
