@@ -139,7 +139,7 @@ daemon.poll () {
     # DAEMON POLL LOOP
     while true ; do
         source ~/.gururc2                                           # to update configurations is user changes them
-        corsair.main write esc magenta
+        corsair.main set esc magenta
         for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
