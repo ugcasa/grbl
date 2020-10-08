@@ -2,6 +2,7 @@
 # guru-client decorations for terminal
 
 if [[ "$GURU_FLAG_COLOR" ]] ; then  #TODO remove this ..
+
     # TODO make futile, then remove
     export RED=$(printf '\033[0;31m')
     export GRN=$(printf '\033[0;32m')

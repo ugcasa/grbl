@@ -13,6 +13,7 @@
 source $GURU_BIN/common.sh
 
     ESC="/tmp/ckbpipe000"
+   CPLC="/tmp/ckbpipe059"
      F1="/tmp/ckbpipe001"
      F2="/tmp/ckbpipe002"
      F3="/tmp/ckbpipe003"
@@ -25,24 +26,31 @@ source $GURU_BIN/common.sh
     F10="/tmp/ckbpipe010"
     F11="/tmp/ckbpipe011"
     F12="/tmp/ckbpipe012"
-   CPLC="/tmp/ckbpipe059"
 
-# rgb color codes [R|G|B|Brightness]
-   _RED="ff0000ff"
- _GREEN="00ff00ff"
-  _BLUE="0000ffff"
-_YELLOW="ffff00ff"
- _WHITE="ffffffff"
-   _OFF="000000ff"
+# extended color list
+[[ "$GURU_CFG/rgb-color.cfg" ]] && source "$GURU_CFG/rgb-color.cfg"
 
 # active key list
-key_list=$(file /tmp/ckbpipe0* |grep fifo |cut -f1 -d ":")
+key_pipe_list=$(file /tmp/ckbpipe0* |grep fifo |cut -f1 -d ":")
 
+# modes with status bar function set
+status_modes=(status, test, red, olive, dark)
 
 corsair.main () {
+
+    # ckb-next current mode data
+    if [[ -f /tmp/guru/corsair.mode ]] ; then
+            corsair_mode="$(head -1 /tmp/guru/corsair.mode)"
+            #corsair_bg_color="$(head -2 /tmp/guru/corsair.mode |tail -1)"
+        else
+            corsair_mode=$GURU_CORSAIR_MODE
+            #corsair_bg_color=$GURU_CORSAIR_BG_COLOR
+        fi
+
+
     # command parser
     local _cmd="$1" ; shift         # get command
-    case "$_cmd" in init|start|clear|status|help|install|remove|write|yes-no|end)
+    case "$_cmd" in init|start|reset|status|help|install|remove|set|yes-no|end)
             corsair.$_cmd $@ ; return $? ;;
         *)  echo "unknown command"
     esac
@@ -64,7 +72,7 @@ corsair.help () {
     gmsg -v 1 " _<COLOR>        up-case color with '_' on front of it "     # todo: go better
     gmsg -v 1 " start           init guru base layout"
     gmsg -v 1 " end             end animation"
-    gmsg -v 1 " clear           clear without init (status mode)"
+    gmsg -v 1 " reset           reset without init"
     gmsg -v 1 " init <mode>     init keyboard mode"
     gmsg -v 2 "                 status|trippy|yes-no|rainbow"
     gmsg -v 2 "                 default is status "
@@ -79,21 +87,26 @@ corsair.help () {
 corsair.check () {
     # Check keyboard driver is available, app and pipes are started and executes if needed
 
+    gmsg -n -v2 -t "checking ckb-next-daemon.. "
+
     if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
-            corsair.end
-            gmsg -v2 -c black "${FUNCNAME[0]}: disabled"
+            gmsg -v2 -c black "disabled"
             return 1
         fi
 
     if ! ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-            gmsg -v0 "starting ckb-next-daemon.. sudo needed"
+            gmsg -c white "starting ckb-next-daemon.. sudo needed"
             sudo ckb-next-daemon >/dev/null &
-            sleep 3
-        else
-            gmsg -n -v2 -t "ckb-next-daemon " ; gmsg -v2 -c green "OK"
-        fi
 
-    return 0
+            gmsg -n -v2 -t "checking is is stated up.. "
+            sleep 3
+            if ! ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
+                    gmsg -x 123 -c red "ckb-next-daemon stating error"
+                fi
+        else
+            gmsg -v2 -c green "OK"
+            return 0
+        fi
 
     # Check is keyboard setup interface, start if not
     # if ! ps auxf |grep "ckb-next " | grep -v grep >/dev/null 2>&1 ; then
@@ -114,11 +127,11 @@ corsair.check () {
 corsair.status () {
     # get status and print it out to kb leds
     if corsair.check ; then
-            corsair.write f4 green
+            corsair.set f4 green
             gmsg -v1 -c green "corsair on service"
             return 0
         else
-            corsair.write f4 red
+            corsair.set f4 red
             gmsg -v1 -c black "corsair not on service"
             return 1
         fi
@@ -127,11 +140,12 @@ corsair.status () {
 
 corsair.init () {
     # load default profile and set wanted mode
-    local _mode="status"
-    [[ $GURU_CORSAIR_MODE ]] && _mode="$GURU_CORSAIR_MODE"
-    [[ $1 ]] && _mode="$1"
+    local _mode=$corsair_mode ; [[ $1 ]] && _mode="$1"
 
-    if ! ckb-next -p guru -m $_mode 2>/dev/null ; then
+    if ckb-next -p guru -m $_mode 2>/dev/null ; then
+            export corsair_mode=$_mode
+            echo $_mode > /tmp/guru/corsair.mode
+        else
             gmsg -v -x $? -c yellow "corsair init failure"
         fi
     return 0
@@ -141,59 +155,80 @@ corsair.init () {
 corsair.start () {
     # reserve some keys for future purposes by coloring them now
     # todo: I think this can be removed, used to be test interface before daemon
+    local _mode=$corsair_mode ; [[ $1 ]] && _mode="$1"
+
     gmsg -v1 -t "starting corsair"
-    corsair.init status
-    for _key_pipe in $key_list ; do
+    corsair.init $_mode
+    sleep 1
+    for _key_pipe in $key_pipe_list ; do
         gmsg -v2 -t "$_key_pipe off"
-        corsair.raw_write $_key_pipe $_OFF
+        corsair.raw_write $_key_pipe $rgb_black
     done
 }
 
 
 corsair.end () {
     # reserve some keys for future purposes by coloring them now
-    gmsg -v1 -t "starting corsair"
-    corsair.init status
+    corsair.init ftb
+    sleep 1
+    corsair.init $GURU_CORSAIR_MODE
 }
 
 
-corsair.clear () {
-    # return normal, assuming that normal really exits
+corsair.reset () {
+    # return normal, if no input reset all
+    # TODO: unable to return mode backround color, it is not known FIX: use mode name as color name
+    corsair.check || return  1
     gmsg -v1 "resetting keyboard indicators"
-    for _key_pipe in $key_list ; do
-        gmsg -v2 -t "$_key_pipe white"
-        corsair.raw_write $_key_pipe $_WHITE
-    done
+    if [[ "$1" ]] ; then
+        corsair.set $1 $corsair_mode 10
+    else
+        for _key_pipe in $key_pipe_list ; do
+            corsair.raw_write $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10
+        done
+    fi
 }
 
 
 corsair.raw_write () {
-    if ! corsair.check ; then return 0 ; fi
     # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
-    #corsair.check || return 100         # check is corsair up ünd running
-    local _button=$1 ; shift            # get input key pipe file
-    local _color=$1 ; shift             # get input color code
-    echo "rgb $_color" > "$_button"     # write color code to button pipe file
-    sleep 0.1                           # let device to receive and process command (surprisingly slow)
+    local _button=$1 ; shift
+    local _color=$1 ; shift
+    local _bright="FF" ; [[ $1 ]] && _bright="$1" ; shift
+
+    # write color code to button pipe file
+    echo "rgb $_color$_bright" > "$_button"
+    # let device to receive and process command (surprisingly slow)
+    sleep 0.1
     return 0
 }
 
 
-corsair.write () {
+corsair.set () {
     # write color to key: input <key> <color>
-    if ! corsair.check ; then return 0 ; fi
-    local _button=${1^^}
-    local _color='_'"${2^^}"
+    if ! [[ $1 ]] ; then corsair.start ; return 0 ; fi
 
+    [[ "${status_modes[@]}" =~ "$corsair_mode" ]] || gmsg -x 1 -v2 "writing not available in '$corsair_mode' mode"
+    corsair.check || gmsg -x 1 "corsair not available"
+
+    local _button=${1^^}
+    local _color='rgb_'"$2"
+    local _bright="FF" ; [[ $3 ]] && _bright="$3"
     gmsg -n -v1 -t "set $_button color to "
     gmsg -v1 -c $2 "$2"
 
     # get input key pipe file location
     _button=$(eval echo '$'$_button)
     [[ $_button ]] || gmsg -c yellow -x 101 "no such button"
+
     # get input color code
     _color=$(eval echo '$'$_color)
     [[ $_color ]] || gmsg  -c yellow -x 102 "no such color"
+
+    #corsailize RGB code with brightness value
+    _color="$_color""$_bright"
+
+    # wrtite to pipe
     gmsg -v2 -t "$_button <- $_color"
 
     # write color code to button pipe file and let device to receive and process command (surprisingly slow)
@@ -204,7 +239,7 @@ corsair.write () {
             gmsg -c yellow "io error, pipe file $_button is not set in cbk-next"
             return 103
         fi
-
+    # pass
     return 0
 }
 
