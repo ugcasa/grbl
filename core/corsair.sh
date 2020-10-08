@@ -140,7 +140,7 @@ corsair.status () {
 
 corsair.init () {
     # load default profile and set wanted mode
-    local _mode=$corsair_mode ; [[ $1 ]] && _mode="$1"
+    local _mode=$GURU_CORSAIR_MODE ; [[ $1 ]] && _mode="$1"
 
     if ckb-next -p guru -m $_mode 2>/dev/null ; then
             export corsair_mode=$_mode
