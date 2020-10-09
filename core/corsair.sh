@@ -3,9 +3,10 @@
 # casa@ujo.guru 2020
 
 # todo
+#   - more colors and key > pipe file bindings - DONE
+#   - more key pipes
 #   - automated keyboard shortcut and pipe configurations for ckb-next
 #   - able keys to go blink in background
-#   - more colors and key > pipe file bindings
 #   - shortcuts behind indicator key presses
 
 # keys pipe files
