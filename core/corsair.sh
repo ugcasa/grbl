@@ -1,18 +1,14 @@
 #!/bin/bash
-# guru-client corsair led notification functions
-# casa@ujo.guru 2020
-
+# guru-client corsair led notification functions casa@ujo.guru 2020
 # todo
-#   - more colors and key > pipe file bindings - DONE
-#   - more key pipes
 #   - automated keyboard shortcut and pipe configurations for ckb-next
-#   - able keys to go blink in background
-#   - shortcuts behind indicator key presses
-
-# keys pipe files
-# NOTE: these need to correlate with cbk-next animation settings!
+#   - more colors and key > pipe file bindings - DONE
+#   - able keys to go blinky in background "new message"
+#   - more key pipes
 source $GURU_BIN/common.sh
 
+# key pipe files
+# NOTE: these need to correlate with cbk-next animation settings
     ESC="/tmp/ckbpipe000"
    CPLC="/tmp/ckbpipe059"
      F1="/tmp/ckbpipe001"
@@ -30,59 +26,72 @@ source $GURU_BIN/common.sh
 
 # extended color list
 [[ "$GURU_CFG/rgb-color.cfg" ]] && source "$GURU_CFG/rgb-color.cfg"
-
 # active key list
 key_pipe_list=$(file /tmp/ckbpipe0* |grep fifo |cut -f1 -d ":")
-
 # modes with status bar function set
+# NOTE: these need to correlate with cbk-next animation settings
 status_modes=(status, test, red, olive, dark)
+# bubblecum tempreary fix
+corsair_last_mode="/tmp/guru/corsair.mode"
+
 
 corsair.main () {
-
     # ckb-next current mode data
-    if [[ -f /tmp/guru/corsair.mode ]] ; then
-            corsair_mode="$(head -1 /tmp/guru/corsair.mode)"
-            #corsair_bg_color="$(head -2 /tmp/guru/corsair.mode |tail -1)"
+    if [[ -f $corsair_last_mode ]] ; then
+            corsair_mode="$(head -1 $corsair_last_mode)"
         else
             corsair_mode=$GURU_CORSAIR_MODE
-            #corsair_bg_color=$GURU_CORSAIR_BG_COLOR
         fi
-
 
     # command parser
     local _cmd="$1" ; shift         # get command
-    case "$_cmd" in init|start|reset|status|help|install|remove|set|yes-no|end)
+    case "$_cmd" in start|init|set|end|kill|reset|status|help|install|remove)
             corsair.$_cmd $@ ; return $? ;;
-        *)  echo "unknown command"
+        *)  echo "corsair: unknown command: $_cmd"
     esac
     return 0
 }
 
 
 corsair.help () {
-    gmsg -v 1 -c white "guru-client corsair driver help"
+    gmsg -v 1 -c white "guru-client corsair help"
     gmsg -v 2
-    gmsg -v 0 "usage:    $GURU_CALL corsair [start|end|status|help|install|remove|write|yes-no|end <key> <color>]"
+    gmsg -v 0 "usage:    $GURU_CALL corsair [start|init|set|reset|end|kill|status|help|install|remove] <key> <color>"
     gmsg -v 2
     gmsg -v 1 -c white "commands:"
-    gmsg -v 1 " install         install requirements "
-    gmsg -v 1 " remove          remove corsair driver "
-    gmsg -v 2 " help            this help "
-    gmsg -v 1 " write           write key color (described below)  "
-    gmsg -v 1 "    <KEY>        up-case key name like 'F1'  "
-    gmsg -v 1 " _<COLOR>        up-case color with '_' on front of it "     # todo: go better
-    gmsg -v 1 " start           init guru base layout"
-    gmsg -v 1 " end             end animation"
-    gmsg -v 1 " reset           reset without init"
-    gmsg -v 1 " init <mode>     init keyboard mode"
-    gmsg -v 2 "                 status|trippy|yes-no|rainbow"
-    gmsg -v 2 "                 default is status "
+    gmsg -v 1 " start                       start ckb-next-daemon "
+    gmsg -v 1 " init <mode>                 init keyboard mode listed below "
+    gmsg -v 2 "                             [status|red|olive|dark] able to set keys "
+    gmsg -v 2 "                             [trippy|yes-no|rainbow] active animations "
+    gmsg -v 1 " set <key> <color>           write key color to keyboard key  "
+    gmsg -v 1 " reset <key>                 reset one key or if empty, all pipes "
+    gmsg -v 1 "  end                         end playing with keyboard, set to normal "
+    gmsg -v 1 " kill                        stop ckb-next-daemon"
+    gmsg -v 1 " status                      blink esc, print status and return "
+    gmsg -v 1 " install                     install requirements "
+    gmsg -v 1 " remove                      remove corsair driver "
+    gmsg -v 2 " help                        this help "
+    gmsg -v 2
     gmsg -v 1 -c white "examples:"
-    gmsg -v 1 "          $GURU_CALL corsair status "
+    gmsg -v 1 "          $GURU_CALL corsair status -v   "
     gmsg -v 1 "          $GURU_CALL corsair init trippy "
-    gmsg -v 1 "          $GURU_CALL corsair end "
+    gmsg -v 1 "          $GURU_CALL corsair end         "
     gmsg -v 2
 }
+
+
+corsair.kill () {
+    gmsg -c white "killing ckb-next-daemon.."
+    sudo -v
+
+    sudo pkill ckb-next-daemon || gmsg -c yellow "kill error"
+    sleep 2
+    if ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
+            gmsg -x 100 -c tomato "kill failed"
+         else
+            gmsg -x 0 -c green "kill verified"
+         fi
+    }
 
 
 corsair.check () {
@@ -96,46 +105,30 @@ corsair.check () {
         fi
 
     if ! ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-            gmsg -c white "starting ckb-next-daemon.. sudo needed"
-            sudo ckb-next-daemon >/dev/null &
-
-            gmsg -n -v2 -t "checking is is stated up.. "
-            sleep 3
-            if ! ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-                    gmsg -x 123 -c red "ckb-next-daemon stating error"
-                fi
+            gmsg -v1 "ckb-next-daemon not running"
+            gmsg -v2 "start by '$GURU_CALL corsair start'"
         else
             gmsg -v2 -c green "OK"
             return 0
         fi
-
-    # Check is keyboard setup interface, start if not
-    # if ! ps auxf |grep "ckb-next " | grep -v grep >/dev/null 2>&1 ; then
-    #         gmsg -v1 -t "starting ckb-next.."
-    #         ckb-next -b >/dev/null 2>&1 &
-    #         sleep 3
-    #     else gmsg -v1 -t "ckb-next $(OK)" ; fi
-
-    # Check are pipes started, start if not
-    # corsair.init status
-    # if ! ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then
-    #         gmsg -x 100 -c white "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
-    #     else gmsg -v1 -t "ckb-next pipes $(OK)" ; fi
-
 }
 
 
 corsair.status () {
     # get status and print it out to kb leds
     if corsair.check ; then
-            corsair.set f4 green
-            gmsg -v1 -c green "corsair on service"
+            gmsg -v1 -t -c green "corsair on service"
+            corsair.set esc green
+            sleep 0.5
+            corsair.reset esc
+
             return 0
         else
-            corsair.set f4 red
-            gmsg -v1 -c black "corsair not on service"
+            corsair.set esc red
+            gmsg -v1 -t -c red "corsair not on service"
             return 1
         fi
+
 }
 
 
@@ -145,9 +138,11 @@ corsair.init () {
 
     if ckb-next -p guru -m $_mode 2>/dev/null ; then
             export corsair_mode=$_mode
-            echo $_mode > /tmp/guru/corsair.mode
+            echo $_mode > $corsair_last_mode
         else
-            gmsg -v -x $? -c yellow "corsair init failure"
+            local _error=$?
+            gmsg -v -c yellow "corsair init failure"
+            return $_error
         fi
     return 0
 }
@@ -156,15 +151,57 @@ corsair.init () {
 corsair.start () {
     # reserve some keys for future purposes by coloring them now
     # todo: I think this can be removed, used to be test interface before daemon
-    local _mode=$corsair_mode ; [[ $1 ]] && _mode="$1"
+    if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
+            gmsg -v1 -c green "already running"
+            return 0
+        fi
 
-    gmsg -v1 -t "starting corsair"
-    corsair.init $_mode
+    gmsg -v1 -c white "starting ckb-next-daemon"
+
+    gmsg -c white "starting kb-next-daemon.."
+    sudo -v
+
+    # start daemon to background
+    sudo /usr/local/bin/ckb-next-daemon >/dev/null &
+    sleep 3
+
+    # check lauch
+    gmsg -n -v1 -t "checking ckb-next-daemon.. "
+    if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
+            gmsg -v1 -c green "OK"
+        else
+            gmsg -c red "ckb-next-daemon starting failed"
+            return 123
+        fi
+
+    # initialize profile and mode
+    gmsg -n -v1 -t "setting profile and mode.. "
+    local _mode=$GURU_CORSAIR_MODE ; [[ "$1" ]] && _mode="$1"
+    corsair.init $_mode && gmsg -v1 -c green "OK"
     sleep 1
+
+    # Check are pipes started, start if not
+    gmsg -n -v1 -t "checking pipes.. "
+    if ! ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then
+            gmsg -c white "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
+                # Check is keyboard setup interface, start if not
+                # if ! ps auxf |grep "ckb-next " | grep -v grep >/dev/null 2>&1 ; then
+                #         gmsg -v1 -t "starting ckb-next.."
+                #         ckb-next -b >/dev/null 2>&1 &
+                #         sleep 3
+                #     else gmsg -v1 -t "ckb-next $(OK)" ; fi
+            return 100
+        else
+            gmsg -v1 -c green "OK"
+        fi
+
+    # Cleaning the table
+    gmsg -n -v1 -t "setting keys keys"
     for _key_pipe in $key_pipe_list ; do
-        gmsg -v2 -t "$_key_pipe off"
-        corsair.raw_write $_key_pipe $rgb_black
-    done
+            gmsg -n -v2 "."
+            corsair.raw_write $_key_pipe $rgb_black
+        done
+    gmsg -v1 -c green " done"
 }
 
 
@@ -178,16 +215,19 @@ corsair.end () {
 
 corsair.reset () {
     # return normal, if no input reset all
-    # TODO: unable to return mode backround color, it is not known FIX: use mode name as color name
-    corsair.check || return  1
-    gmsg -v1 "resetting keyboard indicators"
+    gmsg -n -v2 -t "resetting key"
+
     if [[ "$1" ]] ; then
-        corsair.set $1 $corsair_mode 10
-    else
-        for _key_pipe in $key_pipe_list ; do
-            corsair.raw_write $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10
-        done
-    fi
+            gmsg -v2 " $1"
+            corsair.set $1 $corsair_mode 10
+        else
+            gmsg -n -v2 "s"
+            for _key_pipe in $key_pipe_list ; do
+                gmsg -n -v2 "."
+                corsair.raw_write $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10
+            done
+        gmsg -v2 -c green " done"
+        fi
 }
 
 
@@ -207,25 +247,28 @@ corsair.raw_write () {
 
 corsair.set () {
     # write color to key: input <key> <color>
-    if ! [[ $1 ]] ; then corsair.start ; return 0 ; fi
-
-    [[ "${status_modes[@]}" =~ "$corsair_mode" ]] || gmsg -x 1 -v2 "writing not available in '$corsair_mode' mode"
-    corsair.check || gmsg -x 1 "corsair not available"
+    if ! [[ "${status_modes[@]}" =~ "$corsair_mode" ]] ; then
+            gmsg  -v2 "writing not available in '$corsair_mode' mode"
+            return 1
+        fi
 
     local _button=${1^^}
     local _color='rgb_'"$2"
     local _bright="FF" ; [[ $3 ]] && _bright="$3"
     gmsg -n -v1 -t "set $_button color to "
     gmsg -v1 -c $2 "$2"
-
     # get input key pipe file location
     _button=$(eval echo '$'$_button)
-    [[ $_button ]] || gmsg -c yellow -x 101 "no such button"
-
+    if ! [[ $_button ]] ; then
+            gmsg -c yellow "no such button"
+            return 101
+        fi
     # get input color code
     _color=$(eval echo '$'$_color)
-    [[ $_color ]] || gmsg  -c yellow -x 102 "no such color"
-
+    if ! [[ $_color ]] ; then
+            gmsg  -c yellow "no such color"
+            return 102
+        fi
     #corsailize RGB code with brightness value
     _color="$_color""$_bright"
 

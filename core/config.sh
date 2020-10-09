@@ -99,29 +99,29 @@ config.make_color_rc () {
 
     for color_srt in ${color_name_list[@]} ; do
             # color name
-            color_name=$(echo $color_srt | cut -f1 -d "=")    # ; echo "$color_srt"
-            color_name=${color_name//"rgb_"/""}         # ; echo "$color_name"
+            color_name=$(echo $color_srt | cut -f1 -d "=") # ; echo "$color_srt"
+            color_name=${color_name//"rgb_"/""} # ; echo "$color_name"
             # color value
-            color_value=$(echo $color_srt | cut -f2 -d "=")   # ; echo "$color_value"
+            color_value=$(echo $color_srt | cut -f2 -d "=") # ; echo "$color_value"
             # slice hex code to 8 bit pieces
             _r="${color_value:0:2}"
             _g="${color_value:2:2}"
-            _b="${color_value:4:2}"               #; echo "$_r:$_g:$_b"
-            #[[ $_r ]] || [[ $_r ]] || [[ $_r ]] || echo "missing value"
+            _b="${color_value:4:2}" # ; echo "$_r:$_g:$_b"
             # turn hex to dec
             _r="$((16#$_r))"
             _g="$((16#$_g))"
             _b="$((16#$_b))"
             # compose colorcode
             color=$(printf '\033[38;2;%s;%s;%sm' "$_r" "$_g" "$_b")
-            color=${color//''/'\033'}
+            color=${color//''/'\033'}  # bubblecum
             # printout
             #echo -e "$color $color_name $color_value"
-            gmsg -v2 -c $color_name "$color_name"
+            gmsg -n -v2 -c $color_name "."
             # make stylerc
             printf "\texport C_%s='%s'\n" "${color_name^^}" "$color"  >> $_target_rc
         done
     printf 'fi\n\n' >> $_target_rc
+    gmsg -v2 -c green " done"
 }
 
 
