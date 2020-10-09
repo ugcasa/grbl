@@ -20,13 +20,13 @@ remote.main() {
 
 remote.end () {                        # return normal, assuming that while is normal
     gmsg -v 1 -t "${FUNCNAME[0]}"
-    corsair.write $indicator_key white
+    corsair.main set $indicator_key white
 }
 
 
 remote.start () {                      # set leds  F1 -> F4 off
     gmsg -v 1 -t "${FUNCNAME[0]}"
-    corsair.write $indicator_key off
+    corsair.main set $indicator_key off
 }
 
 
@@ -35,15 +35,15 @@ remote.status () {
     # check remote is reachable. daemon poller will run this
     if remote.online ; then
             gmsg -v 1 -t -c green "${FUNCNAME[0]}: local accesspoint connection"
-            corsair.write $indicator_key green
+            corsair.main set $indicator_key green
             return 0
         elif remote.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
             gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote accesspoint connection"
-            corsair.write $indicator_key yellow
+            corsair.main set $indicator_key yellow
             return 0
         else
             gmsg -v 1 -t -c red "${FUNCNAME[0]}: accesspoint offline"
-            corsair.write $indicator_key red
+            corsair.main set $indicator_key red
             return 101
         fi
 }
