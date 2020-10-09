@@ -18,7 +18,7 @@ if [[ "$GURU_FLAG_COLOR" ]] ; then  #TODO remove this ..
 
 fi
 
-if [[ "$GURU_FLAG_COLOR" ]] ; then # ..replace with this
+if [[ "$GURU_FLAG_COLOR" ]] ; then # ..replace with this EIDT: No, remove all
 
     export C_NORMAL='\033[0m'
     export C_HEADER='\033[1;37m'

@@ -8,7 +8,7 @@ export GURU_HOSTNAME="$(hostname)"
 # export configuration
 
 if ! [[ -f $HOME/.gururc2 ]] ; then
-        [[ -f $HOME/bin/config.sh ]] && $HOME/bin/config.sh export
+        #[[ -f $HOME/bin/config.sh ]] && $HOME/bin/config.sh export
         [[ -f $HOME/.gururc2 ]] || exit 101
     fi
 
@@ -270,7 +270,7 @@ core.shell () {                                                      # terminal 
 
     local _verbose=1
     while : ; do
-            config.export "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
+            #config.export "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
             source $HOME/.gururc2
             GURU_VERBOSE=$_verbose
             # set call name off, affects help print out

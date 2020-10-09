@@ -64,8 +64,7 @@ config.make_rc () {
     [[ $_append_rc ]] || printf "#!/bin/bash \nexport GURU_USER=$GURU_USER\n" > $_target_rc
 
     # read config file, use chapter name as second part of variable name
-    while IFS='= ' read -r lhs rhs
-    do
+    while IFS='= ' read -r lhs rhs ;  do
       if [[ ! $lhs =~ ^\ *# && -n $lhs ]]; then
           rhs="${rhs%%\#*}"    # remove in line right comments
           rhs="${rhs%%*( )}"   # remove trailing spaces
@@ -75,11 +74,54 @@ config.make_rc () {
                       [[ $_chapter ]] && _chapter="$_chapter""_" ;;
                 *)    echo "export GURU_${_chapter^^}${lhs^^}=$rhs"
             esac
-
       fi
     done < $_source_cfg >> $_target_rc
 
     #tr -d '\r' < $configfile > $user_source_cfg.unix
+}
+
+config.make_color_rc () {
+    #export color config for shell scripts"
+    local _source_cfg="$1"
+    local _target_rc="$2"
+    local _append_rc="$3"
+    local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
+    # use same style file than corsair
+    [[ -f "$_source_cfg" ]] && source $_source_cfg || gmsg -x 100 -red "$_source_cfg missing"
+
+    gmsg -v2 "$_source_cfg $_mode $_target_rc"
+    [[ $_append_rc ]] || echo "#!/bin/bash" > $_target_rc
+    printf 'if [[ "$GURU_FLAG_COLOR" ]] ; then \n' >> $_target_rc
+    printf "\texport C_NORMAL=%s\n" "'\033[0m'"  >> $_target_rc
+    printf "\texport C_HEADER=%s\n" "'\033[1;37m'" >> $_target_rc
+    # parse trough color strings
+    color_name_list=$(set | grep rgb_ | grep -v grep | grep -v "   " )            # ; echo "$color_name_list"
+
+    for color_srt in ${color_name_list[@]} ; do
+            # color name
+            color_name=$(echo $color_srt | cut -f1 -d "=")    # ; echo "$color_srt"
+            color_name=${color_name//"rgb_"/""}         # ; echo "$color_name"
+            # color value
+            color_value=$(echo $color_srt | cut -f2 -d "=")   # ; echo "$color_value"
+            # slice hex code to 8 bit pieces
+            _r="${color_value:0:2}"
+            _g="${color_value:2:2}"
+            _b="${color_value:4:2}"               #; echo "$_r:$_g:$_b"
+            #[[ $_r ]] || [[ $_r ]] || [[ $_r ]] || echo "missing value"
+            # turn hex to dec
+            _r="$((16#$_r))"
+            _g="$((16#$_g))"
+            _b="$((16#$_b))"
+            # compose colorcode
+            color=$(printf '\033[38;2;%s;%s;%sm' "$_r" "$_g" "$_b")
+            color=${color//''/'\033'}
+            # printout
+            #echo -e "$color $color_name $color_value"
+            gmsg -v2 -c $color_name "$color_name"
+            # make stylerc
+            printf "\texport C_%s='%s'\n" "${color_name^^}" "$color"  >> $_target_rc
+        done
+    printf 'fi\n\n' >> $_target_rc
 }
 
 
@@ -93,6 +135,7 @@ config.export () {
     # make config<
     config.make_rc "$GURU_CFG/system.cfg" "$_target_rc"
     config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append
+    config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
     # check config
     if [[ "$_target_rc" ]] ; then
             # export configure
