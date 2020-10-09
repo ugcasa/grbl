@@ -1,5 +1,5 @@
 #!/bin/bash
-# automatically generated tester for guru-client corsair.sh Sat Oct 10 01:57:04 EEST 2020 casa@ujo.guru 2020
+# automatically generated tester for guru-client corsair.sh Sat Oct 10 02:42:19 EEST 2020 casa@ujo.guru 2020
 
 source $GURU_BIN/common.sh
 source ../core/corsair.sh 
@@ -44,7 +44,7 @@ corsair.test_main () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.main passed' 
        return 0
     else
@@ -65,7 +65,7 @@ corsair.test_help () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.help passed' 
        return 0
     else
@@ -86,7 +86,7 @@ corsair.test_check () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.check passed' 
        return 0
     else
@@ -107,7 +107,7 @@ corsair.test_status () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.status passed' 
        return 0
     else
@@ -128,7 +128,7 @@ corsair.test_start () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.start passed' 
        return 0
     else
@@ -149,7 +149,7 @@ corsair.test_init () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.init passed' 
        return 0
     else
@@ -170,7 +170,7 @@ corsair.test_raw_write () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.raw_write passed' 
        return 0
     else
@@ -191,7 +191,7 @@ corsair.test_set () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.set passed' 
        return 0
     else
@@ -212,7 +212,7 @@ corsair.test_reset () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.reset passed' 
        return 0
     else
@@ -233,7 +233,7 @@ corsair.test_end () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.end passed' 
        return 0
     else
@@ -254,7 +254,7 @@ corsair.test_kill () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.kill passed' 
        return 0
     else
@@ -275,7 +275,7 @@ corsair.test_install () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.install passed' 
        return 0
     else
@@ -296,7 +296,7 @@ corsair.test_remove () {
 
       ## TODO: add analysis here and manipulate $_error 
 
-    if [[ $_error ]] ; then 
+    if  ((_error<1)) ; then 
        gmsg -v0 -c green 'corsair.remove passed' 
        return 0
     else

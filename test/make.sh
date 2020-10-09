@@ -93,7 +93,7 @@ for _function in "${functions_to_test[@]}" ; do
         echo                                                                >> $tester_file_name
         echo '      ## TODO: add analysis here and manipulate $_error '     >> $tester_file_name
         echo                                                                >> $tester_file_name
-        echo '    if [[ $_error ]] ; then '                                 >> $tester_file_name
+        echo '    if  ((_error<1)) ; then '                                 >> $tester_file_name
         echo "       gmsg -v0 -c green '$_function passed' "                >> $tester_file_name
         echo '       return 0'                                              >> $tester_file_name
         echo '    else'                                                     >> $tester_file_name
