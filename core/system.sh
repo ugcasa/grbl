@@ -4,7 +4,7 @@ source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/corsair.sh
 
-system.main() {
+system.main () {
     # system command parser
     indicator_key='F'"$(poll_order system)"
     local tool="$1"; shift
@@ -51,7 +51,7 @@ system.end () {
 }
 
 
-system.upgrade() {
+system.upgrade () {
     # upgrade guru-client
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"
@@ -72,7 +72,7 @@ system.upgrade() {
 }
 
 
-system.rollback() {
+system.rollback () {
     # rollback to version
 
     local temp_dir="/tmp/guru"

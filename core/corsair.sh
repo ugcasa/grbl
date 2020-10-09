@@ -77,21 +77,9 @@ corsair.help () {
     gmsg -v 1 "          $GURU_CALL corsair init trippy "
     gmsg -v 1 "          $GURU_CALL corsair end         "
     gmsg -v 2
+    return 0
 }
 
-
-corsair.kill () {
-    gmsg -c white "killing ckb-next-daemon.."
-    sudo -v
-
-    sudo pkill ckb-next-daemon || gmsg -c yellow "kill error"
-    sleep 2
-    if ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-            gmsg -x 100 -c tomato "kill failed"
-         else
-            gmsg -x 0 -c green "kill verified"
-         fi
-    }
 
 
 corsair.check () {
@@ -132,33 +120,15 @@ corsair.status () {
 }
 
 
-corsair.init () {
-    # load default profile and set wanted mode
-    local _mode=$GURU_CORSAIR_MODE ; [[ $1 ]] && _mode="$1"
-
-    if ckb-next -p guru -m $_mode 2>/dev/null ; then
-            export corsair_mode=$_mode
-            echo $_mode > $corsair_last_mode
-        else
-            local _error=$?
-            gmsg -v -c yellow "corsair init failure"
-            return $_error
-        fi
-    return 0
-}
-
-
 corsair.start () {
     # reserve some keys for future purposes by coloring them now
-    # todo: I think this can be removed, used to be test interface before daemon
     if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
             gmsg -v1 -c green "already running"
             return 0
         fi
 
+    # ask sudo password forehand cause next step stdout is rerouted to null
     gmsg -v1 -c white "starting ckb-next-daemon"
-
-    gmsg -c white "starting kb-next-daemon.."
     sudo -v
 
     # start daemon to background
@@ -202,32 +172,23 @@ corsair.start () {
             corsair.raw_write $_key_pipe $rgb_black
         done
     gmsg -v1 -c green " done"
+    return 0
 }
 
 
-corsair.end () {
-    # reserve some keys for future purposes by coloring them now
-    corsair.init ftb
-    sleep 1
-    corsair.init $GURU_CORSAIR_MODE
-}
+corsair.init () {
+    # load default profile and set wanted mode
+    local _mode=$GURU_CORSAIR_MODE ; [[ $1 ]] && _mode="$1"
 
-
-corsair.reset () {
-    # return normal, if no input reset all
-    gmsg -n -v2 -t "resetting key"
-
-    if [[ "$1" ]] ; then
-            gmsg -v2 " $1"
-            corsair.set $1 $corsair_mode 10
+    if ckb-next -p guru -m $_mode 2>/dev/null ; then
+            export corsair_mode=$_mode
+            echo $_mode > $corsair_last_mode
         else
-            gmsg -n -v2 "s"
-            for _key_pipe in $key_pipe_list ; do
-                gmsg -n -v2 "."
-                corsair.raw_write $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10
-            done
-        gmsg -v2 -c green " done"
+            local _error=$?
+            gmsg -v -c yellow "corsair init failure"
+            return $_error
         fi
+    return 0
 }
 
 
@@ -279,13 +240,55 @@ corsair.set () {
     if file $_button |grep fifo >/dev/null ; then
             echo "rgb $_color" > "$_button"
             sleep 0.05
+            return 0
         else
             gmsg -c yellow "io error, pipe file $_button is not set in cbk-next"
             return 103
         fi
-    # pass
-    return 0
 }
+
+
+corsair.reset () {
+    # return normal, if no input reset all
+    gmsg -n -v2 -t "resetting key"
+
+    if [[ "$1" ]] ; then
+            gmsg -v2 " $1"
+            corsair.set $1 $corsair_mode 10 && return 0 || return 100
+        else
+            gmsg -n -v2 "s"
+            for _key_pipe in $key_pipe_list ; do
+                gmsg -n -v2 "."
+                corsair.raw_write $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10 || return 100
+            done
+           gmsg -v2 -c green " done"
+           return 0
+        fi
+}
+
+
+corsair.end () {
+    # reserve some keys for future purposes by coloring them now
+    corsair.init ftb
+    sleep 1
+    corsair.init $GURU_CORSAIR_MODE && return 0 || return 100
+}
+
+
+corsair.kill () {
+    gmsg -c white "killing ckb-next-daemon.."
+    sudo -v
+
+    sudo pkill ckb-next-daemon || gmsg -c yellow "kill error"
+    sleep 2
+    if ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
+            gmsg -c tomato "kill failed"
+            return 100
+         else
+            gmsg -c green "kill verified"
+            return 0
+         fi
+    }
 
 
 corsair.install () {
@@ -300,6 +303,7 @@ corsair.install () {
         echo "no corsair devices connected, exiting.."
         return 100
     fi
+    return 0
 }
 
 
@@ -317,6 +321,7 @@ corsair.remove () {
         sudo cmake --build build --target install       # The compilation and installation steps are required because install target generates an install manifest that later allows to determine which files to remove and what is their location.
         sudo cmake --build build --target uninstall
     fi
+    return 0
 }
 
 

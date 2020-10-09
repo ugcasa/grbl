@@ -3,7 +3,7 @@
 source $GURU_BIN/common.sh
 source $GURU_BIN/corsair.sh
 
-remote.main() {
+remote.main () {
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
     indicator_key='F'"$(poll_order remote)"
     source $GURU_BIN/corsair.sh
@@ -73,7 +73,7 @@ remote.warning () {
 }
 
 
-remote.online() {
+remote.online () {
 
     local _user="$GURU_ACCESS_USERNAME"
     local _server="$GURU_ACCESS_LAN_IP" ; [[ "$1" ]] && _server="$1" ; shift
@@ -89,14 +89,14 @@ remote.online() {
 }
 
 
-remote.check() {
+remote.check () {
     # same shit than onlin but silent (shortcut)
     remote.online $@ >/dev/null
     return $?
 }
 
 
-remote.pull_config() {
+remote.pull_config () {
     msg "pulling configs.. "
     local _error=0
 
@@ -114,7 +114,7 @@ remote.pull_config() {
 }
 
 
-remote.push_config() {
+remote.push_config () {
     msg "pushing configs.. "
     local _error=0
 
@@ -140,7 +140,7 @@ remote.push_config() {
 }
 
 
-remote.needed() {
+remote.needed () {
     #install and remove needed applications. input "install" or "remove"
     local action=$1
     [ "$action" ] || read -r -p "install or remove? :" action

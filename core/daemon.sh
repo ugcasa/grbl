@@ -16,7 +16,7 @@ daemon.main () {
 }
 
 
-daemon.help ( ) {
+daemon.help () {
     gmsg -v 1 -c white "guru daemon help "
     gmsg -v 2
     gmsg -v 0 "usage:    $GURU_CALL daemon [start|stop|status|kill|poll]"
