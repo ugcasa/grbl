@@ -216,7 +216,7 @@ corsair.set () {
     local _button=${1^^}
     local _color='rgb_'"$2"
     local _bright="FF" ; [[ $3 ]] && _bright="$3"
-    gmsg -n -v1 -t "set $_button color to "
+    gmsg -n -v1 -t "${FUNCNAME[0]}: $_button color to "
     gmsg -v1 -c $2 "$2"
     # get input key pipe file location
     _button=$(eval echo '$'$_button)
@@ -234,7 +234,7 @@ corsair.set () {
     _color="$_color""$_bright"
 
     # wrtite to pipe
-    gmsg -v2 -t "$_button <- $_color"
+    gmsg -v2 -t "${FUNCNAME[0]}: $_button <- $_color"
 
     # write color code to button pipe file and let device to receive and process command (surprisingly slow)
     if file $_button |grep fifo >/dev/null ; then
