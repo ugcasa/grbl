@@ -16,7 +16,13 @@ if echo "$TERM" | grep "256" >/dev/null ; then
 
 # set only needed colors
 if [[ "$GURU_FLAG_COLOR" ]] ; then
-pass
+        C_NORMAL='\033[0m'
+        C_GREY='\033[38;2;128;128;128m'
+        C_DARK_GREY='\033[38;2;169;169;169m'
+        C_GREEN='\033[38;2;0;128;0m'
+        C_RED='\033[38;2;255;0;0m'
+        C_LIGHT_BLUE='\033[38;2;173;216;230m'
+        C_WHITE='\033[38;2;255;255;255m'
     fi
 
 # use new modules durin installation
