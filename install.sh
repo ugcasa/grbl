@@ -27,7 +27,7 @@ install.main () {
 
     # Step 2) check previous installation
     install.check || gmsg -x 110 "check caused exit"
-    gmsg -v1 -c white "installing guru-client"
+    gmsg -v0 -c white "installing guru-client"
     gmsg -v2 "user: $GURU_USER"
 
     # Step 3) modify and add .rc files
@@ -81,10 +81,17 @@ install.main () {
     gmsg -v2 -c gray "${installed_modules[@]}"
     echo "${installed_modules[@]}" > "$GURU_CFG/installed.modules"
 
+    # printout and save modified files
+    gmsg -v1 -c light_blue "modified ${#modified_files[@]} file(s)"
+    gmsg -v2 -c gray "${modified_files[@]}"
+    echo "${modified_files[@]}" > "$GURU_CFG/modified.files"
+
     # printout file statistics
     gmsg -v1 -c light_blue "copied ${#installed_files[@]} files"
     gmsg -v2 -c gray "${installed_files[@]}"
     echo "${installed_files[@]}" > "$GURU_CFG/installed.files"
+
+
     # pass
     return 0
 }
@@ -144,17 +151,18 @@ install.copy () {
     # copy folders witout subfolders from source to target and keep track of copied files
     local _from="$1" ; shift
     local _to="$1" ; shift
-    gmsg -n -v1 "$@"
+    gmsg -n -v1 "$@ " ; gmsg -v2
     _file_list=( $(ls $_from/*) )
     for _file_to_copy in "${_file_list[@]}" ; do
             if cp -r -f "$_file_to_copy" "$_to" ; then
-                gmsg -v2 -n "."
+                gmsg -v1 -V2 -n -c gray "."
+                gmsg -v2 -c gray "$_file_to_copy"
                 installed_files=( ${installed_files[@]} ${_file_to_copy//$_from/$_to} )
             else
                 gmsg -N -c yellow "$_file_to_copy copy failed"
              fi
         done
-    gmsg -v1 -c green " done"
+    gmsg -v1 -V2 -c green " done"
     return 0
 }
 
@@ -182,7 +190,7 @@ install.check () {
 
 install.rcfiles () {
     ## Set up dot rc files
-    gmsg -n -v1 "setting up launchers.. "
+    gmsg -n -v1 "setting up launchers "
     # Check is .gururc called in .bashrc, add call if not # /etc/skel/.bashrc
     [[ -f "$HOME/.bashrc.giobackup" ]]  || cp -f "$bash_rc" "$HOME/.bashrc.giobackup"
     # make a backup of original .bashrc only if installed first time
@@ -198,35 +206,67 @@ install.rcfiles () {
 
 check.rcfiles () {
     # check that rc files were installed
-    gmsg -n -v1 "checking launchers.. "
-    grep -q "gururc" "$bash_rc"       || gmsg -c red -x 122 ".bashrc modification error"
-    [[ -f "$HOME/.bashrc.giobackup" ]]  || gmsg "warning: .bashrc backup file creation failure"
+    gmsg -n -v1 "checking launchers " ; gmsg -v2
+
+    gmsg -n -v1 -V2 -c gray "." ; gmsg -v2 -n -c gray "$bash_rc"
+    if grep -q "gururc" "$bash_rc" ; then
+            modified_files=(${modified_files[@]} "$bash_rc")
+            gmsg  -v2 -c green " ok"
+        else
+            gmsg -c red -x 122 ".bashrc modification error"
+        fi
+
+    gmsg -n -v1 -V2 -c gray "." ; gmsg -v2 -n -c gray "$HOME/.bashrc.giobackup"
+    if [[ -f "$HOME/.bashrc.giobackup" ]] ; then
+            gmsg -v2 -c green " ok"
+        else
+            gmsg "warning: .bashrc backup file creation failure"
+        fi
+
     # pass
-    gmsg -v1 -c green "passed"
+    gmsg -V2 -v1 -c green " ok"
     return 0
 }
 
 
 install.folders () {
     # create forlders
-    gmsg -n -v1 "setting up folder structure.. "
+    gmsg -n -v1 "setting up folder structure " ; gmsg -v2
+
     # make bin folder for scripts, configs and and apps
     [[ -d "$TARGET_BIN" ]] || mkdir -p "$TARGET_BIN"
+    gmsg -n -v1 -V2 -c gray "." ; gmsg -v2 -c gray "$GURU_CFG/$TARGET_BIN"
+
     # personal configurations
     [[ -d "$GURU_CFG/$GURU_USER" ]] || mkdir -p "$GURU_CFG/$GURU_USER"
+    gmsg -n -v1 -V2 -c gray "." ; gmsg -v2 -c gray "$GURU_CFG/$GURU_USER"
+
     # pass
-    gmsg -v1 -c green "done"
+    gmsg -V2 -v1 -c green " done"
     return 0
 }
 
 
 check.folders () {
     # check that folders were created
-    gmsg -n -v1 "checking created folders.. "
-    [[ -d "$TARGET_BIN" ]] || gmsg -x 141 -c red "failed: bin folder creation error"
-    [[ -d "$GURU_CFG/$GURU_USER" ]] || gmsg -x 143 -c red "failed: configuration folder creation error"
+    gmsg -n -v1 "checking created folders " ; gmsg -v2
+
+    gmsg -n -v1 -V2 -c gray "." ; gmsg -n -v2 -c gray "$TARGET_BIN"
+    if [[ -d "$TARGET_BIN" ]] ; then
+            gmsg -v2 -c green " ok"
+        else
+            gmsg -x 141 -c red "failed: bin folder creation error"
+        fi
+
+
+    gmsg -n -v1 -V2 -c gray "." ; gmsg -n -v2 -c gray "$GURU_CFG/$GURU_USER"
+    if [[ -d "$GURU_CFG/$GURU_USER" ]] ; then
+            gmsg  -v2 -c green " ok"
+        else
+            gmsg -x 143 -c red "failed: configuration folder creation error"
+        fi
     # pass
-    gmsg -v1 -c green "passed"
+    gmsg -V2 -v1 -c green " ok"
     return 0
 }
 
@@ -243,26 +283,30 @@ install.core () {
 
 check.core () {
     # check core were installed
-    gmsg -v1 "checking core modules"
+    gmsg -n -v1 "checking core modules" ; gmsg -v2
     for _file in $(ls core) ; do
-            gmsg -n -v2 -c grey "$_file.. "
+            gmsg -v1 -V2 -n -c grey "."
+            gmsg -n -v2 -c grey "$_file"
             if [[ -f $TARGET_BIN/$_file ]] ; then
-                gmsg -v2 -c green "ok"
+                gmsg -v2 -c green " ok"
             else
                 gmsg -c red "warning: core module $_file missing"
             fi
         done
+    gmsg -v1 -V2 -c green " ok"
 
-    gmsg -v1 "checking configuration files"
+    gmsg -n -v1 "checking configuration files " ; gmsg -v2
     for _file in $(ls cfg) ; do
-            gmsg -n -v2 -c grey "$_file.. "
+            gmsg -v1 -V2 -n -c grey "."
+            gmsg -n -v2 -c grey "$_file"
             if [[ -f $GURU_CFG/$_file ]] ; then
-                gmsg -v2 -c green "ok"
+                gmsg -v2 -c green " ok"
             else
                 gmsg -c yellow "warning: configuration file $_file missing"
             fi
         done
     # pass
+   gmsg -v1 -V2 -c green " ok"
    return 0
 
 }
@@ -342,41 +386,53 @@ check.phone () {
 
 install.modules () {
     # install modules
-    gmsg -v1 "installing modules"
+    gmsg -n -v1 "installing modules " ; gmsg -v2
+
     for _module in ${modules_to_install[@]} ; do
-        gmsg -n -v2 -c gray "$_module.. "
+        gmsg -n -v1 -V2 -c gray "."
+        gmsg -n -v2 -c gray "$_module "
         module_file=$(ls modules/$_module.*)
+
         if [[ -f $module_file ]] ; then
-                cp -f -r modules/$_module.* "$TARGET_BIN" && gmsg -v2 -c green "done"
+
+                if cp -f -r modules/$_module.* "$TARGET_BIN" ; then
+                        gmsg -v2 -c green "done"
+                    else
+                        gmsg -c yellow "module copy error"
+                    fi
+
                 [[ $install_requiremets ]] && gask "install module $_module requirements" && $module_file install
                 installed_files=("${installed_files[@]} ${_module_file}")
                 installed_modules=( ${installed_modules[@]} ${_module} )
             fi
         done
     # pass
+    gmsg -v1 -V2 -c green " done"
     return 0
 }
 
 
 check.modules () {
     # check installed modules (foray folder is not monitored)
-    gmsg -v1 "checking installed modules"
+    gmsg -n -v1 "checking installed modules " ; gmsg -v2
     for _file in  ${modules_to_install[@]} ; do
-            gmsg -n -v2 -c gray "$_file.. "
+            gmsg -n -v2 -c gray "$_file"
+            gmsg -n -v1 -V2 -c gray "."
             if ls $TARGET_BIN/$_file* >/dev/null ; then
-                gmsg -v2 -c green "ok"
+                gmsg -v2 -c green " ok"
             else
                 gmsg -c yellow "warning: module $_file missing"
             fi
         done
     # pass
+    gmsg -v1 -V2 -c green " ok"
     return 0
 }
 
 
 install.config () {
     # config
-    gmsg -v1 "setting user configurations "
+    gmsg -v1 -c white "user configurations "
     if ! [[ -f "$GURU_CFG/$GURU_USER/user.cfg" ]] ; then
          gmsg -c yellow "user specific configuration not found, using default.."
          cp -f $GURU_CFG/user-default.cfg "$GURU_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
@@ -386,7 +442,9 @@ install.config () {
     #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
 
     # set keyboard shortcuts
-    keyboard.main add all
+    gmsg -n -v1 "setting keyboard shortcuts "
+    keyboard.main add all || gmsg -c yellow "error by setting keyboard shortcuts"
+
     return 0
 }
 

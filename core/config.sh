@@ -89,6 +89,7 @@ config.make_color_rc () {
     # use same style file than corsair
     [[ -f "$_source_cfg" ]] && source $_source_cfg || gmsg -x 100 -red "$_source_cfg missing"
 
+    gmsg -n -v1 "setting color codes " ; gmsg -v2
     gmsg -v2 -c gray "$_source_cfg $_mode $_target_rc"
     [[ $_append_rc ]] || echo "#!/bin/bash" > $_target_rc
     printf 'if [[ "$GURU_FLAG_COLOR" ]] ; then \n' >> $_target_rc
@@ -116,12 +117,13 @@ config.make_color_rc () {
             color=${color//''/'\033'}  # bubblecum
             # printout
             #echo -e "$color $color_name $color_value"
-            gmsg -n -v2 -c $color_name "."
+            gmsg -n -v1 -V2 -c $color_name "."
+            gmsg -n -v2 -c $color_name "$color_name "
             # make stylerc
             printf "\texport C_%s='%s'\n" "${color_name^^}" "$color"  >> $_target_rc
         done
     printf 'fi\n\n' >> $_target_rc
-    gmsg -v2 -c green " done"
+    gmsg -v1 -c green " done"
 }
 
 

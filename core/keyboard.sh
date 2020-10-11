@@ -3,13 +3,18 @@
 # casa@ujo.guru 2020
 source $GURU_BIN/common.sh
 
+
 keyboard.main() {
     # keyboard command parser
-    distro="$(check_distro)" #; gmsg -v2 "$distro"
+    distro="$(check_distro)" # ; gmsg -v2 "|$distro|"
     command="$1" ; shift
     case "$command" in
-        add)  [[ "$1" == "all" ]] && keyboard.set_guru_$distro || keyboard.set_shortcut_$distro "$@" ;;
-         rm)  [[ "$1" == "all" ]] && keyboard.reset_$distro || keyboard.release_$distro "$@" ;;
+        add)  if [[ "$1" == "all" ]] ; then
+                    keyboard.set_guru_linuxmint && return 0 || return 100
+                else
+                    keyboard.set_shortcut_$distro "$@"  && return 0 || return 100
+                fi ;;
+         rm)  [[ "$1" == "all" ]] && "keyboard.reset_""${distro}" || keyboard.release_$distro "$@" ;;
      *|help) keyboard.help
             ;;
     esac
@@ -34,8 +39,6 @@ keyboard.help () {
     gmsg -v2
 
 }
-
-
 
 
 keyboard.set_shortcut_ubuntu () {           # set ubuntu keyboard shorcuts
@@ -63,15 +66,16 @@ keyboard.set_shortcut_ubuntu () {           # set ubuntu keyboard shorcuts
 
 keyboard.reset_ubuntu () {        # resets all custom shortcuts to default
     compatible_with "ubuntu" || return 1
-    gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings
+    gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings || return 100
+    return 0
 }
 
 
 keyboard.release_ubuntu(){        # release single shortcut
     # usage: keyboard.release_ubuntu_shortcutss [key_binding] {directory}
     gmsg -v1 -x 101 "TBD ${FUNCNAME[0]}"
+    return 9
 }
-
 
 keyboard.set_guru_ubuntu(){       # set guru defaults
 
@@ -92,9 +96,42 @@ keyboard.set_guru_ubuntu(){       # set guru defaults
     return 0
 }
 
+
+keyboard.set_guru_linuxmint () {
+
+local _new=$GURU_CFG/kbbind.guruio.cfg
+local _backup=$GURU_CFG/kbbind.backup.cfg
+
+if [[ ! -f "$_backup" ]] ; then
+
+        gmsg -n -v2 -c gray "backup $_backup "
+
+        if dconf dump /org/cinnamon/desktop/keybindings/ > "$_backup" ; then
+                gmsg -v1 -c green "ok"
+            else
+                gmsg -c yellow "error saving shortcut backup to $_backup"
+            fi
+    fi
+
+gmsg -n -v2 -c gray "$_new "
+
+if dconf load /org/cinnamon/desktop/keybindings/ < "$_new" ; then
+        gmsg -v1 -c green "ok"
+        return 0
+    else
+        gmsg -c yellow "error setting keyboard shortcuts $_new"
+        return 1
+    fi
+
+return 0
+}
+
+
 keyboard.set_shortcut_linuxmint () {
     gmsg -v1 -x 101 "TBD ${FUNCNAME[0]}"
+    return 9
 }
+
 
 keyboard.reset_linuxmint() {
     # ser cinnamon chortcut
@@ -103,33 +140,18 @@ keyboard.reset_linuxmint() {
     backup=$GURU_CFG/kbbind.backup.cfg
 
     if [ -f "$backup" ]; then
-        dconf load /org/cinnamon/desktop/keybindings/ < "$backup"
+        dconf load /org/cinnamon/desktop/keybindings/ < "$backup" || return 101
     else
         gmsg -c yellow "no backup found"
+        return 2
     fi
 }
 
 
-keyboard.release_linuxmint() {
+keyboard.release_linuxmint () {
     gmsg -v1 -x 101 "TBD ${FUNCNAME[0]}"
+    return 9
 }
-
-
-keyboard.set_guru_linuxmint() {
-    # ser cinnamon chortcut
-    compatible_with "linuxmint" || return 1
-
-    new=$GURU_CFG/kbbind.guruio.cfg
-    backup=$GURU_CFG/kbbind.backup.cfg
-
-    if [ ! -f "$backup" ]; then
-        dconf dump /org/cinnamon/desktop/keybindings/ > "$backup" # && cat "$backup" | grep binding=
-
-    fi
-
-    dconf load /org/cinnamon/desktop/keybindings/ < "$new"
-}
-
 
 keyboard.install () {
      dconf help >/dev/null || sudo apt install dconf-cli

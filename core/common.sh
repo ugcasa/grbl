@@ -33,6 +33,7 @@ export -f msg
 gmsg() {
     # function for ouput messages and make log notifications - revisited
     local _verbose_trigger=0                        # prinout if verbose trigger is not set in options
+    local _verbose_limiter=3
     local _newline="\n"                             # newline is on by default
     local _pre_newline=
     local _timestamp=                               # timestamp is disabled by default
@@ -41,7 +42,7 @@ gmsg() {
     local _color=
     local _exit=
 
-    TEMP=`getopt --long -o "tlnhNx:v:c:" "$@"`
+    TEMP=`getopt --long -o "tlnhNx:V:v:c:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
@@ -51,6 +52,7 @@ gmsg() {
             -n ) _newline=                                  ; shift ;;  # no newline
             -N ) _pre_newline="\n"                          ; shift ;;  # newline before printout
             -x ) _exit=$2                                   ; shift 2 ;;
+            -V)  _verbose_limiter=$2                        ; shift 2 ;;
             -v ) _verbose_trigger=$2                        ; shift 2 ;;
             -c ) _c_var="C_${2^^}" ; _color=${!_c_var}      ; shift 2 ;;
              * ) break
@@ -65,6 +67,9 @@ gmsg() {
     [[ $_exit -gt 9 ]] && _message="$_exit: $_message"
 
     if [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
+
+            if [[ $GURU_VERBOSE -ge $_verbose_limiter ]] ; then return 0 ; fi
+
             if [[ $_color ]] ; then
                     printf "$_pre_newline$_color%s%s$_newline$C_NORMAL" "$_timestamp" "$_message"
                 else
