@@ -6,6 +6,19 @@ GURU_USER="$USER"
 export GURU_BIN="./core"
 GURU_CFG=$HOME/.config/guru
 TARGET_BIN=$HOME/bin
+
+# check if colors possible
+if echo "$TERM" | grep "256" >/dev/null ; then
+    if echo "$COLORTERM" | grep "true" >/dev/null ; then
+            GURU_FLAG_COLOR=true
+        fi
+    fi
+
+# set only needed colors
+if [[ "$GURU_FLAG_COLOR" ]] ; then
+pass
+    fi
+
 # use new modules durin installation
 source core/common.sh
 source core/config.sh
@@ -73,24 +86,23 @@ install.main () {
 
     # printout and save core statistics
     gmsg -v1 -c light_blue "installed ${#installed_core[@]} core scripts"
-    gmsg -v2 -c gray "${installed_core[@]}"
+    gmsg -v2 -c grey "${installed_core[@]}"
     echo "${installed_core[@]}" > "$GURU_CFG/installed.core"
 
     # printout and save module statistics
     gmsg -v1 -c light_blue "installed ${#installed_modules[@]} modules"
-    gmsg -v2 -c gray "${installed_modules[@]}"
+    gmsg -v2 -c grey "${installed_modules[@]}"
     echo "${installed_modules[@]}" > "$GURU_CFG/installed.modules"
 
     # printout and save modified files
     gmsg -v1 -c light_blue "modified ${#modified_files[@]} file(s)"
-    gmsg -v2 -c gray "${modified_files[@]}"
+    gmsg -v2 -c grey "${modified_files[@]}"
     echo "${modified_files[@]}" > "$GURU_CFG/modified.files"
 
     # printout file statistics
     gmsg -v1 -c light_blue "copied ${#installed_files[@]} files"
-    gmsg -v2 -c gray "${installed_files[@]}"
+    gmsg -v2 -c grey "${installed_files[@]}"
     echo "${installed_files[@]}" > "$GURU_CFG/installed.files"
-
 
     # pass
     return 0
@@ -155,8 +167,8 @@ install.copy () {
     _file_list=( $(ls $_from/*) )
     for _file_to_copy in "${_file_list[@]}" ; do
             if cp -r -f "$_file_to_copy" "$_to" ; then
-                gmsg -v1 -V2 -n -c gray "."
-                gmsg -v2 -c gray "$_file_to_copy"
+                gmsg -v1 -V2 -n -c grey "."
+                gmsg -v2 -c grey "$_file_to_copy"
                 installed_files=( ${installed_files[@]} ${_file_to_copy//$_from/$_to} )
             else
                 gmsg -N -c yellow "$_file_to_copy copy failed"
@@ -208,7 +220,7 @@ check.rcfiles () {
     # check that rc files were installed
     gmsg -n -v1 "checking launchers " ; gmsg -v2
 
-    gmsg -n -v1 -V2 -c gray "." ; gmsg -v2 -n -c gray "$bash_rc"
+    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -n -c grey "$bash_rc"
     if grep -q "gururc" "$bash_rc" ; then
             modified_files=(${modified_files[@]} "$bash_rc")
             gmsg  -v2 -c green " ok"
@@ -216,7 +228,7 @@ check.rcfiles () {
             gmsg -c red -x 122 ".bashrc modification error"
         fi
 
-    gmsg -n -v1 -V2 -c gray "." ; gmsg -v2 -n -c gray "$HOME/.bashrc.giobackup"
+    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -n -c grey "$HOME/.bashrc.giobackup"
     if [[ -f "$HOME/.bashrc.giobackup" ]] ; then
             gmsg -v2 -c green " ok"
         else
@@ -235,11 +247,11 @@ install.folders () {
 
     # make bin folder for scripts, configs and and apps
     [[ -d "$TARGET_BIN" ]] || mkdir -p "$TARGET_BIN"
-    gmsg -n -v1 -V2 -c gray "." ; gmsg -v2 -c gray "$GURU_CFG/$TARGET_BIN"
+    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -c grey "$GURU_CFG/$TARGET_BIN"
 
     # personal configurations
     [[ -d "$GURU_CFG/$GURU_USER" ]] || mkdir -p "$GURU_CFG/$GURU_USER"
-    gmsg -n -v1 -V2 -c gray "." ; gmsg -v2 -c gray "$GURU_CFG/$GURU_USER"
+    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -c grey "$GURU_CFG/$GURU_USER"
 
     # pass
     gmsg -V2 -v1 -c green " done"
@@ -251,7 +263,7 @@ check.folders () {
     # check that folders were created
     gmsg -n -v1 "checking created folders " ; gmsg -v2
 
-    gmsg -n -v1 -V2 -c gray "." ; gmsg -n -v2 -c gray "$TARGET_BIN"
+    gmsg -n -v1 -V2 -c grey "." ; gmsg -n -v2 -c grey "$TARGET_BIN"
     if [[ -d "$TARGET_BIN" ]] ; then
             gmsg -v2 -c green " ok"
         else
@@ -259,7 +271,7 @@ check.folders () {
         fi
 
 
-    gmsg -n -v1 -V2 -c gray "." ; gmsg -n -v2 -c gray "$GURU_CFG/$GURU_USER"
+    gmsg -n -v1 -V2 -c grey "." ; gmsg -n -v2 -c grey "$GURU_CFG/$GURU_USER"
     if [[ -d "$GURU_CFG/$GURU_USER" ]] ; then
             gmsg  -v2 -c green " ok"
         else
@@ -334,7 +346,7 @@ check.dev () {
     # check installed tester files
     gmsg -v1 "checking tester module"
     for _file in $(ls test) ; do
-            gmsg -n -v2 -c gray "$_file.. "
+            gmsg -n -v2 -c grey "$_file.. "
             if [[ -f $TARGET_BIN/$_file ]] ; then
                 gmsg -v2 -c green "ok"
             else
@@ -359,7 +371,7 @@ check.server () {
     # check installed server files
     gmsg -v1 "checking server files"
     for _file in "${server_modules[@]}" ; do
-            gmsg -n -v2 -c gray  "$_file.. "
+            gmsg -n -v2 -c grey  "$_file.. "
             if ls $TARGET_BIN/$_file* >/dev/null; then
                 gmsg -v2 -c green "ok"
             else
@@ -389,8 +401,8 @@ install.modules () {
     gmsg -n -v1 "installing modules " ; gmsg -v2
 
     for _module in ${modules_to_install[@]} ; do
-        gmsg -n -v1 -V2 -c gray "."
-        gmsg -n -v2 -c gray "$_module "
+        gmsg -n -v1 -V2 -c grey "."
+        gmsg -n -v2 -c grey "$_module "
         module_file=$(ls modules/$_module.*)
 
         if [[ -f $module_file ]] ; then
@@ -416,8 +428,8 @@ check.modules () {
     # check installed modules (foray folder is not monitored)
     gmsg -n -v1 "checking installed modules " ; gmsg -v2
     for _file in  ${modules_to_install[@]} ; do
-            gmsg -n -v2 -c gray "$_file"
-            gmsg -n -v1 -V2 -c gray "."
+            gmsg -n -v2 -c grey "$_file"
+            gmsg -n -v1 -V2 -c grey "."
             if ls $TARGET_BIN/$_file* >/dev/null ; then
                 gmsg -v2 -c green " ok"
             else
@@ -453,9 +465,4 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         install.main $@
         exit "$?"
 fi
-
-
-
-
-
 
