@@ -1,9 +1,10 @@
 #!/bin/bash
 # sshfs mount functions for guru-client
 source $GURU_BIN/common.sh
-source $GURU_BIN/corsair.sh
+
 
 remote.main () {
+    source $GURU_BIN/corsair.sh
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
     indicator_key='F'"$(poll_order remote)"
     source $GURU_BIN/corsair.sh

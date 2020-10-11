@@ -1,6 +1,9 @@
 #!/bin/bash
 source $GURU_BIN/keyboard.sh
 
+backup_rc="$HOME/.bashrc.backup-by-guru"
+core_rc="$HOME/.gururc2"    # TODO change name to '.gururc' when cleanup next time
+
 ## TODO total bullshit, rewrite all!
 uninstall.main () {
 
@@ -14,16 +17,37 @@ uninstall.main () {
     esac
 }
 
-## TODO total bullshit, rewrite all!
+## TODO total bullshit, rewrite all! edit, slowly..
 uninstall.remove () {
 
-    if [ ! -f "$HOME/.bashrc.giobackup" ]; then
+    if [ -f "$backup_rc" ]; then
+        gmsg -n -v1 "removing launcher "
+
+        if cp -f "$backup_rc" "$HOME/.bashrc" ; then
+                gmsg -v1 -c green "ok"
+            else
+                gmsg -v1 -c yellow  "error when trying to remove launcher from $HOME/.bashrc, try manually"
+            fi
+        else
             echo "not installed, aborting.."
-            return 135
+            return 127
         fi
 
-    mv -f "$HOME/.bashrc.giobackup" "$HOME/.bashrc"
-    rm -f "$HOME/.gururc2"
+    file_list=( $(cat $GURU_CFG/installed.files) )
+
+    gmsg -v1 -n "deleting files " ; gmsg -v2
+    for _file in ${file_list[@]} ; do
+        if [[ -f $_file ]] ; then
+                rm -rf $_file
+                gmsg -n -v1 -V2 -c gray "."
+                gmsg -v2 -c gray "$_file"
+            else
+                gmsg -c yellow "warning: file '$_file' not found"
+            fi
+        done
+    gmsg -v1 -V2 -c green " done"
+
+    rm -f "$core_rc"
     rm -fr "$HOME/bin"
     #[[ $HOME/.config/guru ]] && rm -rf "$HOME/.config/guru"
     keyboard.main rm all
@@ -33,7 +57,7 @@ uninstall.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    [[ -f "$HOME/.gururc2" ]] && source "$HOME/.gururc2"
+    [[ -f "$core_rc" ]] && source "$core_rc"
     uninstall.main "$@"
 fi
 

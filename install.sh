@@ -32,6 +32,7 @@ source core/keyboard.sh
 # to where add gururc call
 bash_rc="$HOME/.bashrc"
 core_rc="$HOME/.gururc2"    # TODO change name to '.gururc' when cleanup next time
+backup_rc="$HOME/.bashrc.backup-by-guru"
 
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
 modules_to_install=(mount mqtt note android print project scan ssh stamp tag timer tor trans user vol yle news)
@@ -175,7 +176,7 @@ install.copy () {
             if cp -r -f "$_file_to_copy" "$_to" ; then
                 gmsg -v1 -V2 -n -c grey "."
                 gmsg -v2 -c grey "$_file_to_copy"
-                installed_files=( ${installed_files[@]} ${_file_to_copy//$_from/$_to} )
+                installed_files=( ${installed_files[@]} ${_file_to_copy/$_from/$_to} )
             else
                 gmsg -N -c yellow "$_file_to_copy copy failed"
              fi
@@ -208,15 +209,16 @@ install.check () {
 
 install.rcfiles () {
     ## Set up dot rc files
-    gmsg -n -v1 "setting up launchers "
+    gmsg -n -v1 "setting up launcher "
     # Check is .gururc called in .bashrc, add call if not # /etc/skel/.bashrc
-    [[ -f "$HOME/.bashrc.giobackup" ]]  || cp -f "$bash_rc" "$HOME/.bashrc.giobackup"
+    [[ -f "$backup_rc" ]]  || cp -f "$bash_rc" "$backup_rc"
     # make a backup of original .bashrc only if installed first time
     if ! grep -q ".gururc" "$bash_rc" ; then
             printf "# guru-client launcher to bashrc \n\nif [[ -f ~/.gururc2 ]] ; then \n    source ~/.gururc2\nfi\n" >>"$bash_rc"
         fi
     # pass
-    installed_files=(${installed_files[@]} "$HOME/.bashrc.giobackup")
+    installed_files=(${installed_files[@]} "$backup_rc")
+    modified_files=(${modified_files[@]} "$backup_rc")
     gmsg -v1 -c green "done"
     return 0
 }
@@ -234,8 +236,8 @@ check.rcfiles () {
             gmsg -c red -x 122 ".bashrc modification error"
         fi
 
-    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -n -c grey "$HOME/.bashrc.giobackup"
-    if [[ -f "$HOME/.bashrc.giobackup" ]] ; then
+    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -n -c grey "$backup_rc"
+    if [[ -f "$backup_rc" ]] ; then
             gmsg -v2 -c green " ok"
         else
             gmsg "warning: .bashrc backup file creation failure"
