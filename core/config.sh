@@ -53,7 +53,7 @@ config.make_rc () {
     local _append_rc="$3"
     local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
 
-    gmsg -v2 "$_source_cfg $_mode $_target_rc"
+    gmsg -v2 -c gray "$_source_cfg $_mode $_target_rc"
 
     #_source_cfg=$HOME/.config/guru/$GURU_USER_NAME/user.cfg
 
@@ -89,7 +89,7 @@ config.make_color_rc () {
     # use same style file than corsair
     [[ -f "$_source_cfg" ]] && source $_source_cfg || gmsg -x 100 -red "$_source_cfg missing"
 
-    gmsg -v2 "$_source_cfg $_mode $_target_rc"
+    gmsg -v2 -c gray "$_source_cfg $_mode $_target_rc"
     [[ $_append_rc ]] || echo "#!/bin/bash" > $_target_rc
     printf 'if [[ "$GURU_FLAG_COLOR" ]] ; then \n' >> $_target_rc
     printf "\texport C_NORMAL=%s\n" "'\033[0m'"  >> $_target_rc
