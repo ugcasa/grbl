@@ -139,7 +139,7 @@ install.help () {
 
 install.arguments () {
     ## Process flags and arguments
-    install_platform=$2
+
     TEMP=`getopt --long -o "dfrvVhu:p:" "$@"`
     eval set -- "$TEMP"
     while true ; do
@@ -155,7 +155,8 @@ install.arguments () {
              *) break
         esac
     done
-    _arg="$@"
+
+    local _arg="$@"
     [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
 
     ## Command parser (if any needed)
