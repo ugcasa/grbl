@@ -92,23 +92,23 @@ install.main () {
 
 
     # printout and save core statistics
-    gmsg -v1 -c light_blue "installed ${#installed_core[@]} core scripts"
-    gmsg -v2 -c grey "${installed_core[@]}"
+    gmsg -v1 -c light_blue "installed ${#installed_core[@]} core modules"
+    gmsg -v2 -c dark_grey "${installed_core[@]}"
     echo "${installed_core[@]}" > "$GURU_CFG/installed.core"
 
     # printout and save module statistics
     gmsg -v1 -c light_blue "installed ${#installed_modules[@]} modules"
-    gmsg -v2 -c grey "${installed_modules[@]}"
+    gmsg -v2 -c dark_grey "${installed_modules[@]}"
     echo "${installed_modules[@]}" > "$GURU_CFG/installed.modules"
 
     # printout and save modified files
     gmsg -v1 -c light_blue "modified ${#modified_files[@]} file(s)"
-    gmsg -v2 -c grey "${modified_files[@]}"
+    gmsg -v2 -c dark_grey "${modified_files[@]}"
     echo "${modified_files[@]}" > "$GURU_CFG/modified.files"
 
     # printout file statistics
     gmsg -v1 -c light_blue "copied ${#installed_files[@]} files"
-    gmsg -v2 -c grey "${installed_files[@]}"
+    gmsg -v2 -c dark_grey "${installed_files[@]}"
     echo "${installed_files[@]}" > "$GURU_CFG/installed.files"
 
     # pass
