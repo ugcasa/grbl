@@ -139,9 +139,8 @@ daemon.poll () {
     # DAEMON POLL LOOP
     while true ; do
         source $GURU_RC                                           # to update configurations is user changes them
-        [[ $GURU_CORSAIR_EFECT_COLOR ]] || $GURU_CORSAIR_EFECT_COLOR=white
-
         corsair.main set esc $GURU_CORSAIR_EFECT_COLOR
+
         for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
@@ -152,6 +151,7 @@ daemon.poll () {
                         gmsg -v2 "${FUNCNAME[0]}: $GURU_BIN/${_poll_list[$_i]}.sh"
                     fi
                 done
+
         corsair.main reset esc
         sleep $GURU_DAEMON_INTERVAL
         [[ -f "$HOME/.guru-stop" ]] && break                        # check is stop command given, exit if so
