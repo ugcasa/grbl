@@ -51,7 +51,7 @@ uninstall.remove () {
     # remove .gururc file from home
     rm -f "$guru_rc"
 
-    # rmdir binary dir if empty
+    # remove left over folders and symbolic link
     unlink $GURU_BIN/$GURU_CALL
     cd $GURU_BIN ; rmdir * >/dev/null 2>&1
     cd ; rmdir $GURU_BIN >/dev/null 2>&1
