@@ -15,11 +15,15 @@ keyboard.main() {
                     keyboard.set_shortcut_$distro "$@"  && return 0 || return 100
                 fi ;;
          rm)  [[ "$1" == "all" ]] && "keyboard.reset_""${distro}" || keyboard.release_$distro "$@" ;;
-     *|help) keyboard.help
-            ;;
+     status) keyboard.status ; return 0 ;;
+     *|help) keyboard.help ; return 0 ;;
     esac
 }
 
+keyboard.status () {
+    gmsg "nothing to report"
+    return 0
+}
 
 keyboard.help () {
     gmsg -v1 -c white "guru-client keyboard help "

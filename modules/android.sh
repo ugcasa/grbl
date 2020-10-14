@@ -20,20 +20,20 @@ android_config_file="$GURU_CFG/$GURU_USER/android.locations.cfg"
 android.main () {
     # android phone command parser
 
-    [[ "$1" == "help" ]] && android.help
+
     [[ $GURU_ANDROID_LAN_IP ]]        || read -p "phone ip: "     GURU_ANDROID_LAN_IP
     [[ $GURU_ANDROID_LAN_PORT ]]      || read -p "sshd port: "    GURU_ANDROID_LAN_PORT
     [[ $GURU_ANDROID_USERNAME ]]      || read -p "ssh user: "     GURU_ANDROID_USERNAME
-    [[ $GURU_ANDROID_PASSWORD ]]      || read -p "password: "     GURU_ANDROID_PASSWORD
+    #[[ $GURU_ANDROID_PASSWORD ]]      || read -p "password: "     GURU_ANDROID_PASSWORD
 
     local _cmd="$1" ; shift
     case "$_cmd" in
                     mount|unmount|terminal)  android.$_cmd "$1"         ;;  # tools
                               media|camera)  android.$_cmd              ;;  # phone locations
-                                      help)  android.help               ;;
+                                      help)  android.help               ; return 0 ;;
                                        all)  android.media
                                              android.camera             ;;
-                                    status)  gmsg -c black "not connected" ;;
+                                    status)  gmsg -c black "not connected" ; return 0 ;;
                             install|server)  sudo apt install sshpass sshfs fusermount
                                              $GURU_BROWSER $android_server_url ;;
                                          *)  echo "unknown action $_cmd"
@@ -63,7 +63,7 @@ android.help () {
     gmsg -v1  "             $GURU_CALL android camera "
     gmsg -v1  "             $GURU_CALL android terminal "
     gmsg -v2
-    exit 0
+    return 0
 }
 
 android.confirm_key () {

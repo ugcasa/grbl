@@ -32,10 +32,10 @@ ssh.key() {
 
 ssh.status () {
     gmsg -v1 "current keys"
-    ls $HOME/.ssh/ |grep _id_rsa|grep -v pub)
+    ls $HOME/.ssh/ |grep _id_rsa|grep -v pub
 }
 
-ssh.help ()  {
+ssh.help () {
     gmsg -v1 -c white "guru-client ssh help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help]"

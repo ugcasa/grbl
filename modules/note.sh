@@ -13,7 +13,8 @@ note.main () {                                  # command parser
 
     command="$1" ; shift                        # ; echo "input: $command"
     case "$command" in
-       ls|add|open|rm|check)  note.$command $@  ;  return $? ;;
+       status|ls|add|open|rm|check)
+                              note.$command $@  ;  return $? ;;
                      report)  note.make_odt $@  ;  return $? ;;
                      locate)  note.gen_var "$1" ;  echo "$note" ;;
                         tag)  tag.main "tag $note $user_input" ;;
@@ -23,6 +24,7 @@ note.main () {                                  # command parser
     esac
     counter.main add note-runned >/dev/null     # Usage statistics
 }
+
 
 
 note.help () {                                  # printout help
@@ -42,6 +44,10 @@ note.help () {                                  # printout help
     gmsg -v2
 }
 
+note.status () {
+    note.online && note.ls
+    return 0
+}
 
 note.gen_var() {                                # fill variables for rest of functions
     # populates needed variables based on given date in format YYYMMDD

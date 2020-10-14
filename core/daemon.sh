@@ -46,7 +46,7 @@ daemon.status () {
             _err=$((_err+10))
         fi
 
-    if ps auxf | grep "guru start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
+    if ps auxf | grep "$HOME/bin/daemon.sh start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
             gmsg -v 1 -c green "${FUNCNAME[0]}: running"
         else
             gmsg -v 1 -c red "${FUNCNAME[0]}: not running"
