@@ -107,7 +107,7 @@ for _function in "${functions_to_test[@]}" ; do
 # add lonely runner check
 echo                                                                        >> $tester_file_name
 echo 'if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then '                        >> $tester_file_name
-echo '    source "$HOME/.gururc2" '                                         >> $tester_file_name
+echo '    source "$GURU_RC" '                                         >> $tester_file_name
 echo '    GURU_VERBOSE=2'                                                   >> $tester_file_name
 echo "    $module.test "'$@'                                                >> $tester_file_name
 echo 'fi'                                                                   >> $tester_file_name

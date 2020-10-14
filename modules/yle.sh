@@ -193,7 +193,7 @@ play_media () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc2"
+    source "$GURU_RC"
     yle_main "$@"
 fi
 

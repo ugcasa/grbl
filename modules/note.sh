@@ -268,7 +268,7 @@ check_debian_repository () {                    # old way to install sublime
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then    # stand alone vs. include. main wont be called if included
-        source "$HOME/.gururc2"
+        source "$GURU_RC"
         note.main "$@"
         exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
     fi

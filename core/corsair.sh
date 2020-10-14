@@ -32,7 +32,7 @@ key_pipe_list=$(file /tmp/ckbpipe0* |grep fifo |cut -f1 -d ":")
 # NOTE: these need to correlate with cbk-next animation settings
 status_modes=(status, test, red, olive, dark)
 # bubblecum tempreary fix
-corsair_last_mode="/tmp/guru/corsair.mode"
+corsair_last_mode="/tmp/corsair.mode"
 
 
 corsair.main () {
@@ -185,7 +185,7 @@ corsair.init () {
             echo $_mode > $corsair_last_mode
         else
             local _error=$?
-            gmsg -v -c yellow "corsair init failure"
+            gmsg -v0 -c yellow "corsair init failure"
             return $_error
         fi
     return 0
@@ -326,7 +326,7 @@ corsair.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-        source "$HOME/.gururc2"
+        source "$GURU_RC"
         corsair.main "$@"
         exit "$?"
 fi

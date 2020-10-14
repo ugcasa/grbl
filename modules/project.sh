@@ -120,7 +120,7 @@ project.sublime () {
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        source "$HOME/.gururc2"
+        source "$GURU_RC"
         project.main "$@"
     fi
 

@@ -2,7 +2,7 @@
 source $GURU_BIN/keyboard.sh
 
 backup_rc="$HOME/.bashrc.backup-by-guru"
-guru_rc="$HOME/.gururc2"    # TODO change name to '.gururc' when cleanup next time
+guru_rc="$GURU_RC"    # TODO change name to '.gururc' when cleanup next time
 
 ## TODO total bullshit, rewrite all!
 uninstall.main () {

@@ -326,7 +326,7 @@ timer.report() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc2"
+    source "$GURU_RC"
     timer.main "$@"
     exit $?
 fi

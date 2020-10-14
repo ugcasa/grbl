@@ -132,13 +132,13 @@ daemon.kill () {
 
 
 daemon.poll () {
-    source ~/.gururc2
+    source $GURU_RC
     [[ -f "$HOME/.guru-stop" ]] && rm -f "$HOME/.guru-stop"
     echo "$(sh -c 'echo "$PPID"')" > "$GURU_SYSTEM_MOUNT/.daemon-pid"
 
     # DAEMON POLL LOOP
     while true ; do
-        source ~/.gururc2                                           # to update configurations is user changes them
+        source $GURU_RC                                           # to update configurations is user changes them
         corsair.main set esc magenta
         for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
@@ -180,7 +180,7 @@ daemon.process_opts () {                                            # argument p
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then                        # user and platform settings (implement here, always up to date)
-        source ~/.gururc2
+        source $GURU_RC
         daemon.process_opts $@
         daemon.main $ARGUMENTS
         exit $?

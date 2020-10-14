@@ -3,7 +3,6 @@
 GURU_CALL="guru"
 GURU_USER="$USER"
 # make allf function/module calls point to installer's version
-export GURU_BIN="./core"
 GURU_CFG=$HOME/.config/guru
 TARGET_BIN=$HOME/bin
 
@@ -33,7 +32,7 @@ source core/config.sh
 source core/keyboard.sh
 # to where add gururc call
 bash_rc="$HOME/.bashrc"
-core_rc="$HOME/.gururc2"    # TODO change name to '.gururc' when cleanup next time
+core_rc="$HOME/.gururc"    # TODO change name to '.gururc' when cleanup next time
 backup_rc="$HOME/.bashrc.backup-by-guru"
 
 # modules where user have direct access
@@ -49,6 +48,7 @@ install.main () {
 
     # Step 2) check previous installation
     install.check || gmsg -x 110 "check caused exit"
+    export GURU_BIN="./core"
     gmsg -v0 -c white "installing guru-client"
     gmsg -v2 "user: $GURU_USER"
 
@@ -269,7 +269,7 @@ install.rcfiles () {
     [[ -f "$backup_rc" ]] || cp -f "$bash_rc" "$backup_rc"
     # make a backup of original .bashrc only if installed first time
     if ! grep -q ".gururc" "$bash_rc" >/dev/null ; then
-            printf "# guru-client launcher to bashrc \n\nif [[ -f ~/.gururc2 ]] ; then \n    source ~/.gururc2\nfi\n" >>"$bash_rc"
+            printf "# guru-client launcher to bashrc \n\nif [[ -f ~/.gururc ]] ; then \n    source ~/.gururc\nfi\n" >>"$bash_rc"
         fi
     # pass
     installed_files=(${installed_files[@]} "$backup_rc")
@@ -500,7 +500,7 @@ install.config () {
          cp -f $GURU_CFG/user-default.cfg "$GURU_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
     fi
     config.export "$GURU_USER" || gmsg -c red -x 182 "user config export error"
-    source "$HOME/.gururc2" || gmsg -c red -x 183 ".gururc2 file error"
+    source "$core_rc" || gmsg -c red -x 183 "$core_rc error"
     #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
 
     # set keyboard shortcuts

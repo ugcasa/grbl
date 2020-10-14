@@ -3,21 +3,7 @@
 # caa@ujo.guru 2020
 
 export GURU_VERSION="0.6.2"
-export GURU_HOSTNAME="$(hostname)"
-
-# export configuration
-
-if ! [[ -f $HOME/.gururc2 ]] ; then
-        #[[ -f $HOME/bin/config.sh ]] && $HOME/bin/config.sh export
-        [[ -f $HOME/.gururc2 ]] || exit 101
-    fi
-
-source $HOME/.gururc2
-
-# user configuration overwrites
-[[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
-[[ $GURU_USER_NAME ]] && export GURU_USER=$GURU_USER_NAME
-[[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
+# export GURU_HOSTNAME="$(hostname)"
 
 # include client sytem tools
 source $GURU_BIN/system.sh
@@ -29,11 +15,33 @@ source $GURU_BIN/mount.sh
 source $GURU_BIN/common.sh
 # include daemon tools
 source $GURU_BIN/daemon.sh
+# export configuration
+
+GURU_RC="$HOME/.gururc"
+[[ -f $GURU_RC ]] && source $GURU_RC || config.main export $GURU_USER
+
+# user configuration overwrites
+[[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
+[[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
+
+
+
 
 ## core functions
 
 core.main () {
     # main function
+
+    if [[ $user_name_input ]] ; then
+        if ! [[ "$user_name_input" == "$GURU_USER" ]] ; then
+            if [[ -d "$GURU_CFG/$user_name_input" ]] ; then
+                export GURU_USER=$user_name_input
+                gmsg -c white "changing user to $user_name_input"
+                config.main export $user_name_input
+            fi
+        fi
+    fi
+
 
     counter.main add guru-runned >/dev/null
     # with arguments go to parser
@@ -163,7 +171,7 @@ core.process_opts () {                                                  # argume
             -V ) export GURU_VERBOSE=2      ; shift     ;;
             -f ) export GURU_FORCE=true     ; shift     ;;
             -l ) export GURU_LOGGING=true   ; shift     ;;
-            -u ) export GURU_USER=$2  ; export GURU_USER_NAME=$2 ; shift 2   ;;
+            -u ) user_name_input=$2   ; shift 2   ;;
             -h ) export GURU_HOSTNAME=$2    ; shift 2   ;;
 
              * ) break                  ;;
@@ -271,7 +279,7 @@ core.shell () {                                                      # terminal 
     local _verbose=1
     while : ; do
             #config.export "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
-            source $HOME/.gururc2
+            source $GURU_RC
             GURU_VERBOSE=$_verbose
             # set call name off, affects help print out
             _GURU_CALL="$GURU_CALL" ; GURU_CALL=

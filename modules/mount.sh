@@ -263,9 +263,7 @@ mount.defaults () {
 
     declare -i _error=0
 
-    [[ -f ~/.gururc2 ]] && source ~/.gururc2 || echo "no file"
-
-    local _default_list=($(cat ~/.gururc2 | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
+    local _default_list=($(cat ~/.gururc | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
@@ -281,7 +279,7 @@ mount.defaults () {
 unmount.defaults () {
     # unmount all GURU_CLOUD_* defined in userrc
     # unmount all local/cloud pairs defined in userrc
-    local _default_list=($(cat ~/.gururc2 | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
+    local _default_list=($(cat ~/.gururc | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
@@ -326,7 +324,7 @@ mount.install () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then    # if sourced only import functions
-        source "$HOME/.gururc2"
+        source "$GURU_RC"
         mount.main "$@"
         exit "$?"
     fi

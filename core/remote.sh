@@ -107,9 +107,9 @@ remote.pull_config () {
     _error=$?
 
     if ((_error<9)) ; then
-            $SUCCESS
+            gmsg -c green "ok"
         else
-            $FAILED
+            gmsg -c red "failed"
         fi
     return $_error
 }
@@ -133,9 +133,9 @@ remote.push_config () {
 
     _error=$?
     if ((_error<9)) ; then
-            SUCCESS
+            gmsg -c green "ok"
         else
-            FAILED
+            gmsg -c red "failed"
         fi
     return $_error
 }
@@ -152,7 +152,7 @@ remote.needed () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$HOME/.gururc2"
+    #source "$GURU_RC"
     remote.main "$@"
     exit 0
 fi

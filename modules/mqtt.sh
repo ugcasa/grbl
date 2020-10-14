@@ -107,7 +107,7 @@ mqtt.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc2"
+    source "$GURU_RC"
     mqtt.main "$@"
     exit "$?"
 fi

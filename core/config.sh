@@ -3,6 +3,7 @@
 
 source $GURU_BIN/common.sh
 source $GURU_BIN/remote.sh
+source $GURU_BIN/corsair.sh
 
 config.main () {
 
@@ -130,7 +131,7 @@ config.make_color_rc () {
 
 config.export () {
     # export configuration to use
-    local _target_rc="$HOME/.gururc2"
+    local _target_rc=$HOME/.gururc
     local _target_user=$GURU_USER ; [[ "$1" ]] && _target_user="$1"
 
     # make backup
@@ -144,7 +145,6 @@ config.export () {
             gmsg -c red -V2 -v1 "failed"
         fi
 
-    config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
 
     # add module lists made by installer to environment
     GURU_MODULES=( $(cat $GURU_CFG/installed.core) $(cat $GURU_CFG/installed.modules) )
@@ -160,13 +160,15 @@ config.export () {
     # include system configureation
     gmsg -n -v1 "setting user configuration " ; gmsg -v2
     config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gmsg -v1 -V2 -c green "done"
+    config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
 
 
-    # check config
+    # check and load config
     if [[ "$_target_rc" ]] ; then
             # export configure
             chmod +x "$_target_rc"
             source "$_target_rc"
+            [[ $GURU_CORSAIR_ENABLED ]] && corsair.main init
         else
             gmsg -c yellow "somethign went wrong, recovering old user configuration"
             [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" || gmsg -x 100 -c red "no old backup found, unable to recover"
@@ -214,7 +216,7 @@ config.set () {             # set tool-kit environmental variable
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        #source "$HOME/.gururc2"
+        #source "$GURU_RC"
         config.main "$@"
     fi
 
