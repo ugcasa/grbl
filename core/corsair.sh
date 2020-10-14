@@ -30,7 +30,7 @@ source $GURU_BIN/common.sh
 key_pipe_list=$(file /tmp/ckbpipe0* |grep fifo |cut -f1 -d ":")
 # modes with status bar function set
 # NOTE: these need to correlate with cbk-next animation settings
-status_modes=(status, test, red, olive, dark)
+status_modes=(status, test, red, olive, dark, orange)
 # bubblecum tempreary fix
 corsair_last_mode="/tmp/corsair.mode"
 
