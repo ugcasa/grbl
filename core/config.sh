@@ -61,7 +61,7 @@ config.make_rc () {
     #if [[ -f $_target_rc ]] ; then rm -f $_target_rc ; fi
 
     # write system configs to rc file
-    [[ $_append_rc ]] || printf "#!/bin/bash \nexport GURU_USER=$GURU_USER\n" > $_target_rc
+    [[ $_append_rc ]] || printf "#!/bin/bash \n# guru-client runtime configurations auto generated at $(date)\nexport GURU_USER=$GURU_USER\n" > $_target_rc
 
     # read config file, use chapter name as second part of variable name
     while IFS='= ' read -r lhs rhs ;  do
@@ -76,6 +76,7 @@ config.make_rc () {
             esac
       fi
     done < $_source_cfg >> $_target_rc
+    return 0
 
     #tr -d '\r' < $configfile > $user_source_cfg.unix
 }
@@ -134,10 +135,33 @@ config.export () {
 
     # make backup
     [[ -f "$_target_rc" ]] && mv -f "$_target_rc" "$_target_rc.old"
-    # make config<
-    config.make_rc "$GURU_CFG/system.cfg" "$_target_rc"
-    config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append
+
+    # include system configureation
+    gmsg -n -v1 "setting system configuration " ; gmsg -v2
+    if config.make_rc "$GURU_CFG/system.cfg" "$_target_rc" ; then
+            gmsg -c green -V2 -v1 "done"
+        else
+            gmsg -c red -V2 -v1 "failed"
+        fi
+
     config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
+
+    # add module lists made by installer to environment
+    GURU_MODULES=( $(cat $GURU_CFG/installed.core) $(cat $GURU_CFG/installed.modules) )
+    gmsg -n -v1 "setting module information "
+    gmsg -N -v2 -c dark_grey "installed modules: '${GURU_MODULES[@]}'"
+    echo "export GURU_MODULES=(${GURU_MODULES[@]})" >>$_target_rc
+    if grep "export GURU_MODULES" "$_target_rc" >/dev/null ; then
+            gmsg -c green -V2 -v1 "done"
+        else
+            gmsg -c red -V2 -v1 "failed"
+        fi
+
+    # include system configureation
+    gmsg -n -v1 "setting user configuration " ; gmsg -v2
+    config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gmsg -v1 -V2 -c green "done"
+
+
     # check config
     if [[ "$_target_rc" ]] ; then
             # export configure
@@ -160,10 +184,10 @@ config.user () {
     read -n 1 -r -p "overwrite settings? : " _answ
     case "$_answ" in y) cp "$GURU_SYSTEM_RC" "$GURU_SYSTEM_RC.backup"
                         echo "$_new_file" >"$GURU_SYSTEM_RC"
-                        printf "\nsaved\n"
-                        echo "to save new configuration also to sever type: 'guru remote push'" ;;
-                     *) printf "\nignored\n"
-                        echo "to get previous configurations from sever type: 'guru remote pull'" ;;
+                        gmsg -c green "configure saved"
+                        gmsg -c "to save new configuration also to sever type: 'guru remote push'" ;;
+                     *) gmsg -c dark_golden_rod "ignored"
+                        gmsg -c "to get previous configurations from sever type: 'guru remote pull'" ;;
                     esac
 }
 

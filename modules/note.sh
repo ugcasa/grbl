@@ -5,7 +5,7 @@
 source $GURU_BIN/common.sh
 #source $GURU_BIN/deco.sh
 source $GURU_BIN/mount.sh
-source $GURU_BIN/tag.sh
+source $GURU_BIN/file/tag.sh
 source $GURU_BIN/corsair.sh
 #echo "$GURU_USER_NAME : ${GURU_MOUNT_NOTES[1]}"
 

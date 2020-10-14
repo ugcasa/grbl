@@ -107,7 +107,7 @@ if [[ ! -f "$_backup" ]] ; then
         gmsg -n -v2 -c gray "backup $_backup "
 
         if dconf dump /org/cinnamon/desktop/keybindings/ > "$_backup" ; then
-                gmsg -v1 -c green "ok"
+                gmsg -v1 -c green "done"
             else
                 gmsg -c yellow "error saving shortcut backup to $_backup"
             fi
@@ -116,7 +116,7 @@ if [[ ! -f "$_backup" ]] ; then
 gmsg -n -v2 -c gray "$_new "
 
 if dconf load /org/cinnamon/desktop/keybindings/ < "$_new" ; then
-        gmsg -v1 -c green "ok"
+        gmsg -v1 -c green "done"
         return 0
     else
         gmsg -c yellow "error setting keyboard shortcuts $_new"

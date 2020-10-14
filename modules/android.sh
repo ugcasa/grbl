@@ -5,7 +5,7 @@
 
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
-source $GURU_BIN/tag.sh
+source $GURU_BIN/file/tag.sh
 
 if ((GURU_VERBOSE>1)) ; then android_verb="-v" ; fi
 
