@@ -36,16 +36,16 @@ corsair_last_mode="/tmp/corsair.mode"
 
 
 corsair.main () {
-    # ckb-next current mode data
+    # ckb-next current mode data - do I really need this? I think this is a leftover part of some fuzzy testing setting. remove when corsair device available
     if [[ -f $corsair_last_mode ]] ; then
             corsair_mode="$(head -1 $corsair_last_mode)"
         else
             corsair_mode=$GURU_CORSAIR_MODE
         fi
-
+    
     # command parser
-    local _cmd="$1" ; shift         # get command
-    case "$_cmd" in start|init|set|end|kill|reset|status|help|install|remove)
+    local _cmd="$1" ; shift        
+    case "$_cmd" in start|init|set|end|check|kill|reset|status|help|install|remove)
             corsair.$_cmd $@ ; return $? ;;
         *)  echo "corsair: unknown command: $_cmd"
     esac
@@ -85,20 +85,51 @@ corsair.help () {
 corsair.check () {
     # Check keyboard driver is available, app and pipes are started and executes if needed
 
-    gmsg -n -v2 -t "checking ckb-next-daemon.. "
-
-    if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
-            gmsg -v2 -c black "disabled"
+    gmsg -n -v2 -t "checking corsair is enabled.. "
+    if [[ $GURU_CORSAIR_ENABLED ]] ; then
+            gmsg -v2 -c green "enabled"    
+        else
+            gmsg -v1 -c dark_grey "disabled"
             return 1
         fi
 
-    if ! ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-            gmsg -v1 "ckb-next-daemon not running"
-            gmsg -v2 "start by '$GURU_CALL corsair start'"
+
+    gmsg -n -v2 -t "checking device is connected.. "
+   
+    if lsusb |grep "Corsair" ; then
+            gmsg -v2 -c green "connected"        
         else
-            gmsg -v2 -c green "OK"
+            gmsg -v1 -c dark_grey "disconnected"
+            return 2
+        fi
+
+    gmsg -n -v2 -t "checking ckb-next-daemon.. "
+    if ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
+            gmsg -v2 -c green "running"            
+        else
+            gmsg -v1 -c dark_grey "ckb-next-daemon not running"
+            gmsg -v2 -c white "start by '$GURU_CALL corsair start'"
+            return 3  
+        fi
+
+    gmsg -n -v2 -t "checking mode supports piping.. "    
+    if [[ "${status_modes[@]}" =~ "$corsair_mode" ]] ; then
+            gmsg -v2 -c green "ok"
+        else
+            gmsg -v1 -c white "writing not available in '$corsair_mode' mode"
             return 0
         fi
+
+   gmsg -n -v2 -t "checking pipes.. "
+    if ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then
+            gmsg -v2 -c green "ready"
+        else
+            gmsg -c red "pipe error"
+            gmsg -v1 -c white "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
+            return 5
+        fi
+
+
 }
 
 
@@ -121,7 +152,8 @@ corsair.status () {
 
 
 corsair.start () {
-    # reserve some keys for future purposes by coloring them now
+    # reserve some keys for future purposes by coloring them no
+
     if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
             gmsg -v1 -c green "already running"
             return 0
@@ -154,12 +186,6 @@ corsair.start () {
     gmsg -n -v1 -t "checking pipes.. "
     if ! ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then
             gmsg -c white "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
-                # Check is keyboard setup interface, start if not
-                # if ! ps auxf |grep "ckb-next " | grep -v grep >/dev/null 2>&1 ; then
-                #         gmsg -v1 -t "starting ckb-next.."
-                #         ckb-next -b >/dev/null 2>&1 &
-                #         sleep 3
-                #     else gmsg -v1 -t "ckb-next $(OK)" ; fi
             return 100
         else
             gmsg -v1 -c green "OK"
@@ -178,6 +204,7 @@ corsair.start () {
 
 corsair.init () {
     # load default profile and set wanted mode
+    corsair.check || return 1
     local _mode=$GURU_CORSAIR_MODE ; [[ $1 ]] && _mode="$1"
 
     if ckb-next -p guru -m $_mode 2>/dev/null ; then
@@ -194,6 +221,7 @@ corsair.init () {
 
 corsair.raw_write () {
     # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
+    corsair.check || return 1
     local _button=$1 ; shift
     local _color=$1 ; shift
     local _bright="FF" ; [[ $1 ]] && _bright="$1" ; shift
@@ -208,11 +236,7 @@ corsair.raw_write () {
 
 corsair.set () {
     # write color to key: input <key> <color>
-    if ! [[ "${status_modes[@]}" =~ "$corsair_mode" ]] ; then
-            gmsg  -v2 "writing not available in '$corsair_mode' mode"
-            return 1
-        fi
-
+    corsair.check || return 1
     local _button=${1^^}
     local _color='rgb_'"$2"
     local _bright="FF" ; [[ $3 ]] && _bright="$3"
@@ -250,6 +274,7 @@ corsair.set () {
 
 corsair.reset () {
     # return normal, if no input reset all
+    corsair.check || return 1
     gmsg -n -v2 -t "resetting key"
 
     if [[ "$1" ]] ; then
@@ -269,6 +294,7 @@ corsair.reset () {
 
 corsair.end () {
     # reserve some keys for future purposes by coloring them now
+    corsair.check || return 1
     corsair.init ftb
     sleep 1
     corsair.init $GURU_CORSAIR_MODE && return 0 || return 100
@@ -293,6 +319,8 @@ corsair.kill () {
 
 corsair.install () {
     # install essentials, driver and application
+    if corsair.check ; then gmsg -x 100 "corsair seems to be working, why bother to install it again?" ; fi 
+
     sudo apt-get install -y build-essential cmake libudev-dev qt5-default zlib1g-dev libappindicator-dev libpulse-dev libquazip5-dev libqt5x11extras5-dev libxcb-screensaver0-dev libxcb-ewmh-dev libxcb1-dev qttools5-dev git pavucontrol
     cd /tmp
     git clone https://github.com/ckb-next/ckb-next.git
@@ -309,6 +337,8 @@ corsair.install () {
 
 corsair.remove () {
     # get rid of driver and shit
+    gask "surely remove corsair" || return 100
+
     if [[ /tmp/ckb-next ]] ; then
         cd /tmp/ckb-next
         sudo cmake --build build --target uninstall
