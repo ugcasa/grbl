@@ -98,7 +98,8 @@ remote.check () {
 
 
 remote.pull_config () {
-    msg "pulling configs.. "
+    gmsg -v1 -n -V2 "pulling configs.. "
+    gmsg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
 
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
@@ -107,7 +108,7 @@ remote.pull_config () {
     _error=$?
 
     if ((_error<9)) ; then
-            gmsg -c green "ok"
+            gmsg -v1 -c green "ok"
         else
             gmsg -c red "failed"
         fi
@@ -116,7 +117,8 @@ remote.pull_config () {
 
 
 remote.push_config () {
-    msg "pushing configs.. "
+    gmsg -v1 -n -V2 "pushing configs.. "
+    gmsg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
 
     ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
@@ -133,7 +135,7 @@ remote.push_config () {
 
     _error=$?
     if ((_error<9)) ; then
-            gmsg -c green "ok"
+            gmsg -v1 -c green "ok"
         else
             gmsg -c red "failed"
         fi
