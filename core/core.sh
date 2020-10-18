@@ -34,7 +34,7 @@ core.main () {
         if ! [[ "$user_name_input" == "$GURU_USER" ]] ; then
             if [[ -d "$GURU_CFG/$user_name_input" ]] ; then
                 export GURU_USER=$user_name_input
-                gmsg -c white "changing user to $user_name_input"
+                gmsg -c $GURU_COLOR_HEADER1 "changing user to $user_name_input"
                 config.main export $user_name_input
             fi
         fi
@@ -228,7 +228,7 @@ core.multi_module_function () {
     # run function name of all installed modules
     local function_to_run=$1 ; shift
     for _module in ${GURU_MODULES[@]} ; do
-                gmsg -c brown "## $_module $function_to_run"
+                gmsg -c $GURU_COLOR_HEADER2 "## $_module $function_to_run"
 
                 # fun shell script module functions
                 if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
