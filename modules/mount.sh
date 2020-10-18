@@ -150,6 +150,8 @@ mount.remote () {
     local _target_folder=""
     if [[ "$2" ]] ; then _target_folder="$2"; else read -r -p "input target mount point: " _target_folder ; fi
 
+    gmsg -v2 -c dark_gray "$FUNCNAME: $_source_folder > $_target_folder"
+
     if mount.online "$_target_folder"; then
             gmsg -v1 "$_target_folder $ONLINE"                                 # already mounted
             return 0
@@ -223,6 +225,8 @@ unmount.remote () {
         read -p "select mount point: " _mountpoint
     fi
 
+    gmsg -v2 -c dark_gray "$FUNCNAME: $_mountpoint"
+
     if ! mount.online "$_mountpoint" ; then
             gmsg -v1 "$_mountpoint is not mounted $IGNORED"
             return 0
@@ -260,18 +264,20 @@ unmount.remote () {
 mount.defaults () {
     # mount all GURU_CLOUD_* defined in userrc
     # mount all local/cloud pairs defined in userrc
+    local _error=0
+    local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
 
-    declare -i _error=0
-
-    local _default_list=($(cat ~/.gururc | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
+    if ! [[ $_default_list ]] ; then
+            gmsg -c yellow "default mount list is empty, edit $GURU_CFG/$GURU_USER/user.cfg and then '$GURU_CALL config export'"
+            return 1
+        fi
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        #gmsg -v2 "${_item,,} "
+        gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} "
         mount.remote "$_source" "$_target" || _error=$?
     done
-
     return $_error
 }
 
@@ -279,11 +285,16 @@ mount.defaults () {
 unmount.defaults () {
     # unmount all GURU_CLOUD_* defined in userrc
     # unmount all local/cloud pairs defined in userrc
-    local _default_list=($(cat ~/.gururc | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
+    local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
+
+    if ! [[ $_default_list ]] ; then
+            gmsg -c yellow "default list is empty"
+            return 1
+        fi
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        #gmsg -v2 "${_item,,} "
+        gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
 
@@ -296,7 +307,7 @@ mount.known_remote () {
 
     local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")      ; echo $_source
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")      ; echo $_target
-
+    gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} $_target"
     mount.remote "$_source" "$_target"
     return $?
 }
@@ -306,6 +317,7 @@ unmount.known_remote () {
     # unmount single GURU_CLOUD_* defined in userrc
 
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
+    gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} $_target"
     unmount.remote "$_target"
     return $?
 }

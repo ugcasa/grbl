@@ -25,8 +25,6 @@ GURU_RC="$HOME/.gururc"
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
 
 
-
-
 ## core functions
 
 core.main () {
@@ -187,14 +185,14 @@ core.run_module () {
     local tool=$1 ; shift
     for _module in ${GURU_MODULES[@]} ; do
         if [[ "$_module" == "$tool" ]] ; then
-                [[ -f "$GURU_BIN/$_module.sh" ]] && $_module.sh "$@"
-                [[ -f "$GURU_BIN/$_module.py" ]] && $_module.py "$@"
-                [[ -f "$GURU_BIN/$_module" ]] && $_module "$@"
-                return $?
+                if [[ -f "$GURU_BIN/$_module.sh" ]] ; then $_module.sh "$@" ; return $? ; fi
+                if [[ -f "$GURU_BIN/$_module.py" ]] ; then $_module.py "$@" ; return $? ; fi
+                if [[ -f "$GURU_BIN/$_module" ]] ; then $_module "$@" ; return $? ; fi
             fi
     done
     gmsg -v1 "passing request to os.."
     $tool "$@"
+    return $?
 }
 
 
@@ -208,17 +206,21 @@ core.run_module_function () {
                     if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
                             source $GURU_BIN/$_module.sh
                             $_module.main "$function_to_run" "$@"
+                            return $?
                         fi
                     # run python module functions
                     if [[ -f "$GURU_BIN/$_module.py" ]] ; then
                             $_module.py "$function_to_run" "$@"
+                            return $?
                         fi
                     # run binary module functions
                     if [[ -f "$GURU_BIN/$_module" ]] ; then
                             $_module "$function_to_run" "$@"
+                            return $?
                         fi
                     fi
     done
+    return 1
 }
 
 
@@ -242,6 +244,7 @@ core.multi_module_function () {
                         $_module "$function_to_run" "$@"
                     fi
     done
+    return 1
 }
 
 
