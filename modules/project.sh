@@ -61,7 +61,7 @@ project.check() {
 
 
 project.ls () {
-    gmsg -c cyan "$(ls $GURU_SYSTEM_MOUNT/project)"
+    gmsg -c $GURU_COLOR_LIST "$(ls $GURU_SYSTEM_MOUNT/project)"
 }
 
 
