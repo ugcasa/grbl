@@ -3,7 +3,6 @@
 
 source $GURU_BIN/common.sh
 source $GURU_BIN/remote.sh
-source $GURU_BIN/corsair.sh
 
 config.main () {
 
@@ -168,7 +167,10 @@ config.export () {
             # export configure
             chmod +x "$_target_rc"
             source "$_target_rc"
-            [[ $GURU_CORSAIR_ENABLED ]] && corsair.main init
+            if [[ $GURU_CORSAIR_ENABLED ]] ; then
+                    source $GURU_BIN/corsair.sh
+                    corsair.main init
+                fi
         else
             gmsg -c yellow "somethign went wrong, recovering old user configuration"
             [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" || gmsg -x 100 -c red "no old backup found, unable to recover"
