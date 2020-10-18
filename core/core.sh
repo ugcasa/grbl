@@ -2,7 +2,7 @@
 # guru-client - main command parser
 # caa@ujo.guru 2020
 
-export GURU_VERSION="0.6.2"
+export GURU_VERSION="0.6.3"
 # export GURU_HOSTNAME="$(hostname)"
 
 # include client sytem tools

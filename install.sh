@@ -1,10 +1,9 @@
 #!/bin/bash
 # installer for guru-client. ujo.guru casa@ujo.guru 2017-2020
-GURU_CALL="guru"
-GURU_USER="$USER"
-# make allf function/module calls point to installer's version
-GURU_CFG=$HOME/.config/guru
-TARGET_BIN=$HOME/bin
+export GURU_CALL="guru"
+export GURU_USER="$USER"
+TARGET_BIN="$HOME/bin"
+TARGET_CFG="$HOME/.config/guru"
 
 # check if colors possible
 if echo "$TERM" | grep "256" >/dev/null ; then
@@ -27,9 +26,13 @@ if [[ "$GURU_FLAG_COLOR" ]] ; then
     fi
 
 # use new modules durin installation
+export GURU_BIN="core"
 source core/common.sh
 source core/config.sh
 source core/keyboard.sh
+# set target locations for uninstaller
+export GURU_CFG="$HOME/.config/guru"
+export GURU_BIN="$HOME/bin"
 # to where add gururc call
 bash_rc="$HOME/.bashrc"
 core_rc="$HOME/.gururc"    # TODO change name to '.gururc' when cleanup next time
@@ -39,7 +42,7 @@ backup_rc="$HOME/.bashrc.backup-by-guru"
 core_module_access=(counter install uninstall config corsair daemon keyboard remote system)
 
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(mount mqtt note android print project scan ssh stamp file timer tor trans user vol yle news)
+modules_to_install=(mount mqtt note android print project scan ssh stamp timer tor trans user vol yle news)
 
 install.main () {
 
@@ -48,7 +51,7 @@ install.main () {
 
     # Step 2) check previous installation
     install.check || gmsg -x 110 "check caused exit"
-    export GURU_BIN="./core"
+    # return
     gmsg -v0 -c white "installing guru-client"
     gmsg -v2 "user: $GURU_USER"
 
@@ -91,20 +94,19 @@ install.main () {
     # save core statistics
     # instead of including all modules include only where user needs to have access.
     # this avoid need to write main, help and status functions what are needed to perform mass function calls
-    echo "${core_module_access[@]}" > "$GURU_CFG/installed.core"
+    echo "${core_module_access[@]}" > "$TARGET_CFG/installed.core"
 
     # save module statistics
-    echo "${installed_modules[@]}" > "$GURU_CFG/installed.modules"
+    echo "${installed_modules[@]}" > "$TARGET_CFG/installed.modules"
 
     # save modified files
-    echo "${modified_files[@]}" > "$GURU_CFG/modified.files"
+    echo "${modified_files[@]}" > "$TARGET_CFG/modified.files"
 
     # save file statistics
-    echo "${installed_files[@]}" > "$GURU_CFG/installed.files"
+    echo "${installed_files[@]}" > "$TARGET_CFG/installed.files"
 
     # Step 10) export user configuration
     install.config || gmsg -x 180 "user configuration error"
-
 
     # printout pass and statistics if verbose set
     gmsg -c white "$($TARGET_BIN/core.sh version) installed"
@@ -226,15 +228,16 @@ install.copy () {
     local _from="$1" ; shift
     local _to="$1" ; shift
     gmsg -n -v1 "$@ " ; gmsg -v2
+
     _file_list=( $(ls $_from/*) )
     for _file_to_copy in "${_file_list[@]}" ; do
-            if cp -r -f "$_file_to_copy" "$_to" ; then
-                gmsg -v1 -V2 -n -c grey "."
-                gmsg -v2 -c grey "$_file_to_copy"
-                installed_files=( ${installed_files[@]} ${_file_to_copy/$_from/$_to} )
-            else
-                gmsg -N -c yellow "$_file_to_copy copy failed"
-             fi
+            if cp -rf "$_file_to_copy" "$_to" ; then
+                    gmsg -v1 -V2 -n -c grey "."
+                    gmsg -v2 -c grey "${_file_to_copy/$_from/$_to}"
+                    installed_files=( ${installed_files[@]} ${_file_to_copy/$_from/$_to} )
+                else
+                    gmsg -N -c yellow "$_file_to_copy copy failed"
+                 fi
         done
     gmsg -v1 -V2 -c green " done"
     return 0
@@ -308,11 +311,14 @@ install.folders () {
 
     # make bin folder for scripts, configs and and apps
     [[ -d "$TARGET_BIN" ]] || mkdir -p "$TARGET_BIN"
-    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -c grey "$GURU_CFG/$TARGET_BIN"
+    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -c grey "$TARGET_BIN"
+
 
     # personal configurations
-    [[ -d "$GURU_CFG/$GURU_USER" ]] || mkdir -p "$GURU_CFG/$GURU_USER"
-    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -c grey "$GURU_CFG/$GURU_USER"
+    [[ -d "$TARGET_CFG/$GURU_USER" ]] || mkdir -p "$TARGET_CFG/$GURU_USER"
+    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -c grey "$TARGET_CFG/$GURU_USER"
+
+
 
     # pass
     gmsg -V2 -v1 -c green " done"
@@ -332,9 +338,11 @@ check.folders () {
         fi
 
 
-    gmsg -n -v1 -V2 -c grey "." ; gmsg -n -v2 -c grey "$GURU_CFG/$GURU_USER"
-    if [[ -d "$GURU_CFG/$GURU_USER" ]] ; then
+    gmsg -n -v1 -V2 -c grey "." ; gmsg -n -v2 -c grey "$TARGET_CFG/$GURU_USER"
+    if [[ -d "$TARGET_CFG/$GURU_USER" ]] ; then
+
             gmsg  -v2 -c green " ok"
+
         else
             gmsg -x 143 -c red "failed: configuration folder creation error"
         fi
@@ -347,8 +355,9 @@ check.folders () {
 
 install.core () {
     # install core files
-    install.copy cfg $GURU_CFG "copying configurations"
+    install.copy cfg $TARGET_CFG "copying configurations"
     install.copy core $TARGET_BIN "copying core files"
+
     installed_core=( ${installed_core[@]} $(ls core | cut -f1 -d '.') )
     return 0
 }
@@ -371,8 +380,9 @@ check.core () {
     for _file in $(ls cfg) ; do
             gmsg -v1 -V2 -n -c grey "."
             gmsg -n -v2 -c grey "$_file"
-            if [[ -f $GURU_CFG/$_file ]] ; then
+            if [[ -f $TARGET_CFG/$_file ]] ; then
                 gmsg -v2 -c green " ok"
+
             else
                 gmsg -c yellow "warning: configuration file $_file missing"
             fi
@@ -458,7 +468,7 @@ install.modules () {
                     if cp -f "$_file" "$_target_file" ; then
                             installed_files=( ${installed_files[@]} $_target_file)
                             #gmsg -c deep_pink "${installed_files[@]}"
-                            gmsg -n -v1 -V2 -c dark_grey "."
+                            gmsg -n -v1 -V2 -c grey "."
                             gmsg -v2 -c green "done"
                         else
                             gmsg -c yellow "module $_module folder copying error"
@@ -495,19 +505,22 @@ check.modules () {
 
 install.config () {
     # config
-    if ! [[ -f "$GURU_CFG/$GURU_USER/user.cfg" ]] ; then
+    if ! [[ -f "$TARGET_CFG/$GURU_USER/user.cfg" ]] ; then
          gmsg -c yellow "user specific configuration not found, using default.."
-         cp -f $GURU_CFG/user-default.cfg "$GURU_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
+
+         cp -f $TARGET_CFG/user-default.cfg "$TARGET_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
     fi
-    config.export "$GURU_USER" || gmsg -c red -x 182 "user config export error"
-    source "$core_rc" || gmsg -c red -x 183 "$core_rc error"
+
+    config.export "$GURU_USER" || gmsg -c red "user config export error"
+    source "$core_rc" || gmsg -c red "$core_rc error"
     #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
 
     # set keyboard shortcuts
     gmsg -n -v1 "setting keyboard shortcuts "
     keyboard.main add all || gmsg -c yellow "error by setting keyboard shortcuts"
-
+    installed_files=( ${installed_files[@]} $TARGET_CFG/kbbind.backup.cfg )
     return 0
+
 }
 
 

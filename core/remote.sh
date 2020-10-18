@@ -108,11 +108,12 @@ remote.pull_config () {
     _error=$?
 
     if ((_error<9)) ; then
-            gmsg -v1 -c green "ok"
+            gmsg -c green "ok"
+            return 0
         else
             gmsg -c red "failed"
+            return $_error
         fi
-    return $_error
 }
 
 
@@ -135,11 +136,12 @@ remote.push_config () {
 
     _error=$?
     if ((_error<9)) ; then
-            gmsg -v1 -c green "ok"
+            gmsg -c green "ok"
+            return 0
         else
             gmsg -c red "failed"
+            return $_error
         fi
-    return $_error
 }
 
 
