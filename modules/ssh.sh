@@ -3,7 +3,7 @@
 # tested: 2/2020 ubuntu desktop 18.04 and mint cinnamon 19.2
 source $GURU_BIN/common.sh
 
-ssh.main() {
+ssh.main () {
     # main selector off ssh functions
     command="$1"
     shift
@@ -15,14 +15,14 @@ ssh.main() {
     esac
 }
 
-ssh.key() {
+
+ssh.key () {
     # ssh key tools
     local command="$1"
     shift
     case "$command" in
-        agent)      ssh.add_key_to_agent "$@" ;;
         ps|active)  ssh-add -l  ;;
-        ls|files)   ls "$HOME/.ssh" |grep "rsa" |grep -v "pub" ;;
+        ls|files)   ls "$HOME/.ssh" | grep "rsa" | grep -v "pub" ;;
         add)        ssh.add_key "$@" ;;
         rm)         ssh.rm_key "$@" ;;
         help|*)     ssh.help ;;
@@ -30,10 +30,12 @@ ssh.key() {
 
 }
 
+
 ssh.status () {
     gmsg -v1 "current keys"
-    ls $HOME/.ssh/ |grep _id_rsa|grep -v pub
+    gmsg -v1 -c $GURU_COLOR_LIST "$(ls $HOME/.ssh/ | grep _id_rsa| grep -v pub)"
 }
+
 
 ssh.help () {
     gmsg -v1 -c white "guru-client ssh help "
@@ -49,36 +51,36 @@ ssh.help () {
     gmsg -v1 "   key add <server>   add keys to known server: ujo.guru, git.ujo.guru, github, bitbucket"
     gmsg -v2
     gmsg -v1 -c white "Example: "
-    gmsg -v1 "      $GURU_CALL ssh key add $GURU_ACCESS_POINT"
+    gmsg -v1 "      $GURU_CALL ssh key add $GURU_ACCESS_DOMAIN"
     gmsg -v1
     gmsg -v1 "Any on known ssh command is passed trough to open-ssh client"
     gmsg -v2
 }
 
 
-ssh.rm_key() {
+ssh.rm_key () {
     # remove local keyfiles (not from server known hosts) TODO
-    echo "key file not found" > "$GURU_ERROR_MSG"
-    [ -f "$HOME/.ssh/$input""_id_rsa" ] && [ -f "$HOME/.ssh/$input""_id_rsa.pub" ] || exit 127
+    [[ -f "$HOME/.ssh/$input""_id_rsa" ]] && [[ -f "$HOME/.ssh/$input""_id_rsa.pub" ]] || gmsg -x 127 -c red "key file not found"
 
-    [ "$1" ] && local input="$1" ||read -r -p "key title (no '_id_rsa') : " input
+    [[ "$1" ]] && local input="$1" || read -r -p "key title (no '_id_rsa') : " input
 
     read -r -p "Are you sure to delete files '$input""_id_rsa' and '$input""_id_rsa.pub'? " answer
-    [ "$input" ] || return 127
-    if [ "${answer^^}" == "Y" ]; then
-        [ -f "$HOME/.ssh/$input""_id_rsa" ] && rm -f "$HOME/.ssh/$input""_id_rsa"
-        [ -f "$HOME/.ssh/$input""_id_rsa.pub" ] && rm -f "$HOME/.ssh/$input""_id_rsa.pub"
-    fi
+
+    if [[ "${answer^^}" == "Y" ]]; then
+            rm -f "$HOME/.ssh/$input""_id_rsa" || gmsg -c yellow "error while removing $HOME/.ssh/$input_id_rsa"
+            rm -f "$HOME/.ssh/$input""_id_rsa.pub" || gmsg -c yellow "error while removing $HOME/.ssh/$input_id_rsa.pub"
+        fi
+    return 0
 }
 
 
-ssh.add_key(){
+ssh.add_key () {
     # [1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket
-    xclip -help >/dev/null 2>&1 ||sudo apt install xclip
+    xclip -help >/dev/null 2>&1 || sudo apt install xclip
     [ -d "$HOME/.ssh" ] || mkdir "$HOME/.ssh"
     error="1"
     # Select git service provider
-    [ "$1" ] && remote="$1" ||read -r -p "[1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket, [5] other or help: " remote
+    [ "$1" ] && remote="$1" || read -r -p "[1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket, [5] other or help: " remote
     shift
 
     case "$remote" in
@@ -93,7 +95,7 @@ ssh.add_key(){
            gmsg -v0 "Usage:    $GURU_CALL ssh key add [ujo.guru|git.ujo.guru|github|bitbucket] or [domain] [port] [user_name]"
            gmsg -v2
            gmsg -v1 "providers:"
-           gmsg -v1 " 1|ujo.guru        add key to access $GURU_ACCESS_POINT "
+           gmsg -v1 " 1|ujo.guru        add key to access $GURU_ACCESS_DOMAIN "
            gmsg -v1 " 2|git.ujo.guru    add key to own git server "
            gmsg -v1 " 3|github          add key to github.com [user_email] "
            gmsg -v1 " 4|bitbucket       add key to bitbucket.org [user_email] "
@@ -108,112 +110,143 @@ ssh.add_key(){
 }
 
 
-ssh.add_key_to_agent () {
-	local key_file="$HOME/.ssh/$GURU_ACCESS_POINT"'_id_rsa'
-    [[ $1 ]] && key_file="$1"
-    eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
-    ssh-add "$key_file" && echo "Key add OK" || return 24
+ssh.keygen () {
+    local key_file=$1 ; shift
+    local user=$GURU_USER ; [[ $1 ]] && user=$1
+    gmsg -c white "generating keys "
+    if ssh-keygen -t rsa -b 4096 -C "$user" -f "$key_file" ; then
+            gmsg -c green "ok"
+        else
+            gmsg -x 22 -c red "ssh-keygen error or user interupt"
+        fi
+    chmod 600 "$key_file"
+    return 0
+}
+
+
+ssh.agent_start () {
+    ## start agent
+    gmsg -c white "checking/starting agent "
+    if eval "$(ssh-agent -s)" ; then
+            gmsg -c green "ok"
+        else
+            gmsg -x 23 -c red "ssh-agent start failed"
+        fi
+    return 0
+}
+
+
+ssh.agent_add () {
+    # add private key to agent
+    local key_file=$1
+    gmsg -c white "adding key to agent "
+    if ssh-add "$key_file" ; then
+            gmsg -c green "ok"
+        else
+            gmsg -x 24 -c red "ssh-add error"
+        fi
+    return 0
+}
+
+
+ssh.copy-id () {
+    # send key to server
+    local key_file=$1
+    local server="$GURU_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
+    local port="$GURU_ACCESS_PORT" ; [[ $3 ]] && port=$3
+
+    gmsg -c white "sending public keys to server "
+    if ssh-copy-id -f -p "$port" -i "$key_file" "$server" ; then
+            gmsg -c green "ok"
+        else
+            gmsg -x 25 -c red "ssh-copy-id error"
+        fi
+    return 0
+}
+
+
+ssh.add_rule () {
+    local key_file=$1
+    local server="$GURU_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
+    local user="$GURU_USER" ; [[ $3 ]] && user=$3
+
+    if cat $HOME/.ssh/config | grep "$user-$server" >/dev/null ; then
+        gmsg -c green "rule already exist, ok"
+    else
+        if printf "\nHost *$server \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" ; then
+                gmsg -c green "ok"
+            else
+                gmsg -x 26 -c red "rule add error"
+            fi
+    fi
 }
 
 
 ssh.add_key_accesspoint () {
     # function to add keys to ujo.guru access point server
+    local server=$GURU_ACCESS_DOMAIN
+    local key_file="$HOME/.ssh/$GURU_USER-$server"'_id_rsa'
 
-    local key_file="$HOME/.ssh/$GURU_ACCESS_POINT"'_id_rsa'
-
-    ## Generate keys
-    echo "key file exist /user interrupt" >"$GURU_ERROR_MSG"
-    ssh-keygen -t rsa -b 4096 -C "$GURU_USER" -f "$key_file" && echo "Key OK" || return 22
-    chmod 600 "$key_file"
-
-    ## Start agent and add private key
-    echo "ssh-agent do not start" >"$GURU_ERROR_MSG"
-    eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
-
-    echo "ssh-add error" >"$GURU_ERROR_MSG"
-    ssh-add "$key_file" && echo "Key add OK" || return 24
-
-    echo "ssh-copy-id error" >"$GURU_ERROR_MSG"
-    ssh-copy-id -p "$GURU_ACCESS_POINT_PORT" -i "$key_file" "$GURU_ACCESS_POINT"
-
-
-    # add domain based rule to ssh config
-    if [ "$(grep -e ujo.guru < $HOME/.ssh/config)" >/dev/null] ; then
-        echo "Rule already exist OK"
-    else
-        printf "\nHost *ujo.guru \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
-    fi
-
+    ssh.keygen "$key_file"
+    ssh.agent_start
+    ssh.agent_add "$key_file"
+    ssh.copy-id "$key_file"
+    ssh.add_rule "$key_file" "$server"
     return 0
 }
 
 
 ssh.add_key_github () {
     # function to setup ssh key login with github
-
-    local key_file="$HOME/.ssh/github_id_rsa"
+    local server="github.com"
+    local key_file="$HOME/.ssh/$GURU_USER-$server"'_id_rsa'
     local ssh_key_add_url="https://github.com/settings/ssh/new"
+    [[ "$1" ]] && user_email="$1" || read -r -p "github login email: " user_email
 
-    [ "$1" ] && user_email="$1" || read -r -p "github login email: " user_email
+    ssh.keygen "$key_file"
+    ssh.agent_start
+    ssh.agent_add "$key_file"
 
-    ## Generate keys
-    ssh-keygen -t rsa -b 4096 -C "$user_email" -f "$key_file" && echo "Key OK" || return 22
-    chmod 600 "$key_file"
+    # copy key to cliboard
+    gmsg -c white "adding key to github "
+    xclip -sel clip < "$key_file.pub"
+    gmsg -c deep_pink "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
 
-    ## Start agent and add private key
-    eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
-    ssh-add "$key_file" && echo "Key add OK" || return 24
-
-    # Paste public key to github
-    xclip -sel clip < "$key_file.pub" && echo "Key copy to clipboard OK" || return 25
-
-    # Open remote profile settings
-    printf "\nOpening github settings page to firefox.\n Paste public key (stored to clipboard) to text box and use %s@%s as a 'Title'.\n\n" "$USER" "$HOSTNAME"
+    # open remote profile settings
     firefox "$ssh_key_add_url" &
-    read -r -p "After key is added, continue by pressing enter.. "
+    gmsg -c white "after key is added, continue by pressing enter.. " ; read -r
 
-    # add domain based rule to ssh config
-    if [ "$(grep -e github.com < $HOME/.ssh/config)" ]; then
-        echo "Rule already exist OK"
-    else
-        printf "\nHost *github.com \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
-    fi
-
+    # add rule
+    ssh.add_rule "$key_file" "$server"
     return 0
 }
 
 
 ssh.add_key_bitbucket () {
     # function to setup ssh key login with bitbucket.
-
-    local key_file="$HOME/.ssh/bitbucket_id_rsa"
+    local server="bitbucket.org"
+    local key_file="$HOME/.ssh/$GURU_USER-$server"'_id_rsa'
     local ssh_key_add_url="https://bitbucket.org"                               # no able to generalize beep link
 
     [ "$1" ] && user_email="$1" || read -r -p "bitbucket login email: " user_email
 
-    ## Generate keys
-    ssh-keygen -t rsa -b 4096 -C "$user_email" -f "$key_file" && echo "Key OK" || return 22
-    chmod 600 "$key_file"
+    ssh.keygen "$key_file"
+    ssh.agent_start
+    ssh.agent_add "$key_file"
 
-    ## Start agent and add private key
-    eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
-    ssh-add "$key_file" && echo "Key add OK" || return 24
+    # copy key to cliboard
+    xclip -sel clip < "$key_file.pub"
 
-    # Paste public key to github
-    xclip -sel clip < "$key_file.pub" && echo "Key copy to clipboard OK" || return 25
+    # open remote profile settings
+    gmsg -c deep_pink "step 1) login to bitbucket then go to 'Profile' -> 'Personal settings' -> 'SSH keys' -> 'Add key'"
+    gmsg -c deep_pink "step 2) paste the key into the text box and add 'Title' $USER@$HOSTNAME and click 'Add key'"
 
-    # Open remote profile settings
-    printf "\nOpening bitbucket.prg to firefox\n Login to Bitbucket, go to 'View Profile' and then 'Settings'.\n Select on 'SSH keys' and then 'Add key'\n Then paste the key into the text box, add 'Title' %s@%s and click 'Add key'.\n\n" "$USER" "$HOSTNAME"
     firefox "$ssh_key_add_url" &
-    read -r -p "After key is added, continue by pressing enter.. "
+
+    gmsg -c white "after key is added, continue by pressing enter.. " ; read -r
 
     # add domain based rule to ssh config
-    if [ "$(grep -e bitbucket.org < $HOME/.ssh/config)" ]; then
-        echo "Rule already exist OK"
-    else
-        printf "\nHost *bitbucket.org \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
-    fi
-
+    ssh.add_rule "$key_file" "$server"
     return 0
 }
 
@@ -223,30 +256,18 @@ ssh.add_key_my_git () {
 }
 
 
-ssh.add_key_other() {
+ssh.add_key_other () {
 
-    [ "$1" ] && server_domain="$1" ||read -r -p "domain: " server_domain
-    [ "$2" ] && server_port="$2" ||read -r -p "port: " server_port
-    [ "$3" ] && user_name="$3" ||read -r -p "user name: " user_name
+    [ "$1" ] && server="$1" || read -r -p "domain: " server
+    [ "$2" ] && port="$2" || read -r -p "port: " port
+    [ "$3" ] && user="$3" || read -r -p "user name: " user
+    local key_file="$HOME/.ssh/$user-$server"'_id_rsa'
 
-    local key_file="$HOME/.ssh/$user_name@$server_domain"'_id_rsa'
-
-    ## Generate keys
-    ssh-keygen -t rsa -b 4096 -C "$user_name" -f "$key_file" && echo "Key OK" || return 22
-    chmod 600 "$key_file"
-
-    ## Start agent and add private key
-    eval "$(ssh-agent -s)" && echo "Agent OK" || return 23
-    ssh-add "$key_file" && echo "Key add OK" || return 24
-
-    ssh-copy-id -i "$key_file" "$user_name@$server_domain" -p "$server_port"
-
-    # add domain based rule to ssh config
-    if [ "$(grep -e ujo.guru < $HOME/.ssh/config)" ]; then
-        echo "Rule already exist OK"
-    else
-        printf "\nHost *$server_domain \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" && echo "Domain rule add OK" || return 26
-    fi
+    ssh.keygen "$key_file"
+    ssh.agent_start
+    ssh.agent_add "$key_file"
+    ssh.copy-id "$key_file" "$server" "$port"
+    ssh.add_rule "$key_file" "$server" "$user"
 
     return 0
 }
