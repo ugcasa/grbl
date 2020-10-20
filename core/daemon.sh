@@ -16,7 +16,7 @@ daemon.main () {
 }
 
 
-daemon.help ( ) {
+daemon.help () {
     gmsg -v 1 -c white "guru daemon help "
     gmsg -v 2
     gmsg -v 0 "usage:    $GURU_CALL daemon [start|stop|status|kill|poll]"
@@ -46,7 +46,7 @@ daemon.status () {
             _err=$((_err+10))
         fi
 
-    if ps auxf | grep "guru start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
+    if ps auxf | grep "$HOME/bin/daemon.sh start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
             gmsg -v 1 -c green "${FUNCNAME[0]}: running"
         else
             gmsg -v 1 -c red "${FUNCNAME[0]}: not running"
@@ -132,14 +132,15 @@ daemon.kill () {
 
 
 daemon.poll () {
-    source ~/.gururc2
+    source $GURU_RC
     [[ -f "$HOME/.guru-stop" ]] && rm -f "$HOME/.guru-stop"
     echo "$(sh -c 'echo "$PPID"')" > "$GURU_SYSTEM_MOUNT/.daemon-pid"
 
     # DAEMON POLL LOOP
     while true ; do
-        source ~/.gururc2                                           # to update configurations is user changes them
-        corsair.main write esc blue
+        source $GURU_RC                                           # to update configurations is user changes them
+        corsair.main set esc $GURU_CORSAIR_EFECT_COLOR
+
         for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
@@ -150,7 +151,8 @@ daemon.poll () {
                         gmsg -v2 "${FUNCNAME[0]}: $GURU_BIN/${_poll_list[$_i]}.sh"
                     fi
                 done
-        corsair.main write esc white
+
+        corsair.main reset esc
         sleep $GURU_DAEMON_INTERVAL
         [[ -f "$HOME/.guru-stop" ]] && break                        # check is stop command given, exit if so
     done
@@ -180,7 +182,7 @@ daemon.process_opts () {                                            # argument p
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then                        # user and platform settings (implement here, always up to date)
-        source ~/.gururc2
+        source $GURU_RC
         daemon.process_opts $@
         daemon.main $ARGUMENTS
         exit $?

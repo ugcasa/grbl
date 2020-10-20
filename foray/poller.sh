@@ -1,30 +1,30 @@
 #!/bin/bash
 
 poll_folder () {
-	#check giver folder + subsolders until any file is modified. Output the filename with path
-	folder_location=$1
-	monitored_action=$2
-	[ $2 ] && action_type="-e $monitored_action"
+    #check giver folder + subsolders until any file is modified. Output the filename with path
+    folder_location=$1
+    monitored_action=$2
+    [ $2 ] && action_type="-e $monitored_action"
 
-	#while file_status=$(inotifywait -q -r $action_type $folder_location); done 	# same as -m
-	file_status=$(inotifywait -q -r $action_type $folder_location &)
+    #while file_status=$(inotifywait -q -r $action_type $folder_location); done     # same as -m
+    file_status=$(inotifywait -q -r $action_type $folder_location &)
 
-	file_status=${file_status// ${monitored_action^^} /}						 #output is "folder MODIFY filename"
-	if [ -f "$file_status" ]; then
-		echo "$file_status"
-		return 0
-	else
-		echo "inotify output error: $file_status: not such file"
-		return 543
-	fi
-	echo "type: $monitored_action"
-	#done
+    file_status=${file_status// ${monitored_action^^} /}                         #output is "folder MODIFY filename"
+    if [ -f "$file_status" ]; then
+        echo "$file_status"
+        return 0
+    else
+        echo "inotify output error: $file_status: not such file"
+        return 543
+    fi
+    echo "type: $monitored_action"
+    #done
 }
 
 while : ; do
-	modified_file=$(poll_folder $GURU_LOCAL_NOTES/$GURU_USER  &)
+    modified_file=$(poll_folder $GURU_LOCAL_NOTES/$GURU_USER  &)
 
-	echo "file modified: $modified_file"
+    echo "file modified: $modified_file"
 done
 
 

@@ -1,7 +1,6 @@
 #!/bin/bash
 # guru-client tor browser ujo.guru 2020
 source $GURU_BIN/common.sh
-source $GURU_BIN/deco.sh
 
 tor.main() {
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
@@ -113,7 +112,7 @@ tor.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc2"
+    source "$GURU_RC"
     tor.main "$@"
     exit 0
 fi

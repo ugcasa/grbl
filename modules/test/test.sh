@@ -1,7 +1,7 @@
 #!/bin/bash
 # guru-client testing functions for all modules
 #
-# Test case actions
+# Test case actions             TODO forget this
 #  1) quick check
 #  2) list stuff
 #  3) information or check
@@ -12,13 +12,13 @@
 #  all) run all valid tests (selected)
 #  release) release validation tests
 #  clean) make clean
-source $HOME/.gururc
-source $HOME/.gururc2
+
+source $GURU_RC
 source $GURU_BIN/common.sh
 
 test.main() {
     # main test case parser
-    export all_tools=("mount" "remote" "project" "note" "system")
+    export all_tools=("mount" "remote" "project" "note" "system" "corsair")
     export GURU_VERBOSE=true
     export LOGGING=true
 

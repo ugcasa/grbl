@@ -60,7 +60,7 @@ play.upgrade () {
 play.help () {
     gmsg -v1 -c white "guru-client play help "
     gmsg -v2
-    gmsg -v1 "usage:    $GURU_CALL play COMMAND what-to-play "
+    gmsg -v0 "usage:    $GURU_CALL play COMMAND what-to-play "
     gmsg -v2
     gmsg -v1 -c white "commands: "
     gmsg -v1 "  url|id         play youtube ID or full url "
@@ -219,6 +219,7 @@ play.beer () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    source "$GURU_BIN/deco.sh"
     play.main "$@"
     exit $?
 fi

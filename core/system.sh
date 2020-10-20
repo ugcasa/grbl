@@ -4,7 +4,7 @@ source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/corsair.sh
 
-system.main() {
+system.main () {
     # system command parser
     indicator_key='F'"$(poll_order system)"
     local tool="$1"; shift
@@ -27,11 +27,11 @@ system.help () {
 system.status () {
     if mount.online "$GURU_SYSTEM_MOUNT" ; then
         gmsg -v 1 -t -c green "${FUNCNAME[0]}: guru on service"
-        corsair.write $indicator_key green
+        corsair.main set $indicator_key green
         return 0
     else
         gmsg -v 1 -t -c red "${FUNCNAME[0]}: .data is unmounted"
-        corsair.write $indicator_key red
+        corsair.main set $indicator_key red
         return 101
     fi
 }
@@ -40,18 +40,18 @@ system.status () {
 system.start () {
     # set leds  F1 -> F4 off
     gmsg -v 1 -t "${FUNCNAME[0]}: system status polling started"
-    corsair.write $indicator_key off || return 101
+    corsair.main set $indicator_key off || return 101
 }
 
 
 system.end () {
     # return normal, assuming that while is normal
     gmsg -v 1 -t "${FUNCNAME[0]}: system status polling ended"
-    corsair.write $indicator_key white || return 101
+    corsair.main set $indicator_key white || return 101
 }
 
 
-system.upgrade() {
+system.upgrade () {
     # upgrade guru-client
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"
@@ -72,7 +72,7 @@ system.upgrade() {
 }
 
 
-system.rollback() {
+system.rollback () {
     # rollback to version
 
     local temp_dir="/tmp/guru"
@@ -94,7 +94,7 @@ system.rollback() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    source "$HOME/.gururc2"
+    source "$GURU_RC"
     system.main "$@"
     exit $?
 fi

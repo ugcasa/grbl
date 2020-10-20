@@ -7,9 +7,6 @@
 #       - epic time base time, rounding when reporting
 #       - project module dependencies
 #       - mqtt connection
-
-
-
 # # bash 2.th try - use date to make math
 # date --date 'March 1, 2015 +7 days'
 # date -d "$(date -d "2014-9-14 10:00:00") + 4 hours + 20 minutes - 0 seconds"
@@ -23,10 +20,9 @@
 
 # date -d $(($(date -d "2014-9-14 11:00:00" +%s) - $(date -d "2014-9-14 10:00:00" +%s)))
 
+source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/corsair.sh
-source $GURU_BIN/deco.sh
-source $GURU_BIN/common.sh
 
 timer.main () {
 
@@ -146,7 +142,7 @@ timer.start() {
         timer.end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
     fi
 
-    corsair.write f9 green  # signal user (with corsair rgb kb) that timer is on
+    corsair.main set f9 green  # signal user (with corsair rgb kb) that timer is on
 
     case "$1" in
 
@@ -207,7 +203,7 @@ timer.end() {
         return 13
     fi
 
-    corsair.write f9 white                                                      # disable timer status kb indicator
+    corsair.main set f9 white                                                      # disable timer status kb indicator
 
     case "$1" in
 
@@ -293,7 +289,7 @@ timer.cancel() {
 
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
         rm $GURU_FILE_TRACKSTATUS
-        corsair.write f9 white
+        corsair.main set f9 white
         echo "canceled"
     else
         echo "not active timer"
@@ -330,8 +326,7 @@ timer.report() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc2"
-    source "$GURU_BIN/mount.sh"
+    source "$GURU_RC"
     timer.main "$@"
     exit $?
 fi

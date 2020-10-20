@@ -1,6 +1,7 @@
 #!/bin/bash
 # install functions for giocon client ujo.guru / juha.palm 2019
 # TODO: move all these to guru-install
+source $GURU_BIN/common.sh
 
 install.main () {
     [ "$1" ] && argument="$1" && shift || read -r -p "input module name: " argument
@@ -69,7 +70,7 @@ install.question () {
 install.java () {
     #install and remove needed applications. input "install" or "remove"
     local action=$1
-    local require="nodejs"
+    local require="nodejs"w
 
     [ "$action" ] || read -r -p "install or remove?: " action
     printf "need to install $require, ctrl+c or enter local "
@@ -245,9 +246,7 @@ install.visual_code () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc2"
-    source "$GURU_BIN/common.sh"
-    #source "$GURU_BIN/deco.sh"
+    source "$GURU_RC"
     install.main "$@"
     exit $?
 fi

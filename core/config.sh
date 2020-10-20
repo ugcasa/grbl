@@ -1,8 +1,6 @@
 #!/bin/bash
 # guru-client config tools
 
-source $GURU_BIN/tag.sh
-source $GURU_BIN/mount.sh
 source $GURU_BIN/common.sh
 source $GURU_BIN/remote.sh
 
@@ -11,7 +9,7 @@ config.main () {
     local _cmd="$1" ; shift
     case "$_cmd" in
           get|set|user)  config.$_cmd $@                                  ; return $? ;;
-              personal)  config.load "$GURU_CFG/$GURU_USER_NAME/user.cfg" ; echo $GURU_REAL_NAME ;;
+              personal)  config.make_rc "$GURU_CFG/$GURU_USER_NAME/user.cfg" ; echo $GURU_REAL_NAME ;;
                 export)  config.export $@                                 ; return $? ;;
              pull|push)  remote."$_cmd"_config $@                         ; return $? ;;
                   help)  config.help $@                                   ; return $? ;;
@@ -47,64 +45,153 @@ config.help () {
 }
 
 
-config.load () {
-    #shopt -s extglob ?
-    local _config_file="$GURU_CFG/$GURU_USER/user.cfg"
-    [[ "$1" ]] && _config_file="$1"
+config.make_rc () {
+    # make rc file out of configuration file
 
-    local _rc_file="$GURU_USER_RC"
-    [[ "$2" ]] && _rc_file="$2"
+    local _source_cfg="$1"
+    local _target_rc="$2"
+    local _append_rc="$3"
+    local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
 
-    [[ $GURU_VERBOSE ]] && msg "$_config_file > $_rc_file\n"
-    if ! [[ -f $_config_file ]] ; then NOTEXIST "$_config_file" ; return 100 ; fi
-    #if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
+    gmsg -v2 -c gray "$_source_cfg $_mode $_target_rc"
 
-    echo "#!/bin/bash" > $_rc_file
-    echo "export GURU_CALL=guru" >> $_rc_file
-    echo "export GURU_BIN=$HOME/bin" >> $_rc_file
-    echo "export GURU_CFG=$HOME/.config/guru" >> $_rc_file
-    echo 'export GURU_HOSTNAME=$(hostname)' >> $_rc_file
-    echo 'export GURU_MODULES=$(cat $GURU_CFG/installed.modules)' >> $_rc_file
+    #_source_cfg=$HOME/.config/guru/$GURU_USER_NAME/user.cfg
 
-    #tr -d '\r' < $configfile > $_config_file.unix
-    while IFS='= ' read -r lhs rhs
-    do
+    if ! [[ -f $_source_cfg ]] ; then gmsg -c yellow "$_source_cfg not found" ; return 100 ; fi
+    #if [[ -f $_target_rc ]] ; then rm -f $_target_rc ; fi
+
+    # write system configs to rc file
+    [[ $_append_rc ]] || printf "#!/bin/bash \n# guru-client runtime configurations auto generated at $(date)\nexport GURU_USER=$GURU_USER\n" > $_target_rc
+
+    # read config file, use chapter name as second part of variable name
+    while IFS='= ' read -r lhs rhs ;  do
       if [[ ! $lhs =~ ^\ *# && -n $lhs ]]; then
           rhs="${rhs%%\#*}"    # remove in line right comments
           rhs="${rhs%%*( )}"   # remove trailing spaces
           case "$lhs" in
                 *[*)  _chapter=${lhs//[}
-                      _chapter=${_chapter//]}  ;;
-                *)      echo "export GURU_${_chapter^^}_${lhs^^}=$rhs"
+                      _chapter=${_chapter//]}
+                      [[ $_chapter ]] && _chapter="$_chapter""_" ;;
+                *)    echo "export GURU_${_chapter^^}${lhs^^}=$rhs"
             esac
-
       fi
-    done < $_config_file >> $_rc_file
+    done < $_source_cfg >> $_target_rc
+    return 0
+
+    #tr -d '\r' < $configfile > $user_source_cfg.unix
+}
+
+config.make_color_rc () {
+    #export color config for shell scripts"
+    local _source_cfg="$1"
+    local _target_rc="$2"
+    local _append_rc="$3"
+    local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
+    # use same style file than corsair
+    [[ -f "$_source_cfg" ]] && source $_source_cfg || gmsg -x 100 -red "$_source_cfg missing"
+
+    gmsg -n -v1 "setting color codes " ; gmsg -v2
+    gmsg -v2 -c gray "$_source_cfg $_mode $_target_rc"
+    [[ $_append_rc ]] || echo "#!/bin/bash" > $_target_rc
+    printf 'if [[ "$GURU_FLAG_COLOR" ]] ; then \n' >> $_target_rc
+    printf "\texport C_NORMAL=%s\n" "'\033[0m'"  >> $_target_rc
+    printf "\texport C_HEADER=%s\n" "'\033[1;37m'" >> $_target_rc
+    # parse trough color strings
+    color_name_list=$(set | grep rgb_ | grep -v grep | grep -v "   " )            # ; echo "$color_name_list"
+
+    for color_srt in ${color_name_list[@]} ; do
+            # color name
+            color_name=$(echo $color_srt | cut -f1 -d "=") # ; echo "$color_srt"
+            color_name=${color_name//"rgb_"/""} # ; echo "$color_name"
+            # color value
+            color_value=$(echo $color_srt | cut -f2 -d "=") # ; echo "$color_value"
+            # slice hex code to 8 bit pieces
+            _r="${color_value:0:2}"
+            _g="${color_value:2:2}"
+            _b="${color_value:4:2}" # ; echo "$_r:$_g:$_b"
+            # turn hex to dec
+            _r="$((16#$_r))"
+            _g="$((16#$_g))"
+            _b="$((16#$_b))"
+            # compose colorcode
+            color=$(printf '\033[38;2;%s;%s;%sm' "$_r" "$_g" "$_b")
+            color=${color//''/'\033'}  # bubblecum
+            # printout
+            #echo -e "$color $color_name $color_value"
+            gmsg -n -v1 -V2 -c $color_name "."
+            gmsg -n -v2 -c $color_name "$color_name "
+            # make stylerc
+            printf "\texport C_%s='%s'\n" "${color_name^^}" "$color"  >> $_target_rc
+        done
+    printf 'fi\n\n' >> $_target_rc
+    gmsg -v1 -c green " done"
 }
 
 
 config.export () {
-    local _source_cfg="$GURU_CFG/$GURU_USER_NAME/user.cfg"
-    local _target_rc="$HOME/.gururc2"
-    config.load "$_source_cfg" "$_target_rc"
-    chmod +x $_target_rc
-    source $_target_rc
+    # export configuration to use
+    local _target_rc=$HOME/.gururc
+    local _target_user=$GURU_USER ; [[ "$1" ]] && _target_user="$1"
+
+    # make backup
+    [[ -f "$_target_rc" ]] && mv -f "$_target_rc" "$_target_rc.old"
+
+    # include system configureation
+    gmsg -n -v1 "setting system configuration " ; gmsg -v2
+    if config.make_rc "$GURU_CFG/system.cfg" "$_target_rc" ; then
+            gmsg -c green -V2 -v1 "done"
+        else
+            gmsg -c red -V2 -v1 "failed"
+        fi
+
+
+    # add module lists made by installer to environment
+    GURU_MODULES=( $(cat $GURU_CFG/installed.core) $(cat $GURU_CFG/installed.modules) )
+    gmsg -n -v1 "setting module information "
+    gmsg -N -v2 -c dark_grey "installed modules: '${GURU_MODULES[@]}'"
+    echo "export GURU_MODULES=(${GURU_MODULES[@]})" >>$_target_rc
+    if grep "export GURU_MODULES" "$_target_rc" >/dev/null ; then
+            gmsg -c green -V2 -v1 "done"
+        else
+            gmsg -c red -V2 -v1 "failed"
+        fi
+
+    # include system configureation
+    gmsg -n -v1 "setting user configuration " ; gmsg -v2
+    config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gmsg -v1 -V2 -c green "done"
+    config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
+
+
+    # check and load config
+    if [[ "$_target_rc" ]] ; then
+            # export configure
+            chmod +x "$_target_rc"
+            source "$_target_rc"
+            if [[ $GURU_CORSAIR_ENABLED ]] ; then
+                    source $GURU_BIN/corsair.sh
+                    corsair.main init
+                fi
+        else
+            gmsg -c yellow "somethign went wrong, recovering old user configuration"
+            [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" || gmsg -x 100 -c red "no old backup found, unable to recover"
+            return 10
+        fi
 }
 
 
 config.user () {
     exec 3>&1                   # open temporary file handle and redirect it to stdout
-    _new_file="$(dialog --editbox "$GURU_USER_RC" "0" "0" 2>&1 1>&3)"
+    _new_file="$(dialog --editbox "$GURU_SYSTEM_RC" "0" "0" 2>&1 1>&3)"
     return_code=$?              # store result value
     exec 3>&-                   # close new file handle
 
     read -n 1 -r -p "overwrite settings? : " _answ
-    case "$_answ" in y) cp "$GURU_USER_RC" "$GURU_USER_RC.backup"
-                        echo "$_new_file" >"$GURU_USER_RC"
-                        printf "\nsaved\n"
-                        echo "to save new configuration also to sever type: 'guru remote push'" ;;
-                     *) printf "\nignored\n"
-                        echo "to get previous configurations from sever type: 'guru remote pull'" ;;
+    case "$_answ" in y) cp "$GURU_SYSTEM_RC" "$GURU_SYSTEM_RC.backup"
+                        echo "$_new_file" >"$GURU_SYSTEM_RC"
+                        gmsg -c green "configure saved"
+                        gmsg -c "to save new configuration also to sever type: 'guru remote push'" ;;
+                     *) gmsg -c dark_golden_rod "ignored"
+                        gmsg -c "to get previous configurations from sever type: 'guru remote pull'" ;;
                     esac
 }
 
@@ -123,7 +210,7 @@ config.set () {             # set tool-kit environmental variable
     [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
     [ "$2" ] && _value="$2" || read -r -p "$_setting value: " _value
 
-    [ -f "$GURU_USER_RC" ] && target_rc="$GURU_USER_RC" || target_rc="$HOME/.gururc"
+    [ -f "$GURU_SYSTEM_RC" ] && target_rc="$GURU_SYSTEM_RC" || target_rc="$HOME/.gururc"
 
     sed -i -e "/$_setting=/s/=.*/=$_value/" "$target_rc"                               # Ähh..
     msg "setting GURU_${_setting^^} to $_value\n"
@@ -131,7 +218,7 @@ config.set () {             # set tool-kit environmental variable
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        source "$HOME/.gururc2"
+        #source "$GURU_RC"
         config.main "$@"
     fi
 
@@ -160,7 +247,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 
 
 
-# config.load () {
+# config.make_rc () {
 #     #shopt -s extglob
 #     local _config_file="$1"       ; echo "input: $_config_file"
 #     local _rc_file="$2"           ; echo "input: $_rc_file"

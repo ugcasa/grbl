@@ -38,8 +38,7 @@ mount.help () {
     # printout help
     gmsg -v1 -c white "guru-client mount help "
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL mount [source] [target]"
-    gmsg -v1 "          $GURU_CALL mount [command] [known_mount_point|arguments]"
+    gmsg -v0 "usage:    $GURU_CALL mount|unount|check|check-system <source> <target>"
     gmsg -v2
     gmsg -v1 -c white "commands:"
     gmsg -v1 " ls                       list of mounted folders "
@@ -55,36 +54,8 @@ mount.help () {
     gmsg -v2
     gmsg -v1 -c white "example:"
     gmsg -v1 "      $GURU_CALL mount /home/$GURU_CLOUD_USERNAME/share /home/$USER/test-mount"
-}
+    gmsg -v1 "      $GURU_CALL umount /home/$USER/test-mount"
 
-
-mount.help-default () {
-    # printout instructions to set/use GURU_CLOUD_* definations to userrc
-    echo "guru-client mount help-default --------------------------------------------"
-    # TODO update
-    gmsg -c yellow "update requested! remove bullshit instructions below.."
-    printf "\nTo add default mount point type ${WHT}%s config user${NC} or edit user configuration \n" "$GURU_CALL"
-    printf "file: ${WHT}%s${NC} \n" "$GURU_USER_RC"
-
-    printf "\n${WHT}Step 1)${NC}\n On configuration dialog find settings named 'GURU_LOCALMOUNT_*' \n"
-    printf "and add new line: ${WHT}export GURU_MOUNT_<MOUNT_POINT>=${NC} where <MOUNT_POINT> \n"
-    peintf "is replaced with single word and up cased. Name will be used as mount point folder name"
-    printf "when mounting or un-mounting individual mount point \n"
-    printf "After equal sing specify mount point folder between quotation marks. \n"
-
-    printf "\n${WHT}Step 2)${NC}\n Then find on configuration dialog find settings named GURU_CLOUD_* \n"
-    printf "and add new line: ${WHT}export GURU_REMOTE_<MOUNT_POINT>=${NC} where <MOUNT_POINT> is replaced \n"
-    printf "with same word as used in local. Specify mount point folder between quotation marks. \n"
-    printf "\nSave and exit. Configuration is applied when next time %s is run. \n" "$GURU_CALL"
-    printf "\nPath to success: \n"
-    printf " - use single word up case for mount variable name \n"
-    printf " - do not use spaces around equal signs \n"
-    printf " - use '' quotation if path or filename name contains spaces \n"
-    printf " - environmental variables can be used, not then use single quotation \n"
-    printf " - use same word for local and cloud variable name \n"
-    printf "\nexample:\n GURU_LOCAL_PORN=\"/home/%s/porn\" \n GURU_REMOTE_PORN=\"/server/full/of/bon-jorno\" \n" "$USER"
-
-    return 0
 }
 
 
@@ -127,7 +98,9 @@ mount.list () {                         # simple list of mounted mountpoints
 
 
 mount.system () {                       # mount system data
+    gmsg -v2 "checking system folder"
     if ! mount.online "$GURU_SYSTEM_MOUNT" ; then
+            gmsg -v2 "mounting system folder"
             mount.remote "${GURU_SYSTEM_MOUNT[1]}" "$GURU_SYSTEM_MOUNT"
         fi
 }
@@ -155,14 +128,14 @@ mount.check () {
     local _err=0
     [[ "$_target_folder" ]] || _target_folder="$GURU_SYSTEM_MOUNT"
 
-    gmsg -n -v 1 "$_target_folder status "
+    gmsg -t -n -v 1 "$_target_folder status "
     mount.online "$_target_folder" ; _err=$?
 
     if [[ $_err -gt 0 ]] ; then
-            gmsg -v 1 "$OFFLINE"
+            gmsg -v 1 -c red "OFFLINE"
             return 1
         fi
-    gmsg -v 1 "$MOUNTED"
+    gmsg -v 1 -c green "MOUNTED"
     return 0
 }
 
@@ -176,6 +149,8 @@ mount.remote () {
 
     local _target_folder=""
     if [[ "$2" ]] ; then _target_folder="$2"; else read -r -p "input target mount point: " _target_folder ; fi
+
+    gmsg -v2 -c dark_gray "$FUNCNAME: $_source_folder > $_target_folder"
 
     if mount.online "$_target_folder"; then
             gmsg -v1 "$_target_folder $ONLINE"                                 # already mounted
@@ -228,7 +203,7 @@ mount.remote () {
     error=$?
 
     if ((error>0)) ; then
-            gmsg -v1 "$WARNING source folder not found, check $GURU_USER_RC"
+            gmsg -v1 "$WARNING source folder not found, check $GURU_SYSTEM_RC"
             [[ -d "$_target_folder" ]] && rmdir "$_target_folder"
             return 25
         else
@@ -249,6 +224,8 @@ unmount.remote () {
         mount.list | grep -v $GURU_SYSTEM_MOUNT
         read -p "select mount point: " _mountpoint
     fi
+
+    gmsg -v2 -c dark_gray "$FUNCNAME: $_mountpoint"
 
     if ! mount.online "$_mountpoint" ; then
             gmsg -v1 "$_mountpoint is not mounted $IGNORED"
@@ -287,20 +264,20 @@ unmount.remote () {
 mount.defaults () {
     # mount all GURU_CLOUD_* defined in userrc
     # mount all local/cloud pairs defined in userrc
+    local _error=0
+    local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
 
-    declare -i _error=0
-
-    [[ -f ~/.gururc2 ]] && source ~/.gururc2 || echo "no file"
-
-    local _default_list=($(cat ~/.gururc2 | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
+    if ! [[ $_default_list ]] ; then
+            gmsg -c yellow "default mount list is empty, edit $GURU_CFG/$GURU_USER/user.cfg and then '$GURU_CALL config export'"
+            return 1
+        fi
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        #gmsg -v2 "${_item,,} "
+        gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} "
         mount.remote "$_source" "$_target" || _error=$?
     done
-
     return $_error
 }
 
@@ -308,11 +285,16 @@ mount.defaults () {
 unmount.defaults () {
     # unmount all GURU_CLOUD_* defined in userrc
     # unmount all local/cloud pairs defined in userrc
-    local _default_list=($(cat ~/.gururc2 | grep "export GURU_MOUNT" | sed 's/^.*MOUNT_//' | cut -d "=" -f1))
+    local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
+
+    if ! [[ $_default_list ]] ; then
+            gmsg -c yellow "default list is empty"
+            return 1
+        fi
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        #gmsg -v2 "${_item,,} "
+        gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
 
@@ -325,7 +307,7 @@ mount.known_remote () {
 
     local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")      ; echo $_source
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")      ; echo $_target
-
+    gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} $_target"
     mount.remote "$_source" "$_target"
     return $?
 }
@@ -335,6 +317,7 @@ unmount.known_remote () {
     # unmount single GURU_CLOUD_* defined in userrc
 
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
+    gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} $_target"
     unmount.remote "$_target"
     return $?
 }
@@ -353,7 +336,7 @@ mount.install () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then    # if sourced only import functions
-        source "$HOME/.gururc2"
+        source "$GURU_RC"
         mount.main "$@"
         exit "$?"
     fi

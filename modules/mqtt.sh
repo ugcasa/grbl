@@ -63,13 +63,13 @@ mqtt.online () {
 
 mqtt.start () {                      # set leds  F1 -> F4 off
     gmsg -v 1 -t "${FUNCNAME[0]}: starting message bus status poller"
-    corsair.write $indicator_key off
+    corsair.main set $indicator_key off
 }
 
 
 mqtt.end () {                        # return normal, assuming that while is normal
     gmsg -v 1 -t "${FUNCNAME[0]}: ending message bus status polling"
-    corsair.write $indicator_key white
+    corsair.main set $indicator_key white
 }
 
 
@@ -80,15 +80,15 @@ mqtt.status () {
     # check mqtt is reachable
     if mqtt.online "$GURU_LOCAL_SERVER" "$GURU_MQTT_LOCAL_PORT" ; then
             gmsg -v 1 -t -c green "${FUNCNAME[0]}: message server online"
-            corsair.write $indicator_key green
+            corsair.main set $indicator_key green
             return 0
         elif mqtt.online "$GURU_REMOTE_SERVER" "$GURU_MQTT_REMOTE_PORT" ; then
             gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote message server online "
-            corsair.write $indicator_key yellow
+            corsair.main set $indicator_key yellow
             return 0
         else
             gmsg -v 1 -t -c red "${FUNCNAME[0]}: message server offline"
-            corsair.write $indicator_key red
+            corsair.main set $indicator_key red
             return 101
         fi
 }
@@ -107,8 +107,7 @@ mqtt.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc2"
-    source "$GURU_BIN/deco.sh"
+    source "$GURU_RC"
     mqtt.main "$@"
     exit "$?"
 fi

@@ -1,9 +1,10 @@
 #!/bin/bash
 # sshfs mount functions for guru-client
 source $GURU_BIN/common.sh
-source $GURU_BIN/corsair.sh
 
-remote.main() {
+
+remote.main () {
+    source $GURU_BIN/corsair.sh
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
     indicator_key='F'"$(poll_order remote)"
     source $GURU_BIN/corsair.sh
@@ -20,13 +21,13 @@ remote.main() {
 
 remote.end () {                        # return normal, assuming that while is normal
     gmsg -v 1 -t "${FUNCNAME[0]}"
-    corsair.write $indicator_key white
+    corsair.main set $indicator_key white
 }
 
 
 remote.start () {                      # set leds  F1 -> F4 off
     gmsg -v 1 -t "${FUNCNAME[0]}"
-    corsair.write $indicator_key off
+    corsair.main set $indicator_key off
 }
 
 
@@ -35,15 +36,15 @@ remote.status () {
     # check remote is reachable. daemon poller will run this
     if remote.online ; then
             gmsg -v 1 -t -c green "${FUNCNAME[0]}: local accesspoint connection"
-            corsair.write $indicator_key green
+            corsair.main set $indicator_key green
             return 0
         elif remote.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
             gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote accesspoint connection"
-            corsair.write $indicator_key yellow
+            corsair.main set $indicator_key yellow
             return 0
         else
             gmsg -v 1 -t -c red "${FUNCNAME[0]}: accesspoint offline"
-            corsair.write $indicator_key red
+            corsair.main set $indicator_key red
             return 101
         fi
 }
@@ -73,7 +74,7 @@ remote.warning () {
 }
 
 
-remote.online() {
+remote.online () {
 
     local _user="$GURU_ACCESS_USERNAME"
     local _server="$GURU_ACCESS_LAN_IP" ; [[ "$1" ]] && _server="$1" ; shift
@@ -89,14 +90,14 @@ remote.online() {
 }
 
 
-remote.check() {
+remote.check () {
     # same shit than onlin but silent (shortcut)
     remote.online $@ >/dev/null
     return $?
 }
 
 
-remote.pull_config() {
+remote.pull_config () {
     msg "pulling configs.. "
     local _error=0
 
@@ -106,15 +107,16 @@ remote.pull_config() {
     _error=$?
 
     if ((_error<9)) ; then
-            $SUCCESS
+            gmsg -c green "ok"
+            return 0
         else
-            $FAILED
+            gmsg -c red "failed"
+            return $_error
         fi
-    return $_error
 }
 
 
-remote.push_config() {
+remote.push_config () {
     msg "pushing configs.. "
     local _error=0
 
@@ -132,15 +134,16 @@ remote.push_config() {
 
     _error=$?
     if ((_error<9)) ; then
-            SUCCESS
+            gmsg -c green "ok"
+            return 0
         else
-            FAILED
+            gmsg -c red "failed"
+            return $_error
         fi
-    return $_error
 }
 
 
-remote.needed() {
+remote.needed () {
     #install and remove needed applications. input "install" or "remove"
     local action=$1
     [ "$action" ] || read -r -p "install or remove? :" action
@@ -151,7 +154,7 @@ remote.needed() {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$HOME/.gururc2"
+    #source "$GURU_RC"
     remote.main "$@"
     exit 0
 fi
