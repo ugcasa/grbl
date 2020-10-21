@@ -21,11 +21,12 @@ ssh.key () {
     local command="$1"
     shift
     case "$command" in
-        ps|active)  ssh-add -l  ;;
-        ls|files)   ls "$HOME/.ssh" | grep "rsa" | grep -v "pub" ;;
-        add)        ssh.add_key "$@" ;;
-        rm)         ssh.rm_key "$@" ;;
-        help|*)     ssh.help ;;
+        ps|active)      ssh-add -l  ;;
+        renerate|new)   ssh.generate_key $@ ; return $? ;;
+        ls|files)       ls "$HOME/.ssh" | grep "rsa" | grep -v "pub" ;;
+        add)            ssh.add_key "$@" ;;
+        rm)             ssh.rm_key "$@" ;;
+        help|*)         ssh.help ;;
     esac
 
 }
@@ -110,6 +111,17 @@ ssh.add_key () {
 }
 
 
+
+ssh.generate_key () {
+    local server=$1 ; shift
+    local user=$1 ; shift
+    local key_file="$HOME/.ssh/$user-$server"'_id_rsa'
+    ssh.keygen "$key_file"
+    ssh.add_rule "$key_file" "$server"
+    gmsg -c light_green "new puplic key: $key_file.pub"
+}
+
+
 ssh.keygen () {
     local key_file=$1 ; shift
     local user=$GURU_USER ; [[ $1 ]] && user=$1
@@ -176,7 +188,8 @@ ssh.add_rule () {
         if printf "\nHost *$server \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" ; then
                 gmsg -c green "ok"
             else
-                gmsg -x 26 -c red "rule add error"
+                gmsg -c red "rule add error"
+                return 26
             fi
     fi
 }
