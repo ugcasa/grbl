@@ -251,6 +251,13 @@ class menu ():
 
         #image_link     = entry.image.link
 
+        ## bash solution to get image
+        # link=https://yle.fi/uutiset/3-11602922
+        # wget $link -O page.html
+        # line=$(grep "og:image" page.html)
+        # url=$(echo $line | cut -f3 -d "=" | cut -d " " -f1)
+        # wget ${url//'"'/''} -O news_id.jpg
+
 
         if int( news_id ) < 0 or int( news_id ) > self.list_length :                                                    # id 1 above
             return 2
