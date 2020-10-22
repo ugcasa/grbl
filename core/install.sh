@@ -42,14 +42,13 @@ install.tiv () {
     #install text mode picture viewer
     [[ -d /tmp/TerminalImageViewer ]] && rm /tmp/TerminalImageViewer -rf
     cd /tmp
-    sudo apt update && OK "update" &&
-    sudo apt install imagemagick && OK "imagemagick" &&
-    git clone https://github.com/stefanhaustein/TerminalImageViewer.git && OK "git clone" &&
-    cd TerminalImageViewer/src/main/cpp &&
-    make && OK "compile" &&
-    sudo make install && OK "install" &&
-    rm /tmp/TerminalImageViewer -rf && OK "clean" &&
-    SUCCESS "installation" || FAILED "something fucked up"
+    sudo apt update && OK "update"
+    sudo apt install imagemagick && OK "imagemagick"
+    git clone https://github.com/stefanhaustein/TerminalImageViewer.git && OK "git clone"
+    cd TerminalImageViewer/src/main/cpp
+    make && OK "compile"
+    sudo make install && OK "install"
+    rm /tmp/TerminalImageViewer -rf && OK "clean"
 }
 
 
