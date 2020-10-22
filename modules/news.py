@@ -249,15 +249,18 @@ class menu ():
         title   = entry.title.replace( "&nbsp;", "" )
         link    = entry.link.replace( "&nbsp;", "" )
 
-        #image_link     = entry.image.link
+        os.environ['foo'] = 'bar'
 
-        ## bash solution to get image
-        # link=https://yle.fi/uutiset/3-11602922
-        # wget $link -O page.html
-        # line=$(grep "og:image" page.html)
-        # url=$(echo $line | cut -f3 -d "=" | cut -d " " -f1)
-        # wget ${url//'"'/''} -O news_id.jpg
-
+        subprocess.run('''
+        wget $link -O /tmp/page.html -q
+        line=$(grep "og:image" /tmp/page.html)
+        url=$(echo $line | cut -f3 -d "=" | cut -d " " -f1)
+        wget ${url//'"'/''} -O /tmp/news.jpg -q
+        ''',
+        shell=True, check=True,env={'link': link},
+        executable='/bin/bash')
+        image_link = "os.environ['url']"
+        #image_link = "/tmp/news.jpg"
 
         if int( news_id ) < 0 or int( news_id ) > self.list_length :                                                    # id 1 above
             return 2
@@ -291,7 +294,7 @@ class menu ():
             print("Error")
 
         # parse entry.image.link
-        image_link = 'https://images.cdn.yle.fi/image/upload//w_1200,h_800,f_auto,fl_lossy,q_auto:eco/13-3-11332872.jpg'
+        image_link = '/tmp/news.jpg'
 
 
         os.system( 'clear' )                                                                            # clear terminal
@@ -301,7 +304,7 @@ class menu ():
         print( "\n "   + bc.ITAL + summary   + bc.ENDC + "\n" )
         #os.system('tiv -h '+str(menu.term_lines)+' -w '+str(menu.term_columns)+' '+image_link)                 # printout image in text mode
         #if terminal colors on < 256 (like phone terminal)
-        os.system('tiv -256 -h '+str(menu.term_lines)+' -w '+str(menu.term_columns)+' '+image_link)                 # printout image in text mode
+        os.system('tiv '+image_link)                 # printout image in text mode
         print( "\n "   + content + "\n" )
         print( "\n "   + bc.DARK + link      + bc.ENDC + "\n" )
         #print( entry)
