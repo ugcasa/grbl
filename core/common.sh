@@ -105,13 +105,47 @@ gask () {
 
 
 core.help () {
+    # functional core help
+
+    core.help_flags () {
+            gmsg -v2
+            gmsg -v0 "general flags:"
+            gmsg -v2
+            gmsg -v0 " -v               set verbose, headers and success are printed out"
+            gmsg -v0 " -V               more deep verbose"
+            gmsg -v1 " -u <username>    change guru user name temporary  "
+            gmsg -v1 " -h <hosname>     change computer host name name temporary "
+            gmsg -v1 " -l               set logging on to file $GURU_LOG"
+            gmsg -v1 " -f               set force mode on, be more aggressive"
+            gmsg -v2
+            return 0
+        }
+
+    core.help_system () {
+            gmsg -v2
+            gmsg -v1 -c white  "system tools"
+            gmsg -v1 "  install         install tools "
+            gmsg -v1 "  uninstall       remove guru toolkit "
+            gmsg -v1 "  set             set options "
+            gmsg -v1 "  counter         to count things"
+            gmsg -v1 "  status          status of stuff"
+            gmsg -v1 "  upgrade         upgrade guru toolkit "
+            gmsg -v1 "  shell           start guru shell"
+            gmsg -v1 "  version         printout version "
+            gmsg -v2 "  os              basic operating system library"
+            gmsg -v2
+            gmsg -v2 "to refer detailed tool help, type '$GURU_CALL <module> help'"
+            return 0
+
+    }
 
     local _arg="$1"
     if [[ "$_arg" ]] ; then
             GURU_VERBOSE=2
             case "$_arg" in
-                    all) core.multi_module_function help ; return 0 ;;
-                      *) core.run_module_function "$_arg" help ; return 0 ;;
+                    all) core.multi_module_function help        ; return 0 ;;
+                    flags) core.help_flags                      ; return 0 ;;
+                      *) core.run_module_function "$_arg" help  ; return 0 ;;
                     esac
         fi
 
@@ -151,17 +185,6 @@ core.help () {
     gmsg -v1 "  input           to control varies input devices (keyboard etc)"
     gmsg -v1 "  keyboard        to setup keyboard shortcuts"
     gmsg -v1 "  radio           listen FM- radio (HW required)"
-    gmsg -v2
-    gmsg -v1 -c white  "system tools"
-    gmsg -v1 "  install         install tools "
-    gmsg -v1 "  uninstall       remove guru toolkit "
-    gmsg -v1 "  set             set options "
-    gmsg -v1 "  counter         to count things"
-    gmsg -v1 "  status          status of stuff"
-    gmsg -v1 "  upgrade         upgrade guru toolkit "
-    gmsg -v1 "  shell           start guru shell"
-    gmsg -v1 "  version         printout version "
-    gmsg -v2 "  os              basic operating system library"
     gmsg -v2
     gmsg -v1 -c white  "examples"
     gmsg -v1 "  $GURU_CALL note yesterday           open yesterdays notes"

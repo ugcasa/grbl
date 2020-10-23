@@ -34,18 +34,8 @@ source $GURU_BIN/daemon.sh
 core.main () {
     # main function
 
-    if [[ $user_name_input ]] ; then
-        if ! [[ "$user_name_input" == "$GURU_USER" ]] ; then
-            if [[ -d "$GURU_CFG/$user_name_input" ]] ; then
-                export GURU_USER=$user_name_input
-                gmsg -c $GURU_COLOR_HEADER1 "changing user to $user_name_input"
-                config.main export $user_name_input
-            fi
-        fi
-    fi
+    #counter.main add guru-runned >/dev/null
 
-
-    counter.main add guru-runned >/dev/null
     # with arguments go to parser
     if [[ "$1" ]] ; then
             core.parser "$@"
@@ -83,14 +73,12 @@ core.parser () {
                          shell)  core.shell "$@"                        ; return $? ;;
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;
                           test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;
-       help|"?"|"-?"|--help|-h) core.help $@ ; exit 0 ;;
+       help|"?"|"-?"|--help|-h)  core.help $@ ; exit 0 ;;
                             "")  core.shell ;;
                              *)  core.run_module "$tool" "$@"           ; return $? ;;
     esac
     return 0
 }
-
-
 
 
 core.process_opts () {                                                  # argument parser
@@ -103,9 +91,8 @@ core.process_opts () {                                                  # argume
             -V ) export GURU_VERBOSE=2      ; shift     ;;
             -f ) export GURU_FORCE=true     ; shift     ;;
             -l ) export GURU_LOGGING=true   ; shift     ;;
-            -u ) user_name_input=$2   ; shift 2   ;;
+            -u ) core.change_user "$2"      ; shift 2   ;;
             -h ) export GURU_HOSTNAME=$2    ; shift 2   ;;
-
              * ) break                  ;;
         esac
     done;
@@ -114,18 +101,39 @@ core.process_opts () {                                                  # argume
 }
 
 
+core.change_user () {
+    # change user to unput ans
+    local _input_user=$1
+    if [[ "$_input_user" == "$GURU_USER" ]] ; then
+            gmsg -c "user is already $_input_user"
+            return 0
+        fi
+
+    if [[ -d "$GURU_CFG/$_input_user" ]] ; then
+            gmsg -c white "changing user to $_input_user"
+            export GURU_USER=$_input_user
+            config.main export $_input_user
+        else
+            gmsg -c yellow "user configuration not exits"
+        fi
+}
+
+
 core.run_module () {
     # check is given tool in module list and lauch first hit
     local tool=$1 ; shift
+    local type_list=(".sh" ".py" "")
+
     for _module in ${GURU_MODULES[@]} ; do
         if [[ "$_module" == "$tool" ]] ; then
-                if [[ -f "$GURU_BIN/$_module.sh" ]] ; then $_module.sh "$@" ; return $? ; fi
-                if [[ -f "$GURU_BIN/$_module.py" ]] ; then $_module.py "$@" ; return $? ; fi
-                if [[ -f "$GURU_BIN/$_module" ]] ; then $_module "$@" ; return $? ; fi
-            fi
+            for _type in ${type_list[@]} ; do
+                if [[ -f "$GURU_BIN/$_module$_type" ]] ; then $_module$_type "$@" ; return $? ; fi
+            done
+        fi
     done
+
     gmsg -v1 "passing request to os.."
-    $tool "$@"
+    $tool $@
     return $?
 }
 
@@ -134,6 +142,7 @@ core.run_module_function () {
     # run module functions
     local tool=$1 ; shift
     local function_to_run=$1 ; shift
+
     for _module in ${GURU_MODULES[@]} ; do
                 if [[ "$_module" == "$tool" ]] ; then
                     # fun shell script module functions
