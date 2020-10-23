@@ -3,22 +3,26 @@
 # caa@ujo.guru 2020
 
 export GURU_VERSION="0.6.3"
-# export GURU_HOSTNAME="$(hostname)"
+# minimal process command
+case "$1" in
+    ver|version|--ver|--version) echo "guru-client v.$GURU_VERSION" ; exit 0 ;;
+esac
 
-# include client sytem tools
-source $GURU_BIN/system.sh
 # include configuration tools
 source $GURU_BIN/config.sh
-# include mount tools
-source $GURU_BIN/mount.sh
+# source common variable
+GURU_RC="$HOME/.gururc"
+[[ -f $GURU_RC ]] && source $GURU_RC || config.main export $GURU_USER
+
 # import common functions
 source $GURU_BIN/common.sh
+# include mount tools
+source $GURU_BIN/mount.sh
+# include client sytem tools
+source $GURU_BIN/system.sh
 # include daemon tools
 source $GURU_BIN/daemon.sh
 # export configuration
-
-GURU_RC="$HOME/.gururc"
-[[ -f $GURU_RC ]] && source $GURU_RC || config.main export $GURU_USER
 
 # user configuration overwrites
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
@@ -61,102 +65,32 @@ core.main () {
 }
 
 
+## code.help moved to common.sh
+
+
 core.parser () {
     # main command parser
     tool="$1" ; shift
     export GURU_CMD="$tool"
-
     case "$tool" in
-                           all)  core.multi_module_function "$@"      ; return $? ;;
+                           all)  core.multi_module_function "$@"        ; return $? ;;
                         status)  gmsg -c green "installed"              ; return 0 ;;
                start|poll|kill)  daemon.$tool                           ; return $? ;;
                           stop)  touch "$HOME/.guru-stop"               ;;
                       document)  $tool "$@"                             ; return $? ;;
+                       unmount)  mount.main unmount "$@"                ; return $? ;;
                          radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;
-                          help)  core.help "$@"                         ; return 0  ;;
-                       unmount)  mount.main unmount "$1"                ; return $? ;;
                          shell)  core.shell "$@"                        ; return $? ;;
-                        status)  echo "TBD" ;;
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;
                           test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;
-                 version|--ver)  printf "guru-client v.%s\n" "$GURU_VERSION"        ;;
+       help|"?"|"-?"|--help|-h) core.help $@ ; exit 0 ;;
                             "")  core.shell ;;
-                             *)  core.run_module "$tool" "$@"        ; return $? ;;
-        esac
-
+                             *)  core.run_module "$tool" "$@"           ; return $? ;;
+    esac
     return 0
 }
 
 
-core.help () {
-
-    local _arg="$1"
-    if [[ "$_arg" ]] ; then
-            GURU_VERBOSE=2
-            case "$_arg" in
-                    all) core.multi_module_function help ; return 0 ;;
-                      *) core.run_module_function "$_arg" help ; return 0 ;;
-                    esac
-        fi
-
-    gmsg -v1 -c white "guru-client help "
-    gmsg -v2
-    gmsg -v0  "usage:    $GURU_CALL [-flags] [tool] [argument] [variables]"
-    gmsg -v1
-    gmsg -v1 -c white  "Flags"
-    gmsg -v1 " -v   set verbose, headers and success are printed out"
-    gmsg -v1 " -V   more deep verbose"
-    gmsg -v1 " -l   set logging on to file $GURU_LOG"
-    gmsg -v1 " -f   set force mode on, be more aggressive"
-    gmsg -v1 " -u   run as user"
-    gmsg -v2
-    gmsg -v1 -c white  "connection tools"
-    gmsg -v1 "  remote          accesspoint access tools"
-    gmsg -v1 "  ssh             ssh key'and connection tools"
-    gmsg -v1 "  mount|umount    mount remote locations"
-    gmsg -v1 "  phone           get data from android phone"
-    gmsg -v2
-    gmsg -v1 -c white  "work track and documentation"
-    gmsg -v1 "  note            greate and edit daily notes"
-    gmsg -v1 "  timer           work track tools"
-    gmsg -v1 "  translate       google translator in terminal"
-    gmsg -v1 "  document        compile markdown to .odt format"
-    gmsg -v1 "  scan            sane scanner tools"
-    gmsg -v2
-    gmsg -v1 -c white  "clipboard tools"
-    gmsg -v1 "  stamp           time stamp to clipboard and terminal"
-    gmsg -v2
-    gmsg -v1 -c white  "entertainment"
-    gmsg -v1 "  news|uutiset    text tv type reader for rss news feeds"
-    gmsg -v1 "  play            play videos and music"
-    gmsg -v1 "  silence         kill all audio and lights "
-    gmsg -v2
-    gmsg -v1 -c white  "hardware and io devices"
-    gmsg -v1 "  input           to control varies input devices (keyboard etc)"
-    gmsg -v1 "  keyboard        to setup keyboard shortcuts"
-    gmsg -v1 "  radio           listen FM- radio (HW required)"
-    gmsg -v2
-    gmsg -v1 -c white  "system tools"
-    gmsg -v1 "  install         install tools "
-    gmsg -v1 "  uninstall       remove guru toolkit "
-    gmsg -v1 "  set             set options "
-    gmsg -v1 "  counter         to count things"
-    gmsg -v1 "  status          status of stuff"
-    gmsg -v1 "  upgrade         upgrade guru toolkit "
-    gmsg -v1 "  shell           start guru shell"
-    gmsg -v1 "  version         printout version "
-    gmsg -v2 "  os              basic operating system library"
-    gmsg -v2
-    gmsg -v1 -c white  "examples"
-    gmsg -v1 "  $GURU_CALL note yesterday           open yesterdays notes"
-    gmsg -v2 "  $GURU_CALL install mqtt-server      isntall mqtt server"
-    gmsg -v1 "  $GURU_CALL ssh key add github       addssh keys to github server"
-    gmsg -v1 "  $GURU_CALL timer start at 12:00     start work time timer"
-    gmsg -v1
-    gmsg -v1 "More detailed help, try '$GURU_CALL <tool> help'"
-    gmsg -v1 "Use verbose mode -v to get more information in help printout. "
-    gmsg -v1 "Even more detailed, try -V"
-}
 
 
 core.process_opts () {                                                  # argument parser
@@ -298,7 +232,7 @@ core.shell () {                                                      # terminal 
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then                            # user and platform settings (implement here, always up to date)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         core.process_opts $@
         core.main $ARGUMENTS
         exit $?
