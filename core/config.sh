@@ -8,40 +8,35 @@ config.main () {
 
     local _cmd="$1" ; shift
     case "$_cmd" in
-          get|set|user)  config.$_cmd $@                                  ; return $? ;;
-              personal)  config.make_rc "$GURU_CFG/$GURU_USER_NAME/user.cfg" ; echo $GURU_REAL_NAME ;;
-                export)  config.export $@                                 ; return $? ;;
-             pull|push)  remote."$_cmd"_config $@                         ; return $? ;;
-                  help)  config.help $@                                   ; return $? ;;
+              get|user)  config.$_cmd $@                        ; return $? ;;
+                   set)  gmsg -v black "config.$_cmd disabled"  ; return $? ;;
+             pull|push)  remote."$_cmd"_config $@               ; return $? ;;
+                export)  config.export $@                       ; return $? ;;
+                  help)  config.help $@                         ; return $? ;;
                 status)  echo "no status data" ;;
                      *)  echo "unknown config action '$_cmd'"
-                         GURU_VERBOSE=1
-                         config.help $@                                   ; return $? ;;
+                         GURU_VERBOSE=2
+                         config.help  $@                        ; return $? ;;
         esac
 }
 
 
 config.help () {
-    gmsg -v1 -c white "guru-client config help "
+    gmsg -v1 "guru-client config help " -c white
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL config [action] <target> "
+    gmsg -v0 "usage:    $GURU_CALL config [pull|push|export|user|help -v] "
     gmsg -v2
     gmsg -v1 "actions:"
-    gmsg -v1 " export        export userconfiguration to encironment"
+    gmsg -v1 " export        export configuration to environment"
     gmsg -v2 "               (run this every time configuration is changed) "
     gmsg -v1 " pull          poll user configuration from server "
     gmsg -v1 " push          push user configuration to server "
-    gmsg -v2 " user          open user config in dialog "
-    gmsg -v2 " help          help printout "
-    gmsg -v2
-    gmsg -v1 -c white "examples:"
+    gmsg -v1 " user          open user configuration in dialog "
+    gmsg -v1 " help          try 'help -V' full help" -V2
+    core.help flags
+    gmsg -v1 "examples:" -c white
     gmsg -v1 "     '$GURU_CALL config'                                 get current host and user settings"
-    gmsg -v1 "     '$GURU_CALL pull -h <host_name> -u <user_name>'     get user and host spesific setting from server  "
-    gmsg -v2 "                                                   useful when porting setting from computer to another or adding users"
-    # guru-client user configuration file
-    # to send configurations to server type 'guru remote push' and
-    # to get configurations from server type 'guru remote pull'
-    # backup is kept at .config/guru/<user>/userrc.backup
+    gmsg -v1 "     '$GURU_CALL pull -h <host_name> -u <user_name>'     get user and host specific setting from server  "
 }
 
 
@@ -81,8 +76,9 @@ config.make_rc () {
     #tr -d '\r' < $configfile > $user_source_cfg.unix
 }
 
+
 config.make_color_rc () {
-    #export color config for shell scripts"
+    # export color configuration for shell scripts"
     local _source_cfg="$1"
     local _target_rc="$2"
     local _append_rc="$3"
@@ -136,14 +132,13 @@ config.export () {
     # make backup
     [[ -f "$_target_rc" ]] && mv -f "$_target_rc" "$_target_rc.old"
 
-    # include system configureation
+    # include system configuration
     gmsg -n -v1 "setting system configuration " ; gmsg -v2
     if config.make_rc "$GURU_CFG/system.cfg" "$_target_rc" ; then
             gmsg -c green -V2 -v1 "done"
         else
             gmsg -c red -V2 -v1 "failed"
         fi
-
 
     # add module lists made by installer to environment
     GURU_MODULES=( $(cat $GURU_CFG/installed.core) $(cat $GURU_CFG/installed.modules) )
@@ -156,13 +151,12 @@ config.export () {
             gmsg -c red -V2 -v1 "failed"
         fi
 
-    # include system configureation
+    # include system configuration
     gmsg -n -v1 "setting user configuration " ; gmsg -v2
     config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gmsg -v1 -V2 -c green "done"
     config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
 
-
-    # check and load config
+    # check and load configuration
     if [[ "$_target_rc" ]] ; then
             # export configure
             chmod +x "$_target_rc"
@@ -180,93 +174,65 @@ config.export () {
 
 
 config.user () {
-    exec 3>&1                   # open temporary file handle and redirect it to stdout
-    _new_file="$(dialog --editbox "$GURU_SYSTEM_RC" "0" "0" 2>&1 1>&3)"
-    return_code=$?              # store result value
-    exec 3>&-                   # close new file handle
+    # open user dialog to make changes to user.cfg
+    local _config_file=$GURU_CFG/$GURU_USER/user.cfg
 
-    read -n 1 -r -p "overwrite settings? : " _answ
-    case "$_answ" in y) cp "$GURU_SYSTEM_RC" "$GURU_SYSTEM_RC.backup"
-                        echo "$_new_file" >"$GURU_SYSTEM_RC"
-                        gmsg -c green "configure saved"
-                        gmsg -c "to save new configuration also to sever type: 'guru remote push'" ;;
-                     *) gmsg -c dark_golden_rod "ignored"
-                        gmsg -c "to get previous configurations from sever type: 'guru remote pull'" ;;
-                    esac
+    if ! [[ -f $_config_file ]] ; then
+        if gask "user configuration fur user did not found, create local config for $GURU_USER" ; then
+                mkdir -p $_config_file
+                cp $GURU_CFG/user-default.cfg $_config_file
+            else
+                return 0
+            fi
+        fi
+
+    # open temporary file handle and redirect it to stdout
+    exec 3>&1
+    _new_file="$(dialog --editbox "$GURU_CFG/$GURU_USER/user.cfg" "0" "0" 2>&1 1>&3)"
+    return_code=$?
+    # close new file handle
+    exec 3>&-
+
+    if (( return_code > 0 )) ; then
+            gmsg "nothing changed.."
+            return 0
+        fi
+
+    if gask "overwrite settings" ; then
+            cp -f "$_config_file" "$GURU_CFG/$GURU_USER/user.cfg.backup"
+            gmsg "backup saved $GURU_CFG/$GURU_USER/user.cfg.backup"
+            echo "$_new_file" >"$_config_file"
+            gmsg -c green "configure saved"
+            gmsg "to save new configuration to sever type: '$GURU_CALL config push'"
+        else
+            gmsg -c dark_golden_rod "ignored"
+            gmsg "to get previous configurations from sever type: '$GURU_CALL config pull'"
+        fi
+    return 0
 }
 
 
 config.get (){              # get tool-kit environmental variable
 
     [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
-    set |grep "GURU_${_setting^^}"
-    #set |grep "GURU_${_setting^^}" |cut -c13-
+    #set |grep "GURU_${_setting^^}"
+    set | grep "GURU_${_setting^^}" | head -1 | cut -d "=" -f2
     return $?
 }
 
 
-config.set () {             # set tool-kit environmental variable
-    # set guru environmental funtions
-    [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
-    [ "$2" ] && _value="$2" || read -r -p "$_setting value: " _value
+# config.set () {             # set tool-kit environmental variable
+#     # set guru environmental funtions
+#     [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
+#     [ "$2" ] && _value="$2" || read -r -p "$_setting value: " _value
 
-    [ -f "$GURU_SYSTEM_RC" ] && target_rc="$GURU_SYSTEM_RC" || target_rc="$HOME/.gururc"
+#     [ -f "$GURU_RC" ] && target_rc="$GURU_RC" || target_rc="$HOME/.gururc"
 
-    sed -i -e "/$_setting=/s/=.*/=$_value/" "$target_rc"                               # Ähh..
-    msg "setting GURU_${_setting^^} to $_value\n"
-}
+#     sed -i -e "/$_setting=/s/=.*/=$_value/" "$target_rc"                               # Ähh..
+#     msg "setting GURU_${_setting^^} to $_value\n"
+# }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        #source "$GURU_RC"
         config.main "$@"
     fi
-
-
-  # --calendar     <text> <height> <width> <day> <month> <year>
-  # --checklist    <text> <height> <width> <list height> <tag1> <item1> <status1>...
-  # --dselect      <directory> <height> <width>
-  # --editbox      <file> <height> <width>
-  # --fselect      <filepath> <height> <width>
-  # --gauge        <text> <height> <width> [<percent>]
-  # --infobox      <text> <height> <width>
-  # --inputbox     <text> <height> <width> [<init>]
-  # --inputmenu    <text> <height> <width> <menu height> <tag1> <item1>...
-  # --menu         <text> <height> <width> <menu height> <tag1> <item1>...
-  # --msgbox       <text> <height> <width>
-  # --passwordbox  <text> <height> <width> [<init>]
-  # --pause        <text> <height> <width> <seconds>
-  # --progressbox  <height> <width>
-  # --radiolist    <text> <height> <width> <list height> <tag1> <item1> <status1>...
-  # --tailbox      <file> <height> <width>
-  # --tailboxbg    <file> <height> <width>
-  # --textbox      <file> <height> <width>
-  # --timebox      <text> <height> <width> <hour> <minute> <second>
-  # --yesno        <text> <height> <width>
-
-
-
-
-# config.make_rc () {
-#     #shopt -s extglob
-#     local _config_file="$1"       ; echo "input: $_config_file"
-#     local _rc_file="$2"           ; echo "input: $_rc_file"
-
-#     if ! [[ -f $_config_file ]] ; then NOTEXIST "$_config_file" ; return 100 ; fi
-#     if [[ -f $_rc_file ]] ; then rm -f $_rc_file ; fi
-#     #tr -d '\r' < $configfile > $_config_file.unix
-#     while IFS='= ' read -r lhs rhs
-#     do
-#       if [[ ! $lhs =~ ^\ *# && -n $lhs ]]; then
-#           rhs="${rhs%%\#*}"    # remove in line right comments
-#           rhs="${rhs%%*( )}"   # remove trailing spaces
-#           #rhs="${rhs%\"*}"     # remove opening string quotes
-#           #rhs="${rhs#\"*}"     # remove closing string quotes
-#           #echo "$lhs=$rhs"
-#           #declare -x $lhs="$rhs"
-
-#           echo "export $lhs=$rhs"
-
-#       fi
-#     done < $_config_file > $_rc_file
-# }
