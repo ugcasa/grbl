@@ -130,15 +130,14 @@ uninstall.remove () {
             return 1
         fi
 
-    gmsg -n -V1 -c white "$(core.sh version) uninstall"
-    gmsg -v1 -c white "uninstalling $(core.sh version)"
+    version_to_uninstall=$(core.sh version)
+    gmsg -v1 -c white "uninstalling $version_to_uninstall"
 
     # remove keyboard shortcuts
     if [[ -f $GURU_BIN/keyboard.sh ]] ; then
             gmsg -v1 "removing keyboad shortcuts.. "
             keyboard.main rm all
         fi
-
 
     # remove configrations
     gmsg -v1 "removing general configurations.. "
@@ -206,8 +205,7 @@ uninstall.remove () {
     rm -f "$guru_rc" || gmsg -v1 -c yellow "error while removing $guru_rc "
 
     # pass
-    gmsg -v1 -c white "guru.client removed"
-    gmsg -V1 -c white "ed"
+    gmsg -c white "$version_to_uninstall removed"
     return 0
 }
 

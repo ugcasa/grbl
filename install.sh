@@ -52,8 +52,7 @@ install.main () {
     # Step 2) check previous installation
     install.check || gmsg -x 110 "check caused exit"
     # return
-    gmsg -V1 -n -c white "$(core/core.sh version) install"
-    gmsg -v1 -c white "installing guru-client"
+    gmsg -v1 -c white "installing $(core/core.sh version)"
 
     # Step 3) modify and add .rc files
     install.rcfiles || gmsg -x 120 "rc file modification error"
@@ -88,7 +87,6 @@ install.main () {
     # Step 8) set up launcher
     ln -f -s "$TARGET_BIN/core.sh" "$TARGET_BIN/$GURU_CALL" || gmsg -x 180 "core linking error"
 
-
     # Step 9) save information
 
     # save core statistics
@@ -109,8 +107,7 @@ install.main () {
     install.config || gmsg -x 180 "user configuration error"
 
     # printout pass and statistics if verbose set
-    gmsg -v1 -c white "$($TARGET_BIN/core.sh version) installed"
-    gmsg -V1 -c white "ed"
+    gmsg -c white "$($TARGET_BIN/core.sh version) installed"
 
     gmsg -v1 -c light_blue "installed ${#installed_core[@]} core modules"
     gmsg -v2 -c dark_grey "${installed_core[@]}"
