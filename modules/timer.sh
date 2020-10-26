@@ -142,7 +142,8 @@ timer.start() {
         timer.end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
     fi
 
-    corsair.main set f9 green  # signal user (with corsair rgb kb) that timer is on
+    # signal user (with corsair rgb kb) that timer is on
+    corsair.main set f9 green  
 
     case "$1" in
 
@@ -203,7 +204,8 @@ timer.end() {
         return 13
     fi
 
-    corsair.main set f9 white                                                      # disable timer status kb indicator
+    # disable timer status kb indicator
+    corsair.main reset f9 
 
     case "$1" in
 
