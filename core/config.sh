@@ -186,6 +186,9 @@ config.user () {
             fi
         fi
 
+    gmsg -v1 "checking dialog installation.."
+    dialog --version >>/dev/null || sudo apt install dialog
+
     # open temporary file handle and redirect it to stdout
     exec 3>&1
     _new_file="$(dialog --editbox "$GURU_CFG/$GURU_USER/user.cfg" "0" "0" 2>&1 1>&3)"
@@ -202,11 +205,12 @@ config.user () {
             cp -f "$_config_file" "$GURU_CFG/$GURU_USER/user.cfg.backup"
             gmsg "backup saved $GURU_CFG/$GURU_USER/user.cfg.backup"
             echo "$_new_file" >"$_config_file"
-            gmsg -c green "configure saved"
-            gmsg "to save new configuration to sever type: '$GURU_CALL config push'"
+            gmsg -c white "configure saved, taking configuration in use.."
+            config.export
+            gmsg -c white "to save new configuration to sever type: '$GURU_CALL config push'"
         else
             gmsg -c dark_golden_rod "ignored"
-            gmsg "to get previous configurations from sever type: '$GURU_CALL config pull'"
+            gmsg -c white "to get previous configurations from sever type: '$GURU_CALL config pull'"
         fi
     return 0
 }
