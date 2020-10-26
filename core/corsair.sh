@@ -93,10 +93,9 @@ corsair.check () {
             return 1
         fi
 
-
     gmsg -n -v2 -t "checking device is connected.. "
    
-    if lsusb |grep "Corsair" ; then
+    if lsusb |grep "Corsair" >/dev/null ; then
             gmsg -v2 -c green "connected"        
         else
             gmsg -v1 -c dark_grey "disconnected"
@@ -123,6 +122,7 @@ corsair.check () {
    gmsg -n -v2 -t "checking pipes.. "
     if ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then
             gmsg -v2 -c green "ready"
+            return 0
         else
             gmsg -c red "pipe error"
             gmsg -v1 -c white "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
@@ -274,7 +274,6 @@ corsair.set () {
 
 corsair.reset () {
     # return normal, if no input reset all
-    corsair.check || return 1
     gmsg -n -v2 -t "resetting key"
 
     if [[ "$1" ]] ; then
@@ -294,7 +293,6 @@ corsair.reset () {
 
 corsair.end () {
     # reserve some keys for future purposes by coloring them now
-    corsair.check || return 1
     corsair.init ftb
     sleep 1
     corsair.init $GURU_CORSAIR_MODE && return 0 || return 100
@@ -321,7 +319,7 @@ corsair.install () {
     # install essentials, driver and application
     if corsair.check ; then gmsg -x 100 "corsair seems to be working, why bother to install it again?" ; fi 
 
-    sudo apt-get install -y build-essential cmake libudev-dev qt5-default zlib1g-dev libappindicator-dev libpulse-dev libquazip5-dev libqt5x11extras5-dev libxcb-screensaver0-dev libxcb-ewmh-dev libxcb1-dev qttools5-dev git pavucontrol
+    sudo apt-get install -y build-essential cmake libudev-dev qt5-default zlib1g-dev libappindicator-dev libpulse-dev libquazip5-dev libqt5x11extras5-dev libxcb-screensaver0-dev libxcb-ewmh-dev libxcb1-dev qttools5-dev git pavucontrol libdbusmenu-qt5-2 libdbusmenu-qt5-dev
     cd /tmp
     git clone https://github.com/ckb-next/ckb-next.git
     cd ckb-next
