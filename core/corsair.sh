@@ -36,16 +36,16 @@ corsair_last_mode="/tmp/corsair.mode"
 
 
 corsair.main () {
-    # ckb-next current mode data - do I really need this? I think this is a leftover part of some fuzzy testing setting. remove when corsair device available
+    # command parser
+    # ckb-next current mode data
     if [[ -f $corsair_last_mode ]] ; then
             corsair_mode="$(head -1 $corsair_last_mode)"
         else
             corsair_mode=$GURU_CORSAIR_MODE
         fi
-    
-    # command parser
+
     local _cmd="$1" ; shift        
-    case "$_cmd" in start|init|set|end|check|kill|reset|status|help|install|remove)
+    case "$_cmd" in check|start|init|set|reset|clear|end|kill|status|help|install|remove)
             corsair.$_cmd $@ ; return $? ;;
         *)  echo "corsair: unknown command: $_cmd"
     esac
@@ -116,16 +116,37 @@ corsair.check () {
             gmsg -v2 -c green "ok"
         else
             gmsg -v1 -c white "writing not available in '$corsair_mode' mode"
-            return 0
+            return 4
         fi
 
    gmsg -n -v2 -t "checking pipes.. "
-    if ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then
+    if ps auxf | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null ; then
             gmsg -v2 -c green "ready"
             return 0
         else
-            gmsg -c red "pipe error"
-            gmsg -v1 -c white "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
+            gmsg -n -c yellow "error, trying to initilize profile.. "
+            corsair.init
+            sleep 1
+            if ps auxf | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null ; then
+                gmsg -c green "ok"
+                return 0
+            else
+                gmsg 
+                gmsg -c red "non imported ckb-next profile "
+                gmsg -v1 -n "open ckb-next and click profile bar and select "
+                gmsg -v1 -n -c white "Manage profiles "
+                gmsg -v1 -n "then click "
+                gmsg -v1 -n -c white "Import "
+                gmsg -v1 -n "and navigate to " 
+                gmsg -v1 -n -c white "$GURU_CFG "
+                gmsg -v1 -n "select " 
+                gmsg -v1 -n -c white "corsair-profile.ckb "
+
+                gmsg -v1 -n "then click " 
+                gmsg -v1 -n -c white "open "
+                gmsg -v1 "and close ckb-next" 
+                gmsg -V1 
+            fi
             return 5
         fi
 
@@ -152,10 +173,9 @@ corsair.status () {
 
 
 corsair.start () {
-    # reserve some keys for future purposes by coloring them no
-
+    # reserve keys esc, F1 to 12
     if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-            gmsg -v1 -c green "already running"
+            gmsg -c green "already running"
             return 0
         fi
 
@@ -184,33 +204,31 @@ corsair.start () {
 
     # Check are pipes started, start if not
     gmsg -n -v1 -t "checking pipes.. "
-    if ! ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then
-            gmsg -c white "set pipes in cbk-next gui: K68 > Lighting > select a key(s) > New animation > Pipe > ... and try again"
-            return 100
-        else
+    if ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then       
             gmsg -v1 -c green "OK"
+        else
+            gmsg -c red "wrong or not imported ckb-next profile "        
+            return 100
         fi
-
-    # Cleaning the table
-    gmsg -n -v1 -t "setting keys keys"
-    for _key_pipe in $key_pipe_list ; do
-            gmsg -n -v2 "."
-            corsair.raw_write $_key_pipe $rgb_black
-        done
-    gmsg -v1 -c green " done"
     return 0
 }
 
 
 corsair.init () {
     # load default profile and set wanted mode
-    corsair.check || return 1
     local _mode=$GURU_CORSAIR_MODE ; [[ $1 ]] && _mode="$1"
 
     if ckb-next -p guru -m $_mode 2>/dev/null ; then
             export corsair_mode=$_mode
             echo $_mode > $corsair_last_mode
         else
+            # issue withckb-next profile selection. it does not return error when profile is not exist
+            # ckb-next -p pillu -m pylly       # profile "pillu" does not exist
+            # QObject::startTimer: Timers cannot have negative intervals
+            # Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+            # echo $?
+            # 0
+
             local _error=$?
             gmsg -v0 -c yellow "corsair init failure"
             return $_error
@@ -221,7 +239,6 @@ corsair.init () {
 
 corsair.raw_write () {
     # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
-    corsair.check || return 1
     local _button=$1 ; shift
     local _color=$1 ; shift
     local _bright="FF" ; [[ $1 ]] && _bright="$1" ; shift
@@ -236,7 +253,7 @@ corsair.raw_write () {
 
 corsair.set () {
     # write color to key: input <key> <color>
-    corsair.check || return 1
+    corsair.check | return $?
     local _button=${1^^}
     local _color='rgb_'"$2"
     local _bright="FF" ; [[ $3 ]] && _bright="$3"
@@ -288,6 +305,18 @@ corsair.reset () {
            gmsg -v2 -c green " done"
            return 0
         fi
+}
+
+
+corsair.clear () {
+    # Cleaning the table
+    gmsg -n -v1 -t "setting keys "
+    for _key_pipe in $key_pipe_list ; do
+            gmsg -n -v1 "."
+            gmsg -n -V1 -v2 "$_key_pipe "
+            corsair.raw_write $_key_pipe $rgb_black
+        done
+    gmsg -v1 -c green " done"
 }
 
 
