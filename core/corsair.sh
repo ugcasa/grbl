@@ -44,7 +44,7 @@ corsair.main () {
             corsair_mode=$GURU_CORSAIR_MODE
         fi
 
-    local _cmd="$1" ; shift        
+    local _cmd="$1" ; shift
     case "$_cmd" in check|start|init|set|reset|clear|end|kill|status|help|install|remove)
             corsair.$_cmd $@ ; return $? ;;
         *)  echo "corsair: unknown command: $_cmd"
@@ -87,16 +87,16 @@ corsair.check () {
 
     gmsg -n -v2 -t "checking corsair is enabled.. "
     if [[ $GURU_CORSAIR_ENABLED ]] ; then
-            gmsg -v2 -c green "enabled"    
+            gmsg -v2 -c green "enabled"
         else
             gmsg -v1 -c dark_grey "disabled"
             return 1
         fi
 
     gmsg -n -v2 -t "checking device is connected.. "
-   
+
     if lsusb |grep "Corsair" >/dev/null ; then
-            gmsg -v2 -c green "connected"        
+            gmsg -v2 -c green "connected"
         else
             gmsg -v1 -c dark_grey "disconnected"
             return 2
@@ -104,14 +104,14 @@ corsair.check () {
 
     gmsg -n -v2 -t "checking ckb-next-daemon.. "
     if ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-            gmsg -v2 -c green "running"            
+            gmsg -v2 -c green "running"
         else
             gmsg -v1 -c dark_grey "ckb-next-daemon not running"
             gmsg -v2 -c white "start by '$GURU_CALL corsair start'"
-            return 3  
+            return 3
         fi
 
-    gmsg -n -v2 -t "checking mode supports piping.. "    
+    gmsg -n -v2 -t "checking mode supports piping.. "
     if [[ "${status_modes[@]}" =~ "$corsair_mode" ]] ; then
             gmsg -v2 -c green "ok"
         else
@@ -131,21 +131,21 @@ corsair.check () {
                 gmsg -c green "ok"
                 return 0
             else
-                gmsg 
+                gmsg
                 gmsg -c red "non imported ckb-next profile "
                 gmsg -v1 -n "open ckb-next and click profile bar and select "
                 gmsg -v1 -n -c white "Manage profiles "
                 gmsg -v1 -n "then click "
                 gmsg -v1 -n -c white "Import "
-                gmsg -v1 -n "and navigate to " 
+                gmsg -v1 -n "and navigate to "
                 gmsg -v1 -n -c white "$GURU_CFG "
-                gmsg -v1 -n "select " 
+                gmsg -v1 -n "select "
                 gmsg -v1 -n -c white "corsair-profile.ckb "
 
-                gmsg -v1 -n "then click " 
+                gmsg -v1 -n "then click "
                 gmsg -v1 -n -c white "open "
-                gmsg -v1 "and close ckb-next" 
-                gmsg -V1 
+                gmsg -v1 "and close ckb-next"
+                gmsg -V1
             fi
             return 5
         fi
@@ -204,10 +204,10 @@ corsair.start () {
 
     # Check are pipes started, start if not
     gmsg -n -v1 -t "checking pipes.. "
-    if ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then       
+    if ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then
             gmsg -v1 -c green "OK"
         else
-            gmsg -c red "wrong or not imported ckb-next profile "        
+            gmsg -c red "wrong or not imported ckb-next profile "
             return 100
         fi
     return 0
@@ -346,7 +346,7 @@ corsair.kill () {
 
 corsair.install () {
     # install essentials, driver and application
-    if corsair.check ; then gmsg -x 100 "corsair seems to be working, why bother to install it again?" ; fi 
+    if corsair.check ; then gmsg -x 100 "corsair seems to be working, why bother to install it again?" ; fi
 
     sudo apt-get install -y build-essential cmake libudev-dev qt5-default zlib1g-dev libappindicator-dev libpulse-dev libquazip5-dev libqt5x11extras5-dev libxcb-screensaver0-dev libxcb-ewmh-dev libxcb1-dev qttools5-dev git pavucontrol libdbusmenu-qt5-2 libdbusmenu-qt5-dev
     cd /tmp
