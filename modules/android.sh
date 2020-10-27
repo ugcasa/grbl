@@ -6,8 +6,8 @@
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
-
-if ((GURU_VERBOSE>1)) ; then android_verb="-v" ; fi
+android_verb="-q"
+if ((GURU_VERBOSE>2)) ; then android_verb="-v" ; fi
 android_first_time="$HOME/.data/android-suveren"
 android_temp_folder="/tmp/guru/android"
 android_file_count=0
@@ -274,7 +274,6 @@ android.camera () {
             gmsg -v1 -c light_blue "$_left_over"
 
             if gask "remove leftovers from temp" ; then
-                    [[ ${#android_temp_folder} < 5 ]] && return 2
                     [[ -d "$android_temp_folder" ]] && rm -rf "$android_temp_folder"
                 fi
         fi
@@ -301,10 +300,13 @@ android.media () {
     mount.online $GURU_MOUNT_VIDEO || mount.known_remote video
     mount.online $GURU_MOUNT_AUDIO || mount.known_remote audio
 
+    gmsg -n -v1 "copying files "
     while IFS= read -r _line ; do
 
-            IFS='>' ; _list=($_line) ; IFS=
             gmsg -v3 -c dark_cyan ":$_line:"
+            _ifs=$IFS ; IFS='>' ; _list=($_line) ; IFS=$_ifs
+
+            gmsg -v3 -c green ":${_list[@]}:"
 
             _action=${_list[0]}
             gmsg -v3 -c deep_pink ":$_action:"   # cp=copy, mv=move
@@ -320,15 +322,17 @@ android.media () {
             gmsg -v3 -c deep_pink ":$_target:"
 
             gmsg -v1 -V2 -n "."
-            gmsg -v2 -c dark_crey "$_title > $_target "
+            gmsg -n -v2 -c dark_crey "$_title > $_target "
             if ! [[ -d "$_target" ]] ; then mkdir -p "$_target" ; fi
+
+
 
             # check folder exits
             if sshpass -p $GURU_ANDROID_PASSWORD \
-                    ssh -o HostKeyAlgorithms=+ssh-dss -p $GURU_ANDROID_LAN_PORT \
-                    $GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP stat "$_source" >/dev/null
+                    ssh -o HostKeyAlgorithms=+ssh-dss -o StrictHostKeyChecking=no -p $GURU_ANDROID_LAN_PORT \
+                    $GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP stat "$_source"
                 then
-                    # copy all files in requested type
+                    # copy all files in requested type $android_verb
                     sshpass -p $GURU_ANDROID_PASSWORD \
                     scp $android_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_ANDROID_LAN_PORT \
                     $GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP:"$_source/*.$_type" $_target
@@ -342,6 +346,7 @@ android.media () {
                         [[ "$_action" == "mv" ]] && echo android.rmdir "$_source"
                         ;;
                     *)  gmsg -c yellow "$_source $_type failed"
+                        ;;
                 esac
 
         done < "$android_config_file"
