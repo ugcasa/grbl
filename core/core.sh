@@ -83,12 +83,13 @@ core.parser () {
 
 core.process_opts () {                                                  # argument parser
 
-    TEMP=`getopt --long -o "vVflu:h:" "$@"`
+    TEMP=`getopt --long -o "vVWflu:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
             -v ) export GURU_VERBOSE=1      ; shift     ;;
             -V ) export GURU_VERBOSE=2      ; shift     ;;
+            -W ) export GURU_VERBOSE=3      ; shift     ;;
             -f ) export GURU_FORCE=true     ; shift     ;;
             -l ) export GURU_LOGGING=true   ; shift     ;;
             -u ) core.change_user "$2"      ; shift 2   ;;

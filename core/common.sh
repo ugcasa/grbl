@@ -33,7 +33,7 @@ export -f msg
 gmsg() {
     # function for ouput messages and make log notifications - revisited
     local _verbose_trigger=0                        # prinout if verbose trigger is not set in options
-    local _verbose_limiter=3
+    local _verbose_limiter=4
     local _newline="\n"                             # newline is on by default
     local _pre_newline=
     local _timestamp=                               # timestamp is disabled by default
@@ -52,7 +52,7 @@ gmsg() {
             -n ) _newline=                                  ; shift ;;  # no newline
             -N ) _pre_newline="\n"                          ; shift ;;  # newline before printout
             -x ) _exit=$2                                   ; shift 2 ;;
-            -V)  _verbose_limiter=$2                        ; shift 2 ;;
+            -V ) _verbose_limiter=$2                        ; shift 2 ;;
             -v ) _verbose_trigger=$2                        ; shift 2 ;;
             -c ) _c_var="C_${2^^}" ; _color=${!_c_var}      ; shift 2 ;;
              * ) break
