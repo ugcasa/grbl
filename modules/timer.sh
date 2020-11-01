@@ -2,15 +2,16 @@
 # guru shell work time tracker
 # casa@ujo.guru 2019-2020
 
-# todo:
+# yes.. lets delete all shit
+
+# todo (noot):
 #       - python is more fluent in mathematics
 #       - epic time base time, rounding when reporting
 #       - project module dependencies
 #       - mqtt connection
-# # bash 2.th try - use date to make math
+
 # date --date 'March 1, 2015 +7 days'
 # date -d "$(date -d "2014-9-14 10:00:00") + 4 hours + 20 minutes - 0 seconds"
-
 # date -d "$(date -d "2014-9-14 11:00:00") + $(date -d "2014-9-14 10:00:00")"
 # epic=$(($(date -d "2014-9-14 11:00:00" +%s) - $(date -d "2014-9-14 10:00:00" +%s)))
 # epic=4200
@@ -19,6 +20,7 @@
 # echo "$h:$m"
 
 # date -d $(($(date -d "2014-9-14 11:00:00" +%s) - $(date -d "2014-9-14 10:00:00" +%s)))
+
 
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
@@ -43,17 +45,18 @@ timer.main () {
 timer.help () {
     gmsg -v1 -c white "guru-client timer help "
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL timer [start|end|cancel|log|edit|report|] "
+    gmsg -v0 "usage:    $GURU_CALL timer [start|end|cancel|log|edit|report] <task> <project> <customer> "
     gmsg -v2
-    gmsg -v1 "  start|change     start timer for target with last customer and project"
+    gmsg -v1 "  start <task>     start timer for target with last customer and project" 
     gmsg -v1 "  start at [TIME]  start timer at given time in format HH:MM"
     gmsg -v1 "  end|stop         end current task"
     gmsg -v1 "  end at [TIME]    end current task at given time in format HH:MM"
-    gmsg -v1 "  cancel           cancels the current task"
-    gmsg -v1 "  log              prints out 10 last tasks from log"
-    gmsg -v1 "  edit             opens work time log with $GURU_EDITOR"
-    gmsg -v1 "  report           creates report in .csv format and opens it with $GURU_OFFICE_DOC"
+    gmsg -v1 "  cancel           cancel the current task"
+    gmsg -v1 "  log              print out 10 last records"
+    gmsg -v1 "  edit             open work time log with $GURU_EDITOR"
+    gmsg -v1 "  report           create report in .csv format and open it with $GURU_OFFICE_DOC"
     gmsg -v2
+    gmsg -v1 "example:  $GURU_CALL timer start config_stuff projectA customerB "
 }
 
 
@@ -64,6 +67,7 @@ timer.toggle () {
     else
         timer.start
     fi
+    # let user to see stuff
     sleep 4
 }
 
@@ -181,10 +185,10 @@ timer.start() {
     nice_date=$(date -d $start_date '+%d.%m.%Y')                                    #; echo "nice_date: "$nice_date
     timer_start=$(date -d "$start_date $start_time" '+%s')                          #; echo "timer_start: "$timer_start
 
-    [ -f $GURU_FILE_TRACKLAST ] && source $GURU_FILE_TRACKLAST  # customer, project, task only
-    [ "$1" ] && task="$1" || task="$last_task"
-    [ "$2" ] && project="$2" || project="$last_project"
-    [ "$3" ] && customer="$3" || customer="$last_customer"
+    [[ -f $GURU_FILE_TRACKLAST ]] && source $GURU_FILE_TRACKLAST  # customer, project, task only
+    [[ "$1" ]] && task="$1" || task="$last_task"
+    [[ "$2" ]] && project="$2" || project="$last_project"
+    [[ "$3" ]] && customer="$3" || customer="$last_customer"
 
     printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_FILE_TRACKSTATUS
     printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_FILE_TRACKSTATUS
