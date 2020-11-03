@@ -38,6 +38,7 @@ corsair_last_mode="/tmp/corsair.mode"
 corsair.main () {
     # command parser
     # ckb-next current mode data
+
     if [[ -f $corsair_last_mode ]] ; then
             corsair_mode="$(head -1 $corsair_last_mode)"
         else
@@ -46,6 +47,7 @@ corsair.main () {
 
     local _cmd="$1" ; shift
     case "$_cmd" in check|start|init|set|reset|clear|end|kill|status|help|install|remove)
+    		if ! corsair.check >/dev/null; then return 0 ; fi
             corsair.$_cmd $@ ; return $? ;;
         *)  echo "corsair: unknown command: $_cmd"
     esac
