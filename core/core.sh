@@ -48,7 +48,7 @@ core.main () {
 
     # less than 100 are warnings, no error output
     if (( _error_code > 99 )); then
-            ERROR "$_error_code while "
+            gmsg -v2 -c dark_grey  "retuning error code $_error_code"
         fi
 
     return $_error_code
@@ -196,6 +196,7 @@ core.shell () {                                                      # terminal 
     # Terminal looper
 
         render_path () {
+            # todo this is broken
             local _path="$(pwd)"
             if [[ "$_path" == "$HOME" ]] ; then _path='~' ; fi
             local _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
