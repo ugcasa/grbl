@@ -103,8 +103,8 @@ keyboard.set_guru_ubuntu(){       # set guru defaults
 
 keyboard.set_guru_linuxmint () {
 
-local _new=$GURU_CFG/kbbind.guruio.cfg
-local _backup=$GURU_CFG/kbbind.backup.cfg
+local _new=$GURU_CFG/keyboard.binding-mint.cfg
+local _backup=$GURU_CFG/keyboard.backup-mint.cfg
 
 if [[ ! -f "$_backup" ]] ; then
 
@@ -141,7 +141,7 @@ keyboard.reset_linuxmint() {
     # ser cinnamon chortcut
     compatible_with "linuxmint" || return 1
 
-    backup=$GURU_CFG/kbbind.backup.cfg
+    backup=$GURU_CFG/keyboard.backup-mint.cfg
 
     if [ -f "$backup" ]; then
         dconf load /org/cinnamon/desktop/keybindings/ < "$backup" || return 101
