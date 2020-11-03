@@ -10,6 +10,7 @@ mount.main () {
     argument="$1"; shift
     case "$argument" in
                start|end)   gmsg -v 1 "mount.sh: no $argument function"         ; return 0 ;;
+                  system)   mount.system                                        ; return $? ;;
                      all)   mount.defaults                                      ; return $? ;;
                       ls)   mount.list                                          ; return $? ;;
                     info)   mount.info | column -t -s $' '                      ; return $? ;;
@@ -332,6 +333,17 @@ mount.install () {
     printf "Need to install $require, ctrl+c? or input local "
     sudo apt update && eval sudo apt "$action" "$require" && printf "\n guru is now ready to mount\n\n"
     return 0
+}
+
+
+mount.system () {
+
+    if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
+            gmsg -v1 -c green "system is mounted"
+            return 0
+        fi
+
+    mount.remote /home/$GURU_ACCESS_USERNAME/data $GURU_SYSTEM_MOUNT
 }
 
 
