@@ -4,6 +4,9 @@
 source $GURU_BIN/common.sh
 source $GURU_BIN/corsair.sh
 
+# back compatibly
+[[ $GURU_CORSAIR_CONNECTED_COLOR ]] || GURU_CORSAIR_CONNECTED_COLOR=deep_pink
+
 audio.help () {
     gmsg -v1 -c white "guru-client audio help "
     gmsg -v2
@@ -60,10 +63,12 @@ audio.tunnel () {
     if [[ $1 ]] ; then _user=$1 ; shift ; fi
 
     gmsg -v1 "tunneling mic to $_user@$_host:$_port"
-    corsair.main set F8 yellow
-    $GURU_BIN/audio/voipt.sh open -h $_host -p $_port -u $_user \
-    && corsair.main set F8 blue \
-    || corsair.main set F8 red
+    corsair.main set F8 $GURU_CORSAIR_EFECT_COLOR
+    if $GURU_BIN/audio/voipt.sh open -h $_host -p $_port -u $_user ; then
+            corsair.main set F8 $GURU_CORSAIR_CONNECTED_COLOR
+        else
+            corsair.main set F8 red
+        fi
 
     return 0
 }
@@ -96,7 +101,7 @@ audio.remove () {
 audio.status () {
     # report status
     if ps auxf | grep "ssh -L 10000:127.0.0.1:10001 " | grep -v grep >/dev/null ; then
-            corsair.main set F8 blue
+            corsair.main set F8 $GURU_CORSAIR_CONNECTED_COLOR
             gmsg -c green "audio tunnel is active"
             return 0
         else
