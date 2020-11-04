@@ -38,7 +38,8 @@ audio.main () {
 
 audio.close () {
     # close audio tunnel
-    $GURU_BIN/audio/voipt.sh close
+    corsair.main set F8 $GURU_CORSAIR_EFECT_COLOR
+    $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME || corsair.main set F8 red
     corsair.main reset F8
     return $?
 }
