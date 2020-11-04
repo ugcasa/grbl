@@ -24,8 +24,8 @@ voipt.main () {
 }
 
 voipt.arguments () {
-    remote_address=ujo.guru
-    remote_ssh_port=2010
+
+    remote_ssh_port=22
     remote_user=$USER
 
     TEMP=`getopt --long -o "vh:u:p:" "$@"`
@@ -39,6 +39,8 @@ voipt.arguments () {
              * ) break
         esac
     done
+
+    [[ $remote_address ]] || read -p "remote address: " remote_address
 
     # check message
     local _arg="$@"
