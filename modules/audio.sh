@@ -10,14 +10,16 @@ source $GURU_BIN/corsair.sh
 audio.help () {
     gmsg -v1 -c white "guru-client audio help "
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL audio status|close|install|remove|tunnel <host|ip> "
+    gmsg -v0 "usage:    $GURU_CALL audio status|close|install|remove|toggle|fast help|tunnel <host|ip> "
     gmsg -v2
     gmsg -v1 -c white "commands: "
-    gmsg -v2 "  tunnel <host|ip>     open tunnel to host "
-    gmsg -v2 "  close                close tunnel "
-    gmsg -v2 "  install              install requirements "
-    gmsg -v2 "  remove               remove requirements "
-    gmsg -v2 "  api_key <key>        set youtube api key "
+    gmsg -v1 "  tunnel <host>           open tunnel to host "
+    gmsg -v2 "  toggle <host>           check is tunnel on them stop it, else open tunnel "
+    gmsg -v1 "  close                   close tunnel "
+    gmsg -v1 "  install                 install requirements "
+    gmsg -v1 "  remove                  remove requirements "
+    gmsg -v2 "  fast [command] <host>   quick open tunnel, does not check stuff, just brute force"
+    gmsg -v1 "  fast help               check fast tool help for more detailed instructions"
     gmsg -v2
 }
 
@@ -26,11 +28,18 @@ audio.main () {
     # main command parser
     local _command="$1" ; shift
     case "$_command" in
-
-            status|tunnel|close|install|remove)
+            status|tunnel|close|install|remove|help)
                             audio.$_command $@
                             return $? ;;
-            *)              gmsg -c red "unknown command"
+            fast)
+                            $GURU_BIN/audio/fast_voipt.sh $1 -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME
+                            return $? ;;
+
+            toggle)
+                            audio.tunnel_toggle $@
+                            return $? ;;
+            *)
+                            gmsg -c red "unknown command"
                             return 1 ;;
         esac
 }
@@ -48,11 +57,11 @@ audio.close () {
 audio.tunnel () {
     # open tunnel adapter for voipt. input host, port, user (all optional)
 
-    # toggler
-    if audio.status ; then
-            audio.close
-            return 0
-        fi
+    # # toggler
+    # if audio.status ; then
+    #         audio.close
+    #         return 0
+    #     fi
 
     # fill default
     local _host=$GURU_ACCESS_DOMAIN
@@ -74,6 +83,16 @@ audio.tunnel () {
     return 0
 }
 
+
+audio.tunnel_toggle () {
+    # # toggler
+    if audio.status ; then
+            audio.close
+            return 0
+        fi
+    audio.tunnel $@
+    return $?
+}
 
     # # info user enter pressing
     # gmsg -V1 "press enter to close"

@@ -46,66 +46,144 @@ voipt.arguments () {
 
 
 voipt.open () {
-    voipt.start_listener || echo "listener error $?"
-    voipt.start_sender || echo "sender error $?"
+    voipt.start_listener || return 100
+    voipt.start_sender || return 100
 }
 
 
 voipt.close () {
-    voipt.close_sender || echo "listener error $?"
-    voipt.close_listener || echo "sender error $?"
+    voipt.close_sender || return 100
+    voipt.close_listener || return 100
 }
 
 
 voipt.close_listener () {
-
-    #if [[ "$remote_address" ==    ]]  hmm.. I need my ip
-    pkill rx
+    gmsg -n -v1 "starting remote audio device.. "
     ssh -p $remote_ssh_port $remote_user@$remote_address pkill rx
     ssh -p $remote_ssh_port $remote_user@$remote_address pkill socat
-    # gnome-terminal -t --geometry=40x4 --hide-menubar  -- ssh -p $remote_ssh_port $remote_user@$remote_address $'pkill rx ; pkill rx ; pkill socat'
+    gmsg -c green -v1 "ok"
+
     return 0
 }
 
 
 voipt.close_sender () {
+    gmsg -n -v1 "closing sender.. "
     #gnome-terminal -t --geometry=40x4 --hide-menubar  --
     pkill tx ; pkill socat
     local pid=$(ps aux | grep ssh | grep "$sender_tcp_port" | tr -s " " | cut -f2 -d " ")
-    [[ $pid ]] && kill $pid
+    [[ $pid ]] && kill $pid && gmsg -c green -v1 "ok"
     return 0
 }
 
 
 voipt.start_listener () {
     # assuming listener is remote and sender is local
-    gnome-terminal -t "listener rx" \
-        --geometry=40x4 --hide-menubar \
-        -- ssh -p $remote_ssh_port $remote_user@$remote_address \
-        $HOME/git/trx/rx -h $sender_address -p $app_udb_port
 
-    gnome-terminal -t "listener tcp>udp $remote_addres:$remote_tcp_port" \
-        --geometry=40x4 --hide-menubar \
-        -- ssh -p $remote_ssh_port $remote_user@$remote_address \
-        socat tcp4-listen:$remote_tcp_port,reuseaddr,fork UDP:$sender_address:$app_udb_port
+    gmsg -n -v1 "starting remote audio device.. "
+    # check listener, lauch if not running
+    if ! ssh -p $remote_ssh_port $remote_user@$remote_address ps auxf | grep "rx -h 127.0.0.1" | grep -v grep >/dev/null ; then
+            gnome-terminal -t "listener rx" \
+                --geometry=40x4 --hide-menubar \
+                -- ssh -p $remote_ssh_port $remote_user@$remote_address \
+                $HOME/git/trx/rx -h $sender_address -p $app_udb_port
+            sleep 1
+            gmsg -v1 -c green "started"
+
+            # test listener
+            if ! ssh -p $remote_ssh_port $remote_user@$remote_address ps auxf | grep "rx -h 127.0.0.1" | grep -v grep >/dev/null ; then
+                    gmsg -c yellow "$FUNCNAME: listener rx error occured "
+                    return 100
+                fi
+        else
+            gmsg -v1 -c green "ok"
+        fi
+
+    gmsg -n -v1 "start to pull udp from tcp.. "
+    # check socat running
+    if ! ssh -p $remote_ssh_port $remote_user@$remote_address ps auxf | grep "socat tcp4-listen:10001" | grep -v grep >/dev/null ; then
+            # launch socat
+            gmsg -v2 "remote_addres:$remote_tcp_port.. "
+            gnome-terminal -t "listener tcp>udp $remote_addres:$remote_tcp_port" \
+                    --geometry=40x4 --hide-menubar \
+                    -- ssh -p $remote_ssh_port $remote_user@$remote_address \
+                    socat tcp4-listen:$remote_tcp_port,reuseaddr,fork UDP:$sender_address:$app_udb_port
+            sleep 1
+
+            # test socat
+            if ssh -p $remote_ssh_port $remote_user@$remote_address ps auxf | grep "socat tcp4-listen:10001" | grep -v grep >/dev/null ; then
+                    gmsg -v1 -c green "started"
+                else
+                    gmsg -c yellow "$FUNCNAME: listener tcp>udp error occured "
+                    return 100
+                fi
+        else
+            gmsg -v1 -c green "ok"
+        fi
+
     return 0
 }
 
 
 voipt.start_sender () {
     #run listener first**
-    gnome-terminal -t "sender tunnel $remote_address" \
-        --geometry=40x4 --hide-menubar -- \
-        ssh -L $sender_tcp_port:$sender_address:$remote_tcp_port $remote_user@$remote_address -p $remote_ssh_port
-    sleep 4
+    gmsg -n -v1 "tunnel to $remote_address.. "
+    # check is tunnel active, start and test if not
+    if ! ps auxf | grep "ssh -L 10000:127.0.0.1:10001" | grep -v grep >/dev/null ; then
 
-    gnome-terminal -t "sender tx $sender_address" \
-        --geometry=40x4 --hide-menubar -- \
-        /tmp/trx/tx -h $sender_address -p $app_udb_port
+            gnome-terminal -t "sender tunnel $remote_address" \
+                --geometry=40x4 --hide-menubar -- \
+                ssh -L $sender_tcp_port:$sender_address:$remote_tcp_port $remote_user@$remote_address -p $remote_ssh_port
 
-    gnome-terminal -t "sender udp>tcp $sender_address:$sender_tcp_port" \
-        --geometry=40x4 --hide-menubar -- \
-        socat udp4-listen:$app_udb_port,reuseaddr,fork tcp:$sender_address:$sender_tcp_port
+            sleep 1
+
+            if ps auxf | grep "ssh -L 10000:127.0.0.1:10001" >/dev/null  ; then
+                    gmsg -v1 -c green "created"
+                else
+                    gmsg -c yellow "$FUNCNAME: sender tx error occured "
+                    return 100
+                fi
+        else
+           gmsg -v1 -c green "ok"
+        fi
+
+
+    gmsg -n -v1 "voip audio sender.. "
+    # check transmitter
+    if ! ps auxf | grep trx/tx | grep -v grep  >/dev/null ; then
+            # sterting is not running
+            gnome-terminal -t "sender tx $sender_address" \
+                --geometry=40x4 --hide-menubar -- \
+                /tmp/trx/tx -h $sender_address -p $app_udb_port
+
+            # test
+            if ps auxf | grep trx/tx >/dev/null ; then
+                    gmsg -v1 -c green "started"
+                else
+                    gmsg -c yellow "$FUNCNAME: sender tx error occured "
+                    return 100
+                fi
+        else
+            gmsg -v1 -c green "ok"
+        fi
+
+    gmsg -n -v1 "start to push udp to tcp.. "
+    # test sender sice udb to tcp
+    if ! ps auxf | grep "socat udp4-listen:1350" | grep -v grep >/dev/null ; then
+
+            gnome-terminal -t "sender udp>tcp $sender_address:$sender_tcp_port" \
+                --geometry=40x4 --hide-menubar -- \
+                socat udp4-listen:$app_udb_port,reuseaddr,fork tcp:$sender_address:$sender_tcp_port
+
+            if ps auxf | grep "socat udp4-listen:1350" | grep -v grep >/dev/null ; then
+                    gmsg -v1 -c green "started"
+                else
+                    gmsg -c yellow "$FUNCNAME: udp>tcp error occured "
+                    return 100
+                fi
+        else
+            gmsg -v1 -c green "ok"
+        fi
     return 0
 }
 

@@ -259,8 +259,8 @@ corsair.set () {
     local _button=${1^^}
     local _color='rgb_'"$2"
     local _bright="FF" ; [[ $3 ]] && _bright="$3"
-    gmsg -n -v1 -t "${FUNCNAME[0]}: $_button color to "
-    gmsg -v1 -c $2 "$2"
+    gmsg -n -v2 -t "${FUNCNAME[0]}: $_button color to "
+    gmsg -v2 -c $2 "$2"
     # get input key pipe file location
     _button=$(eval echo '$'$_button)
     if ! [[ $_button ]] ; then
