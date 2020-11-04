@@ -2,9 +2,6 @@
 # phone bridge voip tunnel POC
 # assuming /git/trx is place for trx stuff
 
-
-# defaults
-
 # host variables
 app_udb_port=1350
 remote_tcp_port=10001
@@ -61,13 +58,18 @@ voipt.close () {
 
 
 voipt.close_listener () {
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- ssh -p $remote_ssh_port $remote_user@$remote_address $'pkill rx ; pkill socat'
+
+    #if [[ "$remote_address" ==    ]]  hmm.. I need my ip
+    pkill rx
+    ssh -p $remote_ssh_port $remote_user@$remote_address pkill rx
+    ssh -p $remote_ssh_port $remote_user@$remote_address pkill socat
+    # gnome-terminal -t --geometry=40x4 --hide-menubar  -- ssh -p $remote_ssh_port $remote_user@$remote_address $'pkill rx ; pkill rx ; pkill socat'
     return 0
 }
 
 
 voipt.close_sender () {
-    #gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 --
+    #gnome-terminal -t --geometry=40x4 --hide-menubar  --
     pkill tx ; pkill socat
     local pid=$(ps aux | grep ssh | grep "$sender_tcp_port" | tr -s " " | cut -f2 -d " ")
     [[ $pid ]] && kill $pid
@@ -77,23 +79,33 @@ voipt.close_sender () {
 
 voipt.start_listener () {
     # assuming listener is remote and sender is local
-    [[ $verbose ]] && echo "listener rx"
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- ssh -p $remote_ssh_port $remote_user@$remote_address $HOME/git/trx/rx -h $sender_address -p $app_udb_port
-    [[ $verbose ]] && echo "listener tcp>udp"
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- ssh -p $remote_ssh_port $remote_user@$remote_address socat tcp4-listen:$remote_tcp_port,reuseaddr,fork UDP:$sender_address:$app_udb_port
+    gnome-terminal -t "listener rx" \
+        --geometry=40x4 --hide-menubar \
+        -- ssh -p $remote_ssh_port $remote_user@$remote_address \
+        $HOME/git/trx/rx -h $sender_address -p $app_udb_port
+
+    gnome-terminal -t "listener tcp>udp $remote_addres:$remote_tcp_port" \
+        --geometry=40x4 --hide-menubar \
+        -- ssh -p $remote_ssh_port $remote_user@$remote_address \
+        socat tcp4-listen:$remote_tcp_port,reuseaddr,fork UDP:$sender_address:$app_udb_port
     return 0
 }
 
 
 voipt.start_sender () {
     #run listener first**
-    [[ $verbose ]] && echo "sender tunnel"
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- ssh -L $sender_tcp_port:$sender_address:$remote_tcp_port $remote_user@$remote_address -p $remote_ssh_port -N
+    gnome-terminal -t "sender tunnel $remote_address" \
+        --geometry=40x4 --hide-menubar -- \
+        ssh -L $sender_tcp_port:$sender_address:$remote_tcp_port $remote_user@$remote_address -p $remote_ssh_port
     sleep 4
-    [[ $verbose ]] && echo "sender tx"
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- /tmp/trx/tx -h $sender_address -p $app_udb_port
-    [[ $verbose ]] && echo "sender udp>tcp"
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- socat udp4-listen:$app_udb_port,reuseaddr,fork tcp:$sender_address:$sender_tcp_port
+
+    gnome-terminal -t "sender tx $sender_address" \
+        --geometry=40x4 --hide-menubar -- \
+        /tmp/trx/tx -h $sender_address -p $app_udb_port
+
+    gnome-terminal -t "sender udp>tcp $sender_address:$sender_tcp_port" \
+        --geometry=40x4 --hide-menubar -- \
+        socat udp4-listen:$app_udb_port,reuseaddr,fork tcp:$sender_address:$sender_tcp_port
     return 0
 }
 
@@ -122,6 +134,15 @@ voipt.install () {
     cd trx
     sed -i 's/ortp_set_log_level_mask(NULL, ORTP_WARNING|ORTP_ERROR);/ortp_set_log_level_mask(ORTP_WARNING|ORTP_ERROR);/g' tx.c
     make && [[ $verbose ]] && echo "success" || return $?
+    return 0
+}
+
+
+voipt.remove () {
+    # assume debian
+    gmsg -v1 "removing libasound2-dev libopus-dev libopus0 libortp-dev libopus-dev libortp-dev wireguard socat.."
+    sudo apt-get remove -y libasound2-dev libopus-dev libopus0 libortp-dev libopus-dev libortp-dev wireguard socat || return $?
+    #make uninstall && [[ $verbose ]] && echo "success" || return $? ??
     return 0
 }
 
