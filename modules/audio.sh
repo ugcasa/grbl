@@ -60,8 +60,10 @@ audio.tunnel () {
     if [[ $1 ]] ; then _user=$1 ; shift ; fi
 
     gmsg -v1 "tunneling mic to $_user@$_host:$_port"
-    corsair.main set F8 blue
-    gmsg -v2 "$($GURU_BIN/audio/voipt.sh open -h $_host -p $_port -u $_user)"
+    corsair.main set F8 yellow
+    $GURU_BIN/audio/voipt.sh open -h $_host -p $_port -u $_user \
+    && corsair.main set F8 blue \
+    || corsair.main set F8 red
 
     return 0
 }
