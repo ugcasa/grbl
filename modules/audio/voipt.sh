@@ -40,7 +40,7 @@ voipt.arguments () {
         esac
     done
 
-    [[ $remote_address ]] || read -p "remote address: " remote_address
+    [[ $remote_address ]] || read -p "remote address: " remote_address
 
     # check message
     local _arg="$@"
@@ -49,14 +49,14 @@ voipt.arguments () {
 
 
 voipt.open () {
-    voipt.start_listener || [[ $verbose ]] && echo "listener error $?"
-    voipt.start_sender || [[ $verbose ]] && echo "sender error $?"
+    voipt.start_listener || echo "listener error $?"
+    voipt.start_sender || echo "sender error $?"
 }
 
 
 voipt.close () {
-    voipt.close_sender || [[ $verbose ]] && echo "listener error $?"
-    voipt.close_listener || [[ $verbose ]] && echo "sender error $?"
+    voipt.close_sender || echo "listener error $?"
+    voipt.close_listener || echo "sender error $?"
 }
 
 
@@ -116,7 +116,7 @@ voipt.help () {
 
 voipt.install () {
     # assume debian
-    sudo apt-get install -y libasound2-dev libopus-dev libopus0 libortp-dev libopus-dev libortp-dev wireguard socat || return $?
+    sudo apt-get install -y libasound2-dev libopus-dev libopus0 libortp-dev libopus-dev libortp-dev wireguard socat || return $?
     cd /tmp
     git clone http://www.pogo.org.uk/~mark/trx.git || return $?
     cd trx
