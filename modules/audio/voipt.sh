@@ -58,21 +58,29 @@ voipt.close () {
 
 
 voipt.close_listener () {
-    gmsg -n -v1 "starting remote audio device.. "
-    ssh -p $remote_ssh_port $remote_user@$remote_address pkill rx
-    ssh -p $remote_ssh_port $remote_user@$remote_address pkill socat
-    gmsg -c green -v1 "ok"
-    return 0
+
+    gmsg -n -v1 "closing remote rx and socat.. "
+    if ssh -p "$remote_ssh_port" "$remote_user@$remote_address" "pkill rx; pkill socat" ; then
+            gmsg -v2 -c green -v1 "ok"
+        else
+            gmsg -c red "remote pkill rx/socat failed"
+        fi
+
 }
 
 
 voipt.close_sender () {
-    gmsg -n -v1 "closing sender.. "
+
     #gnome-terminal -t --geometry=40x4 --hide-menubar  --
+    gmsg -n -v1 "closing local rc and socat sender.. "
     pkill tx
     pkill socat
     local pid=$(ps aux | grep ssh | grep "$sender_tcp_port" | tr -s " " | cut -f2 -d " ")
-    [[ $pid ]] && kill $pid && gmsg -c green -v1 "ok"
+    if [[ $pid ]] ; then
+            kill $pid && gmsg -c green -v1 "ok"
+        else
+            gmsg -c green -v1 "not running"
+        fi
     return 0
 }
 
@@ -87,10 +95,10 @@ voipt.start_listener () {
                 --geometry=40x4 --hide-menubar \
                 -- ssh -p $remote_ssh_port $remote_user@$remote_address \
                 $HOME/git/trx/rx -h $sender_address -p $app_udb_port
-            sleep 1
             gmsg -v1 -c green "started"
 
             # test listener
+            sleep 1
             if ! ssh -p $remote_ssh_port $remote_user@$remote_address ps auxf | grep "rx -h 127.0.0.1" | grep -v grep >/dev/null ; then
                     gmsg -c yellow "$FUNCNAME: listener rx error occured "
                     return 100
@@ -108,13 +116,13 @@ voipt.start_listener () {
                     --geometry=40x4 --hide-menubar \
                     -- ssh -p $remote_ssh_port $remote_user@$remote_address \
                     socat tcp4-listen:$remote_tcp_port,reuseaddr,fork UDP:$sender_address:$app_udb_port
-            sleep 1
 
             # test socat
+            sleep 1
             if ssh -p $remote_ssh_port $remote_user@$remote_address ps auxf | grep "socat tcp4-listen:10001" | grep -v grep >/dev/null ; then
                     gmsg -v1 -c green "started"
                 else
-                    gmsg -c yellow "$FUNCNAME: listener tcp>udp error occured "
+                    gmsg -c red "$FUNCNAME: listener tcp>udp error occured "
                     return 100
                 fi
         else
@@ -135,12 +143,12 @@ voipt.start_sender () {
                 --geometry=40x4 --hide-menubar -- \
                 ssh -L $sender_tcp_port:$sender_address:$remote_tcp_port $remote_user@$remote_address -p $remote_ssh_port
 
-            sleep 1
+            sleep 2
 
             if ps auxf | grep "ssh -L 10000:127.0.0.1:10001" >/dev/null  ; then
                     gmsg -v1 -c green "created"
                 else
-                    gmsg -c yellow "$FUNCNAME: sender tx error occured "
+                    gmsg -c red "$FUNCNAME: sender tx error occured "
                     return 100
                 fi
         else
@@ -160,7 +168,7 @@ voipt.start_sender () {
             if ps auxf | grep trx/tx >/dev/null ; then
                     gmsg -v1 -c green "started"
                 else
-                    gmsg -c yellow "$FUNCNAME: sender tx error occured "
+                    gmsg -c red "$FUNCNAME: sender tx error occured "
                     return 100
                 fi
         else
@@ -178,7 +186,7 @@ voipt.start_sender () {
             if ps auxf | grep "socat udp4-listen:1350" | grep -v grep >/dev/null ; then
                     gmsg -v1 -c green "started"
                 else
-                    gmsg -c yellow "$FUNCNAME: udp>tcp error occured "
+                    gmsg -c red "$FUNCNAME: udp>tcp error occured "
                     return 100
                 fi
         else

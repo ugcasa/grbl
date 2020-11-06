@@ -80,12 +80,15 @@ audio.tunnel () {
 
 
 audio.tunnel_toggle () {
-    # # toggler
+    # audio toggle for keyboard shortcut usage
     corsair.main set F8 $GURU_CORSAIR_EFECT_COLOR
     if audio.status ; then
-            if $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN ; then
+            if $GURU_BIN/audio/fast_voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT ; then
                     corsair.main reset F8
                     return 0
+                else
+                    corsair.main set F8 red
+                    return 1
                 fi
         fi
 

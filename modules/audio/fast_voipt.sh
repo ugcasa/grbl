@@ -46,23 +46,19 @@ voipt.arguments () {
 
 
 voipt.open () {
-    voipt.start_listener || echo "listener error $?"
-    voipt.start_sender || echo "sender error $?"
+    voipt.start_listener || echo "start listener error $?"
+    voipt.start_sender || echo "start sender error $?"
 }
 
 
 voipt.close () {
-    voipt.close_listener || echo "sender error $?"
-    voipt.close_sender || echo "listener error $?"
+    voipt.close_listener || echo "close sender error $?"
+    voipt.close_sender || echo "close listener error $?"
 }
 
 
 voipt.close_listener () {
-    ssh -p $remote_ssh_port $remote_user@$remote_address pkill socat
-    ssh -p $remote_ssh_port $remote_user@$remote_address pkill rx
-    #ssh -p $remote_ssh_port $remote_user@$remote_address kill -9 $(ps auxf | grep "socat tcp4-listen:10001" | grep -v grep | xargs | cut -f2 -d " ")
-    #ssh -p $remote_ssh_port $remote_user@$remote_address kill -9 $(ps auxf | grep "rx -h 127.0.0.1"  | grep -v grep | xargs | cut -f2 -d " ")
-    return 0
+    ssh -p $remote_ssh_port $remote_user@$remote_address "pkill rx ; pkill socat"
 }
 
 
@@ -78,23 +74,27 @@ voipt.close_sender () {
 
 voipt.start_listener () {
     # assuming listener is remote and sender is local
-    [[ $verbose ]] && echo "listener rx"
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- ssh -p $remote_ssh_port $remote_user@$remote_address $HOME/git/trx/rx -h $sender_address -p $app_udb_port
-    [[ $verbose ]] && echo "listener tcp>udp"
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- ssh -p $remote_ssh_port $remote_user@$remote_address socat tcp4-listen:$remote_tcp_port,reuseaddr,fork UDP:$sender_address:$app_udb_port
+    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
+        ssh -p $remote_ssh_port $remote_user@$remote_address $HOME/git/trx/rx -h $sender_address -p $app_udb_port
+
+    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
+        ssh -p $remote_ssh_port $remote_user@$remote_address \
+        "pkill socat; socat tcp4-listen:$remote_tcp_port,reuseaddr,fork UDP:$sender_address:$app_udb_port"
     return 0
 }
 
 
 voipt.start_sender () {
     #run listener first**
-    [[ $verbose ]] && echo "sender tunnel"
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- ssh -L $sender_tcp_port:$sender_address:$remote_tcp_port $remote_user@$remote_address -p $remote_ssh_port -N
-    sleep 4
-    [[ $verbose ]] && echo "sender tx"
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- /tmp/trx/tx -h $sender_address -p $app_udb_port
-    [[ $verbose ]] && echo "sender udp>tcp"
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- socat udp4-listen:$app_udb_port,reuseaddr,fork tcp:$sender_address:$sender_tcp_port
+    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
+        ssh -L $sender_tcp_port:$sender_address:$remote_tcp_port $remote_user@$remote_address -p $remote_ssh_port
+    sleep 3
+
+    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
+        /tmp/trx/tx -h $sender_address -p $app_udb_port
+
+    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
+        socat udp4-listen:$app_udb_port,reuseaddr,fork tcp:$sender_address:$sender_tcp_port
     return 0
 }
 
