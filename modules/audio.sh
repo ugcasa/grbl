@@ -57,16 +57,11 @@ audio.close () {
 audio.tunnel () {
     # open tunnel adapter for voipt. input host, port, user (all optional)
 
-    # # toggler
-    # if audio.status ; then
-    #         audio.close
-    #         return 0
-    #     fi
-
     # fill default
     local _host=$GURU_ACCESS_DOMAIN
     local _port=$GURU_ACCESS_PORT
     local _user=$GURU_ACCESS_USERNAME
+
     # fill user input
     if [[ $1 ]] ; then _host=$1 ; shift ; fi
     if [[ $1 ]] ; then _port=$1 ; shift ; fi
@@ -86,46 +81,40 @@ audio.tunnel () {
 
 audio.tunnel_toggle () {
     # # toggler
+    corsair.main set F8 $GURU_CORSAIR_EFECT_COLOR
     if audio.status ; then
-            audio.close
-            return 0
+            if $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN ; then
+                    corsair.main reset F8
+                    return 0
+                fi
         fi
-    audio.tunnel $@
-    return $?
+
+    if $GURU_BIN/audio/fast_voipt.sh open -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME ; then
+            corsair.main set F8 $GURU_CORSAIR_CONNECTED_COLOR
+            return 0
+        else
+            corsair.main set F8 red
+            return 1
+        fi
 }
-
-    # # info user enter pressing
-    # gmsg -V1 "press enter to close"
-    # gmsg -v1 -c light_blue \
-    #     "press $(printf $C_WHITE)enter $(printf $C_LIGHT_BLUE)to close of"\
-    #     "$(printf $C_WHITE)ctrl+c $(printf $C_LIGHT_BLUE)to leave on then close by typing"\
-    #     "$(printf $C_WHITE)$GURU_CALL audio close"
-    # read _ans
-
-    # # close tunnel
-    # gmsg -v2 "$(audio.close)"
 
 # install function is required by core
 audio.install () {
     $GURU_BIN/audio/voipt.sh install
 }
 
-
 # remove function is required by core
 audio.remove () {
     $GURU_BIN/audio/voipt.sh remove
 }
 
-
 # status function is required by core
 audio.status () {
     # report status
     if ps auxf | grep "ssh -L 10000:127.0.0.1:10001 " | grep -v grep >/dev/null ; then
-            corsair.main set F8 $GURU_CORSAIR_CONNECTED_COLOR
             gmsg -c green "audio tunnel is active"
             return 0
         else
-            corsair.main reset F8
             gmsg -c dark_grey "no audio tunnels"
             return 1
         fi

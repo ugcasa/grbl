@@ -12,7 +12,7 @@ voipt.main () {
     voipt.arguments $@
     local function=$1 ; shift
     case $function in
-            install|open|close|ls|help )
+            install|open|toggle|close|ls|help)
                         voipt.$function $@
                         return $? ;;
                     *)  [[ $verbose ]] && echo "unknown command $function"
@@ -52,20 +52,24 @@ voipt.open () {
 
 
 voipt.close () {
-    voipt.close_sender || echo "listener error $?"
     voipt.close_listener || echo "sender error $?"
+    voipt.close_sender || echo "listener error $?"
 }
 
 
 voipt.close_listener () {
-    gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- ssh -p $remote_ssh_port $remote_user@$remote_address $'pkill rx ; pkill socat'
+    ssh -p $remote_ssh_port $remote_user@$remote_address pkill socat
+    ssh -p $remote_ssh_port $remote_user@$remote_address pkill rx
+    #ssh -p $remote_ssh_port $remote_user@$remote_address kill -9 $(ps auxf | grep "socat tcp4-listen:10001" | grep -v grep | xargs | cut -f2 -d " ")
+    #ssh -p $remote_ssh_port $remote_user@$remote_address kill -9 $(ps auxf | grep "rx -h 127.0.0.1"  | grep -v grep | xargs | cut -f2 -d " ")
     return 0
 }
 
 
 voipt.close_sender () {
     #gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 --
-    pkill tx ; pkill socat
+    pkill tx
+    pkill socat
     local pid=$(ps aux | grep ssh | grep "$sender_tcp_port" | tr -s " " | cut -f2 -d " ")
     [[ $pid ]] && kill $pid
     return 0

@@ -62,7 +62,6 @@ voipt.close_listener () {
     ssh -p $remote_ssh_port $remote_user@$remote_address pkill rx
     ssh -p $remote_ssh_port $remote_user@$remote_address pkill socat
     gmsg -c green -v1 "ok"
-
     return 0
 }
 
@@ -70,7 +69,8 @@ voipt.close_listener () {
 voipt.close_sender () {
     gmsg -n -v1 "closing sender.. "
     #gnome-terminal -t --geometry=40x4 --hide-menubar  --
-    pkill tx ; pkill socat
+    pkill tx
+    pkill socat
     local pid=$(ps aux | grep ssh | grep "$sender_tcp_port" | tr -s " " | cut -f2 -d " ")
     [[ $pid ]] && kill $pid && gmsg -c green -v1 "ok"
     return 0
