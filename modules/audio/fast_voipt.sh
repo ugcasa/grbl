@@ -7,6 +7,9 @@ app_udb_port=1350
 remote_tcp_port=10001
 sender_address=127.0.0.1
 sender_tcp_port=10000
+# new ones
+sender_device="default"
+listener_device="default"
 
 voipt.main () {
     voipt.arguments $@
@@ -25,7 +28,7 @@ voipt.arguments () {
     remote_ssh_port=22
     remote_user=$USER
 
-    TEMP=`getopt --long -o "vh:u:p:" "$@"`
+    TEMP=`getopt --long -o "vh:u:p:d:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
@@ -33,6 +36,7 @@ voipt.arguments () {
             -h ) remote_address=$2   ; shift 2 ;;
             -u ) remote_user=$2      ; shift 2 ;;
             -p ) remote_ssh_port=$2  ; shift 2 ;;
+            -d ) sender_device=$2    ; shift 2 ;;
              * ) break
         esac
     done
@@ -46,8 +50,8 @@ voipt.arguments () {
 
 
 voipt.open () {
-    voipt.start_listener || echo "start listener error $?"
-    voipt.start_sender || echo "start sender error $?"
+    voipt.start_listener $listener_device || echo "start listener error $?"
+    voipt.start_sender $sender_device || echo "start sender error $?"
 }
 
 
@@ -74,8 +78,10 @@ voipt.close_sender () {
 
 voipt.start_listener () {
     # assuming listener is remote and sender is local
+    local _device=$1
     gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
-        ssh -p $remote_ssh_port $remote_user@$remote_address $HOME/git/trx/rx -h $sender_address -p $app_udb_port
+        ssh -p $remote_ssh_port $remote_user@$remote_address \
+        $HOME/git/trx/rx -d $_device -h $sender_address -p $app_udb_port
 
     gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
         ssh -p $remote_ssh_port $remote_user@$remote_address \
@@ -85,17 +91,24 @@ voipt.start_listener () {
 
 
 voipt.start_sender () {
-    #run listener first**
+    # set needed to send voip over ssh tunnel
+    local _device=$1
+
+    # open tunnel to listener
     gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
         ssh -L $sender_tcp_port:$sender_address:$remote_tcp_port $remote_user@$remote_address -p $remote_ssh_port
+
+    # wait tunnel to build up. TIP: is not work remotely, try to increase this
     sleep 3
 
+    echo "device $_device"
+    # open soumd device input and send voip to port listened by socat
     gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
-        /tmp/trx/tx -h $sender_address -p $app_udb_port
+        /tmp/trx/tx -d $_device -h $sender_address -p $app_udb_port
 
+    # stuff udp traffic to tcp port for tunneling
     gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
         socat udp4-listen:$app_udb_port,reuseaddr,fork tcp:$sender_address:$sender_tcp_port
-    return 0
 }
 
 

@@ -16,6 +16,8 @@ audio.help () {
     gmsg -v1 "  tunnel <host>           open tunnel to host "
     gmsg -v2 "  toggle <host>           check is tunnel on them stop it, else open tunnel "
     gmsg -v1 "  close                   close tunnel "
+    gmsg -v1 "  ls                      list of local audio devices "
+    gmsg -v1 "  ls_remote               list of local remote audio devices "
     gmsg -v1 "  install                 install requirements "
     gmsg -v1 "  remove                  remove requirements "
     gmsg -v2 "  fast [command] <host>   quick open tunnel, does not check stuff, just brute force"
@@ -28,7 +30,7 @@ audio.main () {
     # main command parser
     local _command="$1" ; shift
     case "$_command" in
-            status|tunnel|close|install|remove|help)
+            status|ls|tunnel|close|install|remove|help)
                             audio.$_command $@
                             return $? ;;
             fast)
@@ -51,6 +53,20 @@ audio.close () {
     $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME || corsair.main set F8 red
     corsair.main reset F8
     return $?
+}
+
+
+audio.ls () {
+    local _device_list=$(aplay -l | awk -F \: '/,/{print $2}' | awk '{print $1}' | uniq)
+    gmsg -v -c "audio device list (alsa card)"
+    gmsg -c light_blue "$_device_list"
+}
+
+
+audio.ls_remote () {
+
+    local _device_list=$(aplay -l | awk -F \: '/,/{print $2}' | awk '{print $1}' | uniq)
+    gmsg -c light_blue "$_device_list"
 }
 
 
