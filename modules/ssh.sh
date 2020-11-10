@@ -79,12 +79,6 @@ ssh.rm_key () {
 
 ssh.add_key () {
     # [1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket
-    key_output="xclip"
-
-    if ! xclip -help >/dev/null 2>&1 ; then
-            [[ "$GURU_INSTALL_TYPE" == "desktop" ]] && sudo apt install xclip || key_output="stdin"
-    fi
-
     [ -d "$HOME/.ssh" ] || mkdir "$HOME/.ssh"
     error="1"
     # Select git service provider
@@ -217,6 +211,13 @@ ssh.add_key_accesspoint () {
 
 ssh.add_key_github () {
     # function to setup ssh key login with github
+    key_output="stdin"
+    if xclip -help >/dev/null 2>&1 ; then
+            key_output="xclip"
+        else
+            [[ "$GURU_INSTALL_TYPE" == "desktop" ]] && sudo apt install xclip && key_output="xclip"
+    fi
+
     local server="github.com"
     local key_file="$HOME/.ssh/$GURU_USER-$server"'_id_rsa'
     local ssh_key_add_url="https://github.com/settings/ssh/new"
@@ -228,17 +229,18 @@ ssh.add_key_github () {
     ssh.add_rule "$key_file" "$server"
 
     gmsg -c white "adding key to github "
-    # copy key to cliboard
-    if [[ "$key_output" == "xclip" ]] ; then
-            xclip -sel clip < "$key_file.pub"
-            gmsg -c deep_pink "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
-        else
-            gmsg -c orange "----copy between lines----"
-            cat "$key_file.pub"
-            gmsg -c orange "--------------------------"
-        fi
+    case $key_output in
+            xclip)
+                xclip -sel clip < "$key_file.pub"
+                gmsg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
+                ;;
+            stdin)
+                gmsg -c orange "----copy between lines----"
+                cat "$key_file.pub"
+                gmsg -c orange "--------------------------"
+                ;;
+            *)  gmsg "key saved to $key_file.pub and $key_file"
 
-    # open remote profile settings
     if [[ "$GURU_INSTALL_TYPE" == "desktop" ]] ; then
             firefox "$ssh_key_add_url" &
         else
@@ -263,26 +265,29 @@ ssh.add_key_bitbucket () {
     ssh.add_rule "$key_file" "$server"
 
     gmsg -c white "adding key to github "
-    # copy key to cliboard or stdin
-    if [[ "$key_output" == "xclip" ]] ; then
-            xclip -sel clip < "$key_file.pub"
-            gmsg -c deep_pink "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
-        else
-            gmsg -c orange "----copy between lines----"
-            cat "$key_file.pub"
-            gmsg -c orange "--------------------------"
-        fi
-
-    gmsg -c deep_pink "step 1) login to bitbucket then go to 'Profile' -> 'Personal settings' -> 'SSH keys' -> 'Add key'"
-    gmsg -c deep_pink "step 2) paste the key into the text box and add 'Title' $USER@$HOSTNAME and click 'Add key'"
+    case $key_output in
+            xclip)
+                xclip -sel clip < "$key_file.pub"
+                ;;
+            stdin)
+                gmsg -c orange "----copy between lines----"
+                cat "$key_file.pub"
+                gmsg -c orange "--------------------------"
+                ;;
+            *)  gmsg "key saved to $key_file.pub and $key_file"
+        esac
 
     # open remote profile settings
+    gmsg -c orange "step 1) login to bitbucket then go to 'Profile' -> 'Personal settings' -> 'SSH keys' -> 'Add key'"
+    gmsg -c orange "step 2) paste the key into the text box and add 'Title' $USER@$HOSTNAME and click 'Add key'"
     if [[ "$GURU_INSTALL_TYPE" == "desktop" ]] ; then
-            # open remote profile settings
+            gmsg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
             firefox "$ssh_key_add_url" &
         else
-             echo "open browser ans go to url: $ssh_key_add_url"
+            echo "open browser ans go to url: $ssh_key_add_url"
+            gmsg -c white "copy and paste public key to text box and use $USER@$HOSTNAME as a 'Title'"
         fi
+
 
     return 0
 }
