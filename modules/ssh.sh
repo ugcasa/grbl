@@ -26,6 +26,7 @@ ssh.key () {
         ls|files)       ls "$HOME/.ssh" | grep "rsa" | grep -v "pub" ;;
         add)            ssh.add_key "$@" ;;
         rm)             ssh.rm_key "$@" ;;
+        send)           ssh.copy-id "$@" ;;
         help|*)         ssh.help ;;
     esac
 
@@ -41,15 +42,16 @@ ssh.status () {
 ssh.help () {
     gmsg -v1 -c white "guru-client ssh help "
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help]"
+    gmsg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help] <key_file> <host> <port> <user>"
     gmsg -v2
     gmsg -v1 -c white "Commands:"
-    gmsg -v1 " key|keys             key management tools, try '$GURU_CALL ssh key help' for more info."
-    gmsg -v1 "   key ps             list of activekeys "
-    gmsg -v1 "   key ls             list of keys files"
-    gmsg -v1 "   key rm             remove from remote server server [user_name@service_host] "
-    gmsg -v1 "   key add <...>      add keys to server <domain> <port> <user_name> or"
-    gmsg -v1 "   key add <server>   add keys to known server: ujo.guru, git.ujo.guru, github, bitbucket"
+    gmsg -v1 " key|keys                 key management tools, try '$GURU_CALL ssh key help' for more info."
+    gmsg -v1 "   key ps                 list of activekeys "
+    gmsg -v1 "   key send               send keys to server"
+    gmsg -v1 "    "
+    gmsg -v1 "   key rm                 remove from remote server server [user_name@service_host] "
+    gmsg -v1 "   key add <...>          add keys to server <domain> <port> <user_name> or"
+    gmsg -v1 "   key add <server>       add keys to known server: ujo.guru, git.ujo.guru, github, bitbucket"
     gmsg -v2
     gmsg -v1 -c white "Example: "
     gmsg -v1 "      $GURU_CALL ssh key add $GURU_ACCESS_DOMAIN"
@@ -77,7 +79,12 @@ ssh.rm_key () {
 
 ssh.add_key () {
     # [1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket
-    xclip -help >/dev/null 2>&1 || sudo apt install xclip
+    key_output="xclip"
+
+    if ! xclip -help >/dev/null 2>&1 ; then
+            [[ "$GURU_INSTALL_TYPE" == "desktop" ]] && sudo apt install xclip || key_output="stdin"
+    fi
+
     [ -d "$HOME/.ssh" ] || mkdir "$HOME/.ssh"
     error="1"
     # Select git service provider
@@ -166,9 +173,9 @@ ssh.copy-id () {
     local key_file=$1
     local server="$GURU_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
     local port="$GURU_ACCESS_PORT" ; [[ $3 ]] && port=$3
-
+    local user="$GURU_USER" ; [[ $4 ]] && name=$4
     gmsg -c white "sending public keys to server "
-    if ssh-copy-id -f -p "$port" -i "$key_file" "$server" ; then
+    if ssh-copy-id -f -p "$port" -i "$key_file" "$user@$server" ; then
             gmsg -c green "ok"
         else
             gmsg -x 25 -c red "ssh-copy-id error"
@@ -181,7 +188,6 @@ ssh.add_rule () {
     local key_file=$1
     local server="$GURU_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
     local user="$GURU_USER" ; [[ $3 ]] && user=$3
-
     if cat $HOME/.ssh/config | grep "$user-$server" >/dev/null ; then
         gmsg -c green "rule already exist, ok"
     else
@@ -203,8 +209,8 @@ ssh.add_key_accesspoint () {
     ssh.keygen "$key_file"
     ssh.agent_start
     ssh.agent_add "$key_file"
-    ssh.copy-id "$key_file"
     ssh.add_rule "$key_file" "$server"
+    ssh.copy-id "$key_file"
     return 0
 }
 
@@ -219,18 +225,26 @@ ssh.add_key_github () {
     ssh.keygen "$key_file"
     ssh.agent_start
     ssh.agent_add "$key_file"
+    ssh.add_rule "$key_file" "$server"
 
-    # copy key to cliboard
     gmsg -c white "adding key to github "
-    xclip -sel clip < "$key_file.pub"
-    gmsg -c deep_pink "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
+    # copy key to cliboard
+    if [[ "$key_output" == "xclip" ]] ; then
+            xclip -sel clip < "$key_file.pub"
+            gmsg -c deep_pink "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
+        else
+            gmsg -c orange "----copy between lines----"
+            cat "$key_file.pub"
+            gmsg -c orange "--------------------------"
+        fi
 
     # open remote profile settings
-    firefox "$ssh_key_add_url" &
-    gmsg -c white "after key is added, continue by pressing enter.. " ; read -r
+    if [[ "$GURU_INSTALL_TYPE" == "desktop" ]] ; then
+            firefox "$ssh_key_add_url" &
+        else
+            echo "open browser ans go to url: $ssh_key_add_url"
+        fi
 
-    # add rule
-    ssh.add_rule "$key_file" "$server"
     return 0
 }
 
@@ -246,20 +260,30 @@ ssh.add_key_bitbucket () {
     ssh.keygen "$key_file"
     ssh.agent_start
     ssh.agent_add "$key_file"
+    ssh.add_rule "$key_file" "$server"
 
-    # copy key to cliboard
-    xclip -sel clip < "$key_file.pub"
+    gmsg -c white "adding key to github "
+    # copy key to cliboard or stdin
+    if [[ "$key_output" == "xclip" ]] ; then
+            xclip -sel clip < "$key_file.pub"
+            gmsg -c deep_pink "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
+        else
+            gmsg -c orange "----copy between lines----"
+            cat "$key_file.pub"
+            gmsg -c orange "--------------------------"
+        fi
 
-    # open remote profile settings
     gmsg -c deep_pink "step 1) login to bitbucket then go to 'Profile' -> 'Personal settings' -> 'SSH keys' -> 'Add key'"
     gmsg -c deep_pink "step 2) paste the key into the text box and add 'Title' $USER@$HOSTNAME and click 'Add key'"
 
-    firefox "$ssh_key_add_url" &
+    # open remote profile settings
+    if [[ "$GURU_INSTALL_TYPE" == "desktop" ]] ; then
+            # open remote profile settings
+            firefox "$ssh_key_add_url" &
+        else
+             echo "open browser ans go to url: $ssh_key_add_url"
+        fi
 
-    gmsg -c white "after key is added, continue by pressing enter.. " ; read -r
-
-    # add domain based rule to ssh config
-    ssh.add_rule "$key_file" "$server"
     return 0
 }
 
@@ -271,17 +295,16 @@ ssh.add_key_my_git () {
 
 ssh.add_key_other () {
 
-    [ "$1" ] && server="$1" || read -r -p "domain: " server
-    [ "$2" ] && port="$2" || read -r -p "port: " port
-    [ "$3" ] && user="$3" || read -r -p "user name: " user
+    [[ "$1" ]] && server="$1" || read -r -p "domain: " server
+    [[ "$2" ]] && port="$2" || read -r -p "port: " port
+    [[ "$3" ]] && user="$3" || read -r -p "user name: " user
     local key_file="$HOME/.ssh/$user-$server"'_id_rsa'
-
+    export GURU_USER=$user
     ssh.keygen "$key_file"
     ssh.agent_start
     ssh.agent_add "$key_file"
     ssh.copy-id "$key_file" "$server" "$port"
     ssh.add_rule "$key_file" "$server" "$user"
-
     return 0
 }
 
