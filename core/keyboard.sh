@@ -7,7 +7,7 @@ source $GURU_BIN/common.sh
 keyboard.main() {
     # keyboard command parser
     distro="$(check_distro)" # ; gmsg -v2 "|$distro|"
-    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 2
+    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
 
     command="$1" ; shift
     case "$command" in
@@ -50,7 +50,7 @@ keyboard.help () {
 keyboard.set_shortcut_ubuntu () {           # set ubuntu keyboard shorcuts
     # usage: keyboard.set_ubuntu_shortcut [name] [command] [binding]
     compatible_with "ubuntu" || return 1
-    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 2
+    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
 
     current_keys=$(gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings)
     key_base="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom"
@@ -73,6 +73,7 @@ keyboard.set_shortcut_ubuntu () {           # set ubuntu keyboard shorcuts
 
 keyboard.reset_ubuntu () {        # resets all custom shortcuts to default
     compatible_with "ubuntu" || return 1
+    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
     gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings || return 100
     return 0
 }
@@ -87,8 +88,9 @@ keyboard.release_ubuntu(){        # release single shortcut
 keyboard.set_guru_ubuntu(){       # set guru defaults
 
     compatible_with "ubuntu" || return 1
-    keyboard.reset_ubuntu
+    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
 
+    keyboard.reset_ubuntu
     [ "$GURU_KEYBIND_TERMINAL" ]    && keyboard.set_ubuntu_shortcut terminal      "$GURU_TERMINAL"            "$GURU_KEYBIND_TERMINAL"    ; error=$((error+$?))
     [ "$GURU_KEYBIND_NOTE" ]        && keyboard.set_ubuntu_shortcut notes         "guru note"                 "$GURU_KEYBIND_NOTE"        ; error=$((error+$?))
     [ "$GURU_KEYBIND_TIMESTAMP" ]   && keyboard.set_ubuntu_shortcut timestamp     "guru stamp time"           "$GURU_KEYBIND_TIMESTAMP"   ; error=$((error+$?))
@@ -106,6 +108,7 @@ keyboard.set_guru_ubuntu(){       # set guru defaults
 
 keyboard.set_guru_linuxmint () {
 
+[[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
 
 local _new=$GURU_CFG/keyboard.binding-mint.cfg
 local _backup=$GURU_CFG/keyboard.backup-mint.cfg
@@ -136,7 +139,7 @@ return 0
 
 
 keyboard.set_shortcut_linuxmint () {
-    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 2
+    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
     gmsg -v1 -x 101 "TBD ${FUNCNAME[0]}"
     return 9
 }
@@ -145,6 +148,7 @@ keyboard.set_shortcut_linuxmint () {
 keyboard.reset_linuxmint() {
     # ser cinnamon chortcut
     compatible_with "linuxmint" || return 1
+    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
 
     backup=$GURU_CFG/keyboard.backup-mint.cfg
 
