@@ -110,9 +110,10 @@ core.change_user () {
             return 0
         fi
 
-    if [[ -d "$GURU_CFG/$_input_user" ]] ; then
+    export GURU_USER=$_input_user
+
+    if [[ -d "$GURU_CFG/$GURU_USER" ]] ; then
             gmsg -c white "changing user to $_input_user"
-            export GURU_USER=$_input_user
             config.main export $_input_user
         else
             gmsg -c yellow "user configuration not exits"
