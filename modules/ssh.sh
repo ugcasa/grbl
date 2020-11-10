@@ -240,6 +240,7 @@ ssh.add_key_github () {
                 gmsg -c orange "--------------------------"
                 ;;
             *)  gmsg "key saved to $key_file.pub and $key_file"
+        esac
 
     if [[ "$GURU_INSTALL_TYPE" == "desktop" ]] ; then
             firefox "$ssh_key_add_url" &
