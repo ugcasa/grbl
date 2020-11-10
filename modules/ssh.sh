@@ -70,8 +70,8 @@ ssh.rm_key () {
     read -r -p "Are you sure to delete files '$input""_id_rsa' and '$input""_id_rsa.pub'? " answer
 
     if [[ "${answer^^}" == "Y" ]]; then
-            rm -f "$HOME/.ssh/$input""_id_rsa" || gmsg -c yellow "error while removing $HOME/.ssh/$input_id_rsa"
-            rm -f "$HOME/.ssh/$input""_id_rsa.pub" || gmsg -c yellow "error while removing $HOME/.ssh/$input_id_rsa.pub"
+            rm -f "$HOME/.ssh/$input""_id_rsa" || gmsg -c yellow "error while removing $HOME/.ssh/$input_id_rsa"
+            rm -f "$HOME/.ssh/$input""_id_rsa.pub" || gmsg -c yellow "error while removing $HOME/.ssh/$input_id_rsa.pub"
         fi
     return 0
 }
@@ -235,9 +235,10 @@ ssh.add_key_github () {
                 gmsg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
                 ;;
             stdin)
-                gmsg -c orange "----copy between lines----"
+                gmsg -c orange ".....copy between lines....."
                 cat "$key_file.pub"
-                gmsg -c orange "--------------------------"
+                gmsg -c orange "............................"
+                gmsg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
                 ;;
             *)  gmsg "key saved to $key_file.pub and $key_file"
         esac
@@ -271,9 +272,9 @@ ssh.add_key_bitbucket () {
                 xclip -sel clip < "$key_file.pub"
                 ;;
             stdin)
-                gmsg -c orange "----copy between lines----"
+                gmsg -c orange ".....copy between lines....."
                 cat "$key_file.pub"
-                gmsg -c orange "--------------------------"
+                gmsg -c orange "............................"
                 ;;
             *)  gmsg "key saved to $key_file.pub and $key_file"
         esac

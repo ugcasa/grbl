@@ -151,7 +151,7 @@ uninstall.remove () {
                         gmsg -n -v1 "sending $GURU_USER's configurations to accesspoint.. "
                         if config.main push ; then
                                 gmsg -n -v1 "removing $GURU_USER configurations.. "
-                                rm -fr $GURU_CFG/$GURU_USER || gmsg -c yellow "error while removing user files"
+                                rm -fr $GURU_CFG/$GURU_USER || gmsg -c yellow "error while removing user files"
                             else
                                 gmsg -c yellow "error while sending user data "
                             fi
@@ -164,7 +164,7 @@ uninstall.remove () {
             if [[ $(ls $GURU_CFG) ]] ; then
                     gmsg -c yellow "$GURU_CFG contains other user configurations and cannot be removed"
                 else
-                    rmdir "$HOME/.config/guru" || gmsg -c yellow "error while config"
+                    rmdir "$HOME/.config/guru" || gmsg -c yellow "error while config"
                 fi
         fi
 

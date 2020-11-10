@@ -7,12 +7,14 @@ source $GURU_BIN/common.sh
 keyboard.main() {
     # keyboard command parser
     distro="$(check_distro)" # ; gmsg -v2 "|$distro|"
+    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 2
+
     command="$1" ; shift
     case "$command" in
         add)  if [[ "$1" == "all" ]] ; then
-                    keyboard.set_guru_linuxmint && return 0 || return 100
+                    keyboard.set_guru_linuxmint && return 0 || return 100
                 else
-                    keyboard.set_shortcut_$distro "$@"  && return 0 || return 100
+                    keyboard.set_shortcut_$distro "$@"  && return 0 || return 100
                 fi ;;
          rm)  [[ "$1" == "all" ]] && "keyboard.reset_""${distro}" || keyboard.release_$distro "$@" ;;
      status) keyboard.status ; return 0 ;;
@@ -48,6 +50,7 @@ keyboard.help () {
 keyboard.set_shortcut_ubuntu () {           # set ubuntu keyboard shorcuts
     # usage: keyboard.set_ubuntu_shortcut [name] [command] [binding]
     compatible_with "ubuntu" || return 1
+    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 2
 
     current_keys=$(gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings)
     key_base="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom"
@@ -103,6 +106,7 @@ keyboard.set_guru_ubuntu(){       # set guru defaults
 
 keyboard.set_guru_linuxmint () {
 
+
 local _new=$GURU_CFG/keyboard.binding-mint.cfg
 local _backup=$GURU_CFG/keyboard.backup-mint.cfg
 
@@ -132,6 +136,7 @@ return 0
 
 
 keyboard.set_shortcut_linuxmint () {
+    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 2
     gmsg -v1 -x 101 "TBD ${FUNCNAME[0]}"
     return 9
 }

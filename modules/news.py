@@ -134,7 +134,7 @@ class menu ():
                 except:
                     pass
 
-            title = entry.title.replace( "&nbsp;", "" ).replace( " ,", ',' ).replace( ' –', ':' ).replace( ' –', ':' )  # Remove possible html left overs from titles, ugly lines and extra spaces
+            title = entry.title.replace( "&nbsp;", "" ).replace( " ,", ',' ).replace( ' –', ':' ).replace( ' –', ':' )  # Remove possible html left overs from titles, ugly lines and extra spaces
 
             if self.term_columns > 90:                                                                  # select details to be printed out
                 pass

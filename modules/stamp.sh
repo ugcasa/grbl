@@ -79,7 +79,7 @@ stamp.weekplan () {
     day_names_en=("Week" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
     day_names_fi=("Viikko" "Maanantai" "Tiistai" "Keskiviikko" "Torstai" "Perjantai" "Lauvantai" "Sunnuntai")
     target_file=$(guru note location $(date +$GURU_FILE_DATE_FORMAT))                                               #;echo "notefile $target_file"
-    # [ "$1" ] && target_file="$1" || target_file=$(guru note location $(date +$GURU_FILE_DATE_FORMAT))                                               #;echo "notefile $target_file"
+    # [ "$1" ] && target_file="$1" || target_file=$(guru note location $(date +$GURU_FILE_DATE_FORMAT))                                               #;echo "notefile $target_file"
     # [ -f "$target_file" ] || exit 123
 
     get_dates() {

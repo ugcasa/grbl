@@ -115,7 +115,7 @@ daemon.stop () {
 
 daemon.kill () {
     if pkill guru ; then
-            gmsg -v1 "${FUNCNAME[0]}: guru-daemon killed.."
+            gmsg -v1 "${FUNCNAME[0]}: guru-daemon killed.."
         else
             gmsg -v1 "${FUNCNAME[0]}: guru-daemon not running"
         fi

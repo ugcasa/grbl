@@ -52,7 +52,7 @@ volume_main () {
 }
 
 set_volume() {
-    amixer -D pulse sset Master "$1"% >/dev/null;       # weird, without ; syntax error near unexpected token ` {'
+    amixer -D pulse sset Master "$1"% >/dev/null;       # weird, without ; syntax error near unexpected token ` {'
 }
 
 

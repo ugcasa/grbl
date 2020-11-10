@@ -24,7 +24,7 @@ source="http://www.microchip.com/forums/download.axd?file=0;749972"
 echo "source: $source"
 read -p "me open firefox, you download to ~/Downloads, right?"
 
-[ -d $HOME/apps ] || mkdir $HOME/apps
+[ -d $HOME/apps ] || mkdir $HOME/apps
 if [ ! -f  ~/Downloads/PK2DeviceFile.zip ]; then
     firefox "$source"
     read -p "waiting until downlaod ready, continue by pressing anykey "

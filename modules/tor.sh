@@ -64,7 +64,7 @@ tor.kill () {
 
 tor.install () {
     unset _url _dir _file _form _lang
-    [[ $GURU_APP ]] || GURU_APP="$HOME"                     # if run outside of guru-client
+    [[ $GURU_APP ]] || GURU_APP="$HOME"                     # if run outside of guru-client
     local _url="https://dist.torproject.org/torbrowser"
     local _file="tor-browser-linux64-"
     local _form=".tar.xz"
@@ -92,7 +92,7 @@ tor.install () {
     [[ -f "$_file" ]] && rm -fr "$_file"
     wget "$_url"
     # install browser
-    [[ -d "$GURU_APP" ]] || mkdir -p "$GURU_APP"
+    [[ -d "$GURU_APP" ]] || mkdir -p "$GURU_APP"
     [[ -d "$GURU_APP/tor-browser$_lang" ]] && rm -rf "$GURU_APP/tor-browser$_lang"
     tar xf "$_file" -C "$GURU_APP"
 

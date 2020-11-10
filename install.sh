@@ -506,16 +506,16 @@ install.config () {
     if ! [[ -f "$TARGET_CFG/$GURU_USER/user.cfg" ]] ; then
          gmsg -c yellow "user specific configuration not found, using default.."
 
-         cp -f $TARGET_CFG/user-default.cfg "$TARGET_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
+         cp -f $TARGET_CFG/user-default.cfg "$TARGET_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
     fi
 
     config.export "$GURU_USER" || gmsg -c red "user config export error"
     source "$core_rc" || gmsg -c red "$core_rc error"
-    #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
+    #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
 
     # set keyboard shortcuts
     gmsg -n -v1 "setting keyboard shortcuts "
-    keyboard.main add all || gmsg -c yellow "error by setting keyboard shortcuts"
+    keyboard.main add all || gmsg -c yellow "error by setting keyboard shortcuts"
     installed_files=( ${installed_files[@]} $TARGET_CFG/kbbind.backup.cfg )
     return 0
 

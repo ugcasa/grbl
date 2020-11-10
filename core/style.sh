@@ -60,7 +60,7 @@ UNKNOWN() {         [[ "$1" ]] && gmsg "$1 $(printf $UNKNOWN)"   || gmsg "$(prin
 REMOVED() {         [[ "$1" ]] && gmsg "$1 $(printf $REMOVED)"   || gmsg "$(printf $REMOVED)" ; }
 UPTODATE() {        [[ "$1" ]] && gmsg "$1 $(printf $UPTODATE)"  || gmsg "$(printf $UPTODATE)" ; }
 NOTFOUND() {        [[ "$1" ]] && gmsg "$1 $(printf $NOTFOUND)"  || gmsg "$(printf $NOTFOUND)" ; }
-UNMOUNTED() {       [[ "$1" ]] && gmsg "$1 $(printf $UNMOUNTED)" || gmsg "$(printf $UNMOUNTED)" ; }
+UNMOUNTED() {       [[ "$1" ]] && gmsg "$1 $(printf $UNMOUNTED)" || gmsg "$(printf $UNMOUNTED)" ; }
 ERROR() {           [[ "$1" ]] && gmsg "$(printf $ERROR ${WHT} $1)"      || gmsg "$(printf $ERROR)" ; }
 WARNING() {         [[ "$1" ]] && gmsg "$(printf $WARNING ${WHT} $1)"    || gmsg "$(printf $WARNING)" ; }
 FAILED() {          [[ "$1" ]] && gmsg "$(printf ${WHT})$1: $(printf $FAILED)"    || gmsg "$(printf $FAILED)" ; }

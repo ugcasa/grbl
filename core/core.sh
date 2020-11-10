@@ -12,7 +12,7 @@ esac
 source $GURU_BIN/config.sh
 # source common variable
 GURU_RC="$HOME/.gururc"
-[[ -f $GURU_RC ]] && source $GURU_RC || config.main export $GURU_USER
+[[ -f $GURU_RC ]] && source $GURU_RC || config.main export $GURU_USER
 
 # import common functions
 source $GURU_BIN/common.sh

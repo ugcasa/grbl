@@ -11,7 +11,7 @@ user_main() {
     case "$command" in
         add )
 
-            [ "$1" == "cloud" ] && add_user_server "$@" || add_user "$@"
+            [ "$1" == "cloud" ] && add_user_server "$@" || add_user "$@"
             ;;
 
         add )

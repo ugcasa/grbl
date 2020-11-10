@@ -88,7 +88,7 @@ android.mount () {
     local _mount_point="$HOME/android-$GURU_ANDROID_USERNAME" ; [[ "$1" ]] && _mount_point="$1"
     gmsg -v1 -N -c white "mounting $_mount_point"
 
-    if [[ -d "$_mount_point" ]] ; then mkdir -p "$_mount_point" ; fi
+    if [[ -d "$_mount_point" ]] ; then mkdir -p "$_mount_point" ; fi
     sshfs -o HostKeyAlgorithms=androiddss -p "$GURU_ANDROID_LAN_PORT" \
         "$GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP:/storage/emulated/0" \
         "$_mount_point"
@@ -101,7 +101,7 @@ android.unmount () {
     local _mount_point="$HOME/android-$GURU_ANDROID_USERNAME" ; [[ "$1" ]] && _mount_point="$1"
     gmsg -v1 -N -c white "unmounting $_mount_point"
     fusermount -u "$_mount_point" || sudo fusermount -u "$_mount_point"
-    [[ -d "$_mount_point" ]] &&androidr "$_mount_point"
+    [[ -d "$_mount_point" ]] &&androidr "$_mount_point"
     return $?
 }
 
