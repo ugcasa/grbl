@@ -7,7 +7,7 @@ install.main () {
     [ "$1" ] && argument="$1" && shift || read -r -p "input module name: " argument
     local _temp_vebose=$GURU_VERBOSE ; GURU_VERBOSE=true
     case "$argument" in
-        tiv|java|webmin|conda|hackrf|st-link|mqtt-client|visual-code|tor|django|help)
+        tiv|java|webmin|conda|hackrf|st-link|mqtt-client|visual-code|tor|django|virtualbox|help)
                                       install.$argument "$@" ;;
         kaldi|listener)               install.kaldi 4 ;; # number of cores used during compiling
         pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/install-pk2.sh; exit; $SHELL; " ;;
@@ -36,6 +36,32 @@ install.help () {
     gmsg -v1  " tor                         tor browser"
     gmsg -v1  " webmin                      webmin tool for server configuratio"
     gmsg -v2
+}
+
+install.virtualbox () {
+    # add to sources list
+    if [[ -f /etc/apt/sources.list.d/virtualbox.list ]] ; then 
+            echo "already in sources list"  
+        else
+            echo "deb http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+        fi
+    # get key
+    wget https://www.virtualbox.org/download/oracle_vbox_2016.asc
+    # add key
+    sudo apt-key add oracle_vbox_2016.asc
+
+    # install
+    sudo apt-get update
+    sudo apt-get install -y virtualbox-6.1
+
+    # full screen 
+    sudo apt-get install -y build-essential module-assistant
+    sudo m-a prepare
+
+    # install usb support
+    echo "file > preferences > extencions > [+]"
+    $GURU_BROWSER https://download.virtualbox.org/virtualbox/6.1.16/VirtualBoxSDK-6.1.16-140961.zip
+    sudo usermod -aG vboxusers $USER
 }
 
 install.tiv () {
