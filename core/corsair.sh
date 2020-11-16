@@ -191,25 +191,25 @@ corsair.start () {
     # reserve keys esc, F1 to 12
     if ! [[ $GURU_FORCE ]] && ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
             gmsg -c green "already running"
+            gmsg -v1 "use -f to force restart"
             return 0
         fi
 
     if [[ $GURU_FORCE ]] ; then
             gmsg -n "restarting ckb-next-daemon.. "
 
-            if sudo systemctl restart ckb-next-daemon ; then
+            if systemctl restart ckb-next-daemon ; then
                     gmsg -c green "ok"
                 else
                     gmsg -c red "failed"
                 fi
+        else
+            # ask sudo password forehand cause next step stdout is rerouted to null
+            gmsg -v1 -c white "starting ckb-next-daemon.. "
+
+            # start daemon to background
+            systemctl start ckb-next-daemon
         fi
-
-    # ask sudo password forehand cause next step stdout is rerouted to null
-    gmsg -v1 -c white "starting ckb-next-daemon"
-    sudo -v
-
-    # start daemon to background
-    sudo systemctl start ckb-next-daemon
 
     # check lauch
     gmsg -n -v1 -t "checking ckb-next-daemon.. "
@@ -361,7 +361,7 @@ corsair.stop () {
 
     gmsg "stopping ckb-next-daemon.. "
 
-    sudo systemctl stop ckb-next-daemon
+    systemctl stop ckb-next-daemon
 
     if ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
             gmsg -c tomato "kill failed"
