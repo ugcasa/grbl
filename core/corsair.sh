@@ -46,8 +46,7 @@ corsair.main () {
         fi
 
     local _cmd="$1" ; shift
-    case "$_cmd" in check|start|init|set|reset|clear|end|kill|status|help|install|remove)
-    		if ! corsair.check >/dev/null; then return 0 ; fi
+    case "$_cmd" in check|ps|start|init|set|reset|clear|end|stop|kill|status|help|install|remove)
             corsair.$_cmd $@ ; return $? ;;
         *)  echo "corsair: unknown command: $_cmd"
     esac
@@ -62,13 +61,13 @@ corsair.help () {
     gmsg -v 2
     gmsg -v 1 -c white "commands:"
     gmsg -v 1 " start                       start ckb-next-daemon "
-    gmsg -v 1 " init <mode>                 init keyboard mode listed below "
+    gmsg -v 1 " init <mode>                 init keyboard mode "
     gmsg -v 2 "                             [status|red|olive|dark] able to set keys "
     gmsg -v 2 "                             [trippy|yes-no|rainbow] active animations "
     gmsg -v 1 " set <key> <color>           write key color to keyboard key  "
     gmsg -v 1 " reset <key>                 reset one key or if empty, all pipes "
-    gmsg -v 1 "  end                         end playing with keyboard, set to normal "
-    gmsg -v 1 " kill                        stop ckb-next-daemon"
+    gmsg -v 1 " end                         end playing with keyboard, set to normal "
+    gmsg -v 1 " stop (kill)                 stop ckb-next-daemon"
     gmsg -v 1 " status                      blink esc, print status and return "
     gmsg -v 1 " install                     install requirements "
     gmsg -v 1 " remove                      remove corsair driver "
@@ -82,6 +81,10 @@ corsair.help () {
     return 0
 }
 
+
+corsair.ps () {
+    ps auxf | grep ckb-next | grep -v grep
+}
 
 
 corsair.check () {
@@ -113,12 +116,22 @@ corsair.check () {
             return 3
         fi
 
+    # todo: check is hardware communicating with daemon
+    gmsg -n -v2 -t "checking ckb-next.. "
+    if ps auxf |grep "ckb-next" | grep -v "daemon" | grep -v grep >/dev/null ; then
+            gmsg -v2 -c green "running"
+        else
+            gmsg -v1 -c yellow "ckb-next application not running"
+            gmsg -v2 -c white "start by '$GURU_CALL corsair start'"
+            return 4
+        fi
+
     gmsg -n -v2 -t "checking mode supports piping.. "
     if [[ "${status_modes[@]}" =~ "$corsair_mode" ]] ; then
             gmsg -v2 -c green "ok"
         else
             gmsg -v1 -c white "writing not available in '$corsair_mode' mode"
-            return 4
+            return 5
         fi
 
    gmsg -n -v2 -t "checking pipes.. "
@@ -149,7 +162,7 @@ corsair.check () {
                 gmsg -v1 "and close ckb-next"
                 gmsg -V1
             fi
-            return 5
+            return 6
         fi
 
 
@@ -166,7 +179,7 @@ corsair.status () {
 
             return 0
         else
-            corsair.set esc red
+            #corsair.set esc red
             gmsg -v1 -t -c red "corsair not on service"
             return 1
         fi
@@ -176,9 +189,19 @@ corsair.status () {
 
 corsair.start () {
     # reserve keys esc, F1 to 12
-    if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
+    if ! [[ $GURU_FORCE ]] && ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
             gmsg -c green "already running"
             return 0
+        fi
+
+    if [[ $GURU_FORCE ]] ; then
+            gmsg -n "restarting ckb-next-daemon.. "
+
+            if sudo systemctl restart ckb-next-daemon ; then
+                    gmsg -c green "ok"
+                else
+                    gmsg -c red "failed"
+                fi
         fi
 
     # ask sudo password forehand cause next step stdout is rerouted to null
@@ -186,8 +209,7 @@ corsair.start () {
     sudo -v
 
     # start daemon to background
-    sudo /usr/local/bin/ckb-next-daemon >/dev/null &
-    sleep 3
+    sudo systemctl start ckb-next-daemon
 
     # check lauch
     gmsg -n -v1 -t "checking ckb-next-daemon.. "
@@ -197,6 +219,17 @@ corsair.start () {
             gmsg -c red "ckb-next-daemon starting failed"
             return 123
         fi
+
+    gmsg -v1 -c white "starting ckb-next application "
+    ckb-next -b &
+
+    if ps auxf | grep "ckb-next" |  grep -v "ckb-next-" | grep -v grep >/dev/null ; then
+            gmsg -v1 -c green "OK"
+        else
+            gmsg -c red "ckb-next-daemon starting failed"
+            return 123
+        fi
+
 
     # initialize profile and mode
     gmsg -n -v1 -t "setting profile and mode.. "
@@ -224,13 +257,6 @@ corsair.init () {
             export corsair_mode=$_mode
             echo $_mode > $corsair_last_mode
         else
-            # issue withckb-next profile selection. it does not return error when profile is not exist
-            # ckb-next -p pillu -m pylly       # profile "pillu" does not exist
-            # QObject::startTimer: Timers cannot have negative intervals
-            # Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
-            # echo $?
-            # 0
-
             local _error=$?
             gmsg -v0 -c yellow "corsair init failure"
             return $_error
@@ -330,12 +356,13 @@ corsair.end () {
 }
 
 
-corsair.kill () {
-    gmsg -c white "killing ckb-next-daemon.."
-    sudo -v
+corsair.stop () {
+    # stop corsair daemon
 
-    sudo pkill ckb-next-daemon || gmsg -c yellow "kill error"
-    sleep 2
+    gmsg "stopping ckb-next-daemon.. "
+
+    sudo systemctl stop ckb-next-daemon
+
     if ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
             gmsg -c tomato "kill failed"
             return 100
@@ -343,12 +370,23 @@ corsair.kill () {
             gmsg -c green "kill verified"
             return 0
          fi
+
+
     }
+
+
+corsair.kill () {
+    # compatibility
+    corsair.stop $@
+}
 
 
 corsair.install () {
     # install essentials, driver and application
-    if corsair.check ; then gmsg -x 100 "corsair seems to be working, why bother to install it again?" ; fi
+
+    if ! [[ $GURU_FORCE ]] && corsair.check ; then
+            gmsg -x 100 "corsair seems to be working. use '-f' to re-install"
+        fi
 
     sudo apt-get install -y build-essential cmake libudev-dev qt5-default zlib1g-dev libappindicator-dev libpulse-dev libquazip5-dev libqt5x11extras5-dev libxcb-screensaver0-dev libxcb-ewmh-dev libxcb1-dev qttools5-dev git pavucontrol libdbusmenu-qt5-2 libdbusmenu-qt5-dev
     cd /tmp
