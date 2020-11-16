@@ -32,29 +32,35 @@ export -f msg
 
 gmsg() {
     # function for ouput messages and make log notifications - revisited
+
+    # default values
     local _verbose_trigger=0                        # prinout if verbose trigger is not set in options
-    local _verbose_limiter=4
+    local _verbose_limiter=4                        # maximum + 1 verbose level
     local _newline="\n"                             # newline is on by default
-    local _pre_newline=
+    local _pre_newline=                             # newline before text disable by default
     local _timestamp=                               # timestamp is disabled by default
     local _message=                                 # message container
     local _logging=                                 # logging is disabled by default
-    local _color=
-    local _exit=
+    local _color=                                   # default color if none
+    local _exit=                                    # exit with code (exit not return!)
+    local _mqtt_topic=
 
-    TEMP=`getopt --long -o "tlnhNx:V:v:c:" "$@"`
+    # parse flags
+    TEMP=`getopt --long -o "tlnhNx:V:v:c:q:" "$@"`
     eval set -- "$TEMP"
+
     while true ; do
         case "$1" in
             -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
             -l ) _logging=true                              ; shift ;;
             -h ) _color="$C_HEADER"                         ; shift ;;
-            -n ) _newline=                                  ; shift ;;  # no newline
-            -N ) _pre_newline="\n"                          ; shift ;;  # newline before printout
+            -n ) _newline=                                  ; shift ;;
+            -N ) _pre_newline="\n"                          ; shift ;;
             -x ) _exit=$2                                   ; shift 2 ;;
             -V ) _verbose_limiter=$2                        ; shift 2 ;;
             -v ) _verbose_trigger=$2                        ; shift 2 ;;
             -c ) _c_var="C_${2^^}" ; _color=${!_c_var}      ; shift 2 ;;
+            -q ) _mqtt_topic="$GURU_HOSTNAME/$2"            ; shift 2 ;;
              * ) break
         esac
     done
@@ -64,7 +70,7 @@ gmsg() {
     [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
     # add exit code to message
-    [[ $_exit -gt 9 ]] && _message="$_exit: $_message"
+    [[ $_exit -gt 0 ]] && _message="$_exit: $_message"
 
     if [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
 
@@ -77,9 +83,15 @@ gmsg() {
                 fi
         fi
 
+    # publish to mqtt if '-q <topic>' used
+    if [[ $_mqtt_topic ]] ; then
+            echo "h:$GURU_MQTT_REMOTE_SERVER p:$GURU_MQTT_REMOTE_PORT t:$_mqtt_topic m:$_message"
+            mosquitto_pub -h $GURU_MQTT_REMOTE_SERVER -p $GURU_MQTT_REMOTE_PORT -t "$_mqtt_topic" -m "$_message"
+        fi
+
     # logging
     if [[ "$LOGGING" ]] || [[ "$_logging" ]] ; then                          # log without colorcodes ets.
-        [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] || return 0                        # check that system mount is online before logging
+        [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] || return 0                    # check that system mount is online before logging
         [[ -f "$GURU_LOG" ]] || return 0                                     # log inly is log exist (hmm.. this not really neede)
         printf "$@" | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
     fi
