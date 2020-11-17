@@ -41,26 +41,30 @@ gmsg() {
     local _timestamp=                               # timestamp is disabled by default
     local _message=                                 # message container
     local _logging=                                 # logging is disabled by default
-    local _color=                                   # default color if none
+    local _color=
+    local _color_code=                                   # default color if none
     local _exit=                                    # exit with code (exit not return!)
     local _mqtt_topic=
-
+    local _indicator_key=
     # parse flags
-    TEMP=`getopt --long -o "tlnhNx:V:v:c:q:" "$@"`
+    TEMP=`getopt --long -o "tlnhNx:V:v:c:q:k:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
         case "$1" in
             -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
             -l ) _logging=true                              ; shift ;;
-            -h ) _color="$C_HEADER"                         ; shift ;;
+            -h ) _color_code="$C_HEADER"                         ; shift ;;
             -n ) _newline=                                  ; shift ;;
             -N ) _pre_newline="\n"                          ; shift ;;
             -x ) _exit=$2                                   ; shift 2 ;;
             -V ) _verbose_limiter=$2                        ; shift 2 ;;
             -v ) _verbose_trigger=$2                        ; shift 2 ;;
-            -c ) _c_var="C_${2^^}" ; _color=${!_c_var}      ; shift 2 ;;
             -q ) _mqtt_topic="$GURU_HOSTNAME/$2"            ; shift 2 ;;
+            -k ) _indicator_key=$2                          ; shift 2 ;;
+            -c ) _color=$2
+                 _c_var="C_${_color^^}"
+                 _color_code=${!_c_var}                     ; shift 2 ;;
              * ) break
         esac
     done
@@ -76,8 +80,8 @@ gmsg() {
 
             if [[ $GURU_VERBOSE -ge $_verbose_limiter ]] ; then return 0 ; fi
 
-            if [[ $_color ]] ; then
-                    printf "$_pre_newline$_color%s%s$_newline$C_NORMAL" "$_timestamp" "$_message"
+            if [[ $_color_code ]] ; then
+                    printf "$_pre_newline$_color_code%s%s$_newline$C_NORMAL" "$_timestamp" "$_message"
                 else
                     printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
                 fi
@@ -85,9 +89,13 @@ gmsg() {
 
     # publish to mqtt if '-q <topic>' used
     if [[ $_mqtt_topic ]] ; then
-            echo "h:$GURU_MQTT_BROKER p:$GURU_MQTT_PORT t:$_mqtt_topic m:$_message"
             mosquitto_pub -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic" -m "$_message"
         fi
+
+    # set corsair key
+    if [[ $_indicator_key ]] ; then
+        corsair.main set "$_indicator_key" "$_color"
+    fi
 
     # logging
     if [[ "$LOGGING" ]] || [[ "$_logging" ]] ; then                          # log without colorcodes ets.

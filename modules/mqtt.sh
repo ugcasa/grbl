@@ -39,11 +39,31 @@ mqtt.main () {
     return 0
 }
 
+mqtt.online () {
+
+    _send () {
+        touch /tmp/guru-socket
+        while [[ -f /tmp/guru-socket ]]; do
+            mqtt.pub "$GURU_HOSTNAME/test" "online"
+            sleep 1
+        done
+    }
+
+    _send &
+
+    if mqtt.single "$GURU_HOSTNAME/test" >/dev/null ; then
+            rm /tmp/guru-socket
+            return 0
+        else
+            rm /tmp/guru-socket
+            return 1
+    fi
+}
+
 
 mqtt.sub () {
     # subsribe to channel, stay listening
     local _mqtt_topic="$1" ; shift
-    gmsg -v2 "h:$GURU_MQTT_BROKER p:$GURU_MQTT_PORT t:$_mqtt_topic"
     mosquitto_sub -v -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic"
     return $?
 }
@@ -52,9 +72,7 @@ mqtt.sub () {
 mqtt.single () {
     # subsribe to channel, stay listening
     local _mqtt_topic="$1" ; shift
-    gmsg -v2 "h:$GURU_MQTT_BROKER p:$GURU_MQTT_PORT t:$_mqtt_topic"
-    local _msg=$(mosquitto_sub -C 1 -v -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic")
-    echo $_msg
+    mosquitto_sub -C 1 -v -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic"
     return $?
 }
 
@@ -62,7 +80,6 @@ mqtt.single () {
 mqtt.pub () {
     local _mqtt_topic="$1" ; shift
     local _mqtt_message="$@"
-    gmsg -v2 "h:$GURU_MQTT_BROKER p:$GURU_MQTT_PORT t:$_mqtt_topic:$_mqtt_message"
     mosquitto_pub -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic" -m "$_mqtt_message"
     return $?
 }
@@ -71,8 +88,6 @@ mqtt.pub () {
 mqtt.log () {
     local _mqtt_topic="$1" ; shift
     local _log_file=$GURU_LOG ; [[ $1 ]] && _log_file="$1"
-
-    gmsg -v2 "h:$GURU_MQTT_BROKER p:$GURU_MQTT_PORT t:$_mqtt_topic:$_mqtt_message"
     mosquitto_sub -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic" >> $_log_file
     return $?
 }
@@ -92,14 +107,13 @@ mqtt.end () {                        # return normal, assuming that while is nor
 
 mqtt.status () {
     # sub mqtt is reachable
-    if mqtt.status "$GURU_MQTT_BROKER" "$GURU_MQTT_PORT" ; then
-            gmsg -v 1 -t -c green "${FUNCNAME[0]}: broker available" -q "/status"
-            corsair.main set $indicator_key green
+    source corsair.sh
+    if mqtt.online "$GURU_MQTT_BROKER" "$GURU_MQTT_PORT" ; then
+            gmsg -v1 -t -k $indicator_key -c green "${FUNCNAME[0]}: broker available"
             return 0
         else
-            gmsg -v 1 -t -c red "${FUNCNAME[0]}: broker offline"
-            corsair.main set $indicator_key red
-            return 101
+            gmsg -v1 -t -k $indicator_key -c red "${FUNCNAME[0]}: broker offline"
+            return 1
         fi
 }
 
