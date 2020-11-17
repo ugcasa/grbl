@@ -85,8 +85,8 @@ gmsg() {
 
     # publish to mqtt if '-q <topic>' used
     if [[ $_mqtt_topic ]] ; then
-            echo "h:$GURU_MQTT_REMOTE_SERVER p:$GURU_MQTT_REMOTE_PORT t:$_mqtt_topic m:$_message"
-            mosquitto_pub -h $GURU_MQTT_REMOTE_SERVER -p $GURU_MQTT_REMOTE_PORT -t "$_mqtt_topic" -m "$_message"
+            echo "h:$GURU_MQTT_BROKER p:$GURU_MQTT_PORT t:$_mqtt_topic m:$_message"
+            mosquitto_pub -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic" -m "$_message"
         fi
 
     # logging

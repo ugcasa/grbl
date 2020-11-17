@@ -47,7 +47,7 @@ timer.help () {
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL timer [start|end|cancel|log|edit|report] <task> <project> <customer> "
     gmsg -v2
-    gmsg -v1 "  start <task>     start timer for target with last customer and project" 
+    gmsg -v1 "  start <task>     start timer for target with last customer and project"
     gmsg -v1 "  start at [TIME]  start timer at given time in format HH:MM"
     gmsg -v1 "  end|stop         end current task"
     gmsg -v1 "  end at [TIME]    end current task at given time in format HH:MM"
@@ -81,9 +81,12 @@ timer.check() {
 timer.status() {
 
     mount.system
+    indicator_key='F9'
+
 
     if [ ! -f "$GURU_FILE_TRACKSTATUS" ]; then
         gmsg "no timer tasks"
+        corsair.main set
         return 1
     fi
 
@@ -147,7 +150,7 @@ timer.start() {
     fi
 
     # signal user (with corsair rgb kb) that timer is on
-    corsair.main set f9 green  
+    corsair.main set $indicator_key green
 
     case "$1" in
 
@@ -209,7 +212,7 @@ timer.end() {
     fi
 
     # disable timer status kb indicator
-    corsair.main reset f9 
+    corsair.main reset $indicator_key
 
     case "$1" in
 
@@ -295,7 +298,7 @@ timer.cancel() {
 
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
         rm $GURU_FILE_TRACKSTATUS
-        corsair.main set f9 white
+        corsair.main reset $indicator_key
         echo "canceled"
     else
         echo "not active timer"

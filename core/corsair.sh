@@ -3,7 +3,7 @@
 # todo
 #   - automated keyboard shortcut and pipe configurations for ckb-next
 #   - more colors and key > pipe file bindings - DONE
-#   - able keys to go blinky in background "new message"
+#   - able keys to go blinky in background
 #   - more key pipes
 source $GURU_BIN/common.sh
 
@@ -31,7 +31,7 @@ key_pipe_list=$(file /tmp/ckbpipe0* |grep fifo |cut -f1 -d ":")
 # modes with status bar function set
 # NOTE: these need to correlate with cbk-next animation settings
 status_modes=(status, test, red, olive, dark, orange)
-# bubblecum tempreary fix
+# bubble cum temporary fix
 corsair_last_mode="/tmp/corsair.mode"
 
 
@@ -164,8 +164,6 @@ corsair.check () {
             fi
             return 6
         fi
-
-
 }
 
 
@@ -198,7 +196,7 @@ corsair.start () {
     if [[ $GURU_FORCE ]] ; then
             gmsg -n "restarting ckb-next-daemon.. "
 
-            if systemctl restart ckb-next-daemon ; then
+            if systemctl restart ckb-next-daemon  ; then
                     gmsg -c green "ok"
                 else
                     gmsg -c red "failed"
@@ -221,7 +219,7 @@ corsair.start () {
         fi
 
     gmsg -v1 -c white "starting ckb-next application "
-    ckb-next -b &
+    ckb-next -c -b -p guru >/dev/null &
 
     if ps auxf | grep "ckb-next" |  grep -v "ckb-next-" | grep -v grep >/dev/null ; then
             gmsg -v1 -c green "OK"
@@ -230,16 +228,15 @@ corsair.start () {
             return 123
         fi
 
-
     # initialize profile and mode
     gmsg -n -v1 -t "setting profile and mode.. "
     local _mode=$GURU_CORSAIR_MODE ; [[ "$1" ]] && _mode="$1"
     corsair.init $_mode && gmsg -v1 -c green "OK"
-    sleep 1
+    sleep 3
 
     # Check are pipes started, start if not
     gmsg -n -v1 -t "checking pipes.. "
-    if ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null; then
+    if ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null ; then
             gmsg -v1 -c green "OK"
         else
             gmsg -c red "wrong or not imported ckb-next profile "
@@ -359,19 +356,24 @@ corsair.end () {
 corsair.stop () {
     # stop corsair daemon
 
-    gmsg "stopping ckb-next-daemon.. "
+    gmsg "stopping ckb-next.. "
 
+    # stop daemon
     systemctl stop ckb-next-daemon
+    # stop application
+    kill $(pidof ckb-next)
 
     if ps auxf |grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-            gmsg -c tomato "kill failed"
-            return 100
+            gmsg -c red "ckb-next-daemon kill failed"
          else
-            gmsg -c green "kill verified"
-            return 0
+            gmsg -c green "ckb-next-daemon killed"
          fi
 
-
+    if ps auxf |grep "ckb-next" | grep -v grep >/dev/null ; then
+            gmsg -c red "ckb-next kill failed"
+         else
+            gmsg -c green "ckb-next killed"
+         fi
     }
 
 
