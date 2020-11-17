@@ -5,7 +5,7 @@
 export GURU_VERSION="0.6.4.1"
 # minimal process command
 case "$1" in
-    ver|version|--ver|--version) echo "guru-client v.$GURU_VERSION" ; exit 0 ;;
+    ver|version|--ver|--version) echo "guru-client v$GURU_VERSION" ; exit 0 ;;
 esac
 
 # include configuration tools
