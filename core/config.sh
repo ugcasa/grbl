@@ -15,7 +15,6 @@ config.main () {
                   help)  config.help $@                         ; return $? ;;
                 status)  echo "no status data" ;;
                      *)  echo "unknown config action '$_cmd'"
-                         GURU_VERBOSE=2
                          config.help  $@                        ; return $? ;;
         esac
 }

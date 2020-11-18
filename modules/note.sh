@@ -2,7 +2,7 @@
 # note tools for guru-client
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
-source $GURU_BIN/file.sh
+source $GURU_BIN/tag.sh
 
 note.main () {
     command="$1" ; shift

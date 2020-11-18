@@ -99,16 +99,15 @@ uninstall.status () {
 
 
 uninstall.help () {
-    gmsg -v 1 -c white "guru-client uninstaller help"
-    gmsg -v 2
-    gmsg -v 0 "usage:    $GURU_CALL uninstall [config|status|help]"
-    gmsg -v 2
-    gmsg -v 1 -c white "commands:"
-    gmsg -v 1 " config                      remove also configurations"
-    gmsg -v 1 " status                      blink esc, print status and return "
-    gmsg -v 2 " help                        this help "
-    gmsg -v 2
-    return 0
+    gmsg -v1 -c white "guru-client uninstaller help"
+    gmsg -v2
+    gmsg -v0 "usage:    $GURU_CALL uninstall [config|status|help]"
+    gmsg -v2
+    gmsg -v1 -c white "commands:"
+    gmsg -v1 " config                      remove also configurations"
+    gmsg -v1 " status                      blink esc, print status and return "
+    gmsg -v2 " help                        this help "
+    gmsg -v2
 }
 
 
