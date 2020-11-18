@@ -115,15 +115,15 @@ note.ls () {
     note.remount
 
     # List of notes on this month and year or given in order and format YYYY MM
-    [ "$1" ] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
-    [ "$2" ] && year=$(date -d "$2"-1-1 +%Y) || year=$(date +%Y)                  #; echo "year: $year"
+    [[ "$1" ]] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
+    [[ "$2" ]] && year=$(date -d "$2"-1-1 +%Y) || year=$(date +%Y)                  #; echo "year: $year"
     directory="$GURU_MOUNT_NOTES/$GURU_USER_NAME/$year/$month"
 
-    if [ -d "$directory" ]; then
-        gmsg -c $GURU_COLOR_LIST "$(ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted")"
+    if [[ -d "$directory" ]] ; then
+        gmsg -c light_blue "$(ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted")"
         return 0
     else
-        gmsg "no folder exist\n"
+        gmsg "no folder exist"
         return 45
     fi
 }

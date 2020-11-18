@@ -88,9 +88,9 @@ project.ls () {
     gmsg -v1 "list of projects "
     for _project in ${_project_list[@]} ; do
         if [[ "$_project" == "$_active_project" ]] ; then
-                gmsg -c cyan " $_project"
+                gmsg -c aqua_marine "$_project"
             else
-                gmsg -c light_blue " $_project"
+                gmsg -c light_blue "$_project"
             fi
         done
 

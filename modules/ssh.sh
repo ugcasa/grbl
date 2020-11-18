@@ -35,7 +35,7 @@ ssh.key () {
 
 ssh.status () {
     gmsg -v1 "current keys"
-    gmsg -v1 -c $GURU_COLOR_LIST "$(ls $HOME/.ssh/ | grep _id_rsa| grep -v pub)"
+    gmsg -v1 -c light_blue "$(ls $HOME/.ssh/ | grep _id_rsa| grep -v pub)"
 }
 
 
