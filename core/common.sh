@@ -138,10 +138,11 @@ core.help () {
 
     core.help_flags () {
             gmsg -v2
-            gmsg -v0 "general flags:"
+            gmsg -v1 -c white "general flags:"
             gmsg -v2
-            gmsg -v0 " -v               set verbose, headers and success are printed out"
-            gmsg -v0 " -V               more deep verbose"
+            gmsg -v1 " -v               set verbose, headers and some details"
+            gmsg -v1 " -V               more deep verbose, unit level details"
+            gmsg -v2 " -W               damn deep verbose, action level details"
             gmsg -v1 " -u <username>    change guru user name temporary  "
             gmsg -v1 " -h <hosname>     change computer host name name temporary "
             gmsg -v1 " -l               set logging on to file $GURU_LOG"
@@ -150,23 +151,51 @@ core.help () {
             return 0
         }
 
+
     core.help_system () {
             gmsg -v2
             gmsg -v1 -c white  "system tools"
             gmsg -v1 "  install         install tools "
             gmsg -v1 "  uninstall       remove guru toolkit "
-            gmsg -v1 "  set             set options "
-            gmsg -v1 "  counter         to count things"
-            gmsg -v1 "  status          status of stuff"
             gmsg -v1 "  upgrade         upgrade guru toolkit "
+            gmsg -v1 "  status          status of stuff"
             gmsg -v1 "  shell           start guru shell"
             gmsg -v1 "  version         printout version "
-            gmsg -v2 "  os              basic operating system library"
             gmsg -v2
             gmsg -v2 "to refer detailed tool help, type '$GURU_CALL <module> help'"
             return 0
+        }
 
+    core.help_newbie () {
+        if [[ -f $HOME/.data/newbie ]] ; then
+            gmsg
+            gmsg -c white "if problems after installation"
+            gmsg
+            gmsg "1) logout and login to set path by .profiles or set path:"
+            gmsg
+            gmsg '   PATH=$PATH:$HOME/bin'
+            gmsg
+            gmsg "2) if no access to ujo.guru access point, create fake data mount"
+            gmsg
+            gmsg '   mkdir $HOME/.data ; touch $HOME/.data/.online'
+            gmsg
+            gmsg "3) to edit user configurations run:"
+            gmsg
+            gmsg "   $GURU_CALL config user"
+            gmsg
+            gmsg "4) export configurations to environment"
+            gmsg
+            gmsg "   $GURU_CALL config export"
+            gmsg
+            gmsg "5) remove this extra help view to appear anymore"
+            gmsg
+            gmsg "   rm $HOME/.data/newbie"
+            gmsg
+            export GURU_VERBOSE=2
+        fi
     }
+
+
 
     local _arg="$1"
     if [[ "$_arg" ]] ; then
@@ -178,17 +207,11 @@ core.help () {
                     esac
         fi
 
+    core.help_newbie
     gmsg -v1 -c white "guru-client help "
     gmsg -v2
     gmsg -v0  "usage:    $GURU_CALL [-flags] [tool] [argument] [variables]"
-    gmsg -v1
-    gmsg -v1 -c white  "Flags"
-    gmsg -v1 " -v   set verbose, headers and success are printed out"
-    gmsg -v1 " -V   more deep verbose"
-    gmsg -v1 " -l   set logging on to file $GURU_LOG"
-    gmsg -v1 " -f   set force mode on, be more aggressive"
-    gmsg -v1 " -u   run as user"
-    gmsg -v2
+    core.help_flags
     gmsg -v1 -c white  "connection tools"
     gmsg -v1 "  remote          accesspoint access tools"
     gmsg -v1 "  ssh             ssh key'and connection tools"
@@ -224,6 +247,8 @@ core.help () {
     gmsg -v1 "More detailed help, try '$GURU_CALL <tool> help'"
     gmsg -v1 "Use verbose mode -v to get more information in help printout. "
     gmsg -v1 "Even more detailed, try -V"
+    gmsg -v1
+
 }
 
 

@@ -148,9 +148,7 @@ system.start () {
 
 system.end () {
     # return normal, assuming that while is normal
-    source corsair.sh
-    gmsg -v1 -t "${FUNCNAME[0]}: system status polling ended"
-    corsair.main reset $indicator_key
+    gmsg -v1 -t -c reset "${FUNCNAME[0]}: system status polling ended" -k $indicator_key
 }
 
 

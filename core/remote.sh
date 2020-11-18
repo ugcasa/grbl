@@ -121,15 +121,13 @@ remote.push_config () {
 
 
 remote.start () {                      # set leds  F1 -> F4 off
-    gmsg -k $indicator_key -c black -v1 -t "${FUNCNAME[0]}: starting remote"
+    gmsg -v1 -t -c black "${FUNCNAME[0]}: starting remote" -k $indicator_key
 
 }
 
 
 remote.end () {
-    source corsair.sh
-    gmsg -v1 -t "${FUNCNAME[0]}: ending remote"
-    corsair.main reset $indicator_key
+    gmsg -v1 -t -c reset "${FUNCNAME[0]}: ending remote" -k $indicator_key
 }
 
 

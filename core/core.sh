@@ -8,21 +8,24 @@ case "$1" in
     ver|version|--ver|--version) echo "guru-client v$GURU_VERSION" ; exit 0 ;;
 esac
 
+# include configuration tools
+source $HOME/bin/config.sh
+
 # source common variable
 GURU_RC="$HOME/.gururc"
 [[ -f $GURU_RC ]] && source $GURU_RC || config.main export $GURU_USER
 
-# include configuration tools
-source $GURU_BIN/config.sh
 # import common functions
 source $GURU_BIN/common.sh
 # include mount tools
 source $GURU_BIN/mount.sh
 # include client sytem tools
-source $GURU_BIN/system.sh
+#source $GURU_BIN/system.sh
 # include daemon tools
 source $GURU_BIN/daemon.sh
-# export configuration
+# include corsair1tools
+#source $GURU_BIN/corsair.sh
+
 
 # user configuration overwrites
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME

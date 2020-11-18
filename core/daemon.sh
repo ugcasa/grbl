@@ -3,9 +3,9 @@
 # casa@ujo.guru 2020
 
 source $GURU_BIN/common.sh
-source $GURU_BIN/corsair.sh
 
 daemon.main () {
+    indicator_key="esc"
     argument="$1" ; shift
     case "$argument" in
             start|stop|status|help|kill|poll)
@@ -139,7 +139,8 @@ daemon.poll () {
     # DAEMON POLL LOOP
     while true ; do
         source $GURU_RC                                           # to update configurations is user changes them
-        corsair.main set esc $GURU_CORSAIR_EFECT_COLOR
+
+        gmsg -v4 -c $GURU_CORSAIR_EFECT_COLOR -k $indicator_key
 
         for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
@@ -152,7 +153,7 @@ daemon.poll () {
                     fi
                 done
 
-        corsair.main reset esc
+        gmsg -v4 -c reset -k $indicator_key
         sleep $GURU_DAEMON_INTERVAL
         [[ -f "$HOME/.guru-stop" ]] && break                        # check is stop command given, exit if so
     done
