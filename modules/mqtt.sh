@@ -26,7 +26,7 @@ mqtt.help () {
 
 
 mqtt.main () {
-    # corsair command parser
+    # command parser
     indicator_key='F'"$(poll_order mqtt)"
 
     local _cmd="$1" ; shift
@@ -39,25 +39,39 @@ mqtt.main () {
     return 0
 }
 
-mqtt.online () {
 
+
+mqtt.online () {
+    # check mqtt is functional, no printout
     _send () {
-        touch /tmp/guru-socket
-        while [[ -f /tmp/guru-socket ]]; do
-            mqtt.pub "$GURU_HOSTNAME/test" "online"
-            sleep 1
-        done
+        # if mqtt message takes more than 2 seconds to return from closest mqtt server there is something wrong
+        sleep 2
+        mqtt.pub "$GURU_HOSTNAME/online" "$(date +$GURU_FORMAT_TIME)"
     }
 
+    # delayed publish
     _send &
 
-    if mqtt.single "$GURU_HOSTNAME/test" >/dev/null ; then
-            rm /tmp/guru-socket
+    # subscribe to channel
+    if mqtt.single "$GURU_HOSTNAME/online" >/dev/null ; then
             return 0
         else
-            rm /tmp/guru-socket
             return 1
     fi
+}
+
+
+mqtt.status () {
+    # check mqtt broker is reachable.
+    # printout and signal by corsair keyboard indicator led - if available
+    source corsair.sh
+    if mqtt.online "$GURU_MQTT_BROKER" "$GURU_MQTT_PORT" ; then
+            gmsg -v1 -t -c green "${FUNCNAME[0]}: broker available " -k $indicator_key
+            return 0
+        else
+            gmsg -v1 -t -c red "${FUNCNAME[0]}: broker unreachable " -k $indicator_key
+            return 1
+        fi
 }
 
 
@@ -93,28 +107,15 @@ mqtt.log () {
 }
 
 
-mqtt.start () {                      # set leds  F1 -> F4 off
-    gmsg -v 1 -t "${FUNCNAME[0]}: starting message bus status poller"
-    corsair.main set $indicator_key off
+mqtt.start () {
+    gmsg -v1 -t "${FUNCNAME[0]}: starting message bus status poller" -k $indicator_key -c black
 }
 
 
-mqtt.end () {                        # return normal, assuming that while is normal
-    gmsg -v 1 -t "${FUNCNAME[0]}: ending message bus status polling"
-    corsair.main set $indicator_key white
-}
+mqtt.end () {
 
+    gmsg -v1 -t "${FUNCNAME[0]}: ending message bus status polling" -k $indicator_key -c reset
 
-mqtt.status () {
-    # sub mqtt is reachable
-    source corsair.sh
-    if mqtt.online "$GURU_MQTT_BROKER" "$GURU_MQTT_PORT" ; then
-            gmsg -v1 -t -k $indicator_key -c green "${FUNCNAME[0]}: broker available"
-            return 0
-        else
-            gmsg -v1 -t -k $indicator_key -c red "${FUNCNAME[0]}: broker offline"
-            return 1
-        fi
 }
 
 

@@ -54,7 +54,7 @@ gmsg() {
         case "$1" in
             -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
             -l ) _logging=true                              ; shift ;;
-            -h ) _color_code="$C_HEADER"                         ; shift ;;
+            -h ) _color_code="$C_HEADER"                    ; shift ;;
             -n ) _newline=                                  ; shift ;;
             -N ) _pre_newline="\n"                          ; shift ;;
             -x ) _exit=$2                                   ; shift 2 ;;
@@ -69,13 +69,29 @@ gmsg() {
         esac
     done
 
-    # check message
+    # check message for long parameters (don't remember why like this)
     local _arg="$@"
     [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
     # add exit code to message
     [[ $_exit -gt 0 ]] && _message="$_exit: $_message"
 
+    # publish to mqtt if '-q <topic>' used
+    if [[ $_mqtt_topic ]] ; then
+            mosquitto_pub -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic" -m "$_message"
+        fi
+
+    # set corsair key is '-k <key>' used
+    if [[ $_indicator_key ]] ; then
+
+        if [[ "$_color" == "reset" ]] ; then
+                corsair.main reset "$_indicator_key"
+            else
+                corsair.main set "$_indicator_key" "$_color"
+            fi
+       fi
+
+    # printout message if verbose level is more than verbose trigger
     if [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
 
             if [[ $GURU_VERBOSE -ge $_verbose_limiter ]] ; then return 0 ; fi
@@ -87,20 +103,13 @@ gmsg() {
                 fi
         fi
 
-    # publish to mqtt if '-q <topic>' used
-    if [[ $_mqtt_topic ]] ; then
-            mosquitto_pub -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic" -m "$_message"
-        fi
-
-    # set corsair key
-    if [[ $_indicator_key ]] ; then
-        corsair.main set "$_indicator_key" "$_color"
-    fi
-
-    # logging
-    if [[ "$LOGGING" ]] || [[ "$_logging" ]] ; then                          # log without colorcodes ets.
-        [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] || return 0                    # check that system mount is online before logging
-        [[ -f "$GURU_LOG" ]] || return 0                                     # log inly is log exist (hmm.. this not really neede)
+    # print to log if '-l' set
+    if [[ "$LOGGING" ]] || [[ "$_logging" ]] ; then
+        # check that system mount is online before logging
+        [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] || return 0
+        # log only is log exist
+        [[ -f "$GURU_LOG" ]] || return 0
+        # log without colorcodes
         printf "$@" | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
     fi
 

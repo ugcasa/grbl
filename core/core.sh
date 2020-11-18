@@ -2,18 +2,18 @@
 # guru-client - main command parser
 # caa@ujo.guru 2020
 
-export GURU_VERSION="0.6.4.1"
+export GURU_VERSION="0.6.4.2"
 # minimal process command
 case "$1" in
     ver|version|--ver|--version) echo "guru-client v$GURU_VERSION" ; exit 0 ;;
 esac
 
-# include configuration tools
-source $GURU_BIN/config.sh
 # source common variable
 GURU_RC="$HOME/.gururc"
 [[ -f $GURU_RC ]] && source $GURU_RC || config.main export $GURU_USER
 
+# include configuration tools
+source $GURU_BIN/config.sh
 # import common functions
 source $GURU_BIN/common.sh
 # include mount tools

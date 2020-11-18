@@ -7,7 +7,7 @@ source $GURU_BIN/common.sh
 keyboard.main() {
     # keyboard command parser
     distro="$(check_distro)" # ; gmsg -v2 "|$distro|"
-    [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
+    [[ "$GURU_INSTALL_TYPE" == "server" ]] && return 0
 
     command="$1" ; shift
     case "$command" in
@@ -108,7 +108,6 @@ keyboard.set_guru_ubuntu(){       # set guru defaults
 
 keyboard.set_guru_linuxmint () {
 
-[[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
 
 local _new=$GURU_CFG/keyboard.binding-mint.cfg
 local _backup=$GURU_CFG/keyboard.backup-mint.cfg
