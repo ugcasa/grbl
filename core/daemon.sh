@@ -53,7 +53,6 @@ daemon.status () {
         fi
 
     return $_err
-
 }
 
 
@@ -69,8 +68,12 @@ daemon.start () {
     for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
 
         if [[ -f "$GURU_BIN/$module.sh" ]] ; then
-                source "$GURU_BIN/$module.sh"               # ; echo "module: $GURU_BIN/$GURU_BIN/$module.sh"
-                $module.main start                          # ; echo "command: $module.main start"
+                source "$GURU_BIN/$module.sh"
+                gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
+
+                $module.main start
+                gmsg -v3 "command: $module.main start"
+
             else
                 gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
             fi
@@ -82,9 +85,13 @@ daemon.start () {
 
 
 daemon.stop () {
-    [[ -f "$HOME/.guru-stop" ]] && rm "$HOME/.guru-stop"     # remove action
+    # stop daemon
 
-    if ! [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then   # if pid file is not exist
+    # remove stop flag
+    [[ -f "$HOME/.guru-stop" ]] && rm "$HOME/.guru-stop"
+
+    # if pid file is not exist
+    if ! [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
             gmsg "${FUNCNAME[0]}: daemon not running"
             gmsg -v1 "start daemon by typing 'guru start'"
             return 0
@@ -96,8 +103,12 @@ daemon.stop () {
     for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
 
         if [[ -f "$GURU_BIN/$module.sh" ]] ; then
-                source "$GURU_BIN/$module.sh"               # ; echo "module: $GURU_BIN/$GURU_BIN/$module.sh"
-                $module.main end                            # ; echo "command: $module.main end"
+                source "$GURU_BIN/$module.sh"
+                gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
+
+                $module.main end
+                gmsg -v3 "command: $module.main end"
+
             else
                 gmsg -v 1 "${FUNCNAME[0]}: module '$module' not installed"
             fi
