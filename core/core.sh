@@ -74,7 +74,6 @@ core.parser () {
                          radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;
                          shell)  core.shell "$@"                        ; return $? ;;
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;
-                          test)  bash "$GURU_BIN/test/test.sh" "$@"     ; return $? ;;
        help|"?"|"-?"|--help|-h)  core.help $@ ; exit 0 ;;
                             "")  core.shell ;;
                              *)  core.run_module "$tool" "$@"           ; return $? ;;
