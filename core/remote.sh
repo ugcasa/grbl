@@ -1,6 +1,6 @@
 #!/bin/bash
 # sshfs mount functions for guru-client
-source $GURU_BIN/common.sh
+source common.sh
 
 
 remote.main () {

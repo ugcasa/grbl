@@ -1,8 +1,8 @@
 #!/bin/bash
 # guru-client config tools
 
-source $GURU_BIN/common.sh
-source $GURU_BIN/remote.sh
+source common.sh
+source remote.sh
 
 config.main () {
 

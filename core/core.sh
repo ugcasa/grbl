@@ -24,7 +24,7 @@ source $GURU_BIN/mount.sh
 # include daemon tools
 source $GURU_BIN/daemon.sh
 # include corsair1tools
-#source $GURU_BIN/corsair.sh
+source $GURU_BIN/corsair.sh
 
 # user configuration overwrites
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME

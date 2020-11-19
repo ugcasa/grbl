@@ -2,9 +2,9 @@
 # guru shell work time tracker
 # casa@ujo.guru 2019-2020
 
-source $GURU_BIN/common.sh
-source $GURU_BIN/mount.sh
-source $GURU_BIN/corsair.sh
+source common.sh
+source mount.sh
+source corsair.sh
 
 timer.main () {
     mount.system
@@ -12,13 +12,12 @@ timer.main () {
     command="$1"; shift
     case "$command" in
 
-                toggle|check|status|start|change|cancel|end|stop|report|log|edit|last)
-                    timer.$command "$@"
-                    return $?
-                    ;;
-                help|*) timer.help ; return 0
-                    ;;
-
+        toggle|check|status|start|change|cancel|end|stop|report|log|edit|last)
+                timer.$command "$@"
+                return $? ;;
+        help|*)
+                timer.help
+                return 0 ;;
     esac
 }
 
@@ -199,7 +198,9 @@ timer.start() {
 timer.end() {
 
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
-        source $GURU_FILE_TRACKSTATUS                                                       #; echo "timer start "$timer_start
+        source $GURU_FILE_TRACKSTATUS
+        gmsg -v3 "timer start "$timer_start
+
     else
         msg "timer not started"
         return 13
@@ -208,50 +209,58 @@ timer.end() {
     case "$1" in
 
         at|to|till)
-            shift                                                                   #; echo "input: "$@
+            shift
+            gmsg -v3 "input: "$@
 
             if ! [ "$1" ]; then
-                echo "pls. input end time"
-                return 124
-            fi
+                    echo "pls. input end time"
+                    return 124
+                fi
 
-
-            if date -d "$1" '+%H:%M' >/dev/null 2>&1; then                          # Some level of format check
-                time=$(date -d "$1" '+%H:%M')
-                shift                                                               #; echo "time pass: "$@
-            else
-                time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")         #; echo "now pass: "$@
-            fi
+            # Some level of format check
+            if date -d "$1" '+%H:%M' >/dev/null 2>&1; then
+                    time=$(date -d "$1" '+%H:%M')
+                    shift
+                    gmsg -v3 "time pass: "$@
+                else
+                    time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
+                    gmsg -v3 "now pass: "$@
+                fi
 
             if date -d "$1" '+%Y%m%d' >/dev/null 2>&1; then
-                date=$(date -d "$1" '+%Y%m%d')
-                shift                                                               #; echo "date pass: "$@
-            else
-                date=$(date -d "today" '+%Y%m%d')                                   #; echo "today pass: "$@
-            fi
+                    date=$(date -d "$1" '+%Y%m%d')
+                    shift
+                    gmsg -v3 "date pass: "$@
+                else
+                    date=$(date -d "today" '+%Y%m%d')
+                    gmsg -v3 "today pass: "$@
+                fi
             ;;
 
         *)
             date=$(date -d "today" '+%Y%m%d')
-            time=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M")           #; echo "no input pass:"$@
+            time=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M")
+            gmsg -v3 "no input pass:"$@
+
             ;;
     esac
 
-    end_date=$date                                                                  #; echo "end_date: "$end_date
-    end_time=$time                                                                  #; echo "end_time: "$end_time
-    timer_end=$(date -d "$end_date $end_time" '+%s')                                #; echo "timer end "$timer_end
-    dot_start_date=$(date -d $start_date '+%Y.%m.%d')                               #; echo "nice_start_date: "$nice_start_date
-    dot_end_date=$(date -d $end_date '+%Y.%m.%d')                                   #; echo "nice_end_date: "$nice_end_date
-    nice_start_date=$(date -d $start_date '+%d.%m.%Y')                              #; echo "nice_start_date: "$nice_start_date
-    nice_end_date=$(date -d $end_date '+%d.%m.%Y')                                  #; echo "nice_end_date: "$nice_end_date
+    #
+    end_date=$date                                                                 ; gmsg -v3 "end_date: $end_date"
+    end_time=$time                                                                 ; gmsg -v3 "end_time: $end_time"
+    timer_end=$(date -d "$end_date $end_time" '+%s')                               ; gmsg -v3 "timer end: $timer_end"
+    dot_start_date=$(date -d $start_date '+%Y.%m.%d')                              ; gmsg -v3 "nice_start_date: $nice_start_date"
+    dot_end_date=$(date -d $end_date '+%Y.%m.%d')                                  ; gmsg -v3 "nice_end_date: $nice_end_date"
+    nice_start_date=$(date -d $start_date '+%d.%m.%Y')                             ; gmsg -v3 "nice_start_date: $nice_start_date"
+    nice_end_date=$(date -d $end_date '+%d.%m.%Y')                                 ; gmsg -v3 "nice_end_date: $nice_end_date"
 
-    (( spend_sec = timer_end - timer_start ))                                       #; echo "spend_sec: "$spend_sec
-    (( spend_min = spend_sec / 60 ))                                                #; echo "spend_min: "$spend_min
-    (( spend_hour = spend_min / 60 ))                                               #; echo "spend_hour: "$spend_hour
-    (( spend_min_div = spend_min % 60 ))                                            #; echo "spend_min_div: "$spend_min_div
+    (( spend_sec = timer_end - timer_start ))                                      ; gmsg -v3 "spend_sec: $spend_sec"
+    (( spend_min = spend_sec / 60 ))                                               ; gmsg -v3 "spend_min: $spend_min"
+    (( spend_hour = spend_min / 60 ))                                              ; gmsg -v3 "spend_hour: $spend_hour"
+    (( spend_min_div = spend_min % 60 ))                                           ; gmsg -v3 "spend_min_div: $spend_min_div"
 
-    spend_min_dec=$(python -c "print(int(round($spend_min_div * 1.6666, 0)))")      #; echo "spend_min_dec: "$spend_min_dec
-    hours="$spend_hour.$spend_min_dec"                                              #; echo "hours: "$hours
+    spend_min_dec=$(python -c "print(int(round($spend_min_div * 1.6666, 0)))")     ; gmsg -v3 "spend_min_dec: $spend_min_dec"
+    hours="$spend_hour.$spend_min_dec"                                             ; gmsg -v3 "hours: $hours"
 
     if [[ "$nice_start_date" == "$nice_end_date" ]]; then
         option_end_date=""
@@ -259,13 +268,10 @@ timer.end() {
         option_end_date=" ($nice_end_date)"
     fi
 
-
-
-    [ -f $GURU_FILE_TRACKDATA ] || printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n">$GURU_FILE_TRACKDATA
-    [[ $hours > 0.11 ]] && printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n">>$GURU_FILE_TRACKDATA
-
+    # close track file
+    [[ -f $GURU_FILE_TRACKDATA ]] || printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n" >$GURU_FILE_TRACKDATA
+    [[ $hours > 0.11 ]] && printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n" >>$GURU_FILE_TRACKDATA
     printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_FILE_TRACKLAST
-
     rm $GURU_FILE_TRACKSTATUS
 
     # inform user
@@ -277,12 +283,14 @@ timer.end() {
 
 
 timer.stop () {
+    # alias stop for end
     timer.end "$@"
     return 0
 }
 
 
 timer.change() {
+    # alias change for start
     timer.start "$@"
     return $?
 }
@@ -300,21 +308,23 @@ timer.cancel() {
     return 0
 }
 
+
 timer.log () {
+    # printout short list of recent records
     printf "last logged records:\n$(tail $GURU_FILE_TRACKDATA | tr ";" "  ")\n"
     return 0
 }
 
 
 timer.edit  () {
-
+    # edit data csv file
     $GURU_EDITOR "$GURU_FILE_TRACKDATA" &
     return $?
 }
 
 
 timer.report() {
-
+    # make a report
     [ "$1" ] && team="$1" || team="$GURU_TEAM"
     gmsg -v3 "team : $team"
 

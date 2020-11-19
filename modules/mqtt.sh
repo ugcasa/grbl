@@ -8,26 +8,26 @@ mqtt.help () {
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL mqtt start|end|status|help|install|remove|single|sub|pub "
     gmsg -v2
-    gmsg -v1 -c white "commands:"
-    gmsg -v1 " sub <topic>              subsribe to topic on local mqt server "
-    gmsg -v1 " single <topic>           subsribe to topic and wait for message and exit "
+    gmsg -v1 -c white "commands: "
+    gmsg -v1 " sub <topic>              subscribe to topic on local mqtt server "
+    gmsg -v1 " single <topic>           subscribe to topic and wait for message, then exit "
     gmsg -v1 " pub <topic> <message>    printout mqtt service status "
-    gmsg -v1 " log <topic> <log_file>   subsribe to topic and log it to file "
+    gmsg -v1 " log <topic> <log_file>   subscribe to topic and log it to file "
     gmsg -v1 " install                  install client requirements "
     gmsg -v1 " remove                   remove installed requirements "
     gmsg -v2 " help                     printout this help "
     gmsg -v3 " start                    start status polling "
     gmsg -v3 " end                      end status polling "
     gmsg -v2
-    gmsg -v1 -c white "example:"
-    gmsg -v1 "         $GURU_CALL mqtt status"
+    gmsg -v1 -c white "example: "
+    gmsg -v1 "         $GURU_CALL mqtt status "
     gmsg -v2
 }
 
 
 mqtt.main () {
     # command parser
-    indicator_key='F'"$(poll_order mqtt)"
+    indicator_key="f$(poll_order mqtt)"
 
     local _cmd="$1" ; shift
     case "$_cmd" in
@@ -76,7 +76,7 @@ mqtt.status () {
 
 
 mqtt.sub () {
-    # subsribe to channel, stay listening
+    # subscribe to channel, stay listening
     local _mqtt_topic="$1" ; shift
     mosquitto_sub -v -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic"
     return $?
@@ -84,7 +84,7 @@ mqtt.sub () {
 
 
 mqtt.single () {
-    # subsribe to channel, stay listening
+    # subscribe to channel, stay listening
     local _mqtt_topic="$1" ; shift
     mosquitto_sub -C 1 -v -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_mqtt_topic"
     return $?
@@ -108,12 +108,13 @@ mqtt.log () {
 
 
 mqtt.start () {
+    # clean current key by setting it black. affects naturally to message printout color
     gmsg -v1 -t "${FUNCNAME[0]}: starting message bus status poller" -k $indicator_key -c black
 }
 
 
 mqtt.end () {
-
+    # reset back to normal color, color reset is gray
     gmsg -v1 -t "${FUNCNAME[0]}: ending message bus status polling" -k $indicator_key -c reset
 
 }
