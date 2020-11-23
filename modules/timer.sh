@@ -8,7 +8,7 @@ source corsair.sh
 
 timer.main () {
     mount.system
-    indicator_key="f9"
+    indicator_key="f$(poll_order timer)"
     command="$1"; shift
     case "$command" in
 
@@ -74,9 +74,11 @@ timer.status() {
     minutes=$(($timer_state%3600/60))
     seconds=$(($timer_state%60))
 
-    [[ $hours > 0 ]] && print_h=" $hours hours and" || print_h=""
-    [[ $minutes > 0 ]] && print_m=" $minutes minutes" || print_m=""
-    [[ $hours > 0 ]] && print_s="" || print_s=" $seconds seconds"
+    [[ $hours > 0 ]] && print_h=$(printf "%0.2f hours " $hours) || print_h=""
+    [[ $minutes > 0 ]] && print_m=$(printf "%0.2f minutes " $minutes) || print_m=""
+    [[ $hours > 0 ]] && print_s="" || print_s=$(printf "%0.2f seconds" $seconds)
+
+    gmsg -t -v1 -c green -k $indicator_key "current invoice status $print_h$print_m$print_s for $customer $project $task" -q $GURU_USER/status "working $hours:$minutes"
 
     case "$1" in
 
