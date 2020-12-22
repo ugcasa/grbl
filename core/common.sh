@@ -112,10 +112,35 @@ gask () {
     return 1
 }
 
+
+import () {
+    # source all bash function in module. input: import <module_name> <py|sh|php..>
+    local _module=$1 ; shift
+    local _type=sh ; [[ $1 ]] && _type=$1
+
+    if ! [[ -d $_module ]] ; then
+            gmsg -c yellow "no module $_module exist"
+            return 100
+        fi
+
+    for lib in $_module/*$_type ; do
+            gmsg -v2 "library $lib"
+
+            if [[ -f $lib ]] ; then
+                    source $lib
+                else
+                    gmsg -c yellow "no $_type files in $_module/ folder"
+                    return 101
+                fi
+        done
+}
+
+
 export -f system.core-dump
 export -f poll_order
 export -f gmsg
 export -f gask
+export -f import
 
 source os.sh
 source style.sh
