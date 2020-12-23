@@ -1,7 +1,7 @@
 #!/bin/bash
 # guru-client testing functions for all modules
 #
-# Test case actions             TODO forget this
+# Test case actions             TODO forget this, make will auto-generate this
 #  1) quick check
 #  2) list stuff
 #  3) information or check
@@ -81,10 +81,13 @@ test.tool() {
                 return 10
         fi
 
-    source $GURU_BIN/$_tool.$_lang                              # source function under test
-    source $GURU_BIN/test/test-$_tool.$_lang                         # source tester functions
+    # source function under test
+    source $GURU_BIN/$_tool.$_lang
+    # source tester functions
+    source $GURU_BIN/test/test-$_tool.$_lang
 
-    $1.test "$_case" ; _error=$?                        # run test
+    # run test
+    $1.test "$_case" ; _error=$?
 
     if ((_error==1)) ; then
          gmsg -n -c white "TEST $_test_id $_tool.$_lang "
@@ -135,7 +138,7 @@ test.release() {
                 gmsg -n -c white "RELEASE $_test_id RESULT IS "
                 gmsg -c green "PASSED"
             else
-                gmsg -c white "RELEASE $_test_id RESULT IS "
+                gmsg -n -c white "RELEASE $_test_id RESULT IS "
                 gmsg -c red "FAILED"
                 gmsg -c yellow "last error code were: $_error"
             fi
