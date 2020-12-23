@@ -74,7 +74,7 @@ mount.info () {
     # detailed list of mounted mountpoints
     # nice list of information of sshfs mount points
     local _error=0
-    [ $TEST ] || msg "${WHT}user@server remote_folder local_mountpoint  uptime pid${NC}\n"                 # header (stdout when -v)
+    [ $TEST ] || gmsg -c white "user@server remote_folder local_mountpoint  uptime pid"                 # header (stdout when -v)
     mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |                                          # get the mount data
 
     while read mount ; do                                                                               # Iterate over them
@@ -87,7 +87,7 @@ mount.info () {
 
     done
 
-    ((_error>0)) && msg "perl not installed or internal error, pls try to install perl and try again."
+    ((_error>0)) && gmsg -c yellow "perl not installed or internal error, pls try to install perl and try again."
     return $_errorB
 }
 

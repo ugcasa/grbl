@@ -2,7 +2,7 @@
 # guru-client - main command parser
 # caa@ujo.guru 2020
 
-export GURU_VERSION="0.6.4.2"
+export GURU_VERSION="0.6.4.3"
 # minimal process command
 case "$1" in
     ver|version|--ver|--version) echo "guru-client v$GURU_VERSION" ; exit 0 ;;

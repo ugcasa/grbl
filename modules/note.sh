@@ -4,13 +4,6 @@ source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
 
-# iimport library from module
-# source $GURU_BIN/file/tag.sh
-# source $GURU_BIN/file/*.sh
-# iimport full module TODO does this wörk? does not: bash source takes only one variable
-# solved:
-# import file
-
 note.main () {
     command="$1" ; shift
     case "$command" in
@@ -81,12 +74,12 @@ note.check () {
     # chech that given date note file exist
     if ! note.online ; then note.remount ; fi
     note.gen_var "$1"
-    msg "checking note file.. "
+    gmsg -n -v1 "checking note file.. "
     if [[ -f "$note" ]] ; then
-            gmsg -v2 -c yellow  "$note"
+            gmsg -v1 -c green "$note found"
             return 0
         else
-            gmsg -v2 -c yellow "$note not found"
+            gmsg -v1 -c yellow "$note not found"
             return 41
         fi
 }
@@ -95,7 +88,7 @@ note.check () {
 note.online () {
     # check that needed folders are mounted
     if ! [[ "$GURU_MOUNT_NOTES" ]] && [[ "$GURU_MOUNT_TEMPLATES" ]] ; then
-            ERROR "variable emty: '$GURU_MOUNT_NOTES' , '$GURU_MOUNT_TEMPLATES'"
+            gmsg -c yellow "empty variable: '$GURU_MOUNT_NOTES' or '$GURU_MOUNT_TEMPLATES'"
             return 100
         fi
 
@@ -181,7 +174,7 @@ note.rm () {
     [[ -f $note ]] || gmsg -x 1 -c white "no note for date $(date -d $1 +$GURU_FORMAT_DATE)"
 
     if gask "remove $note" ; then
-        rm -rf "$note" || msg -c yellow "note remove failed"
+        rm -rf "$note" || gmsg -c yellow "note remove failed"
     fi
     return 0
 }
@@ -251,19 +244,6 @@ note.make_odt () {
 
     $GURU_OFFICE_DOC "${note%%.*}.odt" &
     echo "report file: ${notefile%%.*}.odt"
-}
-
-
-check_debian_repository () {
-    # add sublime to repository list
-    echo "cheking installation.."
-    subl -v && return 1
-
-    wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
-    sudo apt-get install apt-transport-https
-    echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
-    sudo apt-get update
-    return $?
 }
 
 
