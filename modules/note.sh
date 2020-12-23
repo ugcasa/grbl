@@ -4,6 +4,13 @@ source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
 
+# iimport library from module
+# source $GURU_BIN/file/tag.sh
+# source $GURU_BIN/file/*.sh
+# iimport full module TODO does this wörk? does not: bash source takes only one variable
+# solved:
+# import file
+
 note.main () {
     command="$1" ; shift
     case "$command" in
