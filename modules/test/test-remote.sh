@@ -8,14 +8,14 @@ remote.test() {
     local test_case="$1"
     local _err=("$0")
     case "$test_case" in
-               1) remote.check              ; return $? ;;  # 1) quick check
-               4) remote.test_config        ; return $? ;;  # 4) out of system action
-           all|8) remote.check              || _err=31      # 1) quick check
-                  remote.test_config        || _err=34      # 4) out of system action
+               1) remote.check              ; return $? ;;
+               4) remote.test_config        ; return $? ;;
+           all|8) remote.check              || _err=31
+                  remote.test_config        || _err=34
                   if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                   ;;
-       release|9) remote.check              || _err=31      # 1) quick check
-                  remote.test_config        || _err=34      # 4) out of system action
+       release|9) remote.check              || _err=31
+                  remote.test_config        || _err=34
                   if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                   ;;
 
