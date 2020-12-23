@@ -143,6 +143,5 @@ export -f gask
 export -f import
 
 source os.sh
-source style.sh
 source counter.sh
 
