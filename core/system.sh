@@ -2,7 +2,7 @@
 # system tools for guru-client
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
-source $GURU_BIN/corsair.sh
+
 
 system.main () {
     # system command parser
@@ -39,12 +39,10 @@ system.help () {
 system.status () {
     # system status
     if mount.online "$GURU_SYSTEM_MOUNT" ; then
-        gmsg -v 1 -t -c green "${FUNCNAME[0]}: guru on service"
-        corsair.main set $indicator_key green
+        gmsg -v 1 -t -c green "${FUNCNAME[0]}: guru on service" -k $indicator_key
         return 0
     else
-        gmsg -v 1 -t -c red "${FUNCNAME[0]}: .data is unmounted"
-        corsair.main set $indicator_key red
+        gmsg -v 1 -t -c red "${FUNCNAME[0]}: .data is unmounted" -k $indicator_key
         return 101
     fi
 }
@@ -144,15 +142,13 @@ system.get_env_by_name () {
 
 system.start () {
     # set leds  F1 -> F4 off
-    gmsg -v 1 -t "${FUNCNAME[0]}: system status polling started"
-    corsair.main set $indicator_key off || return 101
+    gmsg -v1 -t -c black "${FUNCNAME[0]}: system status polling started" -k $indicator_key
 }
 
 
 system.end () {
     # return normal, assuming that while is normal
-    gmsg -v 1 -t "${FUNCNAME[0]}: system status polling ended"
-    corsair.main set $indicator_key white || return 101
+    gmsg -v1 -t -c reset "${FUNCNAME[0]}: system status polling ended" -k $indicator_key
 }
 
 

@@ -12,16 +12,16 @@ system.test() {
     case "$test_case" in
                 1) system.get_version             ; return $? ;;  # 1) quick check
                 3) system.set_test                ; return $? ;;  # 3) information or check
-                6) system.rollback_test           ; return $? ;;  # 6) action, touch hot files
-          clean|7) system.upgrade_test            ; return $? ;;  # 7) return
+#                6) system.rollback_test           ; return $? ;;  # 6) action, touch hot files
+#          clean|7) system.upgrade_test            ; return $? ;;  # 7) return
             all|8) system.get_version             || _err=("${_err[@]}" "51")  # 1) quick check
-                   system.rollback_test           || _err=("${_err[@]}" "56")  # 6) action, touch hot files
-                   system.upgrade_test            || _err=("${_err[@]}" "57")  # 7) return
+                   #system.rollback_test           || _err=("${_err[@]}" "56")  # 6) action, touch hot files
+                   #system.upgrade_test            || _err=("${_err[@]}" "57")  # 7) return
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
         release|9) system.get_version             || _err=("${_err[@]}" "52")  # 1) quick check
-                   system.rollback_test           || _err=("${_err[@]}" "56")  # 6) action, touch hot files
-                   system.upgrade_test            || _err=("${_err[@]}" "57")  # 7) return
+                   #system.rollback_test           || _err=("${_err[@]}" "56")  # 6) action, touch hot files
+                   #system.upgrade_test            || _err=("${_err[@]}" "57")  # 7) return
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
                *)  msg "test case '$test_case' not written\n"
@@ -30,7 +30,7 @@ system.test() {
 }
 
 system.get_version () {
-  $GURU_CALL version && TEST_PASSED "${FUNCNAME[0]}" || TEST_FAILED "${FUNCNAME[0]}"
+  $GURU_CALL version && gmsg -c green "${FUNCNAME[0]} passed" || gmsg -c red "${FUNCNAME[0]} failed"
   return $?
 }
 
@@ -41,10 +41,10 @@ system.upgrade_test () {
     system.upgrade ; _error=$?
 
     if ((_error<1)) ; then
-        TEST_PASSED "${FUNCNAME[0]}"
+        gmsg -c green "${FUNCNAME[0]} passed"
         return 0
     else
-        TEST_FAILED "${FUNCNAME[0]}"
+        gmsg -c red "${FUNCNAME[0]} failed"
         return $_error
     fi
 }
@@ -59,19 +59,19 @@ system.rollback_test () {
     grep "$_target_version" <<< "$(bash $GURU_BIN/$GURU_CALL version)"; _error=$?
 
     if ((_error<1)) ; then
-        PASSED "version matches"
+        gmsg -c green "passed"
         else
-        FAILED "version mismatch $(bash $GURU_BIN/$GURU_CALL version), expecting $_target_version"
+        gmsg -c red "failed"
         _error=$((_error+10))
       fi
 
     system.upgrade >/dev/null || return $?
 
     if ((_error<1)) ; then
-        TEST_PASSED "${FUNCNAME[0]}"
+        gmsg -c green "${FUNCNAME[0]} passed"
         return 0
     else
-        TEST_FAILED "${FUNCNAME[0]}"
+        gmsg -c red "${FUNCNAME[0]} failed"
         return $_error
     fi
 }

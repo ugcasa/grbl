@@ -358,6 +358,11 @@ android.install () {
 }
 
 
+android.status () {
+    gmsg "nothing to report"
+}
+
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         source "$GURU_RC"
         android.main "$@"

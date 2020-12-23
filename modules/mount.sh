@@ -74,7 +74,7 @@ mount.info () {
     # detailed list of mounted mountpoints
     # nice list of information of sshfs mount points
     local _error=0
-    [ $TEST ] || msg "${WHT}user@server remote_folder local_mountpoint  uptime pid${NC}\n"                 # header (stdout when -v)
+    [ $TEST ] || gmsg -c white "user@server remote_folder local_mountpoint  uptime pid"                 # header (stdout when -v)
     mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |                                          # get the mount data
 
     while read mount ; do                                                                               # Iterate over them
@@ -87,7 +87,7 @@ mount.info () {
 
     done
 
-    ((_error>0)) && msg "perl not installed or internal error, pls try to install perl and try again."
+    ((_error>0)) && gmsg -c yellow "perl not installed or internal error, pls try to install perl and try again."
     return $_errorB
 }
 
@@ -305,9 +305,9 @@ unmount.defaults () {
 
 mount.known_remote () {
     # mount single GURU_CLOUD_* defined in userrc
-
-    local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")      ; echo $_source
-    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")      ; echo $_target
+    local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
+    gmsg -v3 $_source
+    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
     gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} $_target"
     mount.remote "$_source" "$_target"
     return $?
@@ -330,8 +330,8 @@ mount.install () {
     local action="$1"
     [[ "$action" ]] || read -r -p "install or remove? " action
     local require="ssh rsync"
-    printf "Need to install $require, ctrl+c? or input local "
-    sudo apt update && eval sudo apt "$action" "$require" && printf "\n guru is now ready to mount\n\n"
+    gmsg "Need to install $require, ctrl+c? or input local "
+    sudo apt update && eval sudo apt "$action" "$require" && gmsg "guru is now ready to mount"
     return 0
 }
 

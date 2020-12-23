@@ -1,13 +1,13 @@
 #!/bin/bash
 # sshfs mount functions for guru-client
-source $GURU_BIN/common.sh
+source common.sh
 
 
 remote.main () {
-    source $GURU_BIN/corsair.sh
+
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
     indicator_key='F'"$(poll_order remote)"
-    source $GURU_BIN/corsair.sh
+
     command="$1"; shift
     case "$command" in
               push|pull)    remote.$command"_config"    ; return $? ;;
@@ -19,32 +19,16 @@ remote.main () {
 }
 
 
-remote.end () {                        # return normal, assuming that while is normal
-    gmsg -v 1 -t "${FUNCNAME[0]}"
-    corsair.main set $indicator_key white
-}
-
-
-remote.start () {                      # set leds  F1 -> F4 off
-    gmsg -v 1 -t "${FUNCNAME[0]}"
-    corsair.main set $indicator_key off
-}
-
-
 remote.status () {
-
     # check remote is reachable. daemon poller will run this
     if remote.online ; then
-            gmsg -v 1 -t -c green "${FUNCNAME[0]}: local accesspoint connection"
-            corsair.main set $indicator_key green
+            gmsg -v 1 -t -c green "${FUNCNAME[0]}: local accesspoint available" -k $indicator_key
             return 0
         elif remote.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
-            gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote accesspoint connection"
-            corsair.main set $indicator_key yellow
+            gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote accesspoint available" -k $indicator_key
             return 0
         else
-            gmsg -v 1 -t -c red "${FUNCNAME[0]}: accesspoint offline"
-            corsair.main set $indicator_key red
+            gmsg -v 1 -t -c red "${FUNCNAME[0]}: accesspoint offline" -k $indicator_key
             return 101
         fi
 }
@@ -81,19 +65,10 @@ remote.online () {
     local _server_port="$GURU_ACCESS_LAN_PORT" ; [[ "$1" ]] && _server_port="$1" ; shift
 
     if ssh -o ConnectTimeout=3 -q -p "$_server_port" "$_user@$_server" exit ; then
-        gmsg -v1 -t -c green "${FUNCNAME[0]} $_server"
         return 0
     else
-        gmsg -v0 -t -c red "${FUNCNAME[0]} $_server offline"
         return 132
     fi
-}
-
-
-remote.check () {
-    # same shit than onlin but silent (shortcut)
-    remote.online $@ >/dev/null
-    return $?
 }
 
 
@@ -142,6 +117,17 @@ remote.push_config () {
             gmsg -c red "failed"
             return $_error
         fi
+}
+
+
+remote.start () {                      # set leds  F1 -> F4 off
+    gmsg -v1 -t -c black "${FUNCNAME[0]}: starting remote" -k $indicator_key
+
+}
+
+
+remote.end () {
+    gmsg -v1 -t -c reset "${FUNCNAME[0]}: ending remote" -k $indicator_key
 }
 
 

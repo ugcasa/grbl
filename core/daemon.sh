@@ -3,7 +3,6 @@
 # casa@ujo.guru 2020
 
 source $GURU_BIN/common.sh
-source $GURU_BIN/corsair.sh
 
 daemon.main () {
     argument="$1" ; shift
@@ -54,7 +53,6 @@ daemon.status () {
         fi
 
     return $_err
-
 }
 
 
@@ -70,8 +68,12 @@ daemon.start () {
     for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
 
         if [[ -f "$GURU_BIN/$module.sh" ]] ; then
-                source "$GURU_BIN/$module.sh"               # ; echo "module: $GURU_BIN/$GURU_BIN/$module.sh"
-                $module.main start                          # ; echo "command: $module.main start"
+                source "$GURU_BIN/$module.sh"
+                gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
+
+                $module.main start
+                gmsg -v3 "command: $module.main start"
+
             else
                 gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
             fi
@@ -83,9 +85,13 @@ daemon.start () {
 
 
 daemon.stop () {
-    [[ -f "$HOME/.guru-stop" ]] && rm "$HOME/.guru-stop"     # remove action
+    # stop daemon
 
-    if ! [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then   # if pid file is not exist
+    # remove stop flag
+    [[ -f "$HOME/.guru-stop" ]] && rm "$HOME/.guru-stop"
+
+    # if pid file is not exist
+    if ! [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
             gmsg "${FUNCNAME[0]}: daemon not running"
             gmsg -v1 "start daemon by typing 'guru start'"
             return 0
@@ -97,8 +103,12 @@ daemon.stop () {
     for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
 
         if [[ -f "$GURU_BIN/$module.sh" ]] ; then
-                source "$GURU_BIN/$module.sh"               # ; echo "module: $GURU_BIN/$GURU_BIN/$module.sh"
-                $module.main end                            # ; echo "command: $module.main end"
+                source "$GURU_BIN/$module.sh"
+                gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
+
+                $module.main end
+                gmsg -v3 "command: $module.main end"
+
             else
                 gmsg -v 1 "${FUNCNAME[0]}: module '$module' not installed"
             fi
@@ -138,8 +148,10 @@ daemon.poll () {
 
     # DAEMON POLL LOOP
     while true ; do
-        source $GURU_RC                                           # to update configurations is user changes them
-        corsair.main set esc $GURU_CORSAIR_EFECT_COLOR
+        # to update configurations is user changes them
+        source $GURU_RC
+        # indicate
+        gmsg -v4 -c $GURU_CORSAIR_EFECT_COLOR -k "esc"
 
         for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
@@ -152,16 +164,17 @@ daemon.poll () {
                     fi
                 done
 
-        corsair.main reset esc
+        gmsg -v4 -c reset -k "esc"
         sleep $GURU_DAEMON_INTERVAL
-        [[ -f "$HOME/.guru-stop" ]] && break                        # check is stop command given, exit if so
+        # check is stop command given, exit if so
+        [[ -f "$HOME/.guru-stop" ]] && break
     done
     daemon.stop
 }
 
 
-daemon.process_opts () {                                            # argument parser
-
+daemon.process_opts () {
+    # argument parser
     TEMP=`getopt --long -o "vVflu:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do

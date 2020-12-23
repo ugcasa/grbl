@@ -2,7 +2,7 @@
 # note tools for guru-client
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
-source $GURU_BIN/file.sh
+source $GURU_BIN/tag.sh
 
 note.main () {
     command="$1" ; shift
@@ -74,12 +74,12 @@ note.check () {
     # chech that given date note file exist
     if ! note.online ; then note.remount ; fi
     note.gen_var "$1"
-    msg "checking note file.. "
+    gmsg -n -v1 "checking note file.. "
     if [[ -f "$note" ]] ; then
-            gmsg -v2 -c yellow  "$note"
+            gmsg -v1 -c green "$note found"
             return 0
         else
-            gmsg -v2 -c yellow "$note not found"
+            gmsg -v1 -c yellow "$note not found"
             return 41
         fi
 }
@@ -88,7 +88,7 @@ note.check () {
 note.online () {
     # check that needed folders are mounted
     if ! [[ "$GURU_MOUNT_NOTES" ]] && [[ "$GURU_MOUNT_TEMPLATES" ]] ; then
-            ERROR "variable emty: '$GURU_MOUNT_NOTES' , '$GURU_MOUNT_TEMPLATES'"
+            gmsg -c yellow "empty variable: '$GURU_MOUNT_NOTES' or '$GURU_MOUNT_TEMPLATES'"
             return 100
         fi
 
@@ -115,15 +115,15 @@ note.ls () {
     note.remount
 
     # List of notes on this month and year or given in order and format YYYY MM
-    [ "$1" ] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
-    [ "$2" ] && year=$(date -d "$2"-1-1 +%Y) || year=$(date +%Y)                  #; echo "year: $year"
+    [[ "$1" ]] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
+    [[ "$2" ]] && year=$(date -d "$2"-1-1 +%Y) || year=$(date +%Y)                  #; echo "year: $year"
     directory="$GURU_MOUNT_NOTES/$GURU_USER_NAME/$year/$month"
 
-    if [ -d "$directory" ]; then
-        gmsg -c $GURU_COLOR_LIST "$(ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted")"
+    if [[ -d "$directory" ]] ; then
+        gmsg -c light_blue "$(ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted")"
         return 0
     else
-        gmsg "no folder exist\n"
+        gmsg "no folder exist"
         return 45
     fi
 }
@@ -174,7 +174,7 @@ note.rm () {
     [[ -f $note ]] || gmsg -x 1 -c white "no note for date $(date -d $1 +$GURU_FORMAT_DATE)"
 
     if gask "remove $note" ; then
-        rm -rf "$note" || msg -c yellow "note remove failed"
+        rm -rf "$note" || gmsg -c yellow "note remove failed"
     fi
     return 0
 }
@@ -244,19 +244,6 @@ note.make_odt () {
 
     $GURU_OFFICE_DOC "${note%%.*}.odt" &
     echo "report file: ${notefile%%.*}.odt"
-}
-
-
-check_debian_repository () {
-    # add sublime to repository list
-    echo "cheking installation.."
-    subl -v && return 1
-
-    wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
-    sudo apt-get install apt-transport-https
-    echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
-    sudo apt-get update
-    return $?
 }
 
 

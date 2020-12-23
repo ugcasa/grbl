@@ -15,7 +15,7 @@ counter.main () {
 
                 status)
                     for _counter in $(ls $GURU_LOCAL_COUNTER/*) ; do
-                            gmsg "${_counter//"$GURU_LOCAL_COUNTER/"/""} : $(cat $_counter)"
+                            gmsg -c light_blue "${_counter//"$GURU_LOCAL_COUNTER/"/""} : $(cat $_counter)"
                         done
                         ;;
 
