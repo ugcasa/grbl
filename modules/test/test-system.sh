@@ -12,16 +12,16 @@ system.test() {
     case "$test_case" in
                 1) system.get_version             ; return $? ;;  # 1) quick check
                 3) system.set_test                ; return $? ;;  # 3) information or check
-                6) system.rollback_test           ; return $? ;;  # 6) action, touch hot files
-          clean|7) system.upgrade_test            ; return $? ;;  # 7) return
+#                6) system.rollback_test           ; return $? ;;  # 6) action, touch hot files
+#          clean|7) system.upgrade_test            ; return $? ;;  # 7) return
             all|8) system.get_version             || _err=("${_err[@]}" "51")  # 1) quick check
-                   system.rollback_test           || _err=("${_err[@]}" "56")  # 6) action, touch hot files
-                   system.upgrade_test            || _err=("${_err[@]}" "57")  # 7) return
+                   #system.rollback_test           || _err=("${_err[@]}" "56")  # 6) action, touch hot files
+                   #system.upgrade_test            || _err=("${_err[@]}" "57")  # 7) return
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
         release|9) system.get_version             || _err=("${_err[@]}" "52")  # 1) quick check
-                   system.rollback_test           || _err=("${_err[@]}" "56")  # 6) action, touch hot files
-                   system.upgrade_test            || _err=("${_err[@]}" "57")  # 7) return
+                   #system.rollback_test           || _err=("${_err[@]}" "56")  # 6) action, touch hot files
+                   #system.upgrade_test            || _err=("${_err[@]}" "57")  # 7) return
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
                *)  msg "test case '$test_case' not written\n"

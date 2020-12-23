@@ -67,21 +67,21 @@ test.tool() {
 
     _test_id=$(counter.main get guru-client_test_id)
     counter.main add guru-client_test_id
-    echo
-    HEADER "TEST $_test_id: guru-client $_tool #$_case - $(date)"
+    gmsg -N -c white "TEST $_test_id: guru-client $_tool #$_case - $(date)"
 
-    if [[ -f "$GURU_BIN/test/$_tool.sh" ]] ; then
+    if [[ -f "$GURU_BIN/test/test-$_tool.sh" ]] ; then
                 _lang="sh"
-    elif [[ -f "$GURU_BIN/test/$_tool.py" ]] ; then
+    elif [[ -f "$GURU_BIN/test/test-$_tool.py" ]] ; then
                 _lang="py"
         else
-                gmsg "tool '$_tool' not found\n"
-                TEST_FAILED "TEST $_test_id $_tool"
+                gmsg "tool '$_tool' not found"
+                gmsg -n -c white "TEST $_test_id $_tool "
+                gmsg -c red "FAILED"
                 return 10
         fi
 
     # source function under test
-    source $GURU_BIN/test/$_tool.$_lang
+    source $GURU_BIN/$_tool.$_lang
     # source tester functions
     source $GURU_BIN/test/test-$_tool.$_lang
 
@@ -89,15 +89,18 @@ test.tool() {
     $1.test "$_case" ; _error=$?
 
     if ((_error==1)) ; then
-         TEST_IGNORED "TEST $_test_id $_tool.$_lang"
+         gmsg -n -c white "TEST $_test_id $_tool.$_lang "
+         gmsg -c dark_gold_rod "IGNORED"
         return 0
         fi
 
     if ((_error<1)) ; then
-            TEST_PASSED "TEST $_test_id $_tool.$_lang"
+            gmsg -n -c white "TEST $_test_id $_tool.$_lang "
+            gmsg -c green "PASSED"
             return 0
         else
-            TEST_FAILED "TEST $_test_id $_tool.$_lang"
+            gmsg -n -c white "TEST $_test_id $_tool.$_lang "
+            gmsg -c red "FAILED"
             return $_error
         fi
 }
@@ -111,10 +114,12 @@ test.all() {
         done
 
     if ((_error<1)); then
-            PASSED "\nTest run result is"
+            gmsg -n -c white "\nTest run result is "
+            gmsg -c green "PASSED"
         else
-            msg "counted $_error error(s)\n"
-            FAILED "\nTest run result is"
+            gmsg "counted $_error error(s)"
+            gmsg -n -c white "Test run result is "
+            gmsg -c red "FAILED"
         fi
 
     return $_error
@@ -126,14 +131,16 @@ test.release() {
     local _error=0
     local _test_id=$(counter.main add guru-client_validation_test_id)
 
-        msg "\n${WHT}RELEASE TEST $_test_id: guru-client v.$GURU_VERSION $(date)${NC}\n"
+        gmsg -c white "RELEASE TEST $_test_id: guru-client v.$GURU_VERSION $(date)"
         test.all |grep --color=never "result is:" |grep "TEST" || _error=$?
 
         if ((_error<9)); then
-                PASSED "RELEASE $_test_id RESULT"
+                gmsg -n -c white "RELEASE $_test_id RESULT IS "
+                gmsg -c green "PASSED"
             else
-                msg "last error code were: $_error\n"
-                FAILED "RELEASE $_test_id RESULT"
+                gmsg -n -c white "RELEASE $_test_id RESULT IS "
+                gmsg -c red "FAILED"
+                gmsg -c yellow "last error code were: $_error"
             fi
         return $_error
 }
@@ -151,7 +158,7 @@ test.terminal () {
 
     # time output format
     local TIMEFORMAT='%R'
-    msg "loop $_tool #$_case. usage: [1-9|t|n|b|r|q|]. any other key will run test\n"
+    gmsg "loop $_tool #$_case. usage: [1-9|t|n|b|r|q|]. any other key will run test"
     while read -n 1 -e -p "$_tool:$_case > " _cmd; do
 
         case $_cmd in
@@ -169,7 +176,7 @@ test.terminal () {
               # next line  open new terminal
               r)  gnome-terminal -- /bin/bash -c $GURU_CALL' test loop '$_tool' '$_case'; exec bash' ;;
               # prevent note wrong commands
-              *)  printf "${RED}$_cmd${NC}\n"
+              *)  gmsg -c red $_cmd$
           esac
 
           # source user settings

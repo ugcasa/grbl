@@ -1,7 +1,7 @@
 # don't run, let teset.sh handle shit
 # guru toolkit mount tester
 
-source $GURU_BIN/mount.sh         # TODO: meaby double not sure, check later
+source $GURU_BIN/mount.sh
 
 mount.test () {
     mount.system
@@ -47,8 +47,9 @@ mount.clean_test () {
             error=$((error))
         else
             gmsg -c red "${FUNCNAME[0]} mount failed"
-             error=21
+            error=21
         fi
+
     if ((_error>9)) ; then return 28 ; fi
     return 0
 }
@@ -82,8 +83,8 @@ mount.test_unmount () {
 
 mount.test_default_mount (){
     local _err=0
-
-    gmsg -n "${FUNCNAME[0]} mount defaults "       # to test online ignore
+    # to test online ignore
+    gmsg -n "${FUNCNAME[0]} mount defaults "
     if mount.defaults ; then
             gmsg -c green "passed"
             _err=0
@@ -92,8 +93,8 @@ mount.test_default_mount (){
             _err=$((_err+10))
         fi
     sleep 1
-
-    gmsg -n "${FUNCNAME[0]} un-mount defaults "                      # to test unmount
+    # to test unmount
+    gmsg -n "${FUNCNAME[0]} un-mount defaults "
     if unmount.defaults ; then
             gmsg -c green " passed"
             _err=$_err
@@ -102,8 +103,8 @@ mount.test_default_mount (){
             _err=$((_err+10))
         fi
     sleep 1
-
-    gmsg -n "${FUNCNAME[0]} re-mount defaults "                      # to test re-mount
+    # to test re-mount
+    gmsg -n "${FUNCNAME[0]} re-mount defaults "
     if mount.defaults ; then
             gmsg -c green "passed"
             _err=$_err
@@ -118,15 +119,18 @@ mount.test_default_mount (){
 
 
 mount.test_known_remote () {
-    # Test that
+# Test that
+
     local _err=("$0")
     unmount.known_remote audio ; _err=("${_err[@]}" "$?")
-    mount.known_remote audio ;   _err=("${_err[@]}" "$?")        # Second error in list is to validate result
+    # Second error in list is to validate result
+    mount.known_remote audio ;   _err=("${_err[@]}" "$?")
 
     if [[ ${_err[2]} -gt 0 ]]; then
             gmsg -c red "${FUNCNAME[0]} failed"
             gmsg -c yellow "error: ${_err[@]}"
-            return ${_err[2]};                                 # Return error
+            # Return error
+            return ${_err[2]};
         else
             gmsg -c green "${FUNCNAME[0]} passed"
             return 0
@@ -135,10 +139,12 @@ mount.test_known_remote () {
 
 
 mount.test_list () {
-    msg "sshfs list check: "
-    mount.system || return 24                       # be sure that system is mounted
 
-   if mount.list | grep "/.data" >/dev/null ; then             # if "Track" is in output pass
+    # be sure that system is mounted
+    mount.system || return 24
+    gmsg -n "sshfs list check.. "
+    # if "Track" is in output pass
+    if mount.list | grep "/.data" >/dev/null ; then
         gmsg -c green "${FUNCNAME[0]} passed"
         return 0
     else
@@ -149,10 +155,12 @@ mount.test_list () {
 
 
 mount.test_info () {
-    msg "sshfs list check: "
-    mount.system || return 25                       # be sure that system is mounted
+    # be sure that system is mounted
+    mount.system || return 25
 
-    if mount.info | grep "$GURU_SYSTEM_MOUNT" >/dev/null ; then      # if "Track" is in output pass
+    gmsg -n "sshfs list check: "
+    # if "Track" is in output pass
+    if mount.info | grep "$GURU_SYSTEM_MOUNT" >/dev/null ; then
         gmsg -c green "${FUNCNAME[0]} passed"
         return 0
     else
