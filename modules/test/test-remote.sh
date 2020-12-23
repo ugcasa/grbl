@@ -19,7 +19,7 @@ remote.test() {
                   if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                   ;;
 
-               *) msg "test case '$test_case' not written\n"
+               *) gmsg -c dark_grey "test case '$test_case' not written"
                   return 1
     esac
 }
@@ -41,10 +41,10 @@ remote.test_config() {
         fi
 
     if ((_error<1)) ; then
-            TEST_PASSED "${FUNCNAME[0]}"
+            gmsg -c green "${FUNCNAME[0]} passed"
             return 0
         else
-            TEST_FAILED "${FUNCNAME[0]}"
+            gmsg -c red "${FUNCNAME[0]} failed"
             return 255
         fi
 }

@@ -17,7 +17,7 @@ project.test() {
                     #project.test_open "test" || _err=("${_err[@]}" "43")  #
                     #project.test_rm "test"   || _err=("${_err[@]}" "44")  #
                     if [[ ${_err[1]} -gt 0 ]]; then ERROR "${_err[@]}"; return ${_err[1]}; else return 0; fi ;;
-                *)  msg "test case '$test_case' not written\n"
+                *)  gmsg -c dark_grey "test case '$test_case' not written\n"
                     return 1
     esac
 }
@@ -25,10 +25,10 @@ project.test() {
 
 project.test_check () {
     if project.check "test"; then
-          PASSED "$0"
+          gmsg -c green "${FUNCNAME[0]} passed"
           return 0
       else
-          FAILED "$0"
+          gmsg -c red "${FUNCNAME[0]} failed"
           return 41
 
       fi
@@ -37,10 +37,10 @@ project.test_check () {
 
 project.test_add () {
     if project.add "test" ; then
-          PASSED "$0"
+          gmsg -c green "${FUNCNAME[0]} passed"
           return 0
       else
-          FAILED "$0"
+          gmsg -c red "${FUNCNAME[0]} failed"
           return 42
       fi
 }
@@ -48,10 +48,10 @@ project.test_add () {
 
 project.test_open () {
     if project.open "test" ; then
-          PASSED "$0"
+          gmsg -c green "${FUNCNAME[0]} passed"
           return 0
       else
-          FAILED "$0"
+          gmsg -c red "${FUNCNAME[0]} failed"
           return 43
       fi
 }
@@ -59,10 +59,10 @@ project.test_open () {
 
 project.test_close () {
     if project.close "test" ; then
-          PASSED "$0"
+          gmsg -c green "${FUNCNAME[0]} passed"
           return 0
       else
-          FAILED "$0"
+          gmsg -c red "${FUNCNAME[0]} failed"
           return 43
       fi
 }
@@ -70,10 +70,10 @@ project.test_close () {
 
 project.test_rm () {
     if project.rm "test" ; then
-          PASSED "$0"
+          gmsg -c green "${FUNCNAME[0]} passed"
           return 0
       else
-          FAILED "$0"
+          gmsg -c red "${FUNCNAME[0]} failed"
           return 44
       fi
 }
@@ -81,10 +81,10 @@ project.test_rm () {
 
 project.test_delete () {
     if project.rm "test" ; then
-          PASSED "$0"
+          gmsg -c green "${FUNCNAME[0]} passed"
           return 0
       else
-          FAILED "$0"
+          gmsg -c red "${FUNCNAME[0]} failed"
           return 44
       fi
 }

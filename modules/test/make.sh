@@ -58,7 +58,7 @@ echo "           1) $module.check ; return $? ;;  # 1) quick check"         >> $
 
 # all tests = all functions in introduction order
 echo '         all) '                                                       >> $tester_file_name
-echo '         # TODO: remove non wanted functions and check run order. '                                                       >> $tester_file_name
+echo '         # TODO: remove non wanted functions and check run order. '   >> $tester_file_name
 _i=100
 for _function in "${functions_to_test[@]}" ; do
         test_function_name=${_function//"$module."/"$module.test_"}
@@ -107,7 +107,7 @@ for _function in "${functions_to_test[@]}" ; do
 # add lonely runner check
 echo                                                                        >> $tester_file_name
 echo 'if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then '                        >> $tester_file_name
-echo '    source "$GURU_RC" '                                         >> $tester_file_name
+echo '    source "$GURU_RC" '                                               >> $tester_file_name
 echo '    GURU_VERBOSE=2'                                                   >> $tester_file_name
 echo "    $module.test "'$@'                                                >> $tester_file_name
 echo 'fi'                                                                   >> $tester_file_name
