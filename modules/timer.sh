@@ -8,8 +8,9 @@ source corsair.sh
 
 timer.main () {
     mount.system
-    indicator_key="f$(poll_order timer)"
-    command="$1"; shift
+    #indicator_key="f$(poll_order timer)"
+    indicator_key="f9"
+    command="$1" ; shift
     case "$command" in
 
         toggle|check|status|start|change|cancel|end|stop|report|log|edit|last)
@@ -41,7 +42,7 @@ timer.help () {
 
 
 timer.toggle () {
-
+    # key press action
     if timer.status >/dev/null ; then
         timer.end
     else
@@ -62,7 +63,7 @@ timer.status() {
 
     if [ ! -f "$GURU_FILE_TRACKSTATUS" ]; then
         gmsg -c reset -k $indicator_key "no timer tasks"
-        return 1
+        return 0
     fi
 
     source "$GURU_FILE_TRACKSTATUS"
@@ -83,22 +84,22 @@ timer.status() {
     case "$1" in
 
         -h|human)
-            gmsg "working for $customer from $start_time $nice_start_date, now spend:$print_h$print_m$print_s to $project $task \n"
+            gmsg "working for $customer from $start_time $nice_start_date, now spend:$print_h$print_m$print_s to $project $task "
             ;;
 
         -t|table)
-            gmsg " Start date      | Start time  | Hours  | Minutes  | Seconds  | Customer  | Project  | Task \n"
-            gmsg " --------------- | ----------- | ------ | -------- | -------- | --------- | -------- | ------------ \n"
-            gmsg " $nice_start_date | $start_time | $hours | $minutes | $seconds | $customer | $project | $task\n"
+            gmsg " Start date      | Start time  | Hours  | Minutes  | Seconds  | Customer  | Project  | Task "
+            gmsg " --------------- | ----------- | ------ | -------- | -------- | --------- | -------- | ------------ "
+            gmsg " $nice_start_date | $start_time | $hours | $minutes | $seconds | $customer | $project | $task"
             ;;
 
         -c|csv)
-            gmsg "Start date;Start time;Hours;Minutes;Seconds;Sustomer;Project;Task \n"
-            gmsg "$nice_start_date;$start_time;$hours;$minutes;$seconds;$customer;$project;$task\n"
+            gmsg "Start date;Start time;Hours;Minutes;Seconds;Sustomer;Project;Task "
+            gmsg "$nice_start_date;$start_time;$hours;$minutes;$seconds;$customer;$project;$task"
             ;;
 
         old)
-            gmsg "$nice_start_date $start_time > $hours:$minutes:$seconds c:$customer p:$project t:$task\n"
+            gmsg "$nice_start_date $start_time > $hours:$minutes:$seconds c:$customer p:$project t:$task"
             ;;
 
         simple|*)
@@ -120,10 +121,8 @@ timer.last() {
 
 
 timer.start() {
-
     # check and force mount system (~/.data) where timer record files are kept
     gmsg -v1 "starting timer.."
-
     [[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
 
     if [[ -f "$GURU_FILE_TRACKSTATUS" ]] ; then
@@ -134,51 +133,35 @@ timer.start() {
 
         at|from)
             shift
-            gmsg -v3 "input: $@"
-
             if ! [[ "$1" ]] ; then
-                    echo "pls. input start time"
+                    echo "input start time"
                     return 124
                 fi
 
             if date -d "$1" '+%H:%M' >/dev/null 2>&1; then
                     time=$(date -d "$1" '+%H:%M')
                     shift
-                    gmsg -v3 "time pass: $@"
                 else
                     time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
-                    gmsg -v3 "now pass: $@"
                 fi
 
             if date -d "$1" '+%Y%m%d' >/dev/null 2>&1; then
                     date=$(date -d "$1" '+%Y%m%d')
                     shift
-                    gmsg -v3 "date pass: $@"
                 else
                     date=$(date -d "today" '+%Y%m%d')
-                    gmsg -v3 "today pass: $@"
                 fi
             ;;
-
         *)
             date=$(date -d "today" '+%Y%m%d')
             time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
-            gmsg -v3 "no input pass:"$@""
             ;;
     esac
 
-    start_date=$date
-    gmsg -v3 "start_date: $start_date"
-
-    start_time=$time
-    gmsg -v3 "start_time: $start_time"
-
+    start_date="$date"
+    start_time="$time"
     nice_date=$(date -d $start_date '+%d.%m.%Y')
-    gmsg -v3 "nice_date: $nice_date"
-
     timer_start=$(date -d "$start_date $start_time" '+%s')
-    gmsg -v3 "timer_start: $timer_start"
-
 
     [[ -f $GURU_FILE_TRACKLAST ]] && source $GURU_FILE_TRACKLAST
     [[ "$1" ]] && task="$1" || task="$last_task"
@@ -201,21 +184,15 @@ timer.end() {
 
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
         source $GURU_FILE_TRACKSTATUS
-        gmsg -v3 "timer start "$timer_start
-
     else
-        msg "timer not started"
+        gmsg "timer not started"
         return 13
     fi
 
     case "$1" in
-
         at|to|till)
-            shift
-            gmsg -v3 "input: "$@
-
-            if ! [ "$1" ]; then
-                    echo "pls. input end time"
+            if ! [[ "$2" ]] ; then
+                    gmsg "input end time"
                     return 124
                 fi
 
@@ -223,46 +200,39 @@ timer.end() {
             if date -d "$1" '+%H:%M' >/dev/null 2>&1; then
                     time=$(date -d "$1" '+%H:%M')
                     shift
-                    gmsg -v3 "time pass: "$@
+
                 else
                     time=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
-                    gmsg -v3 "now pass: "$@
                 fi
 
             if date -d "$1" '+%Y%m%d' >/dev/null 2>&1; then
                     date=$(date -d "$1" '+%Y%m%d')
                     shift
-                    gmsg -v3 "date pass: "$@
                 else
                     date=$(date -d "today" '+%Y%m%d')
-                    gmsg -v3 "today pass: "$@
                 fi
             ;;
-
         *)
             date=$(date -d "today" '+%Y%m%d')
             time=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M")
-            gmsg -v3 "no input pass:"$@
-
             ;;
     esac
 
-    #
-    end_date=$date                                                                 ; gmsg -v3 "end_date: $end_date"
-    end_time=$time                                                                 ; gmsg -v3 "end_time: $end_time"
-    timer_end=$(date -d "$end_date $end_time" '+%s')                               ; gmsg -v3 "timer end: $timer_end"
-    dot_start_date=$(date -d $start_date '+%Y.%m.%d')                              ; gmsg -v3 "nice_start_date: $nice_start_date"
-    dot_end_date=$(date -d $end_date '+%Y.%m.%d')                                  ; gmsg -v3 "nice_end_date: $nice_end_date"
-    nice_start_date=$(date -d $start_date '+%d.%m.%Y')                             ; gmsg -v3 "nice_start_date: $nice_start_date"
-    nice_end_date=$(date -d $end_date '+%d.%m.%Y')                                 ; gmsg -v3 "nice_end_date: $nice_end_date"
+    end_date=$date
+    end_time=$time
+    timer_end=$(date -d "$end_date $end_time" '+%s')
+    dot_start_date=$(date -d $start_date '+%Y.%m.%d')
+    dot_end_date=$(date -d $end_date '+%Y.%m.%d')
+    nice_start_date=$(date -d $start_date '+%d.%m.%Y')
+    nice_end_date=$(date -d $end_date '+%d.%m.%Y')
 
-    (( spend_sec = timer_end - timer_start ))                                      ; gmsg -v3 "spend_sec: $spend_sec"
-    (( spend_min = spend_sec / 60 ))                                               ; gmsg -v3 "spend_min: $spend_min"
-    (( spend_hour = spend_min / 60 ))                                              ; gmsg -v3 "spend_hour: $spend_hour"
-    (( spend_min_div = spend_min % 60 ))                                           ; gmsg -v3 "spend_min_div: $spend_min_div"
+    (( spend_sec = timer_end - timer_start ))
+    (( spend_min = spend_sec / 60 ))
+    (( spend_hour = spend_min / 60 ))
+    (( spend_min_div = spend_min % 60 ))
 
-    spend_min_dec=$(python -c "print(int(round($spend_min_div * 1.6666, 0)))")     ; gmsg -v3 "spend_min_dec: $spend_min_dec"
-    hours="$spend_hour.$spend_min_dec"                                             ; gmsg -v3 "hours: $hours"
+    spend_min_dec=$(python -c "print(int(round($spend_min_div * 1.6666, 0)))")
+    hours="$spend_hour.$spend_min_dec"
 
     if [[ "$nice_start_date" == "$nice_end_date" ]]; then
         option_end_date=""
@@ -301,12 +271,12 @@ timer.change() {
 timer.cancel() {
 
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
-        rm $GURU_FILE_TRACKSTATUS
-        gmsg -v4 -t -c reset -k $indicator_key -q $GURU_USER/status "work canceled - probably something still going on.. "
-        gmsg -c dark_golden_rod "canceled"
-    else
-        gmsg "not active timer"
-    fi
+            rm $GURU_FILE_TRACKSTATUS
+            gmsg -v4 -t -c reset -k $indicator_key -q $GURU_USER/status "work canceled - probably something still going on.. "
+            gmsg -c dark_golden_rod "canceled"
+        else
+            gmsg "not active timer"
+        fi
     return 0
 }
 
@@ -321,23 +291,18 @@ timer.log () {
 timer.edit  () {
     # edit data csv file
     $GURU_EDITOR "$GURU_FILE_TRACKDATA" &
-    return $?
+    return 0
 }
 
 
 timer.report() {
     # make a report
     [ "$1" ] && team="$1" || team="$GURU_TEAM"
-    gmsg -v3 "team : $team"
-
     report_file="work-track-report-$(date +%Y%m%d)-$team.csv"
-    gmsg -v3 "report_file:  $report_file"
-
     output_folder=$HOME/Documents
-    gmsg -v3 "output_folder: $output_folder"
-
     [ "$team" == "all" ] && team=""
     [ -f $GURU_FILE_TRACKDATA ] || return 13
+
     cat $GURU_FILE_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
     $GURU_OFFICE_DOC $output_folder/$report_file &
     timer.end $""
