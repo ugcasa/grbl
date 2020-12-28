@@ -12,7 +12,7 @@ system.main () {
         status|start|end)
             system.$tool
             return $? ;;
-        core-dump|get|set|upgrade|rollback)
+        core-dump|get|set|update|upgrade|rollback)
             system.$tool
             return $? ;;
         env)
@@ -152,8 +152,10 @@ system.end () {
 }
 
 
-system.upgrade () {
-    # upgrade guru-client
+
+
+
+system.guru-client_update () {
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"
     local _banch="master" ;
@@ -170,6 +172,25 @@ system.upgrade () {
     cd
     # bash $GURU_BIN/$GURU_CALL version
     #[ "$temp_dir" ] && [ -d "$temp_dir" ] && rm -rf "$temp_dir"
+
+}
+
+
+system.update () {
+    echo pass
+
+}
+
+
+system.upgrade () {
+    # upgrade guru-client
+    sudo apt-get update || gmsg -c red -x 100 "apt update failed"
+    gmsg -v2 -c white "upgradable list: "
+    gmsg -v2 -c light_blue "$(sudo apt list --upgradable)"
+    sudo apt-get upgrade -y || gmsg -c red -x 101 "apt updgrade failed"
+    sudo apt-get autoremove
+    sudo apt-get autoclean
+    sudo apt-get check || gmsg -c yellow "Warning: $? check did nod pass"
 }
 
 
