@@ -6,6 +6,7 @@
 #   - able keys to go blinky in background
 #   - more key pipes
 source $GURU_BIN/common.sh
+source $GURU_BIN/system.sh
 
 # key pipe files
 # NOTE: these need to correlate with cbk-next animation settings
@@ -33,7 +34,6 @@ key_pipe_list=$(file /tmp/ckbpipe0* |grep fifo |cut -f1 -d ":")
 status_modes=(status, test, red, olive, dark, orange)
 # bubble cum temporary fix
 corsair_last_mode="/tmp/corsair.mode"
-suspend_flag="/tmp/corsair-suspend.flag"
 
 
 
@@ -165,16 +165,17 @@ corsair.check () {
     if ps auxf |grep "ckb-next" | grep -v "daemon" | grep -v grep >/dev/null ; then
             gmsg -v1 -c green "running"
 
-            if [[ -f $suspend_flag ]] ; then
-                    gmsg -c yellow "computer suspended, ckb-next restart requested"
-                    gmsg -v1 -c white "command: $GURU_CALL corsair start"
-                    return 6
-                fi
         else
             gmsg -c yellow "ckb-next application not running"
             gmsg -v1 -c white "command: $GURU_CALL corsair start"
             return 4
         fi
+
+    # if system.suspend flag ; then
+    #         #gmsg -c yellow "computer suspended, ckb-next restart requested"
+    #         #gmsg -v2 -c white "command: $GURU_CALL corsair start"
+    #         return 6
+    #     fi
 
     gmsg -n -v1 "checking mode supports piping.. "
     if [[ "${status_modes[@]}" =~ "$corsair_mode" ]] ; then
@@ -234,14 +235,14 @@ corsair.start () {
                 start_stack
                 return $?
                 ;;
-        5 )     gmsg -v1 "no pipes in current profile, changing corsair profile.. "
+        5 )     gmsg -v1 "no pipe support in current profile..  "
                 corsair.init
                 return $?
                 ;;
         6 )     gmsg -v1 "re-starting corsair application.. "
                 ckb-next -c
                 sleep 1
-                rm -f $suspend_flag
+                system.suspend rm_flag
                 start_stack
                 ;;
         f )     gmsg -v1 "force re-start full corsair stack.. "
@@ -405,36 +406,6 @@ corsair.kill () {
 }
 
 
-corsair.suspend_control () {
-
-    temp="/tmp/corsair.temp"
-    # suspend_script="/etc/pm/sleep.d/corsair-suspend.sh"    # old method
-    suspend_script="/lib/systemd/system-sleep/corsair-suspend.sh"
-
-    [[ -d  ${suspend_script%/*} ]] || sudo mkdir -p ${suspend_script%/*}
-    [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
-
-    cat >"$temp" <<EOL
-#!/bin/bash
-case \${1} in
-  pre|suspend )
-    [[ -f /tmp/corsair-suspend.flag ]] || touch /tmp/corsair-suspend.flag
-    chown $USER:$USER /tmp/corsair-suspend.flag
-    ;;
-  post|resume|thaw )
-    sleep 4
-    $GURU_CALL corsair status -f
-    $GURU_CALL corsair status -f
-    ;;
-esac
-EOL
-
-    sudo cp $temp $suspend_script
-    sudo chmod +x $suspend_script
-    rm -f $temp
-}
-
-
 corsair.install () {
     # install essentials, driver and application
 
@@ -448,7 +419,7 @@ corsair.install () {
     cd ckb-next
     ./quickinstall
 
-    corsair.suspend_control
+    system.suspend_control
     # TODO suspend control
 
     if ! lsusb |grep "Corsair" ; then
