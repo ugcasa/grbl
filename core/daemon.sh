@@ -41,7 +41,7 @@ daemon.status () {
             local _pid="$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)"
             gmsg -v 1 -c green "${FUNCNAME[0]}: $_pid"
         else
-            gmsg -v 1 -c black "${FUNCNAME[0]}: no pid reserved"
+            gmsg -v 1 -c dark_grey "${FUNCNAME[0]}: no pid reserved"
             _err=$((_err+10))
         fi
 
@@ -65,19 +65,29 @@ daemon.start () {
         fi
 
     # call start method of module
-    for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
 
-        if [[ -f "$GURU_BIN/$module.sh" ]] ; then
-                source "$GURU_BIN/$module.sh"
-                gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
+    #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
+    for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
 
-                $module.main start
-                gmsg -v3 "command: $module.main start"
+        module=${GURU_DAEMON_POLL_LIST[i]}
+        gmsg -c dark_golden_rod "$i $module"
+        case $module in
+            null|empty )
+                gmsg -c deep_pink "skipping $module"
+                ;;
+            *)
+                if [[ -f "$GURU_BIN/$module.sh" ]] ; then
+                        source "$GURU_BIN/$module.sh"
+                        gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
 
-            else
-                gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
-            fi
+                        $module.main poll start
+                        gmsg -v3 "command: $module.main poll start "
 
+                    else
+                        gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
+                    fi
+                ;;
+            esac
         done
 
     daemon.poll &
@@ -100,19 +110,29 @@ daemon.stop () {
     local _pid=$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)
 
     gmsg -v1 "stopping modules.. "
-    for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
+    #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
 
-        if [[ -f "$GURU_BIN/$module.sh" ]] ; then
-                source "$GURU_BIN/$module.sh"
-                gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
+    for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
 
-                $module.main end
-                gmsg -v3 "command: $module.main end"
+        module=${GURU_DAEMON_POLL_LIST[i]}
+        gmsg -c dark_golden_rod "$i $module"
+        case $module in
+            null|empty )
+                gmsg -c deep_pink "skipping $module"
+                ;;
+            * )
+                if [[ -f "$GURU_BIN/$module.sh" ]] ; then
+                        source "$GURU_BIN/$module.sh"
+                        gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
 
-            else
-                gmsg -v 1 "${FUNCNAME[0]}: module '$module' not installed"
-            fi
+                        $module.main poll end
+                        gmsg -v3 "command: $module.main poll end"
 
+                    else
+                        gmsg -v 1 "${FUNCNAME[0]}: module '$module' not installed"
+                    fi
+                ;;
+            esac
         done
 
     gmsg -v1 "stopping guru-daemon.. "
@@ -150,19 +170,32 @@ daemon.poll () {
     while true ; do
         # to update configurations is user changes them
         source $GURU_RC
+        GURU_FORCE=true
         # indicate
         gmsg -v4 -c $GURU_CORSAIR_EFECT_COLOR -k "esc"
 
-        for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
-                if [[ -f "$GURU_BIN/$module.sh" ]] ; then
-                        source "$GURU_BIN/$module.sh"
-                        $module.main status
-                        gmsg -v2 -t "${FUNCNAME[0]}: $module status $?"
-                    else
-                        gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
-                        gmsg -v2 "${FUNCNAME[0]}: $GURU_BIN/${_poll_list[$_i]}.sh"
-                    fi
-                done
+        #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
+        for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
+
+            module=${GURU_DAEMON_POLL_LIST[i]}
+            gmsg -c dark_golden_rod "$i $module"
+            case $module in
+                null|empty )
+                    gmsg -c deep_pink "skipping $module"
+                    ;;
+                * )
+
+                    if [[ -f "$GURU_BIN/$module.sh" ]] ; then
+                            source "$GURU_BIN/$module.sh"
+                            $module.main poll status
+                            gmsg -v2 -t "${FUNCNAME[0]}: $module poll status $?"
+                        else
+                            gmsg -v1 -c yellow "${FUNCNAME[0]}: module '$module' not installed"
+                            gmsg -v2 "${FUNCNAME[0]}: $GURU_BIN/${_poll_list[$_i]}.sh"
+                        fi
+                    ;;
+                esac
+            done
 
         gmsg -v4 -c reset -k "esc"
         sleep $GURU_DAEMON_INTERVAL

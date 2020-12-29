@@ -3,36 +3,51 @@
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 
-
-system.main () {
-    # system command parser
-    indicator_key='F'"$(poll_order system)"
-    local tool="$1" ; shift
-    case "$tool" in
-        status|start|end)
-            system.$tool
-            return $? ;;
-        core-dump|get|set|update|upgrade|rollback)
-            system.$tool
-            return $? ;;
-        env)
-            re='^[0-9]+$'
-            if [[ $1 =~ $re ]] ; then
-                    system.get_env $@
-                else
-                    system.get_env_by_name $@
-                fi ;;
-        help)
-            system.help ;;
-        *)  system.help ;;
-    esac
-    return 0
-}
-
+system_suspend_flag="/tmp/suspend.flag"
+system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh"
+# system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
 
 system.help () {
     # system help printout
-    gmsg -v0 "usage:    $GURU_CALL system [core-dump|get|set|upgrade|rollback|status|start|end]"
+    gmsg -v1 -c white "guru-client system help TODO "
+    gmsg -v2
+    gmsg -v0 "usage:    $GURU_CALL system [core-dump|get|set|upgrade|rollback|status|start|end|suspend] "
+    gmsg -v2
+    gmsg -v3 " poll start|end           start or end module status polling "
+}
+
+
+system.main () {
+    # system command parser
+    local tool="$1" ; shift
+    indicator_key="f$(poll_order system)"
+
+    case "$tool" in
+
+            status|poll|suspend|core-dump|get|set|update|upgrade|rollback)
+                system.$tool $@
+                return $?
+                ;;
+
+            env)
+                re='^[0-9]+$'
+                if [[ $1 =~ $re ]] ; then
+                        system.get_env $@
+                    else
+                        system.get_env_by_name $@
+                    fi
+                ;;
+
+            help)
+                system.help
+                ;;
+
+            *)  system.help
+                ;;
+
+        esac
+
+    return 0
 }
 
 
@@ -46,6 +61,8 @@ system.status () {
         return 101
     fi
 }
+
+
 
 
 system.get_env () {
@@ -140,21 +157,6 @@ system.get_env_by_name () {
 }
 
 
-system.start () {
-    # set leds  F1 -> F4 off
-    gmsg -v1 -t -c black "${FUNCNAME[0]}: system status polling started" -k $indicator_key
-}
-
-
-system.end () {
-    # return normal, assuming that while is normal
-    gmsg -v1 -t -c reset "${FUNCNAME[0]}: system status polling ended" -k $indicator_key
-}
-
-
-
-
-
 system.guru-client_update () {
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"
@@ -170,15 +172,7 @@ system.guru-client_update () {
     cd "$temp_dir/guru-client"
     bash install.sh "$@"
     cd
-    # bash $GURU_BIN/$GURU_CALL version
-    #[ "$temp_dir" ] && [ -d "$temp_dir" ] && rm -rf "$temp_dir"
-
-}
-
-
-system.update () {
-    echo pass
-
+    rm -fr $temp_dir
 }
 
 
@@ -191,6 +185,11 @@ system.upgrade () {
     sudo apt-get autoremove
     sudo apt-get autoclean
     sudo apt-get check || gmsg -c yellow "Warning: $? check did nod pass"
+}
+
+
+system.update () {
+    system.upgrade
 }
 
 
@@ -215,9 +214,105 @@ system.rollback () {
 }
 
 
+system.suspend_script () {
+
+    temp="/tmp/suspend.temp"
+    gmsg -n -v2 "$system_suspend_script.. "
+
+    [[ -d  ${system_suspend_script%/*} ]] || sudo mkdir -p ${system_suspend_script%/*}
+    [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
+    [[ -f $temp ]] && rm $temp
+
+# following lines should be without indentation
+    cat >"$temp" <<EOL
+#!/bin/bash
+case \${1} in
+  pre|suspend )
+    [[ -f $system_suspend_flag ]] || touch $system_suspend_flag
+    chown $USER:$USER $system_suspend_flag
+    ;;
+  post|resume|thaw )
+    $GURU_BIN/$GURU_CALL start
+    ;;
+esac
+EOL
+
+    sudo cp $temp $system_suspend_script || return 1
+    sudo chmod +x $system_suspend_script || return 2
+    rm -f $temp
+    gmsg -v2 -c green "ok"
+    return 0
+}
+
+
+system.suspend () {
+    # suspend control
+    case $1 in
+
+            flag )
+                gmsg -v1 -n "checking system suspend flag status: "
+                if [[ -f  $system_suspend_flag ]] ; then
+                        gmsg -c yellow "system were suspended"
+                        return 0
+                    else
+                        gmsg -c dark_grey "system were not suspended"
+                        return 1
+                    fi
+                ;;
+
+            set_flag )
+                gmsg -v1 "setting suspend flag.. "
+                touch $system_suspend_flag
+                ;;
+
+            rm_flag )
+                gmsg -v1 "removing suspend flag.. "
+                rm -f $system_suspend_flag
+                ;;
+
+            install )
+                gmsg -v1 "adding suspend script.. "
+                system.suspend_script add
+                ;;
+
+            remove )
+                gmsg -v1 "removing suspend script.. "
+                sudo rm -f $system_suspend_script
+                ;;
+            "" )
+                systemctl suspend
+                ;;
+
+            *)  gmsg "unknown suspend command: $1"
+                ;;
+
+        esac
+}
+
+
+system.poll () {
+
+    local _cmd="$1" ; shift
+
+    case $_cmd in
+        start )
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: system status polling started" -k $indicator_key
+            ;;
+        end )
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: system status polling ended" -k $indicator_key
+            ;;
+        status )
+            system.status $@
+            ;;
+        *)  system.help
+            ;;
+        esac
+
+}
+
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     source "$GURU_RC"
     system.main "$@"
     exit $?
 fi
-
