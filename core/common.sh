@@ -65,7 +65,7 @@ gmsg () {
 
     # set corsair key is '-k <key>' used
     if [[ $_indicator_key ]] ; then
-
+        source corsair.sh
         if [[ "$_color" == "reset" ]] ; then
                 corsair.main reset "$_indicator_key"
             else
