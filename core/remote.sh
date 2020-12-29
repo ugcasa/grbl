@@ -2,18 +2,35 @@
 # sshfs mount functions for guru-client
 source common.sh
 
+remote.help () {
+    gmsg -v1 -c white "guru-client remote help "
+    gmsg -v2
+    gmsg -v0 "usage:    $GURU_CALL remote [push|pull|check|help|status|start|end|install|remove] "
+    gmsg -v2
+    gmsg -v1 -c white  "commands:"
+    gmsg -v1 " check            check that connection to accesspoint server is available "
+    gmsg -v1 " add_key          add key pair with $GURU_ACCESS_DOMAIN and $(hostname) "
+    gmsg -v1 " pull             copy configuration files from access point server "
+    gmsg -v1 " push             copy configuration files to access point server "
+    gmsg -v1 " install          install requirements "
+    gmsg -v3 " poll start|end   start or end module status polling "
+    gmsg -v2
+    gmsg -v1 -c white  "example:"
+    gmsg -v1 "    $GURU_CALL remote mount /home/$GURU_ACCESS_USERNAME/share /home/$USER/mount/$GURU_ACCESS_DOMAIN/"
+    gmsg -v2
+}
+
 
 remote.main () {
 
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
-    indicator_key='F'"$(poll_order remote)"
+    indicator_key='f'"$(poll_order remote)"
 
     command="$1"; shift
     case "$command" in
               push|pull)    remote.$command"_config"    ; return $? ;;
-             check|help)    remote.$command "$@"        ; return $? ;;
-       status|start|end)    remote.$command             ; return $? ;;
-         install|remove)    remote.needed "$command"    ; return $? ;;
+      check|status|poll)    remote.$command "$@"        ; return $? ;;
+         install|remove)    remote.install "$command"    ; return $? ;;
                       *)    remote.help ;;
         esac
 }
@@ -32,25 +49,6 @@ remote.status () {
             return 101
         fi
 }
-
-
-remote.help () {
-    gmsg -v1 -c white "guru-client remote help "
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL remote [push|pull|check|help|status|start|end|install|remove] "
-    gmsg -v2
-    gmsg -v1 -c white  "commands:"
-    gmsg -v1 " check      check that connection to accesspoint server is available "
-    gmsg -v1 " add_key    add key pair with $GURU_ACCESS_DOMAIN and $(hostname) "
-    gmsg -v1 " pull       copy configuration files from access point server "
-    gmsg -v1 " push       copy configuration files to access point server "
-    gmsg -v1 " install    install requirements "
-    gmsg -v2
-    gmsg -v1 -c white  "example:"
-    gmsg -v1 "    $GURU_CALL remote mount /home/$GURU_ACCESS_USERNAME/share /home/$USER/mount/$GURU_ACCESS_DOMAIN/"
-    gmsg -v2
-}
-
 
 remote.warning () {
     echo "running on server installation, remote is a client tool. exiting.."
@@ -120,18 +118,28 @@ remote.push_config () {
 }
 
 
-remote.start () {                      # set leds  F1 -> F4 off
-    gmsg -v1 -t -c black "${FUNCNAME[0]}: starting remote" -k $indicator_key
+remote.poll () {
+
+    local _cmd="$1" ; shift
+
+    case $_cmd in
+        start )
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: remote status polling started" -k $indicator_key
+            ;;
+        end )
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: remote status polling ended" -k $indicator_key
+            ;;
+        status )
+            remote.status $@
+            ;;
+        *)  remote.help
+            ;;
+        esac
 
 }
 
 
-remote.end () {
-    gmsg -v1 -t -c reset "${FUNCNAME[0]}: ending remote" -k $indicator_key
-}
-
-
-remote.needed () {
+remote.install () {
     #install and remove needed applications. input "install" or "remove"
     local action=$1
     [ "$action" ] || read -r -p "install or remove? :" action

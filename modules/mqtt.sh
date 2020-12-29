@@ -16,8 +16,7 @@ mqtt.help () {
     gmsg -v1 " install                  install client requirements "
     gmsg -v1 " remove                   remove installed requirements "
     gmsg -v2 " help                     printout this help "
-    gmsg -v3 " start                    start status polling "
-    gmsg -v3 " end                      end status polling "
+    gmsg -v3 " poll start|end           start or end module status polling "
     gmsg -v2
     gmsg -v1 -c white "example: "
     gmsg -v1 "         $GURU_CALL mqtt status "
@@ -31,7 +30,7 @@ mqtt.main () {
 
     local _cmd="$1" ; shift
     case "$_cmd" in
-               start|end|status|help|install|remove|single|sub|pub)
+               status|help|install|remove|single|sub|pub|poll)
                             mqtt.$_cmd "$@" ; return $? ;;
                *)           echo "${FUNCNAME[0]}: unknown command"
         esac
@@ -107,15 +106,23 @@ mqtt.log () {
 }
 
 
-mqtt.start () {
-    # clean current key by setting it black. affects naturally to message printout color
-    gmsg -v1 -t "${FUNCNAME[0]}: starting message bus status poller" -k $indicator_key -c black
-}
+mqtt.poll () {
 
+    local _cmd="$1" ; shift
 
-mqtt.end () {
-    # reset back to normal color, color reset is gray
-    gmsg -v1 -t "${FUNCNAME[0]}: ending message bus status polling" -k $indicator_key -c reset
+    case $_cmd in
+        start )
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: mqtt status polling started" -k $indicator_key
+            ;;
+        end )
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: mqtt status polling ended" -k $indicator_key
+            ;;
+        status )
+            mqtt.status $@
+            ;;
+        *)  mqtt.help
+            ;;
+        esac
 
 }
 

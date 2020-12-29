@@ -6,7 +6,7 @@ source $GURU_BIN/common.sh
 
 mount.main () {
     # mount command parser
-    indicator_key='F'"$(poll_order mount)"
+    indicator_key='f'"$(poll_order mount)"
     argument="$1"; shift
     case "$argument" in
                start|end)   gmsg -v 1 "mount.sh: no $argument function"         ; return 0 ;;
@@ -52,6 +52,7 @@ mount.help () {
     gmsg -v1 " unmount [all]            unmount all default folders "
     gmsg -v1 " check [target]           check that mount point is mounted "
     gmsg -v2 " check-system             check that guru system folder is mounted "
+    gmsg -v3 " poll start|end           start or end module status polling "
     gmsg -v2
     gmsg -v1 -c white "example:"
     gmsg -v1 "      $GURU_CALL mount /home/$GURU_CLOUD_USERNAME/share /home/$USER/test-mount"
@@ -345,6 +346,29 @@ mount.system () {
 
     mount.remote /home/$GURU_ACCESS_USERNAME/data $GURU_SYSTEM_MOUNT
 }
+
+
+
+mount.poll () {
+
+    local _cmd="$1" ; shift
+
+    case $_cmd in
+        start )
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: mount status polling started" -k $indicator_key
+            ;;
+        end )
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: mount status polling ended" -k $indicator_key
+            ;;
+        status )
+            mount.status $@
+            ;;
+        *)  mount.help
+            ;;
+        esac
+
+}
+
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then    # if sourced only import functions
