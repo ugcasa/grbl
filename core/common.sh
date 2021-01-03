@@ -29,7 +29,7 @@ gmsg () {
     local _mqtt_topic=
     local _indicator_key=
     # parse flags
-    TEMP=`getopt --long -o "tlnhNx:V:v:c:q:k:" "$@"`
+    TEMP=`getopt --long -o "tlnhNx:V:v:c:q:k:m:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
@@ -42,6 +42,7 @@ gmsg () {
                 -x ) _exit=$2                                   ; shift 2 ;;
                 -V ) _verbose_limiter=$2                        ; shift 2 ;;
                 -v ) _verbose_trigger=$2                        ; shift 2 ;;
+                -m ) _mqtt_topic="$2"                           ; shift 2 ;;
                 -q ) _mqtt_topic="$GURU_HOSTNAME/$2"            ; shift 2 ;;
                 -k ) _indicator_key=$2                          ; shift 2 ;;
                 -c ) _color=$2
