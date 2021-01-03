@@ -7,13 +7,54 @@ system_suspend_flag="/tmp/suspend.flag"
 system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
 
+
 system.help () {
     # system help printout
-    gmsg -v1 -c white "guru-client system help TODO "
+    gmsg -v1 -c white "guru-client system help"
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL system [core-dump|get|set|upgrade|rollback|status|start|end|suspend] "
+    gmsg -v0 "usage:    $GURU_CALL system [core-dump|update|rollback|status|suspend|env] "
     gmsg -v2
-    gmsg -v3 " poll start|end           start or end module status polling "
+    gmsg -v1 " core-dump            dump data for development "
+    gmsg -v1 " env get <pid>        get environmental value running process (default is guru-daemon)"
+    gmsg -v1 " env set <pid>        set environmental value of running process"
+    gmsg -v1 " update               update and upgrade os"
+    gmsg -v1 " client-update        upgrade and reinstall guru-client"
+    gmsg -v1 " client-rollback      rollback to last known working version "
+    gmsg -v1 " status               system status output"
+    gmsg -v1 " suspend <sub_cmd>    suspend functions '$GURU_CALL system suspend help' for more details "
+    gmsg -v1 " poll start|end       start or end module status polling "
+}
+
+
+system.suspend_help () {
+    gmsg -v1 -c white "guru-client system suspend help"
+    gmsg -v2
+    gmsg -v0 "usage:    $GURU_CALL system suspend [flag|set_flag|rm_flag|install|remove]"
+    gmsg -v2
+    gmsg -v1 -c white "commands:"
+    gmsg -v2
+    gmsg -v1 " flag         read flag status"
+    gmsg -v1 " set_flag     set suspend flag"
+    gmsg -v1 " rm_flag      remove suspend flag"
+    gmsg -v1 " install      add suspend script "
+    gmsg -v1 " remove       remove suspend script"
+    gmsg -v2
+}
+
+
+system.env_help () {
+    # system help printout
+    gmsg -v1 -c white "guru-client system env help"
+    gmsg -v2
+    gmsg -v0 "get or set environmental variable list or single variable with values of running process"
+    gmsg -v2
+    gmsg -v0 "usage:    $GURU_CALL system env [get|set] <pid|process> <variable>"
+    gmsg -v2
+    gmsg -v2 " env get|set <pid|process_name>  <variable_name>"
+    gmsg -v2 -N -c white "example:"
+    gmsg -v1 "      $GURU_CALL system env get mosquitto_sub TERM"
+    gmsg -v2
+    gmsg -v2 "if variable name is not given all variables will be printed out."
 }
 
 
@@ -24,27 +65,32 @@ system.main () {
 
     case "$tool" in
 
-            status|poll|suspend|core-dump|get|set|update|upgrade|rollback)
+            status|poll|suspend|core-dump|update|upgrade|rollback)
                 system.$tool $@
                 return $?
                 ;;
 
             env)
-                re='^[0-9]+$'
-                if [[ $1 =~ $re ]] ; then
-                        system.get_env $@
-                    else
-                        system.get_env_by_name $@
-                    fi
-                ;;
+                local re='^[0-9]+$'
+                local cmd=$1 ; shift
+                case $cmd in
 
-            help)
-                system.help
+                    get|set)
+                            if [[ $2 =~ $re ]] ; then
+                                    system."$cmd"_env $@
+                                else
+                                    system."$cmd"_env_by_name $@
+                                fi
+                            ;;
+
+                          *)
+                            gmsg -c yellow "get or set please"
+                            GURU_VERBOSE=2
+                            system.help
+                        esac
                 ;;
 
             *)  system.help
-                ;;
-
         esac
 
     return 0
@@ -63,39 +109,60 @@ system.status () {
 }
 
 
-
-
 system.get_env () {
     # get running process variable values by pid
 
     local _pid=$1
-    [[ $_pid ]] || gmsg -x 127 -c yellow  "pid name required "
+    [[ $_pid ]] || gmsg -x 127 -c yellow "pid name required "
     local _pattern=$2
     local _variable_to_find=$3
 
     # find variables pattern
     if [[ $_pattern ]] ; then
-            local _variables=$(cat /proc/$_pid/environ | tr '\0' '\n' | grep $_pattern || gmsg -c yellow "no variables")
+            local _variables=$(cat /proc/$_pid/environ \
+                | tr '\0' '\n' \
+                | grep $_pattern \
+                || gmsg -c yellow "no v ariables")
         else
-            local _variables=$(cat /proc/$_pid/environ | tr '\0' '\n' || gmsg -c yellow "no variables")
+            local _variables=$(cat /proc/$_pid/environ \
+                | tr '\0' '\n' \
+                || gmsg -c yellow "no variables")
         fi
 
     if ! [[ $_variable_to_find ]] ; then
-            gmsg -c light_blue "$_variables"
+            gmsg "$_variables"
             return 0
         fi
 
-    local _variables_found=$(cat /proc/$_pid/environ | tr '\0' '\n' | grep "$_pattern*" | grep $_variable_to_find | awk '{ print length(), $0 | "sort -n" }' | cut -f2 -d " " || gmsg -c yellow "variable not found")
+    local _variables_found=$(cat /proc/$_pid/environ \
+        | tr '\0' '\n' \
+        | grep "$_pattern*" \
+        | grep $_variable_to_find \
+        | awk '{ print length(), $0 | "sort -n" }' \
+        | cut -f2 -d " " \
+        || gmsg -c yellow "variable not found")
 
     # single variable
-    local _variable_found=$(cat /proc/$_pid/environ | tr '\0' '\n' | grep "$_pattern*" | grep $_variable_to_find | awk '{ print length(), $0 | "sort -n" }' | cut -f2 -d " " | head -1 || gmsg -c yellow "variable not found")
-    local _variable=$(echo  $_variable_found | cut -f1 -d "=")
+    local _variable_found=$(cat /proc/$_pid/environ \
+        | tr '\0' '\n' \
+        | grep "$_pattern*" \
+        | grep $_variable_to_find \
+        | awk '{ print length(), $0 | "sort -n" }' \
+        | cut -f2 -d " " \
+        | head -1 \
+        || gmsg -c yellow "variable not found")
+
+    local _variable=$(echo  $_variable_found \
+        | cut -f1 -d "=")
+
     # single value
-    local _value=$(echo  $_variable_found | cut -f2 -d "=")
+    local _value=$(echo  $_variable_found \
+        | cut -f2 -d "=")
 
     # printout
     gmsg -v1 -c white "found variables:"
-    gmsg -v1 -c light_blue "$_variables_found"
+    gmsg "$_variables_found"
+
     if [[ $_variable_found ]] ; then
             gmsg -v1 -c white "$_variable value is:"
             gmsg "$_value"
@@ -114,10 +181,16 @@ system.get_pid_by_name () {
     [[ $_process ]] || read -p "process name: " _process
 
     # find process
-    local _found_processes=$(ps auxf | grep "$_process" | grep -v grep | grep -v "system" )
+    local _found_processes=$(ps auxf \
+        | grep "$_process" \
+        | grep -v grep \
+        | grep -v "system" )
 
     # pid where environment ir read
-    local _pid=$(echo $_found_processes | head -1 | xargs | cut -f2 -d " ")
+    local _pid=$(echo $_found_processes \
+        | head -1 \
+        | xargs \
+        | cut -f2 -d " ")
 
     if ! [[ $_pid ]] ; then
             gmsg -c yellow "no process '$_process'"
@@ -145,19 +218,30 @@ system.get_env_by_name () {
 
     # get PID
     local _pid=$(system.get_pid_by_name $_process)
-    gmsg -v1 -c deep_pink -n "$_pid"
+    gmsg -v2 -c white "pid: $_pid"
 
-    # check putput (bash return annoying is hrr)
-    local re='^[0-9]+$' ; if ! [[ $_pid =~ $re ]] ; then return 102 ; fi
-    local found_process="$(ps auxf | grep $_pid | grep -v grep | head -1 | xargs | rev | cut -d " " -f1-4 | rev)"
-    [[ $_pid ]] || gmsg -x 111 -c red "no pid found" && gmsg -v1 " $found_process"
+    # check user input
+    local re='^[0-9]+$'
+    if ! [[ $_pid =~ $re ]] ; then return 102 ; fi
+
+    local found_process="$(ps auxf \
+        | grep $_pid \
+        | grep -v grep \
+        | head -1 \
+        | xargs \
+        | rev \
+        | cut -d " " -f1-4 | rev)"
+
+    [[ $_pid ]] || gmsg -x 111 -c yellow "no process with id $_pid"
+
+    gmsg -v2 -c white "found: $_process $found_process"
 
     # pattern in variable name
     system.get_env $_pid $_pattern $_variable_to_find
 }
 
 
-system.guru-client_update () {
+system.client_update () {
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"
     local _banch="master" ;
@@ -215,11 +299,15 @@ system.rollback () {
 
 
 system.suspend_script () {
-
     temp="/tmp/suspend.temp"
-    gmsg -n -v2 "$system_suspend_script.. "
+    gmsg -v1 -V2 -n "setting suspend script.. "
+    gmsg -v2 -n "setting suspend script $system_suspend_script.. "
 
-    [[ -d  ${system_suspend_script%/*} ]] || sudo mkdir -p ${system_suspend_script%/*}
+    if [[ -d  ${system_suspend_script%/*} ]] ; then
+        sudo mkdir -p ${system_suspend_script%/*} \
+        || gmsg -x 100 "no permission to create folder ${system_suspend_script%/*}"
+    fi
+
     [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
     [[ -f $temp ]] && rm $temp
 
@@ -232,15 +320,19 @@ case \${1} in
     chown $USER:$USER $system_suspend_flag
     ;;
   post|resume|thaw )
-    $GURU_BIN/$GURU_CALL start
+    $GURU_BIN/$GURU_CALL corsair start
     ;;
 esac
 EOL
 
-    sudo cp $temp $system_suspend_script || return 1
-    sudo chmod +x $system_suspend_script || return 2
+    if ! sudo cp $temp $system_suspend_script ; then
+            gmsg -c red "script copy failed"
+            return 101
+        fi
+
+    sudo chmod +x $system_suspend_script
     rm -f $temp
-    gmsg -v2 -c green "ok"
+    gmsg -v1 -c green "ok"
     return 0
 }
 
@@ -261,29 +353,33 @@ system.suspend () {
                 ;;
 
             set_flag )
-                gmsg -v1 "setting suspend flag.. "
-                touch $system_suspend_flag
+                gmsg -n -v1 "setting suspend flag.. "
+                touch $system_suspend_flag \
+                && gmsg -v1 -c green "ok" || gmsg -c red "failed"
                 ;;
 
             rm_flag )
-                gmsg -v1 "removing suspend flag.. "
-                rm -f $system_suspend_flag
+                gmsg -n -v1 "removing suspend flag.. "
+                rm -f $system_suspend_flag \
+                && gmsg -v1 -c green "ok" || gmsg -c red "failed"
                 ;;
 
             install )
-                gmsg -v1 "adding suspend script.. "
                 system.suspend_script add
                 ;;
 
             remove )
-                gmsg -v1 "removing suspend script.. "
-                sudo rm -f $system_suspend_script
+                gmsg -n -v1 "removing suspend script.. "
+                sudo rm -f $system_suspend_script \
+                && gmsg -v1 -c green "ok" || gmsg -c red "failed"
                 ;;
             "" )
+                gmsg "suspending.. " -q "/status/suspended"
+                [[ $GURU_FORCE ]] || sleep 3
                 systemctl suspend
                 ;;
 
-            *)  gmsg "unknown suspend command: $1"
+            *)  gmsg -c yellow  "unknown suspend command: $1"
                 ;;
 
         esac
