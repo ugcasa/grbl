@@ -4,8 +4,10 @@ source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 
 system_suspend_flag="/tmp/suspend.flag"
-system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
+# system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh" #
+
+system_suspend_script="$HOME/.config/systemd/user/ckb-next-app.service"
 
 
 system.help () {
@@ -303,34 +305,41 @@ system.suspend_script () {
     gmsg -v1 -V2 -n "setting suspend script.. "
     gmsg -v2 -n "setting suspend script $system_suspend_script.. "
 
-    if [[ -d  ${system_suspend_script%/*} ]] ; then
-        sudo mkdir -p ${system_suspend_script%/*} \
+    if ! [[ -d  ${system_suspend_script%/*} ]] ; then
+        mkdir -p ${system_suspend_script%/*} \
         || gmsg -x 100 "no permission to create folder ${system_suspend_script%/*}"
     fi
 
     [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
     [[ -f $temp ]] && rm $temp
 
-# following lines should be without indentation
-    cat >"$temp" <<EOL
-#!/bin/bash
-case \${1} in
-  pre|suspend )
-    [[ -f $system_suspend_flag ]] || touch $system_suspend_flag
-    chown $USER:$USER $system_suspend_flag
-    ;;
-  post|resume|thaw )
-    $GURU_BIN/$GURU_CALL corsair start
-    ;;
-esac
+cat >"$temp" <<EOL
+[Unit]
+Description=start ckb-next application
+
+[Service]
+ExecStart=bash -c '/home/$USER/bin/core.sh corsair start'
+ExecStop=bash -c '/home/$USER/bin/core.sh corsair stop'
+Type=simple
+Restart=always
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical-session.target
 EOL
 
-    if ! sudo cp $temp $system_suspend_script ; then
+    if ! cp -f $temp $system_suspend_script ; then
             gmsg -c red "script copy failed"
             return 101
         fi
 
-    sudo chmod +x $system_suspend_script
+    chmod +x $system_suspend_script
+    # sudo chown $USER:$USER $system_suspend_script
+
+    systemctl --user enable ckb-next-app.service
+    systemctl --user daemon-reload
+
+    # clean
     rm -f $temp
     gmsg -v1 -c green "ok"
     return 0
@@ -365,7 +374,7 @@ system.suspend () {
                 ;;
 
             install )
-                system.suspend_script add
+                system.suspend_script
                 ;;
 
             remove )
@@ -379,7 +388,11 @@ system.suspend () {
                 systemctl suspend
                 ;;
 
-            *)  gmsg -c yellow  "unknown suspend command: $1"
+            help )
+                system.suspend_help
+                ;;
+            *)  gmsg -c yellow "unknown suspend command: $1"
+                system.suspend_help
                 ;;
 
         esac

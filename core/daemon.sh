@@ -1,14 +1,24 @@
 #!/bin/bash
 # guru client background servicer
 # casa@ujo.guru 2020
+# TODO Jan 04 01:24:50 electra bash[413320]: /home/casa/bin/common.sh: line 83: printf: write error: Broken pipe
 
 source $GURU_BIN/common.sh
 
+daemon_service_script="$HOME/.config/systemd/user/guru.service"
+
 daemon.main () {
-    argument="$1" ; shift
+    local argument="$1" ; shift
     case "$argument" in
             start|stop|status|help|kill|poll)
-                daemon.$argument                ; return $? ;;
+                daemon.$argument
+                return $?
+                ;;
+            install|remove)
+                daemon.systemd $argument
+                return $?
+                ;;
+
             *)  gmsg "unknown daemon command"   ; return 1  ;;
         esac
     return 0
@@ -70,18 +80,18 @@ daemon.start () {
     for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
 
         module=${GURU_DAEMON_POLL_LIST[i]}
-        gmsg -c dark_golden_rod "$i $module"
+        gmsg -v2 -c dark_golden_rod "$i $module"
         case $module in
             null|empty )
-                gmsg -c deep_pink "skipping $module"
+                gmsg -v3 -c deep_pink "skipping $module"
                 ;;
             *)
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
-                        gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
+                        gmsg -v3 -c pink "module: $GURU_BIN/$GURU_BIN/$module.sh"
 
                         $module.main poll start
-                        gmsg -v3 "command: $module.main poll start "
+                        gmsg -v3 -c pink "command: $module.main poll start "
 
                     else
                         gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
@@ -115,10 +125,10 @@ daemon.stop () {
     for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
 
         module=${GURU_DAEMON_POLL_LIST[i]}
-        gmsg -c dark_golden_rod "$i $module"
+        gmsg -v3 -c dark_golden_rod "$i $module"
         case $module in
             null|empty )
-                gmsg -c deep_pink "skipping $module"
+                gmsg -v3 -c deep_pink "skipping $module"
                 ;;
             * )
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
@@ -129,7 +139,7 @@ daemon.stop () {
                         gmsg -v3 "command: $module.main poll end"
 
                     else
-                        gmsg -v 1 "${FUNCNAME[0]}: module '$module' not installed"
+                        gmsg -v1 "${FUNCNAME[0]}: module '$module' not installed"
                     fi
                 ;;
             esac
@@ -224,6 +234,67 @@ daemon.process_opts () {
     done;
     _arg="$@"
     [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
+}
+
+
+daemon.systemd () {
+
+    local cmd=$1 ; shift
+    case $cmd in
+            install|remove|enable|disable)
+                        daemon.systemd_$cmd $@
+                        return $?
+                    ;;
+              * ) gmsg -c yellow "unknown command '$cmd'"
+                  return 127
+        esac
+
+}
+
+
+daemon.systemd_install () {
+    temp="/tmp/starter.temp"
+    gmsg -v1 -V2 -n "setting starter script.. "
+    gmsg -v2 -n "setting starter script $daemon_service_script.. "
+
+    if ! [[ -d  ${daemon_service_script%/*} ]] ; then
+        mkdir -p ${daemon_service_script%/*} \
+        || gmsg -x 100 "no permission to create folder ${daemon_service_script%/*}"
+    fi
+
+    [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
+    [[ -f $temp ]] && rm $temp
+
+cat >"$temp" <<EOL
+[Unit]
+Description=guru daemon process manager
+
+[Service]
+ExecStart=bash -c '/home/$USER/bin/core.sh daemon start'
+ExecStop=bash -c '/home/$USER/bin/core.sh daemon stop'
+Type=simple
+Restart=always
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical-session.target
+EOL
+
+    if ! cp -f $temp $daemon_service_script ; then
+            gmsg -c red "script copy failed"
+            return 101
+        fi
+
+    chmod +x $daemon_service_script
+    systemctl --user enable guru.service
+    systemctl --user daemon-reload
+    systemctl --user restart guru.service
+
+    # clean
+    rm -f $temp
+    gmsg -v1 -c green "ok"
+    return 0
+
 }
 
 
