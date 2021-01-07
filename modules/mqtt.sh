@@ -48,7 +48,7 @@ mqtt.online () {
         sleep 2
         timeout 2 mosquitto_pub -u $GURU_MQTT_USER -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT \
           -t "$GURU_HOSTNAME/online" -m "$(date +$GURU_FORMAT_TIME)" >/dev/null 2>&1 \
-          || gmsg -t -c yellow "${FUNCNAME[0]}: connection isses detected $?" -k $mqtt_indicator_key
+          || gmsg -v -t -c yellow "${FUNCNAME[0]}: connection isses detected $?" -k $mqtt_indicator_key
     }
 
     # delayed publish
@@ -58,7 +58,7 @@ mqtt.online () {
     if timeout 3 mosquitto_sub -C 1 -u $GURU_MQTT_USER -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$GURU_HOSTNAME/online" $_options >/dev/null; then
             return 0
         else
-            gmsg -t -c yellow "${FUNCNAME[0]}_receive: connection isses detected $?"
+            gmsg -v -t -c yellow "${FUNCNAME[0]}_receive: connection isses detected $?"
             return 1
     fi
 }
@@ -69,10 +69,10 @@ mqtt.status () {
     # printout and signal by corsair keyboard indicator led - if available
 
     if mqtt.online ; then
-            gmsg -t -c green "${FUNCNAME[0]}: broker available " -k $mqtt_indicator_key
+            gmsg -v1 -t -c green "${FUNCNAME[0]}: broker available " -k $mqtt_indicator_key
             return 0
         else
-            gmsg -t -c red "${FUNCNAME[0]}: broker unreachable " -k $mqtt_indicator_key
+            gmsg -v1 -t -c red "${FUNCNAME[0]}: broker unreachable " -k $mqtt_indicator_key
             return 1
         fi
 }

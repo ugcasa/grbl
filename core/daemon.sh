@@ -75,7 +75,10 @@ daemon.start () {
             kill -9 $_pid
         fi
 
-    # call start method of module
+    if system.suspend flag ; then
+            system.suspend rm_flag
+            corsair.systemd_restart
+        fi
 
     #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
     for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
@@ -172,13 +175,22 @@ daemon.poll () {
     [[ -f "$HOME/.guru-stop" ]] && rm -f "$HOME/.guru-stop"
     echo "$(sh -c 'echo "$PPID"')" > "$GURU_SYSTEM_MOUNT/.daemon-pid"
 
+    GURU_FORCE=
     # DAEMON POLL LOOP
     while true ; do
         # to update configurations is user changes them
         source $GURU_RC
-        GURU_FORCE=true
         #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
-        gmsg -v2 -c $GURU_CORSAIR_EFECT_COLOR -k esc "daemon active"
+
+        if system.suspend flag ; then
+                corsair.systemd_restart
+                system.suspend rm_flag
+                rm -f /tmp/guru-fast.flag
+                sleep 4
+            fi
+
+        gmsg -N -v2 -c $GURU_CORSAIR_EFECT_COLOR -k esc "daemon active"
+
         local i=
         for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
             module=${GURU_DAEMON_POLL_LIST[i-1]}
@@ -199,10 +211,14 @@ daemon.poll () {
                 esac
             done
 
-        gmsg -v2 -c reset -k esc "daemon sleeps $GURU_DAEMON_INTERVAL seconds"
         #gmsg -v2 -c black -k cplc "ignore disable keys"
+        gmsg -n -v2 -c reset -k esc "daemon sleeps $GURU_DAEMON_INTERVAL seconds "
 
-        sleep $GURU_DAEMON_INTERVAL
+        local _seconds=
+        for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )); do
+            [[ -f /tmp/guru-fast.flag ]] && break || sleep 1
+            gmsg -v2 -n -c reset "."
+        done
 
         # check is stop command given, exit if so
         [[ -f "$HOME/.guru-stop" ]] && break

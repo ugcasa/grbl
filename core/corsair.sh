@@ -13,6 +13,8 @@ corsair_last_mode="/tmp/corsair.mode"
 corsair_service="$HOME/.config/systemd/user/corsair.service"
 corsair_daemon_service="/usr/lib/systemd/system/ckb-next-daemon.service"
 
+corsair_indicator_key="f$(poll_order corsair)"
+
 # import colors
 [[ -f "$GURU_CFG/rgb-color.cfg" ]] && source "$GURU_CFG/rgb-color.cfg"
 # key pipe files (these need to correlate with cbk-next animation settings)
@@ -100,7 +102,7 @@ corsair.main () {
                     return $?
                     ;;
 
-            check|install|remove|help)
+            check|install|remove|poll|help)
                     corsair.$cmd $@
                     return $?
                     ;;
@@ -144,19 +146,13 @@ corsair.raw_status () {
 
 corsair.status () {
     # get status and print it out to kb leds
-    if corsair.check ; then
-            gmsg -t -c green "corsair on service" -k $indicator_key
+    if corsair.check >/dev/null ; then
+            gmsg -t -c green "${FUNCNAME[0]}: corsair on service" -k $indicator_key
             return 0
         else
             local status=$?
-            gmsg -t -c red "corsair not on service" -k $indicator_key
-            gmsg -v2 -c light_blue "$(corsair.raw_status)"
-
-            if [[ $GURU_FORCE ]] ; then
-                    unset GURU_FORCE
-                    corsair.start $status
-                fi
-            return 1
+            gmsg -t -c red "${FUNCNAME[0]}: corsair is not available" -k $indicator_key
+            gmsg -v3 -c light_blue "$(corsair.raw_status)"
         fi
 }
 
@@ -419,7 +415,7 @@ corsair.raw_disable () {
     # stop daemon first
     if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null || [[ $GURU_FORCE ]] ; then
             gmsg -v1 "stopping ckb-next-daemon.. "
-            pkill ckb-next-daemon
+            sudo kill $(pidof ckb-next-daemon)
             #systemctl stop ckb-next-daemon
         fi
 
@@ -518,7 +514,7 @@ corsair.remove () {
 corsair.systemd_enable () {
 
     temp="/tmp/suspend.temp"
-    gmsg -v1 -n "generating corsair service file.. "
+    gmsg -v1 "generating corsair service file.. "
 
     if ! [[ -d  ${corsair_service%/*} ]] ; then
         mkdir -p ${corsair_service%/*} \
@@ -564,33 +560,122 @@ EOL
 
 corsair.systemd_disable () {
 
-    systemctl --user stop corsair.service || gmsg -c yellow "stop failed"
     cp -f $corsair_daemon_service $GURU_CFG
+
+    systemctl --user stop corsair.service || gmsg -c yellow "stop failed"
     systemctl --user disable corsair.service || gmsg -c yellow "disable failed"
     rm $corsair_service || gmsg -c yellow "rm failed"
     systemctl --user daemon-reload || gmsg -c yellow "reload failed"
     systemctl --user reset-failed || gmsg -c yellow "reset failed"
 
+    sudo systemctl stop ckb-next-daemon || gmsg -c yellow "daemon stop failed"
+    sudo systemctl disable ckb-next-daemon || gmsg -c yellow "daemon disable failed"
+
 }
 
-
 corsair.systemd_start () {
+    # check and start part by part based on check result
 
-    systemctl --user start corsair.service
+    function corsair.systemd_start_application () {
+        systemctl --user start corsair.service || systemctl --user restart corsair.service || corsair.systemd_enable
+        sleep 1
+        corsair.init
+        return $?
+    }
+
+    if [[ $1 ]] ; then
+            local _status="$1"
+        else
+            corsair.check
+            local _status="$?"
+            gmsg -v3 -c deep_pink "corsair.check: $_status"
+        fi
+
+    [[ $GURU_FORCE ]] && _status="f"
+
+    gmsg -v3 "status/given: $_status"
+    case $_status in
+        1 )     gmsg -v1 -c black "corsair disabled by user configuration" ;;
+        2 )     gmsg -v1 -c black "no corsair devices connected" ;;
+
+        3 )     gmsg -v1 "corsair daemon not running, starting.. "
+                if ! sudo systemctl start ckb-next-daemon ; then
+                        gmsg -c yellow "start failed, trying to restart.."
+                        sudo systemctl restart ckb-next-daemon
+                        return 112
+                    fi
+                    corsair.systemd_start_application
+                ;;
+        4 )     gmsg -v1 "starting corsair application.. "
+                corsair.systemd_start_application
+                return $?
+                ;;
+        5 )     gmsg -v1 "no pipe support in current profile..  "
+                corsair.init
+                return $?
+                ;;
+        6 )     gmsg -v1 "re-starting corsair application.. "
+                systemctl --user stop corsair.service
+                system.suspend rm_flag
+                corsair.systemd_start_application
+                ;;
+        f )     gmsg -v1 "force re-start full corsair stack.. "
+                sudo systemctl restart ckb-next-daemon
+                systemctl --user restart corsair.service
+
+                corsair.systemd_start_application
+                ;;
+        * )     gmsg -t -c green "corsair on service"
+                return 0
+    esac
 }
 
 
 corsair.systemd_restart () {
+    gmsg -v1 "restarting corsair service.. "
     systemctl --user restart corsair.service
+
+    if [[ $GURU_FORCE ]] ; then
+            gmsg -v1 "restarting daemon service.. "
+            sudo systemctl restart ckb-next-daemon
+        fi
 }
 
 
 corsair.systemd_stop () {
-    systemctl --user stop corsair.service
+    gmsg -v1 "stopping corsair service.. "
+    systemctl --user stop corsair.service || gmsg -c yellow "stop failed"
+
+    if [[ $GURU_FORCE ]] ; then
+            gmsg -v1 "stopping corsair daemon service.. "
+            sudo systemctl stop ckb-next-daemon
+        fi
 }
+
 
 corsair.systemd_status () {
     systemctl --user status corsair.service
+}
+
+
+corsair.poll () {
+
+    local _cmd="$1" ; shift
+
+    case $_cmd in
+        start )
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: corsair status polling started" -k $corsair_indicator_key
+            ;;
+        end )
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: corsair status polling ended" -k $corsair_indicator_key
+            ;;
+        status )
+            corsair.status $@
+            ;;
+        *)  corsair.help
+            ;;
+        esac
+
 }
 
 

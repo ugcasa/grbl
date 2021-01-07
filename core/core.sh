@@ -34,8 +34,6 @@ source $GURU_BIN/corsair.sh
 core.main () {
     # main function
 
-    #counter.main add guru-runned >/dev/null
-
     # with arguments go to parser
     if [[ "$1" ]] ; then
             core.parser "$@"
@@ -53,9 +51,6 @@ core.main () {
 
     return $_error_code
 }
-
-
-## code.help moved to common.sh
 
 
 core.parser () {

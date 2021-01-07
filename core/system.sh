@@ -23,6 +23,7 @@ system.help () {
     gmsg -v1 " client-rollback      rollback to last known working version "
     gmsg -v1 " status               system status output"
     gmsg -v1 " suspend <sub_cmd>    suspend functions '$GURU_CALL system suspend help' for more details "
+    gmsg -v1 " suspend now          suspend computer"
     gmsg -v1 " poll start|end       start or end module status polling "
 }
 
@@ -356,7 +357,37 @@ case \${1} in
     chown $USER:$USER $system_suspend_flag
     ;;
   post|resume|thaw )
-    $GURU_BIN/$GURU_CALL start
+    # failed - cannot run on root space
+    # ckb-next -c ; ckb-next -b &
+
+    # failed - cannot connec dbus
+    # systemctl --user restart corsair.service
+
+    # failed - cannot run on root space
+    # $GURU_BIN/$GURU_CALL corsair restart
+
+    # failed - works but then not controllable by systemctl and ckb-next should not runned as root
+    # HOME=/home/casa
+    # USER=casa
+    # /home/casa/.gururc
+    # PATH=$PATH:/home/casa/bin
+    # /home/casa/bin/core.sh corsair raw_start
+
+    # failed - works but password is requested, and does not even give permission
+    # su casa <<'EOF'
+    # bash
+    # /home/casa/.gururc
+    # PATH=$PATH:/home/casa/bin
+    # /home/casa/bin/core.sh corsair raw_start
+    # EOF
+
+    # failed - works but password is requested, and does not even give permission
+    # su casa <<'EOF'
+    # systemctl --user restart corsair.service
+    # EOF
+
+    # suspend flag method is only one that works, but shit it is
+
     ;;
 esac
 EOL
@@ -371,15 +402,22 @@ EOL
 
 system.suspend () {
     # suspend control
-    case $1 in
+    case "$1" in
+
+            now )
+                gmsg -v1 "suspending.."
+                touch /tmp/guru-fast.flag
+                [[ $GURU_FORCE ]] || sleep 3
+                systemctl suspend
+                #system.suspend set_flag
+                ;;
 
             flag )
-                gmsg -v1 -n "checking system suspend flag status: "
+                gmsg -v3 -n "checking is system been suspended "
                 if [[ -f  $system_suspend_flag ]] ; then
-                        gmsg -c yellow "system were suspended"
+                        gmsg -v1 -c yellow "system were suspended"
                         return 0
                     else
-                        gmsg -c dark_grey "system were not suspended"
                         return 1
                     fi
                 ;;
@@ -409,15 +447,6 @@ system.suspend () {
             help )
                 system.suspend_help
                 ;;
-
-            "" )
-                if system.init_system_check "systemd" ; then
-                        gmsg "suspended" -q "status"
-                        [[ $GURU_FORCE ]] || sleep 3
-                        systemctl suspend
-                    fi
-                ;;
-
             *)  gmsg -c yellow "unknown suspend command: $1"
                 system.suspend_help
                 ;;
@@ -438,6 +467,7 @@ system.poll () {
             ;;
         status )
             system.status $@
+            return $?
             ;;
         *)  system.help
             ;;
