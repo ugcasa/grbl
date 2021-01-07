@@ -44,6 +44,8 @@ timer.help () {
 
 timer.toggle () {
     # key press action
+    timer_indicator_key="f$(poll_order timer)"
+
     if timer.status >/dev/null ; then
         timer.end
     else
@@ -123,7 +125,6 @@ timer.last() {
 
 timer.start() {
     # check and force mount system (~/.data) where timer record files are kept
-    timer_indicator_key="f$(poll_order timer)"
 
     gmsg -v1 "starting timer.."
     [[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
@@ -131,8 +132,6 @@ timer.start() {
     if [[ -f "$GURU_FILE_TRACKSTATUS" ]] ; then
         timer.main end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
     fi
-
-    timer_indicator_key="f$(poll_order timer)"    #viiksilanka, tämä kirjoitetaan uusiksi anyway, jaksa korjata =D
 
     case "$1" in
 
