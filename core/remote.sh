@@ -2,6 +2,8 @@
 # sshfs mount functions for guru-client
 source common.sh
 
+remote_indicator_key='f'"$(poll_order remote)"
+
 remote.help () {
     gmsg -v1 -c white "guru-client remote help "
     gmsg -v2
@@ -24,7 +26,7 @@ remote.help () {
 remote.main () {
 
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
-    indicator_key='f'"$(poll_order remote)"
+    remote_indicator_key='f'"$(poll_order remote)"
 
     command="$1"; shift
     case "$command" in
@@ -39,13 +41,13 @@ remote.main () {
 remote.status () {
     # check remote is reachable. daemon poller will run this
     if remote.online ; then
-            gmsg -v 1 -t -c green "${FUNCNAME[0]}: local accesspoint available" -k $indicator_key
+            gmsg -v 1 -t -c green "${FUNCNAME[0]}: local accesspoint available" -k $remote_indicator_key
             return 0
         elif remote.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
-            gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote accesspoint available" -k $indicator_key
+            gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote accesspoint available" -k $remote_indicator_key
             return 0
         else
-            gmsg -v 1 -t -c red "${FUNCNAME[0]}: accesspoint offline" -k $indicator_key
+            gmsg -v 1 -t -c red "${FUNCNAME[0]}: accesspoint offline" -k $remote_indicator_key
             return 101
         fi
 }
@@ -124,10 +126,10 @@ remote.poll () {
 
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: remote status polling started" -k $indicator_key
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: remote status polling started" -k $remote_indicator_key
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: remote status polling ended" -k $indicator_key
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: remote status polling ended" -k $remote_indicator_key
             ;;
         status )
             remote.status $@

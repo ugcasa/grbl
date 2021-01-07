@@ -1,88 +1,61 @@
 #!/bin/bash
-# guru-client corsair led notification functions casa@ujo.guru 2020
+# guru-client corsair led notification functions casa@ujo.guru 2020-2021
 source $GURU_BIN/common.sh
 source $GURU_BIN/system.sh
 
-# key pipe files (these need to correlate with cbk-next animation settings)
-    ESC="/tmp/ckbpipe000"
-   CPLC="/tmp/ckbpipe059"
-     F1="/tmp/ckbpipe001"
-     F2="/tmp/ckbpipe002"
-     F3="/tmp/ckbpipe003"
-     F4="/tmp/ckbpipe004"
-     F5="/tmp/ckbpipe005"
-     F6="/tmp/ckbpipe006"
-     F7="/tmp/ckbpipe007"
-     F8="/tmp/ckbpipe008"
-     F9="/tmp/ckbpipe009"
-    F10="/tmp/ckbpipe010"
-    F11="/tmp/ckbpipe011"
-    F12="/tmp/ckbpipe012"
-
-# import extended color list
-[[ -f "$GURU_CFG/rgb-color.cfg" ]] && source "$GURU_CFG/rgb-color.cfg"
 # active key list
 key_pipe_list=$(file /tmp/ckbpipe0* | grep fifo | cut -f1 -d ":")
-# modes with status bar function set (these need to correlate with cbk-next animation settings)
+# modes with status bar function set
 status_modes=(status, test, red, olive, dark, orange)
-# bubble cum temporary fix
+# bubble cum temporary fix TODO is this needed?
 corsair_last_mode="/tmp/corsair.mode"
+# service configurations for ckb-next application
+corsair_service="$HOME/.config/systemd/user/corsair.service"
+corsair_daemon_service="/usr/lib/systemd/system/ckb-next-daemon.service"
 
-
-corsair.main () {
-    # command parser
-    # ckb-next current mode data
-
-    indicator_key="f$(poll_order corsair)"
-
-    # is this really needed? (tmw)
-    if [[ -f $corsair_last_mode ]] ; then
-            corsair_mode="$(head -1 $corsair_last_mode)"
-        else
-            corsair_mode=$GURU_CORSAIR_MODE
-        fi
-
-    local _cmd="$1" ; shift
-    gmsg -v3 -c deep_pink "$_cmd"
-
-    case "$_cmd" in
-            status|check|ps|restart|start|init|set|reset|clear|end|stop|kill|help|install|remove)
-                    corsair.$_cmd $@
-                    return $?
-                    ;;
-
-            # systemd)
-            #         corsair.systemd install
-            #         return $?
-            #         ;;
-
-            *)      gmsg -c yellow  "corsair: unknown command: $_cmd"
-                    ;;
-        esac
-
-    return 0
-}
+# import colors
+[[ -f "$GURU_CFG/rgb-color.cfg" ]] && source "$GURU_CFG/rgb-color.cfg"
+# key pipe files (these need to correlate with cbk-next animation settings)
+ESC="/tmp/ckbpipe000"
+F1="/tmp/ckbpipe001"
+F2="/tmp/ckbpipe002"
+F3="/tmp/ckbpipe003"
+F4="/tmp/ckbpipe004"
+F5="/tmp/ckbpipe005"
+F6="/tmp/ckbpipe006"
+F7="/tmp/ckbpipe007"
+F8="/tmp/ckbpipe008"
+F9="/tmp/ckbpipe009"
+F10="/tmp/ckbpipe010"
+F11="/tmp/ckbpipe011"
+F12="/tmp/ckbpipe012"
+CPLC="/tmp/ckbpipe059"
 
 
 corsair.help () {
     gmsg -v 1 -c white "guru-client corsair help"
     gmsg -v 2
-    gmsg -v 0 "usage:    $GURU_CALL corsair [start|init|set|reset|end|kill|status|help|install|remove|set-suspend] <key> <color>"
+    gmsg -v 0 "usage:    $GURU_CALL corsair [start|init|set|reset|end|kill|status|help|install|remove|raw_start|raw_status|raw_stop|set-suspend] <key> <color>"
     gmsg -v 2
     gmsg -v 1 -c white "commands:"
     gmsg -v 1 " install                     install requirements "
     gmsg -v 1 " start                       start ckb-next-daemon "
     gmsg -v 1 " status                      printout status "
+    gmsg -v 1 " stop                        stop ckb-next-daemon"
     gmsg -v 1 " init <mode>                 initialize keyboard mode "
     gmsg -v 2 "                             [status|red|olive|dark] able to set keys "
     gmsg -v 2 "                             [trippy|yes-no|rainbow] active animations "
     gmsg -v 1 " set <key> <color>           write key color to keyboard key  "
     gmsg -v 1 " reset <key>                 reset one key or if empty, all pipes "
     gmsg -v 1 " end                         end playing with keyboard, set to normal "
-    gmsg -v 1 " stop|kill                   stop ckb-next-daemon"
     gmsg -v 2 " set-suspend                 active suspend control to avoid suspend issues"
     gmsg -v 1 " remove                      remove corsair driver "
     gmsg -v 2 " help                        this help "
+    gmsg -v 2 -c white -N "raw functions for non systemd linux:"
+    gmsg -v 2 " raw_start                   start ckb-next-daemon "
+    gmsg -v 2 " raw_status                  printout status without systemd"
+    gmsg -v 2 " raw_stop                    printout status without systemd"
+    gmsg -v 2 " raw_disable                 printout status without systemd"
     gmsg -v 2
     gmsg -v 1 -c white "examples:"
     gmsg -v 1 "          $GURU_CALL corsair status -v   "
@@ -105,6 +78,70 @@ corsair.help-profile () {
 }
 
 
+corsair.main () {
+    # command parser
+    # ckb-next current mode data
+
+    indicator_key="f$(poll_order corsair)"
+
+    # is this really needed? (tmw)
+    if [[ -f $corsair_last_mode ]] ; then
+            corsair_mode="$(head -1 $corsair_last_mode)"
+        else
+            corsair_mode=$GURU_CORSAIR_MODE
+        fi
+
+    local cmd="$1" ; shift
+
+    case "$cmd" in
+
+            init|set|reset|clear|end)
+                    corsair.$cmd $@
+                    return $?
+                    ;;
+
+            check|install|remove|help)
+                    corsair.$cmd $@
+                    return $?
+                    ;;
+            # systemd method in use after v0.6.4.5
+            status|enable|start|restart|stop|disable)
+                    if ! system.init_system_check systemd ; then
+                            gmsg -c yellow -x 133 "systemd not in use, try raw_start or raw_stop"
+                        fi
+                    corsair.systemd_$cmd $@
+                    return $?
+                    ;;
+            # non systemd control (not well tested)
+            raw_start|raw_status|raw_stop|raw_disable)
+                    corsair.$cmd $@
+                    return $?
+                    ;;
+
+            *)      gmsg -c yellow "corsair: unknown command: $cmd"
+                    GURU_VERBOSE=2
+                    corsair.help
+                    ;;
+        esac
+
+    return 0
+}
+
+
+corsair.raw_status () {
+    gmsg -V1 "$(ps auxf | grep ckb-next | grep -v grep)"
+
+    gmsg -N -v2 -c white "application stuff"
+    gmsg -v1 "$(systemctl --user status corsair.service)"
+    gmsg -v3 "$(systemctl --user list-dependencies corsair.service)"
+
+    gmsg -N -v2 -c white "daemon stuff"
+    gmsg -v2 "$(systemctl status ckb-next-daemon.service)"
+    gmsg -v3 "$(systemctl --user list-dependencies ckb-next-daemon.service)"
+
+}
+
+
 corsair.status () {
     # get status and print it out to kb leds
     if corsair.check ; then
@@ -113,7 +150,7 @@ corsair.status () {
         else
             local status=$?
             gmsg -t -c red "corsair not on service" -k $indicator_key
-            gmsg -v2 -c light_blue "$(corsair.ps)"
+            gmsg -v2 -c light_blue "$(corsair.raw_status)"
 
             if [[ $GURU_FORCE ]] ; then
                     unset GURU_FORCE
@@ -121,11 +158,6 @@ corsair.status () {
                 fi
             return 1
         fi
-}
-
-
-corsair.ps () {
-    ps auxf | grep ckb-next | grep -v grep
 }
 
 
@@ -195,7 +227,7 @@ corsair.check () {
 }
 
 
-corsair.start () {
+corsair.raw_start () {
     # check and start part by part based on check result
 
     function start_stack () {
@@ -270,7 +302,7 @@ corsair.init () {
 }
 
 
-corsair.raw_write () {
+corsair.raw_set () {
     # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
     local _button=$1 ; shift
     local _color=$1 ; shift
@@ -290,8 +322,8 @@ corsair.set () {
     local _color='rgb_'"$2"
     local _bright="FF" ; [[ $3 ]] && _bright="$3"
 
-    gmsg -n -v2 -t "${FUNCNAME[0]}: $_button color to "
-    gmsg -v2 -c $2 "$2"
+    gmsg -n -v3 "${FUNCNAME[0]}: $_button color to "
+    gmsg -v3 -c $2 "$2"
 
     # get input key pipe file location
     _button=$(eval echo '$'$_button)
@@ -311,7 +343,7 @@ corsair.set () {
     _color="$_color""$_bright"
 
     # wrtite to pipe
-    gmsg -v2 -t "${FUNCNAME[0]}: $_button <- $_color"
+    #gmsg -v2 "${FUNCNAME[0]}: $_button <- $_color"
 
     # write color code to button pipe file and let device to receive and process command (surprisingly slow)
     if file $_button |grep fifo >/dev/null ; then
@@ -328,16 +360,16 @@ corsair.set () {
 corsair.reset () {
     # application level function, not restarting daemon or application
     # return normal, if no input reset all
-    gmsg -n -v2 -t "resetting key"
+    # gmsg -n -v2 "resetting key"
 
     if [[ "$1" ]] ; then
-            gmsg -v2 " $1"
+            # gmsg -v2 " $1"
             corsair.set $1 $corsair_mode 10 && return 0 || return 100
         else
             gmsg -n -v2 "s"
             for _key_pipe in $key_pipe_list ; do
                 gmsg -n -v2 "."
-                corsair.raw_write $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10 || return 100
+                corsair.raw_set $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10 || return 100
             done
            gmsg -v2 -c green " done"
            return 0
@@ -345,13 +377,29 @@ corsair.reset () {
 }
 
 
-corsair.clear () {
-    # Cleaning the table
-    gmsg -n -v1 -t "setting keys "
-    for _key_pipe in $key_pipe_list ; do
+corsair.raw_clear () {
+    # set key to black, input <pipe_file_list> default is F1 to F12
+    local _pipelist=($key_pipe_list)
+    gmsg -n -v1 "writing to pipe file(s) "
+    [[ "$1" ]] && _pipelist=(${@})
+    for _key_pipe in $_pipelist ; do
             gmsg -n -v1 "."
             gmsg -n -V1 -v2 "$_key_pipe "
-            corsair.raw_write $_key_pipe $rgb_black
+            corsair.raw_set $_key_pipe $rgb_black
+        done
+    gmsg -v1 -c green " done"
+}
+
+
+corsair.clear () {
+    # set key to black, input <known_key> default is F1 to F12
+    local _keylist=($key_pipe_list)
+    gmsg -n -v1 "setting keys "
+    [[ "$1" ]] && _keylist=(${@})
+    for _key in $_keylist ; do
+            gmsg -n -v1 "."
+            gmsg -n -V1 -v2 "$_key "
+            corsair.set $_key black
         done
     gmsg -v1 -c green " done"
 }
@@ -365,13 +413,14 @@ corsair.end () {
 }
 
 
-corsair.kill () {
+corsair.raw_disable () {
     # stop corsair daemon
 
     # stop daemon first
     if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null || [[ $GURU_FORCE ]] ; then
             gmsg -v1 "stopping ckb-next-daemon.. "
-            systemctl stop ckb-next-daemon
+            pkill ckb-next-daemon
+            #systemctl stop ckb-next-daemon
         fi
 
     # stop application
@@ -396,13 +445,19 @@ corsair.kill () {
     }
 
 
-corsair.stop () {
+corsair.raw_stop () {
     # stop application
     if ps auxf | grep "ckb-next" |  grep -v "ckb-next-" | grep -v grep >/dev/null || [[ $GURU_FORCE ]] ; then
             gmsg -v1 "stopping ckb-next application.. "
             ckb-next -c || kill $(pidof ckb-next)
             sleep 2
         fi
+
+    if ps auxf | grep "ckb-next" | grep -v grep >/dev/null ; then
+        gmsg -c yellow "ckb-next stop failed"
+     else
+        gmsg -v2 -c green "ckb-next stopped"
+     fi
 }
 
 
@@ -420,8 +475,12 @@ corsair.install () {
     cd ckb-next
     ./quickinstall
 
-    system.suspend_control
+    # system.suspend_control
     # TODO suspend control
+
+    # make backup of .service file
+    cp -f $corsair_daemon_service $GURU_CFG
+
 
     if ! lsusb |grep "Corsair" ; then
         echo "no corsair devices connected, exiting.."
@@ -434,7 +493,7 @@ corsair.install () {
 corsair.remove () {
     # get rid of driver and shit
     gask "really remove corsair" || return 100
-    suspend_script="/lib/systemd/system-sleep/corsair-suspend.sh"
+
 
     if [[ /tmp/ckb-next ]] ; then
         cd /tmp/ckb-next
@@ -456,67 +515,83 @@ corsair.remove () {
 }
 
 
-# corsair.systemd () {
+corsair.systemd_enable () {
 
-#     local cmd=$1 ; shift
-#     case $cmd in
-#             install|remove|enable|disable)
-#                         corsair.systemd_$cmd $@
-#                         return $?
-#                     ;;
-#               * ) gmsg -c yellow "unknown command '$cmd'"
-#                   return 127
-#         esac
+    temp="/tmp/suspend.temp"
+    gmsg -v1 -n "generating corsair service file.. "
 
-# }
+    if ! [[ -d  ${corsair_service%/*} ]] ; then
+        mkdir -p ${corsair_service%/*} \
+        || gmsg -x 100 "no permission to create folder ${corsair_service%/*}"
+    fi
+
+    [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
+    [[ -f $temp ]] && rm $temp
+
+cat >"$temp" <<EOL
+[Unit]
+Description=ckb-next application
+
+[Service]
+ExecStart=bash -c '/home/$USER/bin/core.sh corsair raw_start'
+ExecStop=bash -c '/home/$USER/bin/core.sh corsair raw_stop'
+Type=simple
+Restart=always
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical-session.target
+EOL
+
+    if ! cp -f $temp $corsair_service ; then
+            gmsg -c red "script copy failed"
+            return 101
+        fi
+
+    # copy file to from backup to avoid reinstall need after disable
+    [[ -f $corsair_daemon_service ]] || cp -f $GURU_CFG/${corsair_daemon_service##*/} $corsair_daemon_service
+
+    chmod +x $corsair_service
+    systemctl --user daemon-reload || gmsg -c yellow "reload failed"
+    systemctl --user enable corsair.service || gmsg -c yellow "enable failed"
+    systemctl --user start corsair.service || gmsg -c yellow "start failed"
+
+    rm -f $temp
+    gmsg -v1 -c green "ok"
+    return 0
+}
 
 
-# corsair.systemd_install () {
+corsair.systemd_disable () {
 
-#     temp="/tmp/suspend.temp"
-#     gmsg -v1 -V2 -n "setting suspend script.. "
-#     gmsg -v2 -n "setting suspend script $system_suspend_script.. "
+    systemctl --user stop corsair.service || gmsg -c yellow "stop failed"
+    cp -f $corsair_daemon_service $GURU_CFG
+    systemctl --user disable corsair.service || gmsg -c yellow "disable failed"
+    rm $corsair_service || gmsg -c yellow "rm failed"
+    systemctl --user daemon-reload || gmsg -c yellow "reload failed"
+    systemctl --user reset-failed || gmsg -c yellow "reset failed"
 
-#     if ! [[ -d  ${system_suspend_script%/*} ]] ; then
-#         mkdir -p ${system_suspend_script%/*} \
-#         || gmsg -x 100 "no permission to create folder ${system_suspend_script%/*}"
-#     fi
+}
 
-#     [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
-#     [[ -f $temp ]] && rm $temp
 
-# cat >"$temp" <<EOL
-# [Unit]
-# Description=start ckb-next application
+corsair.systemd_start () {
 
-# [Service]
-# ExecStart=bash -c '/home/$USER/bin/core.sh corsair start'
-# ExecStop=bash -c '/home/$USER/bin/core.sh corsair stop'
-# Type=simple
-# Restart=always
-# RemainAfterExit=yes
+    systemctl --user start corsair.service
+}
 
-# [Install]
-# WantedBy=graphical-session.target
-# EOL
 
-#     if ! cp -f $temp $system_suspend_script ; then
-#             gmsg -c red "script copy failed"
-#             return 101
-#         fi
+corsair.systemd_restart () {
+    systemctl --user restart corsair.service
+}
 
-#     chmod +x $system_suspend_script
-#     # sudo chown $USER:$USER $system_suspend_script
 
-#     systemctl --user enable ckb-next-app.service
-#     systemctl --user daemon-reload
+corsair.systemd_stop () {
+    systemctl --user stop corsair.service
+}
 
-#     # clean
-#     rm -f $temp
-#     gmsg -v1 -c green "ok"
-#     return 0
-# }
-
+corsair.systemd_status () {
+    systemctl --user status corsair.service
+}
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
@@ -525,68 +600,3 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         exit "$?"
 fi
 
-
-
-
-
-
-
-# corsair.start1 () {
-#     # reserve keys esc, F1 to 12
-#     if ! [[ $GURU_FORCE ]] && ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-#             gmsg -c green "already running"
-#             gmsg -v1 "use -f to force restart"
-#             return 0
-#         fi
-
-#     if [[ $GURU_FORCE ]] ; then
-#             gmsg -n "restarting ckb-next-daemon.. "
-
-#             if systemctl restart ckb-next-daemon  ; then
-#                     gmsg -c green "ok"
-#                 else
-#                     gmsg -c red "failed"
-#                 fi
-#         else
-#             # ask sudo password forehand cause next step stdout is rerouted to null
-#             gmsg -v1 -c white "starting ckb-next-daemon.. "
-
-#             # start daemon to background
-#             systemctl start ckb-next-daemon && gmsg -v1 -c green "OK"
-#         fi
-
-#     # check lauch
-#     gmsg -n -v1 -t "checking ckb-next-daemon.. "
-#     if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-#             gmsg -v1 -c green "OK"
-#         else
-#             gmsg -c red "ckb-next-daemon starting failed"
-#             return 123
-#         fi
-
-#     gmsg -v1 -c white "starting ckb-next application "
-#     ckb-next -c -b -p guru >/dev/null &
-
-#     if ps auxf | grep "ckb-next" |  grep -v "ckb-next-" | grep -v grep >/dev/null ; then
-#             gmsg -v1 -c green "OK"
-#         else
-#             gmsg -c red "ckb-next application not running"
-#             return 123
-#         fi
-
-#     # initialize profile and mode
-#     gmsg -n -v1 -t "setting profile and mode.. "
-#     local _mode=$GURU_CORSAIR_MODE ; [[ "$1" ]] && _mode="$1"
-#     corsair.init $_mode && gmsg -v1 -c green "OK"
-#     sleep 3
-
-#     # Check are pipes started
-#     gmsg -n -v1 -t "checking pipes.. "
-#     if ps auxf |grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null ; then
-#             gmsg -v1 -c green "OK"
-#         else
-#             gmsg -c red "wrong or not imported ckb-next profile "
-#             return 100
-#         fi
-#     return 0
-# }

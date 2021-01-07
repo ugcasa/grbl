@@ -4,6 +4,7 @@
 # TODO Jan 04 01:24:50 electra bash[413320]: /home/casa/bin/common.sh: line 83: printf: write error: Broken pipe
 
 source $GURU_BIN/common.sh
+source $GURU_BIN/corsair.sh
 
 daemon_service_script="$HOME/.config/systemd/user/guru.service"
 
@@ -79,20 +80,16 @@ daemon.start () {
     #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
     for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
 
-        module=${GURU_DAEMON_POLL_LIST[i]}
-        gmsg -v2 -c dark_golden_rod "$i $module"
+        module=${GURU_DAEMON_POLL_LIST[i-1]}
         case $module in
             null|empty )
-                gmsg -v3 -c deep_pink "skipping $module"
                 ;;
             *)
+                gmsg -n -v2 -c dark_golden_rod "module_$i:$module: "
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
-                        gmsg -v3 -c pink "module: $GURU_BIN/$GURU_BIN/$module.sh"
-
+                        # gmsg -v3 ": $GURU_BIN/$GURU_BIN/$module.sh"
                         $module.main poll start
-                        gmsg -v3 -c pink "command: $module.main poll start "
-
                     else
                         gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
                     fi
@@ -124,20 +121,19 @@ daemon.stop () {
 
     for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
 
-        module=${GURU_DAEMON_POLL_LIST[i]}
-        gmsg -v3 -c dark_golden_rod "$i $module"
+        module=${GURU_DAEMON_POLL_LIST[i-1]}
+        #gmsg -v3 -c dark_golden_rod "$i $module"
         case $module in
             null|empty )
-                gmsg -v3 -c deep_pink "skipping $module"
+                #gmsg -v3 -c dark_grey "skipping $module"
                 ;;
             * )
+                gmsg -n -v2 -c dark_golden_rod "module_$i:$module: "
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
-                        gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
-
                         $module.main poll end
-                        gmsg -v3 "command: $module.main poll end"
-
+                        # gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
+                        # gmsg -v2 "command: $module.main poll end"
                     else
                         gmsg -v1 "${FUNCNAME[0]}: module '$module' not installed"
                     fi
@@ -181,34 +177,33 @@ daemon.poll () {
         # to update configurations is user changes them
         source $GURU_RC
         GURU_FORCE=true
-        # indicate
-        gmsg -v4 -c $GURU_CORSAIR_EFECT_COLOR -k "esc"
-
         #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
+        gmsg -v2 -c $GURU_CORSAIR_EFECT_COLOR -k esc "daemon active"
+        local i=
         for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
-
-            module=${GURU_DAEMON_POLL_LIST[i]}
-            gmsg -c dark_golden_rod "$i $module"
+            module=${GURU_DAEMON_POLL_LIST[i-1]}
             case $module in
                 null|empty )
-                    gmsg -c deep_pink "skipping $module"
+                    gmsg -v4 -c dark_grey "skipping $module"
                     ;;
                 * )
+                    gmsg -n -v2 -c dark_golden_rod "module_$i:$module: "
 
                     if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                             source "$GURU_BIN/$module.sh"
                             $module.main poll status
-                            gmsg -v2 -t "${FUNCNAME[0]}: $module poll status $?"
                         else
                             gmsg -v1 -c yellow "${FUNCNAME[0]}: module '$module' not installed"
-                            gmsg -v2 "${FUNCNAME[0]}: $GURU_BIN/${_poll_list[$_i]}.sh"
                         fi
                     ;;
                 esac
             done
 
-        gmsg -v4 -c reset -k "esc"
+        gmsg -v2 -c reset -k esc "daemon sleeps $GURU_DAEMON_INTERVAL seconds"
+        #gmsg -v2 -c black -k cplc "ignore disable keys"
+
         sleep $GURU_DAEMON_INTERVAL
+
         # check is stop command given, exit if so
         [[ -f "$HOME/.guru-stop" ]] && break
     done

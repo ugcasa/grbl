@@ -5,10 +5,9 @@ source $GURU_BIN/mount.sh
 
 system_suspend_flag="/tmp/suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
-# system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh" #
+system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh" # ubuntu 18.04 > like mint 20.0
 
-system_suspend_script="$HOME/.config/systemd/user/ckb-next-app.service"
-
+system_indicator_key="f$(poll_order system)"
 
 system.help () {
     # system help printout
@@ -63,7 +62,7 @@ system.env_help () {
 system.main () {
     # system command parser
     local tool="$1" ; shift
-    indicator_key="f$(poll_order system)"
+    #system_indicator_key="f$(poll_order system)"
 
     case "$tool" in
 
@@ -92,6 +91,11 @@ system.main () {
                         esac
                 ;;
 
+        init_system)
+            system.init_system_check "$@"
+            return $?
+            ;;
+
             *)  system.help
         esac
 
@@ -102,10 +106,10 @@ system.main () {
 system.status () {
     # system status
     if mount.online "$GURU_SYSTEM_MOUNT" ; then
-        gmsg -v 1 -t -c green "${FUNCNAME[0]}: guru on service" -k $indicator_key
+        gmsg -v 1 -t -c green "${FUNCNAME[0]}: guru on service" -k $system_indicator_key
         return 0
     else
-        gmsg -v 1 -t -c red "${FUNCNAME[0]}: .data is unmounted" -k $indicator_key
+        gmsg -v 1 -t -c red "${FUNCNAME[0]}: .data is unmounted" -k $system_indicator_key
         return 101
     fi
 }
@@ -264,10 +268,10 @@ system.client_update () {
 
 system.upgrade () {
     # upgrade guru-client
-    sudo apt-get update || gmsg -c red -x 100 "apt update failed"
+    sudo apt-get update || gmsg -c red -x 100 "apt update failed"
     gmsg -v2 -c white "upgradable list: "
     gmsg -v2 -c light_blue "$(sudo apt list --upgradable)"
-    sudo apt-get upgrade -y || gmsg -c red -x 101 "apt updgrade failed"
+    sudo apt-get upgrade -y || gmsg -c red -x 101 "apt updgrade failed"
     sudo apt-get autoremove
     sudo apt-get autoclean
     sudo apt-get check || gmsg -c yellow "Warning: $? check did nod pass"
@@ -300,48 +304,67 @@ system.rollback () {
 }
 
 
-system.suspend_script () {
-    temp="/tmp/suspend.temp"
-    gmsg -v1 -V2 -n "setting suspend script.. "
-    gmsg -v2 -n "setting suspend script $system_suspend_script.. "
+system.init_system_check () {
+    # check init system, return 0 if match with input sysv-init|systemd|upstart
+    local user_input=
 
-    if ! [[ -d  ${system_suspend_script%/*} ]] ; then
-        mkdir -p ${system_suspend_script%/*} \
-        || gmsg -x 100 "no permission to create folder ${system_suspend_script%/*}"
+    [[ "$1" ]] && user_input=$1
+
+    if [[ `/sbin/init --help` =~ upstart ]] ; then # TBD: test with upstart
+            init_system="upstart"
+
+        elif [[ `systemctl` =~ -\.mount ]] ; then
+            init_system="systemd"
+
+        elif [[ -f /etc/init.d/cron && ! -h /etc/init.d/cron ]] ; then # TBD: test with sysv"
+            init_system="sysv-init"
+
+        else
+            init_system=
     fi
 
+    [[ $init_system ]] || gmsg -x 135 -c yellow "cannot detect init system"
+    [[ $user_input ]] || gmsg -V1 "$init_system"
+
+    if [[ "$init_system" == "$user_input" ]] ; then
+            gmsg -v1 -V2 -c green "ok"
+            gmsg -v2 -c green "$init_system"
+            return 0
+        else
+            gmsg -v1 -c yellow "init system did not match, got '$init_system'"
+            return 100
+
+        fi
+}
+
+
+system.suspend_script () {
+    # launch stuff on suspend
+    temp="/tmp/suspend.temp"
+    gmsg -n -v2 "$system_suspend_script.. "
+
+    [[ -d  ${system_suspend_script%/*} ]] || sudo mkdir -p ${system_suspend_script%/*}
     [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
     [[ -f $temp ]] && rm $temp
 
-cat >"$temp" <<EOL
-[Unit]
-Description=start ckb-next application
-
-[Service]
-ExecStart=bash -c '/home/$USER/bin/core.sh corsair start'
-ExecStop=bash -c '/home/$USER/bin/core.sh corsair stop'
-Type=simple
-Restart=always
-RemainAfterExit=yes
-
-[Install]
-WantedBy=graphical-session.target
+# following lines should be without indentation
+    cat >"$temp" <<EOL
+#!/bin/bash
+case \${1} in
+  pre|suspend )
+    [[ -f $system_suspend_flag ]] || touch $system_suspend_flag
+    chown $USER:$USER $system_suspend_flag
+    ;;
+  post|resume|thaw )
+    $GURU_BIN/$GURU_CALL start
+    ;;
+esac
 EOL
 
-    if ! cp -f $temp $system_suspend_script ; then
-            gmsg -c red "script copy failed"
-            return 101
-        fi
-
-    chmod +x $system_suspend_script
-    # sudo chown $USER:$USER $system_suspend_script
-
-    systemctl --user enable ckb-next-app.service
-    systemctl --user daemon-reload
-
-    # clean
+    sudo cp $temp $system_suspend_script || return 1
+    sudo chmod +x $system_suspend_script || return 2
     rm -f $temp
-    gmsg -v1 -c green "ok"
+    gmsg -v2 -c green "ok"
     return 0
 }
 
@@ -382,15 +405,19 @@ system.suspend () {
                 sudo rm -f $system_suspend_script \
                 && gmsg -v1 -c green "ok" || gmsg -c red "failed"
                 ;;
-            "" )
-                gmsg "suspending.. " -q "/status/suspended"
-                [[ $GURU_FORCE ]] || sleep 3
-                systemctl suspend
-                ;;
 
             help )
                 system.suspend_help
                 ;;
+
+            "" )
+                if system.init_system_check "systemd" ; then
+                        gmsg "suspended" -q "status"
+                        [[ $GURU_FORCE ]] || sleep 3
+                        systemctl suspend
+                    fi
+                ;;
+
             *)  gmsg -c yellow "unknown suspend command: $1"
                 system.suspend_help
                 ;;
@@ -398,17 +425,16 @@ system.suspend () {
         esac
 }
 
-
 system.poll () {
 
     local _cmd="$1" ; shift
 
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: system status polling started" -k $indicator_key
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: system status polling started" -k $system_indicator_key
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: system status polling ended" -k $indicator_key
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: system status polling ended" -k $system_indicator_key
             ;;
         status )
             system.status $@

@@ -5,10 +5,11 @@
 source common.sh
 source mount.sh
 
+timer_indicator_key="f$(poll_order timer)"
 
 timer.main () {
-    mount.system
-    indicator_key="f$(poll_order timer)"
+    mount.system >>/dev/null
+
     command="$1" ; shift
     case "$command" in
 
@@ -43,10 +44,8 @@ timer.help () {
 
 timer.toggle () {
     # key press action
-    indicator_key="f$(poll_order timer)"    #viiksilanka, tämä kirjoitetaan uusiksi anyway, jaksa korjata =D
     if timer.status >/dev/null ; then
         timer.end
-        indicator_key="f$(poll_order timer)"    #viiksilanka, tämä kirjoitetaan uusiksi anyway, jaksa korjata =D
     else
         timer.start
     fi
@@ -63,11 +62,10 @@ timer.check() {
 
 timer.status() {
 
-    #indicator_key="f$(poll_order timer)"
-
+    #timer_indicator_key="f$(poll_order timer)"
 
     if [ ! -f "$GURU_FILE_TRACKSTATUS" ]; then
-        gmsg -c reset -k $indicator_key "no timer tasks"
+        gmsg -t -v1 -c reset -k $timer_indicator_key "${FUNCNAME[0]}: no timer tasks"
         return 1
     fi
 
@@ -83,8 +81,6 @@ timer.status() {
     [[ $hours > 0 ]] && print_h=$(printf "%0.2f hours " $hours) || print_h=""
     [[ $minutes > 0 ]] && print_m=$(printf "%0.2f minutes " $minutes) || print_m=""
     [[ $hours > 0 ]] && print_s="" || print_s=$(printf "%0.2f seconds" $seconds)
-
-    gmsg -t -v1 -c aqua -k $indicator_key "current invoice status $print_h$print_m$print_s for $customer $project $task" -q $GURU_USER/status "working $hours:$minutes"
 
     case "$1" in
 
@@ -108,7 +104,7 @@ timer.status() {
             ;;
 
         simple|*)
-            gmsg -c aqua_marine $(printf "$start_time > "'%.2d:%.2d:%.2d'" > $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60)))
+            gmsg -t -v1 -c aqua -k $timer_indicator_key "${FUNCNAME[0]}: $customer $project $task spend: $hours:$minutes" -m $GURU_USER/status
             ;;
     esac
 
@@ -127,7 +123,7 @@ timer.last() {
 
 timer.start() {
     # check and force mount system (~/.data) where timer record files are kept
-    indicator_key="f$(poll_order timer)"
+    timer_indicator_key="f$(poll_order timer)"
 
     gmsg -v1 "starting timer.."
     [[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
@@ -136,7 +132,7 @@ timer.start() {
         timer.main end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
     fi
 
-    indicator_key="f$(poll_order timer)"    #viiksilanka, tämä kirjoitetaan uusiksi anyway, jaksa korjata =D
+    timer_indicator_key="f$(poll_order timer)"    #viiksilanka, tämä kirjoitetaan uusiksi anyway, jaksa korjata =D
 
     case "$1" in
 
@@ -182,8 +178,8 @@ timer.start() {
     printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_FILE_TRACKSTATUS
 
     # signal user and others
-    gmsg -v4 -t -c aqua -k $indicator_key -q $GURU_USER/status "working - please do not disturb"
-    gmsg -v0 -c aqua_marine "start: $nice_date $start_time $customer $project $task"
+    gmsg -v4 -t -c aqua -k $timer_indicator_key -q $GURU_USER/status "working - please do not disturb"
+    gmsg -v1 -c aqua_marine "start: $nice_date $start_time $customer $project $task"
 
     return 0
 }
@@ -194,7 +190,7 @@ timer.end() {
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
         source $GURU_FILE_TRACKSTATUS
     else
-        gmsg "timer not started"
+        gmsg -v1 "timer not started"
         return 13
     fi
 
@@ -257,8 +253,8 @@ timer.end() {
 
 
     # inform user
-    gmsg -v4 -t -c reset -k $indicator_key -q $GURU_USER/status "working paused - feel free to contact"
-    gmsg -c dark_cyan "end: $nice_start_date $start_time - $end_time$option_end_date $hours h:$minutes $customer $project $task"
+    gmsg -v4 -t -c reset -k $timer_indicator_key -q $GURU_USER/status "working paused - feel free to contact"
+    gmsg -v1 -c dark_cyan "end: $nice_start_date $start_time - $end_time$option_end_date $hours h:$minutes $customer $project $task"
 
     return 0
 }
@@ -282,10 +278,10 @@ timer.cancel() {
 
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
             rm $GURU_FILE_TRACKSTATUS
-            gmsg -v4 -t -c reset -k $indicator_key -q $GURU_USER/status "work canceled - probably something still going on.. "
-            gmsg -c dark_golden_rod "canceled"
+            gmsg -v4 -t -c reset -k $timer_indicator_key -q $GURU_USER/status "work canceled - probably something still going on.. "
+            gmsg -v1 -c dark_golden_rod "canceled"
         else
-            gmsg "not active timer"
+            gmsg -v1 "not active timer"
         fi
     return 0
 }
@@ -321,15 +317,15 @@ timer.report() {
 
 timer.poll () {
 
-    indicator_key="f$(poll_order timer)"
+    timer_indicator_key="f$(poll_order timer)"
 
     local _cmd="$1" ; shift
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: timer status polling started" -k $indicator_key
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: timer status polling started" -k $timer_indicator_key
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: timer status polling ended" -k $indicator_key
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: timer status polling ended" -k $timer_indicator_key
             ;;
         status )
             timer.status $@
