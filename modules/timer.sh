@@ -9,6 +9,7 @@ timer_indicator_key="f$(poll_order timer)"
 
 timer.main () {
     mount.system >>/dev/null
+    timer_indicator_key="f$(poll_order timer)"
 
     command="$1" ; shift
     case "$command" in
