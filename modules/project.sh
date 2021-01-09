@@ -41,6 +41,7 @@ project.help () {
 
 project.main() {
     # command paerser
+    mount.main system
     project_folder="$GURU_SYSTEM_MOUNT/project"
     local _cmd="$1" ; shift
     case "$_cmd" in
