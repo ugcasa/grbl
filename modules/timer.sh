@@ -52,7 +52,6 @@ timer.toggle () {
     else
         timer.start
     fi
-    # let user to see stuff
     sleep 4
 }
 
@@ -107,7 +106,7 @@ timer.status() {
             ;;
 
         simple|*)
-            gmsg -t -v1 -c aqua -k $timer_indicator_key "${FUNCNAME[0]}: $customer $project $task spend: $hours:$minutes" -m $GURU_USER/status
+            gmsg -t -v1 -c aqua -k $timer_indicator_key "${FUNCNAME[0]}: $customer $project $task spend: $hours:$minutes"
             ;;
     esac
 
@@ -178,9 +177,9 @@ timer.start() {
     printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_FILE_TRACKSTATUS
 
     # signal user and others
-    gmsg -v4 -t -c aqua -k $timer_indicator_key -q $GURU_USER/status "working - please do not disturb"
-    gmsg -v1 -c aqua_marine "start: $nice_date $start_time $customer $project $task"
-
+    gmsg -v1 -c aqua -k $timer_indicator_key "$start_time $customer $project $task"
+    gmsg -v4 -m $GURU_USER/message $GURU_TIMER_START_MESSAGE
+    gmsg -v4 -m $GURU_USER/status $GURU_TIMER_START_STATUS
     return 0
 }
 
@@ -251,11 +250,10 @@ timer.end() {
     printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_FILE_TRACKLAST
     rm $GURU_FILE_TRACKSTATUS
 
-
-    # inform user
-    gmsg -v4 -t -c reset -k $timer_indicator_key -q $GURU_USER/status "working paused - feel free to contact"
-    gmsg -v1 -c dark_cyan "end: $nice_start_date $start_time - $end_time$option_end_date $hours h:$minutes $customer $project $task"
-
+    # inform
+    gmsg -v1 -c reset -k $timer_indicator_key "$start_time - $end_time$option_end_date $customer $project $task spend $hours"
+    gmsg -v4 -m $GURU_USER/message $GURU_TIMER_END_MESSAGE
+    gmsg -v4 -m $GURU_USER/status $GURU_TIMER_END_STATUS
     return 0
 }
 
@@ -270,16 +268,17 @@ timer.stop () {
 timer.change() {
     # alias change for start
     timer.start "$@"
+    gmsg -v1 -c dark_golden_rod "work topic changed"
     return $?
 }
 
 
 timer.cancel() {
-
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
             rm $GURU_FILE_TRACKSTATUS
-            gmsg -v4 -t -c reset -k $timer_indicator_key -q $GURU_USER/status "work canceled - probably something still going on.. "
-            gmsg -v1 -c dark_golden_rod "canceled"
+            gmsg -v1 -t -c reset -k $timer_indicator_key "work canceled"
+            gmsg -v4 -m $GURU_USER/message "glitch in the matrix, something changed"
+            gmsg -v4 -m $GURU_USER/status "available"
         else
             gmsg -v1 "not active timer"
         fi
@@ -333,7 +332,6 @@ timer.poll () {
         *)  timer.help
             ;;
         esac
-
 }
 
 
