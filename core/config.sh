@@ -195,6 +195,8 @@ config.user () {
     # close new file handle
     exec 3>&-
 
+    clear
+
     if (( return_code > 0 )) ; then
             gmsg "nothing changed.."
             return 0
@@ -206,7 +208,8 @@ config.user () {
             echo "$_new_file" >"$_config_file"
             gmsg -c white "configure saved, taking configuration in use.."
             config.export
-            gmsg -c white "to save new configuration to sever type: '$GURU_CALL config push'"
+            #gmsg -c white "to save new configuration to sever type: '$GURU_CALL config push'"
+            remote.push_config
         else
             gmsg -c dark_golden_rod "ignored"
             gmsg -c white "to get previous configurations from sever type: '$GURU_CALL config pull'"
