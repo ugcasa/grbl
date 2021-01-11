@@ -24,10 +24,11 @@ check_distro() {
     if [ -f /etc/os-release ]; then
         source /etc/os-release
         echo "$ID"
+        return 0
     else
         echo "other"
+        return 100
     fi
-    return 0
 }
 
 
