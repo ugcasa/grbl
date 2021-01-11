@@ -8,7 +8,7 @@ convert -version >/dev/null || sudo sudo apt install imagemagick-6.q16
 scan.main () {
     local _cmd=$1 ; shift
     case $_cmd in
-            receipt|invoice|install|help)
+            check|receipt|invoice|install|remove|help)
                     scan.$_cmd $@                   ; return $? ;;
             *)      gmsg "scan: unknown command"    ; return 1  ;;
         esac
@@ -31,34 +31,120 @@ scan.help () {
 
 scan.install () {
     # http://download.ebz.epson.net/man/linux/iscan_e.html
-    read -p "installing EPSON DS30 driver, continue by anykey, ctrl-c to cancel :" null
 
-    if [[ "$(ls /usr/bin/iscan >/dev/null)" -ne 0 ]]; then
-        cd /tmp
-        wget https://download2.ebz.epson.net/imagescanv3/linuxmint/lts1/deb/x64/imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz || return 101
-        tar -xvf  imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz || return 102
-        cd imagescan-bundle-linuxmint-19-3.59.2.x64.deb || return 102
-        sh install.sh
-        cd ..
-        rm imagescan-bundle-linuxmint-19-3.59.2.x64.deb.tar.gz*
-        rm -rf imagescan-bundle-linuxmint-19-3.59.2.x64.deb
-        sudo apt update
-        sudo apt install xsane imagemagick gocr || return 103
-        # Test
-        sudo sane-find-scanner | grep "EPSON DS-30" && echo "Scanner found" || return 104
-
-        local _file=/etc/udev/rules.d/79-udev-epson.rules
-        if [[ -f "$_file" ]] ; then
-            echo "$_file exist"
-            #sudo rm $_file?
-        else
-            echo 'SUBSYSTEM="usb_device", ACTION="add", GOTO="epson_rules_end"' | sudo tee --append  $_file
-            echo 'ATTR{idVendor}="0x04b8", ATTR{idProduct}="0x012f", SYMLINK+="scan-epson", MODE="0666", OWNER="$USER", GROUP="scanner"' | sudo tee --append $_file
-            echo 'LABEL="epson_rules_end"' | sudo tee --append $_file
+    if [[ -f /usr/bin/iscan ]] ; then
+            gmsg "installed, use force to reinstall"
+            return 0
         fi
-        read -p "modifying config files continue enter ctrl-c cancel" null
-        sudo sed -i -e 's/policy domain="coder" rights="none" pattern="PDF"/policy domain="coder" rights="read|write" pattern="PDF"/g' /etc/ImageMagick-6/policy.xml
-    fi
+
+    # check os type
+    if [[ `uname -o` != "GNU/Linux" ]] ; then
+            gmsg -c red "non comptible plaform $(uname -o)"
+            return 100
+        fi
+
+    source /etc/os-release
+    ver="3.63.0" ; [[ $1 ]] && ver="$1"
+    arch="x64"
+    source="https://download2.ebz.epson.net/imagescanv3/linuxmint/lts1/deb/x64"
+    dep_file="imagescan-bundle-${ID}-${VERSION_ID}-${ver}.${arch}.deb"
+    gz_file="${dep_file}.tar.gz"
+    gmsg -v3 -c pink "${gz_file}"
+    gmsg -v3 -c deep_pink "${source}/${gz_file}"
+
+    case $ID in
+            linuxmint|ubuntu|debian)
+
+                gmsg -v1 -c white "downloading.."
+                cd /tmp
+                wget "${source}/${gz_file}" || gmsg -c red -x 101 "source location not found $source/${gz_file}"
+
+                gmsg -v1 -c white "decompressing.."
+                [[ -f $gz_file ]] || gmsg -c red -x 102 "source ${gz_file} not found"
+                tar -xvf $gz_file || gmsg -c red -x 103 "unable to extract ${gz_file}"
+                cd $dep_file || gmsg -c red -x 103 "cannot enter folder ${dep_file}"
+
+                gmsg -v1 -c white "running installer.."
+                ./install.sh
+                gmsg -v3 -c deep_pink "$?"
+
+                gmsg -v1 -c green "install success"
+                gmsg -v2 -c dark_grey "cleaning up.."
+                cd ..
+                rm -rf imagescan-bundle-linuxmint*
+
+                gmsg -v1 -c white "installing requirements.. "
+
+                #[[ $ID != "debian" ]] && sudo add-apt-repository ppa:rolfbensch/sane-git
+                sudo apt update
+                sudo apt install -y xsane imagemagick gocr || gmsg -c red -x 105 "apt install error"
+
+                gmsg -c green "done"
+                ;;
+
+            *)
+                gmsg -c yellow "unknown distro '$$ID'. pls refer $GURU_BIN/install.sh function scan.install :~50"
+                return 106
+                ;;
+        esac
+
+        # setup installation
+        gmsg -v1 -c white "modifying config files.. "
+
+        # case: scanner not found
+        local rule_file="/etc/udev/rules.d/79-udev-epson.rules"
+        gmsg -v2 -c pink "$rule_file"
+        [[ -f "$rule_file" ]] && sudo rm $rule_file
+
+        #echo 'ATTR{idVendor}="0x04b8", ATTR{idProduct}="0x012f", SYMLINK+="scan-epson", MODE="0666", OWNER="$USER", GROUP="scanner"' \| sudo tee --append $rule_file
+        echo 'SUBSYSTEM="usb_device", ACTION="add", GOTO="epson_rules_end"' | sudo tee --append  $rule_file
+        echo 'ATTRS{idVendor}="0x04b8", ATTR{idProduct}="0x0147", SYMLINK+="scan-epson", MODE="0666", OWNER="$USER", GROUP="scanner", ENV{libsane_matched}="yes"' \
+            | sudo tee --append $rule_file
+        echo 'LABEL="epson_rules_end"' | sudo tee --append $rule_file
+
+        # case: parmission error fix
+        sudo sed -i -e 's/policy domain="coder" rights="none" pattern="PDF"/policy domain="coder" rights="read|write" pattern="PDF"/g' \
+            /etc/ImageMagick-6/policy.xml
+
+        # case: scanimage: no SANE devices found fix
+        # local rule_file="/etc/udev/rules.d/40-libsane.rules"
+        # gmsg -v2 -c pink "$rule_file"
+        # [[ -f "$rule_file" ]] && sudo rm $rule_file
+        # echo 'ATTRS{idVendor}=="0x04b8", ATTRS{idProduct}=="0x0147", ENV{libsane_matched}="yes"' | sudo tee --append $rule_file
+
+        sudo udevadm control --reload-rules && udevadm trigger
+
+        # test
+        gmsg -c white "testing.. "
+        scan.check
+        return $?
+}
+
+
+scan.check () {
+    gmsg -n -v1 "checking device.. "
+    local scanner_type="EPSON DS-30"
+
+    if ! sudo sane-find-scanner | grep "$scanner_type" >/dev/null ; then
+            gmsg -c red "sane cannot find $scanner_type"
+            return 100
+        fi
+
+    if sudo sudo scanimage -L | grep "No scanners" >/dev/null ; then
+            gmsg -c red -x 106 "no sane support for $scanner_type"
+            return 101
+        fi
+
+    gmsg -v1 -c green "$scanner_type found"
+    return 0
+
+}
+
+scan.remove () {
+
+    sudo apt install -y xsane imagemagick gocr || gmsg -c red -x 110 "apt error"
+    sudo rm /etc/udev/rules.d/40-libsane.rules
+    sudo rm $/etc/udev/rules.d/79-udev-epson.rules
 }
 
 
