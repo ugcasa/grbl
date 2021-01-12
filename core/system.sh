@@ -3,7 +3,7 @@
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 
-system_suspend_flag="/tmp/suspend.flag"
+system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
 system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh" # ubuntu 18.04 > like mint 20.0
 
@@ -23,6 +23,9 @@ system.help () {
     gmsg -v1 " client-rollback      rollback to last known working version "
     gmsg -v1 " status               system status output"
     gmsg -v1 " suspend <sub_cmd>    suspend functions '$GURU_CALL system suspend help' for more details "
+    gmsg -v2 " flags                show system flag status"
+    gmsg -v2 " set_flag             arise system flag"
+    gmsg -v2 " rm_flag              remove system flag"
     gmsg -v1 " suspend now          suspend computer"
     gmsg -v1 " poll start|end       start or end module status polling "
 }
@@ -67,7 +70,7 @@ system.main () {
 
     case "$tool" in
 
-            status|poll|suspend|core-dump|update|upgrade|rollback)
+            status|poll|suspend|core-dump|update|upgrade|flag|rollback)
                 system.$tool $@
                 return $?
                 ;;
@@ -114,6 +117,96 @@ system.status () {
         return 101
     fi
 }
+
+
+system.flag () {
+
+    local cmd=$1 ; shift
+    case $cmd in
+            set|rm|ls)
+                system.$cmd-flag $@
+                return $? ;;
+            "") system.ls-flag
+                return $? ;;
+            *)  gmsg "unknown command $cmd"
+                GURU_VERBOSE=2
+                system.help
+        esac
+}
+
+
+system.ls-flag () {
+
+    gmsg -v2 -c white "system flag status:"
+    local flag_list=(fast suspend stop)
+
+    local flag=
+    for flag in ${flag_list[@]} ; do
+            gmsg -v1 -n "$flag flag: "
+            gmsg -V1 -n "$flag:"
+            if [[ -f /tmp/guru-$flag.flag ]] ; then
+                    gmsg -c aqua "set"
+                else
+                    gmsg -c dark_grey "disabled"
+                fi
+        done
+
+    # gmsg -v2 -c white "user flag status:"
+    # flag=
+    # flag_file_list=$(ls -l /tmp/guru-* | grep '.flag' | rev | cut -f1 -d ' ' | rev 2>&1 >/dev/null)
+    # for flag_file in ${flag_file_list[@]} ; do
+    #         # remove ".flag"
+    #         flag=${flag_file%.*}
+    #         # remove "/tmp/guru-"
+    #         flag=${flag#*-}
+
+    #         # remove system flags
+    #         case $flag in ${flag_list[@]}) continue ;; esac
+
+    #         gmsg -v1 -n "$flag flag: "
+    #         gmsg -V1 -n "$flag:"
+    #         if [[ -f /tmp/guru-$flag.flag ]] ; then
+    #                 gmsg -c aqua "set"
+    #             else
+    #                 # this obviously never happen
+    #                 gmsg -c dark_grey "disabled"
+    #             fi
+    #     done
+
+
+}
+
+
+system.set-flag () {
+
+    [[ $1 ]] || gmsg -x 100 -c red "system.set_flag error: flag missing"
+    local flag="$1"
+
+    if [[ -f /tmp/guru-$flag.flag ]] ; then
+            gmsg -v1 "flag already set"
+            return 0
+        else
+            gmsg -v1 "flag $flag set"
+            touch /tmp/guru-$flag.flag
+        fi
+
+}
+
+
+system.rm-flag () {
+
+    [[ $1 ]] || gmsg -x 100 -c red "system.rm_flag error: flag missing"
+    local flag="$1"
+
+    if [[ -f /tmp/guru-$flag.flag ]] ; then
+            rm -f /tmp/guru-$flag.flag && \
+            gmsg -v1 "flag disabled"
+            return 0
+        else
+            gmsg -v1 "flag not set"
+        fi
+}
+
 
 
 system.get_env () {
@@ -249,17 +342,20 @@ system.get_env_by_name () {
 
 
 system.client_update () {
+
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"
     local _banch="master" ;
+
     [[ "$GURU_USE_VERSION" ]] && _branch="$GURU_USE_VERSION"
     [[ "$1" ]] && _branch="$1"
 
     [ -d "$temp_dir" ] && rm -rf "$temp_dir"
     mkdir "$temp_dir"
     cd "$temp_dir"
+
     git clone -b "$_branch" "$source" || return 100
-    bash $GURU_BIN/uninstall.sh
+    bash $GURU_BIN/uninstall.sh -f
     cd "$temp_dir/guru-client"
     bash install.sh "$@"
     cd
@@ -269,6 +365,7 @@ system.client_update () {
 
 system.upgrade () {
     # upgrade guru-client
+
     sudo apt-get update || gmsg -c red -x 100 "apt update failed"
     gmsg -v2 -c white "upgradable list: "
     gmsg -v2 -c light_blue "$(sudo apt list --upgradable)"
@@ -280,7 +377,9 @@ system.upgrade () {
 
 
 system.update () {
+
     system.upgrade
+    return $?
 }
 
 
@@ -307,6 +406,7 @@ system.rollback () {
 
 system.init_system_check () {
     # check init system, return 0 if match with input sysv-init|systemd|upstart
+
     local user_input=
 
     [[ "$1" ]] && user_input=$1
@@ -341,6 +441,7 @@ system.init_system_check () {
 
 system.suspend_script () {
     # launch stuff on suspend
+
     temp="/tmp/suspend.temp"
     gmsg -n -v2 "$system_suspend_script.. "
 
@@ -402,6 +503,7 @@ EOL
 
 system.suspend () {
     # suspend control
+
     case "$1" in
 
             now )
@@ -423,15 +525,17 @@ system.suspend () {
                 ;;
 
             set_flag )
-                gmsg -n -v1 "setting suspend flag.. "
-                touch $system_suspend_flag \
-                && gmsg -v1 -c green "ok" || gmsg -c red "failed"
+                system.flag set suspend
+                # gmsg -n -v1 "setting suspend flag.. "
+                # touch $system_suspend_flag \
+                # && gmsg -v1 -c green "ok" || gmsg -c red "failed"
                 ;;
 
             rm_flag )
-                gmsg -n -v1 "removing suspend flag.. "
-                rm -f $system_suspend_flag \
-                && gmsg -v1 -c green "ok" || gmsg -c red "failed"
+                system.flag rm suspend
+                # gmsg -n -v1 "removing suspend flag.. "
+                # rm -f $system_suspend_flag \
+                # && gmsg -v1 -c green "ok" || gmsg -c red "failed"
                 ;;
 
             install )
@@ -454,6 +558,7 @@ system.suspend () {
         esac
 }
 
+
 system.poll () {
 
     local _cmd="$1" ; shift
@@ -461,9 +566,11 @@ system.poll () {
     case $_cmd in
         start )
             gmsg -v1 -t -c black "${FUNCNAME[0]}: system status polling started" -k $system_indicator_key
+            return 0
             ;;
         end )
             gmsg -v1 -t -c reset "${FUNCNAME[0]}: system status polling ended" -k $system_indicator_key
+            return 0
             ;;
         status )
             system.status $@
