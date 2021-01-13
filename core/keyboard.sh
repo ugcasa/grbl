@@ -2,6 +2,8 @@
 # guru-client keyboard shortcut functions
 # casa@ujo.guru 2020
 source $GURU_BIN/common.sh
+source $GURU_BIN/os.sh
+
 
 
 keyboard.main() {

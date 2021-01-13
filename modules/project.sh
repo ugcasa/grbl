@@ -4,6 +4,8 @@
 # todo: this bs is. rewrite somehow soon
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
+source $GURU_BIN/timer.sh
+
 
 project.help () {
     gmsg -v1 -c white "guru-client project help "
@@ -24,6 +26,7 @@ project.help () {
     gmsg -v2 "  rm <name|id>            remove project and files for good "
     gmsg -v2 "  install                 install requirements "
     gmsg -v2 "  remove                  remove requirements "
+    gmsg -v1 "  change <name>           change project"
     gmsg -v2 "  sublime <name>          open only sublime project "
     gmsg -v1 "  help                    this help "
     gmsg -v1
@@ -39,13 +42,16 @@ project.help () {
 }
 
 
-project.main() {
-    # command paerser
-    mount.main system
-    project_folder="$GURU_SYSTEM_MOUNT/project"
+project.main () {
+
+    mount.system
+
     local _cmd="$1" ; shift
+
     case "$_cmd" in
-        ls|new|open|status|archive|active|close|rm|sublime|help)
+        ls|new|open|change|status|\
+        archive|active|close|rm|\
+        sublime|help)
                 project.$_cmd "$@"
                 return $? ;;
         *)      project.open "$_cmd"
@@ -54,17 +60,18 @@ project.main() {
 }
 
 
-project.check() {
+project.check () {
 
-    gmsg -n -v1 "checking project database.. "
-    mount.online "$GURU_SYSTEM_MOUNT"
+    mount.system
 
-    if [[ -d "$GURU_SYSTEM_MOUNT/project" ]] ; then
-            gmsg -c green "ready"
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+
+    if [[ -d "$project_base" ]] ; then
+            gmsg -v1 -c green "ready"
             return 0
         else
             gmsg -c red "not mounted"
-            gmsg -v2 -c white "to mount try '$GURU_CALL mount system'"
+            gmsg -v1 -c white "to mount try '$GURU_CALL mount system'"
             return 141
         fi
     }
@@ -72,18 +79,27 @@ project.check() {
 
 project.ls () {
 
-    local _project_list=($(file $project_folder/* | grep directory | cut -d ':' -f1 | rev | cut -d "/" -f1 | rev))
-    gmsg -v3 "project count: ${#_project_list[@]}: ${_project_list[@]}"
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+    # gmsg -v3 -c pink "$project_base"
 
-    # check active project
-    [[ -f $project_folder/active ]] && local _active_project=$(cat $project_folder/active)
-    gmsg -v3 "activer project: $_active_project"
+    local _project_list=($(file "$project_base/"* \
+        | grep directory \
+        | cut -d ':' -f1 \
+        | rev  \
+        | cut -d "/" -f1 \
+        | rev))
 
     # is there projects
     if (( ${#_project_list[$@]} < 1 )) ; then
             gmsg -c dark_grey "no projects"
             return 1
         fi
+
+    gmsg -v2 -c white "project count: ${#_project_list[@]}"
+
+    # check active project
+    [[ -f $project_base/active ]] && local _active_project=$(cat $project_base/active)
+    gmsg -v2 -c aqua_marine "active: $_active_project"
 
     # list of projects
     gmsg -v1 "list of projects "
@@ -105,18 +121,40 @@ project.status () {
 }
 
 
+project.add () {
+
+    [[ "$1" ]] || gmsg -x 100 -c yellow "project name needed"
+
+    local project_name="$1"
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+    local project_folder="$project_base/$project_name"
+    local sublime_project_file="project_folder/$GURU_USER-$project_name.sublime-project"
+
+    [[ -d $project_folder ]] || mkdir -p "$project_folder"
+    [[ -f $sublime_project_file ]] || touch "$sublime_project_file"
+}
+
+
 project.sublime () {
 
-    local _project_name="$1"
-    local _project_file=$GURU_SYSTEM_MOUNT/sublime-projects/$GURU_USER-$_project_name.sublime-project
-    gmsg -v2 -c dark_grey "opening project $_project_name"
+    [[ "$1" ]] || gmsg -x 100 -c yellow "project name needed"
 
-    if [[ -f "$_project_file" ]] ; then
-            gmsg -v2 -c dark_grey "using $_project_file"
-            subl --project "$_project_file" -a
-            subl --project "$_project_file" -a                              # Sublime how to open workpace?, this works anyway
+    local project_name="$1"
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+    local project_folder="$project_base/$project_name"
+    local sublime_project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
+
+    if ! [[ -d $project_folder ]] ; then
+            gmsg -c yellow "project not exist"
+            return 131
+        fi
+
+    if [[ -f "$sublime_project_file" ]] ; then
+            gmsg -v2 -c dark_grey "using $sublime_project_file"
+            subl --project "$sublime_project_file" -a
+            subl --project "$sublime_project_file" -a # Sublime how to open workpace?, this works anyway
         else
-            gmsg -c yellow "$_project_file not found"
+            gmsg -c yellow "$sublime_project_file not found"
             return 132
         fi
 }
@@ -124,11 +162,24 @@ project.sublime () {
 
 project.open () {
     # just open sublime for now
-    local _project_name=$1
-    gmsg opening
-    echo $_project_name > "$project_folder/active"
+    local project_name=$1
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+
+    echo $project_name > "$project_base/active"
+    gmsg -v1 -m "$GURU_USER/status" "currenlty working on $project_name"
     project.sublime $@
 }
+
+
+project.change () {
+    # just open sublime for now
+    local project_name=$1
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+
+    echo $project_name > "$project_base/active"
+    gmsg -v2 "$project_name" -m "$GURU_USER/project"
+}
+
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         source "$GURU_RC"

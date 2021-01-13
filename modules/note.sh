@@ -1,19 +1,37 @@
 #!/bin/bash
-# note tools for guru-client
+# note tools for guru-client casa@ujo.guru 2017-2021
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
 
 note.main () {
-    command="$1" ; shift
+
+    local command="$1" ; shift
+    # check is note and template folder mounted, mount if not
+    note.online || note.remount
+
     case "$command" in
-        status|ls|add|open|rm|check)  note.$command $@  ;  return $? ;;
-                             report)  note.make_odt $@  ;  return $? ;;
-                             locate)  note.gen_var "$1" ;  echo "$note" ;;
-                                tag)  tag.main "tag $note $user_input" ;;
-                               help)  note.help ;;
-                                 "")  note.open $(date +"$GURU_FORMAT_FILE_DATE") ;;
-                                  *)  note.open $(date +"$GURU_FORMAT_FILE_DATE" -d "$command")
+            status|ls|add|open|rm|check|locate)
+                    note.$command "$@"
+                    return $?
+                    ;;
+
+            office|web)
+                    note.$command "$@"
+                    return $?
+                    ;;
+            tag)
+                    tag.main "tag $note $user_input"
+                    ;;
+            help)
+                    note.help
+                    ;;
+             "")
+                    note.open $(date +"$GURU_FORMAT_FILE_DATE")
+                    ;;
+              *)
+                    note.open $(date +"$GURU_FORMAT_FILE_DATE" -d "$command")
+                    ;;
         esac
 }
 
@@ -82,6 +100,38 @@ note.check () {
             gmsg -v1 -c yellow "$note not found"
             return 41
         fi
+}
+
+
+note.locate () {
+
+    note.locate_check () {
+
+        note.gen_var "$1"
+        gmsg -v1 -n "$note "
+        gmsg -V1 -n "$note"
+        if [[ -f $note ]] ; then
+                gmsg -v1 -c green "exist"
+            else
+                gmsg -v1 -c red "non exist"
+            fi
+    }
+
+    case $1 in
+        all)
+            start=$(date -d 20170101 +%s)
+            end=$(date +%s)
+            d="$start"
+
+            while [[ $d -le $end ]] ; do
+                note.locate_check "$(date -d @$d +%Y%m%d)"
+                d=$(( $d + 86400 ))
+            done
+            ;;
+        *)
+            note.locate_check $@
+            ;;
+        esac
 }
 
 
@@ -154,16 +204,24 @@ note.add () {
 note.open () {
     # select note to open and call editor input date in format YYYYMMDD
     if ! note.online ; then note.remount ; fi
-    local _date=$1
-    note.gen_var "$_date"
+    local _date_list=(${@})
+    local _note_date=
 
-    if [[ -f "$note" ]]; then
-            note.add_change "opened"
-        else
-            note.add "$_date"
-        fi
+    for _note_date in ${_date_list[@]} ; do
 
-    note.open_editor "$note"
+        note.gen_var "$_note_date"
+        gmsg -v3 -c pink "$_note_date"
+
+        if [[ -f "$note" ]]; then
+                note.add_change "opened"
+            else
+                note.add "$_note_date"
+            fi
+
+        gmsg -v1 -c pink "opening $_note_date"
+        note.open_editor "$note"
+
+    done
 }
 
 
@@ -181,13 +239,26 @@ note.rm () {
 
 
 note.add_change () {
-    # add line to chenge list
-    _line(){ _len=$1 ; for ((i=1;i<=_len;i++)); do printf '-' ; done }
-    if ! note.online ; then note.remount ; fi
-    # printout change table
-    local _change="edited"      ; [[ "$1" ]] && _change="$1"
-    local _author="$GURU_USER_NAME"  ; [[ "$2" ]] && _author="$2"
+    # add line to change log
 
+    _line () {
+        _len=$1
+        for ((i=1;i<=_len;i++)); do
+            printf '-'
+        done
+    }
+
+    # if ! note.online ; then note.remount ; fi
+    note.online || note.remount
+
+    # printout change table
+    local _change="edited"
+    [[ "$1" ]] && _change="$1"
+
+    local _author="$GURU_USER_NAME"
+    [[ "$2" ]] && _author="$2"
+
+    # add header if not exist
     if ! grep "## Change log" "$note" >/dev/null ; then
             printf  "\n\n## Change log\n\n" >>$note
             printf  "%-17s | %-10s | %-30s \n" "Date" "Author" "Changes" >>$note
@@ -200,17 +271,20 @@ note.add_change () {
 
 note.open_editor () {
     # open note to preferred editor
-    if ! note.online ; then note.remount ; fi
+
     case "$GURU_PREFERRED_EDITOR" in
         subl)
-            projectFolder=$GURU_NOTE_PROJECTS
-            [ -f $projectFolder ] || mkdir -p $projectFolder
+            local project_folder=$GURU_SYSTEM_MOUNT/project/notes
+            local sublime_project_file="$project_folder/$GURU_USER_NAME-notes.sublime-project"
 
-            projectFile=$projectFolder/$GURU_USER_NAME.notes.sublime-project
-            [ -f $projectFile ] || printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_MOUNT_NOTES/$GURU_USER_NAME'"'"\n\t\t}\n\t]\n}\n" >$projectFile # Whatta ..?! TODO fix omg lol rolf!
+            [[ -d $project_folder ]] || gmsg -x 100 -c yellow "$project_folder not exist"
+            [[ -f $sublime_project_file ]] || gmsg -c yellow "sublime project file missing"
 
-            subl --project "$projectFile" -a
-            subl "$note" --project "$projectFile" -a
+            # template sublime project
+            # printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_MOUNT_NOTES/$GURU_USER_NAME'"'"\n\t\t}\n\t]\n}\n" >$sublime_project_file
+
+            subl --project "$sublime_project_file" -a
+            subl "$note" --project "$sublime_project_file" -a
             return $?
             ;;
         *)
@@ -220,7 +294,7 @@ note.open_editor () {
 }
 
 
-note.make_odt () {
+note.office () {
     # created odt with team template out of given days note
     if ! note.online ; then note.remount ; fi
     if [[ "$1" ]] ; then
@@ -245,6 +319,34 @@ note.make_odt () {
     $GURU_OFFICE_DOC "${note%%.*}.odt" &
     echo "report file: ${notefile%%.*}.odt"
 }
+
+
+note.web () {
+    # created html of given days note
+    if ! note.online ; then note.remount ; fi
+    if [[ "$1" ]] ; then
+            _date=$(date +$GURU_FORMAT_FILE_DATE -d $1)
+        else
+            _date=$(date +$GURU_FORMAT_FILE_DATE)
+        fi
+
+    note.gen_var "$_date"
+
+    echo "$_date:$note_file:$note:${note%%.*}.odt"
+
+    if [ -f "$note" ]; then
+            template="ujo.guru"
+            pandoc "$note" --reference-odt="$GURU_MOUNT_TEMPLATES/$template-template.odt" \
+                    -f markdown -o  "${note%%.*}.odt"
+        else
+            echo "no note for $(date +$GURU_FORMAT_DATE -d $1)"
+            return 123
+        fi
+
+    $GURU_OFFICE_DOC "${note%%.*}.odt" &
+    echo "report file: ${notefile%%.*}.odt"
+}
+
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

@@ -27,9 +27,10 @@ if [[ "$GURU_FLAG_COLOR" ]] ; then
 
 # use new modules durin installation
 export GURU_BIN="core"
-source core/common.sh
+#source core/common.sh
 source core/config.sh
 source core/keyboard.sh
+source core/system.sh
 # set target locations for uninstaller
 export GURU_CFG="$HOME/.config/guru"
 export GURU_BIN="$HOME/bin"
@@ -39,10 +40,10 @@ core_rc="$HOME/.gururc"    # TODO change name to '.gururc' when cleanup next tim
 backup_rc="$HOME/.bashrc.backup-by-guru"
 
 # modules where user have direct access
-core_module_access=(counter install uninstall config corsair daemon keyboard remote system)
+core_module_access=(counter install uninstall config corsair mount daemon keyboard remote system)
 
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(mount mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news)
+modules_to_install=(mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news)
 
 install.main () {
 
@@ -121,6 +122,10 @@ install.main () {
     gmsg -v1 -c light_blue "copied ${#installed_files[@]} files"
     gmsg -v2 -c dark_grey "${installed_files[@]}"
 
+    if system.flag running ; then
+            system.flag rm pause
+            sleep 1
+        fi
     # pass
     return 0
 }

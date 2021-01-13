@@ -74,7 +74,7 @@ gmsg () {
 
     # set corsair key is '-k <key>' used
     if [[ $_indicator_key ]] ; then
-        source corsair.sh
+        source $GURU_BIN/corsair.sh
         if [[ "$_color" == "reset" ]] ; then
                 corsair.main reset "$_indicator_key"
             else
@@ -147,6 +147,4 @@ export -f gmsg
 export -f gask
 export -f import
 
-source os.sh
-source counter.sh
 

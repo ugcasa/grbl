@@ -39,8 +39,6 @@ system.suspend_help () {
     gmsg -v1 -c white "commands:"
     gmsg -v2
     gmsg -v1 " flag         read flag status"
-    gmsg -v1 " set_flag     set suspend flag"
-    gmsg -v1 " rm_flag      remove suspend flag"
     gmsg -v1 " install      add suspend script "
     gmsg -v1 " remove       remove suspend script"
     gmsg -v2
@@ -49,9 +47,9 @@ system.suspend_help () {
 
 system.env_help () {
     # system help printout
-    gmsg -v1 -c white "guru-client system env help"
+    gmsg -v1 -c white "guru-client system flag help"
     gmsg -v2
-    gmsg -v0 "get or set environmental variable list or single variable with values of running process"
+    gmsg -v1 "get or set environmental variable list or single variable with values of running process"
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL system env [get|set] <pid|process> <variable>"
     gmsg -v2
@@ -60,6 +58,23 @@ system.env_help () {
     gmsg -v1 "      $GURU_CALL system env get mosquitto_sub TERM"
     gmsg -v2
     gmsg -v2 "if variable name is not given all variables will be printed out."
+}
+
+
+system.flag-help () {
+    gmsg -v1 -c white "guru-client system suspend help"
+    gmsg -v2
+    gmsg -v1 "set flags that can control daemon processes (systemdless method) "
+    gmsg -v0 "usage:    $GURU_CALL system flag [ls|set|rm|help]"
+    gmsg -v2
+    gmsg -v1 -c white "commands:"
+    gmsg -v2
+    gmsg -v1 " <flag>         return flag status"
+    gmsg -v1 " ls             list of flags with status"
+    gmsg -v1 " set <flag>     set flag"
+    gmsg -v1 " rm <flag>      remove flag"
+    gmsg -v2 " help           this help"
+    gmsg -v2
 }
 
 
@@ -124,27 +139,38 @@ system.flag () {
     local cmd=$1 ; shift
     case $cmd in
             set|rm|ls)
-                system.$cmd-flag $@
-                return $? ;;
-            "") system.ls-flag
-                return $? ;;
-            *)  gmsg "unknown command $cmd"
-                GURU_VERBOSE=2
-                system.help
+                    system.$cmd-flag $@
+                    return $? ;;
+            help)   system.flag-help
+                    return 0 ;;
+            "")     system.ls-flag
+                    return $? ;;
+            *)      system.check-flag $cmd
+                    return $? ;;
         esac
+}
+
+
+system.check-flag () {
+
+    if [[ -f /tmp/guru-$1.flag ]] ; then
+            return 0
+        else
+            return 1
+        fi
 }
 
 
 system.ls-flag () {
 
     gmsg -v2 -c white "system flag status:"
-    local flag_list=(fast suspend stop)
+    local flag_list=(fast pause suspend stop running)
 
     local flag=
     for flag in ${flag_list[@]} ; do
-            gmsg -v1 -n "$flag flag: "
             gmsg -V1 -n "$flag:"
-            if [[ -f /tmp/guru-$flag.flag ]] ; then
+            gmsg -v1 -n "$flag flag: "
+            if system.check-flag $flag ; then
                     gmsg -c aqua "set"
                 else
                     gmsg -c dark_grey "disabled"
@@ -183,10 +209,10 @@ system.set-flag () {
     local flag="$1"
 
     if [[ -f /tmp/guru-$flag.flag ]] ; then
-            gmsg -v1 "flag already set"
+            gmsg -t -v2 "$flag flag already set"
             return 0
         else
-            gmsg -v1 "flag $flag set"
+            gmsg -t -v1 "$flag flag set"
             touch /tmp/guru-$flag.flag
         fi
 
@@ -200,10 +226,10 @@ system.rm-flag () {
 
     if [[ -f /tmp/guru-$flag.flag ]] ; then
             rm -f /tmp/guru-$flag.flag && \
-            gmsg -v1 "flag disabled"
+            gmsg -t -v1 "$flag flag disabled"
             return 0
         else
-            gmsg -v1 "flag not set"
+            gmsg -t -v2 "$flag flag not set"
         fi
 }
 
@@ -508,15 +534,14 @@ system.suspend () {
 
             now )
                 gmsg -v1 "suspending.."
-                touch /tmp/guru-fast.flag
+                #system.flag set suspend
                 [[ $GURU_FORCE ]] || sleep 3
                 systemctl suspend
-                #system.suspend set_flag
                 ;;
 
             flag )
                 gmsg -v3 -n "checking is system been suspended "
-                if [[ -f  $system_suspend_flag ]] ; then
+                if system.flag suspend ; then
                         gmsg -v1 -c yellow "system were suspended"
                         return 0
                     else
@@ -526,16 +551,10 @@ system.suspend () {
 
             set_flag )
                 system.flag set suspend
-                # gmsg -n -v1 "setting suspend flag.. "
-                # touch $system_suspend_flag \
-                # && gmsg -v1 -c green "ok" || gmsg -c red "failed"
                 ;;
 
             rm_flag )
                 system.flag rm suspend
-                # gmsg -n -v1 "removing suspend flag.. "
-                # rm -f $system_suspend_flag \
-                # && gmsg -v1 -c green "ok" || gmsg -c red "failed"
                 ;;
 
             install )
@@ -566,11 +585,11 @@ system.poll () {
     case $_cmd in
         start )
             gmsg -v1 -t -c black "${FUNCNAME[0]}: system status polling started" -k $system_indicator_key
-            return 0
+
             ;;
         end )
             gmsg -v1 -t -c reset "${FUNCNAME[0]}: system status polling ended" -k $system_indicator_key
-            return 0
+
             ;;
         status )
             system.status $@

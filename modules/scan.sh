@@ -62,7 +62,7 @@ scan.install () {
                 gmsg -v1 -c white "decompressing.."
                 [[ -f $gz_file ]] || gmsg -c red -x 102 "source ${gz_file} not found"
                 tar -xvf $gz_file || gmsg -c red -x 103 "unable to extract ${gz_file}"
-                cd $dep_file || gmsg -c red -x 103 "cannot enter folder ${dep_file}"
+                cd $dep_file || gmsg -c red -x 104 "cannot enter folder ${dep_file}"
 
                 gmsg -v1 -c white "running installer.."
                 ./install.sh

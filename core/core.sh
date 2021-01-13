@@ -15,14 +15,12 @@ source $HOME/bin/config.sh
 GURU_RC="$HOME/.gururc"
 [[ -f $GURU_RC ]] && source $GURU_RC || config.main export $GURU_USER
 
-# import common functions
+# import modules
 source $GURU_BIN/common.sh
-# include mount tools
 source $GURU_BIN/mount.sh
-# include daemon tools
 source $GURU_BIN/daemon.sh
-# include corsair1tools
 source $GURU_BIN/corsair.sh
+source $GURU_BIN/system.sh
 
 # user configuration overwrites
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
@@ -59,9 +57,12 @@ core.parser () {
     export GURU_CMD="$tool"
     case "$tool" in
                            all)  core.multi_module_function "$@"        ; return $? ;;
-                        status)  gmsg -c green "installed"              ; return 0 ;;
+                        status)  gmsg -c green "installed"              ; return 0  ;;
                start|poll|kill)  daemon.$tool                           ; return $? ;;
-                          stop)  touch "$HOME/.guru-stop"               ;;
+                         pause)  system.flag pause \
+                                 && system.flag rm pause \
+                                 || system.flag set pause               ;;
+                          stop)  system.main flag set stop              ; return 0  ;;
                       document)  $tool "$@"                             ; return $? ;;
                        unmount)  mount.main unmount "$@"                ; return $? ;;
                          radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;

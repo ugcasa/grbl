@@ -111,9 +111,14 @@ uninstall.help () {
 }
 
 
-
-
 uninstall.remove () {
+
+    source system.sh
+
+    if system.flag running ; then
+            system.flag set pause
+            sleep 2
+        fi
 
     # check installation
     if [[ -f "$backup_rc" ]] ; then

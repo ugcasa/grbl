@@ -202,7 +202,7 @@ corsair.check () {
 corsair.status () {
     # get status and print it out to kb leds
     if corsair.check >/dev/null ; then
-            gmsg -t -c green "${FUNCNAME[0]}: corsair on service" -k $corsair_indicator_key
+            gmsg -v1 -t -c green "${FUNCNAME[0]}: corsair on service" -k $corsair_indicator_key
             return 0
         else
             local status=$?
@@ -380,7 +380,7 @@ corsair.raw_start () {
                 sleep 3
                 start_stack
                 ;;
-        * )     gmsg -t -c green "corsair on service"
+        * )     gmsg -v1 -t -c green "corsair on service"
                 return 0
     esac
 }
@@ -575,7 +575,7 @@ corsair.systemd_start () {
 
                 corsair.systemd_start_application
                 ;;
-        * )     gmsg -t -c green "corsair on service"
+        * )     gmsg -v1 -t -c green "corsair on service"
                 return 0
     esac
 }
@@ -641,6 +641,37 @@ corsair.poll () {
             ;;
         esac
 
+}
+
+
+corsair.check_pipe () {
+    # check that piping is activated. input timeout in seconds.
+    declare -i timeout=10
+    let timeout=$1 loops=timeout*2
+
+    for (( i = 0; i < $loops; i++ )); do
+        if ps auxf | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null ; then
+                continue
+            fi
+        sleep 0.5
+    done
+    return 127
+}
+
+
+corsiar.suspend_recovery () {
+    # check is system suspended during run and restart ckb-next application to re-connect led pipe files
+
+    system.flag rm fast
+
+    [[ $GURU_CORSAIR_ENABLED ]] || return 0
+
+    # restart ckb-next
+    corsair.systemd_restart
+
+    # wait corsair to start
+    corsair.check_pipe 4
+    return $?
 }
 
 

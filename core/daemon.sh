@@ -5,6 +5,7 @@
 
 source $GURU_BIN/common.sh
 source $GURU_BIN/corsair.sh
+source $GURU_BIN/system.sh
 
 daemon_service_script="$HOME/.config/systemd/user/guru.service"
 
@@ -56,7 +57,7 @@ daemon.status () {
             _err=$((_err+10))
         fi
 
-    if ps auxf | grep "$HOME/bin/daemon.sh start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
+    if ps auxf | grep "$HOME/bin/$GURU_CALL start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
             gmsg -v 1 -c green "${FUNCNAME[0]}: running"
         else
             gmsg -v 1 -c red "${FUNCNAME[0]}: not running"
@@ -107,9 +108,8 @@ daemon.start () {
 daemon.stop () {
     # stop daemon
 
-    # remove stop flag
-    [[ -f "$HOME/.guru-stop" ]] && rm "$HOME/.guru-stop"
-
+    system.flag rm stop
+    gmsg -N -n -V1 -c white "stopping daemon.. "
     # if pid file is not exist
     if ! [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
             gmsg "${FUNCNAME[0]}: daemon not running"
@@ -119,7 +119,7 @@ daemon.stop () {
 
     local _pid=$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)
 
-    gmsg -v1 "stopping modules.. "
+    gmsg -t -v1 "stopping modules.. "
     #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
 
     for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
@@ -144,20 +144,23 @@ daemon.stop () {
             esac
         done
 
-    gmsg -v1 "stopping guru-daemon.. "
+    gmsg -t -v1 "stopping guru-daemon.. "
     [[ -f $GURU_SYSTEM_MOUNT/.daemon-pid ]] && rm -f $GURU_SYSTEM_MOUNT/.daemon-pid
-    kill -9 "$_pid" || gmsg -v 1 "$ERROR guru-daemon pid $_pid cannot be killed, try to 'guru kill $_pid'"
-
+    system.flag rm running
+    gmsg -V1 -c green "ok"
+    kill -9 "$_pid"
 }
 
 
 
 daemon.kill () {
+
     if pkill guru ; then
             gmsg -v1 "${FUNCNAME[0]}: guru-daemon killed.."
         else
             gmsg -v1 "${FUNCNAME[0]}: guru-daemon not running"
         fi
+
 
     if ps auxf | grep "$GURU_BIN/guru" | grep "start" | grep -v "grep" >/dev/null ; then
             gmsg -v1 -c yellow "${FUNCNAME[0]}: daemon still running, try to 'sudo guru kill'"
@@ -171,58 +174,88 @@ daemon.kill () {
 
 
 daemon.poll () {
+
     source $GURU_RC
     [[ -f "$HOME/.guru-stop" ]] && rm -f "$HOME/.guru-stop"
     echo "$(sh -c 'echo "$PPID"')" > "$GURU_SYSTEM_MOUNT/.daemon-pid"
-
+    system.flag rm fast
+    system.flag rm stop
     GURU_FORCE=
+
     # DAEMON POLL LOOP
     while true ; do
+
+        system.flag set running
         # to update configurations is user changes them
         source $GURU_RC
-        #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
 
-        if system.suspend flag ; then
-                corsair.systemd_restart
-                system.suspend rm_flag
-                rm -f /tmp/guru-fast.flag
-                sleep 4
+        # check is system suspended during run and perform needed actions
+        if system.flag suspend ; then
+                # restart ckb-next appication to reconnec led pipe files
+                gmsg -N -t -v1 "daemon recovering from suspend.. "
+                corsiar.suspend_recovery
+                system.flag rm suspend
             fi
 
-        gmsg -N -v2 -c $GURU_CORSAIR_EFECT_COLOR -k esc "daemon active"
+        if system.flag pause ; then
+                gmsg -N -t -v1 -c black "daemon paused " -k esc
+                for (( i = 0; i < 150; i++ )); do
+                    system.flag pause || break
+                    system.flag stop && break
+                    system.flag suspend && break
+                    sleep 2
+                done
+                system.flag rm pause
+                gmsg -v1 -t -c reset "daemon continued" -k esc
+            fi
 
+        if system.flag stop ; then
+                gmsg -N -t -v1 "daemon got request to stop "
+                daemon.stop
+                return $?
+            fi
+
+
+        # light esc key to signal user daemon is active
+        gmsg -N -v2 -c $GURU_CORSAIR_EFECT_COLOR -k esc "daemon active"
+        gmsg -v4 -c black -k cplc
+
+        # go trough poll list
         local i=
         for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
-            module=${GURU_DAEMON_POLL_LIST[i-1]}
-            case $module in
-                null|empty )
-                    gmsg -v4 -c dark_grey "skipping $module"
-                    ;;
-                * )
-                    gmsg -n -v2 -c dark_golden_rod "module_$i:$module: "
+                module=${GURU_DAEMON_POLL_LIST[i-1]}
+                case $module in
+                    null|empty )
+                        gmsg -v4 -c dark_grey "skipping $module"
+                        ;;
+                    * )
+                        gmsg -n -v2 -c dark_golden_rod "module_$i:$module: "
 
-                    if [[ -f "$GURU_BIN/$module.sh" ]] ; then
-                            source "$GURU_BIN/$module.sh"
-                            $module.main poll status
-                        else
-                            gmsg -v1 -c yellow "${FUNCNAME[0]}: module '$module' not installed"
-                        fi
-                    ;;
-                esac
+                        if [[ -f "$GURU_BIN/$module.sh" ]] ; then
+                                source "$GURU_BIN/$module.sh"
+                                $module.main poll status
+                            else
+                                gmsg -v1 -c yellow "${FUNCNAME[0]}: module '$module' not installed"
+                            fi
+                        ;;
+                    esac
             done
 
-        #gmsg -v2 -c black -k cplc "ignore disable keys"
-        gmsg -n -v2 -c reset -k esc "daemon sleeps $GURU_DAEMON_INTERVAL seconds "
+
+        gmsg -n -v2 -c reset -k esc "daemon sleep: $GURU_DAEMON_INTERVAL "
+        gmsg -v4 -c $GURU_CORSAIR_EFECT_COLOR -k cplc
 
         local _seconds=
-        for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )); do
-            [[ -f /tmp/guru-fast.flag ]] && break || sleep 1
-            gmsg -v2 -n -c reset "."
-        done
+        for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )) ; do
+                system.flag stop && break
+                system.flag suspend && continue
+                system.flag pause && continue
+                system.flag fast && continue || sleep 1
+                gmsg -v2 -n -c reset "."
+            done
 
-        # check is stop command given, exit if so
-        [[ -f "$HOME/.guru-stop" ]] && break
     done
+    gmsg -N -t -v1 "daemon got got tired and dropt out "
     daemon.stop
 }
 
@@ -270,7 +303,7 @@ daemon.systemd_install () {
 
     if ! [[ -d  ${daemon_service_script%/*} ]] ; then
         mkdir -p ${daemon_service_script%/*} \
-        || gmsg -x 100 "no permission to create folder ${daemon_service_script%/*}"
+        || gmsg -x 100 "no permission to create folder ${daemon_service_script%/*}"
     fi
 
     [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
@@ -281,8 +314,8 @@ cat >"$temp" <<EOL
 Description=guru daemon process manager
 
 [Service]
-ExecStart=bash -c '/home/$USER/bin/core.sh daemon start'
-ExecStop=bash -c '/home/$USER/bin/core.sh daemon stop'
+ExecStart=bash -c '/home/$USER/bin/core.sh start'
+ExecStop=bash -c '/home/$USER/bin/core.sh stop'
 Type=simple
 Restart=always
 RemainAfterExit=yes
