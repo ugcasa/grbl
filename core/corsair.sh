@@ -38,12 +38,11 @@ CPLC="/tmp/ckbpipe059"
 corsair.help () {
     gmsg -v 1 -c white "guru-client corsair help"
     gmsg -v 2
-    gmsg -v 0 "usage:    $GURU_CALL corsair [start|init|set|reset|end|kill|status|help|install|remove|raw_start|raw_status|raw_stop|set-suspend] <key> <color>"
+    gmsg -v 0 "usage:    $GURU_CALL corsair [start|init|set|reset|end|status|help|install|patch|compile|remove|raw_start|raw_status|raw_stop|set-suspend] <key> <color>"
     gmsg -v 2
     gmsg -v 1 -c white "commands:"
-    gmsg -v 1 " install                     install requirements "
-    gmsg -v 1 " start                       start ckb-next-daemon "
     gmsg -v 1 " status                      printout status "
+    gmsg -v 1 " start                       start ckb-next-daemon "
     gmsg -v 1 " stop                        stop ckb-next-daemon"
     gmsg -v 1 " init <mode>                 initialize keyboard mode "
     gmsg -v 2 "                             [status|red|olive|dark] able to set keys "
@@ -51,14 +50,17 @@ corsair.help () {
     gmsg -v 1 " set <key> <color>           write key color to keyboard key  "
     gmsg -v 1 " reset <key>                 reset one key or if empty, all pipes "
     gmsg -v 1 " end                         end playing with keyboard, set to normal "
+    gmsg -v 1 " install                     install requirements "
+    gmsg -v 2 " compile                     only compile, do not clone or patch"
+    gmsg -v 2 " patch <device>              edit source devices: K68, IRONCLAW"
     gmsg -v 2 " set-suspend                 active suspend control to avoid suspend issues"
     gmsg -v 1 " remove                      remove corsair driver "
-    gmsg -v 2 " help                        this help "
+    gmsg -v 1 " help -v|-V                  get more detailed help by adding verbosity flag"
     gmsg -v 2 -c white -N "raw functions for non systemd linux:"
-    gmsg -v 2 " raw_start                   start ckb-next-daemon "
-    gmsg -v 2 " raw_status                  printout status without systemd"
-    gmsg -v 2 " raw_stop                    printout status without systemd"
-    gmsg -v 2 " raw_disable                 printout status without systemd"
+    gmsg -v 2 " raw_start <1..7>            start ckb-next, number is deepness "
+    gmsg -v 2 " raw_status                  rad status (without systemd)"
+    gmsg -v 2 " raw_stop                    stop by killing app"
+    gmsg -v 2 " raw_disable                 disable service (some systemd) "
     gmsg -v 2
     gmsg -v 1 -c white "examples:"
     gmsg -v 1 "          $GURU_CALL corsair status -v   "
@@ -109,6 +111,7 @@ corsair.main () {
                     ;;
 
             # systemd method in use after v0.6.4.5
+            
             status|enable|start|restart|stop|disable)
                     if ! system.init_system_check systemd ; then
                             gmsg -c yellow -x 133 "systemd not in use, try raw_start or raw_stop"
@@ -118,7 +121,7 @@ corsair.main () {
                     ;;
 
             # guru.client daemon required functions
-            check|install|remove|poll|help)
+            check|install|patch|compile|remove|poll|help)
                     corsair.$cmd $@
                     return $?
                     ;;
@@ -157,7 +160,7 @@ corsair.check () {
             gmsg -v1 -c green "running"
         else
             gmsg -c dark_grey "ckb-next-daemon not running"
-            gmsg -v1 -c white "start by '$GURU_CALL corsair start'"
+            [[ $GURU_FORCE ]] || gmsg -v1 -c white "start by '$GURU_CALL corsair start'"
             return 3
         fi
 
@@ -167,7 +170,7 @@ corsair.check () {
 
         else
             gmsg -c yellow "ckb-next application not running"
-            gmsg -v1 -c white "command: $GURU_CALL corsair start"
+            [[ $GURU_FORCE ]] || gmsg -v1 -c white "command: $GURU_CALL corsair start"
             return 4
         fi
 
@@ -332,7 +335,12 @@ corsair.raw_start () {
     # check and start part by part based on check result
 
     function start_stack () {
-        ckb-next -b 2>/dev/null &
+        if ! [[ $GURU_VERBOSE ]] ; then 
+                ckb-next -b 2>/dev/null &
+            else
+                ckb-next -b & 
+            fi
+
         sleep 2
         corsair.init
         corsair.check
@@ -664,7 +672,7 @@ corsiar.suspend_recovery () {
 
     system.flag rm fast
 
-    [[ $GURU_CORSAIR_ENABLED ]] || return 0
+    [[ $GURU_CORSAIR_ENABLED ]] || return 0
 
     # restart ckb-next
     corsair.systemd_restart
@@ -675,6 +683,87 @@ corsiar.suspend_recovery () {
 }
 
 
+corsair.clone () {
+    cd /tmp
+    git clone https://github.com/ckb-next/ckb-next.git \
+        && gmsg -c green "ok" \
+        || gmsg -x 101 -c yellow "cloning error" 
+}
+
+
+corsair.patch () {
+    # patch corsair k68 to avoid long daemon stop time
+    cd /tmp/ckb-next        
+    
+    case $1 in 
+            K68|k68|keyboard) 
+                gmsg -c pink "1) find 'define NEEDS_UNCLEAN_EXIT(kb)' somewhere near line ~195" 
+                gmsg -c pink "2) add '|| (kb)->product == P_K68_NRGB' to end of line before ')'"
+                subl src/daemon/usb.h    
+                ;;
+            IRONCLAW|ironclaw|mouse)
+                gmsg "no patches yet needed for ironclaw mice"
+                ;;
+            *)  gmsg -c yellow "unknown patch"
+        esac
+    
+    read -p "press any key to continue"     
+    return 0
+}
+
+
+corsair.compile () {
+    # compile ckb-next and ckb-next-daemon 
+    [[ -d /tmp/ckb-next ]] || corsair.clone     
+    cd /tmp/ckb-next        
+    gmsg -c white "running installer.."
+    ./quickinstall && gmsg -c green "ok" || gmsg -x 103 -c yellow "quick installer error" 
+    return 0
+}
+
+
+usb.install-uhubctl () {
+    # install usb hub control tool https://github.com/mvp/uhubctl
+    # DID NOT WORK -failed
+    # other https://github.com/hevz/hubpower/blob/master/hubpower.c
+    cd /tmp
+    git clone https://github.com/mvp/uhubctl
+    cd uhubctl
+    make 
+    sudo make install
+    
+    # test installation 
+    sudo uhubctl \
+        || gmsg -x 101 -c yellow "usb hub control tool install error $?" \
+        && gmsg -c green "ok"
+
+
+}
+
+corsair.requirements () {
+    # install required libs and apps
+    gmsg -c white "installing needed software "
+    usb.install-uhubctl
+    sudo apt-get install -y git cmake build-essential \
+        pavucontrol \
+        libudev-dev \
+        qt5-default \
+        zlib1g-dev \
+        libappindicator-dev \
+        libpulse-dev \
+        libquazip5-dev \
+        libqt5x11extras5-dev \
+        libxcb-screensaver0-dev \
+        libxcb-ewmh-dev \
+        libxcb1-dev qttools5-dev \
+        libdbusmenu-qt5-2 \
+        libdbusmenu-qt5-dev \
+        || gmsg -x 101 -c yellow "apt-get error $?" \
+        && gmdg -c green "ok"
+        return 0
+
+}
+
 corsair.install () {
     # install essentials, driver and application
 
@@ -683,23 +772,27 @@ corsair.install () {
             return 0
         fi
 
-    sudo apt-get install -y build-essential cmake libudev-dev qt5-default zlib1g-dev libappindicator-dev libpulse-dev libquazip5-dev libqt5x11extras5-dev libxcb-screensaver0-dev libxcb-ewmh-dev libxcb1-dev qttools5-dev git pavucontrol libdbusmenu-qt5-2 libdbusmenu-qt5-dev
-    cd /tmp
-    git clone https://github.com/ckb-next/ckb-next.git
-    cd ckb-next
-    ./quickinstall
+    if ! lsusb | grep "Corsair" ; then
+            echo "no corsair devices connected, exiting.."
+            return 100
+        fi
 
-    # system.suspend_control
-    # TODO suspend control
+    corsair.requirements && \
+    corsair.clone && \
+    corsair.patch K68 && \
+    corsair.compile && \
+    
+    corsair.systemd_enable
+    corsar.enable 
+    corsar.start 
+
+    # TBD system.suspend_control
+
+    # TBD debian suspend control
 
     # make backup of .service file
     cp -f $corsair_daemon_service $GURU_CFG
 
-
-    if ! lsusb |grep "Corsair" ; then
-        echo "no corsair devices connected, exiting.."
-        return 100
-    fi
     return 0
 }
 
@@ -707,7 +800,6 @@ corsair.install () {
 corsair.remove () {
     # get rid of driver and shit
     gask "really remove corsair" || return 100
-
 
     if [[ /tmp/ckb-next ]] ; then
         cd /tmp/ckb-next
