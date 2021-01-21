@@ -15,6 +15,8 @@ import subprocess
 try:
     import feedparser
 except ModuleNotFoundError:
+    os.system('apt update')
+    os.system('sudo apt install python-pip -y')
     os.system('pip install --upgrade pip')
     os.system('sudo -H pip install feedparser')
 finally:
