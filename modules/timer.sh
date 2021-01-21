@@ -293,9 +293,9 @@ timer.log () {
 }
 
 
-timer.edit  () {
+timer.edit () {
     # edit data csv file
-    $GURU_EDITOR "$GURU_FILE_TRACKDATA" &
+    $GURU_PREFERRED_EDITOR "$GURU_FILE_TRACKDATA" &
     return 0
 }
 
@@ -309,7 +309,7 @@ timer.report() {
     [ -f $GURU_FILE_TRACKDATA ] || return 13
 
     cat $GURU_FILE_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
-    $GURU_OFFICE_DOC $output_folder/$report_file &
+    $GURU_PREFERRED_OFFICE_DOC $output_folder/$report_file &
     timer.end $""
 }
 
