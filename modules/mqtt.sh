@@ -82,7 +82,8 @@ mqtt.sub () {
     # subscribe to channel, stay listening
     local _topic="$1" ; shift
     [[ $1 ]] && local _options="-$@"
-    mosquitto_sub -u $GURU_MQTT_USER -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT  -t "$_topic" $_options
+    mosquitto_sub -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_topic" $_options
+    #-u $GURU_MQTT_USER
     return $?
 }
 
@@ -91,7 +92,8 @@ mqtt.single () {
     # subscribe to channel, stay listening
     local _topic="$1" ; shift
     [[ $1 ]] && local _options="-$@"
-    mosquitto_sub -C 1 -u $GURU_MQTT_USER -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_topic" $_options
+    mosquitto_sub -C 1 -h $GURU_MQTT_BROKER -p $GURU_MQTT_PORT -t "$_topic" $_options
+    # -u $GURU_MQTT_USER
     return $?
 }
 
