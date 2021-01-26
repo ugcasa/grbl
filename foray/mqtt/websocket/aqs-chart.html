@@ -1,0 +1,235 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>purpuripolku sensors</title>
+
+<script src = "https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js"
+        type = "text/javascript"></script>
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script type="text/javascript">
+
+// hardwritten for now
+
+var aqs_network_list = [{id:'6e6b5aac',name:'office'},
+                        {id:'b3554e4a', name:'home'}]
+
+var aqs_sensor_list =  [{id:24101, location:'Livingroom'},
+                        {id:23822, location:'Meeting room'},
+                        {id:23823, location:'Calibrator'},
+                        {id:23824, location:'Outside'},
+                        {id:24102, location:'Balcony'}]
+
+var aqs_mp_list = [ {id:0, name:"Battery Voltage"},
+                    {id:1, name:"Temperature"},
+                    {id:2, name:"Volatile Organic Compounds"},
+                    {id:3, name:"Humidity"},
+                    {id:4, name:"Ambient Light Level"},
+                    {id:5, name:"Ambient Noise"},
+                    {id:6, name:"Carbon Dioxide"},
+                    {id:7, name:"Carbon Monoxide"},
+                    {id:8, name:"Local Air Pressure"},
+                    {id:9, name:"System Temperature"},
+                    {id:10, name:"Gas Sensor Resistance"},
+                    {id:11, name:"Temperature 2"},
+                    {id:12, name:"Humidity 2"},
+                    {id:13, name:"Pressure 2"},
+                    {id:14, name:"Reference Voltage"},
+                    {id:15, name:"Indoor Air Quality"},
+                    {id:16, name:"VCC Level"},
+                    {id:17, name:"Noise"},
+                    {id:18, name:"Pressure difference"},
+                    {id:19, name:"CO2 level"}]
+
+
+// network select method..
+var network=0
+
+var aqs_gw_id = aqs_network_list[network].id;
+var aqs_gw_name = aqs_network_list[network].name;
+
+var mqtt_broker = 'mqtt.ujo.guru';
+var mqtt_port = 9001;
+var mqtt_topic = aqs_gw_id + '/+/+/Value';
+var mqtt_client = 'web_' + parseInt(Math.random() * 100, 10);
+
+// global variuable for chart
+var chart;
+var dataTopics = new Array();
+console.log("connecting to " + mqtt_broker);
+
+//mqtt broker
+var client = new Paho.MQTT.Client(mqtt_broker, mqtt_port, mqtt_client);
+client.onMessageArrived = onMessageArrived;
+client.onConnectionLost = onConnectionLost;
+
+//mqtt connecton options including the mqtt broker subscriptions
+var options = {
+    timeout: 3,
+    onSuccess: function () {
+        console.log("mqtt connected");
+        console.log("joining to " + aqs_gw_id)
+        // Connection succeeded; subscribe to our topics
+        client.subscribe(mqtt_topic, {qos: 1});
+    },
+    onFailure: function (message) {
+        console.log("connection failed: " + message.errorMessage);
+        console.log("retrying..");
+        window.setTimeout(location.reload(),20000); //wait 20seconds before trying to connect again.
+    }
+};
+
+
+function onConnectionLost(responseObject) {
+    //can be used to reconnect on connection lost
+    console.log("connection lost: " + responseObject.errorMessage);
+    console.log("reconnecting..");
+    window.setTimeout(location.reload(),20000); //wait 20seconds before trying to connect again.
+};
+
+
+
+function onMessageArrived(message) {
+    //what is done when a message arrives from the broker
+    console.log(message.destinationName + ":" + message.payloadString);
+
+    //check if it is a new topic, if not add it to the array
+    if (dataTopics.indexOf(message.destinationName) < 0){
+
+        dataTopics.push(message.destinationName); //add new topic to array
+        var y = dataTopics.indexOf(message.destinationName); //get the index no
+
+        ids = message.destinationName
+        ids = ids.split('/')
+
+        mp = ids[2]
+        sensor = ids[1]
+
+        for (var i = 0; i < aqs_sensor_list.length; i++) {
+            // console.log(aqs_sensor_list[i].id +"|"+sensor )
+            if (aqs_sensor_list[i].id == sensor) {
+                sensor = aqs_sensor_list[i].location
+                break;
+            }
+        }
+
+        //console.log(mp)
+
+        //create new data series for the chart
+        var newseries = {
+                id: y,
+                name: sensor+' '+aqs_mp_list[mp].name,
+                data: []
+                };
+
+        chart.addSeries(newseries); //add the series
+
+        console.log("measurement point added " + message.destinationName)
+        };
+
+    //get the index no of the topic from the array
+    var data_id = dataTopics.indexOf(message.destinationName);
+    //console.log('data_id: ' + data_id)
+
+    //get current epoch time
+    var arrived = new Date().getTime();
+    //console.log('arrived: ' + arrived)
+
+    //remove any text spaces from the message
+    var value = message.payloadString.replace( /^\D+/g, '');
+    //console.log('value: ' + value)
+
+    //create the array
+    var data_point = [arrived, Number(value)];
+
+    //check if it is a real number and not text
+    if (isNumber(value)) {
+            //send it to the plot function
+            plot(data_point, data_id);
+        }
+        else {
+            console.log('%cinvalid value: ' + value, "color: red")
+        };
+};
+
+
+function isNumber(n) {
+//check if a real number
+    return !isNaN(parseFloat(n)) && isFinite(n);
+    //console.log('%cinvalid NAN: ' + value, "color: orange")
+
+};
+
+
+function init() {
+//function that is called once the document has loaded
+
+    //i find i have to set this to false if i have trouble with timezones.
+    Highcharts.setOptions({
+        global: {
+            useUTC: false
+        }
+    });
+    // Connect to MQTT broker
+    client.connect(options);
+};
+
+
+function plot(point, chartno) {
+//this adds the plots to the chart
+    console.log(point);
+
+    var series = chart.series[0],
+        // shift if the series is longer than 20
+        shift = series.data.length > 20;
+    // add the point
+    chart.series[chartno].addPoint(point, true, shift);
+};
+
+
+$(document).ready(function() {
+//settings for the chart
+    chart = new Highcharts.Chart({
+        chart: {
+            renderTo: 'container',
+            defaultSeriesType: 'spline'
+        },
+        title: {
+            text: aqs_gw_name + ' [' + aqs_gw_id + ']'
+        },
+        subtitle: {
+            text: mqtt_broker + ':'+ mqtt_port + ' ' + mqtt_topic
+                    },
+        xAxis: {
+            type: 'datetime',
+            tickPixelInterval: 150,
+            maxZoom: 20 * 1000
+        },
+        yAxis: {
+            minPadding: 0.2,
+            maxPadding: 0.2,
+            title: {
+                text: 'arvo',
+                margin: 10
+            }
+        },
+        series: []
+    });
+});
+/* based on javescript example by @bordignon on twitter Feb 2014 */
+
+</script>
+<script src="http://code.highcharts.com/stock/highstock.js"></script>
+<script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
+</head>
+
+<body>
+<body onload="init();"><!--Start the javascript ball rolling and connect to the mqtt broker-->
+<div id="container" style="height: 500px; min-width: 500px"></div><!-- this the placeholder for the chart-->
+
+
+
+</table></article>
+
+</body>
+</html>
