@@ -1,6 +1,22 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+<!-- message css -->
+<style>
+#messages {      background-color:rgba();
+                font-size:3;
+                font-weight:normal;
+                line-height:100%;    }
+
+#status {       background-color:rgba();
+                font-size:4;
+                font-weight:bold;
+                color:blue;
+                line-height:140%;    }
+
+</style>
+
 <script src = "https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js"
         type = "text/javascript"></script>
 
@@ -91,10 +107,35 @@ function startDisconnect() {
 }
 
 
+function send_message() {
+        document.getElementById("message").innerHTML = "";
+
+        var user = document.forms["message"]["suser"].value;
+        var msg = document.forms["message"]["smessage"].value;
+        console.log(msg+":"+user);
+
+        message = new Paho.MQTT.Message(msg);
+
+        message.destinationName = 'spam/'+user;
+        client.send(message);
+        return false;
+   }
+
 </script>
+
+</head>
 
 <body onload="startConnect();"><!--Start the javascript ball rolling and connect to the mqtt broker-->
 
+<div id="messsages">
 
+<form name="messages" action="" onsubmit="return send_message()">
+        user:           <input type="text" name="suser">
+        message:        <input type="text" name="smessage">
+                        <input type="submit" value="Submit">
+    </form>
+
+
+</div>
 </body>
 </html>
