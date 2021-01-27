@@ -60,6 +60,7 @@ console.log("connecting to " + mqtt_broker);
 var client = new Paho.MQTT.Client(mqtt_broker, mqtt_port, mqtt_client);
 client.onMessageArrived = onMessageArrived;
 client.onConnectionLost = onConnectionLost;
+client.setAutomaticReconnect = true
 
 //mqtt connecton options including the mqtt broker subscriptions
 var options = {
@@ -72,8 +73,7 @@ var options = {
     },
     onFailure: function (message) {
         console.log("connection failed: " + message.errorMessage);
-        console.log("retrying..");
-        window.setTimeout(location.reload(),20000); //wait 20seconds before trying to connect again.
+        //window.setTimeout(location.reload(),20000); //wait 20seconds before trying to connect again.
     }
 };
 
@@ -81,8 +81,7 @@ var options = {
 function onConnectionLost(responseObject) {
     //can be used to reconnect on connection lost
     console.log("connection lost: " + responseObject.errorMessage);
-    console.log("reconnecting..");
-    window.setTimeout(location.reload(),20000); //wait 20seconds before trying to connect again.
+    //window.setTimeout(location.reload(),20000); //wait 20seconds before trying to connect again.
 };
 
 
@@ -168,6 +167,7 @@ function init() {
     });
     // Connect to MQTT broker
     client.connect(options);
+
 };
 
 
