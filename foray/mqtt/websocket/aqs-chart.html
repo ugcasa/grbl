@@ -1,8 +1,6 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>purpuripolku sensors</title>
-
 <script src = "https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js"
         type = "text/javascript"></script>
 
@@ -11,7 +9,7 @@
 
 // hardwritten for now
 
-var aqs_network_list = [{id:'6e6b5aac',name:'office'},
+var aqs_network_list = [{id:'6e6b5aac', name:'office'},
                         {id:'b3554e4a', name:'home'}]
 
 var aqs_sensor_list =  [{id:24101, location:'Livingroom'},
@@ -28,7 +26,7 @@ var aqs_mp_list = [ {id:0, name:"Battery Voltage"},
                     {id:5, name:"Ambient Noise"},
                     {id:6, name:"Carbon Dioxide"},
                     {id:7, name:"Carbon Monoxide"},
-                    {id:8, name:"Local Air Pressure"},
+                    {id:8, name:"Air Pressure"},
                     {id:9, name:"System Temperature"},
                     {id:10, name:"Gas Sensor Resistance"},
                     {id:11, name:"Temperature 2"},
@@ -42,7 +40,7 @@ var aqs_mp_list = [ {id:0, name:"Battery Voltage"},
                     {id:19, name:"CO2 level"}]
 
 
-// network select method..
+// add network select method..
 var network=0
 
 var aqs_gw_id = aqs_network_list[network].id;
@@ -99,9 +97,7 @@ function onMessageArrived(message) {
         dataTopics.push(message.destinationName); //add new topic to array
         var y = dataTopics.indexOf(message.destinationName); //get the index no
 
-        ids = message.destinationName
-        ids = ids.split('/')
-
+        ids = message.destinationName.split('/')
         mp = ids[2]
         sensor = ids[1]
 
@@ -195,7 +191,7 @@ $(document).ready(function() {
             defaultSeriesType: 'spline'
         },
         title: {
-            text: aqs_gw_name + ' [' + aqs_gw_id + ']'
+            text: aqs_gw_name + ' sensor network [' + aqs_gw_id + ']'
         },
         subtitle: {
             text: mqtt_broker + ':'+ mqtt_port + ' ' + mqtt_topic
@@ -209,7 +205,7 @@ $(document).ready(function() {
             minPadding: 0.2,
             maxPadding: 0.2,
             title: {
-                text: 'arvo',
+                text: 'value',
                 margin: 10
             }
         },
@@ -219,15 +215,68 @@ $(document).ready(function() {
 /* based on javescript example by @bordignon on twitter Feb 2014 */
 
 </script>
+
 <script src="http://code.highcharts.com/stock/highstock.js"></script>
 <script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
+
+<style>
+.button {
+    background-color: #1c87c9;
+    border: none;
+    color: white;
+    padding: 5px 14px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 10px;
+    margin: 4px 2px;
+    cursor: pointer;
+    cursor: pointer;
+}
+.home {
+    background-color: white;
+    border: none;
+    color: #1c87c9;
+    padding: 5px 14px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 15px;
+    margin: 4px 2px;
+    cursor: pointer;
+    cursor: pointer;
+}
+</style>
+
+
+<title>ujo.guru sensors</title>
 </head>
 
-<body>
+
 <body onload="init();"><!--Start the javascript ball rolling and connect to the mqtt broker-->
-<div id="container" style="height: 500px; min-width: 500px"></div><!-- this the placeholder for the chart-->
 
+<a href="http://ujo.guru"
+   class="home"
+   target="_blank"
+   rel="noopener noreferrer"
+   >ujo.guru
+</a>
 
+<a href="../office/index.html"
+   class="button"
+   target="_blank"
+   rel="noopener noreferrer"
+   >office sensors
+</a>
+
+<a href="../home/index.html"
+   class="button"
+   target="_blank"
+   rel="noopener noreferrer"
+   >home sensors
+</a>
+
+<div id="container" style="height: 700px; min-width: 500px"></div><!-- this the placeholder for the chart-->
 
 </table></article>
 
