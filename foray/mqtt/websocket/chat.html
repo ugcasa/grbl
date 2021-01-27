@@ -108,10 +108,10 @@ function startDisconnect() {
 
 
 function send_message() {
-        document.getElementById("message").innerHTML = "";
+        document.getElementById("messages").innerHTML = "";
 
-        var user = document.forms["message"]["suser"].value;
-        var msg = document.forms["message"]["smessage"].value;
+        var user = document.forms["messages"]["suser"].value;
+        var msg = document.forms["messages"]["smessage"].value;
         console.log(msg+":"+user);
 
         message = new Paho.MQTT.Message(msg);
@@ -127,7 +127,7 @@ function send_message() {
 
 <body onload="startConnect();"><!--Start the javascript ball rolling and connect to the mqtt broker-->
 
-<div id="messsages">
+<div id="messages">
 
 <form name="messages" action="" onsubmit="return send_message()">
         user:           <input type="text" name="suser">
