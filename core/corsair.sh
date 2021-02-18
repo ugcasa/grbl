@@ -111,7 +111,7 @@ corsair.main () {
                     ;;
 
             # systemd method in use after v0.6.4.5
-            
+
             status|enable|start|restart|stop|disable)
                     if ! system.init_system_check systemd ; then
                             gmsg -c yellow -x 133 "systemd not in use, try raw_start or raw_stop"
@@ -140,7 +140,7 @@ corsair.check () {
     # Check keyboard driver is available, app and pipes are started and executes if needed
 
     gmsg -n -v1 "checking corsair is enabled.. "
-    if [[ $GURU_CORSAIR_ENABLED ]] ; then
+    if [[ $GURU_CORSAIR_ENABLE ]] ; then
             gmsg -v1 -c green "enabled"
         else
             gmsg  -c dark_grey "disabled"
@@ -335,10 +335,10 @@ corsair.raw_start () {
     # check and start part by part based on check result
 
     function start_stack () {
-        if ! [[ $GURU_VERBOSE ]] ; then 
+        if ! [[ $GURU_VERBOSE ]] ; then
                 ckb-next -b 2>/dev/null &
             else
-                ckb-next -b & 
+                ckb-next -b &
             fi
 
         sleep 2
@@ -672,7 +672,7 @@ corsiar.suspend_recovery () {
 
     system.flag rm fast
 
-    [[ $GURU_CORSAIR_ENABLED ]] || return 0
+    [[ $GURU_CORSAIR_ENABLE ]] || return 0
 
     # restart ckb-next
     corsair.systemd_restart
@@ -687,37 +687,37 @@ corsair.clone () {
     cd /tmp
     git clone https://github.com/ckb-next/ckb-next.git \
         && gmsg -c green "ok" \
-        || gmsg -x 101 -c yellow "cloning error" 
+        || gmsg -x 101 -c yellow "cloning error"
 }
 
 
 corsair.patch () {
     # patch corsair k68 to avoid long daemon stop time
-    cd /tmp/ckb-next        
-    
-    case $1 in 
-            K68|k68|keyboard) 
-                gmsg -c pink "1) find 'define NEEDS_UNCLEAN_EXIT(kb)' somewhere near line ~195" 
+    cd /tmp/ckb-next
+
+    case $1 in
+            K68|k68|keyboard)
+                gmsg -c pink "1) find 'define NEEDS_UNCLEAN_EXIT(kb)' somewhere near line ~195"
                 gmsg -c pink "2) add '|| (kb)->product == P_K68_NRGB' to end of line before ')'"
-                subl src/daemon/usb.h    
+                subl src/daemon/usb.h
                 ;;
             IRONCLAW|ironclaw|mouse)
                 gmsg "no patches yet needed for ironclaw mice"
                 ;;
             *)  gmsg -c yellow "unknown patch"
         esac
-    
-    read -p "press any key to continue"     
+
+    read -p "press any key to continue"
     return 0
 }
 
 
 corsair.compile () {
-    # compile ckb-next and ckb-next-daemon 
-    [[ -d /tmp/ckb-next ]] || corsair.clone     
-    cd /tmp/ckb-next        
+    # compile ckb-next and ckb-next-daemon
+    [[ -d /tmp/ckb-next ]] || corsair.clone
+    cd /tmp/ckb-next
     gmsg -c white "running installer.."
-    ./quickinstall && gmsg -c green "ok" || gmsg -x 103 -c yellow "quick installer error" 
+    ./quickinstall && gmsg -c green "ok" || gmsg -x 103 -c yellow "quick installer error"
     return 0
 }
 
@@ -729,10 +729,10 @@ usb.install-uhubctl () {
     cd /tmp
     git clone https://github.com/mvp/uhubctl
     cd uhubctl
-    make 
+    make
     sudo make install
-    
-    # test installation 
+
+    # test installation
     sudo uhubctl \
         || gmsg -x 101 -c yellow "usb hub control tool install error $?" \
         && gmsg -c green "ok"
@@ -781,10 +781,10 @@ corsair.install () {
     corsair.clone && \
     corsair.patch K68 && \
     corsair.compile && \
-    
+
     corsair.systemd_enable
-    corsar.enable 
-    corsar.start 
+    corsar.enable
+    corsar.start
 
     # TBD system.suspend_control
 
