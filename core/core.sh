@@ -79,10 +79,11 @@ core.parser () {
 
 core.process_opts () {                                                  # argument parser
 
-    TEMP=`getopt --long -o "vVWflu:h:" "$@"`
+    TEMP=`getopt --long -o "svVWflu:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
+            -s ) export GURU_VERBOSE=       ; shift     ;;
             -v ) export GURU_VERBOSE=1      ; shift     ;;
             -V ) export GURU_VERBOSE=2      ; shift     ;;
             -W ) export GURU_VERBOSE=3      ; shift     ;;
@@ -247,6 +248,7 @@ core.help () {
             gmsg -v2
             gmsg -v1 -c white "general flags:"
             gmsg -v2
+            gmsg -v1 " -s               be more silent, printout only errors and warnings"
             gmsg -v1 " -v               set verbose, headers and some details"
             gmsg -v1 " -V               more deep verbose, unit level details"
             gmsg -v2 " -W               damn deep verbose, action level details"
@@ -274,7 +276,7 @@ core.help () {
         }
 
     core.help_newbie () {
-        if [[ -f $HOME/.data/newbie ]] ; then
+        if ! [[ -f $HOME/.data/.og ]] ; then
             gmsg
             gmsg -c white "if problems after installation"
             gmsg
@@ -290,15 +292,11 @@ core.help () {
             gmsg
             gmsg "   $GURU_CALL config user"
             gmsg
-            gmsg "4) export configurations to environment"
+            gmsg "4) remove this extra help view to appear anymore"
             gmsg
-            gmsg "   $GURU_CALL config export"
+            gmsg "   touch $HOME/.data/.og"
             gmsg
-            gmsg "5) remove this extra help view to appear anymore"
-            gmsg
-            gmsg "   rm $HOME/.data/newbie"
-            gmsg
-            export GURU_VERBOSE=2
+            export GURU_VERBOSE=1
         fi
     }
 
@@ -320,14 +318,14 @@ core.help () {
     core.help_flags
     gmsg -v1 -c white  "connection tools"
     gmsg -v1 "  remote          accesspoint access tools"
-    gmsg -v1 "  ssh             ssh key'and connection tools"
+    gmsg -v1 "  ssh             ssh key and connection tools"
     gmsg -v1 "  mount|umount    mount remote locations"
     gmsg -v1 "  phone           get data from android phone"
     gmsg -v2
     gmsg -v1 -c white  "work track and documentation"
-    gmsg -v1 "  note            greate and edit daily notes"
+    gmsg -v1 "  note            create and edit daily notes"
     gmsg -v1 "  timer           work track tools"
-    gmsg -v1 "  translate       google translator in terminal"
+    gmsg -v1 "  trans           google translator in terminal"
     gmsg -v1 "  document        compile markdown to .odt format"
     gmsg -v1 "  scan            sane scanner tools"
     gmsg -v2
@@ -335,9 +333,9 @@ core.help () {
     gmsg -v1 "  stamp           time stamp to clipboard and terminal"
     gmsg -v2
     gmsg -v1 -c white  "entertainment"
-    gmsg -v1 "  news|uutiset    text tv type reader for rss news feeds"
+    gmsg -v1 "  news            text tv type reader for rss news feeds"
     gmsg -v1 "  play            play videos and music"
-    gmsg -v1 "  silence         kill all audio and lights "
+    gmsg -v1 "  silence         kill all audio and lights"
     gmsg -v2
     gmsg -v1 -c white  "hardware and io devices"
     gmsg -v1 "  input           to control varies input devices (keyboard etc)"
@@ -346,13 +344,13 @@ core.help () {
     gmsg -v2
     gmsg -v1 -c white  "examples"
     gmsg -v1 "  $GURU_CALL note yesterday           open yesterdays notes"
-    gmsg -v2 "  $GURU_CALL install mqtt-server      isntall mqtt server"
-    gmsg -v1 "  $GURU_CALL ssh key add github       addssh keys to github server"
+    gmsg -v2 "  $GURU_CALL install mqtt-server      install mqtt server"
+    gmsg -v1 "  $GURU_CALL ssh key add github       add ssh keys to github server"
     gmsg -v1 "  $GURU_CALL timer start at 12:00     start work time timer"
     gmsg -v1
-    gmsg -v1 "More detailed help, try '$GURU_CALL <tool> help'"
-    gmsg -v1 "Use verbose mode -v to get more information in help printout. "
-    gmsg -v1 "Even more detailed, try -V"
+    gmsg -v1 -c white  "More detailed help, type '$GURU_CALL <tool> help'"
+    gmsg -v1 "Use verbose mode '-v' to get more information in help printout. "
+    gmsg -v1 "Even more detailed, try '-V' or '-W' "
     gmsg -v1
 
 }
