@@ -63,9 +63,9 @@ corsair.help () {
     gmsg -v 2 " raw_disable                 disable service (some systemd) "
     gmsg -v 2
     gmsg -v 1 -c white "examples:"
-    gmsg -v 1 "          $GURU_CALL corsair status -v   "
-    gmsg -v 1 "          $GURU_CALL corsair init trippy "
-    gmsg -v 1 "          $GURU_CALL corsair end         "
+    gmsg -v 1 " $GURU_CALL corsair status        printout status report "
+    gmsg -v 1 " $GURU_CALL corsair init trippy   initialize trippu color profile"
+    gmsg -v 1 " $GURU_CALL corsair end           stop playing with colors, return to normal"
     gmsg -v 2
     return 0
 }
@@ -97,35 +97,32 @@ corsair.main () {
     local cmd="$1" ; shift
 
     case "$cmd" in
-
             # indicator functions
-            init|set|reset|clear|end)
+            status|init|set|reset|clear|end)
                     corsair.$cmd $@
                     return $?
                     ;;
-
             # non systemd control aka. raw_method (not well tested)
             raw_start|raw_status|raw_stop|raw_disable)
                     corsair.$cmd $@
                     return $?
                     ;;
-
             # systemd method in use after v0.6.4.5
-
-            status|enable|start|restart|stop|disable)
+            enable|start|restart|stop|disable)
                     if ! system.init_system_check systemd ; then
                             gmsg -c yellow -x 133 "systemd not in use, try raw_start or raw_stop"
                         fi
                     corsair.systemd_$cmd $@
                     return $?
                     ;;
-
             # guru.client daemon required functions
             check|install|patch|compile|remove|poll|help)
                     corsair.$cmd $@
                     return $?
                     ;;
 
+            '--')   return 12
+                    ;; 
             *)      gmsg -c yellow "corsair: unknown command: $cmd"
                     GURU_VERBOSE=2
                     corsair.help
@@ -140,7 +137,7 @@ corsair.check () {
     # Check keyboard driver is available, app and pipes are started and executes if needed
 
     gmsg -n -v1 "checking corsair is enabled.. "
-    if [[ $GURU_CORSAIR_ENABLE ]] ; then
+    if [[ $GURU_CORSAIR_ENABLED ]] ; then
             gmsg -v1 -c green "enabled"
         else
             gmsg  -c dark_grey "disabled"
@@ -175,7 +172,7 @@ corsair.check () {
         fi
 
     if system.suspend flag ; then
-            #gmsg -c yellow "computer suspended, ckb-next restart requested"
+            gmsg -v1 -c yellow "computer suspended, ckb-next restart requested"
             #gmsg -v2 -c white "command: $GURU_CALL corsair start"
             return 6
         fi
@@ -204,13 +201,13 @@ corsair.check () {
 
 corsair.status () {
     # get status and print it out to kb leds
-    if corsair.check >/dev/null ; then
+    if corsair.check ; then
             gmsg -v1 -t -c green "${FUNCNAME[0]}: corsair on service" -k $corsair_indicator_key
             return 0
         else
             local status=$?
-            gmsg -t -c red "${FUNCNAME[0]}: corsair is not available" -k $corsair_indicator_key
-            gmsg -v3 -c light_blue "$(corsair.raw_status)"
+            gmsg -t -c red "${FUNCNAME[0]}: corsair is not on service" #-k $corsair_indicator_key
+            #gmsg -v3 -c light_blue "$(corsair.raw_status)"
         fi
 }
 
@@ -672,7 +669,7 @@ corsiar.suspend_recovery () {
 
     system.flag rm fast
 
-    [[ $GURU_CORSAIR_ENABLE ]] || return 0
+    [[ $GURU_CORSAIR_ENABLED ]] || return 0
 
     # restart ckb-next
     corsair.systemd_restart
