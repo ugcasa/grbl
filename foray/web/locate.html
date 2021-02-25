@@ -95,12 +95,11 @@
         document.getElementById('lat').textContent = obj.satnav.latitude;
         document.getElementById('lon').textContent = obj.satnav.longitude;
 
-        // clean coordinates
-        const _lat = obj.satnav.latitude.split(' ');
-        const _lon = obj.satnav.longitude.split(' ');
         // add minutes(including seconds) to degrees
+        const _lat = obj.satnav.latitude.split(' ');
         const gotLatitude = parseFloat(_lat[0].replace(/[^\d.-]/g, ''))
                          + (parseFloat(_lat[1].replace(/[^\d.-]/g, '')) / 60 );
+        const _lon = obj.satnav.longitude.split(' ');
         const gotLongitude = parseFloat(_lon[0].replace(/[^\d.-]/g, ''))
                           + (parseFloat(_lon[1].replace(/[^\d.-]/g, '')) / 60 );
         // output
