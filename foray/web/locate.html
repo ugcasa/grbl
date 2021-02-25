@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- basic stuff -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-A-Compatible" content="ie=edge" />
+    <!-- map stuff -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+      crossorigin=""/>     
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+      crossorigin=""></script>
+    <!-- mqtt stuff -->
+    <script src = "https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" 
+      type = "text/javascript"></script>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"
+      type="text/javascript"></script>
+
+    <style> 
+      #worldMap { height: 300px;
+                width: 600px; }    
+    </style>
+    <title>plot to map</title>
+    
+
+</script>
+
+  </head>
+
+  <body>        
+    <a href="http://ujo.guru">
+        <img src="" id="logo" width="50" /></a>
+    <h1>Location of  <span id="gwId"></span> </h1><p>
+      latitude: <span id="lat"></span><br>
+      longitude: <span id="lon"></span></p>
+    <div id="worldMap"></div>
+
+    <script>
+
+
+  // mqtt settings 
+      const mqttBroker = 'mqtt.ujo.guru';
+      const mqttPort = 9001;  
+      const mqttSubTopic = 'MINIPCIE/STREAM/#'; //' + sensor + '/+/Value'; 
+      const mqttClientId = 'web_' + parseInt(Math.random() * 100, 10);
+      const mqttData = [];
+
+      // connect to mqtt broker   
+      console.log("connecting to mqtt broker..");
+      const client = new Paho.MQTT.Client(mqttBroker, mqttPort, mqttClientId);
+      client.onMessageArrived = onMessageArrived;
+      client.onConnectionLost = onConnectionLost;
+
+      //mqtt connecton options 
+      const options = {
+        timeout: 3,
+        onSuccess: function () {
+          console.log("mqtt connected");
+          client.subscribe(mqttSubTopic, {qos: 1});
+        },
+        onFailure: function (message) {
+          console.log("Connection failed, ERROR: " + message.errorMessage);
+        }
+      };
+
+      // map settings
+      const mymap = L.map('worldMap', {
+        center: [60.23, 24.884],
+        zoom: 4
+      });
+
+      const myIcon = L.icon({
+          iconUrl: 'arrow.png',
+          iconSize: [50, 50],
+          iconAnchor: [25, 50],
+          //popupAnchor: [0, 0],
+      });
+     
+      const attribution = 
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors';
+      const tileURL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      const tiles = L.tileLayer(tileURL, { attribution });
+      tiles.addTo(mymap);
+
+      // main
+
+      client.connect(options);
+      doLogo()
+      //getISS()
+
+      // fetch logo
+      async function doLogo() {
+        const response = await fetch('http://ujo.guru/img/ujo.guru-logo-avatar.001.png')
+        const blob = await response.blob();
+        document.getElementById('logo').src = URL.createObjectURL(blob)
+      }
+
+
+      function onConnectionLost(responseObject) { 
+        console.log("connection lost: " + responseObject.errorMessage);
+      };
+
+
+      function onMessageArrived(message) {
+        console.log(message.payloadString);
+
+        // clean up data
+        const obj = JSON.parse(message.payloadString)                
+        // printout to document
+        document.getElementById('gwId').textContent = obj.id
+        document.getElementById('lat').textContent = obj.satnav.latitude
+        document.getElementById('lon').textContent = obj.satnav.longitude
+
+        // clean coordinates
+        const _lat = obj.satnav.latitude.split(' ')
+        const _lon = obj.satnav.longitude.split(' ')        
+        // add minutes(including seconds) to degrees
+        const gotLatitude = parseFloat(_lat[0].replace(/[^\d.-]/g, ''))
+                          + (parseFloat(_lat[1].replace(/[^\d.-]/g, ''))/60)        
+        const gotLongitude = parseFloat(_lon[0].replace(/[^\d.-]/g, ''))
+                           + (parseFloat(_lon[1].replace(/[^\d.-]/g, ''))/60)                
+        // output
+        //console.log(gotLatitude +":"+ gotLongitude)        
+        L.marker([gotLatitude, gotLongitude], {icon: myIcon}).addTo(mymap);
+      };
+
+
+      function isNumber(n) {
+        console.log('is no propper number');
+        return !isNaN(parseFloat(n)) && isFinite(n);
+      };
+      
+
+      // get ISS location 
+      async function getISS() {
+        const apiURL = "https://api.wheretheiss.at/v1/satellites/25544";
+        const response = await fetch(apiURL);
+        const data = await response.json();
+        //console.log(data)
+        const {latitude, longitude} = data;
+        document.getElementById('lat').textContent = latitude
+        document.getElementById('lon').textContent = longitude
+        L.marker([latitude, longitude], {icon: myIcon}).addTo(mymap);
+      }
+
+
+      async function getGW() {
+        //const apiURL = "https://api.wheretheiss.at/v1/satellites/25544";
+        //onst response = await fetch(apiURL);
+
+      }
+
+
+      //.catch(error => {console.log("error creating map canvas") concole.error(error) });;
+
+   </script>
+  </body>
+</html>
