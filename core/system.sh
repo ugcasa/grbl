@@ -93,29 +93,32 @@ system.main () {
             env)
                 local re='^[0-9]+$'
                 local cmd=$1 ; shift
+               
                 case $cmd in
-
-                    get|set)
+                        get|set)
                             if [[ $2 =~ $re ]] ; then
                                     system."$cmd"_env $@
                                 else
                                     system."$cmd"_env_by_name $@
                                 fi
                             ;;
-
-                          *)
+                        *)
                             gmsg -c yellow "get or set please"
                             GURU_VERBOSE=2
                             system.help
-                        esac
+                    esac
                 ;;
 
-        init_system)
-            system.init_system_check "$@"
-            return $?
-            ;;
+            init_system)
+                system.init_system_check "$@"
+                return $?
+                ;;
 
-            *)  system.help
+            "--") return 0 ;;
+
+            *)  gmsg -c yellow "unknown command $tool"
+                system.help
+                return 0
         esac
 
     return 0

@@ -682,6 +682,7 @@ corsiar.suspend_recovery () {
 
 corsair.clone () {
     cd /tmp
+    [[ -d ckb-next ]] && rm -rf ckb-next
     git clone https://github.com/ckb-next/ckb-next.git \
         && gmsg -c green "ok" \
         || gmsg -x 101 -c yellow "cloning error"
@@ -719,28 +720,10 @@ corsair.compile () {
 }
 
 
-usb.install-uhubctl () {
-    # install usb hub control tool https://github.com/mvp/uhubctl
-    # DID NOT WORK -failed
-    # other https://github.com/hevz/hubpower/blob/master/hubpower.c
-    cd /tmp
-    git clone https://github.com/mvp/uhubctl
-    cd uhubctl
-    make
-    sudo make install
-
-    # test installation
-    sudo uhubctl \
-        || gmsg -x 101 -c yellow "usb hub control tool install error $?" \
-        && gmsg -c green "ok"
-
-
-}
-
 corsair.requirements () {
     # install required libs and apps
     gmsg -c white "installing needed software "
-    usb.install-uhubctl
+
     sudo apt-get install -y git cmake build-essential \
         pavucontrol \
         libudev-dev \
@@ -756,10 +739,11 @@ corsair.requirements () {
         libdbusmenu-qt5-2 \
         libdbusmenu-qt5-dev \
         || gmsg -x 101 -c yellow "apt-get error $?" \
-        && gmdg -c green "ok"
+        && gmsg -c green "ok"
         return 0
 
 }
+
 
 corsair.install () {
     # install essentials, driver and application
@@ -776,15 +760,13 @@ corsair.install () {
 
     corsair.requirements && \
     corsair.clone && \
-    corsair.patch K68 && \
+    # corsair.patch K68 && \
     corsair.compile && \
 
-    corsair.systemd_enable
-    corsar.enable
-    corsar.start
+    corsair.systemd_enable    
+    corsair.systemd_start
 
     # TBD system.suspend_control
-
     # TBD debian suspend control
 
     # make backup of .service file

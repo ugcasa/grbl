@@ -96,6 +96,7 @@ core.process_opts () {                                                  # argume
     done;
     _arg="$@"
     [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
+    gmsg -v3 -c pink "arguments: $ARGUMENTS"
 }
 
 
@@ -103,7 +104,7 @@ core.change_user () {
     # change user to unput ans
     local _input_user=$1
     if [[ "$_input_user" == "$GURU_USER" ]] ; then
-            gmsg -c "user is already $_input_user"
+            gmsg -c yellow "user is already $_input_user"
             return 0
         fi
 
@@ -124,14 +125,14 @@ core.run_module () {
     local type_list=(".sh" ".py" "")
 
     for _module in ${GURU_MODULES[@]} ; do
-        if [[ "$_module" == "$tool" ]] ; then
-            for _type in ${type_list[@]} ; do
-                if [[ -f "$GURU_BIN/$_module$_type" ]] ; then $_module$_type "$@" ; return $? ; fi
-            done
-        fi
-    done
+            if [[ "$_module" == "$tool" ]] ; then
+                for _type in ${type_list[@]} ; do
+                    if [[ -f "$GURU_BIN/$_module$_type" ]] ; then $_module$_type "$@" ; return $? ; fi
+                done
+            fi
+        done
 
-    gmsg -v1 "passing request to os.."
+    gmsg -v1 -c yellow "unknown module passing request to os.."
     $tool $@
     return $?
 }
@@ -161,7 +162,7 @@ core.run_module_function () {
                             return $?
                         fi
                     fi
-    done
+        done
     return 1
 }
 
@@ -185,7 +186,7 @@ core.multi_module_function () {
                 if [[ -f "$GURU_BIN/$_module" ]] ; then
                         $_module "$function_to_run" "$@"
                     fi
-    done
+        done
     return 1
 }
 

@@ -181,11 +181,12 @@ ssh.copy-id () {
 ssh.add_rule () {
     local key_file=$1
     local server="$GURU_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
+    #local port="$GURU_ACCESS_PORT" ; [[ $3 ]] && port=$3
     local user="$GURU_USER" ; [[ $3 ]] && user=$3
     if cat $HOME/.ssh/config | grep "$user-$server" >/dev/null ; then
         gmsg -c green "rule already exist, ok"
     else
-        if printf "\nHost *$server \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" ; then
+        if printf "\nHost *$server \n\tIdentityFile %s\n" $key_file >> "$HOME/.ssh/config" ; then
                 gmsg -c green "ok"
             else
                 gmsg -c red "rule add error"
