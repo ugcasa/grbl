@@ -9,6 +9,13 @@ source $GURU_BIN/common.sh
 install.main () {
     [ "$1" ] && argument="$1" && shift || read -r -p "input module name: " argument
 
+    # architecture selection 
+    case $(uname -m) in 
+        aarch64|arm64) SYSTEM_ARCHITECTURE="arm64" ;;
+        amd64|x86_64) SYSTEM_ARCHITECTURE="amd64" ;;    
+        *) gmsg -c red "unknown architecture" -k esc
+    esac
+
     case "$argument" in
         help|pk2|virtualbox|tiv|django|java|client|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|link|vscode)
                     install.$argument "$@" ;;
@@ -66,7 +73,12 @@ install.virtualbox () {
     if [[ -f /etc/apt/sources.list.d/virtualbox.list ]] ; then
             echo "already in sources list"
         else
-            echo "deb http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+            #  According to your distribution, replace '<mydist>' with 'eoan', 'bionic', 'xenial', 'buster', 'stretch', or 'jessie'
+            # ulyssa <- $(lsb_release -cs) not worky
+            # not possible to get ubuntu release name out of mint :/
+            source /etc/os-release
+            echo "deb [arch=$SYSTEM_ARCHITECTURE] http://download.virtualbox.org/virtualbox/debian $UBUNTU_CODENAME contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+
         fi
     # get key
     wget https://www.virtualbox.org/download/oracle_vbox_2016.asc
@@ -75,7 +87,7 @@ install.virtualbox () {
 
     # install
     sudo apt-get update
-    sudo apt-get install -y virtualbox-6.1
+    sudo apt-get install -y virtualbox virtualbox-ext-pack
 
     # full screen
     sudo apt-get install -y build-essential module-assistant
@@ -83,7 +95,7 @@ install.virtualbox () {
 
     # install usb support
     echo "file > preferences > extencions > [+]"
-    $GURU_BROWSER https://download.virtualbox.org/virtualbox/6.1.16/VirtualBoxSDK-6.1.16-140961.zip
+    $GURU_PREFERRED_BROWSER https://download.virtualbox.org/virtualbox/6.1.16/VirtualBoxSDK-6.1.16-140961.zip
     sudo usermod -aG vboxusers $USER
 }
 
@@ -201,7 +213,7 @@ install.webmin () {
 
     cat /etc/apt/sources.list |grep "download.webmin.com" >/dev/null
     if ! [ $? ]; then
-        sudo sh -c "echo 'deb http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list"
+        sudo sh -c "echo 'deb [arch=$SYSTEM_ARCHITECTURE] http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list"
         wget http://www.webmin.com/jcameron-key.asc #&&\
         sudo apt-key add jcameron-key.asc #&&\
         rm jcameron-key.asc
@@ -291,7 +303,7 @@ install.vscode () {
     code --version >>/dev/null && return 1
     curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
     sudo install -o root -g root -m 644 packages.microsoft.gpg /usr/share/keyrings/
-    sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
+    sudo sh -c 'echo "deb [arch=$SYSTEM_ARCHITECTURE signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
     sudo apt-get install apt-transport-https                    # https://whydoesaptnotusehttps.com/
     sudo apt-get update
     sudo apt-get install code && printf "\n guru is now ready to code \n\n"
