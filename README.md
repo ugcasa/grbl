@@ -19,7 +19,7 @@ Installer will brake something up and lot of application requirements not full f
 Only reason for public repository is that.. hmm.. it public because.. for no obvious reason.
 
 
-casa@ujo.guru 2020
+casa@ujo.guru 2018-2021
 
 ----
 
