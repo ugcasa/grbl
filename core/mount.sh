@@ -248,16 +248,25 @@ unmount.remote () {
         local _i=0
 
         for item in "${_list[@]}" ; do
-            gmsg -c light_blue "$_i: ${_list[_i]}"
+            gmsg -n -c white "$_i: "
+            gmsg -c light_blue "${_list[_i]}"
             let _i++
-            #statements
         done
 
-        _i=0
-        read -p "select mount point: " _i
+        _i=${#_list[@]} ; let _i--
+        read -p "select mount point (0..$_i): " _ii
     fi
 
-    _mountpoint=${_list[_i]}
+    # empty
+    [[ $_ii ]] || return 0
+
+    local re='^[0-9]+$'
+    if [[ $_ii =~ $re ]] && (( _ii <= _i )) && (( _ii >= 0 ))  ; then
+            _mountpoint=${_list[_ii]}
+        else
+            gmsg -c yellow "invalid selection"
+            return 12
+        fi
 
     gmsg -n -v1 "unmounting $_mountpoint.. "
     # check is mounted
@@ -321,9 +330,7 @@ mount.defaults () {
 
 
 unmount.defaults () {
-
     # unmount all GURU_CLOUD_* defined in userrc
-
     # unmount all local/cloud pairs defined in userrc
     local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
 
@@ -335,7 +342,7 @@ unmount.defaults () {
     for _item in "${_default_list[@]}" ; do
         # go trough of found variables
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        #gmsg -v3 -c pink "$FUNCNAME: ${_item,,} "
+        # gmsg -v3 -c pink "$FUNCNAME: ${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
 
