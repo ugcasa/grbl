@@ -18,11 +18,11 @@ mount.main () {
                    check)   mount.online "$@"                                   ; return $? ;;
             check-system)   mount.check "$GURU_SYSTEM_MOUNT"                    ; return $? ;;
            mount|unmount)   case "$1" in all) $argument.defaults                ; return $? ;;
-                                           *) $argument.remote $@               ; return $? ;;
+                                           *) $argument.known_remote $@         ; return $? ;;
                                 esac                                            ; return $? ;;
           install|remove)   mount.install "$argument"                           ; return $? ;;
        help|help-default)   mount.$argument "$1"                                ; return 0  ;;
-                       *)   if [ "$1" ] ; then mount.remote "$argument" "$1"    ; return $? ; fi
+                       *)   if [[ "$1" ]] ; then mount.remote "$argument" "$1"  ; return $? ; fi
                             case $GURU_CMD in
                                 mount|unmount)
                                     case $argument in
@@ -114,10 +114,12 @@ mount.online () {
     # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
 
     local _target_folder="$1"
-
+    gmsg -N -n -v3 -c pink "checking $_target_folder "
     if [[ -f "$_target_folder/.online" ]] ; then
+        gmsg -v3 -c green "mounted"
         return 0
     else
+        gmsg -v3 -c blue "offline"
         return 1
     fi
 }
@@ -199,67 +201,64 @@ mount.remote () {
             user="$GURU_CLOUD_USERNAME"
         fi
 
-    gmsg -v1 -n "mounting $_target_folder "
+    gmsg -v1 -n "mounting $_target_folder.. "
 
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$server_port" "$user@$server:$_source_folder" "$_target_folder"
     error=$?
 
     if ((error>0)) ; then
-            gmsg -v1 "$WARNING source folder not found, check $GURU_SYSTEM_RC"
+            gmsg -v1 -c yellow "source folder not found, check user cofiguration '$GURU_CALL config user'"
             [[ -d "$_target_folder" ]] && rmdir "$_target_folder"
             return 25
         else
             [[ -f "$_target_folder/.online" ]] && touch "$_target_folder/.online"
-            gmsg -v1 "$MOUNTED"
-            return 0                                                         # && echo "mounted $server:$_source_folder to $_target_folder" || error="$
+            gmsg -v1 -c green "ok"
+            return 0
         fi
 }
 
 
 unmount.remote () {
     # unmount mountpoint
+    local _mountpoint=
 
     if [[ "$1" ]] ; then
-        local _mountpoint="$1"
+        _mountpoint="$1"
     else
-
         mount.list | grep -v $GURU_SYSTEM_MOUNT
         read -p "select mount point: " _mountpoint
     fi
 
-    gmsg -v2 -c dark_gray "$FUNCNAME: $_mountpoint"
+    gmsg -n -v1  "unmounting $_mountpoint.. "
+
+    # check is mounted
+    if ! [[ -f "$_mountpoint/.online" ]] ; then
+            gmsg -v1 -c dark_gray "is not mounted"
+            return 0
+        fi
+
+    # unmount (normal)
+    if ! fusermount -u "$_mountpoint" ; then
+            gmsg -v2 -c yellow "error $? "
+        fi
 
     if ! mount.online "$_mountpoint" ; then
-            gmsg -v1 "$_mountpoint is not mounted $IGNORED"
+            gmsg -v1 -c green "OK"
+            rmdir $_mountpoint
             return 0
         fi
 
-    if fusermount -u "$_mountpoint" ; then
-            gmsg -v1 "$_mountpoint $UNMOUNTED"
+    gmsg -n -v1 "trying to force unmount.. "
+
+    if sudo umount -l "$_mountpoint" ; then
+            gmsg -v1 -c green "OK"
+            rmdir $_mountpoint
             return 0
+        else
+            gmsg -c red "failed to force unmount"
+            gmsg -v1 -c white "seems that some of open program like terminal or editor is blocking unmount, try to close those first"
+            return 124
         fi
-
-    # once more or if force
-    if [[ "$GURU_FORCE" ]] || mount.online "$_mountpoint" ; then
-
-            gmsg -v1 "force unmount.. "
-            if fusermount -u "$_mountpoint" ; then
-
-                    gmsg -v1 "$_mountpoint force $UNMOUNTED"
-                    return 0
-                else
-                    if sudo fusermount -u "$_mountpoint" ; then
-                            gmsg -v1 "$_mountpoint SUDO FORCE $UNMOUNTED"
-                            return 0
-                        else
-                            gmsg "$FAILED: sudo force unmount $_mountpoint."
-                            gmsg -v1 "seems that some of open program like terminal or editor is blocking unmount, try to close those first"
-                            return 1
-                    fi
-            fi
-    fi
-
-    return 0
 }
 
 
@@ -296,7 +295,7 @@ unmount.defaults () {
 
     for _item in "${_default_list[@]}" ; do                       # go trough of found variables
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} "
+        #gmsg -v3 -c pink "$FUNCNAME: ${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
 
@@ -307,9 +306,8 @@ unmount.defaults () {
 mount.known_remote () {
     # mount single GURU_CLOUD_* defined in userrc
     local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
-    gmsg -v3 $_source
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
-    gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} $_target"
+    gmsg -v3 -c pink "$FUNCNAME: ${_item,,} $_target < $_source"
     mount.remote "$_source" "$_target"
     return $?
 }
@@ -317,9 +315,8 @@ mount.known_remote () {
 
 unmount.known_remote () {
     # unmount single GURU_CLOUD_* defined in userrc
-
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
-    gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} $_target"
+    gmsg -v3 -c pink "$FUNCNAME: ${_item,,} $_target"
     unmount.remote "$_target"
     return $?
 }
@@ -327,7 +324,6 @@ unmount.known_remote () {
 
 mount.install () {
     #install and remove install applications. input "install" or "remove"
-
     local action="$1"
     [[ "$action" ]] || read -r -p "install or remove? " action
     local require="ssh rsync"
