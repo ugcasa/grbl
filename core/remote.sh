@@ -73,7 +73,7 @@ remote.online () {
 
 
 remote.pull_config () {
-    gmsg -v1 -n -V2 "pulling configs.. "
+    gmsg -v1 -n -V2 "pulling $GURU_USER@$GURU_HOSTNAME configs.. "
     gmsg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
 
@@ -93,7 +93,7 @@ remote.pull_config () {
 
 
 remote.push_config () {
-    gmsg -v1 -n -V2 "pushing configs.. "
+    gmsg -v1 -n -V2 "pushing $GURU_USER@$GURU_HOSTNAME configs.. "
     gmsg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
 
@@ -152,7 +152,6 @@ remote.install () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$GURU_RC"
     remote.main "$@"
     exit 0
 fi
