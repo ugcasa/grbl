@@ -239,35 +239,33 @@ mount.remote () {
 
 unmount.remote () {
     # unmount mountpoint
-    local _mountpoint=
+    local _mountpoint="$1"
+    local _numbers='^[0-9]+$'
+    local _i=0
 
-    if [[ "$1" ]] ; then
-        _mountpoint="$1"
-    else
-        local _list=($(mount.list | grep -v $GURU_SYSTEM_MOUNT))
-        local _i=0
+    if ! [[ "$_mountpoint" ]] ; then
 
-        for item in "${_list[@]}" ; do
-            gmsg -n -c white "$_i: "
-            gmsg -c light_blue "${_list[_i]}"
-            let _i++
-        done
+            local _list=($(mount.list | grep -v $GURU_SYSTEM_MOUNT))
+            for item in "${_list[@]}" ; do
+                gmsg -n -c white "$_i: "
+                gmsg -c light_blue "${_list[_i]}"
+                let _i++
+            done
 
-        _i=${#_list[@]} ; let _i--
-        read -p "select mount point (0..$_i): " _ii
-    fi
+            let _i--
+            read -p "select mount point (0..$_i): " _ii
 
-    # empty
-    [[ $_ii ]] || return 0
+            [[ $_ii ]] || return 0
 
-    local re='^[0-9]+$'
-    if [[ $_ii =~ $re ]] && (( _ii <= _i )) && (( _ii >= 0 ))  ; then
-            _mountpoint=${_list[_ii]}
-        else
-            gmsg -c yellow "invalid selection"
-            return 12
+            if [[ $_ii =~ $_numbers ]] && (( _ii <= _i )) && (( _ii >= 0 ))  ; then
+                    _mountpoint=${_list[_ii]}
+                else
+                    gmsg -c yellow "invalid selection"
+                    return 12
+                fi
         fi
 
+    # empty
     gmsg -n -v1 "unmounting $_mountpoint.. "
     # check is mounted
     if ! grep "$_mountpoint" /etc/mtab >/dev/null ; then
@@ -286,7 +284,7 @@ unmount.remote () {
         fi
 
     if ! mount.online "$_mountpoint" ; then
-            gmsg -v1 -c green "OK"
+            gmsg -v1 -c green "ok"
             rmdir $_mountpoint
             return 0
         fi
@@ -294,7 +292,7 @@ unmount.remote () {
     gmsg -n -v1 "trying to force unmount.. "
 
     if sudo umount -l "$_mountpoint" ; then
-            gmsg -v1 -c green "OK"
+            gmsg -v1 -c green "ok"
             rmdir $_mountpoint
             return 0
         else
