@@ -8,7 +8,7 @@ source $GURU_BIN/common.sh
 mount.main () {
     # mount command parser
     indicator_key='f'"$(poll_order mount)"
-    argument="$1"; shift
+    argument="$1" ; shift
     case "$argument" in
                start|end)   gmsg -v 1 "mount.sh: no $argument function"         ; return 0 ;;
                   system)   mount.system                                        ; return $? ;;
@@ -23,7 +23,7 @@ mount.main () {
                                 esac                                            ; return $? ;;
           install|remove)   mount.install "$argument"                           ; return $? ;;
        help|help-default)   mount.$argument "$1"                                ; return 0  ;;
-                       *)   if [[ "$1" ]] ; then mount.remote "$argument" "$1"  ; return $? ; fi
+                       *)   if [[ "$1" ]] ; then mount.remote "$argument" $@    ; return $? ; fi
                             case $GURU_CMD in
                                 mount|unmount)
                                     case $argument in
@@ -158,13 +158,19 @@ mount.remote () {
     # mount remote location
     # input remote_foder and mount_point
 
+    local _source_server="$GURU_CLOUD_DOMAIN"
+    local _source_port="$GURU_CLOUD_PORT"
     local _source_folder=
     local _target_folder=
+    local _temp_folder="/tmp/guru/mount"
     local _reply=
     unset FORCE
-    if [[ "$1" ]] ; then _source_folder="$1" ; else read -r -p "input source folder at server: " _source_folder ; fi
-    if [[ "$2" ]] ; then _target_folder="$2" ; else read -r -p "input target mount point: " _target_folder ; fi
-    local _temp_folder="/tmp/guru/mount"
+
+    [[ "$1" ]] && _source_folder="$1" || read -r -p "input source folder at server: " _source_folder
+    [[ "$2" ]] && _target_folder="$2" || read -r -p "input target mount point: " _target_folder
+    [[ "$3" ]] && _source_server="$3"
+    [[ "$4" ]] && _source_port="$4"
+
     gmsg -v1 -n "mounting $_target_folder.. "
 
     # check is already mounted
@@ -210,22 +216,22 @@ mount.remote () {
 
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
 
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$GURU_CLOUD_PORT" "$GURU_CLOUD_USERNAME@$GURU_CLOUD_DOMAIN:$_source_folder" "$_target_folder"
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$_source_port" "$GURU_CLOUD_USERNAME@$_source_server:$_source_folder" "$_target_folder"
     error=$?
 
     # copy files from temp if exist
 
     if [[ -d "$_temp_folder/${_target_folder##*/}" ]] ; then
-    # new fucket up space dot --> if [[ -d "$_temp_folder" ]] ; then
-            gmsg -c pink -v3 "juppi: $_temp_folder/${_target_folder##*/}"
-            gmsg -c pink -v3 "cp $_temp_folder/${_target_folder##*/}/*" "$_target_folder"
-            cp -a "$_temp_folder/${_target_folder##*/}/." "$_target_folder" || gmsg -c yellow "failed to append/return files to $_target_folderm, check also $_temp_folder"
+            # new fucket up space dot --> if [[ -d "$_temp_folder" ]] ; then
+            gmsg -c pink -v3 "cp $_temp_folder/${_target_folder##*/} > $_target_folder"
+            cp -a "$_temp_folder/${_target_folder##*/}/." "$_target_folder" || gmsg -c yellow "failed to append/return files to $_target_folder, check also $_temp_folder"
             rm -rf "$_temp_folder" || gmsg -c yellow "failed to remote $_temp_folder"
         fi
 
     # check sshfs error
     if ((error>0)) ; then
-            gmsg -v1 -c yellow "source folder not found, check user cofiguration '$GURU_CALL config user'"
+            gmsg -c yellow "error $error when sshf"
+            gmsg -v2 "check user cofiguration '$GURU_CALL config user'"
             # remove folder only if empty
             [[ -d "$_target_folder" ]] && rmdir "$_target_folder"
             return 25
@@ -318,9 +324,9 @@ mount.defaults () {
 
     for _item in "${_default_list[@]}" ; do
         # go trough of found variables
-        _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")        #
-        _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
-        gmsg -v2 -c dark_gray "$FUNCNAME: ${_item,,} "
+        _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
+        _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
+        gmsg -v2 -c dark_gray "${_item,,} $_source > $_target "
         mount.remote "$_source" "$_target" || _error=$?
     done
     return $_error
@@ -353,8 +359,19 @@ mount.known_remote () {
     # mount single GURU_CLOUD_* defined in userrc
     local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
-    gmsg -v3 -c pink "$FUNCNAME: ${_item,,} $_target < $_source"
-    mount.remote "$_source" "$_target"
+    local _IFS=$IFS
+    IFS=':' read -r _server _port _source_folder <<<"$_source"
+    #GURU_VERBOSE=3
+
+    if ! [[ $_source_folder ]] ; then
+            _source_folder=$_source
+            _server=
+            _port=
+        fi
+
+    gmsg -v3 -c dark_gray "$FUNCNAME: $_target < $_server:$_port:$_source"
+    mount.remote "$_source_folder" "$_target" "$_server" "$_port"
+    IFS=$_IFS
     return $?
 }
 
