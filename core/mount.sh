@@ -312,11 +312,12 @@ unmount.remote () {
 mount.defaults () {
 
     # mount all GURU_CLOUD_* defined in userrc
-    [[ $1 ]] && _default_list=(${1[@]})
+    # [[ $1 ]] && _default_list=(${1[@]})
     # mount all local/cloud pairs defined in userrc
     local _error=0
-    #local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
-    local _default_list=(${GURU_MOUNT_DEFAULT_LIST[@]})
+    local _IFS=$IFS
+    local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
+    #local _default_list=(${GURU_MOUNT_DEFAULT_LIST[@]})
 
     if ! [[ $_default_list ]] ; then
             gmsg -c yellow "default mount list is empty, edit $GURU_CFG/$GURU_USER/user.cfg and then '$GURU_CALL config export'"
@@ -327,9 +328,19 @@ mount.defaults () {
         # go trough of found variables
         _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
         _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
-        gmsg -v2 -c dark_gray "${_item,,} $_source > $_target "
-        mount.remote "$_source" "$_target" || _error=$?
+        IFS=':' read -r _server _port _source_folder <<<"$_source"
+        #GURU_VERBOSE=3
+
+        if ! [[ $_source_folder ]] ; then
+                _source_folder=$_source
+                _server=
+                _port=
+            fi
+
+        gmsg -v3 -c dark_gray "$FUNCNAME: $_target < $_server:$_port:$_source"
+        mount.remote "$_source_folder" "$_target" "$_server" "$_port"
     done
+    IFS=$_IFS
     return $_error
 }
 
