@@ -57,7 +57,7 @@ core.parser () {
     export GURU_CMD="$tool"
     case "$tool" in
                            all)  core.multi_module_function "$@"        ; return $? ;;
-                        status)  gmsg -c green "installed"              ; return 0  ;;
+                        status)  core.multi_module_function status      ; return $? ;;
                start|poll|kill)  daemon.$tool                           ; return $? ;;
                          pause)  system.flag pause \
                                  && system.flag rm pause \
@@ -171,7 +171,7 @@ core.multi_module_function () {
     # run function name of all installed modules
     local function_to_run=$1 ; shift
     for _module in ${GURU_MODULES[@]} ; do
-                gmsg -c dark_olive_green "$_module $function_to_run"
+                gmsg -c dark_golden_rod "$_module $function_to_run"
 
                 # fun shell script module functions
                 if [[ -f "$GURU_BIN/$_module.sh" ]] ; then

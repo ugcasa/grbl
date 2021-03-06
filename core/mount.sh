@@ -312,10 +312,11 @@ unmount.remote () {
 mount.defaults () {
 
     # mount all GURU_CLOUD_* defined in userrc
-
+    [[ $1 ]] && _default_list=(${1[@]})
     # mount all local/cloud pairs defined in userrc
     local _error=0
-    local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
+    #local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
+    local _default_list=(${GURU_MOUNT_DEFAULT_LIST[@]})
 
     if ! [[ $_default_list ]] ; then
             gmsg -c yellow "default mount list is empty, edit $GURU_CFG/$GURU_USER/user.cfg and then '$GURU_CALL config export'"
@@ -336,7 +337,8 @@ mount.defaults () {
 unmount.defaults () {
     # unmount all GURU_CLOUD_* defined in userrc
     # unmount all local/cloud pairs defined in userrc
-    local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
+    local _default_list=(${GURU_MOUNT_DEFAULT_LIST[@]})
+    [[ $1 ]] && _default_list=(${1[@]})
 
     if ! [[ $_default_list ]] ; then
             gmsg -c yellow "default list is empty"

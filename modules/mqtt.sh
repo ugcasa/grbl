@@ -67,12 +67,12 @@ mqtt.online () {
 mqtt.status () {
     # check mqtt broker is reachable.
     # printout and signal by corsair keyboard indicator led - if available
-
+    gmsg -n -v1 -t "${FUNCNAME[0]}: "
     if mqtt.online ; then
-            gmsg -v1 -t -c green "${FUNCNAME[0]}: broker available " -k $mqtt_indicator_key
+            gmsg -v1 -c green "broker available " -k $mqtt_indicator_key
             return 0
         else
-            gmsg -v1 -t -c red "${FUNCNAME[0]}: broker unreachable " -k $mqtt_indicator_key
+            gmsg -v1 -c red "broker unreachable " -k $mqtt_indicator_key
             return 1
         fi
 }

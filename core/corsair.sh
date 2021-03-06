@@ -122,7 +122,7 @@ corsair.main () {
                     ;;
 
             '--')   return 12
-                    ;; 
+                    ;;
             *)      gmsg -c yellow "corsair: unknown command: $cmd"
                     GURU_VERBOSE=2
                     corsair.help
@@ -136,60 +136,60 @@ corsair.main () {
 corsair.check () {
     # Check keyboard driver is available, app and pipes are started and executes if needed
 
-    gmsg -n -v1 "checking corsair is enabled.. "
+    gmsg -n -v2 "checking corsair is enabled.. "
     if [[ $GURU_CORSAIR_ENABLED ]] ; then
-            gmsg -v1 -c green "enabled"
+            gmsg -v2 -c green "enabled"
         else
             gmsg  -c dark_grey "disabled"
             return 1
         fi
 
-    gmsg -n -v1 "checking device is connected.. "
+    gmsg -n -v2 "checking device is connected.. "
     if lsusb | grep "Corsair" >/dev/null ; then
-            gmsg -v1 -c green "connected"
+            gmsg -v2 -c green "connected"
         else
             gmsg -c dark_grey "disconnected"
             return 2
         fi
 
-    gmsg -n -v1 "checking ckb-next-daemon.. "
+    gmsg -n -v2 "checking ckb-next-daemon.. "
     if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
-            gmsg -v1 -c green "running"
+            gmsg -v2 -c green "running"
         else
             gmsg -c dark_grey "ckb-next-daemon not running"
-            [[ $GURU_FORCE ]] || gmsg -v1 -c white "start by '$GURU_CALL corsair start'"
+            [[ $GURU_FORCE ]] || gmsg -v2 -c white "start by '$GURU_CALL corsair start'"
             return 3
         fi
 
-    gmsg -n -v1 "checking ckb-next.. "
+    gmsg -n -v2 "checking ckb-next.. "
     if ps auxf | grep "ckb-next" | grep -v "daemon" | grep -v grep >/dev/null ; then
-            gmsg -v1 -c green "running"
+            gmsg -v2 -c green "running"
 
         else
             gmsg -c yellow "ckb-next application not running"
-            [[ $GURU_FORCE ]] || gmsg -v1 -c white "command: $GURU_CALL corsair start"
+            [[ $GURU_FORCE ]] || gmsg -v2 -c white "command: $GURU_CALL corsair start"
             return 4
         fi
 
     if system.suspend flag ; then
-            gmsg -v1 -c yellow "computer suspended, ckb-next restart requested"
+            gmsg -v2 -c yellow "computer suspended, ckb-next restart requested"
             #gmsg -v2 -c white "command: $GURU_CALL corsair start"
             return 6
         fi
 
-    gmsg -n -v1 "checking mode supports piping.. "
+    gmsg -n -v2 "checking mode supports piping.. "
     if [[ "${status_modes[@]}" =~ "$corsair_mode" ]] ; then
-            gmsg -v1 -c green "ok"
+            gmsg -v2 -c green "ok"
         else
             gmsg -c white "writing not available in '$corsair_mode' mode"
             return 5
         fi
 
-    gmsg -n -v1 "checking pipes.. "
+    gmsg -n -v2 "checking pipes.. "
     if ps auxf | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null ; then
-            gmsg -v1 -c green "ok"
+            gmsg -v2 -c green "ok"
         else
-            gmsg -c red "failed"
+            gmsg -c red "pipe failed"
             corsair.help-profile
             return 6
         fi
@@ -201,13 +201,13 @@ corsair.check () {
 
 corsair.status () {
     # get status and print it out to kb leds
+    gmsg -n -v1 -t "${FUNCNAME[0]}: "
     if corsair.check ; then
-            gmsg -v1 -t -c green "${FUNCNAME[0]}: corsair on service" -k $corsair_indicator_key
+            gmsg -v1 -c green "corsair on service" -k $corsair_indicator_key
             return 0
         else
             local status=$?
-            gmsg -t -c red "${FUNCNAME[0]}: corsair is not on service" #-k $corsair_indicator_key
-            #gmsg -v3 -c light_blue "$(corsair.raw_status)"
+            gmsg -v1 -c red "corsair is not on service" #-k $corsair_indicator_key
         fi
 }
 
@@ -763,7 +763,7 @@ corsair.install () {
     # corsair.patch K68 && \
     corsair.compile && \
 
-    corsair.systemd_enable    
+    corsair.systemd_enable
     corsair.systemd_start
 
     # TBD system.suspend_control

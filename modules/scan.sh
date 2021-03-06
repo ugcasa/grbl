@@ -1,9 +1,6 @@
 #!/bin/bash
 # guru shell scanner wrappers
 
-scanimage -V >/dev/null 2>&1 || scan.install
-convert -version >/dev/null || sudo sudo apt install imagemagick-6.q16
-#gocr >/dev/null || sudo apt-get install -y gocr
 
 scan.main () {
     local _cmd=$1 ; shift
@@ -192,6 +189,13 @@ scan.invoice () {
     # #gocr -i scan_$stamp-$page.pgm -f UTF8 -v >>archive$stamp.txt
     # mogrify -resize 33% scan_$stamp-$page.pgm
     # echo "scan_$stamp-$page.pgm" >>tocompile$stamp
+}
+
+
+scan.install () {
+    scanimage -V >/dev/null 2>&1 || scan.install
+    convert -version >/dev/null || sudo sudo apt install imagemagick-6.q16
+    #gocr >/dev/null || sudo apt-get install -y gocr
 }
 
 

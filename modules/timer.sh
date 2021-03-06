@@ -65,9 +65,10 @@ timer.check() {
 timer.status() {
 
     #timer_indicator_key="f$(poll_order timer)"
+    gmsg -n -t -v1 "${FUNCNAME[0]}: "
 
-    if [ ! -f "$GURU_FILE_TRACKSTATUS" ]; then
-        gmsg -t -v1 -c reset -k $timer_indicator_key "${FUNCNAME[0]}: no timer tasks"
+    if [[ ! -f "$GURU_FILE_TRACKSTATUS" ]] ; then
+        gmsg -v1 -c reset "no timer tasks" -k $timer_indicator_key
         return 1
     fi
 
@@ -106,7 +107,7 @@ timer.status() {
             ;;
 
         simple|*)
-            gmsg -t -v1 -c aqua -k $timer_indicator_key "${FUNCNAME[0]}: $customer $project $task spend: $hours:$minutes"
+            gmsg -v1 -c aqua "$customer $project $task spend: $hours:$minutes" -k $timer_indicator_key
             ;;
     esac
 

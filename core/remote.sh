@@ -40,14 +40,15 @@ remote.main () {
 
 remote.status () {
     # check remote is reachable. daemon poller will run this
+    gmsg -n -v1 -t "${FUNCNAME[0]}: "
     if remote.online ; then
-            gmsg -v 1 -t -c green "${FUNCNAME[0]}: local accesspoint available" -k $remote_indicator_key
+            gmsg -v1 -c green "accesspoint available" -k $remote_indicator_key
             return 0
         elif remote.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
-            gmsg -v 1 -t -c yellow "${FUNCNAME[0]}: remote accesspoint available" -k $remote_indicator_key
+            gmsg -v1 -c green "remote accesspoint available" -k $remote_indicator_key
             return 0
         else
-            gmsg -v 1 -t -c red "${FUNCNAME[0]}: accesspoint offline" -k $remote_indicator_key
+            gmsg -v1 -c red "accesspoint offline" -k $remote_indicator_key
             return 101
         fi
 }
