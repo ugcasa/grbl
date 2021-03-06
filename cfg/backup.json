@@ -1,0 +1,38 @@
+// backup.sh configuration prototype - non functional!
+{
+	"module": "backup",
+	"owner": "casa",
+	"writable": true,
+	"base": "/home/media/casa/store/backup",
+	"rule": [
+		{ 	//
+			"name": "rule name",
+			"purpose": "rule purpose",
+			"date": "Monday",
+			"time": "00:15",
+			"category": "admin",
+			"host": [ "" ],
+			"source": {
+				"server": "",
+				"port": "",
+				"trough_server": "",
+				"trough_port": "",
+				"folder": [
+					{ "location": "/home/casa/usr/cloud-files/company1" },
+					{ "location": "/home/casa/usr/cloud-files/pictures", "exclude": [ "webp", "webv" ] }
+					{ "location": "/home/casa/guru/notes", "include,": ["md", "png", "jpg", "csv"] },
+				],
+			},
+			"target": {
+				"folder_name": "cloud",
+				"type": "tar.bz2",
+				"method": "create",
+				"server": "",
+				"port": "",
+				"trough_server": "",
+				"trough_port": ""
+			}
+		}
+
+	]
+}
