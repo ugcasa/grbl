@@ -172,6 +172,7 @@ mount.remote () {
     [[ "$4" ]] && _source_port="$4"
 
     gmsg -v1 -n "mounting $_target_folder.. "
+    # gmsg -v3 -c deep_pink "$FUNCNAME: $_source_folder|$_target_folder|$_source_server|$_source_port|$_temp_folder"
 
     # check is already mounted
     if mount.online "$_target_folder" ; then
@@ -330,13 +331,16 @@ mount.defaults () {
         IFS=':' read -r _server _port _source_folder <<<"$_source"
         #GURU_VERBOSE=3
 
+        # gmsg -v3 -c deep_pink "$FUNCNAME: $_target < $_server:$_port:$_source"
+
         if ! [[ $_source_folder ]] ; then
                 _source_folder=$_source
                 _server=
                 _port=
             fi
 
-        gmsg -v3 -c dark_gray "$FUNCNAME: $_target < $_server:$_port:$_source"
+        # gmsg -v3 -c deep_pink "$FUNCNAME: $_target < $_server:$_port:$_source"
+
         mount.remote "$_source_folder" "$_target" "$_server" "$_port"
     done
     IFS=$_IFS
@@ -375,17 +379,22 @@ mount.known_remote () {
     IFS=':' read -r _server _port _source_folder <<<"$_source"
     #GURU_VERBOSE=3
 
+
+   # gmsg -v3 -c deep_pink "$FUNCNAME: $_source_folder|$_target|$_server|$_port"
+
     if ! [[ $_source_folder ]] ; then
             _source_folder=$_source
             _server=
             _port=
         fi
 
-    gmsg -v3 -c dark_gray "$FUNCNAME: $_target < $_server:$_port:$_source"
     mount.remote "$_source_folder" "$_target" "$_server" "$_port"
     IFS=$_IFS
     return $?
 }
+
+
+
 
 
 unmount.known_remote () {
