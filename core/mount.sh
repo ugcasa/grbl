@@ -11,7 +11,7 @@ mount.main () {
     argument="$1" ; shift
     case "$argument" in
                start|end)   gmsg -v 1 "mount.sh: no $argument function"         ; return 0 ;;
-                  system)   mount.system                                        ; return $? ;;
+                  #system)   mount.system                                        ; return $? ;;
                      all)   mount.defaults                                      ; return $? ;;
                       ls)   mount.list                                          ; return $? ;;
                     info)   mount.info | column -t -s $' '                      ; return $? ;;
@@ -378,9 +378,7 @@ mount.known_remote () {
     local _IFS=$IFS
     IFS=':' read -r _server _port _source_folder <<<"$_source"
     #GURU_VERBOSE=3
-
-
-   # gmsg -v3 -c deep_pink "$FUNCNAME: $_source_folder|$_target|$_server|$_port"
+    gmsg -v3 -c deep_pink "$FUNCNAME: $_source_folder|$_target|$_server|$_port"
 
     if ! [[ $_source_folder ]] ; then
             _source_folder=$_source
