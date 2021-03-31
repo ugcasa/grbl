@@ -27,34 +27,37 @@ source $GURU_BIN/system.sh
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
 
 
-## core functions
+core.main () {  # tail bone function but it sits well here
+                # to remove: check is *.mail called by modules, and call from tail on this file
 
-core.main () {
-    # main function
-
-    # with arguments go to parser
     if [[ "$1" ]] ; then
+            # with arguments go to parser
             core.parser "$@"
             _error_code=$?
         else
-            # guru without parameters starts terminal loop
+            # without parameters starts terminal loop
             core.shell "$@"
             _error_code=$?
         fi
 
-    # less than 100 are warnings, no error output
-    if (( _error_code > 99 )); then
-            gmsg -v2 -c dark_grey  "retuning error code $_error_code"
+    (( _error_code < 1 )) && return 0
+
+    if (( _error_code > 99 )) ; then
+            # on verbose -v print onle errors
+            gmsg -v2 -c red  "error code $_error_code"
+        else
+            # on verbose -V print also warnings
+            gmsg -v3 -c yellow  "warning code $_error_code"
         fi
 
     return $_error_code
 }
 
 
-core.parser () {
-    # main command parser
-    tool="$1" ; shift
-    export GURU_CMD="$tool"
+core.parser () {  # main command parser
+
+    local tool="$1" ; shift
+    export GURU_CMD="$tool"     # TBD expired method to let modules know the command before client was not: to remove check is it used and remove
     case "$tool" in
                            all)  core.multi_module_function "$@"        ; return $? ;;
                         status)  core.multi_module_function status      ; return $? ;;
@@ -77,7 +80,7 @@ core.parser () {
 
 
 
-core.process_opts () {                                                  # argument parser
+core.process_opts () {  # argument parser
 
     TEMP=`getopt --long -o "svVWflu:h:" "$@"`
     eval set -- "$TEMP"
@@ -100,8 +103,7 @@ core.process_opts () {                                                  # argume
 }
 
 
-core.change_user () {
-    # change user to unput ans
+core.change_user () {  # change user to unput ans
     local _input_user=$1
     if [[ "$_input_user" == "$GURU_USER" ]] ; then
             gmsg -c yellow "user is already $_input_user"
@@ -119,8 +121,7 @@ core.change_user () {
 }
 
 
-core.run_module () {
-    # check is given tool in module list and lauch first hit
+core.run_module () {  # check is given tool in module list and lauch first hit
     local tool=$1 ; shift
     local type_list=(".sh" ".py" "")
 
@@ -138,8 +139,7 @@ core.run_module () {
 }
 
 
-core.run_module_function () {
-    # run module functions
+core.run_module_function () {  # run module functions
     local tool=$1 ; shift
     local function_to_run=$1 ; shift
 
@@ -167,8 +167,7 @@ core.run_module_function () {
 }
 
 
-core.multi_module_function () {
-    # run function name of all installed modules
+core.multi_module_function () {  # run function name of all installed modules
     local function_to_run=$1 ; shift
     for _module in ${GURU_MODULES[@]} ; do
                 gmsg -c dark_golden_rod "$_module $function_to_run"
@@ -191,8 +190,7 @@ core.multi_module_function () {
 }
 
 
-core.shell () {                                                      # terminal loop
-    # Terminal looper
+core.shell () {   # Terminal looper
 
         render_path () {
             # todo this is broken

@@ -44,16 +44,13 @@ project.help () {
 
 project.main () {
 
-    mount.system
-
     local _cmd="$1" ; shift
 
     case "$_cmd" in
-        ls|new|open|change|status|\
-        archive|active|close|rm|\
-        sublime|help)
+        check|ls|new|open|change|status|archive|active|close|rm|sublime|help)
                 project.$_cmd "$@"
                 return $? ;;
+
         *)      project.open "$_cmd"
                 return $? ;;
         esac
@@ -62,19 +59,48 @@ project.main () {
 
 project.check () {
 
-    mount.system
-
     local project_base="$GURU_SYSTEM_MOUNT/project"
+    local project_mount="$GURU_MOUNT_PROJECTS"
+    local project_name="$1"
 
-    if [[ -d "$project_base" ]] ; then
-            gmsg -v1 -c green "ready"
-            return 0
-        else
-            gmsg -c red "not mounted"
-            gmsg -v1 -c white "to mount try '$GURU_CALL mount system'"
-            return 141
+    # check project file locaton is accessavle
+    gmsg -n -v1 "cheking projects.. "
+    if ! [[ -d "$project_base" ]] ; then
+            gmsg -c red "$project_base not available"
+            if [[ $GURU_FORCE ]] ; then
+                    mount.main mount system || return $?
+                else
+                    gmsg -v1 -c white "try -f or '$GURU_CALL mount system'"
+                    return 41
+                fi
         fi
-    }
+
+    # check are projects mounted
+    if [[ -f "$project_mount/.online" ]] ; then
+            gmsg -v1 -c green "available"
+        else
+            gmsg -v1 -c yellow "not mounted"
+
+            if [[ $GURU_FORCE ]] ; then
+                    mount.main mount projects || return $?
+                else
+                    gmsg -v1 -c white "try -f or '$GURU_CALL mount projects'"
+                    return 41
+                fi
+        fi
+
+    [[ $project_name ]] || return 0
+
+    gmsg -n -v1 "$project_name.. "
+    # check does project have a folder
+    if [[ -s "$project_mount/$project_name" ]] ; then
+            gmsg -v1 -c green "ok"
+            gmsg -v2 -c light_blue "$(ls $project_mount/$project_name)"
+        else
+            gmsg -v1 -c yellow "$project_name folder not found"
+            return 41
+        fi
+}
 
 
 project.ls () {

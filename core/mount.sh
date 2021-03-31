@@ -118,10 +118,9 @@ mount.system () {
 }
 
 
-mount.online () {
-    # check if mountpoint "online", no printout, return code only
-    # input: mount point folder.
-    # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
+mount.online () {  # check if mountpoint "online", no printout, return code only
+                   # input: mount point folder.
+                   # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
 
     local _target_folder="$1"
     gmsg -N -n -v3 -c pink "checking $_target_folder "
@@ -135,8 +134,7 @@ mount.online () {
 }
 
 
-mount.check () {
-    # check mountpoint is mounted, output status
+mount.check () {  # check mountpoint is mounted, output status
 
     local _target_folder="$1"
     local _err=0
@@ -154,14 +152,16 @@ mount.check () {
 }
 
 
-mount.remote () {
-    # mount remote location
-    # input remote_foder and mount_point
-
-    local _source_server="$GURU_CLOUD_DOMAIN"
-    local _source_port="$GURU_CLOUD_PORT"
+mount.remote () {  # mount any remote location
+                   # usage: mount.remote remote_foder mountpoint domain port symlink-to
+    # set defaults
     local _source_folder=
     local _target_folder=
+    local _source_server="$GURU_CLOUD_DOMAIN"
+    local _source_port="$GURU_CLOUD_PORT"
+    local _symlink=
+
+    # temporary
     local _temp_folder="/tmp/guru/mount"
     local _reply=
     unset FORCE
@@ -170,8 +170,11 @@ mount.remote () {
     [[ "$2" ]] && _target_folder="$2" || read -r -p "input target mount point: " _target_folder
     [[ "$3" ]] && _source_server="$3"
     [[ "$4" ]] && _source_port="$4"
+    [[ "$5" ]] && _symlink="$5"
 
+    gmsg -v3 -c deep_pink "$_source_folder:$_target_folder:$_source_server:$_source_port:$_symlink:"
     gmsg -v1 -n "mounting $_target_folder.. "
+    # gmsg -v3 -c deep_pink "$FUNCNAME: $_source_folder|$_target_folder|$_source_server|$_source_port|$_temp_folder"
 
     # check is already mounted
     if mount.online "$_target_folder" ; then
@@ -220,12 +223,23 @@ mount.remote () {
     error=$?
 
     # copy files from temp if exist
-
     if [[ -d "$_temp_folder/${_target_folder##*/}" ]] ; then
             # new fucket up space dot --> if [[ -d "$_temp_folder" ]] ; then
             gmsg -c pink -v3 "cp $_temp_folder/${_target_folder##*/} > $_target_folder"
             cp -a "$_temp_folder/${_target_folder##*/}/." "$_target_folder" || gmsg -c yellow "failed to append/return files to $_target_folder, check also $_temp_folder"
             rm -rf "$_temp_folder" || gmsg -c yellow "failed to remote $_temp_folder"
+        fi
+
+    # if symlink given check if exist and create if not
+    if [[ $_symlink ]] ; then
+            gmsg -n -v1 "symlink "
+
+            if file -h $_symlink | grep "symbolic" >/dev/null ; then
+                    gmsg -n -v1 "exist "
+                else
+                    gmsg -n -v1 "creating.. "
+                    ln -s $_target_folder $_symlink && error=0 || gmsg -x 25 -c yellow "error creating $_symlink"
+                fi
         fi
 
     # check sshfs error
@@ -243,10 +257,10 @@ mount.remote () {
 }
 
 
-unmount.remote () {
-    # unmount mountpoint
+unmount.remote () {  # unmount mount point
     local _mountpoint="$1"
     local _numbers='^[0-9]+$'
+    local _symlink=
     local _i=0
 
     if ! [[ "$_mountpoint" ]] ; then
@@ -257,9 +271,10 @@ unmount.remote () {
                 gmsg -c light_blue "${_list[_i]}"
                 let _i++
             done
-
             let _i--
-            read -p "select mount point (0..$_i): " _ii
+
+            (( $_i < 1 )) && return 0
+            read -p "select mount point (0..$_i) " _ii
 
             [[ $_ii ]] || return 0
 
@@ -273,6 +288,7 @@ unmount.remote () {
 
     # empty
     gmsg -n -v1 "unmounting $_mountpoint.. "
+
     # check is mounted
     if ! grep "$_mountpoint" /etc/mtab >/dev/null ; then
             gmsg -v1 -c dark_gray "is not mounted"
@@ -282,7 +298,6 @@ unmount.remote () {
     if ! [[ -f "$_mountpoint/.online" ]] ; then
             gmsg -n -v2 -c yellow ".online missing, "
          fi
-
 
     # unmount (normal)
     if ! fusermount -u "$_mountpoint" ; then
@@ -309,55 +324,74 @@ unmount.remote () {
 }
 
 
-mount.defaults () {
-
-    # mount all GURU_CLOUD_* defined in userrc
-    # mount all local/cloud pairs defined in userrc
+mount.defaults () { # mount all GURU_CLOUD_* defined in userrc
+                    # mount all local/cloud pairs defined in userrc
     local _error=0
-    local _IFS=$IFS
-    local _default_list=($(cat $GURU_RC | grep 'GURU_MOUNT_' | grep -v "DEFAULT_LIST" | sed 's/^.*MOUNT_//' | cut -d '=' -f1))
-    #local _default_list=(${GURU_MOUNT_DEFAULT_LIST[@]})
+    local _IFS="$IFS"
+    local _symlink=
+    local _default_list=(${GURU_MOUNT_DEFAULT_LIST[@]})
 
-    if ! [[ $_default_list ]] ; then
-            gmsg -c yellow "default mount list is empty, edit $GURU_CFG/$GURU_USER/user.cfg and then '$GURU_CALL config export'"
+    [[ ${_default_list[@]} ]] || _default_list=($(\
+            cat $GURU_RC | \
+            grep 'GURU_MOUNT_' | \
+            grep -v "DEFAULT_LIST" | \
+            sed 's/^.*MOUNT_//' | \
+            cut -d '=' -f1))
+
+    if [[ $_default_list ]] ; then
+                gmsg -v3 -c light_blue "$_default_list"
+            else
+                gmsg -c yellow "default mount list is empty, edit $GURU_CFG/$GURU_USER/user.cfg and then '$GURU_CALL config export'"
             return 1
         fi
 
     for _item in "${_default_list[@]}" ; do
-        # go trough of found variables
-        _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
-        _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
-        IFS=':' read -r _server _port _source_folder <<<"$_source"
-        #GURU_VERBOSE=3
+            # go trough of found variables
+            _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
+            _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
+            _symlink=$(eval echo '${GURU_MOUNT_'"${_item}[2]}")
+            IFS=':' read -r _server _port _source_folder <<<"$_source"
 
-        if ! [[ $_source_folder ]] ; then
-                _source_folder=$_source
-                _server=
-                _port=
-            fi
+            if ! [[ $_source_folder ]] ; then
+                    _source_folder=$_source
+                    _server=
+                    _port=
+                fi
 
-        gmsg -v3 -c dark_gray "$FUNCNAME: $_target < $_server:$_port:$_source"
-        mount.remote "$_source_folder" "$_target" "$_server" "$_port"
-    done
-    IFS=$_IFS
+            gmsg -v3 -c deep_pink "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
+            mount.remote "$_source_folder" "$_target" "$_server" "$_port" "$_symlink"
+        done
+
+    IFS="$_IFS"
     return $_error
 }
 
 
-unmount.defaults () {
-    # unmount all GURU_CLOUD_* defined in userrc
-    # unmount all local/cloud pairs defined in userrc
-    local _default_list=(${GURU_MOUNT_DEFAULT_LIST[@]})
-    [[ $1 ]] && _default_list=(${1[@]})
+unmount.defaults () {  # unmount all GURU_CLOUD_* defined in userrc
+                       # unmount all local/cloud pairs defined in userrc
 
-    if ! [[ $_default_list ]] ; then
+    local _default_list=(${GURU_MOUNT_DEFAULT_LIST[@]})
+
+    # fill default list if not set in user configuration
+    [[ $_default_list ]] || _default_list=($(\
+            cat $GURU_RC | \
+            grep 'GURU_MOUNT_' | \
+            grep -v "DEFAULT_LIST" | \
+            sed 's/^.*MOUNT_//' | \
+            cut -d '=' -f1))
+
+    [[ "$1" ]] && _default_list=(${1[@]})
+
+    if [[ $_default_list ]] ; then
+            gmsg -v3 -c light_blue "$_default_list"
+        else
             gmsg -c yellow "default list is empty"
             return 1
         fi
 
     for _item in "${_default_list[@]}" ; do
         # go trough of found variables
-        _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")        #
+        _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
         # gmsg -v3 -c pink "$FUNCNAME: ${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
@@ -366,14 +400,15 @@ unmount.defaults () {
 }
 
 
-mount.known_remote () {
+mount.known_remote () { # mount single GURU_CLOUD_* defined in userrc
 
-    # mount single GURU_CLOUD_* defined in userrc
-    local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
+    local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
+    local _symlink=$(eval echo '${GURU_MOUNT_'"${1^^}[2]}")
     local _IFS=$IFS
     IFS=':' read -r _server _port _source_folder <<<"$_source"
     #GURU_VERBOSE=3
+    gmsg -v3 -c deep_pink "$FUNCNAME: $_source_folder|$_target|$_server|$_port"
 
     if ! [[ $_source_folder ]] ; then
             _source_folder=$_source
@@ -381,16 +416,18 @@ mount.known_remote () {
             _port=
         fi
 
-    gmsg -v3 -c dark_gray "$FUNCNAME: $_target < $_server:$_port:$_source"
-    mount.remote "$_source_folder" "$_target" "$_server" "$_port"
+    gmsg -v3 -c deep_pink "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
+    mount.remote "$_source_folder" "$_target" "$_server" "$_port" "$_symlink"
     IFS=$_IFS
     return $?
 }
 
 
-unmount.known_remote () {
 
-    # unmount single GURU_CLOUD_* defined in userrc
+
+
+unmount.known_remote () { # unmount single GURU_CLOUD_* defined in userrc
+
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
     gmsg -v3 -c pink "$FUNCNAME: ${_item,,} $_target"
     unmount.remote "$_target"
@@ -398,8 +435,7 @@ unmount.known_remote () {
 }
 
 
-mount.install () {
-    #install and remove install applications. input "install" or "remove"
+mount.install () {  # install and remove install applications. input "install" or "remove"
     local action="$1"
     [[ "$action" ]] || read -r -p "install or remove? " action
     local require="ssh rsync"
