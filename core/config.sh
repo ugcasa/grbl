@@ -8,11 +8,10 @@ config.main () {
 
     local _cmd="$1" ; shift
     case "$_cmd" in
-              get|user)  config.$_cmd $@                        ; return $? ;;
+              get|user|export|help|edit)
+                         config.$_cmd $@                        ; return $? ;;
                    set)  gmsg -v black "config.$_cmd disabled"  ; return $? ;;
              pull|push)  remote."$_cmd"_config $@               ; return $? ;;
-                export)  config.export $@                       ; return $? ;;
-                  help)  config.help $@                         ; return $? ;;
                 status)  echo "no status data" ;;
                      *)  echo "unknown config action '$_cmd'"
                          config.help  $@                        ; return $? ;;
@@ -31,6 +30,7 @@ config.help () {
     gmsg -v1 " pull          poll user configuration from server "
     gmsg -v1 " push          push user configuration to server "
     gmsg -v1 " user          open user configuration in dialog "
+    gmsg -v1 " edit          edit user config file with preferred editor "
     gmsg -v1 " help          try 'help -V' full help" -V2
     core.help flags
     gmsg -v1 "examples:" -c white
@@ -169,6 +169,22 @@ config.export () {
             [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" || gmsg -x 100 -c red "no old backup found, unable to recover"
             return 10
         fi
+}
+
+
+config.edit () {
+    # edit user config file with preferred editor
+    local _config_file=$GURU_CFG/$GURU_USER/user.cfg
+
+    if ! [[ -f $_config_file ]] ; then
+        if gask "user configuration fur user did not found, create local config for $GURU_USER" ; then
+                mkdir -p $_config_file
+                cp $GURU_CFG/user-default.cfg $_config_file
+            fi
+        fi
+
+    $GURU_PREFERRED_EDITOR $_config_file  || gmsg -v2 -c yello "error while editing $_config_file.."
+
 }
 
 
