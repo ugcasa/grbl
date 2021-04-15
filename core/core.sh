@@ -67,7 +67,6 @@ core.parser () {  # main command parser
                                  || system.flag set pause               ;;
                           stop)  system.main flag set stop              ; return 0  ;;
                       document)  $tool "$@"                             ; return $? ;;
-                       unmount)  mount.main unmount "$@"                ; return $? ;;
                          radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;
                          shell)  core.shell "$@"                        ; return $? ;;
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;
@@ -133,9 +132,11 @@ core.run_module () {  # check is given tool in module list and lauch first hit
             fi
         done
 
-    gmsg -v1 -c yellow "unknown module passing request to os.."
-    $tool $@
+    gmsg -v1 -c yellow "unknown command: $tool"
     return $?
+
+    # gmsg -v1 -c yellow "unknown module passing request to os.."
+    # $tool $@
 }
 
 
