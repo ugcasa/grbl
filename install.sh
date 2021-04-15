@@ -40,7 +40,7 @@ core_rc="$HOME/.gururc"    # TODO change name to '.gururc' when cleanup next tim
 backup_rc="$HOME/.bashrc.backup-by-guru"
 
 # modules where user have direct access
-core_module_access=(counter install uninstall config corsair mount daemon keyboard remote system)
+core_module_access=(counter install uninstall config corsair mount unmount daemon keyboard remote system)
 
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
 modules_to_install=(mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news)
@@ -199,7 +199,7 @@ install.help () {
 install.arguments () {
     ## Process flags and arguments
 
-    TEMP=`getopt --long -o "dfrvVhu:p:" "$@"`
+    TEMP=`getopt --long -o "dfrvVhlu:p:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
@@ -209,6 +209,7 @@ install.arguments () {
             -v) export GURU_VERBOSE=1      ; shift ;;
             -V) export GURU_VERBOSE=2      ; shift ;;
             -h) install.help               ; shift ;;
+            -l) export LIGTH_INSTALL=true  ; shift ;;
             -u) export GURU_USER=$2        ; shift 2 ;;
             -p) export install_platform=$2 ; shift 2 ;;
              *) break
@@ -256,6 +257,14 @@ install.check () {
         if ! [[ "$answer" == "y" ]]; then
                 gmsg -c red -x 2 "aborting.."
             fi
+
+        if [[ $LIGTH_INSTALL ]] ; then
+            install.core || gmsg -x 150 "error during installing core"
+            check.core
+            install.modules && check.modules || gmsg -x 170 "error when installing modules"
+            exit 0
+        fi
+
 
         if [[ -f "$TARGET_BIN/uninstall.sh" ]] ; then
                 $TARGET_BIN/uninstall.sh
