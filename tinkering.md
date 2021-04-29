@@ -1,6 +1,97 @@
-todo.md
+tinkering.md
 
-# guru-client to do list
+# guru-client - tinkering
+
+Random ideas, pre-spec etc.
+
+
+## 1.1 lokaatiotägit
+
+**note muutos**
+
+- otsikossa määritellään `projecti:kohde: Itse otsikko`
+  - esim `## guru-cli:todo Pikaisesti korjattavaa`
+  - etsitään ##, sitten : jonka vasenta blokkia verrataan:
+  	- projetien nimiin
+  	- varattuihin sanoihin `(private www wiki todo)`
+  	- rajoittaa, esim `wiki` ei voi olla projetin nimi.
+  - julkaistaan jokaisella tallennuksella
+
+**mahdollisa kohteita**
+
+- `projetien nimet` (suorittaa projektin julkaisumetodi) `git pull/push git.ujo.guru/project/notes + opt magic to stay bg`
+- `private, priva` oma shitti (default) `git pull/push git.ujo.guru/casa/notes`
+- `www` julkisin webistys > http://casa.ujo.guru/notes/20210427.html
+- `wiki` aktiivisen projetin wiki, tuuttaa wikiin md -> dokuwiki käännöksen jälkeen "wiki.ujo.guru/notes/2021/4/casa-notes.20210427.txt" + tarviiko kutsua uudelleenindeksointia?
+- `todo` vaikka kategorisesti ulkopuolinen, sopisi tähän jos vain listaa alla viitaten mahd?
+- `secred, password` siirretään lokaalille kryptolevyulle `/modia/casa/safe/notes/casa/sec-notes-20210427.md` (mountataan ensin, salis) jos onnistui poistetaan source tiedostosta ko. kappale ja jätetään viittaus linkillä
+
+
+## password: wanhan vimpelin ompelukerho
+
+domain: wv-ompelu.fi
+user: seppo
+pass: kukka
+
+poistuu ja tilalle seuraava:
+
+---
+
+### wanhan vimpelin ompelukerho
+
+[encrypted login information](file:///media/casa/safe/casa/passut/login-info.md.zip)
+
+---
+
+## sepon puhelin tulis korjata
+
+>kappale tallentuu vain privaattiin muistiinpanoon
+
+pitäiskö ratoksi kirjoittaa tutkielma kojootista?
+
+
+## wiki:elukat/kojootti: kojootti on hieman hämmentynyt hännällinen nisäkäs
+
+>otsikossa oleva käsky `wiki:` ja lokaatio `elukat/kojootti:` luo tai täydentää sivun http://wiki.ujo.guru/elukat/kojootti lisäämällä kappaleen `## kojootti on hieman hämmentynyt hännällinen nisäkäs` sisällön artikkelin loppuun, mukaan lukien tämä kommentti ja kuva (jos linkki enään toimii).
+
+![keskityypillinen Kojootti](https://respawn.fi/wp-content/uploads/2018/08/Wile-E-Coyote.jpg)
+
+
+## Change lög ünd stuff
+
+>priva ellei ###
+
+Date              | Author     | Changes
+------------------|:----------:|------------------------------
+20210427-01:16:53 | casa       | created
+20210427-01:16:55 | guru       | tags added: note 20210427
+20210427-01:17:40 | casa       | opened
+
+## meta blokki?
+
+```
+<meta>
+<file /home/casa/guru/notes/casa/2021/04/casa_notes_20210427.md>
+<www http://casa.ujo.guru/notes/20210427.html>
+<wiki http://casa.ujo.guru/wiki/20210427.txt>
+<project note guru-cli>
+<tag text md casa note 20210427>
+<ver 1.0.1>
+</meta>
+```
+
+---
+
+<meta>
+<file /home/casa/guru/notes/casa/2021/04/casa_notes_20210427.md>
+<www http://casa.ujo.guru/notes/20210427.html>
+<wiki http://casa.ujo.guru/wiki/20210427.txt>
+<project note guru-cli>
+<tag text md casa note 20210427>
+<ver 1.0.1>
+</meta>
+
+---
 
 
 ## architecture: module construction
@@ -114,19 +205,7 @@ hmm.. this is not os.. but not waist of time, learned thing like xev.. evx.. vex
 ### this guy, yes.. looks good
 
 
-
 https://michael.humanfactors.io/blog/debian-hyperkey-binding/
-
-
-### albert. who the fuck is albert?
-
-https://albertlauncher.github.io/docs/using/
-
-nääh.. just an launcher. I though that gnome does all this stuff already?
-
-And "These are build by third parties and may contain malicious code!" - sorry no.
-
-futile
 
 
 ## gnome-terminal setting
