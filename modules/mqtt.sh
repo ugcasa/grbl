@@ -2,6 +2,7 @@
 # guru client mqtt functions
 # casa@ujo.guru 2020
 source $GURU_BIN/common.sh
+#source common.sh
 mqtt_indicator_key="f$(poll_order mqtt)"
 
 mqtt.help () {
@@ -25,15 +26,22 @@ mqtt.help () {
 }
 
 
+mqtt.debug () {
+    export GURU_VERBOSE=1
+    export GURU_FLAG_COLOR=
+    mqtt.status $@
+    return $?
+}
+
 mqtt.main () {
     # command parser
     mqtt_indicator_key="f$(poll_order mqtt)"
 
     local _cmd="$1" ; shift
     case "$_cmd" in
-               status|help|install|remove|single|sub|pub|poll)
+               status|help|install|remove|single|sub|pub|poll|debug)
                             mqtt.$_cmd "$@" ; return $? ;;
-               *)           echo "${FUNCNAME[0]}: unknown command"
+               *)           echo "${FUNCNAME[0]}: unknown command: $_cmd"
         esac
 
     return 0
@@ -168,7 +176,8 @@ mqtt.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    #source "$GURU_RC"
+    #source common.sh
     mqtt.main "$@"
     exit "$?"
 fi

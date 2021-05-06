@@ -81,18 +81,20 @@ core.parser () {  # main command parser
 
 core.process_opts () {  # argument parser
 
-    TEMP=`getopt --long -o "svVWflu:h:" "$@"`
+    TEMP=`getopt --long -o "scCvVWflu:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
-            -s ) export GURU_VERBOSE=       ; shift     ;;
-            -v ) export GURU_VERBOSE=1      ; shift     ;;
-            -V ) export GURU_VERBOSE=2      ; shift     ;;
-            -W ) export GURU_VERBOSE=3      ; shift     ;;
-            -f ) export GURU_FORCE=true     ; shift     ;;
-            -l ) export GURU_LOGGING=true   ; shift     ;;
-            -u ) core.change_user "$2"      ; shift 2   ;;
-            -h ) export GURU_HOSTNAME=$2    ; shift 2   ;;
+            -s ) export GURU_VERBOSE=        ; shift     ;;
+            -c ) export GURU_FLAG_COLOR=true ; shift     ;;
+            -C ) export GURU_FLAG_COLOR=     ; shift     ;;
+            -v ) export GURU_VERBOSE=1       ; shift     ;;
+            -V ) export GURU_VERBOSE=2       ; shift     ;;
+            -W ) export GURU_VERBOSE=3       ; shift     ;;
+            -f ) export GURU_FORCE=true      ; shift     ;;
+            -l ) export GURU_LOGGING=true    ; shift     ;;
+            -u ) core.change_user "$2"       ; shift 2   ;;
+            -h ) export GURU_HOSTNAME=$2     ; shift 2   ;;
              * ) break                  ;;
         esac
     done;
