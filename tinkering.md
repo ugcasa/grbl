@@ -5,7 +5,24 @@ tinkering.md
 Random ideas, pre-spec etc.
 
 
-## 1.1 lokaatiotägit
+## guru-cli:wekan:install
+
+### snap method
+
+```bash
+# requirements
+sudo apt-get install nginx -y
+sudo systemctl start nginx
+sudo systemctl enable nginx
+# install
+sudo snap install wekan
+sudo snap set wekan root_url="http://localhost"
+sudo snap set wekan port='3001'
+sudo systemctl restart snap.wekan.mongodb
+sudo systemctl restart snap.wekan.wekan
+```
+
+## lokaatiotägit
 
 **note muutos**
 
