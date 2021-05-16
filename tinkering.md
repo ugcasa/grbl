@@ -22,6 +22,18 @@ sudo systemctl restart snap.wekan.mongodb
 sudo systemctl restart snap.wekan.wekan
 ```
 
+
+## guru-cli:mount issue
+
+If not mountable, just quit with error do not ask input from user.
+
+	casa@electra:~/guru/.data/project/summer$ ./launch.sh
+	project slummer laucher
+	input source folder at server: ^C
+	casa@electra:~/guru/.data/project/summer$
+
+
+
 ## lokaatiotägit
 
 **note muutos**
