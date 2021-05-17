@@ -8,6 +8,7 @@ source $GURU_BIN/corsair.sh
 source $GURU_BIN/system.sh
 
 daemon_service_script="$HOME/.config/systemd/user/guru.service"
+daemon_pid_file="/tmp/guru.daemon-pid"
 
 daemon.main () {
     local argument="$1" ; shift
@@ -49,15 +50,15 @@ daemon.status () {
 
     local _err=0
 
-    if [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
-            local _pid="$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)"
+    if [[ -f "$daemon_pid_file" ]] ; then
+            local _pid="$(cat $daemon_pid_file)"
             gmsg -v 1 -c green "${FUNCNAME[0]}: $_pid"
         else
             gmsg -v 1 -c dark_grey "${FUNCNAME[0]}: no pid reserved"
             _err=$((_err+10))
         fi
 
-    if ps auxf | grep "$HOME/bin/$GURU_CALL start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
+    if ps auxf | grep "$HOME/bin/core.sh start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
             gmsg -v 1 -c green "${FUNCNAME[0]}: running"
         else
             gmsg -v 1 -c red "${FUNCNAME[0]}: not running"
@@ -70,8 +71,8 @@ daemon.status () {
 
 daemon.start () {
 
-    if [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
-            local _pid=$(cat "$GURU_SYSTEM_MOUNT/.daemon-pid")
+    if [[ -f "$daemon_pid_file" ]] ; then
+            local _pid=$(cat "$daemon_pid_file")
             gmsg -v 1 "${FUNCNAME[0]}:  killing $_pid"
             kill -9 $_pid
         fi
@@ -111,13 +112,13 @@ daemon.stop () {
     system.flag rm stop
     gmsg -N -n -V1 -c white "stopping daemon.. "
     # if pid file is not exist
-    if ! [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
+    if ! [[ -f "$daemon_pid_file" ]] ; then
             gmsg "${FUNCNAME[0]}: daemon not running"
             gmsg -v1 "start daemon by typing 'guru start'"
             return 0
         fi
 
-    local _pid=$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)
+    local _pid=$(cat $daemon_pid_file)
 
     gmsg -t -v1 "stopping modules.. "
     #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
@@ -145,7 +146,7 @@ daemon.stop () {
         done
 
     gmsg -t -v1 "stopping guru-daemon.. "
-    [[ -f $GURU_SYSTEM_MOUNT/.daemon-pid ]] && rm -f $GURU_SYSTEM_MOUNT/.daemon-pid
+    [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
     system.flag rm running
     gmsg -V1 -c green "ok"
     kill -9 "$_pid"
@@ -167,7 +168,7 @@ daemon.kill () {
             return 100
         else
             gmsg -v1 -c white "${FUNCNAME[0]}: kill verified"
-            [[ -f $GURU_SYSTEM_MOUNT/.daemon-pid ]] && rm -f $GURU_SYSTEM_MOUNT/.daemon-pid
+            [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
             return 0
         fi
 }
@@ -176,8 +177,8 @@ daemon.kill () {
 daemon.poll () {
 
     source $GURU_RC
-    [[ -f "$HOME/.guru-stop" ]] && rm -f "$HOME/.guru-stop"
-    echo "$(sh -c 'echo "$PPID"')" > "$GURU_SYSTEM_MOUNT/.daemon-pid"
+    [[ -f "/tmp/guru-stop.flag" ]] && rm -f "/tmp/guru-stop.flag"
+    echo "$(sh -c 'echo "$PPID"')" > "$daemon_pid_file"
     system.flag rm fast
     system.flag rm stop
     GURU_FORCE=

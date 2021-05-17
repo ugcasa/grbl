@@ -93,7 +93,7 @@ system.main () {
             env)
                 local re='^[0-9]+$'
                 local cmd=$1 ; shift
-               
+
                 case $cmd in
                         get|set)
                             if [[ $2 =~ $re ]] ; then
