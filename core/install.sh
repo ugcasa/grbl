@@ -3,6 +3,8 @@
 # module or module adapter scripts should have install and remove functions called by <module>.main install/remove
 # these are stand alone installers for application no worth to make module (or adapter script)
 
+# TBD move installer in to module. combine by purpose pk2, st-link > programmer and name adapter program.sh and so on..
+
 source $GURU_BIN/common.sh
 
 
@@ -17,9 +19,9 @@ install.main () {
     esac
 
     case "$argument" in
-        help|pk2|virtualbox|tiv|django|java| \
+        help|virtualbox|tiv|django|java| \
         client|hackrf|fosphor|spectrumanalyzer| \
-        radio|webmin|anaconda|kaldi|link|vscode )
+        radio|webmin|anaconda|kaldi|vscode )
                     install.$argument "$@" ;;
         status|poll|start|stop)
                     gmsg -v dark_grey "no polling functions" ;;
@@ -43,8 +45,6 @@ install.help () {
     gmsg -v1 " django               django framework "
     gmsg -v1 " mqtt-client          mopsquitto MQTT clients "
     gmsg -v1 " webmin               webmin tools "
-    gmsg -v1 " pk2                  pickit2 programmer interface for PIC mcu "
-    gmsg -v1 " st-link              st-link programmer SM32 mcu "
     gmsg -v1 " radio                gnuradio, HackRF, spectrumanalyzer and fosphor "
     gmsg -v2 " gnuradio             install radio software separately: "
     gmsg -v2 " hackrf               "
@@ -264,27 +264,6 @@ install.kaldi (){
 }
 
 
-install.st-link () {
-    # did not work properly - not mutch testing done dow
-    st-flash --version && exit 0
-    cmake >>/dev/null ||sudo apt install cmake
-    sudo apt install --reinstall build-essential -y
-    dpkg -l libusb-1.0-0-dev >>/dev/null ||sudo apt-get install libusb-1.0-0-dev
-    cd /tmp
-    [ -d stlink ] && rm -rf stlink
-    git clone https://github.com/texane/stlink
-    cd stlink
-    make release
-    #install binaries:
-    sudo cp build/Release/st-* /usr/local/bin -f
-    #install udev rules
-    sudo cp etc/udev/rules.d/49-stlinkv* /etc/udev/rules.d/ -f
-    #and restart udev
-    sudo udevadm control --reload
-    printf "\n guru is now ready to program st mcu's\n\n"
-    echo "usage: st-flash --reset read test.bin 0x8000000 4096"
-    exit 0
-}
 
 
 install.vscode () {

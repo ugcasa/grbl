@@ -5,7 +5,7 @@ source common.sh
 
 stlink.main () {
     # command parser
-    programmer_indicator_key="f$(poll_order programmer)"
+    program_indicator_key="f$(poll_order program)"
 
     local _cmd="$1" ; shift
     case "$_cmd" in
@@ -39,10 +39,10 @@ stlink.help () {
 stlink.status () {
 
     if st-flash --version >>/dev/null ; then
-        gmsg -c green "installed" -k $programmer_indicator_key
+        gmsg -c green "installed" -k $program_indicator_key
         return 0
     else
-        gmsg -c red "not installed" -k $programmer_indicator_key
+        gmsg -c red "not installed" -k $program_indicator_key
         return 1
     fi
 }
@@ -79,7 +79,7 @@ stlink.install () {
     sudo cp etc/udev/rules.d/49-stlinkv* /etc/udev/rules.d/ -f
     #and restart udev
     sudo udevadm control --reload
-    gmsg -c green "\n guru is now ready to program st mcu's\n\n"
+    gmsg -c green "guru is now ready to program st mcu's"
     gmsg -v1 "usage: st-flash --reset read test.bin 0x8000000 4096"
 
 }
@@ -91,10 +91,10 @@ stlink.poll () {
 
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: st-link programmer polling started" -k $programmer_indicator_key
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: st-link programmer polling started" -k $program_indicator_key
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: st-link programmer polling ended" -k $programmer_indicator_key
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: st-link programmer polling ended" -k $program_indicator_key
             ;;
         status )
             stlink.status

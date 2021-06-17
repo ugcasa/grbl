@@ -9,7 +9,7 @@ local_source="$GURU_BIN/modules/programmer/PK2DeviceFile.zip"
 
 pk2.main () {
     # command parser
-    programmer_indicator_key="f$(poll_order programmer)"
+    program_indicator_key="f$(poll_order programmer)"
 
     local _cmd="$1" ; shift
     case "$_cmd" in
@@ -42,10 +42,10 @@ pk2.help () {
 
 pk2.status () {
     if pk2cmd --version >>/dev/null ; then # TBD check argument
-        gmsg -c green "installed" -k $programmer_indicator_key
+        gmsg -c green "installed" -k $program_indicator_key
         return 0
     else
-        gmsg -c red "not installed" -k $programmer_indicator_key
+        gmsg -c red "not installed" -k $program_indicator_key
         return 1
     fi
 }
@@ -107,10 +107,10 @@ pk2.poll () {
 
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: pk2 programmer polling started" -k $programmer_indicator_key
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: pk2 programmer polling started" -k $program_indicator_key
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: pk2 programmer polling ended" -k $programmer_indicator_key
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: pk2 programmer polling ended" -k $program_indicator_key
             ;;
         status )
 			pk2.status
