@@ -67,7 +67,7 @@ pk2.install () {
 	sudo apt install -y g++ libusb-dev
 
 	# get source and unzip to temp
-	if ! [[ -f wget PICkit2_PK2CMD_WIN32_SourceV1-21_RC1.zip ]] ; then
+	if ! [[ -f PICkit2_PK2CMD_WIN32_SourceV1-21_RC1.zip ]] ; then
 		wget http://ww1.microchip.com/downloads/en/DeviceDoc/PICkit2_PK2CMD_WIN32_SourceV1-21_RC1.zip
 	fi
 	unzip PICkit2_PK2CMD_WIN32_SourceV1-21_RC1.zip

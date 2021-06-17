@@ -29,14 +29,21 @@ program.help () {
 program.main () {
     # command parser
     program_indicator_key="f$(poll_order program)"
-    last_programmer_file="$GURU_SYSTEM_MOUNT/program/programmer.last"
+    last_programmer_file="$GURU_SYSTEM_MOUNT/program/program.last"
+    #gmsg -c pink $last_programmer_file
+
+    if ! [[ -d $GURU_SYSTEM_MOUNT/program ]] ; then
+        source mount.sh
+        mount.main mount system
+        [[ $GURU_SYSTEM_MOUNT./online ]] && mkdir $GURU_SYSTEM_MOUNT/program
+    fi
 
     # last programmer
-    if [[ -f $last_programmer_file ]]
+    if [[ -f $last_programmer_file ]] ; then
             programmer="$(cat $last_programmer_file)"
         else
             programmer="pk2" # default programmer
-            echo $programmer > $last_programmer_file
+            echo "$programmer" > $last_programmer_file
         fi
 
     local _cmd="$1" ; shift
@@ -46,25 +53,32 @@ program.main () {
             pk2|pic)
                 programmer="pk2"
                 echo $programmer > $last_programmer_file
-                shift ; _cmd="$1"
+                shift ; _cmd="$@"
                 ;;
 
             st-link|stlink|st)
                 programmer="stlink"
                 echo $programmer > $last_programmer_file
-                shift ; _cmd="$1"
+                shift ; _cmd="$@"
                 ;;
 
             select|set)
                 shift
                 [[ "$1" ]] && programmer=$1
+                shift ; _cmd="$@"
                 ;;
         esac
 
     # check selection
-    [[ -f $GURU_BIN/modules/programmer/$programmer.sh ]] && \
-        source "$GURU_BIN/modules/programmer/$programmer.sh" || \
-        gmsg -x -c yellow "non valid programmer selected" -k $program_indicator_key
+
+    local _runnable="$GURU_BIN/program/$programmer.sh"
+    gmsg -c pink $_runnable
+
+    if [[ -f "$_runnable" ]] ; then
+            source "$_runnable"
+        else
+            gmsg -x 100 -c yellow "non valid programmer selected" -k $program_indicator_key
+        fi
 
     gmsg -v1 "$programmer programmer selected"
 
@@ -73,7 +87,7 @@ program.main () {
             status|help|install|remove|poll)
                 $programmer.$_cmd "$@" ; return $? ;;
             *)
-                gmsg -c yellow"${FUNCNAME[0]}: unknown command: $_cmd"
+                gmsg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
         esac
 
     return 0
@@ -91,6 +105,10 @@ program.status () {
             gmsg -v1 -c red "broker unreachable " -k $program_indicator_key
             return 1
         fi
+
+    gmsg "current programmer is $(cat $last_programmer_file)"
+
+
 }
 
 
@@ -126,7 +144,7 @@ program.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$GURU_RC"
+    source "$GURU_RC"
     #source common.sh
     program.main "$@"
     exit "$?"
