@@ -1,3 +1,4 @@
+
 #!/bin/bash
 # guru client mqtt functions
 # casa@ujo.guru 2020
@@ -163,9 +164,13 @@ mqtt.poll () {
 
 
 mqtt.install () {
-    sudo apt update && \
-    sudo apt install mosquitto-clients
+    sudo apt update
+    sudo apt install mosquitto-clients \
+        && gmsg -c green "guru is now ready to mqtt"  \
+        || gmsg -c yellow "error $? during install mosquitto-clients"
     return 0
+    #sudo add-apt-repository ppa:certbot/certbot || return $?
+    #sudo apt-get install certbot || return $?
 }
 
 

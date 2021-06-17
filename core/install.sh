@@ -9,15 +9,17 @@ source $GURU_BIN/common.sh
 install.main () {
     [ "$1" ] && argument="$1" && shift || read -r -p "input module name: " argument
 
-    # architecture selection 
-    case $(uname -m) in 
+    # architecture selection
+    case $(uname -m) in
         aarch64|arm64) SYSTEM_ARCHITECTURE="arm64" ;;
-        amd64|x86_64) SYSTEM_ARCHITECTURE="amd64" ;;    
+        amd64|x86_64) SYSTEM_ARCHITECTURE="amd64" ;;
         *) gmsg -c red "unknown architecture" -k esc
     esac
 
     case "$argument" in
-        help|pk2|virtualbox|tiv|django|java|client|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|link|vscode)
+        help|pk2|virtualbox|tiv|django|java| \
+        client|hackrf|fosphor|spectrumanalyzer| \
+        radio|webmin|anaconda|kaldi|link|vscode )
                     install.$argument "$@" ;;
         status|poll|start|stop)
                     gmsg -v dark_grey "no polling functions" ;;
@@ -62,10 +64,6 @@ install.question () {
     return 1
 }
 
-
-install.pk2 () {
-    gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/install-pk2.sh; exit; $SHELL; "
-}
 
 
 install.virtualbox () {
@@ -129,16 +127,6 @@ install.java () {
     sudo apt update && eval sudo apt "$action" "$require" && printf "\n guru is now ready to script java\n\n"
 }
 
-
-install.mqtt-client () {   #not tested
-
-    sudo apt-get update || return $?
-    sudo apt install mosquitto-clients || return $?
-    #sudo add-apt-repository ppa:certbot/certbot || return $?
-    #sudo apt-get install certbot || return $?
-    printf "\n guru is now ready to mqtt\n\n"
-    return 0
-}
 
 
 # combined to radio
