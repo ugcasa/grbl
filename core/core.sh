@@ -2,7 +2,8 @@
 # guru-client - main command parser
 # caa@ujo.guru 2020
 
-export GURU_VERSION="0.6.5.0"
+export GURU_VERSION="0.6.6.0"
+
 # minimal process command
 case "$1" in
     ver|version|--ver|--version) echo "guru-client v$GURU_VERSION" ; exit 0 ;;
@@ -15,7 +16,7 @@ source $HOME/bin/config.sh
 GURU_RC="$HOME/.gururc"
 [[ -f $GURU_RC ]] && source $GURU_RC || config.main export $GURU_USER
 
-# import modules
+# import needed modules
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/daemon.sh
@@ -27,8 +28,8 @@ source $GURU_BIN/system.sh
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
 
 
-core.main () {  # tail bone function but it sits well here
-                # to remove: check is *.mail called by modules, and call from tail on this file
+core.main () {
+    # tail bone function but it sits well here
 
     if [[ "$1" ]] ; then
             # with arguments go to parser
@@ -40,24 +41,28 @@ core.main () {  # tail bone function but it sits well here
             _error_code=$?
         fi
 
-    (( _error_code < 1 )) && return 0
-
-    if (( _error_code > 99 )) ; then
-            # on verbose -v print onle errors
-            gmsg -v2 -c red  "error code $_error_code"
+    if (( _error_code < 1 )) ; then
+                return 0
+        elif (( _error_code > 99 )) ; then
+                # on verbose -v print onle errors
+                gmsg -v2 -c red  "error code $_error_code"
         else
-            # on verbose -V print also warnings
-            gmsg -v3 -c yellow  "warning code $_error_code"
+                # on verbose -V print also warnings
+                gmsg -v3 -c yellow "warning code $_error_code"
         fi
 
     return $_error_code
 }
 
 
-core.parser () {  # main command parser
+core.parser () {
+    # main command parser
 
     local tool="$1" ; shift
-    export GURU_CMD="$tool"     # TBD expired method to let modules know the command before client was not: to remove check is it used and remove
+
+    # TBD expired method to let modules know the command before client was not: to remove check is it used and remove
+    export GURU_CMD="$tool"
+
     case "$tool" in
                            all)  core.multi_module_function "$@"        ; return $? ;;
                         status)  core.multi_module_function status      ; return $? ;;
@@ -78,8 +83,8 @@ core.parser () {  # main command parser
 }
 
 
-
-core.process_opts () {  # argument parser
+core.process_opts () {
+    # argument parser
 
     TEMP=`getopt --long -o "scCvVWflu:h:" "$@"`
     eval set -- "$TEMP"
@@ -104,7 +109,9 @@ core.process_opts () {  # argument parser
 }
 
 
-core.change_user () {  # change user to unput ans
+core.change_user () {
+    # change user to unput ans
+
     local _input_user=$1
     if [[ "$_input_user" == "$GURU_USER" ]] ; then
             gmsg -c yellow "user is already $_input_user"
@@ -122,7 +129,9 @@ core.change_user () {  # change user to unput ans
 }
 
 
-core.run_module () {  # check is given tool in module list and lauch first hit
+core.run_module () {
+    # check is given tool in module list and lauch first hit
+
     local tool=$1 ; shift
     local type_list=(".sh" ".py" "")
 
@@ -142,7 +151,9 @@ core.run_module () {  # check is given tool in module list and lauch first hit
 }
 
 
-core.run_module_function () {  # run module functions
+core.run_module_function () {
+    # run module functions
+
     local tool=$1 ; shift
     local function_to_run=$1 ; shift
 
@@ -170,7 +181,9 @@ core.run_module_function () {  # run module functions
 }
 
 
-core.multi_module_function () {  # run function name of all installed modules
+core.multi_module_function () {
+    # run function name of all installed modules
+
     local function_to_run=$1 ; shift
     for _module in ${GURU_MODULES[@]} ; do
                 gmsg -c dark_golden_rod "$_module $function_to_run"
@@ -193,9 +206,10 @@ core.multi_module_function () {  # run function name of all installed modules
 }
 
 
-core.shell () {   # Terminal looper
+core.shell () {
+    # terminal looper
 
-        render_path () {
+    render_path () {
             # todo this is broken
             local _path="$(pwd)"
             if [[ "$_path" == "$HOME" ]] ; then _path='~' ; fi
@@ -211,12 +225,12 @@ core.shell () {   # Terminal looper
             gmsg -n -c normal
         }
 
-        inc_verbose () {
+    inc_verbose () {
             (( _verbose<2 )) && let _verbose++
             cmd=
         }
 
-        dec_verbose () {
+    dec_verbose () {
             (( _verbose>0 )) && let _verbose--
             cmd=
         }
@@ -225,19 +239,24 @@ core.shell () {   # Terminal looper
     gmsg "$GURU_CALL in shell mode (type 'help' enter for help)"
 
     local _verbose=1
+
     while : ; do
-            #config.export "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
+            # config.export "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
             source $GURU_RC
             GURU_VERBOSE=$_verbose
+
             # set call name off, affects help print out
             _GURU_CALL="$GURU_CALL" ; GURU_CALL=
+
             read -e -p "$(render_path)" "cmd"
+
             case "$cmd" in exit|q|quit)  break ;;
                                      -V)  inc_verbose ;;
                                      -v)  dec_verbose ;;
                 esac
             [[ $cmd ]] && core.parser $cmd
         done
+
     gmsg -v2 "take care!"
     return $?
 }
@@ -361,5 +380,5 @@ core.help () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         core.process_opts $@
         core.main $ARGUMENTS
-        exit $?
+        #exit $?
     fi

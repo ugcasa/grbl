@@ -12,7 +12,7 @@ corsair_last_mode="/tmp/corsair.mode"
 # service configurations for ckb-next application
 corsair_service="$HOME/.config/systemd/user/corsair.service"
 corsair_daemon_service="/usr/lib/systemd/system/ckb-next-daemon.service"
-# poll order is read from  environment list ${GURU_DAEMON_POLL_LIST[@]}
+# poll order is read from  environment list ${GURU_DAEMON_POLL_ORDER[@]}
 # origin is $GURU_CFG/$GURU_USER/user.cfg chapter '[daemon]' variable 'poll_list'
 corsair_indicator_key="f$(daemon.poll_order corsair)"
 
@@ -33,6 +33,7 @@ F10="/tmp/ckbpipe010"
 F11="/tmp/ckbpipe011"
 F12="/tmp/ckbpipe012"
 CPLC="/tmp/ckbpipe059"
+MOUSE="/tmp/ckbpipe099"
 
 
 corsair.help () {

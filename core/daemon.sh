@@ -82,10 +82,10 @@ daemon.start () {
             corsair.systemd_restart
         fi
 
-    #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
-    for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
+    #for module in ${GURU_DAEMON_POLL_ORDER[@]} ; do
+    for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
 
-        module=${GURU_DAEMON_POLL_LIST[i-1]}
+        module=${GURU_DAEMON_POLL_ORDER[i-1]}
         case $module in
             null|empty )
                 ;;
@@ -121,11 +121,11 @@ daemon.stop () {
     local _pid=$(cat $daemon_pid_file)
 
     gmsg -t -v1 "stopping modules.. "
-    #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
+    #for module in ${GURU_DAEMON_POLL_ORDER[@]} ; do
 
-    for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
+    for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
 
-        module=${GURU_DAEMON_POLL_LIST[i-1]}
+        module=${GURU_DAEMON_POLL_ORDER[i-1]}
         #gmsg -v3 -c dark_golden_rod "$i $module"
         case $module in
             null|empty )
@@ -223,8 +223,8 @@ daemon.poll () {
 
         # go trough poll list
         local i=
-        for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
-                module=${GURU_DAEMON_POLL_LIST[i-1]}
+        for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
+                module=${GURU_DAEMON_POLL_ORDER[i-1]}
                 case $module in
                     null|empty )
                         gmsg -v4 -c dark_grey "skipping $module"
