@@ -7,7 +7,7 @@ system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
 system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh" # ubuntu 18.04 > like mint 20.0
 
-system_indicator_key="f$(poll_order system)"
+system_indicator_key="f$(daemon.poll_order system)"
 
 system.help () {
     # system help printout
@@ -81,7 +81,7 @@ system.flag-help () {
 system.main () {
     # system command parser
     local tool="$1" ; shift
-    #system_indicator_key="f$(poll_order system)"
+    #system_indicator_key="f$(daemon.poll_order system)"
 
     case "$tool" in
 

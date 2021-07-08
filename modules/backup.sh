@@ -33,7 +33,7 @@ backup.help () {
 backup.main () {
     gmsg -n -v3 -c pink "${FUNCNAME[0]} $@ "
     # command parser
-    backup_indicator_key="f$(poll_order backup)"
+    backup_indicator_key="f$(daemon.poll_order backup)"
 
     local var_a="$1" ; shift
     local var_b="$1" ; shift

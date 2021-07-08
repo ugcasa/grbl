@@ -17,7 +17,7 @@ unmount.main () {
     all_list=(${all_list[@],,})
 
 
-    indicator_key='f'"$(poll_order mount)"
+    indicator_key='f'"$(daemon.poll_order mount)"
     argument="$1" ; shift
     case "$argument" in
 
@@ -83,7 +83,7 @@ unmount.ls () {
 
 unmount.system () {
     # unmount system data
-    local system_indicator_key="f$(poll_order system)"
+    local system_indicator_key="f$(daemon.poll_order system)"
 
     gmsg -v2 -n "checking system data folder.."
     if ! [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] ; then

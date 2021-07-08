@@ -4,7 +4,7 @@ source $GURU_BIN/common.sh
 
 tor.main() {
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
-    indicator_key='F'"$(poll_order remote)"
+    indicator_key='F'"$(daemon.poll_order remote)"
     source $GURU_BIN/corsair.sh
     command="$1"; shift
     case "$command" in

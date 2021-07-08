@@ -177,8 +177,8 @@ project.sublime () {
 
     if [[ -f "$sublime_project_file" ]] ; then
             gmsg -v2 -c dark_grey "using $sublime_project_file"
+            # TBD editor/subl.sh?  << subl --project "$sublime_project_file" -a
             subl --project "$sublime_project_file" -a
-            subl --project "$sublime_project_file" -a # Sublime how to open workpace?, this works anyway
         else
             gmsg -c yellow "$sublime_project_file not found"
             return 132

@@ -96,7 +96,7 @@ daemon.start () {
                         # gmsg -v3 ": $GURU_BIN/$GURU_BIN/$module.sh"
                         $module.main poll start
                     else
-                        gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
+                        gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed" -k "f$(daemon.poll_order $module)"
                     fi
                 ;;
             esac

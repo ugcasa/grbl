@@ -15,7 +15,7 @@ mount.main () {
     all_list=(${all_list[@],,})
 
 
-    indicator_key='f'"$(poll_order mount)"
+    indicator_key='f'"$(daemon.poll_order mount)"
     argument="$1" ; shift
 
     case "$argument" in

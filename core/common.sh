@@ -7,13 +7,44 @@ system.core-dump () {
 }
 
 
-poll_order () {
-    local i=0 ;  while [ "$i" -lt "${#GURU_DAEMON_POLL_LIST[@]}" ] && [ "${GURU_DAEMON_POLL_LIST[$i]}" != "$1" ] ; do ((i++)); done ; ((i=i+1)) ; echo $i;
+daemon.poll_order () {
+    local _to_find="$1"
+    local i=0
+
+    source "$HOME/.gururc"
+
+    for val in ${GURU_DAEMON_POLL_LIST[@]} ; do
+        ((i++))
+        #echo "$i: $val"
+        if [[ "$val" == "$_to_find" ]] ; then break ; fi
+    done
+
+    if [[ "$i" -lt "${#GURU_DAEMON_POLL_LIST[@]}" ]] ; then
+            echo $i
+            return 0
+        else
+            echo "NA"
+            return 1
+        fi
+}
+
+
+daemon.poll_order_old () {
+    local i=0
+    local _to_find=$1
+    # while [[ "$i" -lt "${#GURU_DAEMON_POLL_LIST[@]}" ]] && [[ "${GURU_DAEMON_POLL_LIST[$i]}" != "$_to_find" ]] ; do
+    while [[ "$i" -lt "${#GURU_DAEMON_POLL_LIST[@]}" ]] ; do
+             if [[ "${GURU_DAEMON_POLL_LIST[$i]}" == "$_to_find" ]] ; then break; fi
+            ((i++))
+        done
+    ((i=i+1))
+    echo $i
+    #return $i
 }
 
 
 gmsg () {
-    # function for ouput messages and make log notifications - revisited
+    # function for ouput messages and make log notifications
 
     # default values
     local _verbose_trigger=0                        # prinout if verbose trigger is not set in options
@@ -60,6 +91,25 @@ gmsg () {
     [[ $_exit -gt 0 ]] && _message="$_exit: $_message"
 
 
+    # set corsair key is '-k <key>' used
+    if [[ $_indicator_key ]] && [[ $GURU_CORSAIR_ENABLED ]]; then
+        # TBD: check corsair (or other kb led) module installed
+        #      now in corsair is part of core what it should not to be
+        source corsair.sh
+        if [[ "$_color" == "reset" ]] ; then
+                corsair.main reset "$_indicator_key"
+            else
+                corsair.main set "$_indicator_key" "$_color"
+            fi
+       fi
+
+    # publish to mqtt if '-q|-m <topic>' used
+    if [[ $_mqtt_topic ]] && [[ $GURU_MQTT_ENABLED ]]; then
+            source mqtt.sh
+            # mqtt.enabled || return 0
+            mqtt.pub "$_mqtt_topic" "$_message"
+        fi
+
     # printout message if verbose level is more than verbose trigger
     if [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
 
@@ -70,22 +120,6 @@ gmsg () {
                 else
                     printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
                 fi
-        fi
-
-    # set corsair key is '-k <key>' used
-    if [[ $_indicator_key ]] ; then
-        source $GURU_BIN/corsair.sh
-        if [[ "$_color" == "reset" ]] ; then
-                corsair.main reset "$_indicator_key"
-            else
-                corsair.main set "$_indicator_key" "$_color"
-            fi
-       fi
-
-    # publish to mqtt if '-q|-m <topic>' used
-    if [[ $_mqtt_topic ]] ; then
-            source mqtt.sh
-            mqtt.pub "$_mqtt_topic" "$_message"
         fi
 
     # # print to log if '-l' set
@@ -142,7 +176,7 @@ import () {
 
 
 export -f system.core-dump
-export -f poll_order
+export -f daemon.poll_order
 export -f gmsg
 export -f gask
 export -f import

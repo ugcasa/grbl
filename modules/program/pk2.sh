@@ -9,7 +9,7 @@ local_source="$GURU_BIN/modules/programmer/PK2DeviceFile.zip"
 
 pk2.main () {
     # command parser
-    program_indicator_key="f$(poll_order programmer)"
+    program_indicator_key="f$(daemon.poll_order programmer)"
 
     local _cmd="$1" ; shift
     case "$_cmd" in

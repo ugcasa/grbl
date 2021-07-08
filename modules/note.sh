@@ -283,7 +283,7 @@ note.open_editor () {
             # template sublime project
             # printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_MOUNT_NOTES/$GURU_USER_NAME'"'"\n\t\t}\n\t]\n}\n" >$sublime_project_file
 
-            subl --project "$sublime_project_file" -a
+            # TODO: add check sofr sublime 3 ; then subl --project "$sublime_project_file" -a ; else following
             subl "$note" --project "$sublime_project_file" -a
             return $?
             ;;

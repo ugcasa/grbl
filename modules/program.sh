@@ -28,7 +28,7 @@ program.help () {
 
 program.main () {
     # command parser
-    program_indicator_key="f$(poll_order program)"
+    program_indicator_key="f$(daemon.poll_order program)"
     last_programmer_file="$GURU_SYSTEM_MOUNT/program/program.last"
     #gmsg -c pink $last_programmer_file
 

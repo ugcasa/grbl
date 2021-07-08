@@ -14,7 +14,7 @@ corsair_service="$HOME/.config/systemd/user/corsair.service"
 corsair_daemon_service="/usr/lib/systemd/system/ckb-next-daemon.service"
 # poll order is read from  environment list ${GURU_DAEMON_POLL_LIST[@]}
 # origin is $GURU_CFG/$GURU_USER/user.cfg chapter '[daemon]' variable 'poll_list'
-corsair_indicator_key="f$(poll_order corsair)"
+corsair_indicator_key="f$(daemon.poll_order corsair)"
 
 # import colors
 [[ -f "$GURU_CFG/rgb-color.cfg" ]] && source "$GURU_CFG/rgb-color.cfg"
@@ -131,6 +131,19 @@ corsair.main () {
 
     return 0
 }
+
+
+corsair.enabled () {
+    gmsg -n -v2 "checking corsair is enabled.. "
+        if [[ $GURU_CORSAIR_ENABLED ]] ; then
+                gmsg -v2 -c green "enabled"
+            else
+                gmsg -v2 -c dark_grey "disabled"
+                gmsg -v1 -V2 -c dark_grey "corsair disabled"
+                return 1
+            fi
+}
+
 
 
 corsair.check () {

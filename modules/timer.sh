@@ -5,11 +5,11 @@
 source common.sh
 source mount.sh
 
-timer_indicator_key="f$(poll_order timer)"
+timer_indicator_key="f$(daemon.poll_order timer)"
 
 timer.main () {
     mount.system >>/dev/null
-    timer_indicator_key="f$(poll_order timer)"
+    timer_indicator_key="f$(daemon.poll_order timer)"
 
     command="$1" ; shift
     case "$command" in
@@ -45,7 +45,7 @@ timer.help () {
 
 timer.toggle () {
     # key press action
-    timer_indicator_key="f$(poll_order timer)"
+    timer_indicator_key="f$(daemon.poll_order timer)"
 
     if timer.status >/dev/null ; then
         timer.end
@@ -64,7 +64,7 @@ timer.check() {
 
 timer.status() {
 
-    #timer_indicator_key="f$(poll_order timer)"
+    #timer_indicator_key="f$(daemon.poll_order timer)"
     gmsg -n -t -v1 "${FUNCNAME[0]}: "
 
     if [[ ! -f "$GURU_FILE_TRACKSTATUS" ]] ; then
@@ -317,7 +317,7 @@ timer.report() {
 
 timer.poll () {
 
-    timer_indicator_key="f$(poll_order timer)"
+    timer_indicator_key="f$(daemon.poll_order timer)"
 
     local _cmd="$1" ; shift
     case $_cmd in

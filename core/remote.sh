@@ -2,7 +2,7 @@
 # sshfs mount functions for guru-client
 source common.sh
 
-remote_indicator_key='f'"$(poll_order remote)"
+remote_indicator_key='f'"$(daemon.poll_order remote)"
 
 remote.help () {
     gmsg -v1 -c white "guru-client remote help "
@@ -26,7 +26,7 @@ remote.help () {
 remote.main () {
 
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
-    remote_indicator_key='f'"$(poll_order remote)"
+    remote_indicator_key='f'"$(daemon.poll_order remote)"
 
     command="$1"; shift
     case "$command" in

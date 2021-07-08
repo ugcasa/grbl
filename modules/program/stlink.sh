@@ -5,7 +5,7 @@ source common.sh
 
 stlink.main () {
     # command parser
-    program_indicator_key="f$(poll_order program)"
+    program_indicator_key="f$(daemon.poll_order program)"
 
     local _cmd="$1" ; shift
     case "$_cmd" in
