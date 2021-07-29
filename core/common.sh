@@ -115,7 +115,7 @@ gmsg () {
 
             if [[ $GURU_VERBOSE -ge $_verbose_limiter ]] ; then return 0 ; fi
 
-            if [[ $_color_code ]] ; then
+            if [[ $_color_code ]] && [[ $GURU_FLAG_COLOR ]] ; then
                     printf "$_pre_newline$_color_code%s%s$_newline$C_NORMAL" "$_timestamp" "$_message"
                 else
                     printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"

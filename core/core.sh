@@ -2,7 +2,7 @@
 # guru-client - main command parser
 # caa@ujo.guru 2020
 
-export GURU_VERSION="0.6.6.0"
+export GURU_VERSION="0.6.6.1"
 
 # minimal process command
 case "$1" in
@@ -277,6 +277,9 @@ core.help () {
             gmsg -v1 " -h <hosname>     change computer host name name temporary "
             gmsg -v1 " -l               set logging on to file $GURU_LOG"
             gmsg -v1 " -f               set force mode on, be more aggressive"
+            gmsg -v1 " -c               force color in terminal"
+            gmsg -v1 " -C               remove terminal colors"
+            
             gmsg -v2
             return 0
         }
