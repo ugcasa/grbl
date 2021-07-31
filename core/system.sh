@@ -127,11 +127,12 @@ system.main () {
 
 system.status () {
     # system status
+    gmsg -v 1 -t -n "${FUNCNAME[0]}: "
     if mount.online "$GURU_SYSTEM_MOUNT" ; then
-        gmsg -v 1 -t -c green "${FUNCNAME[0]}: guru on service" -k $system_indicator_key
+        gmsg -v 1 -t -c green "guru on service" -k $system_indicator_key
         return 0
     else
-        gmsg -v 1 -t -c red "${FUNCNAME[0]}: .data is unmounted" -k $system_indicator_key
+        gmsg -v 1 -t -c red ".data is unmounted" -k $system_indicator_key
         return 101
     fi
 }
@@ -212,7 +213,7 @@ system.set-flag () {
     local flag="$1"
 
     if [[ -f /tmp/guru-$flag.flag ]] ; then
-            gmsg -t -v2 "$flag flag already set"
+            gmsg -t -v3 "$flag flag already set"
             return 0
         else
             gmsg -t -v1 "$flag flag set"
@@ -232,7 +233,7 @@ system.rm-flag () {
             gmsg -t -v1 "$flag flag disabled"
             return 0
         else
-            gmsg -t -v2 "$flag flag not set"
+            gmsg -t -v3 "$flag flag not set"
         fi
 }
 

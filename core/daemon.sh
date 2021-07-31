@@ -199,7 +199,7 @@ daemon.poll () {
             fi
 
         if system.flag pause ; then
-                gmsg -N -t -v1 -c black "daemon paused " -k esc
+                gmsg -N -t -v1 -c yellow "daemon paused " -k esc
                 for (( i = 0; i < 150; i++ )); do
                     system.flag pause || break
                     system.flag stop && break
@@ -211,14 +211,14 @@ daemon.poll () {
             fi
 
         if system.flag stop ; then
-                gmsg -N -t -v1 "daemon got request to stop "
+                gmsg -N -t -v1 "daemon got requested to stop "
                 daemon.stop
                 return $?
             fi
 
 
         # light esc key to signal user daemon is active
-        gmsg -N -v2 -c $GURU_CORSAIR_EFECT_COLOR -k esc "daemon active"
+        gmsg -N -t -v3 -c $GURU_CORSAIR_EFECT_COLOR "daemon active" -k esc
         gmsg -v4 -c black -k cplc
 
         # go trough poll list

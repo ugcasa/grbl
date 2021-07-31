@@ -256,14 +256,14 @@ corsair.set () {
     # get input key pipe file location
     _button=$(eval echo '$'$_button)
     if ! [[ $_button ]] ; then
-            gmsg -v2 -c yellow "no such button"
+            gmsg -v3 -c yellow "no such button"
             return 101
         fi
 
     # get input color code
     _color=$(eval echo '$'$_color)
     if ! [[ $_color ]] ; then
-            gmsg -v2 -c yellow "no such color"
+            gmsg -v3 -c yellow "no such color"
             return 102
         fi
 

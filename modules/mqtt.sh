@@ -102,7 +102,7 @@ mqtt.status () {
     gmsg -n -v1 -t "${FUNCNAME[0]}: "
 
     if [[ $GURU_MQTT_ENABLED ]] ; then
-            gmsg -n -v1 -c green "mqtt enabled, "
+            gmsg -v1 -n -c green "mqtt enabled, "
         else
             gmsg -v1 -c black "mqtt disabled " -k $mqtt_indicator_key
             return 1

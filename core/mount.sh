@@ -134,7 +134,7 @@ mount.online () {  # check if mountpoint "online", no printout, return code only
                    # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
 
     local _target_folder="$1"
-    gmsg -N -n -v3 -c pink "checking $_target_folder "
+    gmsg -N -n -v3 "checking $_target_folder "
     if [[ -f "$_target_folder/.online" ]] ; then
         gmsg -v3 -c green "mounted"
         return 0
