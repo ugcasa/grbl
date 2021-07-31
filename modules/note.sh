@@ -219,7 +219,7 @@ note.open () {
                 note.add "$_note_date"
             fi
 
-        gmsg -v1 -c pink "opening $_note_date"
+        gmsg -v3 -c pink "opening $_note_date"
         note.open_editor "$note"
 
     done

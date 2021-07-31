@@ -42,10 +42,10 @@ pk2.help () {
 
 pk2.status () {
     if pk2cmd --version >>/dev/null ; then # TBD check argument
-        gmsg -c green "installed" -k $program_indicator_key
+        gmsg -v1 -c green "pk2 installed" -k $program_indicator_key
         return 0
     else
-        gmsg -c red "not installed" -k $program_indicator_key
+        gmsg -v1 -c red "pk2 not installed" -k $program_indicator_key
         return 1
     fi
 }

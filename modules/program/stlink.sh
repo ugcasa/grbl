@@ -38,11 +38,11 @@ stlink.help () {
 
 stlink.status () {
 
-    if st-flash --version >>/dev/null ; then
-        gmsg -c green "installed" -k $program_indicator_key
+    if locate st-flash >/dev/null ; then
+        gmsg -v2 -c green "installed" -k $program_indicator_key
         return 0
     else
-        gmsg -c red "not installed" -k $program_indicator_key
+        gmsg -v2 -c red "not installed" -k $program_indicator_key
         return 1
     fi
 }
@@ -105,7 +105,7 @@ stlink.poll () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     #source "$GURU_RC"
-    ok2.main "$@"
+    stlink.main "$@"
     exit $?
 fi
 

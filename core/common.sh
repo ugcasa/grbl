@@ -110,6 +110,9 @@ gmsg () {
             mqtt.pub "$_mqtt_topic" "$_message"
         fi
 
+    # uncomment if vanted to see how verbose changes during run
+    # echo "$_verbose_trigger:$GURU_VERBOSE"
+
     # printout message if verbose level is more than verbose trigger
     if [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
 
