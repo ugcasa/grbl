@@ -108,12 +108,13 @@ note.locate () {
     note.locate_check () {
 
         note.gen_var "$1"
-        gmsg -v1 -n "$note "
-        gmsg -V1 -n "$note"
+        gmsg -v1 "$note "        
         if [[ -f $note ]] ; then
-                gmsg -v1 -c green "exist"
+                # gmsg -v1 -c green "exist"
+                return 0
             else
-                gmsg -v1 -c red "non exist"
+                #gmsg -v1 -c red "non exist"
+                return 1
             fi
     }
 
