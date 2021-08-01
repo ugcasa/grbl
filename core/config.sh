@@ -8,9 +8,8 @@ config.main () {
 
     local _cmd="$1" ; shift
     case "$_cmd" in
-              get|user|export|help|edit)
+              get|user|export|help|edit|get|set)
                          config.$_cmd $@                        ; return $? ;;
-                   set)  gmsg -v black "config.$_cmd disabled"  ; return $? ;;
              pull|push)  remote."$_cmd"_config $@               ; return $? ;;
                 status)  echo "no status data" ;;
                      *)  echo "unknown config action '$_cmd'"
@@ -22,19 +21,19 @@ config.main () {
 config.help () {
     gmsg -v1 "guru-client config help " -c white
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL config [pull|push|export|user|help -v] "
+    gmsg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help"
     gmsg -v2
     gmsg -v1 "actions:"
     gmsg -v1 " export        export configuration to environment"
-    gmsg -v2 "               (run this every time configuration is changed) "
     gmsg -v1 " pull          poll user configuration from server "
     gmsg -v1 " push          push user configuration to server "
     gmsg -v1 " user          open user configuration in dialog "
     gmsg -v1 " edit          edit user config file with preferred editor "
+    gmsg -v1 " get           get single value from user config"
+    gmsg -v1 " set           set value to user config and current environment "
     gmsg -v1 " help          try 'help -V' full help" -V2
-    core.help flags
     gmsg -v1 "examples:" -c white
-    gmsg -v1 "     '$GURU_CALL config'                                 get current host and user settings"
+    gmsg -v1 "     '$GURU_CALL config user'                            get current host and user settings"
     gmsg -v1 "     '$GURU_CALL pull -h <host_name> -u <user_name>'     get user and host specific setting from server  "
 }
 
@@ -160,6 +159,9 @@ config.export () {
             # export configure
             chmod +x "$_target_rc"
             source "$_target_rc"
+
+            ## TBD indicator.keyboard init > corsair.main init
+            # init corsair profile
             if [[ $GURU_CORSAIR_ENABLED ]] ; then
                     source $GURU_BIN/corsair.sh
                     corsair.main init
@@ -234,25 +236,31 @@ config.user () {
 }
 
 
-config.get (){              # get tool-kit environmental variable
+config.get (){
+    # get tool-kit environmental variable
 
-    [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
-    #set |grep "GURU_${_setting^^}"
-    set | grep "GURU_${_setting^^}" | head -1 | cut -d "=" -f2
+    [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
+    #set |grep "GURU_${_variable^^}"
+    set | grep "GURU_${_variable^^}" | head -1 | cut -d "=" -f2
     return $?
 }
 
+config.set () {
+    # cahnge current config and set environmental variable
 
-# config.set () {             # set tool-kit environmental variable
-#     # set guru environmental funtions
-#     [ "$1" ] && _setting="$1" || read -r -p "setting to read: " _setting
-#     [ "$2" ] && _value="$2" || read -r -p "$_setting value: " _value
+    [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
+    [[ "$2" ]] && _value="$2" || read -r -p "$_variable value: " _value
 
-#     [ -f "$GURU_RC" ] && target_rc="$GURU_RC" || target_rc="$HOME/.gururc"
+    # this sets only rc file
+    #[[ -f "$GURU_RC" ]] && target_rc="$GURU_RC" || target_rc="$HOME/.gururc"
+    #sed -i -e "/$_variable=/s/=.*/=$_value/" "$target_rc"                               # Ähh..
 
-#     sed -i -e "/$_setting=/s/=.*/=$_value/" "$target_rc"                               # Ähh..
-#     msg "setting GURU_${_setting^^} to $_value\n"
-# }
+    echo 'GURU_USER="casa"' | sed 's/.*\bGURU_${_variable^^}\b.*/_value/'
+
+    gmsg "setting GURU_${_variable^^} to $_value"
+}
+
+GURU_${_tar^^}
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
