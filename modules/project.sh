@@ -248,6 +248,7 @@ project.sublime () {
             gmsg -v2 -c dark_grey "using $sublime_project_file"
             # TBD editor/subl.sh?  << subl --project "$sublime_project_file" -a
             subl --project "$sublime_project_file" -a
+            subl --project "$sublime_project_file" -a
         else
             gmsg -c yellow "$sublime_project_file not found"
             return 132
@@ -300,8 +301,8 @@ project.open () {
                     project.sublime $project_name
                     ;;
 
-            code|v-code|visual-code|vs)
-                    code $project_name
+            code|vcode|v-code|visual-code|vs)
+                    gmsg "TBD code $project_name"
                     ;;
         esac
 
