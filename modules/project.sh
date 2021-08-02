@@ -59,6 +59,7 @@ project.main () {
         esac
 }
 
+
 project.toggle () {
     local project_base="$GURU_SYSTEM_MOUNT/project"
     [[ -f $project_base/active ]] && project.close || project.open $@
@@ -302,8 +303,9 @@ project.open () {
                     ;;
 
             code|vcode|v-code|visual-code|vs)
-                    gmsg "TBD code $project_name"
-                    ;;
+                    gmsg "TBD add support for vcode project files" ;;
+            vi|vim) gmsg "TBD add support for vim project files" ;;
+            joe)    gmsg "TBD add support for joe project files" ;;
         esac
 
     # open terminal
@@ -316,16 +318,23 @@ project.open () {
                         fi
                     ;;
 
-            nemo)   nemo "$project_folder"
+            nemo)   if [[ $DISPLAY ]] ; then
+                            nemo "$project_folder"
+                        else
+                            cd $project_folder
+                        fi
                     ;;
 
             gnome-terminal)
-                    gnome-terminal --working-directory="$project_folder"
+                    if [[ $DISPLAY ]] ; then
+                            gnome-terminal --working-directory="$project_folder"
+                        else
+                            cd $project_folder
+                        fi
                     ;;
             *)      gmsg "non supported terminal"
                     ;;
         esac
-
     return 0
 }
 
