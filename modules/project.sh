@@ -311,7 +311,7 @@ project.open () {
                             source tmux.sh
                             tmux.attach $project_name
                         else
-                            tmux attach -t $project_name
+                            /usr/bin/tmux attach -t $project_name
                         fi
                     ;;
 
@@ -325,8 +325,6 @@ project.open () {
                     ;;
         esac
 
-    # stays here till session deatteched
-    gmsg -v2 "after deattach do here"
     return 0
 }
 

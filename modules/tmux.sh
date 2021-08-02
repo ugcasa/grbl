@@ -201,7 +201,7 @@ tmux.attach () {
         fi
 
     if [[ $DISPLAY ]] ; then
-            gnome-terminal -- /usr/bin/tmux attach -t $session
+            gnome-terminal  --geometry 180x50 -- /usr/bin/tmux attach -t $session
         else
             /usr/bin/tmux attach -t $session
         fi
