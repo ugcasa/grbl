@@ -37,37 +37,39 @@ MOUSE="/tmp/ckbpipe099"
 
 
 corsair.help () {
-    gmsg -v 1 -c white "guru-client corsair help"
-    gmsg -v 2
-    gmsg -v 0 "usage:    $GURU_CALL corsair [start|init|set|reset|end|status|help|install|patch|compile|remove|raw_start|raw_status|raw_stop|set-suspend] <key> <color>"
-    gmsg -v 2
-    gmsg -v 1 -c white "commands:"
-    gmsg -v 1 " status                      printout status "
-    gmsg -v 1 " start                       start ckb-next-daemon "
-    gmsg -v 1 " stop                        stop ckb-next-daemon"
-    gmsg -v 1 " init <mode>                 initialize keyboard mode "
-    gmsg -v 2 "                             [status|red|olive|dark] able to set keys "
-    gmsg -v 2 "                             [trippy|yes-no|rainbow] active animations "
-    gmsg -v 1 " set <key> <color>           write key color to keyboard key  "
-    gmsg -v 1 " reset <key>                 reset one key or if empty, all pipes "
-    gmsg -v 1 " end                         end playing with keyboard, set to normal "
-    gmsg -v 1 " install                     install requirements "
-    gmsg -v 2 " compile                     only compile, do not clone or patch"
-    gmsg -v 2 " patch <device>              edit source devices: K68, IRONCLAW"
-    gmsg -v 2 " set-suspend                 active suspend control to avoid suspend issues"
-    gmsg -v 1 " remove                      remove corsair driver "
-    gmsg -v 1 " help -v|-V                  get more detailed help by adding verbosity flag"
-    gmsg -v 2 -c white -N "raw functions for non systemd linux:"
-    gmsg -v 2 " raw_start <1..7>            start ckb-next, number is deepness "
-    gmsg -v 2 " raw_status                  rad status (without systemd)"
-    gmsg -v 2 " raw_stop                    stop by killing app"
-    gmsg -v 2 " raw_disable                 disable service (some systemd) "
-    gmsg -v 2
-    gmsg -v 1 -c white "examples:"
-    gmsg -v 1 " $GURU_CALL corsair status        printout status report "
-    gmsg -v 1 " $GURU_CALL corsair init trippy   initialize trippu color profile"
-    gmsg -v 1 " $GURU_CALL corsair end           stop playing with colors, return to normal"
-    gmsg -v 2
+    gmsg -v1 -c white "guru-client corsair keyboard indicator help"
+    gmsg -v2
+    gmsg -v0 "usage:           $GURU_CALL corsair start|init|reset|end|status|help|set <key/profile> <color>"
+    gmsg -v1 "setup:           install|compile|patch|remove"
+    gmsg -v2 "without systemd: raw_start|raw_status|raw_stop|set-suspend "
+    gmsg -v2
+    gmsg -v1 -c white "commands:"
+    gmsg -v1 " status                      printout status "
+    gmsg -v1 " start                       start ckb-next-daemon "
+    gmsg -v1 " stop                        stop ckb-next-daemon"
+    gmsg -v1 " init <mode>                 initialize keyboard mode "
+    gmsg -v2 "                             [status|red|olive|dark] able to set keys "
+    gmsg -v2 "                             [trippy|yes-no|rainbow] active animations "
+    gmsg -v1 " set <key> <color>           write key color to keyboard key  "
+    gmsg -v1 " reset <key>                 reset one key or if empty, all pipes "
+    gmsg -v1 " end                         end playing with keyboard, set to normal "
+    gmsg -v1 " install                     install requirements "
+    gmsg -v2 " compile                     only compile, do not clone or patch"
+    gmsg -v2 " patch <device>              edit source devices: K68, IRONCLAW"
+    gmsg -v2 " set-suspend                 active suspend control to avoid suspend issues"
+    gmsg -v1 " remove                      remove corsair driver "
+    gmsg -v1 " help -v|-V                  get more detailed help by adding verbosity flag"
+    gmsg -v2 -c white -N "raw functions for non systemd linux:"
+    gmsg -v2 " raw_start <1..7>            start ckb-next, number is deepness "
+    gmsg -v2 " raw_status                  rad status (without systemd)"
+    gmsg -v2 " raw_stop                    stop by killing app"
+    gmsg -v2 " raw_disable                 disable service (some systemd) "
+    gmsg -v2
+    gmsg -v1 -c white "examples:"
+    gmsg -v1 " $GURU_CALL corsair status        printout status report "
+    gmsg -v1 " $GURU_CALL corsair init trippy   initialize trippu color profile"
+    gmsg -v1 " $GURU_CALL corsair end           stop playing with colors, return to normal"
+    gmsg -v2
     return 0
 }
 
