@@ -13,11 +13,15 @@ tmux_indicator_key="f$(daemon.poll_order tmux)"
 tmux.help () {
     gmsg -v1 -c white "guru-client tmux help "
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL tmux status|config|start|end|help|install|remove "
+    gmsg -V2 -v0 "usage:    $GURU_CALL tmux ls|attach|config "
+    gmsg -v2     "usage:    $GURU_CALL tmux ls|attach|config|help|status|start|end|install|remove "
     gmsg -v2
     gmsg -v1 -c white "commands: "
-    gmsg -v1 " config                   open configuration in dialog"
-    gmsg -v1 " config edit              open configuration in $GURU_PREFERRED_EDITOR"
+    gmsg -v1 " ls                       list on running sessions "
+    gmsg -v1 " attach <session>         attach to exist session "
+    gmsg -v1 " config                   open configuration in dialog "
+    gmsg -v1 " config edit              open configuration in $GURU_PREFERRED_EDITOR "
+    gmsg -v1 " config undo              undo last config changes "
     gmsg -v1 " status                   show status of default tmux server "
     gmsg -v1 " install                  install client requirements "
     gmsg -v1 " remove                   remove installed requirements "
@@ -37,7 +41,7 @@ tmux.main () {
 
 
     case "$_cmd" in
-               help|install|remove|poll|status|config)
+               help|ls|attach|install|remove|poll|status|config)
                     tmux.$_cmd "$@"
                     return $?
                     ;;
@@ -49,6 +53,12 @@ tmux.main () {
     return 0
 }
 
+
+
+tmux.ls () {
+    tmux ls
+    return $?
+}
 
 
 tmux.config () {
@@ -111,9 +121,9 @@ tmux.config_dialog () {
             gmsg -v1 "backup saved $config_file.old"
             echo "$new_file" >"$config_file"
             gmsg -v1 -c white "configure saved"
+            gmsg -v2 "to get previous configurations from sever type: '$GURU_CALL config undo'"
         else
             gmsg -v1 -c dark_golden_rod "nothing changed"
-            gmsg -v1 -c white "to get previous configurations from sever type: '$GURU_CALL config undo'"
         fi
     return 0
 }
@@ -132,7 +142,7 @@ tmux.config_undo () {
             mv -f "$config_file" "$config_file.tmp"
             cp -f "$config_file.old" "$config_file"
             mv -f "$config_file.tmp" "$config_file.old"
-            gmsg -v1 -c white "previous configure retuned"
+            gmsg -v1 -c white "previous configure returned"
         else
             gmsg -v1 -c dark_golden_rod "nothing changed"
         fi
@@ -156,6 +166,26 @@ tmux.status () {
         fi
 }
 
+
+tmux.attach () {
+    # attachs to tmux session if exist
+    local session="0"
+    [[ $1 ]] && session="$1"
+
+    if [[ $TMUX ]] ; then
+            gmsg -c white "working inside of tmux session"
+            gmsg -v1 "open new terminal or close current session"
+            return 2
+        fi
+
+    if tmux ls | grep $session ; then
+            tmux attach -t $session
+        else
+            gmsg -c yellow "session '$session' does not exist"
+            return 1
+        fi
+    return 0
+}
 
 tmux.poll () {
     # daemon required polling functions

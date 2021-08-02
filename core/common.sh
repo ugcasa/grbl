@@ -13,13 +13,13 @@ daemon.poll_order () {
 
     source "$HOME/.gururc"
 
-    for val in ${GURU_DAEMON_POLL_LIST[@]} ; do
+    for val in ${GURU_DAEMON_POLL_ORDER[@]} ; do
         ((i++))
         #echo "$i: $val"
         if [[ "$val" == "$_to_find" ]] ; then break ; fi
     done
 
-    if [[ "$i" -lt "${#GURU_DAEMON_POLL_LIST[@]}" ]] ; then
+    if [[ "$i" -lt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] ; then
             echo $i
             return 0
         else
@@ -177,7 +177,22 @@ import () {
         done
 }
 
+module.installed () {
 
+    local i=0
+    local _to_find=$1
+
+    while [[ "$i" -lt "${#GURU_MODULES[@]}" ]] ; do
+            if [[ "${GURU_MODULES[$i]}" == "$_to_find" ]] ; then
+                    return 0
+                fi
+            ((i++))
+        done
+    return 100
+}
+
+
+#`TBD`declase -xf ? rather than export?
 export -f system.core-dump
 export -f daemon.poll_order
 export -f gmsg

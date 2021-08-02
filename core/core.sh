@@ -2,21 +2,29 @@
 # guru-client - main command parser
 # caa@ujo.guru 2020
 
-export GURU_VERSION="0.6.6.1"
+# global variables variable
+declare -x GURU_VERSION="0.6.6.1"
+declare -x GURU_RC="$HOME/.gururc"
+declare -x GURU_BIN="$HOME/bin"
 
-# minimal process command
+# early exit commands
 case "$1" in
-    ver|version|--ver|--version) echo "guru-client v$GURU_VERSION" ; exit 0 ;;
-esac
+        ver|version|--ver|--version)
+            echo "guru-client v$GURU_VERSION"
+            exit 0
+    esac
 
-# include configuration tools
-source $HOME/bin/config.sh
-
-# source common variable
-GURU_RC="$HOME/.gururc"
-[[ -f $GURU_RC ]] && source $GURU_RC || config.main export $GURU_USER
+if [[ -f $GURU_RC ]] ; then
+        source $GURU_RC
+    else
+        # run configs exporting function to produce file for current os user
+        source $HOME/bin/config.sh
+        config.main export $USER
+        source $GURU_RC
+    fi
 
 # import needed modules
+source $GURU_BIN/config.sh
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/daemon.sh
@@ -27,6 +35,12 @@ source $GURU_BIN/system.sh
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
 
+# check is accesspoint enabled and mount is not already done
+if [[ $GURU_ACCESS_ENABLED ]] ; then
+    # check is system folder mounted
+    source $GURU_BIN/mount.sh
+    mount.main system
+fi
 
 core.main () {
     # tail bone function but it sits well here
@@ -75,8 +89,8 @@ core.parser () {
                          radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;
                          shell)  core.shell "$@"                        ; return $? ;;
                      uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;
-       help|"?"|"-?"|--help|-h)  core.help $@ ; exit 0 ;;
-                            "")  core.shell ;;
+       help|"?"|"-?"|--help|-h)  core.help $@                           ; return $? ;;
+                            "")  core.shell                             ; return $? ;;
                              *)  core.run_module "$tool" "$@"           ; return $? ;;
     esac
     return 0
@@ -86,16 +100,14 @@ core.parser () {
 core.process_opts () {
     # argument parser
 
-    TEMP=`getopt --long -o "scCvVWflu:h:" "$@"`
+    TEMP=`getopt --long -o "scCflv:u:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
             -s ) export GURU_VERBOSE=        ; shift     ;;
             -c ) export GURU_FLAG_COLOR=true ; shift     ;;
             -C ) export GURU_FLAG_COLOR=     ; shift     ;;
-            -v ) export GURU_VERBOSE=1       ; shift     ;;
-            -V ) export GURU_VERBOSE=2       ; shift     ;;
-            -W ) export GURU_VERBOSE=3       ; shift     ;;
+            -v ) export GURU_VERBOSE=$2      ; shift 2   ;;
             -f ) export GURU_FORCE=true      ; shift     ;;
             -l ) export GURU_LOGGING=true    ; shift     ;;
             -u ) core.change_user "$2"       ; shift 2   ;;
@@ -245,14 +257,15 @@ core.shell () {
             source $GURU_RC
             GURU_VERBOSE=$_verbose
 
-            # set call name off, affects help print out
-            _GURU_CALL="$GURU_CALL" ; GURU_CALL=
+            # set call name off for sub processes, affects some help content
+            local _GURU_CALL="$GURU_CALL"
+            GURU_CALL=
 
             read -e -p "$(render_path)" "cmd"
 
             case "$cmd" in exit|q|quit)  break ;;
-                                     -V)  inc_verbose ;;
-                                     -v)  dec_verbose ;;
+                                     '+')  inc_verbose ;;
+                                     '-')  dec_verbose ;;
                 esac
             [[ $cmd ]] && core.parser $cmd
         done
@@ -270,16 +283,13 @@ core.help () {
             gmsg -v1 -c white "general flags:"
             gmsg -v2
             gmsg -v1 " -s               be more silent, printout only errors and warnings"
-            gmsg -v1 " -v               set verbose, headers and some details"
-            gmsg -v1 " -V               more deep verbose, unit level details"
-            gmsg -v2 " -W               damn deep verbose, action level details"
+            gmsg -v1 " -v 1..4          verbose level, adds headers and some details"
             gmsg -v1 " -u <username>    change guru user name temporary  "
             gmsg -v1 " -h <hosname>     change computer host name name temporary "
             gmsg -v1 " -l               set logging on to file $GURU_LOG"
             gmsg -v1 " -f               set force mode on, be more aggressive"
             gmsg -v1 " -c               force color in terminal"
             gmsg -v1 " -C               remove terminal colors"
-            
             gmsg -v2
             return 0
         }
@@ -300,7 +310,7 @@ core.help () {
         }
 
     core.help_newbie () {
-        if ! [[ -f $HOME/.data/.og ]] ; then
+        if [[ -f $HOME/.data/.newbie ]] ; then
             gmsg
             gmsg -c white "if problems after installation"
             gmsg
@@ -316,9 +326,9 @@ core.help () {
             gmsg
             gmsg "   $GURU_CALL config user"
             gmsg
-            gmsg "4) remove this extra help view to appear anymore"
+            gmsg "4) remove newbie help view by: "
             gmsg
-            gmsg "   touch $HOME/.data/.og"
+            gmsg "   rm $HOME/.data/.newbie"
             gmsg
             export GURU_VERBOSE=1
         fi
