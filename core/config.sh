@@ -260,8 +260,6 @@ config.set () {
     gmsg "setting GURU_${_variable^^} to $_value"
 }
 
-GURU_${_tar^^}
-
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         config.main "$@"

@@ -145,7 +145,7 @@ gask () {
     local _ask="$1"
     local _ans
 
-    read -n 1 -p "$_ask? [y/n]: " _ans
+    read -n 1 -p "$_ask [y/n]: " _ans
     echo
 
     case $_ans in y|Y|yes|Yes)
