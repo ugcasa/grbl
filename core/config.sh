@@ -5,15 +5,23 @@ source common.sh
 source remote.sh
 
 config.main () {
-
+    # main comman parser
     local _cmd="$1" ; shift
     case "$_cmd" in
-              get|user|export|help|edit|get|set)
-                         config.$_cmd $@                        ; return $? ;;
-             pull|push)  remote."$_cmd"_config $@               ; return $? ;;
-                status)  echo "no status data" ;;
-                     *)  echo "unknown config action '$_cmd'"
-                         config.help  $@                        ; return $? ;;
+            user|export|help|edit|get|set)
+                    config.$_cmd $@
+                    return $?
+                     ;;
+            pull|push)
+                    remote."$_cmd"_config $@
+                    return $?
+                    ;;
+            status)
+                    gmsg "no status data"
+                    ;;
+
+                 *) echo "unknown config action '$_cmd'"
+                    config.help  $@                        ; return $? ;;
         esac
 }
 
@@ -237,8 +245,7 @@ config.user () {
 
 
 config.get (){
-    # get tool-kit environmental variable
-
+    # get environmental value of variable
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
     #set |grep "GURU_${_variable^^}"
     set | grep "GURU_${_variable^^}" | head -1 | cut -d "=" -f2
@@ -246,18 +253,21 @@ config.get (){
 }
 
 config.set () {
-    # cahnge current config and set environmental variable
-
+    # change environment temporary
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
     [[ "$2" ]] && _value="$2" || read -r -p "$_variable value: " _value
 
-    # this sets only rc file
-    #[[ -f "$GURU_RC" ]] && target_rc="$GURU_RC" || target_rc="$HOME/.gururc"
-    #sed -i -e "/$_variable=/s/=.*/=$_value/" "$target_rc"                               # Ähh..
-
-    echo 'GURU_USER="casa"' | sed 's/.*\bGURU_${_variable^^}\b.*/_value/'
-
-    gmsg "setting GURU_${_variable^^} to $_value"
+    #_variable=user ; _value=uljas
+    #echo 'GURU_USER="casa"' | sed 's/.*\bGURU_${_variable^^}\b.*/_value/'
+    if ! cat $GURU_RC | grep "GURU_${_variable^^}=" >/dev/null; then
+            gmsg -c yellow "no variable 'GURU_${_variable^^}' found"
+            return 2
+        fi
+    local _found=$(cat $GURU_RC | grep "GURU_${_variable^^}=" | cut -d '=' -f 2)
+    sed -i "s/GURU_${_variable^^}=.*/GURU_${_variable^^}='${_value}'/" $GURU_RC
+    gmsg -v1 "changing GURU_${_variable^^} from $_found to '$_value'"
+    source $GURU_RC
+    return 0
 }
 
 

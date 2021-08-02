@@ -116,15 +116,15 @@ mount.list () {
 mount.system () {
     # mount system data
 
-    gmsg -v2 -n "checking system data folder.."
+    gmsg -v3 -n "checking system data folder.."
     if [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] ; then
-            gmsg -v1 -c green "mounted "
+            gmsg -v3 -c green "mounted "
         else
-            gmsg -v1 -n "mounting.. "
+            gmsg -v3 -n "mounting.. "
             # gmsg -v3 -c deep_pink "${GURU_SYSTEM_MOUNT[1]} -> $GURU_SYSTEM_MOUNT"
             mount.remote "$GURU_SYSTEM_MOUNT" "${GURU_SYSTEM_MOUNT[1]}" \
-                && gmsg -c green "ok"  \
-                || gmsg -c yellow "error $?"
+                && gmsg -v3 -c green "ok"  \
+                || gmsg -v3 -c yellow "error $?"
           fi
 }
 

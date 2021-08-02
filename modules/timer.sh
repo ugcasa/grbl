@@ -45,7 +45,7 @@ timer.help () {
 
 timer.toggle () {
     # key press action
-    timer_indicator_key="f$(daemon.poll_order timer)"
+    local timer_indicator_key="f$(daemon.poll_order timer)"
 
     if timer.status >/dev/null ; then
         timer.end

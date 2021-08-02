@@ -129,10 +129,10 @@ system.status () {
     # system status
     gmsg -v 1 -t -n "${FUNCNAME[0]}: "
     if mount.online "$GURU_SYSTEM_MOUNT" ; then
-        gmsg -v 1 -t -c green "guru on service" -k $system_indicator_key
+        gmsg -v 1 -c green "guru on service" -k $system_indicator_key
         return 0
     else
-        gmsg -v 1 -t -c red ".data is unmounted" -k $system_indicator_key
+        gmsg -v 1 -c red ".data is unmounted" -k $system_indicator_key
         return 101
     fi
 }

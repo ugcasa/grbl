@@ -6,7 +6,6 @@
 # TBD better intregration with tmux
 # TBD do not generate project details, save those to base (of somekind)
 
-
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/timer.sh
@@ -24,8 +23,8 @@ project.help () {
     gmsg -v1 "  open <name|id>          open project "
     gmsg -v1 "  close                   close project, keep data "
     gmsg -v1 "  change <name|id>        same as close and open  "
-    gmsg -v1 "  archive <name|id>       move to archive"
-    gmsg -v1 "  active <name|id>        return archived project "
+    #gmsg -v1 "  archive <name|id>       move to archive"
+    #gmsg -v1 "  active <name|id>        return archived project "
     gmsg -v2 "  rm <name|id>            remove project and files for good "
     gmsg -v2 "  install                 install requirements "
     gmsg -v2 "  remove                  remove requirements "
@@ -39,8 +38,8 @@ project.help () {
     gmsg -v2
     gmsg -v1 -c white "example:"
     gmsg -v1 " $GURU_CALL project new demo       # init new project called 'demo'"
-    gmsg -v2 " $GURU_CALL project archive        # list of archived projects "
-    gmsg -v1 " $GURU_CALL project archive demo   # archive demo "
+    #gmsg -v2 " $GURU_CALL project archive        # list of archived projects "
+    #gmsg -v1 " $GURU_CALL project archive demo   # archive demo "
     gmsg -v2 " $GURU_CALL project rm demo        # remove all demo project files "
     gmsg -v2
     return 0
@@ -52,13 +51,19 @@ project.main () {
     local _cmd="$1" ; shift
 
     case "$_cmd" in
-        check|ls|info|new|open|change|status|archive|active|close|rm|sublime|poll|help)
+        check|ls|info|new|status|open|change|close|toggle|rm|sublime|poll|help)
                 project.$_cmd "$@"
                 return $? ;;
-
         *)      project.open "$_cmd"
                 return $? ;;
         esac
+}
+
+project.toggle () {
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+    [[ -f $project_base/active ]] && project.close || project.open $@
+    sleep 4
+    return 0
 }
 
 
@@ -70,42 +75,31 @@ project.status () {
     local project_indicator_key="f$(daemon.poll_order project)"
 
     # check project file locaton is accessavle
-    gmsg -t -n -v1 "cheking projects.. "
-    if ! [[ -d "$project_base" ]] ; then
-            gmsg -c red "$project_base not available" -k $project_indicator_key
-            if [[ $GURU_FORCE ]] ; then
-                    mount.main mount system || return $?
-                else
-                    gmsg -v1 -c white "try -f or '$GURU_CALL mount system'"
-                    return 41
-                fi
+    gmsg -t -n -v1 "checking project.. "
+    if [[ -d "$project_base" ]] ; then
+            gmsg -v1 -n -c green "installed, " -k $project_indicator_key
+        else
+            gmsg -n -c red "$project_base not installed, " -k $project_indicator_key
+            return 100
         fi
 
     # check are projects mounted
     if [[ -f "$project_mount/.online" ]] ; then
-            gmsg -v1 -c green "available"  -k $project_indicator_key
+            gmsg -n -v1 -c green "mounted, "
         else
-            gmsg -v1 -c yellow "not mounted"  -k $project_indicator_key
-
-            if [[ $GURU_FORCE ]] ; then
-                    mount.main mount projects || return $?
-                else
-                    gmsg -v1 -c white "try -f or '$GURU_CALL mount projects'"
-                    return 41
-                fi
+            gmsg -v1 -c yellow "not mounted" -k $project_indicator_key
+            return 100
         fi
 
-    [[ $project_name ]] || return 0
-
-    gmsg -n -v1 "$project_name.. "
-    # check does project have a folder
-    if [[ -d "$project_mount/$project_name" ]] ; then
-            gmsg -v1 -c green "ok" -k $project_indicator_key
-            gmsg -v2 -c light_blue "$(ls $project_mount/$project_name)"
+    if [[ -f $project_base/active ]]; then
+            local active=$(cat $project_base/active)
+            gmsg -n "active: "
+            gmsg -v1 -c aqua "$active " -k $project_indicator_key
         else
-            gmsg -v1 -c yellow "$project_name folder not found" -k $project_indicator_key
-            return 41
+            gmsg -v1 -c reset "no active projects "
         fi
+
+    return 0
 }
 
 
@@ -131,13 +125,13 @@ project.ls () {
 
     # check active project
     [[ -f $project_base/active ]] && local _active_project=$(cat $project_base/active)
-    gmsg -v2 -c aqua_marine "active: $_active_project"
+    gmsg -v2 -c aqua "active: $_active_project"
 
     # list of projects
     #gmsg -v1 "list of projects "
     for _project in ${_project_list[@]} ; do
         if [[ "$_project" == "$_active_project" ]] ; then
-                gmsg -c aqua_marine "$_project"
+                gmsg -c aqua "$_project"
             else
                 gmsg -c light_blue "$_project"
             fi
@@ -150,7 +144,10 @@ project.ls () {
 project.info () {
     # list of projects, active higlighted with lis of tmux sessions
     #source tmux.sh
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+    local project_mount="$GURU_MOUNT_PROJECTS"
 
+    # check system folder is mounted, almost futile
     gmsg -n -c white "system folder.. "
     if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
         gmsg -c green "mounted"
@@ -159,7 +156,7 @@ project.info () {
         gmsg "cannot continue, exiting"
         return 100
     fi
-
+    # check is project file folder mounted
     gmsg -n -c white "project folder.. "
     if [[ -f $GURU_MOUNT_PROJECTS/.online ]] ; then
         gmsg -c green "mounted"
@@ -167,37 +164,31 @@ project.info () {
         gmsg -c red "not mounted"
     fi
 
+    # printout
     gmsg -n -c white "projects: "
     project.ls | tr '\n' ' ' ; echo
 
-    if module.installed tmux ; then
-            gmsg -n -c white "tmux sessions: "
-            local sessions=($(tmux ls |cut -f 1 -d ':'))
-            local active=$(tmux ls | grep '(attached)' | cut -f 1 -d ':')
-            local _id=""
-
-            for _id in ${sessions[@]} ; do
-                    if [[ $_id == $active ]] ; then
-                            gmsg -n -c aqua_marine "$_id "
-                        else
-                            gmsg -n -c light_blue "$_id "
-                        fi
-                    #gmsg -c pink "$_id : $active"
-                done
-            echo
+    if [[ -f $project_base/active ]] ; then
+            local active=$(cat $project_base/active)
+            gmsg -c white "active project '$active' "
+        else
+            gmsg -c reset "no active project "
+            return 0
         fi
 
-    local active=$(cat $GURU_SYSTEM_MOUNT/project/active)
-    gmsg -n -c white "active project '$active' "
-
-    # active project ingformation
-    if [[ -f $GURU_SYSTEM_MOUNT/project/$active/project.conf ]] ; then
-            source $GURU_SYSTEM_MOUNT/project/$active/project.conf
-            gmsg -n -c aqua_marine "$project_name"
-            gmsg -c grey " '$project_description' data: '$project_data' mountpoint: '$project_folder'"
+    gmsg -n -c white "$active data: "
+    # active project information
+    if [[ -f $project_base/$active/project.conf ]] ; then
+            source $project_base/$active/project.conf
+            gmsg -c grey " '$project_description' data location: '$project_data' mount point: '$project_folder'"
             #gmsg -c pink "$GURU_SYSTEM_MOUNT/project/$active/project.conf"
         else
             gmsg "no $active project data available"
+        fi
+
+    if module.installed tmux ; then
+            source tmux.sh
+            tmux.status
         fi
 }
 
@@ -266,33 +257,41 @@ project.sublime () {
 
 project.open () {
     # open project, sublime + env variables+ tmux
+    local project_indicator_key="f$(daemon.poll_order project)"
 
-    if ! [[ "$1" ]] ; then
-        gmsg -c yellow "project name needed"
-        return 1
-    fi
+    # source project configuration file
+    local project_base="$GURU_SYSTEM_MOUNT/project"
 
-    local project_name="$1"
+    # figure out project name
+    local project_name=
+    if [[ "$1" ]] ; then
+            # is user has input project name to open
+            project_name="$1"
+        else
+            # no user input, check last project
+            if [[ -f $project_base/last ]] ; then
+                    project_name="$(cat $project_base/last)"
+                else
+                    # not able to figure project name up
+                    gmsg -c yellow "project name needed"
+                    return 1
+                fi
+        fi
 
-    # check that prroject is in projects list
+    # check that project is in projects list
     if ! project.exist $project_name ; then
             gmsg -c yellow "$project_name does not exist"
             return 3
         fi
 
-    # source project configuration file
-    local project_base="$GURU_SYSTEM_MOUNT/project"
-    # check that project folder exist
-
     # set active project
     echo $project_name > "$project_base/active"
-
+    echo $project_name > "$project_base/last"
     local project_folder="$project_base/$project_name"
 
     # inform user and message bus
-    gmsg -v1 "working on $project_name" -m "$GURU_USER/status"
-    mqtt.main pub "$GURU_USER/project" "$project_name"
-
+    gmsg -v1 -n "$GURU_USER working on "
+    gmsg -v1 -c aqua "$project_name" -m "$GURU_USER/project" -k $project_indicator_key
 
     # open editor
     case $GURU_PREFERRED_EDITOR in
@@ -312,7 +311,7 @@ project.open () {
                             source tmux.sh
                             tmux.attach $project_name
                         else
-                            tmux attach $project_name
+                            tmux attach -t $project_name
                         fi
                     ;;
 
@@ -326,12 +325,43 @@ project.open () {
                     ;;
         esac
 
-
     # stays here till session deatteched
     gmsg -v2 "after deattach do here"
     return 0
-
 }
+
+
+project.close () {
+
+    local project_name="$1"
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+
+    # check is there active projects, exit if not
+    [[ -f $project_base/active ]] || return 0
+
+    local active_project=$(cat $project_base/active)
+    [[ $project_name ]] || project_name=$active_project
+    local project_indicator_key="f$(daemon.poll_order project)"
+
+    # check that project is in projects list
+    if ! project.exist $project_name ; then
+            gmsg -c yellow "$project_name does not exist"
+            return 3
+        fi
+
+    if module.installed tmux ; then
+            tmux detach -s $project_name
+        fi
+
+    # check active project
+    if [[ -f $project_base/active ]] ; then
+            mv -f $project_base/active $project_base/last
+            gmsg -v1 -c reset "$active_project closed" -k $project_indicator_key
+        fi
+    GURU_VERBOSE=0
+    project.status
+}
+
 
 project.exist () {
 
@@ -354,12 +384,14 @@ project.exist () {
     return 100
 }
 
+
 project.change () {
     # just open sublime for now
     local project_name=$1
     local project_base="$GURU_SYSTEM_MOUNT/project"
 
     echo $project_name > "$project_base/active"
+    echo $project_name > "$project_base/last"
     gmsg -v2 "$project_name" -m "$GURU_USER/project"
 }
 
@@ -386,7 +418,6 @@ project.poll () {
             ;;
         esac
 }
-
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then

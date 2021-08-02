@@ -4,11 +4,11 @@
 # thanks samoshkin! https://github.com/samoshkin/tmux-config
 # [vim + tmux - OMG!Code](https://www.youtube.com/watch?v=5r6yzFEXajQ)
 # [Complete tmux Tutorial](https://www.youtube.com/watch?v=Yl7NFenTgIo)
-# config location: (overrides defaults in:)
+# config location: ~/.tmux.conf (overrides defaults)
 
 source $GURU_BIN/common.sh
 tmux_indicator_key="f$(daemon.poll_order tmux)"
-
+GURU_VERBOSE=1
 
 tmux.help () {
     gmsg -v1 -c white "guru-client tmux help "
@@ -37,26 +37,20 @@ tmux.help () {
 tmux.main () {
     # tmux main command parser
     local _cmd="$1" ; shift
-    tmux_indicator_key="f$(daemon.poll_order tmux)"
-
 
     case "$_cmd" in
                help|ls|attach|install|remove|poll|status|config)
                     tmux.$_cmd "$@"
                     return $?
                     ;;
-
                *)   gmsg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
                     return 2
         esac
-
-    return 0
 }
 
 
-
 tmux.ls () {
-    tmux ls
+    tmux ls | cut -d ':'
     return $?
 }
 
@@ -96,7 +90,7 @@ tmux.config () {
 
 
 tmux.config_dialog () {
-    # open ialog to make changes to tmux dxonfig file
+    # open dialog to make changes to tmux config file
 
     # gmsg -v3 "checking dialog installation.."
     dialog --version >>/dev/null || sudo apt install dialog
@@ -134,7 +128,7 @@ tmux.config_undo () {
     if [[ $1 ]] ; then
             local config_file="$1"
         else
-            gmsg -c yellow "configfile '$1' does not exist"
+            gmsg -c yellow "config file '$1' does not exist"
             return 0
         fi
 
@@ -149,26 +143,49 @@ tmux.config_undo () {
 }
 
 
+tmux.open () {
+    # open tmux session
+    local session="0"
+    [[ $1 ]] && session="$1"
+    tmux attach -s $session
+    return 0
+}
+
+
 
 tmux.status () {
     # check tmux broker is reachable.
     # printout and signal by corsair keyboard indicator led - if available
     tmux_indicator_key="f$(daemon.poll_order tmux)"
 
-    gmsg -n -v1 -t "${FUNCNAME[0]}: "
+    gmsg -n -t "${FUNCNAME[0]}: "
 
     if [[ $GURU_TMUX_ENABLED ]] ; then
-            gmsg -v1 -n -c green "enabled, "
+            gmsg -n -c green "enabled, "
         else
-            gmsg -v1 -c black "disabled " \
-                 -k $tmux_indicator_key
+            gmsg -c reset "disabled " -k $tmux_indicator_key
             return 1
         fi
+
+    local sessions=($(tmux ls |cut -f 1 -d ':'))
+    local active=$(tmux ls | grep '(attached)' | cut -f 1 -d ':')
+    local _id=""
+
+    gmsg -n "${#sessions[@]} sessions: "
+    for _id in ${sessions[@]} ; do
+            if [[ $_id == $active ]] ; then
+                    gmsg -n -c aqua_marine "$_id "
+                else
+                    gmsg -n -c light_blue "$_id "
+                fi
+            #gmsg -c pink "$_id : $active"
+        done
+    echo
 }
 
 
 tmux.attach () {
-    # attachs to tmux session if exist
+    # attach to tmux session if exist
     local session="0"
     [[ $1 ]] && session="$1"
 
@@ -178,18 +195,25 @@ tmux.attach () {
             return 2
         fi
 
-    if tmux ls | grep $session ; then
-            tmux attach -t $session
-        else
+    if ! tmux ls | grep $session ; then
             gmsg -c yellow "session '$session' does not exist"
             return 1
         fi
-    return 0
+
+    if [[ $DISPLAY ]] ; then
+            gnome-terminal -- /usr/bin/tmux attach -t $session
+        else
+            /usr/bin/tmux attach -t $session
+        fi
+    return $?
+
 }
+
 
 tmux.poll () {
     # daemon required polling functions
     local _cmd="$1" ; shift
+    local tmux_indicator_key="f$(daemon.poll_order tmux)"
 
     case $_cmd in
         start )
@@ -212,7 +236,7 @@ tmux.poll () {
 
 
 tmux.install () {
-    # install mosquitto tmux clients
+    # install tmux
     sudo apt update
     sudo apt install tmux \
         && gmsg -c green "guru is now ready to tmux" \
@@ -223,7 +247,7 @@ tmux.install () {
 
 
 tmux.remove () {
-    # remove mosquitto tmux clients
+    # remove tmux
     sudo apt remove tmux && return 0
     return 1
 }
