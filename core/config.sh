@@ -1,19 +1,13 @@
 #!/bin/bash
 # guru-client config tools
-
 source common.sh
-source remote.sh
 
 config.main () {
     # main comman parser
     local _cmd="$1" ; shift
     case "$_cmd" in
-            user|export|help|edit|get|set)
+            user|export|help|edit|get|set|pull|push)
                     config.$_cmd $@
-                    return $?
-                     ;;
-            pull|push)
-                    remote."$_cmd"_config $@
                     return $?
                     ;;
             status)
@@ -21,7 +15,9 @@ config.main () {
                     ;;
 
                  *) echo "unknown config action '$_cmd'"
-                    config.help  $@                        ; return $? ;;
+                    config.help  $@
+                    return $?
+                    ;;
         esac
 }
 
@@ -78,8 +74,6 @@ config.make_rc () {
       fi
     done < $_source_cfg >> $_target_rc
     return 0
-
-    #tr -d '\r' < $configfile > $user_source_cfg.unix
 }
 
 
@@ -182,6 +176,56 @@ config.export () {
 }
 
 
+config.pull () {
+    # pull configuration files from server
+    gmsg -v1 -n -V2 "pulling $GURU_USER@$GURU_HOSTNAME configs.. "
+    gmsg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
+    local _error=0
+
+    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
+        "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/" \
+        "$GURU_CFG/$GURU_USER"
+    _error=$?
+
+    if ((_error<9)) ; then
+            gmsg -c green "ok"
+            return 0
+        else
+            gmsg -c red "failed"
+            return $_error
+        fi
+}
+
+
+config.push () {
+    # save configuration to server
+    gmsg -v1 -n -V2 "pushing $GURU_USER@$GURU_HOSTNAME configs.. "
+    gmsg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
+    local _error=0
+
+    ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
+        -p "$GURU_ACCESS_PORT" \
+        ls "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER" >/dev/null 2>&1 || \
+
+    ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
+        -p "$GURU_ACCESS_PORT" \
+        mkdir -p "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER"
+
+    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
+        "$GURU_CFG/$GURU_USER/" \
+        "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/"
+
+    _error=$?
+    if ((_error<9)) ; then
+            gmsg -c green "ok"
+            return 0
+        else
+            gmsg -c red "failed"
+            return $_error
+        fi
+}
+
+
 config.edit () {
     # edit user config file with preferred editor
     local _config_file=$GURU_CFG/$GURU_USER/user.cfg
@@ -251,6 +295,7 @@ config.get (){
     set | grep "GURU_${_variable^^}" | head -1 | cut -d "=" -f2
     return $?
 }
+
 
 config.set () {
     # change environment temporary

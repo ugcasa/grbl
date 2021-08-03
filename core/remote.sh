@@ -18,7 +18,7 @@ remote.help () {
     gmsg -v3 " poll start|end   start or end module status polling "
     gmsg -v2
     gmsg -v1 -c white  "example:"
-    gmsg -v1 "    $GURU_CALL remote mount /home/$GURU_ACCESS_USERNAME/share /home/$USER/mount/$GURU_ACCESS_DOMAIN/"
+    gmsg -v1 "    $GURU_CALL remote "
     gmsg -v2
 }
 
@@ -26,11 +26,9 @@ remote.help () {
 remote.main () {
 
     [[ "$GURU_INSTALL" == "server" ]] && remote.warning
-    remote_indicator_key='f'"$(daemon.poll_order remote)"
 
     command="$1"; shift
     case "$command" in
-              push|pull)    remote.$command"_config"    ; return $? ;;
       check|status|poll)    remote.$command "$@"        ; return $? ;;
          install|remove)    remote.install "$command"    ; return $? ;;
                       *)    remote.help ;;
@@ -41,6 +39,7 @@ remote.main () {
 remote.status () {
     # check remote is reachable. daemon poller will run this
     gmsg -n -v1 -t "${FUNCNAME[0]}: "
+    remote_indicator_key='f'"$(daemon.poll_order remote)"
     if remote.online ; then
             gmsg -v1 -c green "accesspoint available" -k $remote_indicator_key
             return 0
@@ -73,57 +72,10 @@ remote.online () {
 }
 
 
-remote.pull_config () {
-    gmsg -v1 -n -V2 "pulling $GURU_USER@$GURU_HOSTNAME configs.. "
-    gmsg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
-    local _error=0
-
-    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
-        "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/" \
-        "$GURU_CFG/$GURU_USER"
-    _error=$?
-
-    if ((_error<9)) ; then
-            gmsg -c green "ok"
-            return 0
-        else
-            gmsg -c red "failed"
-            return $_error
-        fi
-}
-
-
-remote.push_config () {
-    gmsg -v1 -n -V2 "pushing $GURU_USER@$GURU_HOSTNAME configs.. "
-    gmsg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
-    local _error=0
-
-    ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
-        -p "$GURU_ACCESS_PORT" \
-        ls "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER" >/dev/null 2>&1 || \
-
-    ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
-        -p "$GURU_ACCESS_PORT" \
-        mkdir -p "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER"
-
-    rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
-        "$GURU_CFG/$GURU_USER/" \
-        "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/"
-
-    _error=$?
-    if ((_error<9)) ; then
-            gmsg -c green "ok"
-            return 0
-        else
-            gmsg -c red "failed"
-            return $_error
-        fi
-}
-
-
 remote.poll () {
 
     local _cmd="$1" ; shift
+    remote_indicator_key='f'"$(daemon.poll_order remote)"
 
     case $_cmd in
         start )

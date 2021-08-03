@@ -1,16 +1,12 @@
 #!/bin/bash
 # guru shell work time tracker
 # casa@ujo.guru 2019-2020
-
+# TODO timer module neewds to be write again.. this is useless, still partly working and in use.
+# python might be better than bash for mathematics
 source common.sh
-source mount.sh
-
-timer_indicator_key="f$(daemon.poll_order timer)"
 
 timer.main () {
-    mount.system >>/dev/null
-    timer_indicator_key="f$(daemon.poll_order timer)"
-
+    # main command parser
     command="$1" ; shift
     case "$command" in
 
@@ -45,8 +41,6 @@ timer.help () {
 
 timer.toggle () {
     # key press action
-    local timer_indicator_key="f$(daemon.poll_order timer)"
-
     if timer.status >/dev/null ; then
         timer.end
     else
@@ -57,34 +51,40 @@ timer.toggle () {
 
 
 timer.check() {
-
+    # check timer state
     timer.status human && return 0 || return 100
     }
 
 
 timer.status() {
-
-    #timer_indicator_key="f$(daemon.poll_order timer)"
+    # output timer status
+    timer_indicator_key="f$(daemon.poll_order timer)"
     gmsg -n -t -v1 "${FUNCNAME[0]}: "
 
+    # check is timer set
     if [[ ! -f "$GURU_FILE_TRACKSTATUS" ]] ; then
         gmsg -v1 -c reset "no timer tasks" -k $timer_indicator_key
         return 1
     fi
 
+    # get timer variables
     source "$GURU_FILE_TRACKSTATUS"
 
+    # fill variables
     timer_now=$(date +%s)
     timer_state=$(($timer_now-$timer_start))
     nice_start_date=$(date -d $start_date '+%d.%m.%Y')
+    # static for mathematics
     hours=$(($timer_state/3600))
     minutes=$(($timer_state%3600/60))
     seconds=$(($timer_state%60))
 
+    # format output
     [[ $hours > 0 ]] && print_h=$(printf "%0.2f hours " $hours) || print_h=""
     [[ $minutes > 0 ]] && print_m=$(printf "%0.2f minutes " $minutes) || print_m=""
     [[ $hours > 0 ]] && print_s="" || print_s=$(printf "%0.2f seconds" $seconds)
 
+    # select output format
     case "$1" in
 
         -h|human)
@@ -116,6 +116,7 @@ timer.status() {
 
 
 timer.last() {
+    # get last timer state
     if [[ -f $GURU_FILE_TRACKLAST ]] ; then
             gmsg -c light_blue "$(cat $GURU_FILE_TRACKLAST)"
         else
@@ -125,15 +126,16 @@ timer.last() {
 
 
 timer.start() {
-    # check and force mount system (~/.data) where timer record files are kept
-
-    gmsg -v1 "starting timer.."
+    # Start timer TBD rewrite this thole module
+    timer_indicator_key="f$(daemon.poll_order timer)"
     [[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
 
+    # check is timer alredy set
     if [[ -f "$GURU_FILE_TRACKSTATUS" ]] ; then
         timer.main end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
     fi
 
+    # parse given arguments
     case "$1" in
 
         at|from)
@@ -163,11 +165,13 @@ timer.start() {
             ;;
     esac
 
+    # is this really needed? Don't think so
     start_date="$date"
     start_time="$time"
     nice_date=$(date -d $start_date '+%d.%m.%Y')
     timer_start=$(date -d "$start_date $start_time" '+%s')
 
+    gmsg -v1 "starting timer.."
     [[ -f $GURU_FILE_TRACKLAST ]] && source $GURU_FILE_TRACKLAST
     [[ "$1" ]] && task="$1" || task="$last_task"
     [[ "$2" ]] && project="$2" || project="$last_project"
@@ -186,13 +190,15 @@ timer.start() {
 
 
 timer.end() {
-
+    # end timer and save to database (file)
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
         source $GURU_FILE_TRACKSTATUS
     else
         gmsg -v1 "timer not started"
         return 13
     fi
+
+    timer_indicator_key="f$(daemon.poll_order timer)"
 
     case "$1" in
         at|to|till)
@@ -275,6 +281,9 @@ timer.change() {
 
 
 timer.cancel() {
+    # cancel exits timer
+    timer_indicator_key="f$(daemon.poll_order timer)"
+
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
             rm $GURU_FILE_TRACKSTATUS
             gmsg -v1 -t -c reset -k $timer_indicator_key "work canceled"
@@ -316,7 +325,7 @@ timer.report() {
 
 
 timer.poll () {
-
+    # daemon interface
     timer_indicator_key="f$(daemon.poll_order timer)"
 
     local _cmd="$1" ; shift
