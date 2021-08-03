@@ -16,7 +16,7 @@ mount.test () {
                6) mount.test_default_mount  ; return $? ;;  # 6) touch hot files
                7) mount.test_known_remote   ; return $? ;;  # 7) return
            clean) mount.clean_test          ; return $? ;;  # make clean
-     release|all) mount.check        || _err=("${_err[@]}" "21")  # 1) quick check
+     release|all) mount.check               || _err=("${_err[@]}" "21")  # 1) quick check
                   mount.test_list           || _err=("${_err[@]}" "22")  # 2) list of stuff
                   mount.test_info           || _err=("${_err[@]}" "23")  # 3) information
                   mount.test_mount          || _err=("${_err[@]}" "24")  # 4) out of system action
@@ -56,7 +56,7 @@ mount.clean_test () {
 
 
 mount.test_mount () {
-
+    # TBD new mountpoints for Hesus Testman
     if mount.remote "/home/$GURU_USER_NAME/usr/test" "$HOME/tmp/test_mount" ; then
             gmsg -c green "${FUNCNAME[0]} passed"
             return 0
@@ -69,7 +69,7 @@ mount.test_mount () {
 
 mount.test_unmount () {
     local _mount_point="$HOME/tmp/test_mount"
-
+     # TBD new mountpoints for Hesus Testman
     if unmount.remote "$_mount_point" ; then
             gmsg -c green "${FUNCNAME[0]} passed"
             rm -rf "$H_mount_point" || WARNING "error when removing $_mount_point "

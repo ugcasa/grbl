@@ -12,7 +12,7 @@ corsair.test() {
     case "$test_case" in
            1) corsair.check ; return 0 ;;  # 1) quick check
          all)
-         # TODO: remove non wanted functions and check run order.
+         # TODO: check run order.
               corsair.test_main || _err=("${_err[@]}" "101")
               corsair.test_help || _err=("${_err[@]}" "102")
               corsair.test_check || _err=("${_err[@]}" "103")
@@ -22,11 +22,15 @@ corsair.test() {
               corsair.test_raw_write || _err=("${_err[@]}" "107")
               corsair.test_set || _err=("${_err[@]}" "108")
               corsair.test_reset || _err=("${_err[@]}" "109")
-              corsair.test_end || _err=("${_err[@]}" "110")
               corsair.test_kill || _err=("${_err[@]}" "111")
+              corsair.test_start || _err=("${_err[@]}" "105")
+              corsair.test_end || _err=("${_err[@]}" "110")
+              if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi ;;
+     dangero)
               corsair.test_install || _err=("${_err[@]}" "112")
               corsair.test_remove || _err=("${_err[@]}" "113")
               if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi ;;
+
          *) gmsg "test case $test_case not written"
             return 1
     esac

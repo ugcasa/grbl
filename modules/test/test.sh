@@ -16,10 +16,11 @@
 source $GURU_RC
 source $GURU_BIN/common.sh
 
+
 test.main() {
     # main test case parser
-    export all_tools=("mount" "remote" "project" "note" "system" "corsair")
-    export GURU_VERBOSE=true
+    export all_tools=("mount" "remote" "mqtt" "project" "note" "system" "corsair")
+    export GURU_VERBOSE=2
     export LOGGING=true
 
     case "$1" in
@@ -55,6 +56,7 @@ test.help () {
 test.tool() {
     # Tool to test tools. Simply call sourced tool main function and parse normal commands
     # sources under test
+    source $GURU_BIN/counter.sh
 
     local _tool=""
     local _case=""
@@ -128,6 +130,7 @@ test.all() {
 
 test.release() {
     # validation test, tests all but prints out only module reports
+    source $GURU_BIN/counter.sh
     local _error=0
     local _test_id=$(counter.main add guru-client_validation_test_id)
 
