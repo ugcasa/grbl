@@ -136,6 +136,7 @@ install.desktop () {
     return 0
 }
 
+
 install.server () {
     # add server module to install list
     modules_to_install=( ${modules_to_install[@]} "server" )
@@ -186,8 +187,7 @@ install.help () {
     gmsg " -p [platform]    select installation platform: desktop|laptop|server|phone "
     gmsg " -d               install also dev stuff "
     gmsg " -r               install all module requirements (experimental)"
-    gmsg " -v               low verbose (normally quite silent) "
-    gmsg " -V               high verbose "
+    gmsg " -v 0..3          set verbose level "
     gmsg " -h               print this help "
     gmsg
     gmsg -c white "example:"
@@ -199,17 +199,16 @@ install.help () {
 install.arguments () {
     ## Process flags and arguments
 
-    TEMP=`getopt --long -o "dfrvVhlu:p:" "$@"`
+    TEMP=`getopt --long -o "dfrhlv:u:p:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
             -d) install_dev=true           ; shift ;;
             -f) force_overwrite=true       ; shift ;;
             -r) install_requiremets=true   ; shift ;;
-            -v) export GURU_VERBOSE=1      ; shift ;;
-            -V) export GURU_VERBOSE=2      ; shift ;;
             -h) install.help               ; shift ;;
             -l) export LIGTH_INSTALL=true  ; shift ;;
+            -v) export GURU_VERBOSE=$2     ; shift 2 ;;
             -u) export GURU_USER=$2        ; shift 2 ;;
             -p) export install_platform=$2 ; shift 2 ;;
              *) break
@@ -364,7 +363,6 @@ check.folders () {
 }
 
 
-
 install.core () {
     # install core files
     install.copy cfg $TARGET_CFG "copying configurations"
@@ -373,6 +371,7 @@ install.core () {
     installed_core=( ${installed_core[@]} $(ls core | cut -f1 -d '.') )
     return 0
 }
+
 
 check.core () {
     # check core were installed
@@ -405,6 +404,7 @@ check.core () {
 
 }
 
+
 install.dev () {
     # install foray, test and all modules
 
@@ -435,7 +435,6 @@ check.dev () {
     # pass
     return 0
 }
-
 
 
 install.modules () {
@@ -486,10 +485,7 @@ install.modules () {
                             gmsg -c yellow "module $_module folder copying error"
                         fi
                 done
-
-
             fi
-
         done
     # pass
     gmsg -v1 -V2 -c green " done"
