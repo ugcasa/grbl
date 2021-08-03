@@ -19,7 +19,7 @@ project.help () {
     gmsg -v1 -c white "commands:"
     gmsg -v1 "  ls                      list of projects "
     gmsg -v1 "  info                    more detailed information of projects "
-    gmsg -v1 "  new <name|id>           add new projects "
+    gmsg -v1 "  add <name|id>           add new projects "
     gmsg -v1 "  open <name|id>          open project "
     gmsg -v1 "  close                   close project, keep data "
     gmsg -v1 "  change <name|id>        same as close and open  "
@@ -51,20 +51,12 @@ project.main () {
     local _cmd="$1" ; shift
 
     case "$_cmd" in
-        check|ls|info|new|status|open|change|close|toggle|rm|sublime|poll|help)
+        check|exist|ls|info|add|status|open|change|close|toggle|rm|sublime|poll|help)
                 project.$_cmd "$@"
                 return $? ;;
         *)      project.open "$_cmd"
                 return $? ;;
         esac
-}
-
-
-project.toggle () {
-    local project_base="$GURU_SYSTEM_MOUNT/project"
-    [[ -f $project_base/active ]] && project.close || project.open $@
-    sleep 4
-    return 0
 }
 
 
@@ -101,6 +93,22 @@ project.status () {
         fi
 
     return 0
+}
+
+
+
+project.add () {
+    # add project to projects
+    [[ "$1" ]] || gmsg -x 100 -c yellow "project name needed"
+
+    local project_name="$1"
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+    local project_folder="$project_base/$project_name"
+    local sublime_project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
+
+    [[ -d $project_folder ]] || mkdir -p "$project_folder"
+    [[ -f $sublime_project_file ]] || touch "$sublime_project_file"
+
 }
 
 
@@ -190,44 +198,6 @@ project.info () {
     if module.installed tmux ; then
             source tmux.sh
             tmux.status
-        fi
-}
-
-
-project.add () {
-    # add project to projects
-    [[ "$1" ]] || gmsg -x 100 -c yellow "project name needed"
-
-    local project_name="$1"
-    local project_base="$GURU_SYSTEM_MOUNT/project"
-    local project_folder="$project_base/$project_name"
-    local sublime_project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
-
-    [[ -d $project_folder ]] || mkdir -p "$project_folder"
-    [[ -f $sublime_project_file ]] || touch "$sublime_project_file"
-
-}
-
-
-project.rm () {
-
-    [[ $1 ]] || gmsg -x 1 "project name is reguired"
-    local project_name="$1"
-    local project_base="$GURU_SYSTEM_MOUNT/project"
-    local project_folder="$project_base/$project_name"
-    local sublime_project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
-
-    [[ -d $project_folder ]] || gmsg -x 100 "project $project_name not exist"
-
-    if gask "sure to remove $project_name?" ; then
-            # remove sublime project file if exist
-            [[ -f $sublime_project_file ]] && rm -f $sublime_project_file || gmsg "sublime project $project_name not exist"
-            # remove project database
-            rm -fr $project_folder && gmsg -v1 "project folder $project_folder removed"
-            return $?
-        else
-            gmsg -v1 -c dark_golden_rod "nothing changed"
-            return 0
         fi
 }
 
@@ -371,6 +341,37 @@ project.close () {
 }
 
 
+project.toggle () {
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+    [[ -f $project_base/active ]] && project.close || project.open $@
+    sleep 2
+    return 0
+}
+
+
+project.rm () {
+
+    [[ $1 ]] || gmsg -x 1 "project name is reguired"
+    local project_name="$1"
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+    local project_folder="$project_base/$project_name"
+    local sublime_project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
+
+    [[ -d $project_folder ]] || gmsg -x 100 "project $project_name not exist"
+
+    if gask "sure to remove $project_name?" ; then
+            # remove sublime project file if exist
+            [[ -f $sublime_project_file ]] && rm -f $sublime_project_file || gmsg "sublime project $project_name not exist"
+            # remove project database
+            rm -fr $project_folder && gmsg -v1 "project folder $project_folder removed"
+            return $?
+        else
+            gmsg -v1 -c dark_golden_rod "nothing changed"
+            return 0
+        fi
+}
+
+
 project.exist () {
 
     local i=0
@@ -386,9 +387,12 @@ project.exist () {
         | rev))
 
     while [[ "$i" -lt "${#project_list[@]}" ]] ; do
-            if [[ "${project_list[$i]}" == "$project_name" ]] ; then return 0; fi
+            if [[ "${project_list[$i]}" == "$project_name" ]] ; then
+                    gmsg -v2 -c green "project $project_name exist"
+                    return 0; fi
             ((i++))
         done
+    gmsg -v1 -c yellow "project $project_name does not exist"
     return 100
 }
 
