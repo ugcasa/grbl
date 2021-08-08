@@ -209,7 +209,8 @@ tunnel.open () {
                     if [[ $TMUX ]] ; then
                         ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port #$ssh_param
                     else
-                        gnome-terminal -- ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port
+                        gnome-terminal --geometry 70x11 --zoom 0.5 -- \
+                            ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port
                     fi
                     return 0
                     ;;
