@@ -1,16 +1,23 @@
 #!/bin/bash
-# sshfs mount functions for guru-client
+# guru-client tunneling functions 2021
+
 source common.sh
 
 tunnel.help () {
     gmsg -v1 -c white "guru-client tunnel help "
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL tunnel [push|pull|check|help|status|start|end|install|remove] "
+    gmsg -v0 "usage:    $GURU_CALL tunnel status|ls|open|close|add|rm|start|end|install|remove] "
     gmsg -v2
     gmsg -v1 -c white  "commands:"
-    gmsg -v1 " status            check that accesspoint server is available "
+    gmsg -v1 " ls               list, active highlighted"
+    gmsg -v1 " status           tunnel status "
+    gmsg -v1 " open <service>   open known tunnel set in user.cfg"
+    gmsg -v1 " close <service>  close open tunnels"
+    gmsg -v2 " add              add tunnel to .ssh/config"
+    gmsg -v2 " rm               remove tunnel from .ssh/config"
     gmsg -v1 " install          install requirements "
-    gmsg -v3 " poll start|end   start or end module status polling "
+    gmsg -v1 " remove           remove installed requirements "
+    gmsg -v2 " poll start|end   start or end module status polling "
     gmsg -v2
     gmsg -v1 -c white  "example:"
     gmsg -v1 "    $GURU_CALL tunnel "
@@ -25,7 +32,7 @@ tunnel.main () {
     command="$1"; shift
     case "$command" in
 
-        check|status|online|poll)
+        check|status|poll)
                 tunnel.$command "$@"
                 return $? ;;
 
@@ -95,11 +102,34 @@ tunnel.rm () {
 tunnel.ls () {
     # list of ssh tunnels
 
-    # TBD active tunnel list
-    source $GURU_RC
-    gmsg -n -V2 "configured tunnels: "
-    gmsg -c light_blue "${GURU_TUNNEL_LIST[@]}"
+    local all_services=${GURU_TUNNEL_LIST[@]}
+    local service=
 
+    #gmsg -n -V2 "configured tunnels: "
+    #gmsg -c light_blue "${all_services[@]}"
+
+    # TBD active tunnel list
+    # local active_pids=($(ps a | grep -v grep | grep "ssh -L" | cut -d " " -f 1))
+    # for pid in ${active_pids[@]} ; do
+    #         if ps --no-headers $pid | grep "ssh -L $to_port:localhost:" >/dev/null; then
+    #                 gmsg -n -c aqua "$service "
+    #             else
+    #                 gmsg -n -c light_blue "$service "
+    #             fi
+    #     done
+
+    local to_ports=ps a | grep -v grep | grep "ssh -L" | cut -d " " -f13 | cut -d ":" -f1
+
+    gmsg -n -v2 "tunnels: "
+    for service in ${all_services[@]} ; do
+        tunnel.parameters $service
+        if ps -x | grep -v grep | grep "ssh -L $to_port:localhost:" >/dev/null; then
+                gmsg -n -c aqua "$service "
+            else
+                gmsg -n -c light_blue "$service "
+            fi
+        done
+        echo
     return 0
 }
 
@@ -133,7 +163,7 @@ tunnel.parameters () {
     i=0
     for parameter in ${options[@]} ; do
         local value="GURU_TUNNEL_${GURU_TUNNEL_LIST[$service_nr]^^}[$i]"
-        gmsg -c pink "$value $parameter=${!value}"
+        #gmsg -c pink "$value $parameter=${!value}"
         eval $parameter=${!value}
         (( i++ ))
         done
@@ -144,6 +174,16 @@ tunnel.parameters () {
 
 tunnel.open () {
     # ssh tunnel
+
+    if ! [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
+            source mount.sh
+            mount.main mount system
+        fi
+
+    local data_folder="$GURU_SYSTEM_MOUNT/tunnel/$(hostname)"
+
+    [[ -d $data_folder ]] || mkdir -p $data_folder
+    source $data_folder/status
 
     local service_name="wiki" ;
     if [[ $1 ]] ; then
@@ -157,18 +197,40 @@ tunnel.open () {
 
     tunnel.parameters $service_name
 
+
+    # add to active list
+    source $data_folder/status
+    echo "active=($service_name $active)" >$data_folder/status
+
+    # echo url
     local url="localhost:$to_port"
+    # add rest of url if set
     [[ $url_end ]] && url="$url/$url_end"
-
     gmsg "$GURU_PREFERRED_BROWSER $url"
-    #gnome-terminal --
-    ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port
 
+    #ssh_param="-oClearAllForwardings=yes -oServerAliveInterval=15 "
+
+    # open session
+    case $GURU_PREFERRED_TERMINAL in
+            gnome-terminal)
+                    gnome-terminal -- ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port #$ssh_param
+                    return 0
+                    ;;
+            tmux)
+
+                    # TBD send to session "tunnel" following command
+                    ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port #$ssh_param
+                    return $?
+                    ;;
+            esac
+    return 0
 }
 
 
 tunnel.close () {
     # ssh tunnel
+
+    local data_folder="$GURU_SYSTEM_MOUNT/tunnel/$(hostname)"
 
     if [[ $1 ]] ; then
         local service_name=$1
@@ -181,6 +243,11 @@ tunnel.close () {
         local pid=$(ps a | grep -v grep | grep "ssh -L" | head -1 | cut -d " "  -f 1)
         service_name=unknown
     fi
+
+    source $data_folder/status
+    if ! echo ${active[@]} | grep $service_name ; then
+            gmsg -c yellow "tunnel '$service_name' not active"
+        fi
 
     # check that pid is number
     if ! echo $pid | grep -E ^\-?[0-9]?\.?[0-9]+$ >/dev/null; then
@@ -230,6 +297,7 @@ tunnel.requirements () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    source $GURU_RC
     tunnel.main "$@"
     exit 0
 fi
