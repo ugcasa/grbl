@@ -32,20 +32,25 @@ tunnel.main () {
     command="$1"; shift
     case "$command" in
 
-        check|status|poll)
+        check|status|poll|help)
                 tunnel.$command "$@"
                 return $? ;;
 
-        add|rm|open|close|ls)
-                tunnel.$command "$@"
+        add|rm|open|close|ls|tmux)
+
+                case $1 in
+                    all)    for service in ${GURU_TUNNEL_LIST[@]} ; do
+                                tunnel.$command $service
+                            done ;;
+                      *) tunnel.$command "$@"
+                esac
                 return $? ;;
-
-
         install|remove)
                 tunnel.requirements "$command"
                 return $? ;;
         *)
-                tunnel.help
+                tunnel.open $command
+                return $?
         esac
 }
 
@@ -53,7 +58,7 @@ tunnel.main () {
 tunnel.status () {
     # check tunnel is reachable. daemon poller will run this
     gmsg -n -v1 -t "${FUNCNAME[0]}: "
-    tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
+    local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
 
     if [[ -f /usr/bin/ssh ]] ; then
             gmsg -n -c green "available " -k $tunnel_indicator_key
@@ -71,6 +76,17 @@ tunnel.status () {
 tunnel.add () {
     # add ssh tunnel to .ssh_config
     echo TBD
+    # https://www.everythingcli.org/ssh-tunnelling-for-fun-and-profit-autossh/
+    # ~/.ssh/config
+    #   Host wiki
+    #   HostName      ujo.guru
+    #   User          hesus
+    #   Port          2010
+    #   # IdentityFile  ~/.ssh/id_rsa-cytopia@everythingcli
+    #   LocalForward  5000 localhost:3306
+    #   ServerAliveInterval 30
+    #   ServerAliveCountMax 3
+
     return 0
 }
 
@@ -83,37 +99,38 @@ tunnel.rm () {
 
 tunnel.ls () {
     # list of ssh tunnels
-
     local all_services=${GURU_TUNNEL_LIST[@]}
     local service=
-    local _return=1
-
-    #gmsg -n -V2 "configured tunnels: "
-    #gmsg -c light_blue "${all_services[@]}"
-
-    # TBD active tunnel list
-    # local active_pids=($(ps a | grep -v grep | grep "ssh -L" | cut -d " " -f 1))
-    # for pid in ${active_pids[@]} ; do
-    #         if ps --no-headers $pid | grep "ssh -L $to_port:localhost:" >/dev/null; then
-    #                 gmsg -n -c aqua "$service "
-    #             else
-    #                 gmsg -n -c light_blue "$service "
-    #             fi
-    #     done
-
+    [[ $1 ]] && service=$1
+    local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
     local to_ports=ps a | grep -v grep | grep "ssh -L" | cut -d " " -f13 | cut -d ":" -f1
 
+    # check only given service
+    if [[ $service ]] ; then
+            tunnel.parameters $service
+                if ps -x | grep -v grep | grep "ssh -L $to_port:localhost:" >/dev/null; then
+                        # gmsg -v2 -c aqua "$service"
+                        return 0
+                    else
+                        gmsg -v3 -c reset "$service" -k $tunnel_indicator_key
+                        return 1
+                    fi
+        fi
+
+    # check all tunnels
+    local _return=1
     gmsg -n -v2 "tunnels: "
     for service in ${all_services[@]} ; do
         tunnel.parameters $service
         if ps -x | grep -v grep | grep "ssh -L $to_port:localhost:" >/dev/null; then
-                gmsg -n -c aqua "$service "
+                gmsg -n -c aqua "$service " -k $tunnel_indicator_key
                 _return=0
             else
                 gmsg -n -c light_blue "$service "
             fi
         done
         echo
+    (( _return != 0 )) && gmsg -v3 -c reset "reset"  -k $tunnel_indicator_key
     return $_return
 }
 
@@ -163,23 +180,37 @@ tunnel.open () {
             service_name=$1
         else
             source $GURU_RC
-            gmsg -n -V2 "configured tunnels: "
+            gmsg -v2 -n -c white "available: "
             gmsg -c light_blue "${GURU_TUNNEL_LIST[@]}"
             read -p "input tunnel name: " service_name
         fi
 
     tunnel.parameters $service_name
-    # local ssh_param="-oClearAllForwardings=yes -oServerAliveInterval=15 "
-
     local url="http://localhost:$to_port"
     [[ $url_end ]] && url="$url/$url_end"
 
-    gmsg -v1 -c aqua "$GURU_PREFERRED_BROWSER $url " -k $tunnel_indicator_key
+
+    if tunnel.ls $service ; then
+            gmsg -v2 -n -c white "$service at "
+            gmsg -v1 -c aqua "$url"
+            return 0
+        fi
+
+    # local ssh_param="-oClearAllForwardings=yes -oServerAliveInterval=15 "
+
+
+    gmsg -v2 -n -c white "$service at "
+    gmsg -v1 -c aqua "$url" -k $tunnel_indicator_key
 
     # open session
     case $GURU_PREFERRED_TERMINAL in
+
             gnome-terminal)
-                    gnome-terminal -- ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port #$ssh_param
+                    if [[ $TMUX ]] ; then
+                        ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port #$ssh_param
+                    else
+                        gnome-terminal -- ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port
+                    fi
                     return 0
                     ;;
             tmux)
@@ -197,6 +228,8 @@ tunnel.close () {
     # ssh tunnel
 
     local data_folder="$GURU_SYSTEM_MOUNT/tunnel/$(hostname)"
+    local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
+
 
     if [[ $1 ]] ; then
         local service_name=$1
@@ -207,20 +240,51 @@ tunnel.close () {
     else
         # try to find a tunnel
         local pid=$(ps a | grep -v grep | grep "ssh -L" | head -1 | cut -d " "  -f 1)
-        service_name=unknown
+        service_name="unknown"
     fi
 
     # check that pid is number
     if ! echo $pid | grep -E ^\-?[0-9]?\.?[0-9]+$ >/dev/null; then
-            gmsg -c yellow "tunnel '$service_name' not found "
+            gmsg -v2 -c yellow "tunnel '$service_name' not found "
             return 2
         fi
 
-    gmsg "killing tunnel '$service_name' localhost:$to_port pid: $pid"
+    gmsg -v2 "killing tunnel '$service_name' localhost:$to_port pid: $pid"
     kill $pid
 
-    tunnel.status
+    # verify and indicate
+    if tunnel.ls $service_name ; then
+            gmsg -v2 -c green "$service_name kill verified" -k $tunnel_indicator_key
+        fi
+
+    if tunnel.ls >/dev/null; then
+            gmsg -v2 -c aqua "active tunnels detected" -k $tunnel_indicator_key
+        fi
+
     return 0
+}
+
+
+tunnel.tmux () {
+    # add new session "tunnels", open new pane to main window for all tunnel sessions
+    gmsg -v2 -c blue "TBD tmux ahve A lot of vibstagels, later"
+    # local session=tunnels
+    # local window=${session}:0
+    # local pane=${window}.0
+
+    # if ! tmux attach -t $session ; then
+    #         gnome-terminal -- tmux new -s $session &
+
+    #         sleep 1 ; gmsg "sending C-b"
+    #         tmux send-keys -t "$pane" C-b C-b
+    #         sleep 0,2 : gmsg "sending d"
+    #         tmux send-keys -t "$pane" d
+    #     fi
+
+    # tmux select-pane -t "$pane"
+    # tmux select-window -t "$window"
+    # #tmux send-keys -t "$pane" C-z 'some -new command' Enter
+
 }
 
 

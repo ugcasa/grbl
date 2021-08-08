@@ -14,8 +14,7 @@ mount.main () {
             cut -d '=' -f1))
     all_list=(${all_list[@],,})
 
-
-    indicator_key='f'"$(daemon.poll_order mount)"
+    # indicator_key='f'"$(daemon.poll_order mount)"
     argument="$1" ; shift
 
     case "$argument" in
