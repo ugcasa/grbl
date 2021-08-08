@@ -216,9 +216,8 @@ project.sublime () {
         fi
 
     if [[ -f "$sublime_project_file" ]] ; then
-            gmsg -v2 -c dark_grey "using $sublime_project_file"
+            gmsg -v2 "using $sublime_project_file"
             # TBD editor/subl.sh?  << subl --project "$sublime_project_file" -a
-            subl --project "$sublime_project_file" -a
             subl --project "$sublime_project_file" -a
         else
             gmsg -c yellow "$sublime_project_file not found"
