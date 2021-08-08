@@ -70,6 +70,8 @@ tunnel.status () {
     if tunnel.ls ; then
             gmsg -n -v3 -c aqua "active tunnels" -k $tunnel_indicator_key
         fi
+    echo
+    return 0
 }
 
 
@@ -129,9 +131,8 @@ tunnel.ls () {
                 gmsg -n -c light_blue "$service "
             fi
         done
-        echo
-    (( _return != 0 )) && gmsg -v3 -c reset "reset"  -k $tunnel_indicator_key
-    return $_return
+    (( _return != 0 )) && gmsg -v3 -c reset "reset" -k $tunnel_indicator_key
+    return 0
 }
 
 
@@ -247,7 +248,7 @@ tunnel.close () {
     # check that pid is number
     if ! echo $pid | grep -E ^\-?[0-9]?\.?[0-9]+$ >/dev/null; then
             gmsg -v2 -c yellow "tunnel '$service_name' not found "
-            return 2
+            return 0
         fi
 
     gmsg -v2 "killing tunnel '$service_name' localhost:$to_port pid: $pid"

@@ -2,8 +2,6 @@
 # user settings for guru-client
 # casa@ujo.guru 2020
 
-source "$(dirname "$0")/remote.sh"
-
 user_main() {
 
     command="$1"; shift

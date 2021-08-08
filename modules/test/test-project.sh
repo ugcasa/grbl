@@ -2,7 +2,7 @@
 # automatically generated tester for guru-client project.sh Tue 03 Aug 2021 09:53:07 AM EEST casa@ujo.guru 2020
 
 source $GURU_BIN/common.sh
-source ../../modules/project.sh
+source $GURU_BIN/project.sh
 GURU_VERBOSE=2
 ## TODO add test initial conditions here
 
@@ -326,7 +326,9 @@ project.test_poll () {
 
       ## TODO: add pre-conditions here
 
-      project.poll ; _error=$?
+      project.poll start || (( _error++ ))
+      project.poll status || (( _error++ ))
+      project.poll end || (( _error++ ))
 
       ## TODO: add analysis here and manipulate $_error
 
@@ -342,6 +344,7 @@ project.test_poll () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$GURU_RC"
+    source ../../modules/project.sh
     GURU_VERBOSE=2
     project.test $@
 fi

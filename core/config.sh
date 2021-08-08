@@ -279,7 +279,7 @@ config.user () {
             gmsg -c white "configure saved, taking configuration in use.."
             config.export
             #gmsg -c white "to save new configuration to sever type: '$GURU_CALL config push'"
-            remote.push_config
+            config.push
         else
             gmsg -c dark_golden_rod "ignored"
             gmsg -c white "to get previous configurations from sever type: '$GURU_CALL config pull'"

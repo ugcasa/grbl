@@ -40,7 +40,7 @@ core_rc="$HOME/.gururc"    # TODO change name to '.gururc' when cleanup next tim
 backup_rc="$HOME/.bashrc.backup-by-guru"
 
 # modules where user have direct access
-core_module_access=(counter install uninstall config mount unmount daemon keyboard remote system)
+core_module_access=(counter install uninstall config mount unmount daemon keyboard system)
 
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
 modules_to_install=(mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news program tmux tunnel corsair)
