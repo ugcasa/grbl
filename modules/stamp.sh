@@ -25,7 +25,7 @@ stamp.main () {    # main command parser
                 stamp="![]($file){ width=500px }"
                 ;;
 
-            status)  echo "no status data" ; exit 0 ;;
+            status)  echo "no status data" ; return 0 ;;
             help|*) stamp.help ; return 0 ;;
         esac
 

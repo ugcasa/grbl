@@ -129,6 +129,7 @@ mqtt.status () {
                  -k $mqtt_indicator_key
             return 1
         fi
+    sleep 3
 }
 
 

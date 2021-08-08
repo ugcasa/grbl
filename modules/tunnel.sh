@@ -54,35 +54,17 @@ tunnel.status () {
     # check tunnel is reachable. daemon poller will run this
     gmsg -n -v1 -t "${FUNCNAME[0]}: "
     tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
-    if tunnel.online ; then
-            gmsg -v1 -c green "accesspoint available" -k $tunnel_indicator_key
-            return 0
-        elif tunnel.online "$GURU_ACCESS_DOMAIN" "$GURU_ACCESS_PORT" ; then
-            gmsg -v1 -c green "tunnel accesspoint available" -k $tunnel_indicator_key
-            return 0
+
+    if [[ -f /usr/bin/ssh ]] ; then
+            gmsg -n -c green "available " -k $tunnel_indicator_key
         else
-            gmsg -v1 -c red "accesspoint offline" -k $tunnel_indicator_key
-            return 101
+            gmsg -n -c red "not installed" -k $tunnel_indicator_key
+            return 2
         fi
-}
 
-tunnel.warning () {
-    echo "running on server installation, tunnel is a client tool. exiting.."
-    exit 1
-}
-
-
-tunnel.online () {
-
-    local _user="$GURU_ACCESS_USERNAME"
-    local _server="$GURU_ACCESS_LAN_IP" ; [[ "$1" ]] && _server="$1" ; shift
-    local _server_port="$GURU_ACCESS_LAN_PORT" ; [[ "$1" ]] && _server_port="$1" ; shift
-
-    if ssh -o ConnectTimeout=3 -q -p "$_server_port" "$_user@$_server" exit ; then
-        return 0
-    else
-        return 132
-    fi
+    if tunnel.ls ; then
+            gmsg -n -v3 -c aqua "active tunnels" -k $tunnel_indicator_key
+        fi
 }
 
 
@@ -104,6 +86,7 @@ tunnel.ls () {
 
     local all_services=${GURU_TUNNEL_LIST[@]}
     local service=
+    local _return=1
 
     #gmsg -n -V2 "configured tunnels: "
     #gmsg -c light_blue "${all_services[@]}"
@@ -125,24 +108,24 @@ tunnel.ls () {
         tunnel.parameters $service
         if ps -x | grep -v grep | grep "ssh -L $to_port:localhost:" >/dev/null; then
                 gmsg -n -c aqua "$service "
+                _return=0
             else
                 gmsg -n -c light_blue "$service "
             fi
         done
         echo
-    return 0
+    return $_return
 }
 
+
 tunnel.parameters () {
-
+    # get tunnel configuration an populate common variables
     source $GURU_RC
-
-    local service_name="wiki" ; [[ $1 ]] && service_name=$1
+    local service_name=$1
     local all_services=(${GURU_TUNNEL_LIST[@]})
     local options=${GURU_TUNNEL_OPTIONS[@]}
-    local i=0
 
-    # TBD check is service configured
+    # TBD get all_sevices list automatically
     # local all_services=$(set | grep "GURU_TUNNEL" | grep -v "LIST" | grep -v "OPTIONS" \
     #                          | cut  -d '=' -f 1 | cut -d '_' -f 3 )
     # all_services=(${all_services,,})
@@ -160,7 +143,7 @@ tunnel.parameters () {
             (( service_nr++ ))
         done
 
-    i=0
+    local i=0
     for parameter in ${options[@]} ; do
         local value="GURU_TUNNEL_${GURU_TUNNEL_LIST[$service_nr]^^}[$i]"
         #gmsg -c pink "$value $parameter=${!value}"
@@ -171,21 +154,11 @@ tunnel.parameters () {
 }
 
 
-
 tunnel.open () {
-    # ssh tunnel
-
-    if ! [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
-            source mount.sh
-            mount.main mount system
-        fi
-
-    local data_folder="$GURU_SYSTEM_MOUNT/tunnel/$(hostname)"
-
-    [[ -d $data_folder ]] || mkdir -p $data_folder
-    source $data_folder/status
-
+    # open local ssh tunnel
     local service_name="wiki" ;
+    local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
+
     if [[ $1 ]] ; then
             service_name=$1
         else
@@ -196,19 +169,12 @@ tunnel.open () {
         fi
 
     tunnel.parameters $service_name
+    # local ssh_param="-oClearAllForwardings=yes -oServerAliveInterval=15 "
 
-
-    # add to active list
-    source $data_folder/status
-    echo "active=($service_name $active)" >$data_folder/status
-
-    # echo url
-    local url="localhost:$to_port"
-    # add rest of url if set
+    local url="http://localhost:$to_port"
     [[ $url_end ]] && url="$url/$url_end"
-    gmsg "$GURU_PREFERRED_BROWSER $url"
 
-    #ssh_param="-oClearAllForwardings=yes -oServerAliveInterval=15 "
+    gmsg -v1 -c aqua "$GURU_PREFERRED_BROWSER $url " -k $tunnel_indicator_key
 
     # open session
     case $GURU_PREFERRED_TERMINAL in
@@ -244,11 +210,6 @@ tunnel.close () {
         service_name=unknown
     fi
 
-    source $data_folder/status
-    if ! echo ${active[@]} | grep $service_name ; then
-            gmsg -c yellow "tunnel '$service_name' not active"
-        fi
-
     # check that pid is number
     if ! echo $pid | grep -E ^\-?[0-9]?\.?[0-9]+$ >/dev/null; then
             gmsg -c yellow "tunnel '$service_name' not found "
@@ -257,11 +218,10 @@ tunnel.close () {
 
     gmsg "killing tunnel '$service_name' localhost:$to_port pid: $pid"
     kill $pid
-    return $?
+
+    tunnel.status
+    return 0
 }
-
-
-
 
 
 tunnel.poll () {

@@ -37,9 +37,11 @@ tor.status () {
     # return 0 if installed (what is same as true) with printout
     gmsg -n "tor browser is "
     if tor.check ; then
-        gmsg -x 0 -c green "installed"
+        gmsg -c green "installed"
+        return 0
     else
-        gmsg -x 1 -c red "not installed"
+        gmsg -c red "not installed"
+        return 1
     fi
 }
 

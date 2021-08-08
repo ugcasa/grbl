@@ -68,7 +68,7 @@ project.status () {
     local project_indicator_key="f$(daemon.poll_order project)"
 
     # check project file locaton is accessavle
-    gmsg -t -n -v1 "checking project.. "
+    gmsg -n -v1 -t "${FUNCNAME[0]}: "
     if [[ -d "$project_base" ]] ; then
             gmsg -v1 -n -c green "installed, " -k $project_indicator_key
         else
