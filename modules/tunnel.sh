@@ -20,14 +20,12 @@ tunnel.help () {
     gmsg -v2 " poll start|end   start or end module status polling "
     gmsg -v2
     gmsg -v1 -c white  "example:"
-    gmsg -v1 "    $GURU_CALL tunnel "
+    gmsg -v1 "    $GURU_CALL tunnel open wiki"
     gmsg -v2
 }
 
 
 tunnel.main () {
-
-    [[ "$GURU_INSTALL" == "server" ]] && tunnel.warning
 
     command="$1"; shift
     case "$command" in
@@ -99,24 +97,25 @@ tunnel.rm () {
     return 0
 }
 
+
 tunnel.ls () {
     # list of ssh tunnels
     local all_services=${GURU_TUNNEL_LIST[@]}
     local service=
     [[ $1 ]] && service=$1
     local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
-    local to_ports=ps a | grep -v grep | grep "ssh -L" | cut -d " " -f13 | cut -d ":" -f1
+    #local to_ports=ps a | grep -v grep | grep "ssh -L" | cut -d " " -f13 | cut -d ":" -f1
 
     # check only given service
     if [[ $service ]] ; then
             tunnel.parameters $service
-                if ps -x | grep -v grep | grep "ssh -L $to_port:localhost:" >/dev/null; then
-                        # gmsg -v2 -c aqua "$service"
-                        return 0
-                    else
-                        gmsg -v3 -c reset "$service" -k $tunnel_indicator_key
-                        return 1
-                    fi
+            if ps -x | grep -v grep | grep "ssh -L $to_port:localhost:" >/dev/null; then
+                    # gmsg -v2 -c aqua "$service"
+                    return 0
+                else
+                    gmsg -v3 -c reset "$service" -k $tunnel_indicator_key
+                    return 1
+                fi
         fi
 
     # check all tunnels
@@ -124,15 +123,20 @@ tunnel.ls () {
     gmsg -n -v2 "tunnels: "
     for service in ${all_services[@]} ; do
         tunnel.parameters $service
-        if ps -x | grep -v grep | grep "ssh -L $to_port:localhost:" >/dev/null; then
+        if ps -x | grep -v grep | grep "ssh" | grep "$to_port:" >/dev/null; then
                 gmsg -n -c aqua "$service " -k $tunnel_indicator_key
                 _return=0
             else
                 gmsg -n -c light_blue "$service "
             fi
         done
-    (( _return != 0 )) && gmsg -v3 -c reset "reset" -k $tunnel_indicator_key
-    return 0
+    echo
+    if (( _return > 0 )) ; then
+        gmsg -v3 -c reset "reset" -k $tunnel_indicator_key
+        return 1
+    else
+        return 0
+    fi
 }
 
 

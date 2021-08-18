@@ -20,7 +20,7 @@ source $GURU_BIN/counter.sh
 
 test.main() {
     # main test case parser
-    export all_tools=("mount" "mqtt" "project" "note" "system" "corsair" "tunnel")
+    export all_tools=("mount" "mqtt" "project" "note" "system" "tunnel" "corsair")
     export GURU_VERBOSE=2
     export LOGGING=true
 
