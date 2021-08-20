@@ -151,7 +151,7 @@ uninstall.remove () {
             gmsg -n -v1 "removing user configurations.. "
 
             if [[ -f $GURU_CFG/$GURU_USER/user.cfg ]] ; then
-                    if remote.online ; then
+                    if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
                         gmsg -n -v1 "sending $GURU_USER's configurations to accesspoint.. "
                         if config.main push ; then
                                 gmsg -n -v1 "removing $GURU_USER configurations.. "

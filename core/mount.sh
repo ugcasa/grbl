@@ -14,8 +14,7 @@ mount.main () {
             cut -d '=' -f1))
     all_list=(${all_list[@],,})
 
-
-    indicator_key='f'"$(daemon.poll_order mount)"
+    # indicator_key='f'"$(daemon.poll_order mount)"
     argument="$1" ; shift
 
     case "$argument" in
@@ -116,25 +115,27 @@ mount.list () {
 mount.system () {
     # mount system data
 
-    gmsg -v2 -n "checking system data folder.."
+    gmsg -v3 -n "checking system data folder.."
     if [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] ; then
-            gmsg -v1 -c green "mounted "
+            gmsg -v3 -c green "mounted "
         else
-            gmsg -v1 -n "mounting.. "
+            gmsg -v3 -n "mounting.. "
             # gmsg -v3 -c deep_pink "${GURU_SYSTEM_MOUNT[1]} -> $GURU_SYSTEM_MOUNT"
             mount.remote "$GURU_SYSTEM_MOUNT" "${GURU_SYSTEM_MOUNT[1]}" \
-                && gmsg -c green "ok"  \
-                || gmsg -c yellow "error $?"
+                && gmsg -v3 -c green "ok"  \
+                || gmsg -v3 -c yellow "error $?"
           fi
 }
 
 
-mount.online () {  # check if mountpoint "online", no printout, return code only
-                   # input: mount point folder.
-                   # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
+mount.online () {
+    # check if mountpoint "online", no printout, return code only
+    # input: mount point folder.
+    # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
+    local _target_folder="$GURU_SYSTEM_MOUNT"
+    [[ "$1" ]] && _target_folder="$1"
 
-    local _target_folder="$1"
-    gmsg -N -n -v3 -c pink "checking $_target_folder "
+    gmsg -N -n -v3 "checking $_target_folder "
     if [[ -f "$_target_folder/.online" ]] ; then
         gmsg -v3 -c green "mounted"
         return 0
@@ -147,9 +148,9 @@ mount.online () {  # check if mountpoint "online", no printout, return code only
 
 mount.check () {  # check mountpoint is mounted, output status
 
-    local _target_folder="$1"
     local _err=0
-    [[ "$_target_folder" ]] || _target_folder="$GURU_SYSTEM_MOUNT"
+    local _target_folder="$GURU_SYSTEM_MOUNT"
+    [[ "$1" ]] && _target_folder="$1"
 
     gmsg -t -n -v 1 "$_target_folder status "
     mount.online "$_target_folder" ; _err=$?

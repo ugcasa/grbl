@@ -15,11 +15,13 @@
 
 source $GURU_RC
 source $GURU_BIN/common.sh
+source $GURU_BIN/counter.sh
+
 
 test.main() {
     # main test case parser
-    export all_tools=("mount" "remote" "project" "note" "system" "corsair")
-    export GURU_VERBOSE=true
+    export all_tools=("mount" "mqtt" "project" "note" "system" "tunnel" "corsair")
+    export GURU_VERBOSE=2
     export LOGGING=true
 
     case "$1" in
@@ -55,6 +57,7 @@ test.help () {
 test.tool() {
     # Tool to test tools. Simply call sourced tool main function and parse normal commands
     # sources under test
+    source $GURU_BIN/counter.sh
 
     local _tool=""
     local _case=""
@@ -128,10 +131,11 @@ test.all() {
 
 test.release() {
     # validation test, tests all but prints out only module reports
+    source $GURU_BIN/counter.sh
     local _error=0
     local _test_id=$(counter.main add guru-client_validation_test_id)
 
-        msg "\n${WHT}RELEASE TEST $_test_id: guru-client v.$GURU_VERSION $(date)${NC}\n"
+        gmsg "\n${WHT}RELEASE TEST $_test_id: guru-client v.$GURU_VERSION $(date)${NC}\n"
         test.all | grep --color=never "result is:" | grep "TEST" || _error=$?
 
         if ((_error<9)); then
@@ -156,7 +160,7 @@ test.terminal () {
     local _case="$2"
     # time output format
     local TIMEFORMAT='%R'
-    msg "loop $_tool #$_case. usage: [1-9|t|n|b|r|q|]. any other key will run test\n"
+    gmsg "loop $_tool #$_case. usage: [1-9|t|n|b|r|q|]. any other key will run test\n"
     while read -n 1 -e -p "$_tool:$_case > " _cmd; do
 
         case $_cmd in
@@ -178,7 +182,7 @@ test.terminal () {
           # source user settings
           source $HOME/.gururc
           # source function under test
-          source $GURU_BIN/$_tool.sh
+          source $HOME/bin/$_tool.sh
           # source tester functions
           source $GURU_BIN/test/test-$_tool.sh
 
@@ -197,6 +201,9 @@ test.terminal () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    source $GURU_RC
+    source $GURU_BIN/common.sh
+    source $GURU_BIN/counter.sh
     case "$1" in
         loop) shift ; test.terminal $@ ; exit $? ;;
         esac

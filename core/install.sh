@@ -19,9 +19,10 @@ install.main () {
     esac
 
     case "$argument" in
-        help|virtualbox|tiv|django|java| \
-        client|hackrf|fosphor|spectrumanalyzer| \
-        radio|webmin|anaconda|kaldi|vscode )
+        help|virtualbox|tiv|java|\
+        client|hackrf|fosphor|spectrumanalyzer|\
+        radio|webmin|kaldi|vscode|\
+        django|anaconda|python)
                     install.$argument "$@" ;;
         status|poll|start|stop)
                     gmsg -v dark_grey "no polling functions" ;;
@@ -181,7 +182,7 @@ install.spectrumanalyzer () {
 }
 
 
-isntall.radio () {
+install.radio () {
 
     if !gnuradio-companion --help >/dev/null ; then
             sudo apt-get install -y \
@@ -264,6 +265,24 @@ install.kaldi (){
 }
 
 
+install.python () {
+    # raw install python tools
+    sudo apt update && sudo apt upgrade -y
+    if python -V ; then
+            gmsg -c green "python2.7 installed"
+        else
+            sudo apt install python2 || gmsg -c yellow "error $? during python2.7 install"
+        fi
+
+    if python3 -V ; then
+            gmsg -c green "python3 installed"
+        else
+            sudo apt install -y python3.9 python3-pip python3-venv python3-dev \
+            || gmsg -c yellow "error $? during python3.9 install"
+        fi
+
+    sudo apt install build-essential libssl-dev libffi-dev
+}
 
 
 install.vscode () {

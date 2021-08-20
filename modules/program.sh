@@ -72,7 +72,7 @@ program.main () {
     # check selection
 
     local _runnable="$GURU_BIN/program/$programmer.sh"
-    gmsg -c pink $_runnable
+    # gmsg -c pink $_runnable
 
     if [[ -f "$_runnable" ]] ; then
             source "$_runnable"
@@ -80,7 +80,7 @@ program.main () {
             gmsg -x 100 -c yellow "non valid programmer selected" -k $program_indicator_key
         fi
 
-    gmsg -v1 "$programmer programmer selected"
+    gmsg -v2 "$programmer programmer selected"
 
     case "$_cmd" in
 

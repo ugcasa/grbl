@@ -1,6 +1,8 @@
 #!/bin/bash
 # Mick Tagger - ujo.guru 2019
 
+source common.sh
+
 tag.main () {
     # get arguments                             # debug
     if [[ "$1" == "help" ]] ; then tag.help ; return 0 ; fi
@@ -208,6 +210,11 @@ tag.picture () {
             [[ "$tag_action" ]] && _add_tags "$string"
             ;;
         esac
+}
+
+tag.status () {
+    gmsg -c gray "status unknown"
+    return 0
 }
 
 

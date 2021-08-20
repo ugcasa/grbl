@@ -14,13 +14,13 @@ trans.main() {
 
 trans.help () {
     gmsg -v0 "usage:    $GURU_CALL trans source_l:targed_l <text>"
-    exit 0
+    return 0
 }
 
 
 trans.status () {
-    gmsg -v1 -x 1 "no status information"
-    exit 0
+    gmsg -v1 "no status information"
+    return 0
 }
 
 
@@ -67,5 +67,5 @@ trans.get () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then    # stand alone vs. include. main wont be called if included
         source "$GURU_RC"
         trans.main "$@"
-        exit $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
+        return $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
     fi

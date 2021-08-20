@@ -15,10 +15,11 @@
 
 source $GURU_RC
 source $GURU_BIN/common.sh
+source $GURU_BIN/counter.sh
 
 test.main() {
     # main test case parser
-    export all_tools=("mount" "remote" "project" "note" "system" "corsair")
+    export all_tools=("mount" "project" "note" "system" "corsair" "tunnel")
     #export GURU_VERBOSE=true
     export LOGGING=true
 
@@ -114,7 +115,7 @@ test.all() {
         done
 
     if ((_error<1)); then
-            gmsg -n -c white "\nTest run result is "
+            gmsg -N -n -c white "Test run result is "
             gmsg -c green "PASSED"
         else
             gmsg "counted $_error error(s)"
@@ -182,7 +183,7 @@ test.terminal () {
           # source user settings
           source $HOME/.gururc
           # source function under test
-          source $GURU_BIN/test/$_tool.sh
+          source $GURU_BIN/$_tool.sh
           # source tester functions
           source $GURU_BIN/test/test-$_tool.sh
 
@@ -201,6 +202,10 @@ test.terminal () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    source $GURU_RC
+    source $GURU_BIN/common.sh
+    source $GURU_BIN/counter.sh
+
     case "$1" in
         loop) shift ; test.terminal $@ ; exit $? ;;
         esac

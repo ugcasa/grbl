@@ -2,8 +2,6 @@
 # user settings for guru-client
 # casa@ujo.guru 2020
 
-source "$(dirname "$0")/remote.sh"
-
 user_main() {
 
     command="$1"; shift
@@ -24,7 +22,9 @@ user_main() {
             echo "usage:    $GURU_CALL user [add|rm|change|help]"
             ;;
         status)
-            [[ "$GURU_USER" == "$GURU_USER_NAME" ]] && gmsg -c green "username OK" || gmsg -c red "username mismatch! $GURU_USER:$GURU_USER_NAME"
+            [[ "$GURU_USER" == "$GURU_USER_NAME" ]] \
+                && gmsg -c green "username OK" \
+                || gmsg -c red "username mismatch! $GURU_USER:$GURU_USER_NAME"
             ;;
         change|*)
             change_user "$@"
@@ -90,7 +90,7 @@ change_user () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     #source "$GURU_RC"
     user_main "$@"
-    exit 0
+    return 0
 fi
 
 

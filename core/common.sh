@@ -19,7 +19,14 @@ daemon.poll_order () {
         if [[ "$val" == "$_to_find" ]] ; then break ; fi
     done
 
+<<<<<<< HEAD
     if [[ "$i" -gt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] ; then
+=======
+    if [[ "$i" -lt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] ; then
+            echo $i
+            return 0
+        else
+>>>>>>> 8064695fda386a20629c8c2fc3c74cc315d4de9b
             echo "NA"
             return 1
         else
@@ -110,12 +117,15 @@ gmsg () {
             mqtt.pub "$_mqtt_topic" "$_message"
         fi
 
+    # uncomment if vanted to see how verbose changes during run
+    # echo "$_verbose_trigger:$GURU_VERBOSE"
+
     # printout message if verbose level is more than verbose trigger
     if [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
 
             if [[ $GURU_VERBOSE -ge $_verbose_limiter ]] ; then return 0 ; fi
 
-            if [[ $_color_code ]] ; then
+            if [[ $_color_code ]] && [[ $GURU_FLAG_COLOR ]] ; then
                     printf "$_pre_newline$_color_code%s%s$_newline$C_NORMAL" "$_timestamp" "$_message"
                 else
                     printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
@@ -142,7 +152,7 @@ gask () {
     local _ask="$1"
     local _ans
 
-    read -n 1 -p "$_ask? [y/n]: " _ans
+    read -n 1 -p "$_ask [y/n]: " _ans
     echo
 
     case $_ans in y|Y|yes|Yes)
@@ -174,7 +184,22 @@ import () {
         done
 }
 
+module.installed () {
 
+    local i=0
+    local _to_find=$1
+
+    while [[ "$i" -lt "${#GURU_MODULES[@]}" ]] ; do
+            if [[ "${GURU_MODULES[$i]}" == "$_to_find" ]] ; then
+                    return 0
+                fi
+            ((i++))
+        done
+    return 100
+}
+
+
+#`TBD`declase -xf ? rather than export?
 export -f system.core-dump
 export -f daemon.poll_order
 export -f gmsg

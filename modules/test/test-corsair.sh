@@ -12,21 +12,25 @@ corsair.test() {
     case "$test_case" in
            1) corsair.check ; return 0 ;;  # 1) quick check
          all)
-         # TODO: remove non wanted functions and check run order.
+         # TODO: check run order.
               corsair.test_main || _err=("${_err[@]}" "101")
               corsair.test_help || _err=("${_err[@]}" "102")
               corsair.test_check || _err=("${_err[@]}" "103")
               corsair.test_status || _err=("${_err[@]}" "104")
-              corsair.test_start || _err=("${_err[@]}" "105")
+              #corsair.test_start || _err=("${_err[@]}" "105")
               corsair.test_init || _err=("${_err[@]}" "106")
-              corsair.test_raw_write || _err=("${_err[@]}" "107")
+              #corsair.test_raw_write || _err=("${_err[@]}" "107")
               corsair.test_set || _err=("${_err[@]}" "108")
               corsair.test_reset || _err=("${_err[@]}" "109")
+              #corsair.test_kill || _err=("${_err[@]}" "111")
+              #corsair.test_start || _err=("${_err[@]}" "105")
               corsair.test_end || _err=("${_err[@]}" "110")
-              corsair.test_kill || _err=("${_err[@]}" "111")
+              if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi ;;
+     compile)
               corsair.test_install || _err=("${_err[@]}" "112")
               corsair.test_remove || _err=("${_err[@]}" "113")
               if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi ;;
+
          *) gmsg "test case $test_case not written"
             return 1
     esac
@@ -117,25 +121,26 @@ corsair.test_status () {
 }
 
 
-corsair.test_start () {
-    # function to test corsair module function corsair.start
-    local _error=0
-    gmsg -v0 -c white 'testing corsair.start'
+# corsair.test_start () {
+#     # function to test corsair module function corsair.start
+#     local _error=0
+#     gmsg -v0 -c white 'testing corsair.start'
 
-      ## TODO: add pre-conditions here
+#       ## TODO: add pre-conditions here
 
-      corsair.start ; _error=$?
+#       corsair.start ; _error=$?
+#       sleep 4
 
-      ## TODO: add analysis here and manipulate $_error
+#       ## TODO: add analysis here and manipulate $_error
 
-    if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.start passed'
-       return 0
-    else
-       gmsg -v0 -c red 'corsair.start failed'
-       return $_error
-  fi
-}
+#     if  ((_error<1)) ; then
+#        gmsg -v0 -c green 'corsair.start passed'
+#        return 0
+#     else
+#        gmsg -v0 -c red 'corsair.start failed'
+#        return $_error
+#   fi
+# }
 
 
 corsair.test_init () {
@@ -146,6 +151,7 @@ corsair.test_init () {
       ## TODO: add pre-conditions here
 
       corsair.init ; _error=$?
+      sleep 2
 
       ## TODO: add analysis here and manipulate $_error
 
@@ -230,6 +236,7 @@ corsair.test_end () {
       ## TODO: add pre-conditions here
 
       corsair.end ; _error=$?
+      sleep 2
 
       ## TODO: add analysis here and manipulate $_error
 

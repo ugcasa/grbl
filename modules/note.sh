@@ -7,8 +7,6 @@ source $GURU_BIN/tag.sh
 note.main () {
 
     local command="$1" ; shift
-    # check is note and template folder mounted, mount if not
-    note.online || note.remount
 
     case "$command" in
             status|ls|add|open|rm|check|locate)
@@ -108,14 +106,18 @@ note.locate () {
     note.locate_check () {
 
         note.gen_var "$1"
-        gmsg -v1 -n "$note "
-        gmsg -V1 -n "$note"
+        gmsg -v1 "$note "        
         if [[ -f $note ]] ; then
-                gmsg -v1 -c green "exist"
+                # gmsg -v1 -c green "exist"
+                return 0
             else
-                gmsg -v1 -c red "non exist"
+                #gmsg -v1 -c red "non exist"
+                return 1
             fi
     }
+
+    # check is note and template folder mounted, mount if not
+    note.online || note.remount
 
     case $1 in
         all)
@@ -162,7 +164,9 @@ note.remount () {
 
 note.ls () {
     # list of notes given month/year
-    note.remount
+
+    # check is note and template folder mounted, mount if not
+    note.online || note.remount
 
     # List of notes on this month and year or given in order and format YYYY MM
     [[ "$1" ]] && month=$(date -d 2000-"$1"-1 +%m) || month=$(date +%m)             #; echo "month: $month"
@@ -181,7 +185,9 @@ note.ls () {
 
 note.add () {
     # creates notes
-    if ! note.online ; then note.remount ; fi
+
+    # check is note and template folder mounted, mount if not
+    note.online || note.remount
     note.gen_var "$1"
 
     [[  -d "$note_dir" ]] || mkdir -p "$note_dir"
@@ -203,7 +209,10 @@ note.add () {
 
 note.open () {
     # select note to open and call editor input date in format YYYYMMDD
-    if ! note.online ; then note.remount ; fi
+
+    # check is note and template folder mounted, mount if not
+    note.online || note.remount
+
     local _date_list=(${@})
     local _note_date=
 
@@ -218,7 +227,7 @@ note.open () {
                 note.add "$_note_date"
             fi
 
-        gmsg -v1 -c pink "opening $_note_date"
+        gmsg -v3 -c pink "opening $_note_date"
         note.open_editor "$note"
 
     done
@@ -227,7 +236,10 @@ note.open () {
 
 note.rm () {
     # remove note of given date. input format YYYYMMDD
-    if ! note.online ; then note.remount ; fi
+
+    # check is note and template folder mounted, mount if not
+    note.online || note.remount
+
     note.gen_var "$1"
     [[ -f $note ]] || gmsg -x 1 -c white "no note for date $(date -d $1 +$GURU_FORMAT_DATE)"
 
@@ -248,7 +260,7 @@ note.add_change () {
         done
     }
 
-    # if ! note.online ; then note.remount ; fi
+    # check is note and template folder mounted, mount if not
     note.online || note.remount
 
     # printout change table
@@ -296,7 +308,10 @@ note.open_editor () {
 
 note.office () {
     # created odt with team template out of given days note
-    if ! note.online ; then note.remount ; fi
+
+    # check is note and template folder mounted, mount if not
+    note.online || note.remount
+
     if [[ "$1" ]] ; then
             _date=$(date +$GURU_FORMAT_FILE_DATE -d $1)
         else
@@ -323,7 +338,10 @@ note.office () {
 
 note.web () {
     # created html of given days note
-    if ! note.online ; then note.remount ; fi
+
+    # check is note and template folder mounted, mount if not
+    note.online || note.remount
+
     if [[ "$1" ]] ; then
             _date=$(date +$GURU_FORMAT_FILE_DATE -d $1)
         else

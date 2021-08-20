@@ -14,16 +14,16 @@ mount.test () {
                4) mount.test_mount          ; return $? ;;  # 4) out of system action
                5) mount.test_unmount        ; return $? ;;  # 5) return
                6) mount.test_default_mount  ; return $? ;;  # 6) touch hot files
-               7) mount.test_known_remote   ; return $? ;;  # 7) return
+               #7) mount.test_known_remote   ; return $? ;;  # 7) return
            clean) mount.clean_test          ; return $? ;;  # make clean
-     release|all) mount.check        || _err=("${_err[@]}" "21")  # 1) quick check
+     release|all) mount.check               || _err=("${_err[@]}" "21")  # 1) quick check
                   mount.test_list           || _err=("${_err[@]}" "22")  # 2) list of stuff
                   mount.test_info           || _err=("${_err[@]}" "23")  # 3) information
                   mount.test_mount          || _err=("${_err[@]}" "24")  # 4) out of system action
                   mount.test_unmount        || _err=("${_err[@]}" "25")  # 5) return
                   mount.test_default_mount  || _err=("${_err[@]}" "26")  # 5) return
                   mount.test_known_remote   || _err=("${_err[@]}" "27")  # 7) return
-                  mount.clean_test          || _err=("${_err[@]}" "29")  # make clean
+                  #mount.clean_test          || _err=("${_err[@]}" "29")  # make clean
                   if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi ;;
                *) msg "test case '$test_case' not written\n"
                   return 1
@@ -56,7 +56,7 @@ mount.clean_test () {
 
 
 mount.test_mount () {
-
+    # TBD new mountpoints for Hesus Testman
     if mount.remote "/home/$GURU_USER_NAME/usr/test" "$HOME/tmp/test_mount" ; then
             gmsg -c green "${FUNCNAME[0]} passed"
             return 0
@@ -69,7 +69,7 @@ mount.test_mount () {
 
 mount.test_unmount () {
     local _mount_point="$HOME/tmp/test_mount"
-
+     # TBD new mountpoints for Hesus Testman
     if unmount.remote "$_mount_point" ; then
             gmsg -c green "${FUNCNAME[0]} passed"
             rm -rf "$H_mount_point" || WARNING "error when removing $_mount_point "
@@ -118,24 +118,24 @@ mount.test_default_mount (){
 }
 
 
-mount.test_known_remote () {
-# Test that
+# mount.test_known_remote () {
+# # Test TBD
 
-    local _err=("$0")
-    unmount.known_remote audio ; _err=("${_err[@]}" "$?")
-    # Second error in list is to validate result
-    mount.known_remote audio ;   _err=("${_err[@]}" "$?")
+#     local _err=("$0")
+#     unmount.known_remote audio ; _err=("${_err[@]}" "$?")
+#     # Second error in list is to validate result
+#     mount.known_remote audio ;   _err=("${_err[@]}" "$?")
 
-    if [[ ${_err[2]} -gt 0 ]]; then
-            gmsg -c red "${FUNCNAME[0]} failed"
-            gmsg -c yellow "error: ${_err[@]}"
-            # Return error
-            return ${_err[2]};
-        else
-            gmsg -c green "${FUNCNAME[0]} passed"
-            return 0
-        fi
-}
+#     if [[ ${_err[2]} -gt 0 ]]; then
+#             gmsg -c red "${FUNCNAME[0]} failed"
+#             gmsg -c yellow "error: ${_err[@]}"
+#             # Return error
+#             return ${_err[2]};
+#         else
+#             gmsg -c green "${FUNCNAME[0]} passed"
+#             return 0
+#         fi
+# }
 
 
 mount.test_list () {
