@@ -146,7 +146,6 @@ corsair.enabled () {
 }
 
 
-
 corsair.check () {
     # Check keyboard driver is available, app and pipes are started and executes if needed
 
