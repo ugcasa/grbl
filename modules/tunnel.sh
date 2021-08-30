@@ -35,7 +35,6 @@ tunnel.main () {
                 return $?
                 ;;
 
-
         add|rm|open|close|ls|tmux)
 
                 case $1 in
@@ -46,10 +45,12 @@ tunnel.main () {
                 esac
                 return $?
                 ;;
+
         install|remove)
                 tunnel.requirements "$command"
                 return $?
                 ;;
+
         *)
                 tunnel.open $command
                 return $?
