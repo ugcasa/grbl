@@ -257,7 +257,7 @@ project.open () {
         fi
 
     # check is given project alredy active
-    if [[ "$project_name" == "$(cat $project_base/active)" ]] && ! [[ $GURU_FORCE ]]; then
+    if [[ -f $project_base/active ]] && [[ "$project_name" == "$(cat $project_base/active)" ]] && ! [[ $GURU_FORCE ]]; then
             gmsg -c green "project $project_name is active"
             return 0
         fi
