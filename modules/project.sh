@@ -238,6 +238,7 @@ project.open () {
     if [[ "$1" ]] ; then
             # is user has input project name to open
             project_name="$1"
+            shift
         else
             # no user input, check last project
             if [[ -f $project_base/last ]] ; then
@@ -284,7 +285,7 @@ project.open () {
         esac
 
     # run project configs
-    [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh pre
+    [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh pre $@
 
     # open terminal
     case $GURU_PREFERRED_TERMINAL in
