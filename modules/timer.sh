@@ -1,7 +1,7 @@
 #!/bin/bash
 # guru shell work time tracker
-# casa@ujo.guru 2019-2020
-# TODO timer module neewds to be write again.. this is useless, still partly working and in use.
+# casa@ujo.guru 2019-2020|
+# TODO timer module neewds to be write again.. this is useless, still partly working and in use. yes useless.. rotten
 # python might be better than bash for mathematics
 source common.sh
 
@@ -171,7 +171,6 @@ timer.start() {
     nice_date=$(date -d $start_date '+%d.%m.%Y')
     timer_start=$(date -d "$start_date $start_time" '+%s')
 
-    gmsg -v1 "starting timer.."
     [[ -f $GURU_FILE_TRACKLAST ]] && source $GURU_FILE_TRACKLAST
     [[ "$1" ]] && task="$1" || task="$last_task"
     [[ "$2" ]] && project="$2" || project="$last_project"
@@ -199,10 +198,11 @@ timer.end() {
     fi
 
     timer_indicator_key="f$(daemon.poll_order timer)"
+    local command=$1 ; shift
 
-    case "$1" in
+    case "$command" in
         at|to|till)
-            if ! [[ "$2" ]] ; then
+            if ! [[ "$1" ]] ; then
                     gmsg "input end time"
                     return 124
                 fi
@@ -242,8 +242,8 @@ timer.end() {
     (( spend_hour = spend_min / 60 ))
     (( spend_min_div = spend_min % 60 ))
 
-    spend_min_dec=$(python -c "print(int(round($spend_min_div * 1.6666, 0)))")
-    hours="$spend_hour.$spend_min_dec"
+    # round were pain in the bee with bash
+    spend_min_dec=$(python3 -c "print(int(round($spend_min_div * 1.6666, 0)))")
 
     if [[ "$nice_start_date" == "$nice_end_date" ]]; then
         option_end_date=""
@@ -252,9 +252,17 @@ timer.end() {
     fi
 
     # close track file
-    [[ -f $GURU_FILE_TRACKDATA ]] || printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n" >$GURU_FILE_TRACKDATA
-    [[ $hours > 0.11 ]] && printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n" >>$GURU_FILE_TRACKDATA
+    if ! [[ -f $GURU_FILE_TRACKDATA ]] ; then
+            printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n" >$GURU_FILE_TRACKDATA
+        fi
+
+    hours="$spend_hour.$spend_min_dec"
+    #if (( spend_min_dec > 11 )) ; then
+            printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n" >>$GURU_FILE_TRACKDATA
+    #    fi
+
     printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_FILE_TRACKLAST
+
     rm $GURU_FILE_TRACKSTATUS
 
     # inform
