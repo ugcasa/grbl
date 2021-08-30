@@ -3,13 +3,13 @@
 # module or module adapter scripts should have install and remove functions called by <module>.main install/remove
 # these are stand alone installers for application no worth to make module (or adapter script)
 
-# TBD move installer in to module. combine by purpose pk2, st-link > programmer and name adapter program.sh and so on..
-
 source $GURU_BIN/common.sh
 
-
 install.main () {
-    [ "$1" ] && argument="$1" && shift || read -r -p "input module name: " argument
+    if [[ "$1" ]] ; then
+            argument="$1"
+            shift
+        fi
 
     # architecture selection
     case $(uname -m) in
@@ -53,32 +53,29 @@ install.help () {
     gmsg -v2 " fosphor              "
     gmsg -v1 " tiv                  tiv text mode picture viewer "
     gmsg -v2
-
 }
 
 
 install.question () {
-    [ "$1" ] || return 2
+    [[ "$1" ]] || return 2
     read -p "$1 [y/n]: " answer
-    [ $answer ] || return 1
-    [ $answer == "y" ]  && return 0
+    [[ $answer ]] || return 1
+    [[ $answer == "y" ]]  && return 0
     return 1
 }
-
 
 
 install.virtualbox () {
     # add to sources list
     if [[ -f /etc/apt/sources.list.d/virtualbox.list ]] ; then
-            echo "already in sources list"
-        else
-            #  According to your distribution, replace '<mydist>' with 'eoan', 'bionic', 'xenial', 'buster', 'stretch', or 'jessie'
-            # ulyssa <- $(lsb_release -cs) not worky
-            # not possible to get ubuntu release name out of mint :/
-            source /etc/os-release
-            echo "deb [arch=$SYSTEM_ARCHITECTURE] http://download.virtualbox.org/virtualbox/debian $UBUNTU_CODENAME contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
-
-        fi
+        echo "already in sources list"
+    else
+        #  According to your distribution, replace '<mydist>' with 'eoan', 'bionic', 'xenial', 'buster', 'stretch', or 'jessie'
+        # ulyssa <- $(lsb_release -cs) not worky
+        # not possible to get ubuntu release name out of mint :/
+        source /etc/os-release
+        echo "deb [arch=$SYSTEM_ARCHITECTURE] http://download.virtualbox.org/virtualbox/debian $UBUNTU_CODENAME contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+    fi
     # get key
     wget https://www.virtualbox.org/download/oracle_vbox_2016.asc
     # add key
@@ -135,7 +132,7 @@ install.hackrf () {
     # full
     # sudo apt install hackrf
     read -r -p "Connect HacrkRF One and press anykey: " nouse
-    hackrf_info && echo "successfully installed" ||echo "HackrRF One not found, pls. re-plug or re-install"
+    hackrf_info && echo "successfully installed" || echo "HackrRF One not found, pls. re-plug or re-install"
     mkdir -p $HOME/git/labtools/radio
     cd $HOME/git/labtools/radio
     git clone https://github.com/mossmann/hackrf.git
@@ -166,7 +163,7 @@ install.fosphor () {
 
 install.spectrumanalyzer () {
 
-    [ -f /usr/local/bin/qspectrumanalyzer ] && return 0
+    [[ -f /usr/local/bin/qspectrumanalyzer ]] && return 0
 
     sudo add-apt-repository -y ppa:myriadrf/drivers
     sudo apt-get update
@@ -184,7 +181,7 @@ install.spectrumanalyzer () {
 
 install.radio () {
 
-    if !gnuradio-companion --help >/dev/null ; then
+    if ! gnuradio-companion --help >/dev/null ; then
             sudo apt-get install -y \
                 "build-essential python3-dev libqt4-dev gnuradio gqrx-sdr hackrf \
                 gr-osmosdr libusb-dev python-qwt5-qt4"
@@ -201,7 +198,7 @@ install.radio () {
 install.webmin () {
 
     cat /etc/apt/sources.list |grep "download.webmin.com" >/dev/null
-    if ! [ $? ]; then
+    if ! [[ $? ]] ; then
         sudo sh -c "echo 'deb [arch=$SYSTEM_ARCHITECTURE] http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list"
         wget http://www.webmin.com/jcameron-key.asc #&&\
         sudo apt-key add jcameron-key.asc #&&\
@@ -209,7 +206,7 @@ install.webmin () {
     fi
 
     cat /etc/apt/sources.list |grep "webmin" >/dev/null
-    if ! [ $? ]; then
+    if ! [[ $? ]] ; then
         sudo apt update
         sudo apt install webmin
         echo "webmin installed, connect http://localhost:10000"
@@ -226,14 +223,14 @@ install.anaconda () {
 
     sudo apt-get install -y libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6
 
-    [ "$1" ] && anaconda_version=$1 || anaconda_version="2019.03"
+    [[ "$1" ]] && anaconda_version=$1 || anaconda_version="2019.03"
     anaconda_installer="Anaconda3-$anaconda_version-Linux-x86_64.sh"
     anaconda_sum=45c851b7497cc14d5ca060064394569f724b67d9b5f98a926ed49b834a6bb73a
 
     curl -O https://repo.anaconda.com/archive/$anaconda_installer
     sha256sum $anaconda_installer >installer_sum
     printf "checking sum, if exit it's invalid: "
-    cat installer_sum |grep $anaconda_sum && echo "ok" || return 11
+    cat installer_sum | grep $anaconda_sum && echo "ok" || return 11
 
     chmod +x $anaconda_installer
     bash $anaconda_installer -u && rm $anaconda_installer installer_sum || return 12
@@ -267,7 +264,7 @@ install.kaldi (){
 
 install.python () {
     # raw install python tools
-    sudo apt update && sudo apt upgrade -y
+    sudo apt update
     if python -V ; then
             gmsg -c green "python2.7 installed"
         else
@@ -286,13 +283,14 @@ install.python () {
 
 
 install.vscode () {
-    code --version >>/dev/null && return 1
-    curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
-    sudo install -o root -g root -m 644 packages.microsoft.gpg /usr/share/keyrings/
-    sudo sh -c 'echo "deb [arch=$SYSTEM_ARCHITECTURE signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
-    sudo apt-get install apt-transport-https                    # https://whydoesaptnotusehttps.com/
-    sudo apt-get update
-    sudo apt-get install code && printf "\n guru is now ready to code \n\n"
+    gmsg -c red "broken"
+    # code --version >>/dev/null && return 1
+    # curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+    # sudo install -o root -g root -m 644 packages.microsoft.gpg /usr/share/keyrings/
+    # sudo sh -c 'echo "deb [arch=$SYSTEM_ARCHITECTURE signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
+    # sudo apt-get install apt-transport-https                    # https://whydoesaptnotusehttps.com/
+    # sudo apt-get update
+    # sudo apt-get install code && printf "\n guru is now ready to code \n\n"
 }
 
 
