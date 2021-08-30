@@ -2,7 +2,7 @@
 # path set here based on user.cfg information 
 
 if [[ $GURU_PATH_COLOR_ENABLED ]] && [[ $GURU_FLAG_COLOR ]]; then
-	source common.sh
+	source $GURU_BIN/common.sh
 	PS1=${debian_chroot:+($debian_chroot)}
 	PS1="$PS1\[$(gmsg -n -C $GURU_PATH_COLOR_USER)\]\u"
 	PS1="$PS1\[$(gmsg -n -C $GURU_PATH_COLOR_HOST)\]@\h"
