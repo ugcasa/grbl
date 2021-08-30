@@ -19,12 +19,19 @@ daemon.poll_order () {
         if [[ "$val" == "$_to_find" ]] ; then break ; fi
     done
 
+<<<<<<< HEAD
+    if [[ "$i" -gt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] ; then
+=======
     if [[ "$i" -lt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] ; then
             echo $i
             return 0
         else
+>>>>>>> 8064695fda386a20629c8c2fc3c74cc315d4de9b
             echo "NA"
             return 1
+        else
+            echo $i
+            return 0
         fi
 }
 
@@ -32,9 +39,9 @@ daemon.poll_order () {
 daemon.poll_order_old () {
     local i=0
     local _to_find=$1
-    # while [[ "$i" -lt "${#GURU_DAEMON_POLL_LIST[@]}" ]] && [[ "${GURU_DAEMON_POLL_LIST[$i]}" != "$_to_find" ]] ; do
-    while [[ "$i" -lt "${#GURU_DAEMON_POLL_LIST[@]}" ]] ; do
-             if [[ "${GURU_DAEMON_POLL_LIST[$i]}" == "$_to_find" ]] ; then break; fi
+    # while [[ "$i" -lt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] && [[ "${GURU_DAEMON_POLL_ORDER[$i]}" != "$_to_find" ]] ; do
+    while [[ "$i" -lt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] ; do
+             if [[ "${GURU_DAEMON_POLL_ORDER[$i]}" == "$_to_find" ]] ; then break; fi
             ((i++))
         done
     ((i=i+1))
