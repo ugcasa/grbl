@@ -126,6 +126,8 @@ config.make_color_rc () {
 
 config.export () {
     # export configuration to use
+    # source $GURU_RC
+
     local _target_rc=$HOME/.gururc
     local _target_user=$GURU_USER ; [[ "$1" ]] && _target_user="$1"
 
@@ -155,6 +157,9 @@ config.export () {
     gmsg -n -v1 "setting user configuration " ; gmsg -v2
     config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gmsg -v1 -V2 -c green "done"
     config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
+    # set path
+    echo "source $GURU_BIN/path.sh" >> $_target_rc
+    echo "source $GURU_BIN/alias.sh" >> $_target_rc
 
     # check and load configuration
     if [[ "$_target_rc" ]] ; then
@@ -317,5 +322,6 @@ config.set () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
+        source $GURU_RC
         config.main "$@"
     fi

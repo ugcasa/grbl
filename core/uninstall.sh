@@ -14,7 +14,6 @@ uninstall.main () {
         status) uninstall.status                       ; return 0 ;;
           help) uninstall.help                         ; return 0 ;;
              *) uninstall.remove                       ; return $? ;;
-
     esac
 }
 

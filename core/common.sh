@@ -59,8 +59,10 @@ gmsg () {
     local _exit=                                    # exit with code (exit not return!)
     local _mqtt_topic=
     local _indicator_key=
+    local _color_only=
+    local _c_var=
     # parse flags
-    TEMP=`getopt --long -o "tlnhNx:V:v:c:q:k:m:" "$@"`
+    TEMP=`getopt --long -o "tlnhNx:V:v:c:C:q:k:m:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
@@ -76,9 +78,15 @@ gmsg () {
                 -m ) _mqtt_topic="$2"                           ; shift 2 ;;
                 -q ) _mqtt_topic="$GURU_HOSTNAME/$2"            ; shift 2 ;;
                 -k ) _indicator_key=$2                          ; shift 2 ;;
+                -C ) _color=$2
+                     _color_only=true
+                     _c_var="C_${_color^^}"
+                     _color_code=${!_c_var}
+                     shift 2 ;;
                 -c ) _color=$2
                      _c_var="C_${_color^^}"
-                     _color_code=${!_c_var}                     ; shift 2 ;;
+                     _color_code=${!_c_var}
+                     shift 2 ;;
                  * ) break
             esac
         done
@@ -112,6 +120,13 @@ gmsg () {
 
     # uncomment if vanted to see how verbose changes during run
     # echo "$_verbose_trigger:$GURU_VERBOSE"
+
+
+    if [[ $_color_only ]] ; then
+
+            echo -n "$_color_code"
+            return 0
+        fi
 
     # printout message if verbose level is more than verbose trigger
     if [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then

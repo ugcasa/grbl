@@ -255,6 +255,12 @@ project.open () {
             return 3
         fi
 
+    # check is given project alredy active
+    if [[ "$project_name" == "$(cat $project_base/active)" ]] && ! [[ $GURU_FORCE ]]; then
+            gmsg -c green "project $project_name is active"
+            return 0
+        fi
+
     # set active project
     echo $project_name > "$project_base/active"
     echo $project_name > "$project_base/last"
@@ -277,40 +283,47 @@ project.open () {
             joe)    gmsg "TBD add support for joe project files" ;;
         esac
 
+    # run project configs
+    [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh pre
+
     # open terminal
     case $GURU_PREFERRED_TERMINAL in
             tmux)   if module.installed tmux ; then
                             source tmux.sh
                             tmux.attach $project_name
+                            return $?
                         else
                             /usr/bin/tmux attach -t $project_name
+                            return $?
                         fi
                     ;;
 
             nemo)   if [[ $DISPLAY ]] ; then
                             nemo "$project_folder"
-                        else
-                            cd $project_folder
                         fi
                     ;;
 
             gnome-terminal)
                     if [[ $DISPLAY ]] ; then
-                            gnome-terminal --working-directory="$project_folder"
-                        else
-                            cd $project_folder
+                            if [[ $GURU_PROJECT_GIT ]] ; then
+                                gnome-terminal --tab --title="project" --working-directory="$project_folder" \
+                                               --tab --title="git"     --working-directory="$GURU_PROJECT_GIT"
+                            else
+                                gnome-terminal --working-directory="$project_folder"
+                            fi
                         fi
                     ;;
             *)      gmsg "non supported terminal"
                     ;;
         esac
-    return 0
+
+    return $?
 }
 
 
 project.close () {
 
-    local project_name="$1"
+    local project_name="$1" ; shift
     local project_base="$GURU_SYSTEM_MOUNT/project"
 
     # check is there active projects, exit if not
@@ -326,9 +339,11 @@ project.close () {
             return 3
         fi
 
-    if module.installed tmux ; then
+    if [[ $GURU_TMUX_ENABLED ]] && module.installed tmux ; then
             tmux detach -s $project_name
         fi
+
+    [[ -f $project_base/$project_name/config.sh ]] && source $project_base/$project_name/config.sh post $@
 
     # check active project
     if [[ -f $project_base/active ]] ; then

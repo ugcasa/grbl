@@ -28,9 +28,9 @@ if [[ "$GURU_FLAG_COLOR" ]] ; then
 # use new modules durin installation
 export GURU_BIN="core"
 #source core/common.sh
-source core/config.sh
-source core/keyboard.sh
-source core/system.sh
+source $GURU_BIN/config.sh
+source $GURU_BIN/keyboard.sh
+source $GURU_BIN/system.sh
 # set target locations for uninstaller
 export GURU_CFG="$HOME/.config/guru"
 export GURU_BIN="$HOME/bin"
@@ -39,16 +39,20 @@ bash_rc="$HOME/.bashrc"
 core_rc="$HOME/.gururc"    # TODO change name to '.gururc' when cleanup next time
 backup_rc="$HOME/.bashrc.backup-by-guru"
 
+
 # modules where user have direct access
-core_module_access=(counter install uninstall config mount unmount daemon keyboard system)
+core_module_access=(counter install uninstall config mount unmount daemon keyboard system path)
 
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
 modules_to_install=(mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news program tmux tunnel corsair)
 
 install.main () {
 
+
     # Step 1) parse arguments
     install.arguments $@ || gmsg -x 100 "argumentation error"
+
+    # store current core rc if not no port install configure
 
     # Step 2) check previous installation
     install.check || gmsg -x 110 "check caused exit"
@@ -198,19 +202,30 @@ install.help () {
 
 install.arguments () {
     ## Process flags and arguments
+    export GURU_VERBOSE=0
 
-    TEMP=`getopt --long -o "dfrhlv:u:p:" "$@"`
+    TEMP=`getopt --long -o "dfcrhlv:u:p:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
-            -d) install_dev=true           ; shift ;;
-            -f) force_overwrite=true       ; shift ;;
-            -r) install_requiremets=true   ; shift ;;
-            -h) install.help               ; shift ;;
-            -l) export LIGTH_INSTALL=true  ; shift ;;
-            -v) export GURU_VERBOSE=$2     ; shift 2 ;;
-            -u) export GURU_USER=$2        ; shift 2 ;;
-            -p) export install_platform=$2 ; shift 2 ;;
+            -d) install_dev=true
+                shift ;;
+            -f) force_overwrite=true
+                shift ;;
+            -c) configure_after_install=true
+                shift ;;
+            -r) install_requiremets=true
+                shift ;;
+            -h) install.help
+                shift ;;
+            -l) export LIGTH_INSTALL=true
+                shift ;;
+            -v) export GURU_VERBOSE=$2
+                shift 2 ;;
+            -u) export GURU_USER=$2
+                shift 2 ;;
+            -p) export install_platform=$2
+                shift 2 ;;
              *) break
         esac
     done
@@ -262,6 +277,10 @@ install.check () {
             check.core
             install.modules && check.modules || gmsg -x 170 "error when installing modules"
             exit 0
+        fi
+
+        if ! [[ $configure_after_install ]] && [[ -f $core_rc ]]; then
+            cp $core_rc /tmp/temp.rc
         fi
 
 
@@ -515,18 +534,23 @@ install.config () {
     # config
     if ! [[ -f "$TARGET_CFG/$GURU_USER/user.cfg" ]] ; then
          gmsg -c yellow "user specific configuration not found, using default.."
-
          cp -f $TARGET_CFG/user-default.cfg "$TARGET_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
     fi
 
-    config.export "$GURU_USER" || gmsg -c red "user config export error"
-    source "$core_rc" || gmsg -c red "$core_rc error"
-    #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
+    # post install configure
+    if [[ $configure_after_install ]] ; then
+            config.export "$GURU_USER" || gmsg -c red "user config export error"
+            source "$core_rc" || gmsg -c red "$core_rc error"
+            #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
 
-    # set keyboard shortcuts
-    gmsg -n -v1 "setting keyboard shortcuts "
-    keyboard.main add all || gmsg -c yellow "error by setting keyboard shortcuts"
-    installed_files=( ${installed_files[@]} $TARGET_CFG/kbbind.backup.cfg )
+            # set keyboard shortcuts
+            gmsg -n -v1 "setting keyboard shortcuts "
+            keyboard.main add all || gmsg -c yellow "error by setting keyboard shortcuts"
+            installed_files=( ${installed_files[@]} $TARGET_CFG/kbbind.backup.cfg )
+        else
+            [[ -f /tmp/temp.rc ]] && mv -f /tmp/temp.rc $core_rc
+        fi
+
     return 0
 
 }
