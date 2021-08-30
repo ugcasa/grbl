@@ -30,9 +30,11 @@ tunnel.main () {
     command="$1"; shift
     case "$command" in
 
-        check|status|poll|help)
+        toggle|check|status|poll|help)
                 tunnel.$command "$@"
-                return $? ;;
+                return $?
+                ;;
+
 
         add|rm|open|close|ls|tmux)
 
@@ -42,10 +44,12 @@ tunnel.main () {
                             done ;;
                       *) tunnel.$command "$@"
                 esac
-                return $? ;;
+                return $?
+                ;;
         install|remove)
                 tunnel.requirements "$command"
-                return $? ;;
+                return $?
+                ;;
         *)
                 tunnel.open $command
                 return $?
@@ -98,6 +102,30 @@ tunnel.rm () {
 }
 
 
+tunnel.toggle () {
+    # open default tunnel list and closes
+    declare -l state=/tmp/tunnel.toggle
+
+    if [[ -f $state ]] ; then
+            for tunnel in ${GURU_TUNNEL_DEFAULT[@]} ; do
+                    gmsg "$tunnel close"
+                    #tunnel.ls $tunnel &&
+                    tunnel.close $tunnel
+                done
+            rm -f $state
+        else
+            for tunnel in ${GURU_TUNNEL_DEFAULT[@]} ; do
+                    gmsg "$tunnel open"
+                    #tunnel.ls $tunnel ||
+                    tunnel.open $tunnel
+                done
+            touch $state
+        fi
+
+    return 0
+}
+
+
 tunnel.ls () {
     # list of ssh tunnels
     local all_services=${GURU_TUNNEL_LIST[@]}
@@ -143,9 +171,9 @@ tunnel.ls () {
 tunnel.parameters () {
     # get tunnel configuration an populate common variables
     source $GURU_RC
-    local service_name=$1
-    local all_services=(${GURU_TUNNEL_LIST[@]})
-    local options=${GURU_TUNNEL_OPTIONS[@]}
+    declare -l service_name=$1
+    declare -l all_services=(${GURU_TUNNEL_LIST[@]})
+    declare -l options=${GURU_TUNNEL_OPTIONS[@]}
 
     # TBD get all_sevices list automatically
     # local all_services=$(set | grep "GURU_TUNNEL" | grep -v "LIST" | grep -v "OPTIONS" \
@@ -242,10 +270,10 @@ tunnel.close () {
         # get config
         tunnel.parameters $service_name
         # get pid from ps list, must be a ssh local tunnel and contains right to_port
-        local pid=$(ps a |grep "ssh -L" | grep $from_port | grep -v grep | cut -d " "  -f 1)
+        local pid=$(ps a |grep "ssh -L" | grep $from_port | grep -v grep | sed 's/^[[:space:]]*//' | cut -d " "  -f 1)
     else
         # try to find a tunnel
-        local pid=$(ps a | grep -v grep | grep "ssh -L" | head -1 | cut -d " "  -f 1)
+        local pid=$(ps a | grep "ssh -L" | head -1 | sed 's/^[[:space:]]*//' | cut -d " "  -f 1)
         service_name="unknown"
     fi
 
