@@ -340,9 +340,9 @@ project.close () {
             return 3
         fi
 
-    if [[ $GURU_TMUX_ENABLED ]] && module.installed tmux ; then
-            tmux detach -s $project_name
-        fi
+    # if [[ $GURU_TMUX_ENABLED ]] && module.installed tmux ; then
+    #         tmux detach -s $project_name
+    #     fi
 
     [[ -f $project_base/$project_name/config.sh ]] && source $project_base/$project_name/config.sh post $@
 
