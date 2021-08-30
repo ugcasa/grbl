@@ -54,7 +54,7 @@ project.main () {
         check|exist|ls|info|add|status|open|change|close|toggle|rm|sublime|poll|help)
                 project.$_cmd "$@"
                 return $? ;;
-        *)      project.open "$_cmd"
+        *)      project.open "$_cmd" "$@"
                 return $? ;;
         esac
 }
