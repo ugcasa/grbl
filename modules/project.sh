@@ -62,14 +62,25 @@ project.main () {
 
 project.status () {
     # check that project module is working correctly
-    declare -l project_base="$GURU_SYSTEM_MOUNT/project"
-    declare -l project_mount="$GURU_MOUNT_PROJECTS"
-    declare -l project_name="$1"
-    declare -l project_folder="$project_base/$project_name"
-    declare -l project_indicator_key="f$(daemon.poll_order project)"
-    declare -l key_color="deep_pink"
 
-    [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh source
+    declare -l project_base="$GURU_SYSTEM_MOUNT/project"
+    declare -l project_name="notes"
+    # get active project name
+    if [[ -f $project_base/active ]] ; then
+            project_name=$(cat $project_base/active)
+        fi
+
+    declare -l project_folder="$project_base/$project_name"
+    declare -l project_cfg="$project_folder/config.sh"
+
+    declare -l project_mount="$GURU_MOUNT_PROJECTS"
+    declare -l project_indicator_key="f$(daemon.poll_order project)"
+    declare -l key_color="aqua"
+
+    [[ -f $project_cfg ]] && source $project_cfg source
+
+    [[ $GURU_PROJECT_COLOR ]] && key_color=$GURU_PROJECT_COLOR
+     gmsg -v3 -c $key_color "$project_cfg status color:$GURU_PROJECT_COLOR"
 
     # check project file locaton is accessavle
     gmsg -n -v1 -t "${FUNCNAME[0]}: "
@@ -91,11 +102,10 @@ project.status () {
     if [[ -f $project_base/active ]]; then
             local active=$(cat $project_base/active)
             gmsg -n "active: "
-            gmsg -v1 -c aqua "$active "
+            gmsg -v1 -c $key_color "$active "
+            gmsg -n -c $key_color "" -k $project_indicator_key
 
             # set keyboard indicator to project color, if set
-            [[ $GURU_PROJECT_COLOR ]] && key_color=$GURU_PROJECT_COLOR
-            gmsg -v1 -c $key_color "" -k $project_indicator_key
 
         else
             gmsg -v1 -c reset "no active projects "
@@ -282,9 +292,9 @@ project.open () {
     [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh pre $@
 
     # set keyboard key to project color
-    declare -l key_color="pink"
+    declare -l key_color="aqua"
     [[ $GURU_PROJECT_COLOR ]] && key_color=$GURU_PROJECT_COLOR
-    gmsg -c deep_pink "color:$GURU_PROJECT_COLOR"
+    gmsg -v3 -c $key_color "open color:$GURU_PROJECT_COLOR"
 
     gmsg -v1 -c $key_color "$project_name" -m "$GURU_USER/project" -k $project_indicator_key
 
