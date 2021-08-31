@@ -62,10 +62,14 @@ project.main () {
 
 project.status () {
     # check that project module is working correctly
-    local project_base="$GURU_SYSTEM_MOUNT/project"
-    local project_mount="$GURU_MOUNT_PROJECTS"
-    local project_name="$1"
-    local project_indicator_key="f$(daemon.poll_order project)"
+    declare -l project_base="$GURU_SYSTEM_MOUNT/project"
+    declare -l project_mount="$GURU_MOUNT_PROJECTS"
+    declare -l project_name="$1"
+    declare -l project_folder="$project_base/$project_name"
+    declare -l project_indicator_key="f$(daemon.poll_order project)"
+    declare -l key_color="deep_pink"
+
+    [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh source
 
     # check project file locaton is accessavle
     gmsg -n -v1 -t "${FUNCNAME[0]}: "
@@ -87,7 +91,12 @@ project.status () {
     if [[ -f $project_base/active ]]; then
             local active=$(cat $project_base/active)
             gmsg -n "active: "
-            gmsg -v1 -c aqua "$active " -k $project_indicator_key
+            gmsg -v1 -c aqua "$active "
+
+            # set keyboard indicator to project color, if set
+            [[ $GURU_PROJECT_COLOR ]] && key_color=$GURU_PROJECT_COLOR
+            gmsg -v1 -c $key_color "" -k $project_indicator_key
+
         else
             gmsg -v1 -c reset "no active projects "
         fi
@@ -269,7 +278,15 @@ project.open () {
 
     # inform user and message bus
     gmsg -v1 -n "$GURU_USER working on "
-    gmsg -v1 -c aqua "$project_name" -m "$GURU_USER/project" -k $project_indicator_key
+    # run project configs. Make sure that config.sh is pass trough.
+    [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh pre $@
+
+    # set keyboard key to project color
+    declare -l key_color="pink"
+    [[ $GURU_PROJECT_COLOR ]] && key_color=$GURU_PROJECT_COLOR
+    gmsg -c deep_pink "color:$GURU_PROJECT_COLOR"
+
+    gmsg -v1 -c $key_color "$project_name" -m "$GURU_USER/project" -k $project_indicator_key
 
     # open editor
     case $GURU_PREFERRED_EDITOR in
@@ -284,8 +301,6 @@ project.open () {
             joe)    gmsg "TBD add support for joe project files" ;;
         esac
 
-    # run project configs
-    [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh pre $@
 
     # open terminal
     case $GURU_PREFERRED_TERMINAL in
