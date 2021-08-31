@@ -177,7 +177,7 @@ daemon.kill () {
 daemon.poll () {
 
     source $GURU_RC
-    [[ -f "/tmp/guru-stop.flag" ]] && rm -f "/tmp/guru-stop.flag"
+    #[[ -f "/tmp/guru-stop.flag" ]] && rm -f "/tmp/guru-stop.flag"
     echo "$(sh -c 'echo "$PPID"')" > "$daemon_pid_file"
     system.flag rm fast
     system.flag rm stop
@@ -198,6 +198,7 @@ daemon.poll () {
                 system.flag rm suspend
             fi
 
+        # if paused stay here 300 seconds
         if system.flag pause ; then
                 gmsg -N -t -v1 -c yellow "daemon paused " -k esc
                 for (( i = 0; i < 150; i++ )); do
@@ -226,10 +227,10 @@ daemon.poll () {
         for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
                 module=${GURU_DAEMON_POLL_ORDER[i-1]}
                 case $module in
-                    null|empty )
+                    null|empty|na|NA)
                         gmsg -v4 -c dark_grey "skipping $module"
                         ;;
-                    * )
+                    *)
                         gmsg -n -v2 -c dark_golden_rod "module_$i:$module: "
 
                         if [[ -f "$GURU_BIN/$module.sh" ]] ; then
@@ -256,7 +257,7 @@ daemon.poll () {
             done
 
     done
-    gmsg -N -t -v1 "daemon got got tired and dropt out "
+    gmsg -N -t -v1 "daemon got got tired and dropped out "
     daemon.stop
 }
 
