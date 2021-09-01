@@ -30,21 +30,48 @@ backup.help () {
 }
 
 
+backup.check_space () {
+    # check free space of server disk
+
+    declare -l mount_point=$GURU_SYSTEM_MOUNT
+    [[ $1 ]] && mount_point=$1
+    declare -l column=4
+    if [[ $2 ]] ; then
+        case $2 in
+            u|used)
+            column=3
+            ;;
+            '%'|usage)
+            column=5
+            ;;
+            a|available|free|*)
+            column=4
+            ;;
+        esac
+    fi
+
+    # df with parameters
+    declare -g server_free_space=$(df \
+        | grep $GURU_SYSTEM_MOUNT \
+        | tr -s " " \
+        | cut -d " " -f $column \
+        | sed 's/[^0-9]*//g')
+
+    # printout
+    echo "$server_free_space"
+}
+
+
 backup.main () {
     gmsg -n -v3 -c pink "${FUNCNAME[0]} $@ "
     # command parser
     backup_indicator_key="f$(daemon.poll_order backup)"
 
-    local var_a="$1" ; shift
-    local var_b="$1" ; shift
-    case "$var_a$var_b" in
+    local command="$1" ; shift
+    case "$command" in
 
-                *now|*at)
-                    backup.$var_b "$var_a" "$@"
-                    return $? ;;
-
-                ls*|list*|status*|help*|install*|poll*)
-                    backup.$var_a "$var_b" "$@"
+                ls|list|status|help|install|poll)
+                    backup.$command  "$@"
                     return $? ;;
 
                 "")
@@ -76,7 +103,13 @@ backup.status () {
 
 
 backup.list () {
+
+    local ifs=$IFS
+    local tall=0
     gmsg -v3 -c pink "${FUNCNAME[0]} $@"
+
+
+    # (/home/casa/porn)
     # list available backups and its status
     return 0
 }
@@ -128,7 +161,6 @@ backup.poll () {
         *)  gmsg -c dark_grey "function not written"
             return 0
         esac
-
 }
 
 
