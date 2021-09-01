@@ -8,22 +8,20 @@ TARGET_CFG="$HOME/.config/guru"
 # check if colors possible
 if echo "$TERM" | grep "256" >/dev/null ; then
     if echo "$COLORTERM" | grep "true" >/dev/null ; then
-            GURU_FLAG_COLOR=true
+        GURU_FLAG_COLOR=true
+            # set only needed colors
+            C_NORMAL='\033[0m'
+            C_GRAY='\033[38;2;169;169;169m'
+            C_GREY='\033[38;2;169;169;169m'
+            C_DARK_GRAY='\033[38;2;128;128;128m'
+            C_DARK_GREY='\033[38;2;128;128;128m'
+            C_GREEN='\033[38;2;0;128;0m'
+            C_RED='\033[38;2;255;0;0m'
+            C_LIGHT_BLUE='\033[38;2;173;216;230m'
+            C_WHITE='\033[38;2;255;255;255m'
         fi
     fi
 
-# set only needed colors
-if [[ "$GURU_FLAG_COLOR" ]] ; then
-        C_NORMAL='\033[0m'
-        C_GRAY='\033[38;2;169;169;169m'
-        C_GREY='\033[38;2;169;169;169m'
-        C_DARK_GRAY='\033[38;2;128;128;128m'
-        C_DARK_GREY='\033[38;2;128;128;128m'
-        C_GREEN='\033[38;2;0;128;0m'
-        C_RED='\033[38;2;255;0;0m'
-        C_LIGHT_BLUE='\033[38;2;173;216;230m'
-        C_WHITE='\033[38;2;255;255;255m'
-    fi
 
 # use new modules durin installation
 export GURU_BIN="core"
@@ -38,16 +36,12 @@ export GURU_BIN="$HOME/bin"
 bash_rc="$HOME/.bashrc"
 core_rc="$HOME/.gururc"    # TODO change name to '.gururc' when cleanup next time
 backup_rc="$HOME/.bashrc.backup-by-guru"
-
-
 # modules where user have direct access
 core_module_access=(counter install uninstall config mount unmount daemon keyboard system path)
-
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
 modules_to_install=(mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news program tmux tunnel corsair)
 
 install.main () {
-
 
     # Step 1) parse arguments
     install.arguments $@ || gmsg -x 100 "argumentation error"
@@ -162,7 +156,6 @@ check.server () {
                     # continue anuweay
             fi
         done
-
     # pass
     return 0
 }
