@@ -49,13 +49,10 @@ tunnel.main () {
                 tunnel.requirements "$command"
                 return $?
                 ;;
-        "")
+        *)
                 tunnel.open $command $@
                 return $?
                 ;;
-        *)
-                gmsg "unknown command $command"
-                return 0
 
         esac
 }
@@ -225,7 +222,7 @@ tunnel.open () {
     if [[ $1 ]] ; then
             service_name=($@)
         else
-            service_name=${GURU_TUNNEL_LIST[@]}
+            service_name=${GURU_TUNNEL_DEFAULT[@]}
         fi
 
     for _service in ${service_name[@]} ; do
@@ -238,9 +235,9 @@ tunnel.open () {
                     gmsg -v1 -c aqua "$url"
                     continue
                 fi
-
-            gnome-terminal --geometry 70x11 --zoom 0.5 -- \
+            gnome-terminal --tab --title "$_service"  -- \
                 ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port #$ssh_param
+                #--geometry 65x10 --zoom 0.5
 
             gmsg -v2 -n -c white "$_service "
             gmsg -v1 -c aqua "$url" -k $tunnel_indicator_key
