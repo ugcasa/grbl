@@ -94,15 +94,15 @@ gmsg () {
             esac
         done
 
-    # check message for long parameters (don't remember why like this)
+    # --) check message for long parameters (don't remember why like this)
     local _arg="$@"
     [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
-    # add exit code to message
+    # -x) add exit code to message
     [[ $_exit -gt 0 ]] && _message="$_exit: $_message"
 
 
-    # set corsair key is '-k <key>' used
+    # -k) set corsair key is '-k <key>' used
     if [[ $_indicator_key ]] && [[ $GURU_CORSAIR_ENABLED ]]; then
         # TBD: check corsair (or other kb led) module installed
         #      now in corsair is part of core what it should not to be
@@ -114,46 +114,49 @@ gmsg () {
             fi
        fi
 
-    # publish to mqtt if '-q|-m <topic>' used
+    # -m) publish to mqtt if '-q|-m <topic>' used
     if [[ $_mqtt_topic ]] && [[ $GURU_MQTT_ENABLED ]]; then
             source mqtt.sh
             # mqtt.enabled || return 0
             mqtt.pub "$_mqtt_topic" "$_message"
         fi
 
-    # uncomment if vanted to see how verbose changes during run
-    # echo "$_verbose_trigger:$GURU_VERBOSE"
 
 
+    # -C) print only color code
     if [[ $_color_only ]] ; then
             echo -n "$_color_code"
             return 0
         fi
 
-
-    # given verbose level is higher than limiter, do not print
-    if [[ $GURU_VERBOSE -ge $_verbose_limiter ]] ; then
+    # -v) given verbose level is lower than trigger level, do not print
+    # "print only if higer verbose level than this"
+    if (( _verbose_trigger > GURU_VERBOSE )) ; then
             return 0
         fi
 
-    # given verbose level is lower than trigger, do not print
-    if [[ $GURU_VERBOSE -le $_verbose_trigger ]] ; then
+    # -V) given verbose level is higher than high limiter, do not print
+    # "do not print after this verbose level"
+    if (( _verbose_limiter < GURU_VERBOSE )) ; then
             return 0
         fi
 
-    # normal printout no formatting
-    if ! [[ $_color_code ]] || ! [[ $GURU_FLAG_COLOR ]] ; then
+    # print to shell
+    if [[ $_color_code ]] && [[ $GURU_COLOR ]] ; then
+
+            # -w) fill message length to column limiter
+            if ! [[ $_column_width ]] ; then
+                    _column_width=${#_message}
+                fi
+            # -c) color printout
+            printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline${C_NORMAL}" "${_timestamp}" "${_message:0:$_column_width}"
+
+        else
+            # *) normal printout no formatting
             printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
             return 0
-        fi
+    fi
 
-    # fill message length to column limiter
-    if ! [[ $_column_width ]] ; then
-            _column_width=${#_message}
-        fi
-
-    # normal printout no formatting
-    printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline${C_NORMAL}" "${_timestamp}" "${_message:0:$_column_width}"
 
     # echo "saata $GURU_VERBOSE:$_verbose_trigger<$_verbose_limiter"
     # echo "$_pre_newline:pre_newline"
@@ -163,7 +166,7 @@ gmsg () {
     # echo "$_timestamp:timestamp"
     # echo "$_message:message"
 
-    # printout and exit for development use
+    # -x) printout and exit for development use
     [[ $_exit ]] && exit $_exit
 
     return 0

@@ -7,6 +7,12 @@ declare -x GURU_VERSION="0.6.6.4"
 declare -x GURU_RC="$HOME/.gururc"
 declare -x GURU_BIN="$HOME/bin"
 
+# check if colors possible, will be overwritten by user.cfg
+# if echo "$TERM" | grep "256" >/dev/null ; then
+#     if echo "$COLORTERM" | grep "true" >/dev/null ; then
+#             export GURU_COLOR=true
+#         fi
+#     fi
 # early exit commands
 case "$1" in
         ver|version|--ver|--version)
@@ -31,9 +37,15 @@ source $GURU_BIN/daemon.sh
 source $GURU_BIN/corsair.sh
 source $GURU_BIN/system.sh
 
+
 # user configuration overwrites
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
+if [[ $GURU_FLAG_COLOR ]] ; then
+        export GURU_COLOR=true
+    else
+        export GURU_COLOR=
+    fi
 
 # check is accesspoint enabled and mount is not already done
 if [[ $GURU_ACCESS_ENABLED ]] ; then
@@ -41,6 +53,7 @@ if [[ $GURU_ACCESS_ENABLED ]] ; then
     source $GURU_BIN/mount.sh
     mount.main system
 fi
+
 
 core.main () {
     # tail bone function but it sits well here
@@ -60,10 +73,10 @@ core.main () {
         elif (( _error_code > 99 )) ; then
                 # on verbose -v print onle errors
                 gmsg -v2 -c red  "error code $_error_code"
-        else
+            else
                 # on verbose -V print also warnings
                 gmsg -v3 -c yellow "warning code $_error_code"
-        fi
+            fi
 
     return $_error_code
 }
@@ -71,7 +84,6 @@ core.main () {
 
 core.parser () {
     # main command parser
-
     local tool="$1" ; shift
 
     # TBD expired method to let modules know the command before client was not: to remove check is it used and remove
@@ -99,14 +111,13 @@ core.parser () {
 
 core.process_opts () {
     # argument parser
-
     TEMP=`getopt --long -o "scCflv:u:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
             -s ) export GURU_VERBOSE=        ; shift     ;;
-            -c ) export GURU_FLAG_COLOR=true ; shift     ;;
-            -C ) export GURU_FLAG_COLOR=     ; shift     ;;
+            -c ) export GURU_COLOR=true      ; shift     ;;
+            -C ) export GURU_COLOR=          ; shift     ;;
             -v ) export GURU_VERBOSE=$2      ; shift 2   ;;
             -f ) export GURU_FORCE=true      ; shift     ;;
             -l ) export GURU_LOGGING=true    ; shift     ;;
