@@ -110,18 +110,14 @@ tunnel.toggle () {
 
     declare -l state=/tmp/tunnel.toggle
 
-    if [[ -f $state ]] ; then
-            for tunnel in ${GURU_TUNNEL_DEFAULT[@]} ; do
-                    tunnel.close $tunnel
-                done
-            rm -f $state
+    if [[ -f $state ]] && tunnel.ls ; then
+            tunnel.close
+            rm $state
         else
-            for tunnel in ${GURU_TUNNEL_DEFAULT[@]} ; do
-                    tunnel.open $tunnel
-                done
+            tunnel.open
             touch $state
         fi
-
+    tunnel.ls
     return 0
 }
 
