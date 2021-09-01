@@ -59,7 +59,7 @@ tunnel.main () {
 
 
 tunnel.status () {
-    # check tunnel is reachable. daemon poller will run this
+    # check tunnel is reachable
 
     gmsg -n -v1 -t "${FUNCNAME[0]}: "
     local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
@@ -179,7 +179,6 @@ tunnel.ls () {
 tunnel.parameters () {
     # get tunnel configuration an populate common variables
 
-    source $GURU_RC
     declare -l service_name=$1
     declare -l all_services=(${GURU_TUNNEL_LIST[@]})
     declare -l options=${GURU_TUNNEL_OPTIONS[@]}
@@ -244,7 +243,7 @@ tunnel.open () {
 
 
 tunnel.close () {
-    # ssh tunnel
+    # close ssh tunnel
 
     local data_folder="$GURU_SYSTEM_MOUNT/tunnel/$(hostname)"
     local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
@@ -252,17 +251,17 @@ tunnel.close () {
 
     if [[ $1 ]] ; then
         local service_name=($@)
-        # get config
+        # go trough tunnel list
         for service in ${service_name[@]} ; do
+            # get config
             tunnel.parameters $service
             # get pid from ps list, must be a ssh local tunnel and contains right to_port
             pid_list=($pid_list $(ps a | grep -v grep | grep "ssh -L" | grep $from_port | head -n 1  | sed 's/^[[:space:]]*//' | cut -d " "  -f 1))
-            #echo ${pid_list[@]}
         done
     else
         # try to find all tunnels tunnels
         pid_list=($(ps a | grep -v grep | grep "ssh -L" | sed 's/^[[:space:]]*//' | cut -d " "  -f 1))
-        #gmsg -v3 ${pid_list[@]}
+
     fi
 
     # check that pid is number
@@ -271,12 +270,15 @@ tunnel.close () {
         return 0
     fi
 
+    # kill thjose tunnels
     for pid in ${pid_list[@]} ; do
+
             gmsg -v2 "killing pid $pid"
             if ! echo $pid | grep -E ^\-?[0-9]?\.?[0-9]+$ >/dev/null; then
                     gmsg -v2 -c yellow "tunnel '$service_name' not found "
                     return 0
                 fi
+
             if kill -15 $pid ; then
                     gmsg -c green "$pid killed"
                 else
@@ -317,6 +319,7 @@ tunnel.tmux () {
 
 
 tunnel.poll () {
+    # daemon poller will run this
 
     local _cmd="$1" ; shift
     tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
