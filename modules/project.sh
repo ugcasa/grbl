@@ -31,13 +31,13 @@ project.help () {
     gmsg -v1 "  change <name>           change project"
     gmsg -v2 "  sublime <name>          open only sublime project "
     gmsg -v1 "  status                  status of project module"
-    gmsg -v2 "  poll start|stop         damen poll function"
+    gmsg -v2 "  poll start|stop         daemon poll function"
     gmsg -v1 "  help                    this help "
     gmsg -v1
     gmsg -v1 "most of commands takes project name (or id) as an variable "
     gmsg -v2
     gmsg -v1 -c white "example:"
-    gmsg -v1 " $GURU_CALL project new demo       # init new project called 'demo'"
+    gmsg -v1 " $GURU_CALL project new demo       # initialize new project called 'demo'"
     #gmsg -v2 " $GURU_CALL project archive        # list of archived projects "
     #gmsg -v1 " $GURU_CALL project archive demo   # archive demo "
     gmsg -v2 " $GURU_CALL project rm demo        # remove all demo project files "
@@ -51,11 +51,19 @@ project.main () {
     local _cmd="$1" ; shift
 
     case "$_cmd" in
-        check|exist|ls|info|add|status|open|change|close|toggle|rm|sublime|poll|help)
-                project.$_cmd "$@"
-                return $? ;;
-        *)      project.open "$_cmd" "$@"
-                return $? ;;
+            # list of commands
+            check|exist|ls|info|\
+            add|status|open|change|\
+            close|toggle|rm|sublime|\
+            subl|poll|help)
+
+            project.$_cmd "$@"
+            return $?
+            ;;
+
+        *)  project.open "$_cmd" "$@"
+            return $?
+            ;;
         esac
 }
 
@@ -101,19 +109,16 @@ project.status () {
 
     if [[ -f $project_base/active ]]; then
             local active=$(cat $project_base/active)
-            gmsg -n "active: "
+            gmsg -v2 -n "active: "
             gmsg -v1 -c $key_color "$active "
-            gmsg -n -c $key_color "" -k $project_indicator_key
-
             # set keyboard indicator to project color, if set
-
+            gmsg -n -c $key_color  -k $project_indicator_key
         else
             gmsg -v1 -c reset "no active projects "
         fi
 
     return 0
 }
-
 
 
 project.add () {
@@ -156,7 +161,6 @@ project.ls () {
     gmsg -v2 -c aqua "active: $_active_project"
 
     # list of projects
-    #gmsg -v1 "list of projects "
     for _project in ${_project_list[@]} ; do
         if [[ "$_project" == "$_active_project" ]] ; then
                 gmsg -c aqua "$_project"
@@ -223,9 +227,20 @@ project.info () {
 
 project.sublime () {
 
-    [[ "$1" ]] || gmsg -x 100 -c yellow "project name needed"
-    local project_name="$1"
+    local project_name=""
     local project_base="$GURU_SYSTEM_MOUNT/project"
+
+    # solve project name if not given
+    if [[ "$1" ]] ; then
+        project_name="$1"
+    else
+        if [[ -f $project_base/active ]] ; then
+            project_name="$(cat $project_base/active)"
+        else
+            project_name="$(cat $project_base/last)"
+        fi
+    fi
+
     local project_folder="$project_base/$project_name"
     local sublime_project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
 
@@ -236,12 +251,18 @@ project.sublime () {
 
     if [[ -f "$sublime_project_file" ]] ; then
             gmsg -v2 "using $sublime_project_file"
-            # TBD editor/subl.sh?  << subl --project "$sublime_project_file" -a
+            # TBD edit/subl.sh?  << subl --project "$sublime_project_file" -a
             subl --project "$sublime_project_file" -a
         else
             gmsg -c yellow "$sublime_project_file not found"
             return 132
         fi
+}
+
+
+project.subl () {
+    # alias for above
+    project.sublime $@
 }
 
 
