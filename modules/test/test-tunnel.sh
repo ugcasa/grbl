@@ -154,7 +154,8 @@ tunnel.test_ls () {
 
       ## TODO: add pre-conditios here
 
-      tunnel.ls ; _error=$?
+      tunnel.open wiki
+      tunnel.ls wiki ; _error=$?
 
       ## TODO: add analysis here and manipulate $_error 
 
