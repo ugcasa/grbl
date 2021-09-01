@@ -44,7 +44,7 @@ daemon.poll_order_old () {
 
 
 gmsg () {
-    # function for ouput messages and make log notifications
+    # function for output messages and make log notifications
 
     # default values
     local _verbose_trigger=0                        # prinout if verbose trigger is not set in options
@@ -61,8 +61,10 @@ gmsg () {
     local _indicator_key=
     local _color_only=
     local _c_var=
+    local _column_width
+
     # parse flags
-    TEMP=`getopt --long -o "tlnhNx:V:v:c:C:q:k:m:" "$@"`
+    TEMP=`getopt --long -o "tlnhNx:w:V:v:c:C:q:k:m:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
@@ -73,6 +75,7 @@ gmsg () {
                 -n ) _newline=                                  ; shift ;;
                 -N ) _pre_newline="\n"                          ; shift ;;
                 -x ) _exit=$2                                   ; shift 2 ;;
+                -w ) _column_width=$2                           ; shift 2 ;;
                 -V ) _verbose_limiter=$2                        ; shift 2 ;;
                 -v ) _verbose_trigger=$2                        ; shift 2 ;;
                 -m ) _mqtt_topic="$2"                           ; shift 2 ;;
@@ -123,33 +126,44 @@ gmsg () {
 
 
     if [[ $_color_only ]] ; then
-
             echo -n "$_color_code"
             return 0
         fi
 
-    # printout message if verbose level is more than verbose trigger
-    if [[ $GURU_VERBOSE -ge $_verbose_trigger ]] ; then
 
-            if [[ $GURU_VERBOSE -ge $_verbose_limiter ]] ; then return 0 ; fi
-
-            if [[ $_color_code ]] && [[ $GURU_FLAG_COLOR ]] ; then
-                    printf "$_pre_newline$_color_code%s%s$_newline$C_NORMAL" "$_timestamp" "$_message"
-                else
-                    printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
-                fi
+    # given verbose level is higher than limiter, do not print
+    if [[ $GURU_VERBOSE -ge $_verbose_limiter ]] ; then
+            return 0
         fi
 
-    # # print to log if '-l' set
-    # if [[ "$LOGGING" ]] || [[ "$_logging" ]] ; then
-    #         # check that system mount is online before logging
-    #         [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] || return 0
-    #         # log only is log exist
-    #         [[ -f "$GURU_LOG" ]] || return 0
-    #         # log without colorcodes
-    #         printf "$@" | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' >>"$GURU_LOG"
-    #     fi
+    # given verbose level is lower than trigger, do not print
+    if [[ $GURU_VERBOSE -le $_verbose_trigger ]] ; then
+            return 0
+        fi
 
+    # normal printout no formatting
+    if ! [[ $_color_code ]] || ! [[ $GURU_FLAG_COLOR ]] ; then
+            printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
+            return 0
+        fi
+
+    # fill message length to column limiter
+    if ! [[ $_column_width ]] ; then
+            _column_width=${#_message}
+        fi
+
+    # normal printout no formatting
+    printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline${C_NORMAL}" "${_timestamp}" "${_message:0:$_column_width}"
+
+    # echo "saata $GURU_VERBOSE:$_verbose_trigger<$_verbose_limiter"
+    # echo "$_pre_newline:pre_newline"
+    # echo "$_color_code:color_code"
+    # echo "$_column_width:column_width"
+    # echo "$_newline:newline"
+    # echo "$_timestamp:timestamp"
+    # echo "$_message:message"
+
+    # printout and exit for development use
     [[ $_exit ]] && exit $_exit
 
     return 0
