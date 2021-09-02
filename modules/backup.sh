@@ -30,38 +30,6 @@ backup.help () {
 }
 
 
-backup.check_space () {
-    # check free space of server disk
-
-    declare -l mount_point=$GURU_SYSTEM_MOUNT
-    [[ $1 ]] && mount_point=$1
-    declare -l column=4
-    if [[ $2 ]] ; then
-        case $2 in
-            u|used)
-            column=3
-            ;;
-            '%'|usage)
-            column=5
-            ;;
-            a|available|free|*)
-            column=4
-            ;;
-        esac
-    fi
-
-    # df with parameters
-    declare -g server_free_space=$(df \
-        | grep $GURU_SYSTEM_MOUNT \
-        | tr -s " " \
-        | cut -d " " -f $column \
-        | sed 's/[^0-9]*//g')
-
-    # printout
-    echo "$server_free_space"
-}
-
-
 backup.main () {
     gmsg -n -v3 -c pink "${FUNCNAME[0]} $@ "
     # command parser
@@ -70,7 +38,7 @@ backup.main () {
     local command="$1" ; shift
     case "$command" in
 
-                ls|list|status|help|install|poll)
+                ls|list|now|status|help|install|poll)
                     backup.$command  "$@"
                     return $? ;;
 
@@ -87,18 +55,87 @@ backup.main () {
 }
 
 
-backup.status () {
-    gmsg -v3 -c pink "${FUNCNAME[0]} $@"
-    # check latest backup is reachable and returnable.
-    gmsg -n -t -v1 "${FUNCNAME[0]}: "
 
-    if [[ -f $GURU_BACKUP_CONFIG ]] ; then
-            gmsg -v1 -c green "ok" -k $backup_indicator_key
+backup.config () {
+    # get tunnel configuration an populate common variables
+
+    #gmsg -v3 -c pink "${FUNCNAME[0]} |$@|indicator:$backup_indicator_key "
+
+    declare -la backup_name=($1)
+    declare -la header=(store method from)
+    declare -ga active_list=(${GURU_BACKUP_ACTIVE[@]})
+
+    # check is enabled
+    if ! [[ $GURU_BACKUP_ENABLED ]] ; then
+            gmsg -c dark_grey "backup module disabled"
             return 0
-        else
-            gmsg -v1 -c red "configuration not found! " -k $backup_indicator_key
-            return 1
         fi
+
+    # exit if not in list
+    if ! echo "${active_list[@]}" | grep "$backup_name" >/dev/null ; then
+        gmsg -c yellow "no configuration for backup $backup_name"
+        return 1
+        fi
+
+    gmsg -v3 -c white "active_list: ${active_list[@]}"
+
+    for bu_name in ${active_list[@]} ; do
+            if [[ "$bu_name" == "$backup_name" ]] ; then
+                local data="GURU_BACKUP_${bu_name^^}[@]" ; data=(${!data})
+                gmsg -v3 -c pink "${data[@]}"
+                declare -l store_device=${data[0]}
+                declare -l method=${data[1]}
+                declare -l from=${data[2]}
+                local store="GURU_BACKUP_${store_device^^}" ; store=${!store}
+                gmsg -v3 -c deep_pink "|$store_device|$store|$method|$from|"
+                break
+            fi
+        done
+
+        if echo $from | grep ":" >/dev/null ; then
+            declare -g from_user=$(echo $from | cut -d ":" -f1)
+            declare -g from_domain=$(echo $from | cut -d ":" -f2)
+            declare -g from_port=$(echo $from | cut -d ":" -f3)
+            declare -g from_location=$(echo $from | cut -d ":" -f4)
+        else
+            declare -g from_location=$from
+        fi
+
+        if echo $store | grep ":" >/dev/null ; then
+            declare -g store_user=$(echo $store | cut -d ":" -f1)
+            declare -g store_domain=$(echo $store | cut -d ":" -f2)
+            declare -g store_port=$(echo $store | cut -d ":" -f3)
+            declare -g store_location=$(echo $store | cut -d ":" -f4)
+        else
+            declare -g store_location=$store
+        fi
+
+        declare -g storing_method=$method
+
+        return 1
+
+    return 0
+}
+
+
+
+backup.status () {
+    GURU_VERBOSE=2
+    #gmsg -v3 -c pink "${FUNCNAME[0]} |$@|indicator:$backup_indicator_key "
+    # check latest backup is reachable and returnable.
+    backup.config $1
+
+
+    # source $GURU_BIN/os.sh
+    # os.check_space porn
+
+    # if [[ -f  ]] ; then
+    #         gmsg -v1 -c green "ok" -k $backup_indicator_key
+    #         return 0
+    #     else
+    #         gmsg -v1 -c yellow "configuration not found! " -k $backup_indicator_key
+    #         return 1
+    #     fi
 }
 
 
@@ -133,9 +170,28 @@ backup.at () {
 
 
 backup.now () {
-    gmsg -v3 -c pink "${FUNCNAME[0]} $@"
-    # run backup
-    # input list of backup
+
+    backup.config $1
+
+    local from_param="$from_location"
+    local store_param="$store_location"
+
+    #local command_param="-avh '-e ssh -p $from_port' --progress --update"
+
+    if [[ $from_domain ]] && [[ $store_domain ]] ; then
+            from_param="$from_user@$from_domain 'rsync -ave ssh $from_location $store_user@$store_domain:$from_port:$store_location'"
+            store_param=
+    elif [[ $from_domain ]] ; then
+            command_param="-avh -e 'ssh -p $from_port' --progress --update"
+            from_param="$from_user@$from_domain:$from_location"
+    elif [[ $store_domain ]] ; then
+            command_param="-avh -e 'ssh -p $store_port' --progress --update"
+            store_param="$store_user@$store_domain:$store_location"
+    fi
+
+    [[ $store_domain ]]|| echo mkdir -p $store_param
+    echo $storing_method $command_param $from_param $store_param
+
     return 0
 }
 
@@ -182,6 +238,7 @@ backup.remove () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$GURU_RC"
+    GURU_COLOR=true
     backup.main "$@"
     exit "$?"
 fi
