@@ -70,7 +70,7 @@ install.main () {
     # development stuff (flag: -d)
     if [[ $install_dev ]] ; then
             install.dev || gmsg -x 160 "error during installing dev"
-            check.dev
+            #check.dev
         fi
 
     # platform related stuff (flag: -p <platform>)
@@ -425,28 +425,28 @@ install.dev () {
     modules_to_install=($(ls modules -p | grep -v / | cut -f1 -d '.'))
 
     # copy foray modules
-    install.copy "foray" "$TARGET_BIN" "copying trial scripts"
+    # install.copy "foray" "$TARGET_BIN" "copying trial scripts"
     return 0
 }
 
 
-check.dev () {
-    # check installed tester files
-    gmsg -v1 "checking development files"
-    local _modules_to_install=($(ls foray -p | grep -v /))
+# check.dev () {
+#     # check installed tester files
+#     gmsg -v1 "checking development files"
+#     local _modules_to_install=($(ls foray -p | grep -v /))
 
-    for _file in ${_modules_to_install[@]} ; do
+#     for _file in ${_modules_to_install[@]} ; do
 
-            gmsg -n -v2 -c grey "$_file.. "
-            if [[ -f $TARGET_BIN/$_file ]] ; then
-                gmsg -v2 -c green "ok"
-            else
-                gmsg -c yellow "warning: development file $_file missing"
-            fi
-        done
-    # pass
-    return 0
-}
+#             gmsg -n -v2 -c grey "$_file.. "
+#             if [[ -f $TARGET_BIN/$_file ]] ; then
+#                 gmsg -v2 -c green "ok"
+#             else
+#                 gmsg -c yellow "warning: development file $_file missing"
+#             fi
+#         done
+#     # pass
+#     return 0
+# }
 
 
 install.modules () {
@@ -532,6 +532,7 @@ install.config () {
 
     # post install configure
     if [[ $configure_after_install ]] ; then
+            gmsg -c white "configuring $GURU_USER.."
             config.export "$GURU_USER" || gmsg -c red "user config export error"
             source "$core_rc" || gmsg -c red "$core_rc error"
             #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
