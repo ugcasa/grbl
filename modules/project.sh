@@ -93,7 +93,7 @@ project.status () {
     # check project file locaton is accessavle
     gmsg -n -v1 -t "${FUNCNAME[0]}: "
     if [[ -d "$project_base" ]] ; then
-            gmsg -v1 -n -c green "installed, " -k $project_indicator_key
+            gmsg -v1 -n -c green "installed, "
         else
             gmsg -n -c red "$project_base not installed, " -k $project_indicator_key
             return 100
