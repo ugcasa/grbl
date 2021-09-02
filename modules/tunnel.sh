@@ -133,7 +133,7 @@ tunnel.ls () {
     # non color system get only list og active tunnels and do not set corsair stuff
     if ! [[ $GURU_COLOR ]] ; then
         for service in ${all_services[@]} ; do
-            tunnel.parameters $service
+            tunnel.get_config $service
             if ps -x | grep -v grep | grep "ssh" | grep "$to_port:" >/dev/null; then
                     gmsg -n "$service "
                     _return=0
@@ -145,7 +145,7 @@ tunnel.ls () {
 
     # check only given service
     if [[ $service ]] ; then
-            tunnel.parameters $service
+            tunnel.get_config $service
             if ps -x | grep -v grep | grep "ssh -L $to_port:localhost:" >/dev/null; then
                     gmsg -v2 -c aqua "$service"  -k $tunnel_indicator_key
                     return 0
@@ -158,7 +158,7 @@ tunnel.ls () {
     # check all tunnels
     gmsg -n -v2 "tunnels: "
     for service in ${all_services[@]} ; do
-        tunnel.parameters $service
+        tunnel.get_config $service
         if ps -x | grep -v grep | grep "ssh" | grep "$to_port:" >/dev/null; then
                 gmsg -n -c aqua "$service " -k $tunnel_indicator_key
                 _return=0
@@ -176,7 +176,7 @@ tunnel.ls () {
 }
 
 
-tunnel.parameters () {
+tunnel.get_config () {
     # get tunnel configuration an populate common variables
 
     declare -l service_name=$1
@@ -221,7 +221,7 @@ tunnel.open () {
         fi
 
     for _service in ${service_name[@]} ; do
-            tunnel.parameters $_service || continue
+            tunnel.get_config $_service || continue
             local url="http://localhost:$to_port"
             [[ $url_end ]] && url="$url/$url_end"
 
@@ -254,7 +254,7 @@ tunnel.close () {
         # go trough tunnel list
         for service in ${service_name[@]} ; do
             # get config
-            tunnel.parameters $service
+            tunnel.get_config $service
             # get pid from ps list, must be a ssh local tunnel and contains right to_port
             pid_list=($pid_list $(ps a | grep -v grep | grep "ssh -L" | grep $from_port | head -n 1  | sed 's/^[[:space:]]*//' | cut -d " "  -f 1))
         done
