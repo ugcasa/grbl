@@ -37,3 +37,34 @@ check_python_module () {                                      # Does work, but r
    return "$?"
 }
 
+
+check_space () {
+    # check free space of server disk
+
+    declare -l mount_point=$GURU_SYSTEM_MOUNT
+    [[ $1 ]] && mount_point=$1
+    declare -l column=4
+    if [[ $2 ]] ; then
+        case $2 in
+            u|used)
+            column=3
+            ;;
+            '%'|usage)
+            column=5
+            ;;
+            a|available|free|*)
+            column=4
+            ;;
+        esac
+    fi
+
+    # df with parameters
+    declare -g server_free_space=$(df \
+        | grep $GURU_SYSTEM_MOUNT \
+        | tr -s " " \
+        | cut -d " " -f $column \
+        | sed 's/[^0-9]*//g')
+
+    # printout
+    echo "$server_free_space"
+}
