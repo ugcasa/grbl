@@ -139,6 +139,7 @@ system.status () {
 
 
 system.flag () {
+    # set flags
 
     local cmd=$1 ; shift
     case $cmd in
