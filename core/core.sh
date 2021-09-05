@@ -41,6 +41,7 @@ source $GURU_BIN/system.sh
 # user configuration overwrites
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
 [[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
+[[ $GURU_FLAG_DEBUG ]] && export GURU_DEBUG=true
 if [[ $GURU_FLAG_COLOR ]] ; then
         export GURU_COLOR=true
     else
@@ -111,13 +112,14 @@ core.parser () {
 
 core.process_opts () {
     # argument parser
-    TEMP=`getopt --long -o "scCflv:u:h:" "$@"`
+    TEMP=`getopt --long -o "scCfldv:u:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
             -s ) export GURU_VERBOSE=        ; shift     ;;
             -c ) export GURU_COLOR=true      ; shift     ;;
             -C ) export GURU_COLOR=          ; shift     ;;
+            -d ) export GURU_DEBUG=true      ; shift     ;;
             -v ) export GURU_VERBOSE=$2      ; shift 2   ;;
             -f ) export GURU_FORCE=true      ; shift     ;;
             -l ) export GURU_LOGGING=true    ; shift     ;;
