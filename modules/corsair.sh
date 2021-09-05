@@ -748,7 +748,6 @@ corsair.requirements () {
                                 libxcb1-dev qttools5-dev \
                                 libdbusmenu-qt5-2 \
                                 libdbusmenu-qt5-dev \
-
             || gmsg -x 101 -c yellow "apt-get error $?" \
             && gmsg -c green "ok"
 
