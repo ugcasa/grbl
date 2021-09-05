@@ -55,7 +55,7 @@ project.main () {
             check|exist|ls|info|\
             add|status|open|change|\
             close|toggle|rm|sublime|\
-            subl|poll|help)
+            subl|poll|help|terminal|term)
 
             project.$_cmd "$@"
             return $?
@@ -332,9 +332,40 @@ project.open () {
             joe)    gmsg "TBD add support for joe project files" ;;
         esac
 
+    project.terminal $project_folder
 
+    return $?
+}
+
+
+
+project.terminal () {
     # open terminal
+
+    local project_base="$GURU_SYSTEM_MOUNT/project"
+
+    if [[ $1 ]] ; then
+        project_name=$1
+
+    elif [[ -f $project_base/active ]] ; then
+        project_name=$(cat $project_base/active)
+
+    elif [[ -f $project_base/last ]] ; then
+        project_name=$(cat $project_base/last)
+
+    else
+        gmsg -c yellow "project name '$project_base' does not exists"
+        return 100
+    fi
+
+    local project_folder="$project_base/$project_name"
+
+    [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh source $@
+
+    gmsg -c pink "$GURU_PROJECT_GIT:$GURU_PREFERRED_TERMINAL:$project_folder/config.sh"
+
     case $GURU_PREFERRED_TERMINAL in
+
             tmux)   if module.installed tmux ; then
                             source tmux.sh
                             tmux.attach $project_name
@@ -351,7 +382,9 @@ project.open () {
                     ;;
 
             gnome-terminal)
+
                     if [[ $DISPLAY ]] ; then
+
                             if [[ $GURU_PROJECT_GIT ]] ; then
                                 gnome-terminal --tab --title="project" --working-directory="$project_folder" \
                                                --tab --title="git"     --working-directory="$GURU_PROJECT_GIT"
@@ -365,6 +398,13 @@ project.open () {
         esac
 
     return $?
+}
+
+
+project.term () {
+    project.terminal$@
+    return $?
+
 }
 
 
