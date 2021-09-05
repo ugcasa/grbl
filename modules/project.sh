@@ -202,6 +202,7 @@ project.open () {
     # open project, sublime + env variables+ tmux
 
     project.configure $1
+    shift
 
     # check is given project alredy active
     if [[ -f $project_base/active ]] && [[ "$project_name" == "$(cat $project_base/active)" ]] && ! [[ $GURU_FORCE ]]; then
@@ -301,6 +302,7 @@ project.close () {
 
     # get config
     project.configure $1
+    shift
 
     # check is there active projects, exit if not
     [[ -f $project_base/active ]] || return 0
