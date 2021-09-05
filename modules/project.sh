@@ -314,7 +314,7 @@ project.close () {
             return 3
         fi
 
-    [[ -f $project_base/$project_name/config.sh ]] && source $project_base/$project_name/config.sh post $@
+    [[ -f "$project_base/projects/$project_name/config.sh" ]] && source "$project_base/projects/$project_name/config.sh" post $@
 
     # check active project
     if [[ -f $project_base/active ]] ; then
