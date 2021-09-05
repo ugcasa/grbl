@@ -174,7 +174,7 @@ project.info () {
 
 
 project.sublime () {
-    # open siblime with project file
+    # open sublime with project file
     if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     project.configure $1
