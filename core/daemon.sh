@@ -11,6 +11,8 @@ daemon_service_script="$HOME/.config/systemd/user/guru.service"
 daemon_pid_file="/tmp/guru.daemon-pid"
 
 daemon.main () {
+    # daemon main command parser
+
     local argument="$1" ; shift
     case "$argument" in
             start|stop|status|help|kill|poll)
@@ -29,6 +31,8 @@ daemon.main () {
 
 
 daemon.help () {
+    # general help
+
     gmsg -v 1 -c white "guru daemon help "
     gmsg -v 2
     gmsg -v 0 "usage:    $GURU_CALL daemon [start|stop|status|kill|poll]"
@@ -47,6 +51,7 @@ daemon.help () {
 
 
 daemon.status () {
+    # printout status of daemon
 
     local _err=0
 
@@ -70,6 +75,7 @@ daemon.status () {
 
 
 daemon.start () {
+    # staart daemon
 
     if [[ -f "$daemon_pid_file" ]] ; then
             local _pid=$(cat "$daemon_pid_file")
@@ -155,6 +161,7 @@ daemon.stop () {
 
 
 daemon.kill () {
+    # force stop daemon
 
     if pkill guru ; then
             gmsg -v1 "${FUNCNAME[0]}: guru-daemon killed.."
@@ -175,6 +182,7 @@ daemon.kill () {
 
 
 daemon.poll () {
+    # peller for modules
 
     source $GURU_RC
     #[[ -f "/tmp/guru-stop.flag" ]] && rm -f "/tmp/guru-stop.flag"
@@ -264,6 +272,7 @@ daemon.poll () {
 
 daemon.process_opts () {
     # argument parser
+
     TEMP=`getopt --long -o "vVflu:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
@@ -284,6 +293,7 @@ daemon.process_opts () {
 
 
 daemon.systemd () {
+    # systemd method
 
     local cmd=$1 ; shift
     case $cmd in
@@ -299,6 +309,8 @@ daemon.systemd () {
 
 
 daemon.systemd_install () {
+    # setup systemd service
+
     temp="/tmp/starter.temp"
     gmsg -v1 -V2 -n "setting starter script.. "
     gmsg -v2 -n "setting starter script $daemon_service_script.. "

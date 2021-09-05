@@ -11,6 +11,7 @@ system_indicator_key="f$(daemon.poll_order system)"
 
 system.help () {
     # system help printout
+
     gmsg -v1 -c white "guru-client system help"
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL system [core-dump|update|rollback|status|suspend|env] "
@@ -32,6 +33,8 @@ system.help () {
 
 
 system.suspend_help () {
+    # suspend help
+
     gmsg -v1 -c white "guru-client system suspend help"
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL system suspend [flag|set_flag|rm_flag|install|remove]"
@@ -46,7 +49,8 @@ system.suspend_help () {
 
 
 system.env_help () {
-    # system help printout
+    # system environment help printout
+
     gmsg -v1 -c white "guru-client system flag help"
     gmsg -v2
     gmsg -v1 "get or set environmental variable list or single variable with values of running process"
@@ -62,6 +66,8 @@ system.env_help () {
 
 
 system.flag-help () {
+    # flag help
+
     gmsg -v1 -c white "guru-client system suspend help"
     gmsg -v2
     gmsg -v1 "set flags that can control daemon processes (systemdless method) "
@@ -80,6 +86,7 @@ system.flag-help () {
 
 system.main () {
     # system command parser
+
     local tool="$1" ; shift
     #system_indicator_key="f$(daemon.poll_order system)"
 
@@ -127,6 +134,7 @@ system.main () {
 
 system.status () {
     # system status
+
     gmsg -v 1 -t -n "${FUNCNAME[0]}: "
     if mount.online "$GURU_SYSTEM_MOUNT" ; then
         gmsg -v 1 -c green "guru on service" -k $system_indicator_key
@@ -157,6 +165,7 @@ system.flag () {
 
 
 system.check-flag () {
+    # returen true if flag is set
 
     if [[ -f /tmp/guru-$1.flag ]] ; then
             return 0
@@ -167,6 +176,7 @@ system.check-flag () {
 
 
 system.ls-flag () {
+    # list of flags
 
     gmsg -v2 -c white "system flag status:"
     local flag_list=(fast pause suspend stop running)
@@ -182,33 +192,11 @@ system.ls-flag () {
                 fi
         done
 
-    # gmsg -v2 -c white "user flag status:"
-    # flag=
-    # flag_file_list=$(ls -l /tmp/guru-* | grep '.flag' | rev | cut -f1 -d ' ' | rev 2>&1 >/dev/null)
-    # for flag_file in ${flag_file_list[@]} ; do
-    #         # remove ".flag"
-    #         flag=${flag_file%.*}
-    #         # remove "/tmp/guru-"
-    #         flag=${flag#*-}
-
-    #         # remove system flags
-    #         case $flag in ${flag_list[@]}) continue ;; esac
-
-    #         gmsg -v1 -n "$flag flag: "
-    #         gmsg -V1 -n "$flag:"
-    #         if [[ -f /tmp/guru-$flag.flag ]] ; then
-    #                 gmsg -c aqua "set"
-    #             else
-    #                 # this obviously never happen
-    #                 gmsg -c dark_grey "disabled"
-    #             fi
-    #     done
-
-
 }
 
 
 system.set-flag () {
+    # set flag
 
     [[ $1 ]] || gmsg -x 100 -c red "system.set_flag error: flag missing"
     local flag="$1"
@@ -225,6 +213,7 @@ system.set-flag () {
 
 
 system.rm-flag () {
+    # release flag
 
     [[ $1 ]] || gmsg -x 100 -c red "system.rm_flag error: flag missing"
     local flag="$1"
@@ -373,6 +362,7 @@ system.get_env_by_name () {
 
 
 system.client_update () {
+    # update guru-client
 
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"
@@ -408,6 +398,7 @@ system.upgrade () {
 
 
 system.update () {
+    # upgrade system
 
     system.upgrade
     return $?
@@ -584,6 +575,7 @@ system.suspend () {
 
 
 system.poll () {
+    # daemon pull function api
 
     local _cmd="$1" ; shift
 

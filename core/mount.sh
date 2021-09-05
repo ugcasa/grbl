@@ -45,6 +45,8 @@ mount.main () {
 
 
 mount.help () {
+    # general help
+
     gmsg -v1 -c white "guru-client mount help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL mount|unount|check|check-system <source> <target>"
@@ -68,6 +70,7 @@ mount.help () {
 
 mount.status () {
     # check status of GURU_CLOUD_* mountpoints defined in userrc
+
     local _active_mount_points=$(mount.list)
     for _mount_point in ${_active_mount_points[@]}; do
         mount.check $_mount_point
@@ -77,8 +80,7 @@ mount.status () {
 
 
 mount.info () {
-    # detailed list of mounted mountpoints
-    # nice list of information of sshfs mount points
+    # detailed list of mounted mountpoints. nice list of information of sshfs mount points
 
     local _error=0
     [ $TEST ] || gmsg -c white "user@server remote_folder local_mountpoint  uptime pid"
@@ -129,9 +131,8 @@ mount.system () {
 
 
 mount.online () {
-    # check if mountpoint "online", no printout, return code only
-    # input: mount point folder.
-    # usage: mount.online mount_point && echo "mounted" || echo "not mounted"
+    # check if mountpoint "online", no printout, return code only input: mount point folder. usage: mount.online mount_point && echo "mounted" || echo "not mounted"
+
     local _target_folder="$GURU_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
 
@@ -146,7 +147,8 @@ mount.online () {
 }
 
 
-mount.check () {  # check mountpoint is mounted, output status
+mount.check () {
+    # check mountpoint is mounted, output status
 
     local _err=0
     local _target_folder="$GURU_SYSTEM_MOUNT"
@@ -164,8 +166,8 @@ mount.check () {  # check mountpoint is mounted, output status
 }
 
 
-mount.remote () {  # mount any remote location
-    # usage: mount_point remote_folder optional: domain port symlink_to
+mount.remote () {
+    # mount any remote location. usage: mount_point remote_folder optional: domain port symlink_to
 
     # set defaults
     local _target_folder=
@@ -280,8 +282,9 @@ mount.remote () {  # mount any remote location
 }
 
 
-mount.defaults () { # mount all GURU_CLOUD_* defined in userrc
-                    # mount all local/cloud pairs defined in userrc
+mount.defaults () {
+    # mount all GURU_CLOUD_* defined in userrc
+
     local _error=0
     local _IFS="$IFS"
     local _symlink=
@@ -318,8 +321,9 @@ mount.defaults () { # mount all GURU_CLOUD_* defined in userrc
 }
 
 
-mount.all () { # mount all GURU_CLOUD_* defined in userrc
-                    # mount all local/cloud pairs defined in userrc
+mount.all () {
+    # mount all GURU_CLOUD_* defined in userrc
+
     local _error=0
     local _IFS="$IFS"
     local _symlink=
@@ -356,7 +360,8 @@ mount.all () { # mount all GURU_CLOUD_* defined in userrc
 
 
 
-mount.known_remote () { # mount single GURU_CLOUD_* defined in userrc
+mount.known_remote () {
+    # mount single GURU_CLOUD_* defined in userrc
 
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
     local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
@@ -379,7 +384,9 @@ mount.known_remote () { # mount single GURU_CLOUD_* defined in userrc
 }
 
 
-mount.install () {  # install and remove install applications. input "install" or "remove"
+mount.install () {
+    # install and remove install applications. input "install" or "remove"
+
     local action="$1"
     [[ "$action" ]] || read -r -p "install or remove? " action
     local require="ssh rsync"
@@ -390,6 +397,7 @@ mount.install () {  # install and remove install applications. input "install" o
 
 
 mount.poll () {
+    # daemon poll api
 
     local _cmd="$1" ; shift
 
@@ -406,7 +414,6 @@ mount.poll () {
         *)  mount.help
             ;;
         esac
-
 }
 
 

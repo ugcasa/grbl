@@ -4,6 +4,7 @@ source common.sh
 
 config.main () {
     # main comman parser
+
     local _cmd="$1" ; shift
     case "$_cmd" in
             user|export|help|edit|get|set|pull|push)
@@ -23,6 +24,8 @@ config.main () {
 
 
 config.help () {
+    # general help
+
     gmsg -v1 "guru-client config help " -c white
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help"
@@ -79,6 +82,7 @@ config.make_rc () {
 
 config.make_color_rc () {
     # export color configuration for shell scripts"
+
     local _source_cfg="$1"
     local _target_rc="$2"
     local _append_rc="$3"
@@ -126,6 +130,7 @@ config.make_color_rc () {
 
 config.export () {
     # export configuration to use
+
     # source $GURU_RC
 
     local _target_rc=$HOME/.gururc
@@ -183,6 +188,7 @@ config.export () {
 
 config.pull () {
     # pull configuration files from server
+
     gmsg -v1 -n -V2 "pulling $GURU_USER@$GURU_HOSTNAME configs.. "
     gmsg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
@@ -204,6 +210,7 @@ config.pull () {
 
 config.push () {
     # save configuration to server
+
     gmsg -v1 -n -V2 "pushing $GURU_USER@$GURU_HOSTNAME configs.. "
     gmsg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
@@ -233,6 +240,7 @@ config.push () {
 
 config.edit () {
     # edit user config file with preferred editor
+
     local _config_file=$GURU_CFG/$GURU_USER/user.cfg
 
     if ! [[ -f $_config_file ]] ; then
@@ -249,6 +257,7 @@ config.edit () {
 
 config.user () {
     # open user dialog to make changes to user.cfg
+
     local _config_file=$GURU_CFG/$GURU_USER/user.cfg
 
     if ! [[ -f $_config_file ]] ; then
@@ -295,6 +304,7 @@ config.user () {
 
 config.get (){
     # get environmental value of variable
+
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
     #set |grep "GURU_${_variable^^}"
     set | grep "GURU_${_variable^^}" | head -1 | cut -d "=" -f2
@@ -304,6 +314,7 @@ config.get (){
 
 config.set () {
     # change environment temporary
+
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
     [[ "$2" ]] && _value="$2" || read -r -p "$_variable value: " _value
 

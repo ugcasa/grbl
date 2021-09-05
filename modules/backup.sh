@@ -4,7 +4,8 @@
 source $GURU_BIN/common.sh
 
 backup.help () {
-    gmsg -v3 -c pink "${FUNCNAME[0]} $@ "
+    # general help
+
     gmsg -v1 -c white "guru-client backup help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL backup status|list|poll|install|remove  "
@@ -31,8 +32,8 @@ backup.help () {
 
 
 backup.main () {
-    gmsg -n -v3 -c pink "${FUNCNAME[0]} $@ "
     # command parser
+
     backup_indicator_key="f$(daemon.poll_order backup)"
 
     local command="$1" ; shift
@@ -58,8 +59,6 @@ backup.main () {
 
 backup.config () {
     # get tunnel configuration an populate common variables
-
-    #gmsg -v3 -c pink "${FUNCNAME[0]} |$@|indicator:$backup_indicator_key "
 
     declare -la backup_name=($1)
     declare -la header=(store method from)
@@ -120,9 +119,9 @@ backup.config () {
 
 
 backup.status () {
-    GURU_VERBOSE=2
-    #gmsg -v3 -c pink "${FUNCNAME[0]} |$@|indicator:$backup_indicator_key "
     # check latest backup is reachable and returnable.
+
+    GURU_VERBOSE=2
     backup.config $1
 
 
@@ -140,29 +139,31 @@ backup.status () {
 
 
 backup.list () {
+    # list available backups and its status
 
     local ifs=$IFS
     local tall=0
-    gmsg -v3 -c pink "${FUNCNAME[0]} $@"
+
 
 
     # (/home/casa/porn)
-    # list available backups and its status
     return 0
 }
 
 
 backup.ls () {
-    gmsg -v3 -c pink "${FUNCNAME[0]} $@"
     # alias for list
+
     backup.list $@
     return $?
 }
 
 
 backup.at () {
-    gmsg -v3 -c pink "${FUNCNAME[0]} $@"
     # set of cron like launcher based on daemon
+
+
+
     # if daemon is not running (computer sleeping) backup is not run
     # overdue backups shall be run at next start
     return 0
@@ -170,6 +171,7 @@ backup.at () {
 
 
 backup.now () {
+    # make backup now
 
     backup.config $1
 
@@ -197,8 +199,8 @@ backup.now () {
 
 
 backup.poll () {
-    gmsg -v3 -c pink "${FUNCNAME[0]} $@"
     # poll functions
+
     # TBD: write cooperative standard function for timed processes
 
     local _cmd="$1" ; shift
@@ -221,8 +223,8 @@ backup.poll () {
 
 
 backup.install () {
-    gmsg -v3 -c pink "${FUNCNAME[0]} $@"
     # install needed tools
+
     sudo apt update && \
     sudo apt install ssh scp rsync sshfs pv
     return $?
@@ -230,8 +232,8 @@ backup.install () {
 
 
 backup.remove () {
-    gmsg -v3 -c pink "${FUNCNAME[0]} $@"
     #sudo apt remove xxx
+
     return 0
 }
 

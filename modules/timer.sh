@@ -7,6 +7,7 @@ source common.sh
 
 timer.main () {
     # main command parser
+
     command="$1" ; shift
     case "$command" in
 
@@ -21,6 +22,8 @@ timer.main () {
 
 
 timer.help () {
+    # general help
+
     gmsg -v1 -c white "guru-client timer help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL timer [start|end|cancel|log|edit|report] <task> <project> <customer> "
@@ -41,6 +44,7 @@ timer.help () {
 
 timer.toggle () {
     # key press action
+
     if timer.status >/dev/null ; then
         timer.end
     else
@@ -50,14 +54,16 @@ timer.toggle () {
 }
 
 
-timer.check() {
+timer.check () {
     # check timer state
+
     timer.status human && return 0 || return 100
     }
 
 
-timer.status() {
+timer.status () {
     # output timer status
+
     timer_indicator_key="f$(daemon.poll_order timer)"
     gmsg -n -t -v1 "${FUNCNAME[0]}: "
 
@@ -115,8 +121,9 @@ timer.status() {
 }
 
 
-timer.last() {
+timer.last () {
     # get last timer state
+
     if [[ -f $GURU_FILE_TRACKLAST ]] ; then
             gmsg -c light_blue "$(cat $GURU_FILE_TRACKLAST)"
         else
@@ -125,8 +132,9 @@ timer.last() {
 }
 
 
-timer.start() {
+timer.start () {
     # Start timer TBD rewrite this thole module
+
     timer_indicator_key="f$(daemon.poll_order timer)"
     [[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
 
@@ -188,8 +196,9 @@ timer.start() {
 }
 
 
-timer.end() {
+timer.end () {
     # end timer and save to database (file)
+
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
         source $GURU_FILE_TRACKSTATUS
     else
@@ -275,21 +284,25 @@ timer.end() {
 
 timer.stop () {
     # alias stop for end
+
     timer.end "$@"
     return 0
 }
 
 
-timer.change() {
+timer.change () {
     # alias change for start
+
+
     timer.start "$@"
     gmsg -v1 -c dark_golden_rod "work topic changed"
     return $?
 }
 
 
-timer.cancel() {
+timer.cancel () {
     # cancel exits timer
+
     timer_indicator_key="f$(daemon.poll_order timer)"
 
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
@@ -306,6 +319,7 @@ timer.cancel() {
 
 timer.log () {
     # printout short list of recent records
+
     printf "last logged records:\n$(tail $GURU_FILE_TRACKDATA | tr ";" "  ")\n"
     return 0
 }
@@ -313,6 +327,7 @@ timer.log () {
 
 timer.edit () {
     # edit data csv file
+
     $GURU_PREFERRED_EDITOR "$GURU_FILE_TRACKDATA" &
     return 0
 }
@@ -320,6 +335,7 @@ timer.edit () {
 
 timer.report() {
     # make a report
+
     [ "$1" ] && team="$1" || team="$GURU_TEAM"
     report_file="work-track-report-$(date +%Y%m%d)-$team.csv"
     output_folder=$HOME/Documents
@@ -334,6 +350,7 @@ timer.report() {
 
 timer.poll () {
     # daemon interface
+
     timer_indicator_key="f$(daemon.poll_order timer)"
 
     local _cmd="$1" ; shift

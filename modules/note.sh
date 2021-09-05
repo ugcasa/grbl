@@ -5,6 +5,7 @@ source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
 
 note.main () {
+    # main command parser
 
     local command="$1" ; shift
 
@@ -35,6 +36,8 @@ note.main () {
 
 
 note.help () {
+    # general help
+
     gmsg -v1 -c white "guru-client note help "
     gmsg -v2
     gmsg -v0 "Usage:    $GURU_CALL note [ls|add|open|rm|check|report|locate|tag] <date> "
@@ -52,14 +55,9 @@ note.help () {
 }
 
 
-note.status () {
-    note.online && note.ls
-    return 0
-}
-
-
 note.gen_var () {
     # populates needed variables based on given date in format YYYMMDD
+
     input=$1
 
     if [ "$input" ]; then
@@ -88,6 +86,7 @@ note.gen_var () {
 
 note.check () {
     # chech that given date note file exist
+
     if ! note.online ; then note.remount ; fi
     note.gen_var "$1"
     gmsg -n -v1 "checking note file.. "
@@ -102,8 +101,10 @@ note.check () {
 
 
 note.locate () {
+    # find notes based on timestamp
 
     note.locate_check () {
+        # make variables
 
         note.gen_var "$1"
         gmsg -v1 "$note "        
@@ -139,6 +140,7 @@ note.locate () {
 
 note.online () {
     # check that needed folders are mounted
+
     if ! [[ "$GURU_MOUNT_NOTES" ]] && [[ "$GURU_MOUNT_TEMPLATES" ]] ; then
             gmsg -c yellow "empty variable: '$GURU_MOUNT_NOTES' or '$GURU_MOUNT_TEMPLATES'"
             return 100
@@ -156,6 +158,7 @@ note.online () {
 
 note.remount () {
     # mount needed folders
+
     mount.known_remote notes || return 43
     mount.known_remote templates || return 43
     return 0
@@ -363,6 +366,17 @@ note.web () {
 
     $GURU_OFFICE_DOC "${note%%.*}.odt" &
     echo "report file: ${notefile%%.*}.odt"
+}
+
+################## daemon functions #####################
+
+# TDB poller
+
+note.status () {
+    # make status for daemon
+
+    note.online && note.ls
+    return 0
 }
 
 

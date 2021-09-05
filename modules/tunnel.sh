@@ -4,6 +4,8 @@
 source common.sh
 
 tunnel.help () {
+    # genereal help
+
     gmsg -v1 -c white "guru-client tunnel help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL tunnel status|ls|open|close|add|rm|start|end|install|remove] "
@@ -26,6 +28,7 @@ tunnel.help () {
 
 
 tunnel.main () {
+    # command parser
 
     command="$1"; shift
     case "$command" in
@@ -100,6 +103,7 @@ tunnel.add () {
 
 tunnel.rm () {
     # remove ssh tunnel from ssh config
+
     echo TBD
     return 0
 }
@@ -124,6 +128,7 @@ tunnel.toggle () {
 
 tunnel.ls () {
     # list of ssh tunnels
+
     local all_services=${GURU_TUNNEL_LIST[@]}
     local service=
     [[ $1 ]] && service=$1
@@ -342,7 +347,8 @@ tunnel.poll () {
 
 
 tunnel.requirements () {
-    #install and remove needed applications. input "install" or "remove"
+    # install and remove needed applications. input "install" or "remove"
+
     local action=$1
     [[ "$action" ]] || read -r -p "install or remove? :" action
     local require="ssh rsync"

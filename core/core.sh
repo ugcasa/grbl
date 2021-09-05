@@ -85,6 +85,7 @@ core.main () {
 
 core.parser () {
     # main command parser
+
     local tool="$1" ; shift
 
     # TBD expired method to let modules know the command before client was not: to remove check is it used and remove
@@ -112,6 +113,7 @@ core.parser () {
 
 core.process_opts () {
     # argument parser
+
     TEMP=`getopt --long -o "scCfldv:u:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
@@ -251,6 +253,7 @@ core.shell () {
         }
 
     inc_verbose () {
+
             (( _verbose<2 )) && let _verbose++
             cmd=
         }

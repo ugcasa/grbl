@@ -6,6 +6,7 @@ source common.sh
 
 convert.main () {
 	# convert format parser
+
 	declare -l format=$1
 	shift
 
@@ -29,6 +30,8 @@ convert.main () {
 
 
 convert.help () {
+	# genral help
+
 	gmsg -v1 -c white "guru convert help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL convert <input_format> file list"
@@ -77,17 +80,18 @@ convert.webp_png () {
 
 
 convert.install_webp () {
+	# install needed
 
 	dwebp -version -quiet >/dev/null && return 0
 	sudo apt update && sudo apt install webp
 }
 
-convert.install_webp () {
+convert.remove_webp () {
+	# remove tools
 
 	dwebp -version -quiet >/dev/null || return 0
 	sudo apt remove webp
 }
-
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then

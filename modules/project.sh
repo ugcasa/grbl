@@ -8,7 +8,6 @@ source $GURU_BIN/timer.sh
 
 project.main () {
     # main command parser
-    #if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     local _cmd="$1" ; shift
 
@@ -23,7 +22,7 @@ project.main () {
             return $?
             ;;
 
-        *)  #project.open "$_cmd" "$@"
+        *)  project.open "$_cmd" "$@"
             return $?
             ;;
         esac
@@ -69,7 +68,6 @@ project.help () {
 
 project.configure () {
     # set global project variables
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     declare -g project_base="$GURU_SYSTEM_MOUNT/project"
     declare -g project_arhive="$GURU_SYSTEM_MOUNT/project/arhive"
@@ -113,7 +111,6 @@ project.configure () {
 
 project.info () {
     # list of projects, active higlighted with lis of tmux sessions
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     project.configure $1
 
@@ -175,7 +172,6 @@ project.info () {
 
 project.sublime () {
     # open sublime with project file
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     project.configure $1
 
@@ -197,7 +193,6 @@ project.sublime () {
 
 project.subl () {
     # alias for above
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     project.sublime $@
 }
@@ -205,7 +200,6 @@ project.subl () {
 
 project.open () {
     # open project, sublime + env variables+ tmux
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     project.configure $1
 
@@ -251,7 +245,6 @@ project.open () {
 
 project.terminal () {
     # open preferred terminal with configuration or command line setup
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     project.configure $1
 
@@ -296,7 +289,6 @@ project.terminal () {
 
 project.term () {
     # alias for above
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     project.terminal $@
     return $?
@@ -306,7 +298,6 @@ project.term () {
 
 project.close () {
     # close project, config.sh will be called if exisats
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     # get config
     project.configure $1
@@ -337,7 +328,6 @@ project.close () {
 
 project.toggle () {
     # open last project if not open already and close if its open
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     local project_base="$GURU_SYSTEM_MOUNT/project"
     [[ -f $project_base/active ]] && project.close || project.open $@
@@ -350,7 +340,6 @@ project.toggle () {
 
 project.ls () {
     # list of projects
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     #project.configure $1   # no point, only one variable needed
     local project_base="$GURU_SYSTEM_MOUNT/project"
@@ -409,7 +398,6 @@ project.ls () {
 
 project.add () {
     # add project to projects
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     if [[ "$1" ]] ; then
             local project_name="$1"
@@ -449,7 +437,6 @@ project.add () {
 
 project.archive () {
     # move project archive
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     local project_list=($@)
 
@@ -487,7 +474,6 @@ project.archive () {
 
 project.rm () {
     # remove project
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     if [[ $1 ]] ; then
             local project_list=($@)
@@ -536,7 +522,6 @@ project.rm () {
 
 project.exist () {
     # check that project exist
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     local i=0
     project_name="$1"
@@ -554,7 +539,6 @@ project.exist () {
 
 project.change () {
     # just open sublime for now
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     local project_name=$1
     local project_base="$GURU_SYSTEM_MOUNT/project"
@@ -569,7 +553,6 @@ project.change () {
 
 project.status () {
     # check that project module is working correctly
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     project.configure $1
 
@@ -606,7 +589,6 @@ project.status () {
 
 project.poll () {
     # daemon required polling functions
-    if [[ $GURU_DEBUG ]] ; then gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:" ; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">" ; fi
 
     local _cmd="$1" ; shift
 

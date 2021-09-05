@@ -277,13 +277,13 @@ project.test_rm () {
 
 project.test_exist () {
     # function to test project module function project.exist
-    local _error=0
+    local _error=100
     gmsg -v0 -c white 'testing project.exist'
 
       ## TODO: add pre-conditions here
 
       if project.exist test ; then
-         _error=100
+         _error=0
       fi
 
       ## TODO: add analysis here and manipulate $_error

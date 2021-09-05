@@ -11,6 +11,8 @@ tmux_indicator_key="f$(daemon.poll_order tmux)"
 GURU_VERBOSE=1
 
 tmux.help () {
+    # general help
+
     gmsg -v1 -c white "guru-client tmux help "
     gmsg -v2
     gmsg -V2 -v0 "usage:    $GURU_CALL tmux ls|attach|config "
@@ -36,6 +38,7 @@ tmux.help () {
 
 tmux.main () {
     # tmux main command parser
+
     local _cmd="$1" ; shift
 
     case "$_cmd" in
@@ -50,6 +53,8 @@ tmux.main () {
 
 
 tmux.ls () {
+    # list of sessions
+
     tmux ls | cut -d ':'
     return $?
 }
@@ -57,6 +62,7 @@ tmux.ls () {
 
 tmux.config () {
     # tmux configuration manager
+
     local editor='dialog'
     [[ $1 ]] && editor='$1'
     config_file="$HOME/.tmux.conf"
@@ -124,6 +130,7 @@ tmux.config_dialog () {
 
 
 tmux.config_undo () {
+    # return previous config
 
     if [[ $1 ]] ; then
             local config_file="$1"
@@ -145,6 +152,7 @@ tmux.config_undo () {
 
 tmux.open () {
     # open tmux session
+
     local session="0"
     [[ $1 ]] && session="$1"
     tmux attach -s $session
@@ -154,8 +162,8 @@ tmux.open () {
 
 
 tmux.status () {
-    # check tmux broker is reachable.
-    # printout and signal by corsair keyboard indicator led - if available
+    # check tmux broker is reachable. printout and signal by corsair keyboard indicator led - if available
+
     tmux_indicator_key="f$(daemon.poll_order tmux)"
 
     gmsg -n -t "${FUNCNAME[0]}: "
@@ -186,6 +194,7 @@ tmux.status () {
 
 tmux.attach () {
     # attach to tmux session if exist
+
     local session="0"
     [[ $1 ]] && session="$1"
 
@@ -212,6 +221,7 @@ tmux.attach () {
 
 tmux.poll () {
     # daemon required polling functions
+
     local _cmd="$1" ; shift
     local tmux_indicator_key="f$(daemon.poll_order tmux)"
 
@@ -237,6 +247,7 @@ tmux.poll () {
 
 tmux.install () {
     # install tmux
+
     sudo apt update
     sudo apt install tmux \
         && gmsg -c green "guru is now ready to tmux" \
@@ -248,6 +259,7 @@ tmux.install () {
 
 tmux.remove () {
     # remove tmux
+
     sudo apt remove tmux && return 0
     return 1
 }

@@ -7,6 +7,8 @@ mqtt_indicator_key="f$(daemon.poll_order mqtt)"
 
 
 mqtt.help () {
+    # general help
+
     gmsg -v1 -c white "guru-client mqtt help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL mqtt status|sub|pub|start|end|single|help|install|remove "
@@ -32,6 +34,7 @@ mqtt.help () {
 
 mqtt.main () {
     # mqtt main command parser
+
     local _cmd="$1" ; shift
     mqtt_indicator_key="f$(daemon.poll_order mqtt)"
 
@@ -55,8 +58,8 @@ mqtt.main () {
 # TBD enabled, online and status should combine to one function?
 
 mqtt.enabled () {
-    # check is function activated and output instructions
-    # to enable function on user configuration
+    # check is function activated and output instructions to enable function on user configuration
+
     if [[ $GURU_MQTT_ENABLED ]] ; then
         gmsg -v2 -c green "mqtt enabled"
         return 0
@@ -73,6 +76,7 @@ mqtt.online () {
 
     mqtt.online_send () {
         # if mqtt message takes more than 2 seconds to return from closest mqtt server there is something wrong
+
         sleep 2
         timeout 2 mosquitto_pub \
             -u "$GURU_MQTT_USER" \
@@ -106,8 +110,8 @@ mqtt.online () {
 
 
 mqtt.status () {
-    # check mqtt broker is reachable.
-    # printout and signal by corsair keyboard indicator led - if available
+    # check mqtt broker is reachable. printout and signal by corsair keyboard indicator led - if available
+
     mqtt_indicator_key="f$(daemon.poll_order mqtt)"
 
     gmsg -n -v1 -t "${FUNCNAME[0]}: "
@@ -135,6 +139,7 @@ mqtt.status () {
 
 mqtt.sub () {
     # subscribe to channel, stay listening
+
     local _topic="$1" ; shift
     # lazy way to deliver arguments
     [[ $1 ]] && local _options="-$@"
@@ -150,6 +155,7 @@ mqtt.sub () {
 
 mqtt.pub () {
     # publish to mqtt server
+
     local _topic="$1" ; shift
     local _message="$@"
     local _error=
@@ -182,6 +188,7 @@ mqtt.pub () {
 
 mqtt.single () {
     # subscribe to channel, stay listening
+
     local _topic="$1" ; shift
     [[ $1 ]] && local _options="-$@"
     mosquitto_sub -C 1 \
@@ -195,6 +202,8 @@ mqtt.single () {
 
 
 mqtt.log () {
+    # start topic log to file
+
     local _topic="$1" ; shift
     local _log_file=$GURU_LOG ; [[ $1 ]] && _log_file="$1"
     mosquitto_sub \
@@ -208,6 +217,7 @@ mqtt.log () {
 
 mqtt.poll () {
     # daemon required polling functions
+
     local _cmd="$1" ; shift
 
     case $_cmd in
@@ -232,6 +242,7 @@ mqtt.poll () {
 
 mqtt.install () {
     # install mosquitto mqtt clients
+
     sudo apt update
     sudo apt install mosquitto-clients \
         && gmsg -c green "guru is now ready to mqtt" \
@@ -246,6 +257,7 @@ mqtt.install () {
 
 mqtt.remove () {
     # remove mosquitto mqtt clients
+
     sudo apt remove mosquitto-clients && return 0
     return 1
 }

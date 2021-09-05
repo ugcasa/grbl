@@ -2,12 +2,16 @@
 # TODO remove common.sh, not practical way cause of namespacing
 
 system.core-dump () {
+    # dump environmental status to file
+
     echo "core dumped to $GURU_CORE_DUMP"
     set > "$GURU_CORE_DUMP"
 }
 
 
 daemon.poll_order () {
+    # set get polling order
+
     local _to_find="$1"
     local i=0
 
@@ -30,6 +34,8 @@ daemon.poll_order () {
 
 
 daemon.poll_order_old () {
+    # old way to get polling order
+
     local i=0
     local _to_find=$1
     # while [[ "$i" -lt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] && [[ "${GURU_DAEMON_POLL_ORDER[$i]}" != "$_to_find" ]] ; do
@@ -174,6 +180,8 @@ gmsg () {
 
 
 gask () {
+    # yes or no shortcut
+
     local _ask="$1"
     local _ans
 
@@ -189,6 +197,7 @@ gask () {
 
 import () {
     # source all bash function in module. input: import <module_name> <py|sh|php..>
+
     local _module=$1 ; shift
     local _type=sh ; [[ $1 ]] && _type=$1
 
@@ -210,6 +219,7 @@ import () {
 }
 
 module.installed () {
+    # check is module installed
 
     local i=0
     local _to_find=$1

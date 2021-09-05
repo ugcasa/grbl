@@ -2,7 +2,8 @@
 # user settings for guru-client
 # casa@ujo.guru 2020
 
-user_main() {
+user_main () {
+    # command parser
 
     command="$1"; shift
 
@@ -36,6 +37,7 @@ user_main() {
 }
 
 set_value () {
+    # set value to user (or any) config file
 
     [ -f "$GURU_SYSTEM_RC" ] && target_rc="$GURU_SYSTEM_RC" || target_rc="$GURU_RC"        #
     #[ $3 ] && target_rc=$3
@@ -45,6 +47,7 @@ set_value () {
 
 
 add_user () {
+    # add user (futile)
 
     [ "$1" ] && new_user="$1" || read -p "user name to change to : " new_user
     echo "adding $new_user"
@@ -59,6 +62,7 @@ add_user () {
 
 add_user_server () {
     # Run this only at accesspoint server for now
+
     echo "add user to access point server TBD"
     [ "$1" ] && new_user="$1" || read -p "user name to add : " new_user
     echo sudo adduser "$new_user"
@@ -66,6 +70,7 @@ add_user_server () {
 }
 
 change_user () {
+    # change user, futile done bu guru config export -u <username>
 
     [ "$1" ] && new_user="$1" || read -p "user name to change to : " new_user
 

@@ -40,6 +40,8 @@ MOUSE="/tmp/ckbpipe099"
 
 
 corsair.help () {
+    # general help
+
     gmsg -v1 -c white "guru-client corsair keyboard indicator help"
     gmsg -v2
     gmsg -v0 "usage:           $GURU_CALL corsair start|init|reset|end|status|help|set <key/profile> <color>"
@@ -80,6 +82,7 @@ corsair.help () {
 
 corsair.help-profile () {
     # inform user to set profile manually (should never need)
+
     gmsg -c white "set ckb-next profile manually"
     gmsg -v1 -n "open ckb-next and click profile bar and select " ; gmsg -v1 -n -c white "Manage profiles "
     gmsg -v1 -n "then click " ; gmsg -v1 -n -c white "Import "
@@ -142,6 +145,8 @@ corsair.main () {
 
 
 corsair.enabled () {
+    # check is corsair enables in user.cfg
+
     gmsg -n -v2 "checking corsair is enabled.. "
         if [[ $GURU_CORSAIR_ENABLED ]] ; then
                 gmsg -v2 -c green "enabled"
@@ -221,6 +226,7 @@ corsair.check () {
 
 corsair.init () {
     # load default profile and set wanted mode, default is set in user configuration
+
     local _mode=$GURU_CORSAIR_MODE ; [[ $1 ]] && _mode="$1"
 
     if ckb-next -p guru -m $_mode 2>/dev/null ; then
@@ -238,6 +244,7 @@ corsair.init () {
 
 corsair.set () {
     # write color to key: input <key> <color>
+
     corsair.check | return $?
     local _button=${1^^}
     local _color='rgb_'"$2"
@@ -276,8 +283,7 @@ corsair.set () {
 
 
 corsair.reset () {
-    # application level function, not restarting daemon or application
-    # return normal, if no input reset all
+    # application level function, not restarting daemon or application, return normal, if no input reset all
 
     gmsg -n -v3 "resetting key"
 
@@ -298,6 +304,7 @@ corsair.reset () {
 
 corsair.clear () {
     # set key to black, input <known_key> default is F1 to F12
+
     local _keylist=($key_pipe_list)
     gmsg -n -v3 "setting keys "
     [[ "$1" ]] && _keylist=(${@})
@@ -312,6 +319,7 @@ corsair.clear () {
 
 corsair.end () {
     # reserve some keys for future purposes by coloring them now
+
     corsair.init ftb
     sleep 1
     corsair.init $GURU_CORSAIR_MODE && return 0 || return 100
@@ -339,6 +347,7 @@ corsair.check_pipe () {
 ############### raw method fucntions (for non systemd releases) ######################
 
 corsair.raw_status () {
+    # get status information
 
     gmsg -V1 "$(ps auxf | grep ckb-next | grep -v grep)"
 
@@ -355,6 +364,7 @@ corsair.raw_status () {
 
 corsair.start_raw_stack () {
     # start full stack, daemon and application
+
     if ! [[ $GURU_VERBOSE ]] ; then
             ckb-next -b 2>/dev/null &
         else
@@ -500,6 +510,7 @@ corsair.raw_disable () {
 
 corsair.systemd_status () {
     # printout systemd service status
+
     systemctl --user status corsair.service
 }
 
@@ -583,6 +594,7 @@ corsair.systemd_restart () {
 
 corsair.systemd_stop () {
     # systemd method stop service function
+
     gmsg -v1 "stopping corsair service.. "
     systemctl --user stop corsair.service || gmsg -c yellow "stop failed"
 
@@ -721,6 +733,7 @@ corsair.patch () {
 
 corsair.compile () {
     # compile ckb-next and ckb-next-daemon
+
     [[ -d /tmp/ckb-next ]] || corsair.clone
     cd /tmp/ckb-next
     gmsg -c white "running installer.."
