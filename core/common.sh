@@ -224,11 +224,14 @@ module.installed () {
 }
 
 
+
+
 #`TBD`declase -xf ? rather than export?
 export -f system.core-dump
 export -f daemon.poll_order
 export -f gmsg
 export -f gask
 export -f import
+
 
 
