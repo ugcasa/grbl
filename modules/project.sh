@@ -633,7 +633,6 @@ gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:"; gmsg -n -c deep_pink "$@" ; gmsg -n 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         source "$GURU_RC"
-        GURU_COLOR=true
         project.main "$@"
     fi
 

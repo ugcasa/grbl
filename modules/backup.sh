@@ -240,7 +240,6 @@ backup.remove () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$GURU_RC"
-    GURU_COLOR=true
     backup.main "$@"
     exit "$?"
 fi

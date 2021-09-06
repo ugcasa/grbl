@@ -4,7 +4,6 @@ source common.sh
 
 config.main () {
     # main comman parser
-
     local _cmd="$1" ; shift
     case "$_cmd" in
             user|export|help|edit|get|set|pull|push)
@@ -25,7 +24,6 @@ config.main () {
 
 config.help () {
     # general help
-
     gmsg -v1 "guru-client config help " -c white
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help"

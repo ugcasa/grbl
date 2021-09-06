@@ -7,13 +7,6 @@ declare -x GURU_VERSION="0.6.6.5"
 declare -x GURU_RC="$HOME/.gururc"
 declare -x GURU_BIN="$HOME/bin"
 
-# check if colors possible, will be overwritten by user.cfg
-# if echo "$TERM" | grep "256" >/dev/null ; then
-#     if echo "$COLORTERM" | grep "true" >/dev/null ; then
-#             export GURU_COLOR=true
-#         fi
-#     fi
-# early exit commands
 case "$1" in
         ver|version|--ver|--version)
             echo "guru-client v$GURU_VERSION"
@@ -38,15 +31,9 @@ source $GURU_BIN/corsair.sh
 source $GURU_BIN/system.sh
 
 
+
 # user configuration overwrites
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
-[[ $GURU_FLAG_VERBOSE ]] && export GURU_VERBOSE=$GURU_FLAG_VERBOSE
-[[ $GURU_FLAG_DEBUG ]] && export GURU_DEBUG=true
-if [[ $GURU_FLAG_COLOR ]] ; then
-        export GURU_COLOR=true
-    else
-        export GURU_COLOR=
-    fi
 
 # check is accesspoint enabled and mount is not already done
 if [[ $GURU_ACCESS_ENABLED ]] ; then
@@ -55,35 +42,57 @@ if [[ $GURU_ACCESS_ENABLED ]] ; then
     mount.main system
 fi
 
+core.process_opts () {
+    # argument parser
 
-core.main () {
-    # tail bone function but it sits well here
+    # default values
+    GURU_HOSTNAME="$(hostname)"
+    GURU_VERBOSE=$GURU_FLAG_VERBOSE
+    GURU_COLOR=$GURU_FLAG_COLOR
+    GURU_DEBUG=$GURU_FLAG_DEBUG
+    GURU_FORCE=
+    GURU_LOGGING=
 
-    if [[ "$1" ]] ; then
-            # with arguments go to parser
-            core.parser "$@"
-            _error_code=$?
-        else
-            # without parameters starts terminal loop
-            core.shell "$@"
-            _error_code=$?
+    # go trought arguments and overwrite defualt if set or value given
+    TEMP=`getopt --long -o "scfldv:u:h:" "$@"`
+    eval set -- "$TEMP"
+    while true ; do
+        case "$1" in
+            -c ) GURU_COLOR=            ; shift     ;;
+            -s ) GURU_VERBOSE=          ; shift     ;;
+            -d ) GURU_DEBUG=true        ; shift     ;;
+            -f ) GURU_FORCE=true        ; shift     ;;
+            -l ) GURU_LOGGING=true      ; shift     ;;
+            -v ) GURU_VERBOSE=$2        ; shift 2   ;;
+            -u ) core.change_user "$2"  ; shift 2   ;;
+            -h ) GURU_HOSTNAME=$2       ; shift 2   ;;
+             * ) break                  ;;
+        esac
+    done;
+    _arg="$@"
+
+    # TBD can this use to deliver -- variables to modules?
+    [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
+    gmsg -v3 -c pink "arguments: $ARGUMENTS"
+
+    # check if colors possible, and overwrite user input and user.cfg
+    if echo "$TERM" | grep "256" >/dev/null ; then
+        if ! echo "$COLORTERM" | grep "true" >/dev/null ; then
+                export GURU_COLOR=
+            fi
         fi
 
-    if (( _error_code < 1 )) ; then
-                return 0
-        elif (( _error_code > 99 )) ; then
-                # on verbose -v print onle errors
-                gmsg -v2 -c red  "error code $_error_code"
-            else
-                # on verbose -V print also warnings
-                gmsg -v3 -c yellow "warning code $_error_code"
-            fi
-
-    return $_error_code
+    # export set values
+    export GURU_HOSTNAME
+    export GURU_VERBOSE
+    export GURU_COLOR
+    export GURU_DEBUG
+    export GURU_FORCE
+    export GURU_LOGGING
 }
 
 
-core.parser () {
+core.main () {
     # main command parser
 
     local tool="$1" ; shift
@@ -92,47 +101,30 @@ core.parser () {
     export GURU_CMD="$tool"
 
     case "$tool" in
-                           all)  core.multi_module_function "$@"        ; return $? ;;
-                        status)  core.multi_module_function status      ; return $? ;;
-               start|poll|kill)  daemon.$tool                           ; return $? ;;
-                         pause)  system.flag pause \
-                                 && system.flag rm pause \
-                                 || system.flag set pause               ;;
-                          stop)  system.main flag set stop              ; return 0  ;;
-                      document)  $tool "$@"                             ; return $? ;;
-                         radio)  DISPLAY=0; $tool.py "$@"               ; return $? ;;
-                         shell)  core.shell "$@"                        ; return $? ;;
-                     uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; return $? ;;
-       help|"?"|"-?"|--help|-h)  core.help $@                           ; return $? ;;
-                            "")  core.shell                             ; return $? ;;
-                             *)  core.run_module "$tool" "$@"           ; return $? ;;
-    esac
-    return 0
-}
-
-
-core.process_opts () {
-    # argument parser
-
-    TEMP=`getopt --long -o "scCfldv:u:h:" "$@"`
-    eval set -- "$TEMP"
-    while true ; do
-        case "$1" in
-            -s ) export GURU_VERBOSE=        ; shift     ;;
-            -c ) export GURU_COLOR=true      ; shift     ;;
-            -C ) export GURU_COLOR=          ; shift     ;;
-            -d ) export GURU_DEBUG=true      ; shift     ;;
-            -v ) export GURU_VERBOSE=$2      ; shift 2   ;;
-            -f ) export GURU_FORCE=true      ; shift     ;;
-            -l ) export GURU_LOGGING=true    ; shift     ;;
-            -u ) core.change_user "$2"       ; shift 2   ;;
-            -h ) export GURU_HOSTNAME=$2     ; shift 2   ;;
-             * ) break                  ;;
+                       all)  core.multi_module_function "$@"        ; _error_code=$? ;;
+                    status)  core.multi_module_function status      ; _error_code=$? ;;
+           start|poll|kill)  daemon.$tool                           ; _error_code=$? ;;
+                     pause)  system.flag pause \
+                             && system.flag rm pause \
+                             || system.flag set pause               ;;
+                      stop)  system.main flag set stop              ; return 0  ;;
+                  document)  $tool "$@"                             ; _error_code=$? ;;
+                     radio)  DISPLAY=0; $tool.py "$@"               ; _error_code=$? ;;
+                     shell)  core.shell "$@"                        ; _error_code=$? ;;
+                 uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; _error_code=$? ;;
+                   help|-h)  core.help $@                           ; _error_code=$? ;;
+                        "")  core.shell                             ; _error_code=$? ;;
+                         *)  core.run_module "$tool" "$@"           ; _error_code=$? ;;
         esac
-    done;
-    _arg="$@"
-    [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }"
-    gmsg -v3 -c pink "arguments: $ARGUMENTS"
+
+    # on verbose -v print onle errors
+    if (( _error_code > 99 )) ; then
+            gmsg -v1 -c red  "error code $_error_code"
+    elif (( _error_code > 0 )) ; then
+            gmsg -v2 -c yellow "warning code $_error_code"
+        fi
+
+    return $_error_code
 }
 
 
@@ -304,8 +296,7 @@ core.help () {
             gmsg -v1 " -h <hosname>     change computer host name name temporary "
             gmsg -v1 " -l               set logging on to file $GURU_LOG"
             gmsg -v1 " -f               set force mode on, be more aggressive"
-            gmsg -v1 " -c               force color in terminal"
-            gmsg -v1 " -C               remove terminal colors"
+            gmsg -v1 " -c               disable colors in terminal"
             gmsg -v2
             return 0
         }
@@ -409,5 +400,5 @@ core.help () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         core.process_opts $@
         core.main $ARGUMENTS
-        #exit $?
+        exit $?
     fi
