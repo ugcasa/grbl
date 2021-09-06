@@ -185,8 +185,16 @@ gask () {
     local _ask="$1"
     local _ans
 
+    # just for showup ;)=
+    if [[ GURU_CORSAIR_ENABLED ]] ; then
+            source $GURU_BIN/corsair.sh
+            corsair.init yes-no
+        fi
+
     read -n 1 -p "$_ask [y/n]: " _ans
     echo
+
+    [[ $GURU_CORSAIR_ENABLED ]] && corsair.init # $GURU_CORSAIR_MODE
 
     case $_ans in y|Y|yes|Yes)
             return 0
