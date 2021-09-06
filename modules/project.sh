@@ -195,13 +195,14 @@ project.subl () {
     # alias for above
 
     project.sublime $@
+    return $?
 }
 
 
 project.open () {
     # open project, sublime + env variables+ tmux
 
-    project.configure $1
+    if ! project.configure $1 ; then return 0 ; fi
     shift
 
     # check is given project alredy active
