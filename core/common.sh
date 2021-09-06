@@ -53,8 +53,8 @@ gmsg () {
     # function for output messages and make log notifications
 
     # default values
-    local _verbose_trigger=0                        # prinout if verbose trigger is not set in options
-    local _verbose_limiter=4                        # maximum + 1 verbose level
+    local verbose_trigger=0                        # prinout if verbose trigger is not set in options
+    local verbose_limiter=4                        # maximum + 1 verbose level
     local _newline="\n"                             # newline is on by default
     local _pre_newline=                             # newline before text disable by default
     local _timestamp=                               # timestamp is disabled by default
@@ -82,8 +82,8 @@ gmsg () {
                 -N ) _pre_newline="\n"                          ; shift ;;
                 -x ) _exit=$2                                   ; shift 2 ;;
                 -w ) _column_width=$2                           ; shift 2 ;;
-                -V ) _verbose_limiter=$2                        ; shift 2 ;;
-                -v ) _verbose_trigger=$2                        ; shift 2 ;;
+                -V ) verbose_limiter=$2                        ; shift 2 ;;
+                -v ) verbose_trigger=$2                        ; shift 2 ;;
                 -m ) _mqtt_topic="$2"                           ; shift 2 ;;
                 -q ) _mqtt_topic="$GURU_HOSTNAME/$2"            ; shift 2 ;;
                 -k ) _indicator_key=$2                          ; shift 2 ;;
@@ -137,13 +137,13 @@ gmsg () {
 
     # -v) given verbose level is lower than trigger level, do not print
     # "print only if higer verbose level than this"
-    if (( _verbose_trigger > GURU_VERBOSE )) ; then
+    if [[ $verbose_trigger -gt $GURU_VERBOSE ]] ; then
             return 0
         fi
 
     # -V) given verbose level is higher than high limiter, do not print
     # "do not print after this verbose level"
-    if (( _verbose_limiter < GURU_VERBOSE )) ; then
+    if [[ $verbose_limiter -lt $GURU_VERBOSE ]] ; then
             return 0
         fi
 
@@ -164,7 +164,7 @@ gmsg () {
     fi
 
 
-    # echo "saata $GURU_VERBOSE:$_verbose_trigger<$_verbose_limiter"
+    # echo "saata $GURU_VERBOSE:$verbose_trigger<$verbose_limiter"
     # echo "$_pre_newline:pre_newline"
     # echo "$_color_code:color_code"
     # echo "$_column_width:column_width"

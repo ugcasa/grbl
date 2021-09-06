@@ -64,20 +64,26 @@ tunnel.main () {
 tunnel.status () {
     # check tunnel is reachable
 
+    # ptrintout timestamp and function name
     gmsg -n -v1 -t "${FUNCNAME[0]}: "
+
     local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
 
+    # check system is able to service
     if [[ -f /usr/bin/ssh ]] ; then
-            gmsg -n -c green "available " -k $tunnel_indicator_key
+            gmsg -v1 -n -c green "available " -k $tunnel_indicator_key
         else
-            gmsg -n -c red "not installed" -k $tunnel_indicator_key
+            gmsg -v1 -c red "not installed" -k $tunnel_indicator_key
             return 2
         fi
 
-    if tunnel.ls ; then
-            gmsg -n -v3 -c aqua "active tunnels" -k $tunnel_indicator_key
+    # list of tunnels all verbose levels
+    [[ $GURU_VERBOSE -gt 0 ]] && tunnel.ls
+
+    # indicate user if active tunnels
+    if ps -x | grep -v grep | grep "ssh -L " | grep localhost >/dev/null; then
+            gmsg -v4 -c aqua "active tunnels detected" -k $tunnel_indicator_key
         fi
-    echo
     return 0
 }
 

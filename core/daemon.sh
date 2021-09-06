@@ -96,7 +96,7 @@ daemon.start () {
             null|empty )
                 ;;
             *)
-                gmsg -n -v2 -c dark_golden_rod "module_$i:$module: "
+                gmsg -n -v2 -w 15 -c dark_golden_rod "$i:$module: "
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
                         # gmsg -v3 ": $GURU_BIN/$GURU_BIN/$module.sh"
@@ -132,13 +132,13 @@ daemon.stop () {
     for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
 
         module=${GURU_DAEMON_POLL_ORDER[i-1]}
-        #gmsg -v3 -c dark_golden_rod "$i $module"
+        #gmsg -v3 -w 15 -c dark_golden_rod "$i $module"
         case $module in
             null|empty )
                 #gmsg -v3 -c dark_grey "skipping $module"
                 ;;
             * )
-                gmsg -n -v2 -c dark_golden_rod "module_$i:$module: "
+                gmsg -n -v2 -w 15 -c dark_golden_rod "$i:$module: "
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
                         $module.main poll end
@@ -240,7 +240,7 @@ daemon.poll () {
                         gmsg -v4 -c dark_grey "skipping $module"
                         ;;
                     *)
-                        gmsg -n -v2 -c dark_golden_rod "module_$i:$module: "
+                        gmsg -n -v2 -w 15 -c dark_golden_rod "$i:$module: "
 
                         if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                                 source "$GURU_BIN/$module.sh"
@@ -253,7 +253,7 @@ daemon.poll () {
             done
 
 
-        gmsg -n -v2 -c reset -k esc "daemon sleep: $GURU_DAEMON_INTERVAL "
+        gmsg -n -v2 -w 15 -c reset -k esc "sleep ${GURU_DAEMON_INTERVAL}s: "
         gmsg -v4 -c $GURU_CORSAIR_EFECT_COLOR -k cplc
 
         local _seconds=
@@ -264,7 +264,7 @@ daemon.poll () {
                 system.flag fast && continue || sleep 1
                 gmsg -v2 -n -c reset "."
             done
-
+        gmsg -v2 ""
     done
     gmsg -N -t -v1 "daemon got got tired and dropped out "
     daemon.stop

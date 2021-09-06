@@ -22,25 +22,8 @@ if [[ -f $GURU_RC ]] ; then
         source $GURU_RC
     fi
 
-# import needed modules
-source $GURU_BIN/config.sh
-source $GURU_BIN/common.sh
-source $GURU_BIN/mount.sh
-source $GURU_BIN/daemon.sh
-source $GURU_BIN/corsair.sh
-source $GURU_BIN/system.sh
-
-
-
 # user configuration overwrites
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
-
-# check is accesspoint enabled and mount is not already done
-if [[ $GURU_ACCESS_ENABLED ]] ; then
-    # check is system folder mounted
-    source $GURU_BIN/mount.sh
-    mount.main system
-fi
 
 core.process_opts () {
     # argument parser
@@ -396,9 +379,26 @@ core.help () {
 
 }
 
-
+# if launched as a script, not as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        core.process_opts $@
+
+    # process '-' arguments, returns rest of argument in $ARGUMENTS variable
+    core.process_opts $@
+
+    # import needed modules
+    source $GURU_BIN/config.sh
+    source $GURU_BIN/common.sh
+    source $GURU_BIN/mount.sh
+    source $GURU_BIN/daemon.sh
+    source $GURU_BIN/corsair.sh
+    source $GURU_BIN/system.sh
+
+    # check is accesspoint enabled and mount is not already done
+    if [[ $GURU_ACCESS_ENABLED ]] ; then
+        # check is system folder mounted
+        source $GURU_BIN/mount.sh
+        mount.main system
+    fi
         core.main $ARGUMENTS
         exit $?
-    fi
+fi
