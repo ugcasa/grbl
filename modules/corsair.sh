@@ -146,7 +146,7 @@ corsair.help-profile () {
 }
 
 
-ir.enabled () {
+corsair.enabled () {
     # check is corsair enables in user.cfg
 
     gmsg -n -v2 "checking corsair is enabled.. "
@@ -201,7 +201,7 @@ corsair.check () {
     if system.suspend flag ; then
             gmsg -v2 -c yellow "computer suspended, ckb-next restart requested"
             #gmsg -v2 -c white "command: $GURU_CALL corsair start"
-            return 6
+            return 4
         fi
 
     gmsg -n -v2 "checking mode supports piping.. "
@@ -373,9 +373,9 @@ corsair.systemd_start_application () {
 
     systemctl --user start corsair.service \
          || systemctl --user restart corsair.service\
-         || corsair.systemd_enable
+         #|| corsair.systemd_enable
 
-    sleep 1
+    sleep 2
     corsair.init
     return $?
 }
@@ -461,6 +461,8 @@ corsair.systemd_stop () {
 corsair.make_daemon_service () {
     ## ckb-next-daemon service
 
+     local temp="/tmp/suspend.temp"
+
     [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
     [[ -f $temp ]] && rm $temp
 
@@ -512,9 +514,9 @@ After=network.target
 
 [Service]
 Type=simple
-# User=casa
-# Group=casa
-ExecStart=/usr/local/bin/ckb-next
+# User=$USER
+# Group=$USER
+ExecStart=/usr/local/bin/ckb-next -b -p guru
 TimeoutStartSec=0
 RemainAfterExit=yes
 
@@ -524,8 +526,6 @@ WantedBy=default.target
 EOL
 
     [[ -f $corsair_service ]] || cp -f $corsair_service $GURU_CFG/${corsair_service##*/}
-
-    /home/casa/.config/systemd/user/
 
     if ! cp -f $temp $corsair_service ; then
             gmsg -c yellow "ckb-next service update failed"
@@ -710,6 +710,7 @@ corsair.status () {
         else
             local status=$?
             gmsg -v1 -c red "corsair is not in service" # -k $corsair_indicator_key
+            return $status
         fi
 }
 

@@ -185,6 +185,7 @@ daemon.poll () {
     # peller for modules
 
     source $GURU_RC
+    [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
     #[[ -f "/tmp/guru-stop.flag" ]] && rm -f "/tmp/guru-stop.flag"
     echo "$(sh -c 'echo "$PPID"')" > "$daemon_pid_file"
     system.flag rm fast
@@ -202,7 +203,7 @@ daemon.poll () {
         if system.flag suspend ; then
                 # restart ckb-next appication to reconnec led pipe files
                 gmsg -N -t -v1 "daemon recovering from suspend.. "
-                corsiar.suspend_recovery
+                [[ $GURU_CORSAIR_ENABLED ]] && corsair.suspend_recovery
                 system.flag rm suspend
             fi
 

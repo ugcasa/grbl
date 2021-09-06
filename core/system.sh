@@ -481,6 +481,7 @@ case \${1} in
     ;;
   post|resume|thaw )
         systemctl restart ckb-next-daemon
+        systemctl --user restart corsair.service
     ;;
 esac
 EOL
@@ -542,11 +543,12 @@ system.suspend () {
                 ;;
 
             flag )
-                gmsg -v3 -n "checking is system been suspended "
+                gmsg -v3 -n "checking is system been suspended.. "
                 if system.flag suspend ; then
                         gmsg -v1 -c yellow "system were suspended"
                         return 0
                     else
+                        gmsg -v3 -c dark_grey "nope"
                         return 1
                     fi
                 ;;
