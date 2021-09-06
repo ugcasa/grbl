@@ -465,7 +465,7 @@ system.suspend_script () {
     # launch stuff on suspend
 
     temp="/tmp/suspend.temp"
-    gmsg -n -v2 "$system_suspend_script.. "
+    gmsg -v1 "updating $system_suspend_script.. "
 
     [[ -d  ${system_suspend_script%/*} ]] || sudo mkdir -p ${system_suspend_script%/*}
     [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
@@ -476,10 +476,14 @@ system.suspend_script () {
 #!/bin/bash
 case \${1} in
   pre|suspend )
-    [[ -f $system_suspend_flag ]] || touch $system_suspend_flag
-    chown $USER:$USER $system_suspend_flag
+        [[ -f $system_suspend_flag ]] || touch $system_suspend_flag
+        chown $USER:$USER $system_suspend_flag
     ;;
   post|resume|thaw )
+        systemctl restart ckb-next-daemon
+    ;;
+esac
+EOL
     # failed - cannot run on root space
     # ckb-next -c ; ckb-next -b &
 
@@ -511,15 +515,17 @@ case \${1} in
 
     # suspend flag method is only one that works, but shit it is
 
-    ;;
-esac
-EOL
+    if sudo cp -f $temp $system_suspend_script ; then
 
-    sudo cp $temp $system_suspend_script || return 1
-    sudo chmod +x $system_suspend_script || return 2
-    rm -f $temp
-    gmsg -v2 -c green "ok"
-    return 0
+            sudo chmod +x $system_suspend_script || return 2
+            rm -f $temp
+            gmsg -v1 -c green "success"
+            return 0
+       else
+            gmsg -c yellow "failed update $system_suspend_script"
+            return 1
+        fi
+
 }
 
 
