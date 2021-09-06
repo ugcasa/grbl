@@ -2,7 +2,7 @@
 # automatically generated tester for guru-client corsair.sh Sat Oct 10 02:42:19 EEST 2020 casa@ujo.guru 2020
 
 source $GURU_BIN/common.sh
-source ../core/corsair.sh
+source $GURU_BIN/corsair.sh
 
 ## TODO add test initial conditions here
 
@@ -10,6 +10,11 @@ corsair.test() {
     local test_case=$1
     local _err=($0)
     case "$test_case" in
+
+        check|status|init|raw_write|set|reset|end|kill|install|remove)
+              corsair.test_$test_case ; return 0
+              ;;  # 1) quick check
+
            1) corsair.check ; return 0 ;;  # 1) quick check
          all)
          # TODO: check run order.
@@ -44,7 +49,7 @@ corsair.test_main () {
 
       ## TODO: add pre-conditions here
 
-      corsair.main ; _error=$?
+      corsair.main set esc green ; _error=$?
 
       ## TODO: add analysis here and manipulate $_error
 
@@ -150,7 +155,7 @@ corsair.test_init () {
 
       ## TODO: add pre-conditions here
 
-      corsair.init ; _error=$?
+      corsair.init test ; _error=$?
       sleep 2
 
       ## TODO: add analysis here and manipulate $_error
@@ -165,25 +170,25 @@ corsair.test_init () {
 }
 
 
-corsair.test_raw_write () {
-    # function to test corsair module function corsair.raw_write
-    local _error=0
-    gmsg -v0 -c white 'testing corsair.raw_write'
+# corsair.test_raw_write () {
+#     # function to test corsair module function corsair.raw_write
+#     local _error=0
+#     gmsg -v0 -c white 'testing corsair.raw_write'
 
-      ## TODO: add pre-conditions here
+#       ## TODO: add pre-conditions here
 
-      corsair.raw_write ; _error=$?
+#       corsair.raw_write ; _error=$?
 
-      ## TODO: add analysis here and manipulate $_error
+#       ## TODO: add analysis here and manipulate $_error
 
-    if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.raw_write passed'
-       return 0
-    else
-       gmsg -v0 -c red 'corsair.raw_write failed'
-       return $_error
-  fi
-}
+#     if  ((_error<1)) ; then
+#        gmsg -v0 -c green 'corsair.raw_write passed'
+#        return 0
+#     else
+#        gmsg -v0 -c red 'corsair.raw_write failed'
+#        return $_error
+#   fi
+# }
 
 
 corsair.test_set () {
@@ -193,11 +198,13 @@ corsair.test_set () {
 
       ## TODO: add pre-conditions here
 
-      corsair.set ; _error=$?
+     if ! corsair.set esc red ; then
+             _error=$?
+         fi
 
       ## TODO: add analysis here and manipulate $_error
 
-    if  ((_error<1)) ; then
+    if ((_error<1)) ; then
        gmsg -v0 -c green 'corsair.set passed'
        return 0
     else
@@ -214,7 +221,7 @@ corsair.test_reset () {
 
       ## TODO: add pre-conditions here
 
-      corsair.reset ; _error=$?
+      corsair.reset esc ; _error=$?
 
       ## TODO: add analysis here and manipulate $_error
 
