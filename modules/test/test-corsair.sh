@@ -49,7 +49,9 @@ corsair.test_main () {
 
       ## TODO: add pre-conditions here
 
+      sleep 0.5
       corsair.main set esc green ; _error=$?
+      sleep 0.5
 
       ## TODO: add analysis here and manipulate $_error
 
