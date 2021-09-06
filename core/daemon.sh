@@ -159,7 +159,6 @@ daemon.stop () {
 }
 
 
-
 daemon.kill () {
     # force stop daemon
 
@@ -168,7 +167,6 @@ daemon.kill () {
         else
             gmsg -v1 "${FUNCNAME[0]}: guru-daemon not running"
         fi
-
 
     if ps auxf | grep "$GURU_BIN/guru" | grep "start" | grep -v "grep" >/dev/null ; then
             gmsg -v1 -c yellow "${FUNCNAME[0]}: daemon still running, try to 'sudo guru kill'"
@@ -182,7 +180,7 @@ daemon.kill () {
 
 
 daemon.poll () {
-    # peller for modules
+    # poller for modules
 
     source $GURU_RC
     [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
@@ -226,7 +224,6 @@ daemon.poll () {
                 return $?
             fi
 
-
         # light esc key to signal user daemon is active
         gmsg -N -t -v3 -c $GURU_CORSAIR_EFECT_COLOR "daemon active" -k esc
         gmsg -v4 -c black -k cplc
@@ -251,7 +248,6 @@ daemon.poll () {
                         ;;
                     esac
             done
-
 
         gmsg -n -v2 -w 15 -c reset -k esc "sleep ${GURU_DAEMON_INTERVAL}s: "
         gmsg -v4 -c $GURU_CORSAIR_EFECT_COLOR -k cplc
@@ -305,7 +301,6 @@ daemon.systemd () {
               * ) gmsg -c yellow "unknown command '$cmd'"
                   return 127
         esac
-
 }
 
 
@@ -356,8 +351,7 @@ EOL
 
 }
 
-
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then                        # user and platform settings (implement here, always up to date)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         source $GURU_RC
         daemon.process_opts $@
         daemon.main $ARGUMENTS
