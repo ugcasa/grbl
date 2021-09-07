@@ -59,21 +59,50 @@ convert.webp_png () {
 			gmsg -c yellow "no files found"
 		fi
 
+	local rand=""
+
 	for file in ${found_files[@]} ; do
 
-			file_base_name=$(echo $file | sed 's/\.[^.]*$//')
-			# gmsg -c light_blue "$file_base_name"
-			if [[ -f "$file_base_name.webp" ]] ; then
-					# force remove existing file
-					[[ $GURU_FORCE ]] && [[ $file_base_name.png ]] && rm $file_base_name.png
+			rand=""
+			file_base_name=$(sed 's/\.[^.]*$//' <<< "$file")
+			gmsg -v3 -c deep_pink "$file_base_name"
 
-					gmsg -c light_blue "> $file_base_name.png.."
-					dwebp -quiet $file_base_name.webp -o $file_base_name.png
-					# force remove original if convert success
-					[[ $GURU_FORCE ]] && [[ $file_base_name.png ]] && rm $file_base_name.webp
-				else
+			# check do original exist
+			if ! [[ -f "$file_base_name.webp" ]] ; then
 					gmsg -c yellow "file $file_base_name.webp not found"
+					continue
 				fi
+
+			# there is a file with same name
+			if [[ -f "$file_base_name.png" ]] ; then
+				gmsg -n -c yellow "$file_base_name.png file found "
+				# convert webp to temp
+				dwebp -quiet "$file_base_name.webp" -o "/tmp/$file_base_name.png"
+
+				# check does picture have same contetn
+				orig=$(identify -quiet -format "%#" "$file_base_name.png" )
+				new=$(identify -quiet -format "%#" "/tmp/$file_base_name.png")
+
+				if [[ "$orig" == "$new" ]] ; then
+						# overwrite existing file
+						gmsg -c yellow "with same content, overwriting"
+						rm -f "$file_base_name.png"
+					else
+						gmsg -c yellow "with different content, renaming"
+						rand="-$(shuf -i 1000-9999 -n 1)"
+					fi
+				fi
+
+			# convert
+			gmsg -c light_blue "$file_base_name$rand.png.. "
+			dwebp -quiet $file_base_name.webp -o $file_base_name$rand.png
+
+			# force remove original if convert success
+			[[ $GURU_FORCE ]] && [[ $file_base_name$rand.png ]] && rm $file_base_name.webp
+
+			# clean up
+			[[ -f /tmp/$file_base_name.png ]] && rm /tmp/$file_base_name.png
+
 		done
 	return 0
 }
