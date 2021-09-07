@@ -289,7 +289,7 @@ note.open_editor () {
 
     case "$GURU_PREFERRED_EDITOR" in
         subl)
-            local project_folder=$GURU_SYSTEM_MOUNT/project/notes
+            local project_folder=$GURU_SYSTEM_MOUNT/project/projects/notes
             local sublime_project_file="$project_folder/$GURU_USER_NAME-notes.sublime-project"
 
             [[ -d $project_folder ]] || gmsg -x 100 -c yellow "$project_folder not exist"
