@@ -52,28 +52,48 @@ class bc:
     ENDC = '\033[0m'
 
 
-class menu ():
+class menu:
+    # draw a menu and contain variables
 
-    term_columns                = 120
-    term_lines                  = 24
     list_length                 = 0
     list_length_max             = 0
-    selection                   = 0                                 # list selection id
-    provider                    = 100                               # news provider ID
-    known_date_formats          = [ '%a, %d %b %Y %H:%M:%S' ,\
-                                    '%Y-%m-%dT%H:%M:%S' ]           # http://strftime.org/
+    selection                   = 0
+    provider                    = 100
+    known_date_formats          = [ '%a, %d %b %Y %H:%M:%S', '%Y-%m-%dT%H:%M:%S' ]
 
-    def __init__ ( self, x, y ):
+    def __init__ ( self, columns, lines ):
 
-        self.term_columns       = x
-        self.term_lines         = y
-        self.list_length_max    = self.term_lines - 3
+        self.prev_term_columns  = int(
+            str(subprocess.check_output( 'resize -c', shell=True ) )\
+            .split( "COLUMNS ", 1 )[1]\
+            .split( "'" )[1]\
+            .split( "'" )[0]\
+            )
 
-        self.resize( self.term_lines, self.term_columns )
-        os.system( 'clear' )
+        self.prev_term_lines    = int(
+            str( subprocess.check_output( 'resize -c', shell=True ) )\
+            .split( "LINES ", 1 )[1]\
+            .split( "'" )[1]\
+            .split( "'" )[0]\
+            )
 
-        self.feed_list_file     = open( os.environ["GURU_CFG"] + "/" + os.environ["GURU_USER"] + "/rss-feed.list", "r" )
-        self.feed_list          = self.feed_list_file.readlines()
+        if self.prev_term_columns > columns :
+            self.term_columns = self.prev_term_columns
+        else :
+            self.term_columns = columns
+
+        if self.prev_term_lines > lines :
+            self.term_lines = self.prev_term_lines
+        else :
+            self.term_lines = lines
+
+        self.list_length_max = self.term_lines - 3
+
+        self.resize( self.term_columns, self.term_lines )
+        # os.system( 'clear' )
+
+        self.feed_list_file = open( os.environ["GURU_CFG"] + "/" + os.environ["GURU_USER"] + "/rss-feed.list", "r" )
+        self.feed_list = self.feed_list_file.readlines()
         self.feed_list_file.close()
 
         self.feed = feedparser.parse( self.feed_list[0] )
@@ -81,18 +101,34 @@ class menu ():
 
     def clear ( self ):
         "clear the screen. os clear do not work in phone "
+
         print("\n" * self.term_lines)
 
 
-    def resize ( self, lines, columns ):
+    def resize ( self, columns, lines ):
         "resize terminal window"
+
+        self.get_size()
         os.system('resize -s '+str(lines)+' '+str(columns))
+
 
     def get_size ( self ):
         "get terminal window size"
-        self.term_lines         = int( str( subprocess.check_output( 'resize -c', shell=True ) ).split( "LINES ",   1 )[1].split( "'" )[1].split( "'" )[ 0 ] )
-        self.term_columns       = int( str( subprocess.check_output( 'resize -c', shell=True ) ).split( "COLUMNS ", 1 )[1].split( "'" )[1].split( "'" )[ 0 ] )
-        self.list_length_max    = self.term_lines - 3
+
+        self.term_lines = int(
+            str( subprocess.check_output( 'resize -c', shell=True ) )\
+            .split( "LINES ",1)[1]\
+            .split( "'" )[1]\
+            .split( "'" )[0]\
+            )
+
+        self.term_columns = int(
+            str( subprocess.check_output( 'resize -c', shell=True ) )\
+            .split( "COLUMNS ",1)[1]\
+            .split( "'" )[1]\
+            .split( "'" )[0]\
+            )
+        self.list_length_max = self.term_lines - 3
 
 
     def header ( self, content , logo = "ujo.guru", first = 0, second = 0, separator = "/"):
@@ -119,26 +155,32 @@ class menu ():
 
     def feeds ( self ):
         "print out the list of feed fit in terminal size"
+
         i = 0
-        for i in range( len( self.feed.entries ) ):                                                     # parse all titles in feed.entries list
+        # parse all titles in feed.entries list
+        for i in range( len( self.feed.entries ) ):
             entry = self.feed.entries[ i ]
 
 
-            for format_count in range( len( m.known_date_formats ) ):                                   # check time stamp formats and select suitable and translate it to wanted format
+            # check time stamp formats and select suitable and translate it to wanted format
+            for format_count in range( len( m.known_date_formats ) ):
 
                 try:
                     datestamp = datetime.strptime( entry.published.rsplit( ' ', 1 )[0].rsplit( '-', 1 )[0], m.known_date_formats[ format_count ] ).strftime( '%d.%m.%y %H:%M' )
                     break
 
-                except ValueError:                                                                      # what?
+                # what?
+                except ValueError:
                     pass
 
                 except:
                     pass
 
-            title = entry.title.replace( "&nbsp;", "" ).replace( " ,", ',' ).replace( ' –', ':' ).replace( ' –', ':' )  # Remove possible html left overs from titles, ugly lines and extra spaces
+            # Remove possible html left overs from titles, ugly lines and extra spaces
+            title = entry.title.replace( "&nbsp;", "" ).replace( " ,", ',' ).replace( ' –', ':' ).replace( ' –', ':' )
 
-            if self.term_columns > 90:                                                                  # select details to be printed out
+            # select details to be printed out
+            if self.term_columns > 90:
                 pass
 
             elif self.term_columns > 60:
@@ -147,62 +189,81 @@ class menu ():
             else:
                 datestamp = ''
 
-            base_size = 6 + len( datestamp )                                                            # reserves space for spaces and line number
+            # reserves space for spaces and line number
+            base_size = 6 + len( datestamp )
 
-            if len( title ) < self.term_columns - base_size:                                            # space bar
+            # space bar
+            if len( title ) < self.term_columns - base_size:
                 title += ' ' * ( self.term_columns - base_size - len( title ))
 
-            if i < 9:                                                                                   # intended lines 1 - 9
+            # intended lines 1 - 9
+            if i < 9:
                 print(' ', end='')
 
-            title = title[ 0: self.term_columns - base_size ]                                           # cut to right length
+            # cut to right length
+            title = title[ 0: self.term_columns - base_size ]
 
-            if title[ -1: ] != ' ':                                                                     # check is middle of word
-                lastword = title.split()[ -1 ]                                                          # remove last word or piece of it
-                lastword_length = len( lastword )                                                       # check how long it was
-                title = title.rsplit( ' ', 1 )[0] + '.. '+ (' ' * ( lastword_length - 2 ) )             # place ".." to end of line
+            # check is middle of word
+            if title[ -1: ] != ' ':
+                # remove last word or piece of it
+                lastword = title.split()[ -1 ]
+                # check how long it was
+                lastword_length = len( lastword )
+                # place ".." to end of line
+                title = title.rsplit( ' ', 1 )[0] + '.. '+ (' ' * ( lastword_length - 2 ) )
 
-            if i > self.list_length_max:                                                                # record all entries even there is no space in screen
+            # record all entries even there is no space in screen
+            if i > self.list_length_max:
                 continue
 
-            print( "[" + str( i + 1 ) + "]" + " " + title[ 0: self.term_columns - base_size ] + " " + datestamp)    # print out the line
+            # print out the line
+            print( "[" + str( i + 1 ) + "]" + " " + title[ 0: self.term_columns - base_size ] + " " + datestamp)
 
-        if i < self.list_length_max:                                                                    # print empty lines to fill the screen
+            # print empty lines to fill the screen
+        if i < self.list_length_max:
                 print( '\n' * ( ( self.list_length_max - i ) - 1 ) )
 
-        self.list_length = i                                                                            # update list length
+            # update list length
+        self.list_length = i
         return i
 
 
     def input ( self, answer = 0 ):
         "waits user input if not given pre-hand"
 
-        if answer :                                                                                     # id not given, ask
+        # id not given, ask
+        if answer :
             pass
 
         else :
             answer = input( bc.OKBLUE + 'Open news id: ' + bc.ENDC )
             print( "wait.." )
 
-        if answer == "q" or answer == "exit" or answer == "99":                                         # character commands
+        # character commands
+        if answer == "q" or answer == "exit" or answer == "99":
             self.quit()
 
-        elif answer == "n" and self.provider < len(self.feed_list) * 100:                               # increment if nor last
+        # increment if nor last
+        elif answer == "n" and self.provider < len(self.feed_list) * 100:
             self.provider =  self.provider + 100
             self.input ( str( self.provider ) )
             return 0
 
-        elif answer == "b" and self.provider > 100 :                                                    # decrement if not first
+        # decrement if not first
+        elif answer == "b" and self.provider > 100 :
             self.provider =  self.provider - 100
             self.input ( str( self.provider ) )
             return 0
 
-        if not answer.isdigit() :                                                                       # Numeral selections
+        # Numeral selections
+        if not answer.isdigit() :
             return 2
 
-        selection = int( answer )                                                                       # is digit can be taken as an select value
+        # is digit can be taken as an select value
+        selection = int( answer )
 
-        if selection > 0 and selection < 100:                                                           # is current publisher line number
+        # is current publisher line number
+        if selection > 0 and selection < 100:
 
             self.selection = selection
             self.feeds()
@@ -210,23 +271,30 @@ class menu ():
             if self.selection > self.list_length + 1 :
                 return 2
 
-            self.open( int( self.selection) - 1 )                                                       # open the news
+            # open the news
+            self.open( int( self.selection) - 1 )
 
 
-        if selection >= 100 :                                                                           # other provider
-            provider = int( selection / 100 ) * 100                                                     # parse publisher main menu
-            sub_selection = selection % 100                                                             # Parse out possible sub sub_selection
+        # other provider
+        if selection >= 100 :
+            # parse publisher main menu
+            provider = int( selection / 100 ) * 100
+            # Parse out possible sub sub_selection
+            sub_selection = selection % 100
 
             try:
-                self.feed = feedparser.parse( self.feed_list[ int( provider / 100 - 1 ) ] )             # try to parse a feed, if possible valid id
+                # try to parse a feed, if possible valid id
+                self.feed = feedparser.parse( self.feed_list[ int( provider / 100 - 1 ) ] )
 
-            except:                                                                                     # is not valid id
-                print("fukedid")
+            # is not valid id
+            except:
+                print("fuked up id")
                 return 2
 
             self.provider = provider
 
-            if sub_selection > 0:                                                                       # is not negative
+            # is not negative
+            if sub_selection > 0:
                 print(sub_selection)
                 self.selection = sub_selection
                 self.feeds()
@@ -234,24 +302,27 @@ class menu ():
                 if self.selection > self.list_length + 1 :
                     return 2
 
-                self.open( self.selection  - 1 )                                                            # open the news
+                # open the news
+                self.open( self.selection - 1)
 
 
     def browser ( self, link ):
         "open news link to guru default browser"
-        profile = '--user-data-dir=' + os.environ[ "GURU_CHROME_USER_DATA" ]
-        browser = os.environ[ "GURU_BROWSER" ] + ' ' + profile + ' ' + link + ' &'
-        os.system( browser )
+
+        #profile = '--user-data-dir=' + os.environ[ "GURU_CHROME_USER_DATA" ]
+        browser = os.environ[ "GURU_PREFERRED_BROWSER" ]
+        os.system( browser  + ' ' + link + ' &' ) #+ ' ' + profile)
 
 
     def open ( self, news_id ):
-        "open news if "
-        print("id: " + str( news_id ) )
+        "open news if exist"
+
+        print("opening id " + str( news_id + 1 ) + ".. ")
         entry   = self.feed.entries[ int( news_id ) ]
         title   = entry.title.replace( "&nbsp;", "" )
         link    = entry.link.replace( "&nbsp;", "" )
 
-        os.environ['foo'] = 'bar'
+        #os.environ['foo'] = 'bar'
 
         subprocess.run('''
         wget $link -O /tmp/page.html -q
@@ -264,7 +335,8 @@ class menu ():
         image_link = "os.environ['url']"
         #image_link = "/tmp/news.jpg"
 
-        if int( news_id ) < 0 or int( news_id ) > self.list_length :                                                    # id 1 above
+        # id 1 above
+        if int( news_id ) < 0 or int( news_id ) > self.list_length :
             return 2
 
         try :
@@ -276,7 +348,7 @@ class menu ():
             return 2
 
         except :
-            print( "erooer" )
+            print( "error: 3" )
             return 3
 
         summary = entry.summary.replace( "&nbsp;", "" )
@@ -297,7 +369,6 @@ class menu ():
 
         # parse entry.image.link
         image_link = '/tmp/news.jpg'
-
 
         os.system( 'clear' )                                                                            # clear terminal
         self.clear()
@@ -347,7 +418,7 @@ class menu ():
 
     def quit ( self ) :
         "quit and return terminal size"
-        self.resize( 24, 80 )
+        self.resize( self.prev_term_columns, self.prev_term_lines )
         os.system( 'clear' )
         quit()
 
@@ -362,7 +433,12 @@ if len(sys.argv) > 1:
         print("no status data")
         quit()
 
-m = menu( 120, 24 )
+
+
+m = menu( \
+    int(os.environ[ "GURU_NEWS_TERMINAL_COLUMNS" ]),\
+    int(os.environ[ "GURU_NEWS_TERMINAL_LINES" ])\
+    )
 
 # sudo apt install imagemagick || yum install ImageMagick
 # git clone https://github.com/stefanhaustein/TerminalImageViewer.git
