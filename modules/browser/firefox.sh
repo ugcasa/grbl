@@ -18,6 +18,26 @@ firefox.add_profile () {
 }
 
 
+firefox.set_config () {
+	# set firefox config values (about:config) values from command line
+
+	if [[ $2 ]]	then
+			gmsg -c yellow "key value pair needed"
+			return 100
+		fi
+
+	local key=$1
+	local value=$2
+	gmsg "change key $key to value $value"
+	gask "quite sure?"
+
+	cd
+	sed -i 's/user_pref("'$key'",.*);/user_pref("'$key'",'$value');/' user.js
+	grep -q $key user.js || echo "user_pref(\"$key\",$value);" >> user.js
+
+}
+
+
 firefox.play_stream () {
 	local profile_name="player"
 	local profile="$profile_location/$profile_name"
