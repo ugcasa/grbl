@@ -55,7 +55,7 @@ note.help () {
 }
 
 
-note.gen_var () {
+note.config () {
     # populates needed variables based on given date in format YYYMMDD
 
     input=$1
@@ -88,7 +88,7 @@ note.check () {
     # chech that given date note file exist
 
     if ! note.online ; then note.remount ; fi
-    note.gen_var "$1"
+    note.config "$1"
     gmsg -n -v1 "checking note file.. "
     if [[ -f "$note" ]] ; then
             gmsg -v1 -c green "$note found"
@@ -106,7 +106,7 @@ note.locate () {
     note.locate_check () {
         # make variables
 
-        note.gen_var "$1"
+        note.config "$1"
         gmsg -v1 "$note "        
         if [[ -f $note ]] ; then
                 # gmsg -v1 -c green "exist"
@@ -191,7 +191,7 @@ note.add () {
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
-    note.gen_var "$1"
+    note.config "$1"
 
     [[  -d "$note_dir" ]] || mkdir -p "$note_dir"
     [[  -d "$GURU_MOUNT_TEMPLATES" ]] || mkdir -p "$GURU_MOUNT_TEMPLATES"
@@ -221,7 +221,7 @@ note.open () {
 
     for _note_date in ${_date_list[@]} ; do
 
-        note.gen_var "$_note_date"
+        note.config "$_note_date"
         gmsg -v3 -c pink "$_note_date"
 
         if [[ -f "$note" ]]; then
@@ -243,7 +243,7 @@ note.rm () {
     # check is note and template folder mounted, mount if not
     note.online || note.remount
 
-    note.gen_var "$1"
+    note.config "$1"
     [[ -f $note ]] || gmsg -x 1 -c white "no note for date $(date -d $1 +$GURU_FORMAT_DATE)"
 
     if gask "remove $note" ; then
@@ -295,11 +295,7 @@ note.open_editor () {
             [[ -d $project_folder ]] || gmsg -x 100 -c yellow "$project_folder not exist"
             [[ -f $sublime_project_file ]] || gmsg -c yellow "sublime project file missing"
 
-            # template sublime project
-            # printf "{\n\t"'"folders"'":\n\t[\n\t\t{\n\t\t\t"'"path"'": "'"'$GURU_MOUNT_NOTES/$GURU_USER_NAME'"'"\n\t\t}\n\t]\n}\n" >$sublime_project_file
-
-            # TODO: add check sofr sublime 3 ; then subl --project "$sublime_project_file" -a ; else following
-            subl "$note" --project "$sublime_project_file" -a
+            subl "$note" -n --project "$sublime_project_file" -a
             return $?
             ;;
         *)
@@ -321,7 +317,7 @@ note.office () {
             _date=$(date +$GURU_FORMAT_FILE_DATE)
         fi
 
-    note.gen_var "$_date"
+    note.config "$_date"
 
     echo "$_date:$note_file:$note:${note%%.*}.odt"
 
@@ -351,7 +347,7 @@ note.web () {
             _date=$(date +$GURU_FORMAT_FILE_DATE)
         fi
 
-    note.gen_var "$_date"
+    note.config "$_date"
 
     echo "$_date:$note_file:$note:${note%%.*}.odt"
 
