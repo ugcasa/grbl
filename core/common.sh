@@ -143,7 +143,7 @@ gmsg () {
 
     # -V) given verbose level is higher than high limiter, do not print
     # "do not print after this verbose level"
-    if [[ $verbose_limiter -lt $GURU_VERBOSE ]] ; then
+    if [[ $verbose_limiter -le $GURU_VERBOSE ]] ; then
             return 0
         fi
 
