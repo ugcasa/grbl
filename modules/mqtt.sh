@@ -83,7 +83,7 @@ mqtt.online () {
             -h "$GURU_MQTT_BROKER" \
             -p "$GURU_MQTT_PORT" \
             -t "$GURU_HOSTNAME/online" \
-            -m "$(date +$GURU_FORMAT_TIME)" \
+            -m "$(date +$GURU_FORMAT_DATE) $(date +$GURU_FORMAT_TIME)" \
              >/dev/null 2>&1 \
         || gmsg -v2 -c yellow "mqtt publish issue: $?"
     }
