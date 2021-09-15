@@ -134,18 +134,43 @@ core.change_user () {
 core.run_module () {
     # check is given tool in module list and lauch first hit
 
-    local tool=$1 ; shift
     local type_list=(".sh" ".py" "")
+    local reserved_cmd=(help add rm ls run remove remove list)
+
+    # guru add ssh key @ -> guru ssh key add @
+    if ! grep -q -w "$1" <<<${reserved_cmd[@]} ; then
+            # remove movule from arguments
+            local module=$1 ; shift
+            local command=$1 ; shift
+            local function=$1 ; shift
+            # gmsg -v3 -n -c dark_grey "not in reserved commands list "
+         else
+            local function=$1 ; shift
+            local module=$1 ; shift
+            local command=$1 ; shift
+            # gmsg -v3 -n -c green "found in in reserved commands list "
+        fi
+        # gmsg -v3 -c pink "'$module' '$command' '$function' '$@'"
+
 
     for _module in ${GURU_MODULES[@]} ; do
-            if [[ "$_module" == "$tool" ]] ; then
-                for _type in ${type_list[@]} ; do
-                    if [[ -f "$GURU_BIN/$_module$_type" ]] ; then $_module$_type "$@" ; return $? ; fi
-                done
+
+            if ! [[ "$_module" == "$module" ]] ; then
+                continue
             fi
+
+            for _type in ${type_list[@]} ; do
+
+                if [[ -f "$GURU_BIN/$_module$_type" ]] ; then
+                    # echo "'$_module$_type' '$command' '$function' '$@'"
+                    $_module$_type $command $function $@
+                    return $?
+                fi
+            done
+
         done
 
-    gmsg -v1 -c yellow "unknown command: $tool"
+    gmsg -v1 -c yellow "unknown command: $module"
     return $?
 
     # gmsg -v1 -c yellow "unknown module passing request to os.."
@@ -156,25 +181,39 @@ core.run_module () {
 core.run_module_function () {
     # run module functions
 
-    local tool=$1 ; shift
-    local function_to_run=$1 ; shift
+    local reserved_cmd=($GURU_SYSTEM_RESERVED_COMMANDS)
+
+    # guru add ssh key @ -> guru ssh key add @
+    if ! grep -q -w "$1" <<<${reserved_cmd[@]} ; then
+            # remove movule from arguments
+            local module=$1 ; shift
+            local command=$1 ; shift
+            local function=$1 ; shift
+            # gmsg -v3 -n -c dark_grey "$module not in reserved commands "
+         else
+            local function=$1 ; shift
+            local module=$1 ; shift
+            local command=$1 ; shift
+            # gmsg -v3 -n -c green "found in in reserved commands "
+        fi
+    # gmsg -v3 -c pink "'$module' '$command' '$function' '$@'"
 
     for _module in ${GURU_MODULES[@]} ; do
-                if [[ "$_module" == "$tool" ]] ; then
+                if [[ "$_module" == "$module" ]] ; then
                     # fun shell script module functions
                     if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
                             source $GURU_BIN/$_module.sh
-                            $_module.main "$function_to_run" "$@"
+                            $_module.main "$command" "$function" "$@"
                             return $?
                         fi
                     # run python module functions
                     if [[ -f "$GURU_BIN/$_module.py" ]] ; then
-                            $_module.py "$function_to_run" "$@"
+                            $_module.py "$command" "$function" "$@"
                             return $?
                         fi
                     # run binary module functions
                     if [[ -f "$GURU_BIN/$_module" ]] ; then
-                            $_module "$function_to_run" "$@"
+                            $_module "$command" "$function" "$@"
                             return $?
                         fi
                     fi
