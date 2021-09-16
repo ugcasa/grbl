@@ -64,12 +64,15 @@ config.make_rc () {
     # read config file, use chapter name as second part of variable name
     while IFS='= ' read -r lhs rhs ;  do
       if [[ ! $lhs =~ ^\ *# && -n $lhs ]]; then
-          rhs="${rhs%%\#*}"    # remove in line right comments
-          rhs="${rhs%%*( )}"   # remove trailing spaces
+          rhs="${rhs%%\#*}"         # remove in line right comments
+          rhs="${rhs%%*( )}"        # remove trailing spaces
+          rhs="${rhs// =/=}"        # remove spaces from =
+          rhs="${rhs//= /=}"
+
           case "$lhs" in
                 *[*)  _chapter=${lhs//[}
                       _chapter=${_chapter//]}
-                      [[ $_chapter ]] && _chapter="$_chapter""_" ;;
+                      [[ $_chapter ]] && _chapter="${_chapter}_" ;;
                 *)    echo "export GURU_${_chapter^^}${lhs^^}=$rhs"
             esac
       fi
