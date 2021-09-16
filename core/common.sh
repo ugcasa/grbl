@@ -53,8 +53,8 @@ gmsg () {
     # function for output messages and make log notifications
 
     # default values
-    local verbose_trigger=0                        # prinout if verbose trigger is not set in options
-    local verbose_limiter=4                        # maximum + 1 verbose level
+    local verbose_trigger=0                         # prinout if verbose trigger is not set in options
+    local verbose_limiter=5                         # maximum + 1 verbose level
     local _newline="\n"                             # newline is on by default
     local _pre_newline=                             # newline before text disable by default
     local _timestamp=                               # timestamp is disabled by default
@@ -99,6 +99,8 @@ gmsg () {
                  * ) break
             esac
         done
+
+
 
     # --) check message for long parameters (don't remember why like this)
     local _arg="$@"
@@ -146,6 +148,11 @@ gmsg () {
     if [[ $verbose_limiter -le $GURU_VERBOSE ]] ; then
             return 0
         fi
+
+    #On verbose level 3+ timestamp is always on
+    if [[ $verbose_trigger -gt 3 ]] && [[ ${#_message} -gt 1 ]]; then
+        _timestamp="$(date +$GURU_FORMAT_TIME.%3N) "
+    fi
 
     # print to shell
     if [[ $_color_code ]] && [[ $GURU_COLOR ]] ; then
