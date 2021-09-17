@@ -161,7 +161,7 @@ tunnel.ls () {
                     gmsg -v2 -c aqua "$service"  -k $tunnel_indicator_key
                     return 0
                 else
-                    gmsg -v3 -c reset "$service" -k $tunnel_indicator_key
+                    gmsg -v3 -c green "$service" -k $tunnel_indicator_key
                     return 1
                 fi
         fi
@@ -179,7 +179,7 @@ tunnel.ls () {
         done
     echo
     if (( _return > 0 )) ; then
-        gmsg -v3 -c reset "reset" -k $tunnel_indicator_key
+        gmsg -v3 -c green "reset" -k $tunnel_indicator_key
         return 1
     else
         return 0
