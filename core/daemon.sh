@@ -6,6 +6,9 @@
 daemon_service_script="$HOME/.config/systemd/user/guru.service"
 daemon_pid_file="/tmp/guru.daemon-pid"
 
+# use same key than system.sh
+daemon_indicator_key="f$(daemon.poll_order system)"
+
 source $GURU_BIN/system.sh
 
 daemon.main () {
@@ -206,7 +209,7 @@ daemon.poll () {
 
         # if paused stay here 300 seconds
         if system.flag pause ; then
-                gmsg -N -t -v1 -c yellow "daemon paused " -k esc
+                gmsg -N -t -v1 -c yellow "daemon paused " -k $daemon_indicator_key
                 for (( i = 0; i < 150; i++ )); do
                     system.flag pause || break
                     system.flag stop && break
@@ -214,7 +217,7 @@ daemon.poll () {
                     sleep 2
                 done
                 system.flag rm pause
-                gmsg -v1 -t -c reset "daemon continued" -k esc
+                gmsg -v1 -t -c green "daemon continued" -k $daemon_indicator_key
             fi
 
         if system.flag stop ; then
@@ -224,8 +227,8 @@ daemon.poll () {
             fi
 
         # light esc key to signal user daemon is active
-        gmsg -N -t -v3 -c $GURU_CORSAIR_EFECT_COLOR "daemon active" -k esc
-        gmsg -v4 -c black -k cplc
+        gmsg -N -t -v3 -c aqua "daemon active" -k $daemon_indicator_key
+        gmsg -v4 -c aqua -k cplc
 
         # go trough poll list
         local i=
@@ -248,8 +251,8 @@ daemon.poll () {
                     esac
             done
 
-        gmsg -n -v2 -c reset -k esc "sleep ${GURU_DAEMON_INTERVAL}s: "
-        gmsg -v4 -c $GURU_CORSAIR_EFECT_COLOR -k cplc
+        gmsg -n -v2 -c green -k $daemon_indicator_key "sleep ${GURU_DAEMON_INTERVAL}s: "
+        gmsg -v4 -c reset -k cplc
 
         local _seconds=
         for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )) ; do
