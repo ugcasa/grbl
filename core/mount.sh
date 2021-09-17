@@ -3,42 +3,40 @@
 #source "$HOME/.gururc"
 source $GURU_BIN/common.sh
 
+all_list=($(\
+        cat $GURU_RC | \
+        grep 'GURU_MOUNT_' | \
+        grep -v "DEFAULT_LIST" | \
+        sed 's/^.*MOUNT_//' | \
+        cut -d '=' -f1))
+all_list=(${all_list[@],,})
+
+mount_indicator_key='f'"$(daemon.poll_order mount)"
+
 mount.main () {
     # mount command parser
 
-    all_list=($(\
-            cat $GURU_RC | \
-            grep 'GURU_MOUNT_' | \
-            grep -v "DEFAULT_LIST" | \
-            sed 's/^.*MOUNT_//' | \
-            cut -d '=' -f1))
-    all_list=(${all_list[@],,})
+    local command="$1" ; shift
+    case "$command" in
 
-    # indicator_key='f'"$(daemon.poll_order mount)"
-    argument="$1" ; shift
-
-    case "$argument" in
-       all|defaults|system|status|help)
-                            mount.$argument                     ; return $? ;;
-                 ls|list)   mount.list                          ; return $? ;;
-                    info)   mount.info | column -t -s $' '      ; return $? ;;
-                   check)   mount.online "$@"                   ; return $? ;;
+         defaults|system|all|help|ls|info|check|\
+         poll|status|start|stop)
+                            mount.$command $@                   ; return $? ;;
             check-system)   mount.check "$GURU_SYSTEM_MOUNT"    ; return $? ;;
                       "")   mount.defaults                      ; return $? ;;
-                       *)
-                            if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$argument" ; then
+                       *)   if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$command" ; then
                                     gmsg -v3 -c green "found in defauls list"
-                                    mount.known_remote $argument $@
+                                    mount.known_remote $command $@
 
-                                elif echo ${all_list[@]} | grep -q -w "$argument" ; then
+                                elif echo ${all_list[@]} | grep -q -w "$command" ; then
                                     gmsg -v3 -c green "found in all list"
-                                    mount.known_remote $argument $@
+                                    mount.known_remote $command $@
 
                                 else
                                     gmsg -v3 -c yellow "not in any list"
-                                    mount.remote $argument $@
+                                    #mount.remote $command $@
                                 fi
-
+                            mount.status >/dev/null
                             return $? ;;
         esac
 }
@@ -68,12 +66,46 @@ mount.help () {
 }
 
 
-mount.status () {
-    # check status of GURU_CLOUD_* mountpoints defined in userrc
 
-    local _active_mount_points=$(mount.list)
-    for _mount_point in ${_active_mount_points[@]}; do
-        mount.check $_mount_point
+mount.status () {
+    # daemon status function
+
+    # printout header for status output
+    gmsg -t -v1 -n "${FUNCNAME[0]}: "
+
+    # check is enabled
+    #if [[ $GURU_MOUNT_ENABLED ]] ; then
+    if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
+            gmsg -v1 -n -c green "available " -k $mount_indicator_key
+            gmsg -v2
+        else
+            #gmsg -v1 -c reset "disabled" -k $mount_indicator_key
+            gmsg -v1 -c red "unavailable" -k $mount_indicator_key
+            return 100
+        fi
+
+    # printout list of mountponts
+    local mount_list=($(mount.ls))
+
+    for _mount_point in ${mount_list[@]} ; do
+            mount.check $_mount_point
+        done
+
+    # serve enter and indication
+    gmsg -v1 -V2
+
+    # serve enter and indication
+    #gmsg -v1 -V2
+    if [[ ${#mount_list[@]} -gt 1 ]] ; then
+            gmsg -v4 -c aqua -k $mount_indicator_key
+        fi
+
+    # indicate personal mount locations
+    local sripped=("${mount_list[@]/$GURU_SYSTEM_MOUNT}")
+    for _mount_point in ${sripped[@]} ; do
+            case $_mount_point in
+                *'/.'*)  gmsg -v4 -c deep_pink -k $mount_indicator_key
+                esac
         done
     return 0
 }
@@ -106,7 +138,7 @@ mount.info () {
 }
 
 
-mount.list () {
+mount.ls () {
     # simple list of mounted mountpoints
 
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
@@ -136,12 +168,9 @@ mount.online () {
     local _target_folder="$GURU_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
 
-    gmsg -N -n -v3 "checking $_target_folder "
     if [[ -f "$_target_folder/.online" ]] ; then
-        gmsg -v3 -c green "mounted"
         return 0
     else
-        gmsg -v3 -c dark_grey "offline"
         return 1
     fi
 }
@@ -154,14 +183,24 @@ mount.check () {
     local _target_folder="$GURU_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
 
-    gmsg -t -n -v 1 "$_target_folder status "
+    gmsg -n -v1 -V2 -c light_blue "${_target_folder##*/} "
+    gmsg -n -v2 -c light_blue "$_target_folder "
+
     mount.online "$_target_folder" ; _err=$?
 
     if [[ $_err -gt 0 ]] ; then
-            gmsg -v 1 -c red "OFFLINE"
+            gmsg -v2 -c dark_grey "not mounted"
             return 1
         fi
-    gmsg -v 1 -c green "MOUNTED"
+
+    case $_target_folder in
+        *'.data'*)  gmsg -v2 -c blue "mounted"
+                    ;;
+            *'.'*)  gmsg -v2 -c deep_pink "private"
+                    ;;
+                *)  gmsg -v2 -c green "mounted"
+                    ;;
+                esac
     return 0
 }
 
@@ -215,6 +254,7 @@ mount.remote () {
     if ! [[ -z "$(ls -A $_target_folder)" ]] ; then
             # Check that targed directory is empty
             gmsg -c yellow "target folder is not empty!"
+
             if ! [[ $GURU_FORCE ]] ; then
                     gmsg -v2 -c white "try '-f' to force or: '$GURU_CALL -f mount $_source_folder $_target_folder"
                     return 25
@@ -223,6 +263,7 @@ mount.remote () {
             # move found files to temp
             gmsg -c light_blue "$(ls $_target_folder)"
             read -r -p "append above files to $_target_folder?: " _reply
+
             case $_reply in
                 y)
                     [[ -d $_temp_folder ]] && rm -rf "$_temp_folder"
@@ -244,8 +285,12 @@ mount.remote () {
     if [[ -d "$_temp_folder/${_target_folder##*/}" ]] ; then
             # new fucket up space dot --> if [[ -d "$_temp_folder" ]] ; then
             gmsg -c pink -v3 "cp $_temp_folder/${_target_folder##*/} > $_target_folder"
-            cp -a "$_temp_folder/${_target_folder##*/}/." "$_target_folder" || gmsg -c yellow "failed to append/return files to $_target_folder, check also $_temp_folder"
-            rm -rf "$_temp_folder" || gmsg -c yellow "failed to remote $_temp_folder"
+
+            cp -a "$_temp_folder/${_target_folder##*/}/." "$_target_folder" \
+                || gmsg -c yellow "failed to append/return files to $_target_folder, check also $_temp_folder"
+
+            rm -rf "$_temp_folder" \
+                || gmsg -c yellow "failed to remote $_temp_folder"
         fi
 
     # if symlink given check if exist and create if not
@@ -256,7 +301,8 @@ mount.remote () {
                     gmsg -n -v1 "exist "
                 else
                     gmsg -n -v1 "creating.. "
-                    ln -s $_target_folder $_symlink && error=0 || gmsg -x 25 -c yellow "error creating $_symlink"
+                    ln -s $_target_folder $_symlink && error=0 \
+                        || gmsg -x 25 -c yellow "error creating $_symlink"
                 fi
         fi
 
@@ -313,9 +359,9 @@ mount.defaults () {
                 fi
 
             gmsg -v3 -c deep_pink "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
-            mount.remote  "$_target" "$_source_folder" "$_server" "$_port" "$_symlink"
+            mount.remote "$_target" "$_source_folder" "$_server" "$_port" "$_symlink"
         done
-
+    mount.status >/dev/null
     IFS="$_IFS"
     return $_error
 }
@@ -342,6 +388,7 @@ mount.all () {
             _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
             _symlink=$(eval echo '${GURU_MOUNT_'"${_item}[2]}")
             IFS=':' read -r _server _port _source_folder <<<"$_source"
+            IFS="$_IFS"
 
             if ! [[ $_source_folder ]] ; then
                     _source_folder=$_source
@@ -349,11 +396,11 @@ mount.all () {
                     _port=
                 fi
 
-            # gmsg -v3 -c deep_pink "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
+            gmsg -v3 -c deep_pink "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
             mount.remote "$_target" "$_source_folder" "$_server" "$_port" "$_symlink"
         done
 
-    IFS="$_IFS"
+    mount.status >/dev/null
     return $_error
 }
 
@@ -403,10 +450,10 @@ mount.poll () {
 
     case $_cmd in
         start )
-            gmsg -v1 -t -w 20 -c black "${FUNCNAME[0]}: mount status polling started" -k $indicator_key
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: mount status polling started" -k $mount_indicator_key
             ;;
         end )
-            gmsg -v1 -t -w 20 -c reset "${FUNCNAME[0]}: mount status polling ended" -k $indicator_key
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: mount status polling ended" -k $mount_indicator_key
             ;;
         status )
             mount.status $@

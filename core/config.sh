@@ -181,7 +181,8 @@ config.export () {
                 fi
         else
             gmsg -c yellow "somethign went wrong, recovering old user configuration"
-            [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" || gmsg -x 100 -c red "no old backup found, unable to recover"
+            [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" \
+                || gmsg -x 100 -c red "no old backup found, unable to recover"
             return 10
         fi
 }
@@ -216,13 +217,15 @@ config.push () {
     gmsg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
 
+    # "if not"
     ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
         -p "$GURU_ACCESS_PORT" \
         ls "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER" >/dev/null 2>&1 || \
-
-    ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
-        -p "$GURU_ACCESS_PORT" \
-        mkdir -p "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER"
+        # "then"
+        ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
+            -p "$GURU_ACCESS_PORT" \
+            mkdir -p "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER"
+        # "fi"
 
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
         "$GURU_CFG/$GURU_USER/" \

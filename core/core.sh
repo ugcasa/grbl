@@ -3,9 +3,11 @@
 # caa@ujo.guru 2020
 
 # global variables variable
-declare -x GURU_VERSION="0.6.6.6"
+declare -x GURU_VERSION="0.6.6.7"
 declare -x GURU_RC="$HOME/.gururc"
 declare -x GURU_BIN="$HOME/bin"
+
+#export GURU_SYSTEM_RESERVED_CMD=($GURU_SYSTEM_RESERVED_CMD)
 
 case "$1" in
         ver|version|--ver|--version)
@@ -25,25 +27,91 @@ if [[ -f $GURU_RC ]] ; then
 # user configuration overwrites
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
 
+# all modules need daemon functions
+source $GURU_BIN/daemon.sh
+
+core.main () {
+    # main command parser
+
+    local module="$1" ; shift
+
+    # check is accesspoint enabled and mount is not already done
+    source $GURU_BIN/mount.sh
+    if [[ $GURU_ACCESS_ENABLED ]] && [[ $GURU_MOUNT_ENABLED ]] && ! mount.online ; then
+        # check is system folder mounted
+        mount.main system
+    fi
+
+    case "$module" in
+
+            all)
+                    core.multi_module_function "$@"
+                    return $? ;;
+
+            uninstall)
+                    bash "$GURU_BIN/$module.sh" "$@"
+                    return $? ;;
+
+            start|poll|kill)
+                    #source $GURU_BIN/daemon.sh
+                    daemon.$module
+                    return $? ;;
+
+            "")
+                    core.shell
+                    return $? ;;
+
+            *)
+                    core.run_module "$module" "$@"
+                    return $? ;;
+        esac
+}
+
+
+core.stop () {
+    # ask daemon to stop
+
+    source $GURU_BIN/system.sh
+
+    system.main flag set stop
+    reuturn $?
+}
+
+
+core.pause () {
+    # ask daemon to pause
+
+    source $GURU_BIN/system.sh
+
+    # toggle
+    if system.flag pause ; then
+            system.flag rm pause
+        else
+            system.flag set pause
+        fi
+    return 0
+}
+
+
 core.process_opts () {
     # argument parser
 
     # default values
-    GURU_HOSTNAME="$(hostname)"
+    GURU_HOSTNAME=$(hostname)
     GURU_VERBOSE=$GURU_FLAG_VERBOSE
     GURU_COLOR=$GURU_FLAG_COLOR
-    GURU_DEBUG=$GURU_FLAG_DEBUG
+    #GURU_DEBUG=$GURU_FLAG_DEBUG
     GURU_FORCE=
     GURU_LOGGING=
 
     # go trought arguments and overwrite defualt if set or value given
-    TEMP=`getopt --long -o "scfldv:u:h:" "$@"`
+    TEMP=`getopt --long -o "scflv:u:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
             -c ) GURU_COLOR=            ; shift     ;;
             -s ) GURU_VERBOSE=          ; shift     ;;
-            -d ) GURU_DEBUG=true        ; shift     ;;
+            #-d ) GURU_DEBUG=true        ; shift     ;;
             -f ) GURU_FORCE=true        ; shift     ;;
             -l ) GURU_LOGGING=true      ; shift     ;;
             -v ) GURU_VERBOSE=$2        ; shift 2   ;;
@@ -69,65 +137,9 @@ core.process_opts () {
     export GURU_HOSTNAME
     export GURU_VERBOSE
     export GURU_COLOR
-    export GURU_DEBUG
+    #export GURU_DEBUG
     export GURU_FORCE
     export GURU_LOGGING
-}
-
-
-core.main () {
-    # main command parser
-
-    local tool="$1" ; shift
-
-    # TBD expired method to let modules know the command before client was not: to remove check is it used and remove
-    export GURU_CMD="$tool"
-
-    case "$tool" in
-                       all)  core.multi_module_function "$@"        ; _error_code=$? ;;
-                    status)  core.multi_module_function status      ; _error_code=$? ;;
-           start|poll|kill)  daemon.$tool                           ; _error_code=$? ;;
-                     pause)  system.flag pause \
-                             && system.flag rm pause \
-                             || system.flag set pause               ;;
-                      stop)  system.main flag set stop              ; return 0  ;;
-                  document)  $tool "$@"                             ; _error_code=$? ;;
-                     radio)  DISPLAY=0; $tool.py "$@"               ; _error_code=$? ;;
-                     shell)  core.shell "$@"                        ; _error_code=$? ;;
-                 uninstall)  bash "$GURU_BIN/$tool.sh" "$@"         ; _error_code=$? ;;
-                   help|-h)  core.help $@                           ; _error_code=$? ;;
-                        "")  core.shell                             ; _error_code=$? ;;
-                         *)  core.run_module "$tool" "$@"           ; _error_code=$? ;;
-        esac
-
-    # on verbose -v print onle errors
-    if (( _error_code > 99 )) ; then
-            gmsg -v1 -c red  "error code $_error_code"
-    elif (( _error_code > 0 )) ; then
-            gmsg -v2 -c yellow "warning code $_error_code"
-        fi
-
-    return $_error_code
-}
-
-
-core.change_user () {
-    # change user to unput ans
-
-    local _input_user=$1
-    if [[ "$_input_user" == "$GURU_USER" ]] ; then
-            gmsg -c yellow "user is already $_input_user"
-            return 0
-        fi
-
-    export GURU_USER=$_input_user
-
-    if [[ -d "$GURU_CFG/$GURU_USER" ]] ; then
-            gmsg -c white "changing user to $_input_user"
-            config.main export $_input_user
-        else
-            gmsg -c yellow "user configuration not exits"
-        fi
 }
 
 
@@ -135,10 +147,9 @@ core.run_module () {
     # check is given tool in module list and lauch first hit
 
     local type_list=(".sh" ".py" "")
-    local reserved_cmd=(help add rm ls run remove remove list)
 
     # guru add ssh key @ -> guru ssh key add @
-    if ! grep -q -w "$1" <<<${reserved_cmd[@]} ; then
+    if ! grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
             # remove movule from arguments
             local module=$1 ; shift
             local command=$1 ; shift
@@ -181,10 +192,8 @@ core.run_module () {
 core.run_module_function () {
     # run module functions
 
-    local reserved_cmd=($GURU_SYSTEM_RESERVED_COMMANDS)
-
     # guru add ssh key @ -> guru ssh key add @
-    if ! grep -q -w "$1" <<<${reserved_cmd[@]} ; then
+    if ! grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
             # remove movule from arguments
             local module=$1 ; shift
             local command=$1 ; shift
@@ -247,6 +256,27 @@ core.multi_module_function () {
 }
 
 
+core.change_user () {
+    # change user to unput ans
+
+    local _input_user=$1
+    if [[ "$_input_user" == "$GURU_USER" ]] ; then
+            gmsg -c yellow "user is already $_input_user"
+            return 0
+        fi
+
+    export GURU_USER=$_input_user
+    source $GURU_BIN/config.sh
+
+    if [[ -d "$GURU_CFG/$GURU_USER" ]] ; then
+            gmsg -c white "changing user to $_input_user"
+            config.main export $_input_user
+        else
+            gmsg -c yellow "user configuration not exits"
+        fi
+}
+
+
 core.shell () {
     # terminal looper
 
@@ -282,7 +312,7 @@ core.shell () {
 
     local _verbose=1
 
-    while : ; do
+    while true ; do
             # config.export "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
             source $GURU_RC
             GURU_VERBOSE=$_verbose
@@ -425,19 +455,18 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     core.process_opts $@
 
     # import needed modules
-    source $GURU_BIN/config.sh
     source $GURU_BIN/common.sh
-    source $GURU_BIN/mount.sh
-    source $GURU_BIN/daemon.sh
-    source $GURU_BIN/corsair.sh
-    source $GURU_BIN/system.sh
 
-    # check is accesspoint enabled and mount is not already done
-    if [[ $GURU_ACCESS_ENABLED ]] ; then
-        # check is system folder mounted
-        source $GURU_BIN/mount.sh
-        mount.main system
+    core.main $ARGUMENTS
+
+    _error_code=$?
+
+    # on verbose -v print onle errors
+    if (( _error_code > 99 )) ; then
+            gmsg -v1 -c red  "error code $_error_code"
+    elif (( _error_code > 0 )) ; then
+            gmsg -v2 -c yellow "warning code $_error_code"
     fi
-        core.main $ARGUMENTS
-        exit $?
+
+    exit $_error_code
 fi

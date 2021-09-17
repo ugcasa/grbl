@@ -3,12 +3,10 @@
 # casa@ujo.guru 2020
 # TODO Jan 04 01:24:50 electra bash[413320]: /home/casa/bin/common.sh: line 83: printf: write error: Broken pipe
 
-source $GURU_BIN/common.sh
-source $GURU_BIN/corsair.sh
-source $GURU_BIN/system.sh
-
 daemon_service_script="$HOME/.config/systemd/user/guru.service"
 daemon_pid_file="/tmp/guru.daemon-pid"
+
+source $GURU_BIN/system.sh
 
 daemon.main () {
     # daemon main command parser
@@ -96,13 +94,14 @@ daemon.start () {
             null|empty )
                 ;;
             *)
-                gmsg -n -v2 -w 15 -c dark_golden_rod "$i:$module: "
+                gmsg -v2 -c dark_golden_rod "$i:$module: "
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
                         # gmsg -v3 ": $GURU_BIN/$GURU_BIN/$module.sh"
                         $module.main poll start
                     else
-                        gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed" -k "f$(daemon.poll_order $module)"
+                        gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed" \
+                            -k "f$(daemon.poll_order $module)"
                     fi
                 ;;
             esac
@@ -132,13 +131,13 @@ daemon.stop () {
     for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
 
         module=${GURU_DAEMON_POLL_ORDER[i-1]}
-        #gmsg -v3 -w 15 -c dark_golden_rod "$i $module"
+        #gmsg -v3 -c dark_golden_rod "$i $module"
         case $module in
             null|empty )
                 #gmsg -v3 -c dark_grey "skipping $module"
                 ;;
             * )
-                gmsg -n -v2 -w 15 -c dark_golden_rod "$i:$module: "
+                gmsg -v2 -c dark_golden_rod "$i:$module: "
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
                         $module.main poll end
@@ -163,16 +162,16 @@ daemon.kill () {
     # force stop daemon
 
     if pkill guru ; then
-            gmsg -v1 "${FUNCNAME[0]}: guru-daemon killed.."
+            gmsg -v1 -c green "daemon killed.."
         else
-            gmsg -v1 "${FUNCNAME[0]}: guru-daemon not running"
+            gmsg -v2 -c dark_grey "daemon not running"
         fi
 
     if ps auxf | grep "$GURU_BIN/guru" | grep "start" | grep -v "grep" >/dev/null ; then
-            gmsg -v1 -c yellow "${FUNCNAME[0]}: daemon still running, try to 'sudo guru kill'"
+            gmsg -v1 -c yellow "daemon still running, try to 'sudo guru kill' again"
             return 100
         else
-            gmsg -v1 -c white "${FUNCNAME[0]}: kill verified"
+            gmsg -v3 -c white "kill verified"
             [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
             return 0
         fi
@@ -237,7 +236,7 @@ daemon.poll () {
                         gmsg -v4 -c dark_grey "skipping $module"
                         ;;
                     *)
-                        gmsg -n -v2 -w 15 -c dark_golden_rod "$i:$module: "
+                        gmsg -v2 -c dark_golden_rod "$i:$module: "
 
                         if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                                 source "$GURU_BIN/$module.sh"
@@ -249,7 +248,7 @@ daemon.poll () {
                     esac
             done
 
-        gmsg -n -v2 -w 15 -c reset -k esc "sleep ${GURU_DAEMON_INTERVAL}s: "
+        gmsg -n -v2 -c reset -k esc "sleep ${GURU_DAEMON_INTERVAL}s: "
         gmsg -v4 -c $GURU_CORSAIR_EFECT_COLOR -k cplc
 
         local _seconds=
@@ -353,6 +352,8 @@ EOL
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         source $GURU_RC
+        source $GURU_BIN/common.sh
+        source $GURU_BIN/corsair.sh
         daemon.process_opts $@
         daemon.main $ARGUMENTS
         exit $?

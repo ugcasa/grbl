@@ -2,6 +2,7 @@
 # unmount tools for guru-client
 #source "$HOME/.gururc"
 source $GURU_BIN/common.sh
+source $GURU_BIN/mount.sh
 
 unmount.main () {
     # mount command parser
@@ -48,6 +49,8 @@ unmount.main () {
                     gmsg -v3 -c yellow "not in any list"
                     unmount.remote $argument $@
                 fi
+
+                mount.status >/dev/null
 
     esac
 }
@@ -196,7 +199,9 @@ unmount.defaults () {  # unmount all GURU_CLOUD_* defined in userrc
         unmount.remote "$_target" || _error=$?
     done
 
+    mount.status >/dev/null
     return $_error
+
 }
 
 
@@ -226,6 +231,7 @@ unmount.all () {  # unmount all GURU_CLOUD_* defined in userrc
         unmount.remote "$_target" || _error=$?
     done
 
+    mount.status >/dev/null
     return $_error
 }
 

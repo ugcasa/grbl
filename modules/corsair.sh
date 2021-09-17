@@ -9,7 +9,7 @@ source $GURU_BIN/system.sh
 
 # active key list
 key_pipe_list=$(file /tmp/ckbpipe0* | grep fifo | cut -f1 -d ":")
-# modes with status bar function set
+# modes with status bar function set. if add on this list, add name=<rgb color> to rgb-color.cfg
 status_modes=(status, test, red, olive, dark, orange, eq)
 corsair_last_mode="/tmp/corsair.mode"
 # service configurations for ckb-next application
@@ -252,20 +252,20 @@ corsair.set () {
     local _color='rgb_'"$2"
     local _bright="FF" ; [[ $3 ]] && _bright="$3"
 
-    gmsg -v4 -n "${FUNCNAME[0]}: $_button color to "
-    gmsg -v4 -c $2 "$2"
+    #gmsg -v4 -n "${FUNCNAME[0]}: $_button color to "
+    gmsg -v4 -c $2 "$_button $2 "
 
     # get input key pipe file location
     _button=$(eval echo '$'$_button)
     if ! [[ $_button ]] ; then
-            gmsg -v3 -c yellow "no such button"
+            gmsg -v3 -c yellow "no such button '$_button'"
             return 101
         fi
 
     # get input color code
     _color=$(eval echo '$'$_color)
     if ! [[ $_color ]] ; then
-            gmsg -v3 -c yellow "no such color"
+            gmsg -v3 -c yellow "no such color '$_color'"
             return 102
         fi
 
@@ -301,13 +301,12 @@ corsair.pipe () {
 corsair.reset () {
     # application level function, not restarting daemon or application, return normal, if no input reset all
 
-    gmsg -n -v3 "resetting key"
+    gmsg -n -v3 "resetting keys "
 
     if [[ "$1" ]] ; then
             # gmsg -v2 " $1"
             corsair.set $1 $corsair_mode 10 && return 0 || return 100
         else
-            gmsg -n -v3 "s"
             for _key_pipe in $key_pipe_list ; do
                 gmsg -n -v3 "."
                 corsair.pipe $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10 || return 100
@@ -326,7 +325,7 @@ corsair.clear () {
     [[ "$1" ]] && _keylist=(${@})
     for _key in $_keylist ; do
             gmsg -n -v3 "."
-            gmsg -n -V3 -v2 "$_key "
+            gmsg -n -V3 -v2 -c black "$_key "
             corsair.set $_key black
         done
     gmsg -v3 -c green " done"

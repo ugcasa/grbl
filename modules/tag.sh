@@ -7,43 +7,45 @@ tag.main () {
     # get arguments                             # debug
     if [[ "$1" == "help" ]] ; then tag.help ; return 0 ; fi
 
-    tag_file_name="$1" ; shift                  #; echo "tag_file_name:$tag_file_name"
-
-    tag_action="$1" ; shift                     #; echo "tag_action:$tag_action"
+    tag_file_name="$1" ; shift
+    tag_action="$1" ; shift
 
     # parse file format
-    tag_file_format="${tag_file_name: -5}"      #; echo "tag_file_format:$tag_file_format"      # read last characters of filename
-    tag_file_format="${tag_file_format#*.}"     #; echo "tag_file_format:$tag_file_format"  # read after separator
-    tag_file_format="${tag_file_format^^}"      #; echo "tag_file_format:$tag_file_format"  # upcase
+    tag_file_format="${tag_file_name: -5}"      #read last characters of filename
+    tag_file_format="${tag_file_format#*.}"     #read after separator
+    tag_file_format="${tag_file_format^^}"      #upcase
 
-    case "$tag_file_format" in                                ### # #
-         3G2|3GP2|3GP|3GPP|AAX|AI|AIT|ARQ|ARW|CR2|CR3|CRM|CRW|CIFF|\
-         CS1|DCP|DNG|DR4|DVB|EPS|EPSF|PS|ERF|EXIF|EXV|F4A|F4B|F4P|\
-         F4V|FFF|FLIF|GIF|GPR|HDP|WDP|JXR|HEIC|HEIF|ICC|ICM|IIQ|IND|\
-         INDD|INDT|JP2|JPF|JPM|JPX|JPEG|JPG|JPE|LRV|M4A|M4B|M4P|M4V|\
-                MEF|MIE|MOS|MOV|QT|MPO|MQV|MRW|NEF|NRW|ORF|PDF|PEF|PNG|\
-                JNG|MNG|PPM|PBM|PGM|PSD|PSB|PSDT|QTIF|QTI|QIF|RAF|RAW|RW2|\
-                RWL|SR2|SRW|THM|TIFF|TIF|VRD|X3F|XMP) tag.picture "$@"    ;;
-                                                 MP3) tag.audio "$@"      ;;
-                                                 MP4) tag.mp4 "$@"        ;;
-                                          MD|TXT|MDD) tag.text "$@"       ;;
-                                                   *) echo "unknown format"
-                                                        return 123          #####
-        esac                                                   ###################
-}                                                               ####################
-                                                                 ####################
-                                                                  #################
+    case "$tag_file_format" in                                           ### # #
+    3G2|3GP2|3GP|3GPP|AAX|AI|AIT|ARQ|ARW|CR2|CR3|CRM|CRW|CIFF|PBM|GIF|GPR|\
+    CS1|DCP|DNG|DR4|DVB|EPS|EPSF|PS|ERF|EXIF|EXV|F4A|F4B|F4P|F4V|FFF|FLIF|\
+           HDP|WDP|JXR|HEIC|HEIF|ICC|ICM|IIQ|IND|RWL|SR2|SRW|THM|JNG|MNG|PPM|\
+                    INDD|INDT|JP2|JPF|JPM|JPX|JPEG|JPG|JPE|LRV|M4A|M4B|M4P|M4V|\
+                     MEF|MIE|MOS|MOV|QT|MPO|MQV|MRW|NEF|NRW|ORF|PDF|PEF|PNG|\
+                                    PGM|PSD|PSB|PSDT|QTIF|QTI|QIF|RAF|RAW|RW2|\
+                                    TIFF|TIF|VRD|X3F|XMP) tag.picture "$@"    ;;
+                                                     MP3) tag.audio "$@"      ;;
+                                                     MP4) tag.mp4 "$@"        ;;
+                                              MD|TXT|MDD) tag.text "$@"       ;;
+                                                       *) echo "unknown format"
+                                                            return 123          #####
+    esac                                                           ###################
+    }                                                               ####################
+                                                                     ####################
+                                                                      #################
+                                                                       ##############  #
+                                                                        ##########  ##
+
 tag.help () {
     echo "usage:    $GURU_CALL tag [add|rm|get] <file>"
 }
 
-
-tag.text () {                                                      ##############  #
-    # If file has more than two lines it's taggable                  ##########  ##
+tag.text () {
+    # If file has more than two lines it's taggable
 
     _get_tags () {
         current_tags=$(sed -n '2p' $tag_file_name)
-        current_tags=${current_tags##*": "}             # Cut "tag:" text away
+        # Cut "tag:" text away
+        current_tags=${current_tags##*": "}
     }
 
 

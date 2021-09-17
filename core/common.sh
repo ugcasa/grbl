@@ -129,8 +129,6 @@ gmsg () {
             mqtt.pub "$_mqtt_topic" "$_message"
         fi
 
-
-
     # -C) print only color code
     if [[ $_color_only ]] ; then
             echo -n "$_color_code"
@@ -209,6 +207,9 @@ gask () {
     return 1
 }
 
+contains() {
+    [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && return 0 || return 1
+}
 
 import () {
     # source all bash function in module. input: import <module_name> <py|sh|php..>

@@ -5,6 +5,9 @@
 # [vim + tmux - OMG!Code](https://www.youtube.com/watch?v=5r6yzFEXajQ)
 # [Complete tmux Tutorial](https://www.youtube.com/watch?v=Yl7NFenTgIo)
 # config location: ~/.tmux.conf (overrides defaults)
+# https://stackoverflow.com/questions/60335872/start-tmux-with-specific-layout
+# https://gist.github.com/sdondley/b01cc5bb1169c8c83401e438a652b84e
+# https://gist.github.com/Muzietto/325344c2b1b3b723985a85800cafef4f
 
 source $GURU_BIN/common.sh
 tmux_indicator_key="f$(daemon.poll_order tmux)"

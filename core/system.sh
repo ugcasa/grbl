@@ -1,7 +1,6 @@
 #!/bin/bash
 # system tools for guru-client
 source $GURU_BIN/common.sh
-source $GURU_BIN/mount.sh
 
 system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
@@ -136,7 +135,7 @@ system.status () {
     # system status
 
     gmsg -v 1 -t -n "${FUNCNAME[0]}: "
-    if mount.online "$GURU_SYSTEM_MOUNT" ; then
+    if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
         gmsg -v 1 -c green "guru on service" -k $system_indicator_key
         return 0
     else
@@ -393,7 +392,7 @@ system.upgrade () {
     sudo apt-get upgrade -y || gmsg -c red -x 101 "apt updgrade failed"
     sudo apt-get autoremove
     sudo apt-get autoclean
-    sudo apt-get check || gmsg -c yellow "Warning: $? check did nod pass"
+    sudo apt-get check || gmsg -c yellow "warning: $? check did nod pass"
 }
 
 

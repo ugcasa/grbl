@@ -267,11 +267,22 @@ tunnel.close () {
             # get config
             tunnel.get_config $service
             # get pid from ps list, must be a ssh local tunnel and contains right to_port
-            pid_list=($pid_list $(ps a | grep -v grep | grep "ssh -L" | grep $from_port | head -n 1  | sed 's/^[[:space:]]*//' | cut -d " "  -f 1))
+            pid_list=($pid_list $(ps a | \
+                                grep -v grep | \
+                                grep "ssh -L" | \
+                                grep $from_port | \
+                                head -n 1  | sed 's/^[[:space:]]*//' | \
+                                cut -d " "  -f 1 \
+                                ))
         done
     else
         # try to find all tunnels tunnels
-        pid_list=($(ps a | grep -v grep | grep "ssh -L" | sed 's/^[[:space:]]*//' | cut -d " "  -f 1))
+        pid_list=($(ps a | \
+            grep -v grep | \
+            grep "ssh -L" | \
+            sed 's/^[[:space:]]*//' | \
+            cut -d " "  -f 1 \
+            ))
 
     fi
 

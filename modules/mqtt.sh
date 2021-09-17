@@ -5,6 +5,28 @@
 source $GURU_BIN/common.sh
 mqtt_indicator_key="f$(daemon.poll_order mqtt)"
 
+mqtt.main () {
+    # mqtt main command parser
+
+    local _cmd="$1" ; shift
+    mqtt_indicator_key="f$(daemon.poll_order mqtt)"
+
+    case "$_cmd" in
+               status|help|install|remove|enabled)
+                    mqtt.$_cmd "$@"
+                    return $?
+                    ;;
+
+               single|sub|pub|poll)
+                    mqtt.enabled || return 1
+                    mqtt.$_cmd "$@"
+                    ;;
+               *)   gmsg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
+                    return 2
+        esac
+    return 0
+}
+
 
 mqtt.help () {
     # general help
@@ -29,29 +51,6 @@ mqtt.help () {
     gmsg -v1 "         $GURU_CALL mqtt sub '#' "
     gmsg -v1 "         $GURU_CALL mqtt pub '/msg Hello!' "
     gmsg -v2
-}
-
-
-mqtt.main () {
-    # mqtt main command parser
-
-    local _cmd="$1" ; shift
-    mqtt_indicator_key="f$(daemon.poll_order mqtt)"
-
-    case "$_cmd" in
-               status|help|install|remove|enabled)
-                    mqtt.$_cmd "$@"
-                    return $?
-                    ;;
-
-               single|sub|pub|poll)
-                    mqtt.enabled || return 1
-                    mqtt.$_cmd "$@"
-                    ;;
-               *)   gmsg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
-                    return 2
-        esac
-
     return 0
 }
 
@@ -61,7 +60,7 @@ mqtt.enabled () {
     # check is function activated and output instructions to enable function on user configuration
 
     if [[ $GURU_MQTT_ENABLED ]] ; then
-        gmsg -v2 -c green "mqtt enabled"
+        # gmsg -v2 -c green "mqtt enabled"
         return 0
     else
         gmsg -v2 -c black "mqtt disabled in user config"
@@ -78,14 +77,14 @@ mqtt.online () {
         # if mqtt message takes more than 2 seconds to return from closest mqtt server there is something wrong
 
         sleep 2
-        timeout 2 mosquitto_pub \
+        timeout 1 mosquitto_pub \
             -u "$GURU_MQTT_USER" \
             -h "$GURU_MQTT_BROKER" \
             -p "$GURU_MQTT_PORT" \
             -t "$GURU_HOSTNAME/online" \
             -m "$(date +$GURU_FORMAT_DATE) $(date +$GURU_FORMAT_TIME)" \
              >/dev/null 2>&1 \
-        || gmsg -v2 -c yellow "mqtt publish issue: $?"
+        || gmsg -v2 -c yellow "timeout or mqtt publish issue: $?"
     }
 
     # delayed publish
@@ -106,34 +105,6 @@ mqtt.online () {
                 "mqtt subscribe issue: $?"
             return 1
     fi
-}
-
-
-mqtt.status () {
-    # check mqtt broker is reachable. printout and signal by corsair keyboard indicator led - if available
-
-    mqtt_indicator_key="f$(daemon.poll_order mqtt)"
-
-    gmsg -n -v1 -t "${FUNCNAME[0]}: "
-
-    if [[ $GURU_MQTT_ENABLED ]] ; then
-            gmsg -v1 -n -c green "enabled, "
-        else
-            gmsg -v1 -c black "disabled " \
-                 -k $mqtt_indicator_key
-            return 1
-        fi
-
-    if mqtt.online ; then
-            gmsg -v1 -c green "broker available " \
-                 -k $mqtt_indicator_key
-            return 0
-        else
-            gmsg -v1 -c red "broker unreachable " \
-                 -k $mqtt_indicator_key
-            return 1
-        fi
-    sleep 3
 }
 
 
@@ -187,16 +158,17 @@ mqtt.pub () {
 
 
 mqtt.single () {
-    # subscribe to channel, stay listening
+    # subscribe to channel, stay listening until one message received
 
     local _topic="$1" ; shift
+    # lazy ass variable transport. TBD -- for this use
     [[ $1 ]] && local _options="-$@"
     mosquitto_sub -C 1 \
         -h "$GURU_MQTT_BROKER" \
         -p "$GURU_MQTT_PORT" \
         -t "$_topic" \
         $_options
-    # -u $GURU_MQTT_USER
+        # -u $GURU_MQTT_USER
     return $?
 }
 
@@ -212,6 +184,39 @@ mqtt.log () {
         -p "$GURU_MQTT_PORT" \
         -t "$_topic" >> $_log_file
     return $?
+}
+
+
+# ################# daemon functions #######################
+
+
+mqtt.status () {
+    # check mqtt broker is reachable.
+
+    mqtt_indicator_key="f$(daemon.poll_order mqtt)"
+
+    gmsg -n -v1 -t "${FUNCNAME[0]}: "
+
+    if [[ $GURU_MQTT_ENABLED ]] ; then
+            gmsg -v1 -n -c green "enabled, "
+        else
+            gmsg -v1 -c black "disabled " \
+                 -k $mqtt_indicator_key
+            return 1
+        fi
+
+    # printout and signal by corsair keyboard indicator led
+    if mqtt.online ; then
+            gmsg -v1 -c green "broker available " \
+                 -k $mqtt_indicator_key
+            return 0
+        else
+            gmsg -v1 -c red "broker unreachable " \
+                 -k $mqtt_indicator_key
+            return 1
+        fi
+    #try to keep possible error messages in module segment by waiting mqtt.sub reply after timeout
+    sleep 3
 }
 
 
