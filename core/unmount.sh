@@ -1,8 +1,13 @@
 #!/bin/bash
 # unmount tools for guru-client
 #source "$HOME/.gururc"
+
+
+#### TBD 1) figure out how to minimalize unmount.sh
+#### TBD 2) remove this and integrate functions to mount.sh
+
+
 source $GURU_BIN/common.sh
-source $GURU_BIN/mount.sh
 
 unmount.main () {
     # mount command parser
@@ -50,6 +55,7 @@ unmount.main () {
                     unmount.remote $argument $@
                 fi
 
+                source $GURU_BIN/mount.sh
                 mount.status >/dev/null
 
     esac
@@ -110,7 +116,7 @@ unmount.remote () {  # unmount mount point
 
     if ! [[ "$_mountpoint" ]] ; then
 
-            local _list=($(mount.main list | grep -v $GURU_SYSTEM_MOUNT))
+            local _list=($(unmount.ls | grep -v $GURU_SYSTEM_MOUNT))
             for item in "${_list[@]}" ; do
                 gmsg -n -c white "$_i: "
                 gmsg -c light_blue "${_list[_i]}"
@@ -199,7 +205,6 @@ unmount.defaults () {  # unmount all GURU_CLOUD_* defined in userrc
         unmount.remote "$_target" || _error=$?
     done
 
-    mount.status >/dev/null
     return $_error
 
 }
@@ -231,7 +236,6 @@ unmount.all () {  # unmount all GURU_CLOUD_* defined in userrc
         unmount.remote "$_target" || _error=$?
     done
 
-    mount.status >/dev/null
     return $_error
 }
 
