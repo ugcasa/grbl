@@ -77,6 +77,7 @@ mqtt.online () {
         # if mqtt message takes more than 2 seconds to return from closest mqtt server there is something wrong
 
         sleep 2
+        gmsg -v4 -c aqua -k $mqtt_indicator_key
         timeout 1 mosquitto_pub \
             -u "$GURU_MQTT_USER" \
             -h "$GURU_MQTT_BROKER" \
@@ -84,13 +85,14 @@ mqtt.online () {
             -t "$GURU_HOSTNAME/online" \
             -m "$(date +$GURU_FORMAT_DATE) $(date +$GURU_FORMAT_TIME)" \
              >/dev/null 2>&1 \
-        || gmsg -v2 -c yellow "timeout or mqtt publish issue: $?"
+        || gmsg -v2 -c yellow "timeout or mqtt publish issue: $?" -k $mqtt_indicator_key
     }
 
     # delayed publish
     mqtt.online_send &
 
     # subscribe to channel no output
+    gmsg -v4 -c aqua_marine -k $mqtt_indicator_key
     if timeout 3 mosquitto_sub -C 1 \
                     -u "$GURU_MQTT_USER" \
                     -h "$GURU_MQTT_BROKER" \
@@ -98,6 +100,7 @@ mqtt.online () {
                     -t "$GURU_HOSTNAME/online" \
                     $_options >/dev/null
         then
+            gmsg -v4 -c green -k $mqtt_indicator_key
             return 0
         else
             gmsg -v2 -c yellow \
@@ -112,14 +115,22 @@ mqtt.sub () {
     # subscribe to channel, stay listening
 
     local _topic="$1" ; shift
+
+    gmsg -v4 -c white -k $mqtt_indicator_key
+
     # lazy way to deliver arguments
     [[ $1 ]] && local _options="-$@"
+
     # susbsribe
-    mosquitto_sub \
-        -h $GURU_MQTT_BROKER \
-        -p $GURU_MQTT_PORT \
-        -t "$_topic" $_options
-        # TBD why -u $GURU_MQTT_USER was removed?
+    if mosquitto_sub \
+            -h $GURU_MQTT_BROKER \
+            -p $GURU_MQTT_PORT \
+            -t "$_topic" $_options ; then
+            gmsg -v4 -c green -k $mqtt_indicator_key
+        else
+            gmsg -v4 -c red -k $mqtt_indicator_key
+        fi
+
     return $?
 }
 
@@ -131,28 +142,39 @@ mqtt.pub () {
     local _message="$@"
     local _error=
 
-    [[ $_topic ]] || gmsg -v1 -x 127 "no topic specified"
+    if ! [[ $_topic ]] ; then
+            gmsg -v1  "no topic specified"
+            return 127
+        fi
+
+    if ! [[ $_message ]] ; then
+        gmsg -v1  "no mesage specified"
+            return 128
+        fi
+
+    gmsg -v4 -c aqua -k $mqtt_indicator_key
 
     local _i=
     for _i in {1..5} ; do
-          # -I $GURU_MQTT_CLIENT
-          mosquitto_pub \
-            -u $GURU_MQTT_USER \
-            -h $GURU_MQTT_BROKER \
-            -p $GURU_MQTT_PORT \
-            -t "$_topic" \
-            -m "$_message" >/dev/null 2>&1
-          _error=$?
 
-          if (( $_error )) ; then
+            mosquitto_pub \
+                -u $GURU_MQTT_USER \
+                -h $GURU_MQTT_BROKER \
+                -p $GURU_MQTT_PORT \
+                -t "$_topic" \
+                -m "$_message" >/dev/null 2>&1
+                _error=$?
+
+            if (( $_error )) ; then
                   gmsg -v2 -c red \
                     -k $mqtt_indicator_key \
                     "mqtt connection $_i error $_error"
               else
-                  gmsg -n -c green -k $mqtt_indicator_key
+                  gmsg -v4 -c green -k $mqtt_indicator_key
                   break
               fi
         done
+
     return $_error
 }
 
@@ -163,12 +185,15 @@ mqtt.single () {
     local _topic="$1" ; shift
     # lazy ass variable transport. TBD -- for this use
     [[ $1 ]] && local _options="-$@"
+    gmsg -v4 -c white -k $mqtt_indicator_key
+
     mosquitto_sub -C 1 \
         -h "$GURU_MQTT_BROKER" \
         -p "$GURU_MQTT_PORT" \
         -t "$_topic" \
         $_options
         # -u $GURU_MQTT_USER
+    gmsg -v4 -c green -k $mqtt_indicator_key
     return $?
 }
 
