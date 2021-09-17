@@ -147,7 +147,7 @@ gmsg () {
             return 0
         fi
 
-    #On verbose level 3+ timestamp is always on
+    # On verbose level 3+ timestamp is always on
     if [[ $verbose_trigger -gt 3 ]] && [[ ${#_message} -gt 1 ]]; then
         _timestamp="$(date +$GURU_FORMAT_TIME.%3N) "
     fi
