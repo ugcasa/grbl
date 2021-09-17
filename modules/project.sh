@@ -222,7 +222,6 @@ project.open () {
     # set keyboard key to project color
     declare -l key_color="aqua"
     [[ $GURU_PROJECT_COLOR ]] && key_color=$GURU_PROJECT_COLOR
-    gmsg -v3 -c $key_color "open color:$GURU_PROJECT_COLOR"
 
     gmsg -v1 -c $key_color "$project_name" -m "$GURU_USER/project" -k $project_indicator_key
 
@@ -579,9 +578,7 @@ project.status () {
     if [[ -f $project_base/active ]]; then
             local active=$(cat $project_base/active)
             gmsg -v2 -n "active: "
-            gmsg -v1 -c $project_key_color "$active "
-            # set keyboard indicator to project color, if set
-            gmsg -n -c $project_key_color  -k $project_indicator_key
+            gmsg -v1 -c $project_key_color "$active " -k $project_indicator_key
         else
             gmsg -v1 -c reset "no active projects "
         fi
