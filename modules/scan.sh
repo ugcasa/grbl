@@ -117,6 +117,13 @@ scan.install () {
         return $?
 }
 
+scan.check_connector () {
+    # run this to test connector of device
+
+    while true ; do lsusb | grep pson >/dev/null && echo connected || echo disconnected ; done
+}
+
+
 
 scan.check () {
     gmsg -n -v1 "checking device.. "
