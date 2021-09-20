@@ -369,8 +369,8 @@ tunnel.requirements () {
     local action=$1
     [[ "$action" ]] || read -r -p "install or remove? :" action
     local require="ssh rsync"
-    printf "Need to install $require, ctrl+c? or input local "
-    sudo apt update && eval sudo apt "$action" "$require" && printf "\n guru is now ready to tunnel \n\n"
+    gmsg -c yellow "need to install $require, ctrl+c? or input local "
+    sudo apt update && eval sudo apt "$action" "$require" && gmsg -c yellow "guru is now ready to tunnel"
 }
 
 
