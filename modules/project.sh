@@ -206,7 +206,10 @@ project.open () {
     shift
 
     # check is given project alredy active
-    if [[ -f $project_base/active ]] && [[ "$project_name" == "$(cat $project_base/active)" ]] && ! [[ $GURU_FORCE ]]; then
+    if [[ -f $project_base/active ]] \
+            && [[ "$project_name" == "$(cat $project_base/active)" ]] \
+            && ! [[ $GURU_FORCE ]]
+        then
             gmsg -c green "project $project_name is active"
             return 0
         fi
@@ -273,8 +276,10 @@ project.terminal () {
                     if [[ $DISPLAY ]] ; then
 
                             if [[ $GURU_PROJECT_GIT ]] ; then
-                                gnome-terminal --tab --title="project" --working-directory="$project_folder" \
-                                               --tab --title="git"     --working-directory="$GURU_PROJECT_GIT"
+                                gnome-terminal --tab --title="project" \
+                                               --working-directory="$project_folder" \
+                                               --tab --title="git" \
+                                               --working-directory="$GURU_PROJECT_GIT"
                             else
                                 gnome-terminal --working-directory="$project_folder"
                             fi
