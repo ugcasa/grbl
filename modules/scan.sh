@@ -1,6 +1,7 @@
 #!/bin/bash
 # guru shell scanner wrappers
 
+# TBD get this working again.. epson says that sthey do not support device anymore on linux, mfs.
 
 scan.main () {
     local _cmd=$1 ; shift
@@ -28,6 +29,8 @@ scan.help () {
 
 scan.install () {
     # http://download.ebz.epson.net/man/linux/iscan_e.html
+
+    # TBD did not run thif function, donn't see why?
 
     if [[ -f /usr/bin/iscan ]] ; then
             gmsg "installed, use force to reinstall"
@@ -117,12 +120,12 @@ scan.install () {
         return $?
 }
 
+
 scan.check_connector () {
     # run this to test connector of device
 
     while true ; do lsusb | grep pson >/dev/null && echo connected || echo disconnected ; done
 }
-
 
 
 scan.check () {
