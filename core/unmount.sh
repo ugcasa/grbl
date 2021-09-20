@@ -55,9 +55,7 @@ unmount.main () {
                     unmount.remote $argument $@
                 fi
 
-                source $GURU_BIN/mount.sh
                 mount.status >/dev/null
-
     esac
 }
 
