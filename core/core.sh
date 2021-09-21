@@ -105,11 +105,12 @@ core.process_opts () {
     GURU_LOGGING=
 
     # go trought arguments and overwrite defualt if set or value given
-    TEMP=`getopt --long -o "scflv:u:h:" "$@"`
+    TEMP=`getopt --long -o "scCflv:u:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
-            -c ) GURU_COLOR=            ; shift     ;;
+            -c ) GURU_COLOR=true        ; shift     ;;
+            -C ) GURU_COLOR=            ; shift     ;;
             -s ) GURU_VERBOSE=          ; shift     ;;
             #-d ) GURU_DEBUG=true        ; shift     ;;
             -f ) GURU_FORCE=true        ; shift     ;;
