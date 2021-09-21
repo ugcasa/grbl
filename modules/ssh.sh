@@ -23,7 +23,7 @@ ssh.key () {
     case "$command" in
         ps|active)      ssh-add -l  ;;
         renerate|new)   ssh.generate_key $@ ; return $? ;;
-        ls|files)       ls "$HOME/.ssh" | grep "rsa" | grep -v "pub" ;;
+        ls|files)       gmsg -c light_blue $(ls "$HOME/.ssh" | grep "rsa" | grep -v "pub") ;;
         add)            ssh.add_key "$@" ;;
         rm)             ssh.rm_key "$@" ;;
         send)           ssh.copy-id "$@" ;;
