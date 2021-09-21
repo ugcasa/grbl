@@ -2,7 +2,7 @@
 # guru telegram integration based on telegram-cli casa@ujo.guru 2021
 
 crypto_method="libcrypto"
-telegram_indicator_key="f$(daemon.poll_order telegram)"
+#telegram_indicator_key="f$(daemon.poll_order telegram)"
 public_server_key="/etc/telegram-cli/tg-server.pub"
 
 telegram.main () {
@@ -12,7 +12,7 @@ telegram.main () {
 
     case "$command" in
 
-            enabled|connect|sub|poll|install)
+            enabled|connect|sub|msg|poll|install)
                     telegram.$command "$@"
                     return $?
                     ;;
@@ -41,27 +41,20 @@ telegram.enabled () {
 }
 
 
-telegram.my_server_down () {
-    # send warning to channel that server is down
-    local channel="server-watchdog"
-    local domain="elena.ujo.guru" ; [[ $1 ]] && domain=$1
-    local send_log="/tmp/ug-tg-log.json"
-    local warn_msg="$domain is down, I repeat: $domain is down - actions needed!"
-    local timeout=300
+telegram.msg () {
+    # send message to hebo or to channel. input <channel> <message>
 
-    echo "starting server-watchdog $domain, warning send to $channel, interval $timeout logged to $send_log "
-    telegram-cli --json -W -e "msg $channel starting server-watchdog at $(hostname) for $domain (interval $timeout).. " >>$send_log
+    local channel=$1 ; shift
+    local msg=$@
+    # if [[ $1 ]] ; then channel=$1 ; shift ; fi
+    # if [[ $2 ]] ; then msg="$@" ; fi
 
-    while true ; do
-        if ping -q -W 3 -c 3 $domain >/dev/null ; then
-                printf "."
-                sleep $timeout
-            else
-                echo "server down!"
-                telegram-cli --json -W -e "msg $channel $warn_msg" >>$send_log
-                sleep 60
-            fi
-    done
+    if telegram-cli -D -W -e "msg $channel $msg" >/dev/null ; then
+            return 0
+        else
+            gmsg -c yellow "unable to send telegram message"
+            return 100
+        fi
 }
 
 
@@ -69,8 +62,8 @@ telegram.connect () {
     # connect to server with given key
 
     [[ $1 ]] && public_server_key=$1 ; shift
+    telegram-cli -k $public_server_key
 
-    /bin/telegram-cli -k $public_server_key
 }
 
 
@@ -136,6 +129,7 @@ telegram.install () {
 
     # crypto method selection
     case $crypto_method in
+
         openssl )
                 sudo apt-get install -y libssl-dev
                 if ./configure ; then
@@ -143,8 +137,8 @@ telegram.install () {
                     else
                         gmsg -x 103 -c red "openssl configure error"
                     fi
+                ;;
 
-            ;;
         libcrypto )
                 sudo apt-get install -y libgcrypt20 libgcrypt20-dev libssl-dev
                 if ./configure --disable-openssl --prefix=/usr CFLAGS="$CFLAGS -w"
@@ -164,7 +158,7 @@ telegram.install () {
             gmsg -c yellow "error $? during make"
         fi
 
-     # copy server key
+    # copy server key
     if ! [[ -d ${public_server_key%/*} ]] ; then
             sudo mkdir /etc/telegram-cli
         fi
