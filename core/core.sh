@@ -110,7 +110,7 @@ core.process_opts () {
     while true ; do
         case "$1" in
             -c ) GURU_COLOR=true        ; shift     ;;
-            -C ) GURU_COLOR=            ; shift     ;;
+            -C ) GURU_COLOR=false       ; shift     ;;
             -s ) GURU_VERBOSE=          ; shift     ;;
             #-d ) GURU_DEBUG=true        ; shift     ;;
             -f ) GURU_FORCE=true        ; shift     ;;
