@@ -237,12 +237,12 @@ fi
 #     help - prints this help
 #     get_self - get our user info
 
-# Card
+# # Card
 
-#     export_card - print your 'card' that anyone can later use to import your contact
-#     import_card <card> - gets user by card. You can write messages to him after that.
+# #     export_card - print your 'card' that anyone can later use to import your contact
+# #     import_card <card> - gets user by card. You can write messages to him after that.
 
-# Other
+# # Other
 
-#     quit - quit
-#     safe_quit - wait for all queries to end then quit
+# #     quit - quit
+# #     safe_quit - wait for all queries to end then quit
