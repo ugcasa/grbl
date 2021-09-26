@@ -85,6 +85,7 @@ daemon.start () {
         fi
 
     if system.suspend flag ; then
+            [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
             system.suspend rm_flag
             corsair.systemd_restart
         fi
