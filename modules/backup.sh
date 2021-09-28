@@ -238,15 +238,25 @@ backup.now () {
     # crypto virus honeypot file
     # if crypted or copied to another file ending cancel backup
 
-    #echo $honeypot_file
+    # if from location is remote
     if [[ $from_domain ]] ; then
-       gmsg -n "getting honeypot file.. "
-       eval $storing_method $command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null && gmsg -c green "ok"
+        # check if file exists
+        if ssh $from_user@$from_domain "test -e $honeypot_file" ; then
+            [[ -f /tmp/honeypot.txt ]] && rm -f /tmp/honeypot.txt
+            gmsg -n "getting honeypot file.. "
+            # get honeypot file
+            if eval $storing_method $command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null ; then
+                gmsg -c green "ok"
+            else
+                gmsg -c yellow "cannot get honeypot file"
+            fi
+        fi
     fi
 
     if [[ -f /tmp/honeypot.txt ]] ; then
             gmsg -n "checking honeypot file.. "
             local contain=($(cat /tmp/honeypot.txt))
+            rm -f /tmp/honeypot.txt
             if ! [[ ${contain[3]} == "honeypot" ]] ; then
                 gmsg -c yellow \
                      "honeypot file changed! got '${contain[3]}' when 'honeypot' expected."
@@ -257,7 +267,6 @@ backup.now () {
 
                 fi
         gmsg -c green "ok"
-        #rm -f /tmp/honeypot.txt
         fi
 
     eval $storing_method $command_param $from_param $store_param
@@ -280,7 +289,7 @@ backup.all () {
     local error=0
 
     for source in ${GURU_BACKUP_ACTIVE[@]} ; do
-        gmsg -c dark_golden_rod "backing up $item/${#GURU_BACKUP_ACTIVE[@]}.."
+        gmsg -n -c dark_golden_rod "backing up $item/${#GURU_BACKUP_ACTIVE[@]}.. "
         backup.now $source || (( _error++ ))
         (( item++ ))
         done
