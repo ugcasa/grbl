@@ -135,41 +135,28 @@ backup.status () {
             return 1
         fi
 
-    if [[ -f $backup_data_folder/next ]] ; then
-
-            local epic_backup=$(cat $backup_data_folder/next)
-            local diff=$(( $epic_backup - $(date '+%s') ))
-            # indicate that backup is close ~3h
-            if [[ $diff -lt 10000 ]] ; then
-                gmsg -v1 -c aqua_marine -k $backup_indicator_key \
-                    "scheduled backup at $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
-            else
-                gmsg -n -v1 -c green -k $backup_indicator_key "ok "
-                gmsg -v1 "next backup at $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
-            fi
-
-
-
-        else
-            gmsg -v1 -c reset -k $backup_indicator_key \
+    if ! [[ -f $backup_data_folder/next ]] ; then
+            gmsg -v1 -c green -k $backup_indicator_key \
                 "no scheduled backups"
             return 0
-
         fi
 
-    if [[ $(date '+%s') -ge $epic_backup ]] ; then
+    local epic_backup=$(cat $backup_data_folder/next)
+    local diff=$(( $epic_backup - $(date '+%s') ))
 
-        backup.all
-        local _error=$?
-        if [[ $_error -lt 100 ]] ; then
-            epic_backup=$(( $epic_backup + 86400))
-            echo $epic_backup > $backup_data_folder/next
-            gmsg -c white \
-                "next backup scheduled to $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
-            return $_error
-        fi
+    # indicate backup time
+    if [[ $diff -lt 10000 ]] ; then
+        # indicate that backup is close ~3h
+        gmsg -n -v1 -c aqua_marine -k $backup_indicator_key \
+            "scheduled backup at $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
+        # indicate that that backup is very soon, ~minutes
+        [[ $diff -lt $GURU_DAEMON_INTERVAL ]] && gmsg -n -v1 -c deep_pink -k $backup_indicator_key \ "($diff seconds)"
+        echo
+    else
+        # all fine, no backup for three least hours
+        gmsg -n -v1 -c green -k $backup_indicator_key "ok "
+        gmsg -v1 "next backup at $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
     fi
-
     return 0
 }
 
@@ -351,11 +338,36 @@ backup.all () {
         fi
 }
 
+backup.scheduled () {
+        # run an set scheduled backup
+
+        local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
+        local epic_backup=$(cat $backup_data_folder/next)
+
+        if ! [[ -f $backup_data_folder/next ]] ; then
+            return 0
+        fi
+
+        if [[ $(date '+%s') -lt $epic_backup ]] ; then
+            return 0
+        fi
+
+        backup.all
+        local _error=$?
+
+        if [[ $_error -lt 100 ]] ; then
+            epic_backup=$(( $epic_backup + 86400))
+            echo $epic_backup > $backup_data_folder/next
+            gmsg -c white \
+                "next backup scheduled to $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
+            return $_error
+        fi
+}
+
 
 backup.poll () {
     # poll functions
 
-    # TBD: write cooperative standard function for timed processes
     local backup_indicator_key="f$(daemon.poll_order backup)"
     local _cmd="$1" ; shift
 
@@ -368,7 +380,7 @@ backup.poll () {
             ;;
         status )
             backup.status
-            # check is backup is overdue, launch here if so
+            backup.scheduled
             ;;
         *)  gmsg -c dark_grey "function not written"
             return 0
@@ -387,7 +399,7 @@ backup.install () {
 
 backup.remove () {
     #sudo apt remove xxx
-
+    gmsg "no point ro remove so basic tools.."
     return 0
 }
 
