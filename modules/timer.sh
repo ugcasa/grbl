@@ -67,10 +67,18 @@ timer.status () {
     timer_indicator_key="f$(daemon.poll_order timer)"
     gmsg -n -t -v1 "${FUNCNAME[0]}: "
 
+    # enabled?
+    if [[ $GURU_TIMER_ENABLED ]] ; then
+            gmsg -n -v1 -c green "enabled, " -k $timer_indicator_key
+        else
+            gmsg -v1 -c reset "disabled" -k $timer_indicator_key
+            return 1
+        fi
+
     # check is timer set
     if [[ ! -f "$GURU_FILE_TRACKSTATUS" ]] ; then
         gmsg -v1 -c reset "no timer tasks" -k $timer_indicator_key
-        return 1
+        return 2
     fi
 
     # get timer variables
