@@ -108,7 +108,9 @@ backup.config () {
             declare -g store_location=$store
         fi
 
-        declare -g storing_method=$method
+        declare -g backup_method=$method
+
+
         declare -g honeypot_file="$from_location/honeypot.txt"
 
         return 1
@@ -206,6 +208,50 @@ backup.restore () {
     return 127
 }
 
+
+backup.wekan () {
+    # take a database dump and copy it to location set in user.cfg where normal process can copy it to local
+    local _domain=$1
+    local _port=$2
+    local _user=$3
+    local _location=$4
+
+    # stop container
+    gmsg -n "stop container.. "
+    ssh ${_user}@${_domain} -p ${_port} -- docker stop wekan >/dev/null \
+        && gmsg -c green "ok" \
+        || gmsg -c yellow "error $?"
+
+    # delete current dump
+    gmsg -n "delete current dump.. "
+    ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db rm -rf /data/dump >/dev/null \
+        && gmsg -c green "ok" \
+        || gmsg -c yellow "error $?"
+
+    # take a dump
+    gmsg -n "take a dump /data/dump.. "
+    ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db mongodump -o /data/dump 2>/dev/null \
+        && gmsg -c green "ok" \
+        || gmsg -c yellow "error $?"
+
+    # copy to where to rsyck it to final location
+    gmsg -n "copy to ${_location}.. "
+    ssh ${_user}@${_domain} -p ${_port} -- "[[ -d ${_location} ]] || mkdir -p ${_location}>/dev/null "
+
+    ssh ${_user}@${_domain} -p ${_port} -- docker cp wekan-db:/data/dump ${_location} >/dev/null \
+        && gmsg -c green "ok" \
+        || gmsg -c yellow "error $?"
+
+    # start container
+    gmsg -n "starting container.. "
+    ssh ${_user}@${_domain} -p ${_port} -- docker start wekan >/dev/null \
+        && gmsg -c green "ok" \
+        || gmsg -c yellow "error $?"
+
+    return 0
+}
+
+
 backup.now () {
     # check things and if pass then make backup
 
@@ -251,6 +297,19 @@ backup.now () {
             mkdir -p $store_location
         fi
 
+    case $backup_method in
+
+            wekan)  backup.wekan $from_domain $from_port $from_user $from_location || return $?
+                    # continue
+                    ;;
+            wiki)   echo "wiki"
+                    # continue
+                    ;;
+            git)    echo "wiki"
+                    # continue
+                    ;;
+        esac
+
     # crypto virus checks only if from location is remote and store location is local
     if [[ $from_domain ]] && ! [[ $store_domain ]] ; then
 
@@ -281,7 +340,8 @@ backup.now () {
             [[ -f /tmp/honeypot.txt ]] && rm -f /tmp/honeypot.txt
             gmsg -n "getting honeypot file.. "
             # get honeypot file
-            if eval $storing_method $command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null ; then
+
+            if eval rsync $command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null ; then
                 gmsg -c green "ok"
             else
                 gmsg -c yellow "cannot get honeypot file"
@@ -306,10 +366,10 @@ backup.now () {
         gmsg -c green "ok"
     fi
 
-    eval $storing_method $command_param $from_param $store_param
+    eval rsync $command_param $from_param $store_param
 
     if [[ $? -gt 0 ]] ; then
-            gmsg -v1 "$from_location error: $storing_method $?" \
+            gmsg -v1 "$from_location error: $backup_method $?" \
                  -c red -k $backup_indicator_key
             return 12
         else
