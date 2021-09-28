@@ -257,7 +257,7 @@ install.copy () {
 
 install.check () {
     ## Check installation, reinstall if -f or user input
-    gmsg  -v1 "checking current installation.. "
+    gmsg -v1 "checking current installation.. "
     if grep -q "gururc" "$bash_rc" ; then
         [[ $force_overwrite ]] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer
 
