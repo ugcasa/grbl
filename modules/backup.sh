@@ -235,7 +235,8 @@ backup.now () {
             # build local to remote command variables
             command_param="-a -e 'ssh -p $store_port' --progress --update"
             store_param="$store_user@$store_domain:$store_location"
-        # else local to local
+
+        # ..else local to local
         else
             command_param="-a --progress --update"
             store_param="$store_location"
@@ -247,11 +248,11 @@ backup.now () {
             mkdir -p $store_location
         fi
 
-    # crypto virus checks only if from location is remote and store location local
+    # crypto virus checks only if from location is remote and store location is local
     if [[ $from_domain ]] && ! [[ $store_domain ]] ; then
 
         # wannacry test
-        local list_of_files=($(ssh $from_user@$from_domain "ls $from_location"))
+        local list_of_files=($(ssh $from_user@$from_domain "find $from_location -type f -name '*' "))
 
         for file in ${list_of_files[@]} ; do
 
@@ -260,7 +261,7 @@ backup.now () {
                 *.WNCRY*)
                         gmsg -c red -k $backup_indicator_key \
                             "POTENTIAL VIRUS: wannacry tracks detected!"
-                        gmsg -c light_blue "$from_location/$file"
+                        gmsg -c light_blue "$file"
                         gmsg -c yellow "backup of $from_location canceled"
                         return 101
                         ;;
