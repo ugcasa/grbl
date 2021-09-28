@@ -116,7 +116,7 @@ uninstall.remove () {
 
     if system.flag running ; then
             system.flag set pause
-            sleep 2
+            sleep 3
         fi
 
     # check installation
