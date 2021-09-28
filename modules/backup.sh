@@ -203,8 +203,37 @@ backup.at () {
     return 0
 }
 
+
+backup.restore_wekan () {
+    # TBD
+
+    gmsg -c light_blue "docker stop wekan"
+    gmsg -c light_blue "docker exec wekan-db rm -rf /data/dump"
+    gmsg -c light_blue "docker cp dump wekan-db:/data/"
+    gmsg -c light_blue "docker exec wekan-db mongorestore --drop --dir=/data/dump"
+    gmsg -c light_blue "docker start wekan"
+    return 127
+}
+
+
 backup.restore () {
-    echo TBD
+    # TBD
+
+    backup_method=$1
+
+    case $backup_method in
+
+        wekan)  backup.restore_wekan $from_domain $from_port $from_user $from_location || return $?
+                ;;
+        mediawiki)
+                echo "TBD mediawiki backup restore"
+                ;;
+        git|gitea)
+                echo "TBD git server backup restore"
+                ;;
+        *)      gmsg -c yellow "unknown method '$backup_method'"
+    esac
+
     return 127
 }
 
@@ -306,14 +335,14 @@ backup.now () {
 
     case $backup_method in
 
-            wekan)  backup.wekan $from_domain $from_port $from_user $from_location || return $?
-                    # continue
+            wekan)
+                    backup.wekan $from_domain $from_port $from_user $from_location || return $?
                     ;;
-            wiki)   echo "wiki"
-                    # continue
+            mediawiki)
+                    echo "TBD mediawiki backup"
                     ;;
-            git)    echo "wiki"
-                    # continue
+            git|gitea)
+                    echo "TBD git server backup"
                     ;;
         esac
 
