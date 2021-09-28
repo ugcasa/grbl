@@ -31,7 +31,7 @@ mount.main () {
 
                       "")   mount.list default
                             return $? ;;
-
+                       # TBD this is bullshit
                        *)   if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$command" ; then
                                     gmsg -v4 -c pink "found in defauls list"
                                     mount.known_remote $command $@
