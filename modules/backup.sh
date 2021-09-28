@@ -58,7 +58,7 @@ backup.config () {
     # get tunnel configuration an populate common variables
 
     declare -ga backup_name=($1)
-    declare -la header=(store method from)
+    declare -la header=(store method from ignore)
     declare -ga active_list=(${GURU_BACKUP_ACTIVE[@]})
     declare -g backup_indicator_key="f$(daemon.poll_order backup)"
 
@@ -84,6 +84,7 @@ backup.config () {
                 declare -l store_device=${data[0]}
                 declare -l method=${data[1]}
                 declare -l from=${data[2]}
+                declare -l ignore="${data[3]//:/" "}"
                 local store="GURU_BACKUP_${store_device^^}" ; store=${!store}
                 gmsg -v3 -c deep_pink "|$store_device|$store|$method|$from|"
                 break
@@ -108,9 +109,8 @@ backup.config () {
             declare -g store_location=$store
         fi
 
+        declare -ga backup_ignore=($ignore)
         declare -g backup_method=$method
-
-
         declare -g honeypot_file="$from_location/honeypot.txt"
 
         return 1
@@ -217,13 +217,13 @@ backup.wekan () {
     local _location=$4
 
     # stop container
-    gmsg -n "stop container.. "
+    gmsg -n "stopping docker container.. "
     ssh ${_user}@${_domain} -p ${_port} -- docker stop wekan >/dev/null \
         && gmsg -c green "ok" \
         || gmsg -c yellow "error $?"
 
     # delete current dump
-    gmsg -n "delete current dump.. "
+    gmsg -n "delete last dump.. "
     ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db rm -rf /data/dump >/dev/null \
         && gmsg -c green "ok" \
         || gmsg -c yellow "error $?"
@@ -243,7 +243,7 @@ backup.wekan () {
         || gmsg -c yellow "error $?"
 
     # start container
-    gmsg -n "starting container.. "
+    gmsg -n "starting docker container.. "
     ssh ${_user}@${_domain} -p ${_port} -- docker start wekan >/dev/null \
         && gmsg -c green "ok" \
         || gmsg -c yellow "error $?"
@@ -277,13 +277,20 @@ backup.now () {
         elif [[ $from_domain ]] ; then
             # build remote to local command variables
             command_param="-a -e 'ssh -p $from_port' --progress --update"
+
+            if [[ $backup_ignore ]] ; then
+                for _ignore in  ${backup_ignore[@]} ; do
+                    command_param="$command_param --exclude '*$_ignore'"
+                done
+            fi
+
             from_param="$from_user@$from_domain:$from_location"
 
         # .. or if local to server copy..
         elif [[ $store_domain ]] ; then
             # build local to remote command variables
             read -p  "NEVER TESTED!! continue? "
-            command_param="-a -e 'ssh -p $store_port' --progress --update"
+            command_param="-a -e 'ssh -p $store_port'"
             store_param="$store_user@$store_domain:$store_location"
         # # ..else local to local
         # else
@@ -341,7 +348,7 @@ backup.now () {
             gmsg -n "getting honeypot file.. "
             # get honeypot file
 
-            if eval rsync $command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null ; then
+            if eval rsync "$command_param" $from_user@$from_domain:$honeypot_file /tmp >/dev/null ; then
                 gmsg -c green "ok"
             else
                 gmsg -c yellow "cannot get honeypot file"
@@ -366,10 +373,11 @@ backup.now () {
         gmsg -c green "ok"
     fi
 
-    eval rsync $command_param $from_param $store_param
+    eval rsync "$command_param" $from_param $store_param/$backup_name
 
-    if [[ $? -gt 0 ]] ; then
-            gmsg -v1 "$from_location error: $backup_method $?" \
+    local _error=$?
+    if [[ $_error -gt 0 ]] ; then
+            gmsg -v1 "$from_location error: $backup_method $_error" \
                  -c red -k $backup_indicator_key
             return 12
         else
