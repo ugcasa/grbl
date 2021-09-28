@@ -138,7 +138,7 @@ project.info () {
             local active=$(cat $project_base/active)
             gmsg -c white "active project: '$active' "
         else
-            gmsg -c reset "no active project "
+            gmsg -c reset "no active projects "
             return 0
         fi
 
@@ -588,7 +588,7 @@ project.status () {
             #gmsg -v2 -n "active: "
             gmsg -n -v4 -c $project_key_color -k $project_indicator_key
         else
-            gmsg -v1 -c reset "no active projects "  -k $project_indicator_key
+            gmsg -v3 -c reset "no active projects "  -k $project_indicator_key
         fi
 
     return 0
