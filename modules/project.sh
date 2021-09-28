@@ -574,18 +574,21 @@ project.status () {
 
     # check are projects mounted
     if [[ -f "$project_mount/.online" ]] ; then
-            gmsg -n -v1 -c green "mounted, "
+            gmsg -n -v1 -c green "mounted "
         else
             gmsg -v1 -c yellow "not mounted" -k $project_indicator_key
             return 100
         fi
 
+    # print
+    project.ls
+
     if [[ -f $project_base/active ]]; then
             local active=$(cat $project_base/active)
-            gmsg -v2 -n "active: "
-            gmsg -v1 -c $project_key_color "$active " -k $project_indicator_key
+            #gmsg -v2 -n "active: "
+            gmsg -n -v4 -c $project_key_color -k $project_indicator_key
         else
-            gmsg -v1 -c reset "no active projects "
+            gmsg -v1 -c reset "no active projects "  -k $project_indicator_key
         fi
 
     return 0

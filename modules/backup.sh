@@ -154,8 +154,8 @@ backup.status () {
         echo
     else
         # all fine, no backup for three least hours
-        gmsg -n -v1 -c green -k $backup_indicator_key "ok "
-        gmsg -v1 "next backup at $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
+        gmsg -n -v1 -c green -k $backup_indicator_key "on service "
+        gmsg -v1 -c reset "next backup $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
     fi
     return 0
 }
@@ -207,13 +207,15 @@ backup.restore () {
 }
 
 backup.now () {
-    # make backup now
+    # check things and if pass then make backup
 
     # get config of backup name
     backup.config $1
 
+    #
     local from_param="$from_location"
     local store_param="$store_location"
+    local command_param="-a --progress --update"
 
     gmsg -v3 "backup active" -c $GURU_BACKUP_COLOR -k $backup_indicator_key
     #local command_param="-avh '-e ssh -p $from_port' --progress --update"
@@ -221,6 +223,7 @@ backup.now () {
     # if server to server copy..
     if [[ $from_domain ]] && [[ $store_domain ]] ; then
             # build server to server copy command variables
+            read -p  "NEVER TESTED!! continue? "
             from_param="$from_user@$from_domain 'rsync -ave ssh $from_location $store_user@$store_domain:$from_port:$store_location'"
             store_param=
 
@@ -233,14 +236,14 @@ backup.now () {
         # .. or if local to server copy..
         elif [[ $store_domain ]] ; then
             # build local to remote command variables
+            read -p  "NEVER TESTED!! continue? "
             command_param="-a -e 'ssh -p $store_port' --progress --update"
             store_param="$store_user@$store_domain:$store_location"
-
-        # ..else local to local
-        else
-            command_param="-a --progress --update"
-            store_param="$store_location"
-            from_param="$from_location"
+        # # ..else local to local
+        # else
+        #     command_param="-a --progress --update"
+        #     store_param="$store_location"
+        #     from_param="$from_location"
         fi
 
     # make dir if not exist (year changes)
@@ -399,7 +402,8 @@ backup.install () {
 
 
 backup.remove () {
-    #sudo apt remove xxx
+    # remove stuff
+
     gmsg "no point ro remove so basic tools.."
     return 0
 }
