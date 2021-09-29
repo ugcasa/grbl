@@ -40,18 +40,12 @@ backup.main () {
                     backup.$command "$@"
                     return $? ;;
 
-                "")
-                    gmsg -c yellow "missing parameter"
-                    return 0 ;;
-
-                *)  gmsg -c yellow "unknown command"
-                    # backup.help
-                    return 0 ;;
+                *)  backup.all $command
+                    return $? ;;
         esac
     backup.status
     return $?
 }
-
 
 
 backup.config () {
@@ -59,7 +53,7 @@ backup.config () {
 
     declare -ga backup_name=($1)
     declare -la header=(store method from ignore)
-    declare -ga active_list=(${GURU_BACKUP_ACTIVE[@]})
+    declare -ga active_list=(${GURU_BACKUP_DAILY[@]} ${GURU_BACKUP_WEEKLY[@]} ${GURU_BACKUP_MONTHLY[@]})
     declare -g backup_indicator_key="f$(daemon.poll_order backup)"
 
 
@@ -240,6 +234,7 @@ backup.restore () {
 
 backup.wekan () {
     # take a database dump and copy it to location set in user.cfg where normal process can copy it to local
+
     local _domain=$1
     local _port=$2
     local _user=$3
@@ -284,16 +279,25 @@ backup.wekan () {
 backup.now () {
     # check things and if pass then make backup
 
-    # get config of backup name
+    # 1) get config for backup name
+    # 2) check and plase variables for rsynck
+    # 3) check backup method get files out of service containers
+    # 4) file checks to avoid broken/infected copy over good files
+    # 5) perform copy
+
+
+### 1) get config for backup name
+
     backup.config $1
 
-    #
     local from_param="$from_location"
     local store_param="$store_location"
     local command_param="-a --progress --update"
 
     gmsg -v3 "backup active" -c $GURU_BACKUP_COLOR -k $backup_indicator_key
     #local command_param="-avh '-e ssh -p $from_port' --progress --update"
+
+### 2) check and plase variables for rsynck based on user.cfg
 
     # if server to server copy..
     if [[ $from_domain ]] && [[ $store_domain ]] ; then
@@ -333,6 +337,8 @@ backup.now () {
             mkdir -p $store_location
         fi
 
+### 3) check backup method get files out of service containers based settings in user.cfg
+
     case $backup_method in
 
             wekan)
@@ -345,6 +351,8 @@ backup.now () {
                     echo "TBD git server backup"
                     ;;
         esac
+
+### 4) file checks to avoid broken/infected copy over good files
 
     # crypto virus checks only if from location is remote and store location is local
     if [[ $from_domain ]] && ! [[ $store_domain ]] ; then
@@ -402,6 +410,7 @@ backup.now () {
         gmsg -c green "ok"
     fi
 
+### 5) perform copy
     eval rsync "$command_param" $from_param $store_param/$backup_name
 
     local _error=$?
@@ -420,11 +429,27 @@ backup.now () {
 backup.all () {
     # backup all in active list
 
+    local _lists_name=$1
     local item=1;
-    local _error=0
+    local _error=
+    local _active_list=()
 
-    for source in ${GURU_BACKUP_ACTIVE[@]} ; do
-            gmsg -n -c dark_golden_rod "backing up $source $item/${#GURU_BACKUP_ACTIVE[@]}.. "
+    case $_lists_name in
+        weekly)     _active_list=(${GURU_BACKUP_WEEKLY[@]}) ;;
+        monthly)    _active_list=(${GURU_BACKUP_MONTHLY[@]}) ;;
+        all)        _active_list=(${GURU_BACKUP_DAILY[@]} ${GURU_BACKUP_WEEKLY[@]} ${GURU_BACKUP_MONTHLY[@]}) ;;
+        daily)      _active_list=(${GURU_BACKUP_DAILY[@]}) ;;
+            *)      gmsg -c yellow "unknown schedule '$_lists_name', try daily, weekly, monthly or all"
+                    read -p "run daily? " answer
+                    if [[ ${answer^^} == 'Y' ]] ; then
+                            _active_list=(${GURU_BACKUP_DAILY[@]})
+                        else
+                            return 0
+                        fi
+        esac
+
+    for source in ${_active_list[@]} ; do
+            gmsg -n -c dark_golden_rod "backing up $source $item/${#_active_list[@]}.. "
             #if ! [[ $GURU_BACKUP_ENABLED ]] ; then gmsg -c yellow "canceled" ; break ; fi
             backup.now $source || (( _error++ ))
             (( item++ ))
@@ -439,9 +464,11 @@ backup.all () {
         fi
 }
 
+
 backup.scheduled () {
         # run an set scheduled backup
 
+        local schedule=$1
         local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
         local epic_backup=$(cat $backup_data_folder/next)
 
@@ -453,7 +480,7 @@ backup.scheduled () {
             return 0
         fi
 
-        backup.all
+        backup.all $schedule
         local _error=$?
 
         if [[ $_error -lt 100 ]] ; then
@@ -481,7 +508,7 @@ backup.poll () {
             ;;
         status )
             backup.status
-            backup.scheduled
+            backup.scheduled all
             ;;
         *)  gmsg -c dark_grey "function not written"
             return 0
