@@ -91,8 +91,13 @@ system.main () {
 
     case "$tool" in
 
-            status|poll|suspend|core-dump|update|upgrade|flag|rollback)
+            status|poll|suspend|core-dump|upgrade|flag|rollback)
                 system.$tool $@
+                return $?
+                ;;
+
+            update)
+                system.client_update
                 return $?
                 ;;
 
@@ -364,27 +369,27 @@ system.client_update () {
     # update guru-client
 
     local temp_dir="/tmp/guru"
-    local source="git@github.com:ugcasa/guru-client.git"
-    local _banch="master" ;
+    local source="https://github.com/ugcasa/guru-client.git"
+    local branch="dev"
 
-    [[ "$GURU_USE_VERSION" ]] && _branch="$GURU_USE_VERSION"
-    [[ "$1" ]] && _branch="$1"
+    # [[ "$GURU_USE_VERSION" ]] && branch="$GURU_USE_VERSION"
+    [[ "$1" ]] && branch="$1"
 
     [ -d "$temp_dir" ] && rm -rf "$temp_dir"
     mkdir "$temp_dir"
     cd "$temp_dir"
 
-    git clone -b "$_branch" "$source" || return 100
-    bash $GURU_BIN/uninstall.sh -f
+    git clone -b "$branch" "$source" || return 100
+    # bash $GURU_BIN/uninstall.sh -f
     cd "$temp_dir/guru-client"
-    bash install.sh "$@"
+    bash install.sh -fc $@
     cd
     rm -fr $temp_dir
 }
 
 
 system.upgrade () {
-    # upgrade guru-client
+    # upgrade system
 
     sudo apt-get update || gmsg -c red -x 100 "apt update failed"
     gmsg -v2 -c white "upgradable list: "
