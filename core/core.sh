@@ -3,7 +3,7 @@
 # caa@ujo.guru 2020
 
 # global variables variable
-declare -x GURU_VERSION="0.6.6.9"
+declare -x GURU_VERSION="0.6.7.0"
 declare -x GURU_RC="$HOME/.gururc"
 declare -x GURU_BIN="$HOME/bin"
 
