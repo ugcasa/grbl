@@ -54,7 +54,7 @@ convert.help () {
     gmsg -v0 "usage:    $GURU_CALL convert <input_format> file list"
     gmsg -v2
     gmsg -v1 "all pictures are converted to $GURU_FORMAT_PICTURE"
-    gmsg -v1 "default input format is webp"
+    gmsg -v1 "all videos are converted to $GURU_FORMAT_VIDEO"
     gmsg -v2
     gmsg -v1 -c white "example:"
     gmsg -v1 "      $GURU_CALL convert webp 		# converts all webp in folder to $GURU_FORMAT_PICTURE "
@@ -62,6 +62,8 @@ convert.help () {
 	return 0
 }
 
+
+## TBD issue #59 make one convert.format <format> all there three are almost identical
 
 convert.webp () {
 	# convert all webp in folder of given file
