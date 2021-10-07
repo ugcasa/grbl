@@ -37,12 +37,33 @@ backup.main () {
     case "$command" in
 
                 ls|now|restore|status|help|install|poll|all|at)
+                    gmsg -v3 -c beep_pink "backup.$command $@"
                     backup.$command "$@"
                     return $? ;;
 
-                *)  backup.all $command
+                daily|weekly|monthly)
+                    gmsg -v3 -c beep_pink "backup.all $command"
+                    backup.all $command
+                    return $? ;;
+                "")
+                    gmsg -v3 -c beep_pink "backup.all daily"
+                    backup.all daily
+                    return $? ;;
+                *)
+                    local mount_lists=(${GURU_BACKUP_DAILY[@]} ${GURU_BACKUP_WEEKLY[@]} ${GURU_BACKUP_MONTHLY[@]})
+                    local given_items=("$command" "$@")
+
+                    # handle lists given by user
+                    for list_item in ${given_items[@]} ; do
+                        # check is command on some of schedule lists
+                        if grep -w "$list_item" <<<${mount_lists[@]} >/dev/null; then
+                                gmsg -v2 -c dark_golden_rod "backing up $list_item.. "
+                                backup.now $list_item
+                            fi
+                        done
                     return $? ;;
         esac
+    gmsg -c reset "unknown list/schedule '$command'"
     backup.status
     return $?
 }
@@ -55,7 +76,6 @@ backup.config () {
     declare -la header=(store method from ignore)
     declare -ga active_list=(${GURU_BACKUP_DAILY[@]} ${GURU_BACKUP_WEEKLY[@]} ${GURU_BACKUP_MONTHLY[@]})
     declare -g backup_indicator_key="f$(daemon.poll_order backup)"
-
 
     # check is enabled
     if ! [[ $GURU_BACKUP_ENABLED ]] ; then
@@ -79,36 +99,40 @@ backup.config () {
                 declare -l method=${data[1]}
                 declare -l from=${data[2]}
                 declare -l ignore="${data[3]//:/" "}"
-                local store="GURU_BACKUP_${store_device^^}" ; store=${!store}
-                gmsg -v3 -c deep_pink "|$store_device|$store|$method|$from|"
+                local store="GURU_BACKUP_${store_device^^}[@]" ; store=(${!store})
                 break
             fi
         done
 
+        # fill parameters if from seems to be a remote location
         if echo $from | grep ":" >/dev/null ; then
             declare -g from_user=$(echo $from | cut -d ":" -f1)
             declare -g from_domain=$(echo $from | cut -d ":" -f2)
             declare -g from_port=$(echo $from | cut -d ":" -f3)
             declare -g from_location=$(echo $from | cut -d ":" -f4)
         else
+            # fill only one parameter if from is local drive
             declare -g from_location=$from
         fi
-
-        if echo $store | grep ":" >/dev/null ; then
-            declare -g store_user=$(echo $store | cut -d ":" -f1)
-            declare -g store_domain=$(echo $store | cut -d ":" -f2)
-            declare -g store_port=$(echo $store | cut -d ":" -f3)
-            declare -g store_location=$(echo $store | cut -d ":" -f4)
+        # if store is remote drive
+        if echo ${store[@]} | grep ":" >/dev/null ; then
+            declare -g store_user=$(echo ${store[1]} | cut -d ":" -f1)
+            declare -g store_domain=$(echo ${store[1]} | cut -d ":" -f2)
+            declare -g store_port=$(echo ${store[1]} | cut -d ":" -f3)
+            declare -g store_location=$(echo ${store[1]} | cut -d ":" -f4)
         else
-            declare -g store_location=$store
+            # fill parameters if store is local drive
+            declare -g store_device_file=${store[0]}
+            declare -g store_file_system=${store[1]}
+            declare -g store_mount_point=${store[2]}
+            declare -g store_folder=${store[3]}
+            declare -g store_location="$store_mount_point/$store_folder"
         fi
 
         declare -ga backup_ignore=($ignore)
         declare -g backup_method=$method
         declare -g honeypot_file="$from_location/honeypot.txt"
-
         return 1
-
     return 0
 }
 
@@ -242,35 +266,50 @@ backup.wekan () {
 
     # stop container
     gmsg -n "stopping docker container.. "
-    ssh ${_user}@${_domain} -p ${_port} -- docker stop wekan >/dev/null \
-        && gmsg -c green "ok" \
-        || gmsg -c yellow "error $?"
+    if ssh ${_user}@${_domain} -p ${_port} -- docker stop wekan >/dev/null ; then
+            gmsg -c green "ok"
+        else
+            gmsg -c yellow "error $?"
+            return 128
+        fi
 
     # delete current dump
     gmsg -n "delete last dump.. "
-    ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db rm -rf /data/dump >/dev/null \
-        && gmsg -c green "ok" \
-        || gmsg -c yellow "error $?"
+    if ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db rm -rf /data/dump >/dev/null ; then
+            gmsg -c green "ok"
+        else
+            gmsg -c yellow "error $?"
+            return 129
+        fi
 
     # take a dump
     gmsg -n "take a dump /data/dump.. "
-    ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db mongodump -o /data/dump 2>/dev/null \
-        && gmsg -c green "ok" \
-        || gmsg -c yellow "error $?"
+    if ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db mongodump -o /data/dump 2>/dev/null ; then
+            gmsg -c green "ok"
+        else
+            gmsg -c yellow "error $?"
+            return 130
+        fi
 
     # copy to where to rsyck it to final location
     gmsg -n "copy to ${_location}.. "
     ssh ${_user}@${_domain} -p ${_port} -- "[[ -d ${_location} ]] || mkdir -p ${_location}>/dev/null "
 
-    ssh ${_user}@${_domain} -p ${_port} -- docker cp wekan-db:/data/dump ${_location} >/dev/null \
-        && gmsg -c green "ok" \
-        || gmsg -c yellow "error $?"
+    if ssh ${_user}@${_domain} -p ${_port} -- docker cp wekan-db:/data/dump ${_location} >/dev/null ; then
+            gmsg -c green "ok"
+        else
+            gmsg -c yellow "error $?"
+            return 131
+        fi
 
     # start container
     gmsg -n "starting docker container.. "
-    ssh ${_user}@${_domain} -p ${_port} -- docker start wekan >/dev/null \
-        && gmsg -c green "ok" \
-        || gmsg -c yellow "error $?"
+    if ssh ${_user}@${_domain} -p ${_port} -- docker start wekan >/dev/null ; then
+            gmsg -c green "ok"
+        else
+            gmsg -c yellow "error $?"
+            return 132
+        fi
 
     return 0
 }
@@ -278,13 +317,11 @@ backup.wekan () {
 
 backup.now () {
     # check things and if pass then make backup
-
     # 1) get config for backup name
-    # 2) check and plase variables for rsynck
+    # 2) check and place variables for rsynck
     # 3) check backup method get files out of service containers
     # 4) file checks to avoid broken/infected copy over good files
     # 5) perform copy
-
 
 ### 1) get config for backup name
 
@@ -302,7 +339,7 @@ backup.now () {
     # if server to server copy..
     if [[ $from_domain ]] && [[ $store_domain ]] ; then
             # build server to server copy command variables
-            read -p  "NEVER TESTED!! continue? "
+            gask "NEVER TESTED!! continue? " || return 1
             from_param="$from_user@$from_domain 'rsync -ave ssh $from_location $store_user@$store_domain:$from_port:$store_location'"
             store_param=
 
@@ -311,18 +348,51 @@ backup.now () {
             # build remote to local command variables
             command_param="-a -e 'ssh -p $from_port' --progress --update"
 
+            # check is target location mounted and try to mount if not
+            if ! mount | grep $store_mount_point >/dev/null ; then
+
+                if [[ $DISPLAY ]] ; then
+                        gmsg -n "mounting store media $store_device_file.. "
+                        gio mount -d $store_device_file \
+                            && gmsg -v1 -c green "ok" \
+                            || gmsg -v1 -c yellow "error: $?" -k $backup_indicator_key
+
+                    else
+                        gmsg -c white "to mount -t $store_file_system $store_device_file $store_mount_point sudo needed"
+
+                        [[ -d $store_mount_point ]] || sudo mkdir -p $store_mount_point
+
+                        # if [[ $store_file_system == "luks" ]] ; then
+                        #         sudo mount -t $store_file_system "/dev/mapper/dev/luks_$store_device_file" $store_mount_point
+                        #     else
+
+                        #     fi
+
+                        if sudo mount -t $store_file_system $store_device_file $store_mount_point ; then
+                                gmsg -v1 -c green "ok"
+                            else
+                                gmsg -v1 -c yellow "error: $?" -k $backup_indicator_key
+                                return 32
+                            fi
+
+                    fi
+                    # no rush, my friend
+                    sleep 3
+                fi
+
+            # if ignores set add arguments
             if [[ $backup_ignore ]] ; then
                 for _ignore in  ${backup_ignore[@]} ; do
                     command_param="$command_param --exclude '*$_ignore'"
                 done
             fi
-
+            store_param="$store_mount_point/$store_folder"
             from_param="$from_user@$from_domain:$from_location"
 
         # .. or if local to server copy..
         elif [[ $store_domain ]] ; then
             # build local to remote command variables
-            read -p  "NEVER TESTED!! continue? "
+            gask "NEVER TESTED!! continue? " || return 1
             command_param="-a -e 'ssh -p $store_port'"
             store_param="$store_user@$store_domain:$store_location"
         # # ..else local to local
@@ -332,9 +402,10 @@ backup.now () {
         #     from_param="$from_location"
         fi
 
-    # make dir if not exist (year changes)
+    # make dir if not exist (like when year changes)
     if ! [[ $store_domain ]] && [[ $store_location ]] ; then
-            mkdir -p $store_location
+            gmsg -v3 -c deep_pink "mkdir -p $store_location"
+            [[ -d $store_location ]] || mkdir -p $store_location
         fi
 
 ### 3) check backup method get files out of service containers based settings in user.cfg
@@ -411,7 +482,8 @@ backup.now () {
     fi
 
 ### 5) perform copy
-    eval rsync "$command_param" $from_param $store_param/$backup_name
+    gmsg -v3 -c deep_pink "eval rsync $command_param $from_param $store_param/$backup_name"
+    eval rsync $command_param $from_param $store_param/$backup_name
 
     local _error=$?
     if [[ $_error -gt 0 ]] ; then
@@ -472,17 +544,21 @@ backup.scheduled () {
         local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
         local epic_backup=$(cat $backup_data_folder/next)
 
+        # if not shedule file, return
         if ! [[ -f $backup_data_folder/next ]] ; then
             return 0
         fi
 
+        # if not shedule file, return
         if [[ $(date '+%s') -lt $epic_backup ]] ; then
             return 0
         fi
 
+        # run given schedule list
         backup.all $schedule
         local _error=$?
 
+        # chedule next backup
         if [[ $_error -lt 100 ]] ; then
             epic_backup=$(( $epic_backup + 86400))
             echo $epic_backup > $backup_data_folder/next
