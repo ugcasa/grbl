@@ -1,27 +1,44 @@
 #!/bin/bash 
 # webp to png multible files
-# guru archive format is png all will be converted to png!
+# guru archive formats
+#  all images -> png
+#  all videfo -> mp4
+#  all photos -> jpg
+
 
 source common.sh
 
 convert.main () {
 	# convert format parser
 
-	declare -l format=$1
+	local format=$1
 	shift
 
 	case $format in
 
-			webp)
+			webp|webm|mkv)
 				convert.install
-				convert.webp $@
+				convert.$format $@
 				return $?
 				;;
-			help)
-				convert.help
+			help|poll|status)
+				convert.$format $@
 				return $?
 				;;
-			*)  convert.webp $format $@
+			*)
+				# check chat format user is targeting, lazy
+				if grep "webp" <<< $format >/dev/null ; then
+						convert.webp $format $@
+						return $?
+					fi
+				if grep "webm" <<< $format >/dev/null ; then
+						convert.webm $format $@
+						return $?
+					fi
+				if grep "mkv" <<< $format >/dev/null ; then
+						convert.mkv $format $@
+						return $?
+					fi
 				;;
 			"")  gmsg -c yellow "unknown format $format"
 		esac
@@ -52,7 +69,8 @@ convert.webp () {
 	if [[ $1 ]] ; then
 			found_files=($@)
 		else
-			found_files=$(ls *webp)
+			eval 'detox *webp'
+			found_files=($(eval 'ls *webp'))
 		fi
 
 	if ! [[ $found_files ]] ; then
@@ -109,25 +127,179 @@ convert.webp () {
 }
 
 
+convert.webm () {
+
+	local convert_indicator_key="f$(daemon.poll_order convert)"
+
+	if [[ $1 ]] ; then
+				found_files=($@)
+			else
+				eval 'detox *webm'
+				found_files=$(eval 'ls *webm')
+			fi
+
+		if ! [[ $found_files ]] ; then
+				gmsg -c yellow "no files found"
+			fi
+
+		local rand=""
+		local _format=$GURU_FORMAT_VIDEO
+
+		for file in ${found_files[@]} ; do
+
+				rand=""
+				file_base_name=${file%%.*}
+
+				gmsg -v3 -c aqua "$file_base_name" -k $convert_indicator_key
+
+				# check do original exist
+				if ! [[ -f "$file" ]] ; then
+						gmsg -c yellow "file $file not found"
+						continue
+					fi
+
+				# convert
+				gmsg -n -c light_blue "$file_base_name$rand.${_format}.. "
+
+				# there is a file with same name
+				if [[ -f "$file_base_name.${_format}" ]] ; then
+					gmsg -n "overwriting.. "
+							fi
+
+				if ffmpeg -y -hide_banner -loglevel error -i "$file" "$file_base_name$rand.${_format}" ; then
+						gmsg -c green "ok" -k $convert_indicator_key
+					else
+						gmsg -c red "failed: $?" -k $convert_indicator_key
+					fi
+
+				# force remove original if convert success
+				[[ $GURU_FORCE ]] && [[ $file_base_name$rand.${_format} ]] && rm $file_base_name.webm
+
+			done
+		return 0
+}
+
+
+convert.mkv () {
+
+	local convert_indicator_key="f$(daemon.poll_order convert)"
+
+	if [[ $1 ]] ; then
+				found_files=($@)
+			else
+				eval 'detox *mkv'
+				found_files=$(eval 'ls *mkv')
+			fi
+
+		if ! [[ $found_files ]] ; then
+				gmsg -c yellow "no files found"
+			fi
+
+		local rand=""
+		local _format=$GURU_FORMAT_VIDEO
+
+		for file in ${found_files[@]} ; do
+
+				rand=""
+				file_base_name=${file%%.*}
+
+				gmsg -v3 -c aqua "$file_base_name" -k $convert_indicator_key
+
+				# check do original exist
+				if ! [[ -f "$file" ]] ; then
+						gmsg -c yellow "file $file not found"
+						continue
+					fi
+
+				# convert
+				gmsg -n -c light_blue "$file_base_name$rand.${_format}.. "
+
+				# there is a file with same name
+				if [[ -f "$file_base_name.${_format}" ]] ; then
+					gmsg -n "overwriting.. "
+							fi
+
+				if ffmpeg -y -hide_banner -loglevel error -i "$file" "$file_base_name$rand.${_format}" ; then
+						gmsg -c green "ok" -k $convert_indicator_key
+					else
+						gmsg -c red "failed: $?" -k $convert_indicator_key
+					fi
+
+				# force remove original if convert success
+				[[ $GURU_FORCE ]] && [[ $file_base_name$rand.${_format} ]] && rm $file_base_name.mkv
+
+			done
+		return 0
+}
+
+
 convert.install () {
 	# install needed
 
 	# webp format support
-	dwebp -version -quiet && return 0
-	sudo apt update && sudo apt install webp
+	dwebp -version -quiet >/dev/null && \
+	ffmpeg -version -quiet >/dev/null && \
+		return 0
+
+	sudo apt update && sudo apt install webp ffmpeg detox
 }
+
 
 convert.remove () {
 	# remove tools
 
 	dwebp -version -quiet >/dev/null || return 0
-	sudo apt remove webp
+	sudo apt remove webp ffmpeg
 }
+
+
+convert.status () {
+    # check latest convert is reachable and returnable.
+
+    local convert_indicator_key="f$(daemon.poll_order convert)"
+
+    gmsg -n -v1 -t "${FUNCNAME[0]}: "
+
+    if [[ $GURU_CONVERT_ENABLED ]] ; then
+            gmsg -v1 -c green -k $convert_indicator_key \
+                "enabled"
+        else
+            gmsg -v1 -c reset -k $convert_indicator_key \
+                "disabled"
+            return 1
+        fi
+
+    return 0
+}
+
+
+convert.poll () {
+    # poll functions
+
+    local convert_indicator_key="f$(daemon.poll_order convert)"
+    local _cmd="$1" ; shift
+
+    case $_cmd in
+        start )
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: convert status polling started" -k $convert_indicator_key
+            ;;
+        end )
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: convert status polling ended" -k $convert_indicator_key
+            ;;
+        status )
+            convert.status
+            ;;
+        *)  gmsg -c dark_grey "function not written"
+            return 0
+        esac
+}
+
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     source "$GURU_RC"
-    convert.main "$@"
+
+    convert.main $@
     exit $?
 fi
 
