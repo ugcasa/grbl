@@ -213,8 +213,25 @@ gmsg () {
 gask () {
     # yes or no shortcut
 
-    local _ask="$1"
+    local _message="$1"
     local _ans
+     #TBD --kill-after
+
+   # parse flags
+    TEMP=`getopt --long -o "k:" "$@"`
+    eval set -- "$TEMP"
+
+    while true ; do
+            case "$1" in
+                -k ) local kill_time=$1
+                    ;;
+                 * ) break
+            esac
+        done
+
+    # --) check message for long parameters (don't remember why like this)
+    local _arg="$@"
+    [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
     # just for showup ;)=
     if [[ GURU_CORSAIR_ENABLED ]] ; then
@@ -222,20 +239,28 @@ gask () {
             corsair.init yes-no
         fi
 
-    read -n 1 -p "$_ask [y/n]: " _ans
+    if [[ $kill_time ]] ; then
+            # NOT TESTED, not even run. ever
+            timeout 10 "read -n 1 -p $_message [y/n]: " _ans
+        else
+            read -n 1 -p "$_message [y/n]: " _ans
+        fi
+
     echo
 
     [[ $GURU_CORSAIR_ENABLED ]] && corsair.init # $GURU_CORSAIR_MODE
 
-    case $_ans in y|Y|yes|Yes)
+    case ${_ans^^} in Y|YES|YEP)
             return 0
         esac
     return 1
 }
 
+
 contains() {
     [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && return 0 || return 1
 }
+
 
 import () {
     # source all bash function in module. input: import <module_name> <py|sh|php..>
