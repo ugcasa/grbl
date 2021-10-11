@@ -322,8 +322,6 @@ config.set () {
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
     [[ "$2" ]] && _value="$2" || read -r -p "$_variable value: " _value
 
-    #_variable=user ; _value=uljas
-    #echo 'GURU_USER="casa"' | sed 's/.*\bGURU_${_variable^^}\b.*/_value/'
     if ! cat $GURU_RC | grep "GURU_${_variable^^}=" >/dev/null; then
             gmsg -c yellow "no variable 'GURU_${_variable^^}' found"
             return 2

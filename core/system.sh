@@ -489,36 +489,6 @@ case \${1} in
     ;;
 esac
 EOL
-    # failed - cannot run on root space
-    # ckb-next -c ; ckb-next -b &
-
-    # failed - cannot connec dbus
-    # systemctl --user restart corsair.service
-
-    # failed - cannot run on root space
-    # $GURU_BIN/$GURU_CALL corsair restart
-
-    # failed - works but then not controllable by systemctl and ckb-next should not runned as root
-    # HOME=/home/casa
-    # USER=casa
-    # /home/casa/.gururc
-    # PATH=$PATH:/home/casa/bin
-    # /home/casa/bin/core.sh corsair raw_start
-
-    # failed - works but password is requested, and does not even give permission
-    # su casa <<'EOF'
-    # bash
-    # /home/casa/.gururc
-    # PATH=$PATH:/home/casa/bin
-    # /home/casa/bin/core.sh corsair raw_start
-    # EOF
-
-    # failed - works but password is requested, and does not even give permission
-    # su casa <<'EOF'
-    # systemctl --user restart corsair.service
-    # EOF
-
-    # suspend flag method is only one that works, but shit it is
 
     if sudo cp -f $temp $system_suspend_script ; then
 

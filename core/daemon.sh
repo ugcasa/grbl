@@ -1,7 +1,6 @@
 #!/bin/bash
 # guru client background servicer
 # casa@ujo.guru 2020
-# TODO Jan 04 01:24:50 electra bash[413320]: /home/casa/bin/common.sh: line 83: printf: write error: Broken pipe
 
 daemon_service_script="$HOME/.config/systemd/user/guru.service"
 daemon_pid_file="/tmp/guru.daemon-pid"
