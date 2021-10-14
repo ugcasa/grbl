@@ -432,7 +432,7 @@ system.rollback () {
 
 system.init_system_check () {
     # check init system, return 0 if match with input sysv-init|systemd|upstart
-
+    # see issue #62
     local user_input=
 
     [[ "$1" ]] && user_input=$1
@@ -441,6 +441,7 @@ system.init_system_check () {
             init_system="upstart"
 
         elif [[ `systemctl` =~ -\.mount ]] ; then
+            # kind of same as "systemctl | grep  '\.mount'"
             init_system="systemd"
 
         elif [[ -f /etc/init.d/cron && ! -h /etc/init.d/cron ]] ; then # TBD: test with sysv"
@@ -452,6 +453,9 @@ system.init_system_check () {
 
     [[ $init_system ]] || gmsg -x 135 -c yellow "cannot detect init system"
     [[ $user_input ]] || gmsg -V1 "$init_system"
+    # TBD possible issue, should exit here if input empy, or set default init system = systemdf in defination?
+    # now function returns 0 if null init_system from elif else. if input is required, if fine but should
+    # exit with error
 
     if [[ "$init_system" == "$user_input" ]] ; then
             gmsg -v1 -V2 -c green "ok"
@@ -476,7 +480,7 @@ system.suspend_script () {
     [[ -f $temp ]] && rm $temp
 
 # following lines should be without indentation
-    cat >"$temp" <<EOL
+    cat > "$temp" <<EOL
 #!/bin/bash
 case \${1} in
   pre|suspend )
@@ -486,6 +490,7 @@ case \${1} in
   post|resume|thaw )
         systemctl restart ckb-next-daemon
         systemctl --user restart corsair.service
+        # systemctl restart guru-daemon
     ;;
 esac
 EOL
@@ -542,13 +547,14 @@ system.suspend () {
             remove )
                 gmsg -n -v1 "removing suspend script.. "
                 sudo rm -f $system_suspend_script \
-                && gmsg -v1 -c green "ok" || gmsg -c red "failed"
+                    && gmsg -v1 -c green "ok" || gmsg -c red "failed"
                 ;;
 
             help )
                 system.suspend_help
                 ;;
-            *)  gmsg -c yellow "unknown suspend command: $1"
+            *)
+                gmsg -c yellow "unknown suspend command: $1"
                 system.suspend_help
                 ;;
 
