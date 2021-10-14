@@ -11,12 +11,9 @@ from datetime import datetime
 import readline
 import subprocess
 
-
 try:
     import feedparser
 except ModuleNotFoundError:
-    os.system('apt update')
-    os.system('sudo apt install python3-pip -y')
     os.system('pip install --upgrade pip')
     os.system('sudo -H pip install feedparser')
 finally:
@@ -31,12 +28,23 @@ finally:
     from bs4 import BeautifulSoup
 
 try:
-    import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree
 except ModuleNotFoundError:
     os.system('pip install --upgrade pip')
     os.system('sudo -H pip install elementpath')
 finally:
     import xml.etree.ElementTree as ET
+
+# to get next module to run in non gui environment this is needed
+os.environ["DISPLAY"] = ":0"
+
+try:
+    import pyautogui
+except ModuleNotFoundError:
+    os.system('sudo -H pip install pyautogui')
+finally:
+    from pyautogui import keyDown, press, keyUp
+
 
 class bc:
 
@@ -63,12 +71,17 @@ class menu:
 
     def __init__ ( self, columns, lines ):
 
-        self.prev_term_columns  = int(
-            str(subprocess.check_output( 'resize -c', shell=True ) )\
-            .split( "COLUMNS ", 1 )[1]\
-            .split( "'" )[1]\
-            .split( "'" )[0]\
-            )
+        try:
+            subprocess.check_output('resize -c', shell=True)
+        except subprocess.CalledProcessError:
+            os.system('sudo apt install xterm -y')
+        finally:
+            self.prev_term_columns  = int(
+                str(subprocess.check_output( 'resize -c', shell=True ) )\
+                .split( "COLUMNS ", 1 )[1]\
+                .split( "'" )[1]\
+                .split( "'" )[0]\
+                )
 
         self.prev_term_lines    = int(
             str( subprocess.check_output( 'resize -c', shell=True ) )\
@@ -371,16 +384,44 @@ class menu:
         image_link = '/tmp/news.jpg'
 
         os.system( 'clear' )                                                                            # clear terminal
-        self.clear()
+        #self.clear()
         self.header( self.feed.feed.title, first = self.selection, second = self.list_length)           # header
         print( "\n\n " + bc.BOLD + title     + bc.ENDC + "\n" )                                         # titles
         print( "\n "   + bc.ITAL + summary   + bc.ENDC + "\n" )
         #os.system('tiv -h '+str(menu.term_lines)+' -w '+str(menu.term_columns)+' '+image_link)                 # printout image in text mode
         #if terminal colors on < 256 (like phone terminal)
+
+        # TBD Issue #63 check tiv and clone/compile/install if not present
+        # try:
+        #     os.system('tiv')
+        # except:
+        #     os.system('git clone https://github.com/stefanhaustein/TerminalImageViewer.git')
+        #     os.system('cd TerminalImageViewer/src/main/cpp')
+        #     os.system('make')
+        #     os.system('sudo make install')
+        # finally:
+        #     os.system('tiv '+image_link)
+
         os.system('tiv '+image_link)                 # printout image in text mode
         print( "\n "   + content + "\n" )
         print( "\n "   + bc.DARK + link      + bc.ENDC + "\n" )
         #print( entry)
+
+
+        # Holds down the alt key
+        pyautogui.keyDown("shift")
+
+        # Presses the tab key once
+        pyautogui.press("pageup")
+        pyautogui.press("pageup")
+        pyautogui.press("pageup")
+        pyautogui.press("pageup")
+
+
+        # Lets go of the alt key
+        pyautogui.keyUp("shift")
+
+
         answer = input(bc.OKBLUE+'Hit "o" to open news in browser, news id to jump to news or "Enter" to return to list: '+bc.ENDC)
 
         if answer == "q" or answer == "exit" or answer == "99":
