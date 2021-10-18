@@ -283,7 +283,24 @@ install.python () {
 
 
 install.vscode () {
-    gmsg -c red "broken"
+    # install ms visual code editor
+
+    gmsg "installing vscode.."
+    sudo apt update
+    sudo apt install software-properties-common apt-transport-https wget
+
+    wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
+    sudo apt update
+
+    if sudo apt install code ; then
+            gmsg -c green "installed"
+            return 0
+        else
+            gmsg -c yellow "error $? during install"
+            return $?
+        fi
+
     # code --version >>/dev/null && return 1
     # curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
     # sudo install -o root -g root -m 644 packages.microsoft.gpg /usr/share/keyrings/
