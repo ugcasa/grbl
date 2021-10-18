@@ -365,6 +365,26 @@ system.get_env_by_name () {
 }
 
 
+system.get_window_id () {
+    # input process id, output window id to std
+
+    local findpid=$1
+    local known_windows=$(xwininfo -root -children | sed -e 's/^ *//' | grep -E "^0x" | awk '{ print $1 }')
+
+    for id in ${known_windows} ;  do
+
+            # echo "${id}|${pid}|${findpid}" >>/home/casa/git/guru-client/modules/log.log
+            local xx=$(xprop -id $id _NET_WM_PID)
+            if test $? -eq 0; then
+                    pid=$(xprop -id $id _NET_WM_PID | cut -d '=' -f2 | tr -d ' ')
+                    if [[ "${pid}" -eq "${findpid}" ]] ; then
+                            echo "$id"
+                        fi
+                fi
+        done
+}
+
+
 system.client_update () {
     # update guru-client
 
