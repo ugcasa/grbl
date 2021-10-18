@@ -2,6 +2,7 @@
 # guru-client tunneling functions 2021
 
 source common.sh
+#source system.sh
 
 tunnel.help () {
     # genereal help
@@ -26,6 +27,8 @@ tunnel.help () {
     gmsg -v2
 }
 
+
+# xprop -id 0x5600001
 
 tunnel.main () {
     # command parser
@@ -118,13 +121,13 @@ tunnel.rm () {
 tunnel.toggle () {
     # open default tunnel list and closes
 
-    declare -l state=/tmp/tunnel.toggle
+    declare -l state="/tmp/tunnel.toggle"
 
     if [[ -f $state ]] && tunnel.ls ; then
-            tunnel.close
+            tunnel.close # &&
             rm $state
         else
-            tunnel.open
+            tunnel.open # &&
             touch $state
         fi
     tunnel.ls
@@ -222,14 +225,14 @@ tunnel.open () {
     # open local ssh tunnel
 
     declare -la service_name
-    local ssh_param="-oClearAllForwardings=yes -oServerAliveInterval=15 "
-    local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
-
     if [[ $1 ]] ; then
             service_name=($@)
         else
             service_name=${GURU_TUNNEL_DEFAULT[@]}
         fi
+
+    local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
+    local ssh_param="-o ClearAllForwardings=yes -o ServerAliveInterval=15 "
 
     for _service in ${service_name[@]} ; do
             tunnel.get_config $_service || continue
@@ -237,18 +240,56 @@ tunnel.open () {
             [[ $url_end ]] && url="$url/$url_end"
 
             if tunnel.ls $_service ; then
-                    gmsg -v2 -n -c white "$_service "
-                    gmsg -v1 -c aqua "$url"
+                    gmsg -v2 -n -c light_blue "$_service "
+                    gmsg -v1 -c white "$url"
                     continue
                 fi
-            gnome-terminal --tab --title "$_service"  -- \
-                ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port #$ssh_param
-                #--geometry 65x10 --zoom 0.5
 
-            gmsg -v2 -n -c white "$_service "
-            gmsg -v1 -c aqua "$url" -k $tunnel_indicator_key
+            if [[ $DISPLAY ]] ; then
+
+                    gnome-terminal --hide-menubar --geometry 47x10 --zoom 0.5 \
+                                            --title "$_service"  -- \
+                                            ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port ; pidof gnome-terminal & #$ssh_param
+
+                    # echo $_output
+                    # TBD not able to get pig of gnome-terminal session =/
+                    # local process_id=$(sh -c "echo && ; gnome-terminal --hide-menubar --geometry 47x10 --zoom 0.5 --title $_service  -- ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port")
+                    # process_id=$(sh -c 'gnome-terminal --hide-menubar --geometry 47x10 --zoom 0.5 --title kukka  -- ssh -L 8181:localhost:8181 casa@roima -p 22')
+                    # process_id=$(sh -c 'echo $$; exec gnome-terminal --hide-menubar --geometry 47x10 --zoom 0.5 --title kukka  -- ssh -L 8181:localhost:8181 casa@roima -p 22')
+                    #gmsg -v2 -c white -n "$_service $from_port "
+                    # check if graphical environment or forced not to open window
+                    # local process_id=$!
+                    # gmsg -v2 -c white -n "pid: $process_id "
+
+                    # get tunnel pid
+                    # local tunnel_pid=$(ps a | \
+                    #         grep -v grep | \
+                    #         grep "ssh -L" | \
+                    #         grep $from_port | \
+                    #         head -n 1  | sed 's/^[[:space:]]*//' | \
+                    #         cut -d " "  -f 1 \
+                    #     )
+                    # # gmsg -v2 -c white -n "tunnel_process: $tunnel_pid "
+
+                    # try to minimaze window
+                    #local window_id=$(system.get_window_id $tunnel_pid)
+                    # local window_id=$(system.get_window_id $process_id)
+
+                    # if [[ $window_id ]] ; then
+                    #         # gmsg -v2 -c white -n "window_id: $window_id "
+                    #         xdotool windowminimize ${window_id}
+                    #     fi
+
+                else
+                    # console environment
+                    gmsg -v2 -c white "to avoid ssh session start here, launch new terminal and run: "
+                    gmsg -v0 -c light_blue "ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port"
+                    return 1
+                fi
+
+            gmsg -v1 -c white "$url" -k $tunnel_indicator_key
+
         done
-
     return 0
 }
 
@@ -304,7 +345,7 @@ tunnel.close () {
             if kill -15 $pid ; then
                     gmsg -c green "$pid killed"
                 else
-                    gmsg -c yellow "$pid kill failed"
+                    kill -9 $pid || gmsg -c yellow "$pid kill failed"
                 fi
         done
 
