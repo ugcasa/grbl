@@ -2,13 +2,28 @@
 # guru client background servicer
 # casa@ujo.guru 2020
 
-source $GURU_BIN/common.sh
+daemon_service_script="$HOME/.config/systemd/user/guru.service"
+daemon_pid_file="/tmp/guru.daemon-pid"
+
+# use same key than system.sh
+daemon_indicator_key="f$(daemon.poll_order system)"
+
+source $GURU_BIN/system.sh
 
 daemon.main () {
-    argument="$1" ; shift
+    # daemon main command parser
+
+    local argument="$1" ; shift
     case "$argument" in
             start|stop|status|help|kill|poll)
-                daemon.$argument                ; return $? ;;
+                daemon.$argument
+                return $?
+                ;;
+            install|remove)
+                daemon.systemd $argument
+                return $?
+                ;;
+
             *)  gmsg "unknown daemon command"   ; return 1  ;;
         esac
     return 0
@@ -16,6 +31,8 @@ daemon.main () {
 
 
 daemon.help () {
+    # general help
+
     gmsg -v 1 -c white "guru daemon help "
     gmsg -v 2
     gmsg -v 0 "usage:    $GURU_CALL daemon [start|stop|status|kill|poll]"
@@ -34,18 +51,19 @@ daemon.help () {
 
 
 daemon.status () {
+    # printout status of daemon
 
     local _err=0
 
-    if [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
-            local _pid="$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)"
+    if [[ -f "$daemon_pid_file" ]] ; then
+            local _pid="$(cat $daemon_pid_file)"
             gmsg -v 1 -c green "${FUNCNAME[0]}: $_pid"
         else
             gmsg -v 1 -c dark_grey "${FUNCNAME[0]}: no pid reserved"
             _err=$((_err+10))
         fi
 
-    if ps auxf | grep "$HOME/bin/daemon.sh start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
+    if ps auxf | grep "$HOME/bin/core.sh start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
             gmsg -v 1 -c green "${FUNCNAME[0]}: running"
         else
             gmsg -v 1 -c red "${FUNCNAME[0]}: not running"
@@ -57,34 +75,36 @@ daemon.status () {
 
 
 daemon.start () {
+    # staart daemon
 
-    if [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
-            local _pid=$(cat "$GURU_SYSTEM_MOUNT/.daemon-pid")
+    if [[ -f "$daemon_pid_file" ]] ; then
+            local _pid=$(cat "$daemon_pid_file")
             gmsg -v 1 "${FUNCNAME[0]}:  killing $_pid"
             kill -9 $_pid
         fi
 
-    # call start method of module
+    if system.suspend flag ; then
+            [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
+            system.suspend rm_flag
+            corsair.systemd_restart
+        fi
 
-    #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
-    for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
+    #for module in ${GURU_DAEMON_POLL_ORDER[@]} ; do
+    for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
 
-        module=${GURU_DAEMON_POLL_LIST[i]}
-        gmsg -c dark_golden_rod "$i $module"
+        module=${GURU_DAEMON_POLL_ORDER[i-1]}
         case $module in
             null|empty )
-                gmsg -c deep_pink "skipping $module"
                 ;;
             *)
+                gmsg -v2 -c dark_golden_rod "$i:$module: "
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
-                        gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
-
+                        # gmsg -v3 ": $GURU_BIN/$GURU_BIN/$module.sh"
                         $module.main poll start
-                        gmsg -v3 "command: $module.main poll start "
-
                     else
-                        gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed"
+                        gmsg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed" \
+                            -k "f$(daemon.poll_order $module)"
                     fi
                 ;;
             esac
@@ -97,117 +117,161 @@ daemon.start () {
 daemon.stop () {
     # stop daemon
 
-    # remove stop flag
-    [[ -f "$HOME/.guru-stop" ]] && rm "$HOME/.guru-stop"
-
+    system.flag rm stop
+    gmsg -N -n -V1 -c white "stopping daemon.. "
     # if pid file is not exist
-    if ! [[ -f "$GURU_SYSTEM_MOUNT/.daemon-pid" ]] ; then
+    if ! [[ -f "$daemon_pid_file" ]] ; then
             gmsg "${FUNCNAME[0]}: daemon not running"
             gmsg -v1 "start daemon by typing 'guru start'"
             return 0
         fi
 
-    local _pid=$(cat $GURU_SYSTEM_MOUNT/.daemon-pid)
+    local _pid=$(cat $daemon_pid_file)
 
-    gmsg -v1 "stopping modules.. "
-    #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
+    gmsg -t -v1 "stopping modules.. "
+    #for module in ${GURU_DAEMON_POLL_ORDER[@]} ; do
 
-    for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
+    for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
 
-        module=${GURU_DAEMON_POLL_LIST[i]}
-        gmsg -c dark_golden_rod "$i $module"
+        module=${GURU_DAEMON_POLL_ORDER[i-1]}
+        #gmsg -v3 -c dark_golden_rod "$i $module"
         case $module in
             null|empty )
-                gmsg -c deep_pink "skipping $module"
+                #gmsg -v3 -c dark_grey "skipping $module"
                 ;;
             * )
+                gmsg -v2 -c dark_golden_rod "$i:$module: "
                 if [[ -f "$GURU_BIN/$module.sh" ]] ; then
                         source "$GURU_BIN/$module.sh"
-                        gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
-
                         $module.main poll end
-                        gmsg -v3 "command: $module.main poll end"
-
+                        # gmsg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
+                        # gmsg -v2 "command: $module.main poll end"
                     else
-                        gmsg -v 1 "${FUNCNAME[0]}: module '$module' not installed"
+                        gmsg -v1 "${FUNCNAME[0]}: module '$module' not installed"
                     fi
                 ;;
             esac
         done
 
-    gmsg -v1 "stopping guru-daemon.. "
-    [[ -f $GURU_SYSTEM_MOUNT/.daemon-pid ]] && rm -f $GURU_SYSTEM_MOUNT/.daemon-pid
-    kill -9 "$_pid" || gmsg -v 1 "$ERROR guru-daemon pid $_pid cannot be killed, try to 'guru kill $_pid'"
-
+    gmsg -t -v1 "stopping guru-daemon.. "
+    [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
+    system.flag rm running
+    gmsg -V1 -c green "ok"
+    kill -9 "$_pid"
 }
 
 
-
 daemon.kill () {
+    # force stop daemon
+
     if pkill guru ; then
-            gmsg -v1 "${FUNCNAME[0]}: guru-daemon killed.."
+            gmsg -v1 -c green "daemon killed.."
         else
-            gmsg -v1 "${FUNCNAME[0]}: guru-daemon not running"
+            gmsg -v2 -c dark_grey "daemon not running"
         fi
 
     if ps auxf | grep "$GURU_BIN/guru" | grep "start" | grep -v "grep" >/dev/null ; then
-            gmsg -v1 -c yellow "${FUNCNAME[0]}: daemon still running, try to 'sudo guru kill'"
+            gmsg -v1 -c yellow "daemon still running, try to 'sudo guru kill' again"
             return 100
         else
-            gmsg -v1 -c white "${FUNCNAME[0]}: kill verified"
-            [[ -f $GURU_SYSTEM_MOUNT/.daemon-pid ]] && rm -f $GURU_SYSTEM_MOUNT/.daemon-pid
+            gmsg -v3 -c white "kill verified"
+            [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
             return 0
         fi
 }
 
 
 daemon.poll () {
+    # poller for modules
+
     source $GURU_RC
-    [[ -f "$HOME/.guru-stop" ]] && rm -f "$HOME/.guru-stop"
-    echo "$(sh -c 'echo "$PPID"')" > "$GURU_SYSTEM_MOUNT/.daemon-pid"
+    [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
+    #[[ -f "/tmp/guru-stop.flag" ]] && rm -f "/tmp/guru-stop.flag"
+    echo "$(sh -c 'echo "$PPID"')" > "$daemon_pid_file"
+    system.flag rm fast
+    system.flag rm stop
+    GURU_FORCE=
 
     # DAEMON POLL LOOP
     while true ; do
+
+        system.flag set running
         # to update configurations is user changes them
         source $GURU_RC
-        GURU_FORCE=true
-        # indicate
-        gmsg -v4 -c $GURU_CORSAIR_EFECT_COLOR -k "esc"
 
-        #for module in ${GURU_DAEMON_POLL_LIST[@]} ; do
-        for ((i=0; i <= ${#GURU_DAEMON_POLL_LIST[@]}; i++)) ; do
+        # check is system suspended during run and perform needed actions
+        if system.flag suspend ; then
+                # restart ckb-next appication to reconnec led pipe files
+                gmsg -N -t -v1 "daemon recovering from suspend.. "
+                [[ $GURU_CORSAIR_ENABLED ]] && corsair.suspend_recovery
+                system.flag rm suspend
+            fi
 
-            module=${GURU_DAEMON_POLL_LIST[i]}
-            gmsg -c dark_golden_rod "$i $module"
-            case $module in
-                null|empty )
-                    gmsg -c deep_pink "skipping $module"
-                    ;;
-                * )
+        # if paused stay here 300 seconds
+        if system.flag pause ; then
+                gmsg -N -t -v1 -c yellow "daemon paused " -k $daemon_indicator_key
+                for (( i = 0; i < 150; i++ )); do
+                    system.flag pause || break
+                    system.flag stop && break
+                    system.flag suspend && break
+                    sleep 2
+                done
+                system.flag rm pause
+                gmsg -v1 -t -c green "daemon continued" -k $daemon_indicator_key
+            fi
 
-                    if [[ -f "$GURU_BIN/$module.sh" ]] ; then
-                            source "$GURU_BIN/$module.sh"
-                            $module.main poll status
-                            gmsg -v2 -t "${FUNCNAME[0]}: $module poll status $?"
-                        else
-                            gmsg -v1 -c yellow "${FUNCNAME[0]}: module '$module' not installed"
-                            gmsg -v2 "${FUNCNAME[0]}: $GURU_BIN/${_poll_list[$_i]}.sh"
-                        fi
-                    ;;
-                esac
+        if system.flag stop ; then
+                gmsg -N -t -v1 "daemon got requested to stop "
+                daemon.stop
+                return $?
+            fi
+
+        # light esc key to signal user daemon is active
+        gmsg -N -t -v3 -c aqua "daemon active" -k $daemon_indicator_key
+        gmsg -v4 -c aqua -k cplc
+
+        # go trough poll list
+        local i=
+        for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
+                module=${GURU_DAEMON_POLL_ORDER[i-1]}
+                case $module in
+                    null|empty|na|NA)
+                        gmsg -v4 -c dark_grey "skipping $module"
+                        ;;
+                    *)
+                        gmsg -v2 -c dark_golden_rod "$i:$module: "
+
+                        if [[ -f "$GURU_BIN/$module.sh" ]] ; then
+                                source "$GURU_BIN/$module.sh"
+                                $module.main poll status
+                            else
+                                gmsg -v1 -c yellow "${FUNCNAME[0]}: module '$module' not installed"
+                            fi
+                        ;;
+                    esac
             done
 
-        gmsg -v4 -c reset -k "esc"
-        sleep $GURU_DAEMON_INTERVAL
-        # check is stop command given, exit if so
-        [[ -f "$HOME/.guru-stop" ]] && break
+        gmsg -n -v2 -c green -k $daemon_indicator_key "sleep ${GURU_DAEMON_INTERVAL}s: "
+        gmsg -v4 -c reset -k cplc
+
+        local _seconds=
+        for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )) ; do
+                system.flag stop && break
+                system.flag suspend && continue
+                system.flag pause && continue
+                system.flag fast && continue || sleep 1
+                gmsg -v2 -n -c reset "."
+            done
+        gmsg -v2 ""
     done
+    gmsg -N -t -v1 "daemon got got tired and dropped out "
     daemon.stop
 }
 
 
 daemon.process_opts () {
     # argument parser
+
     TEMP=`getopt --long -o "vVflu:h:" "$@"`
     eval set -- "$TEMP"
     while true ; do
@@ -227,8 +291,72 @@ daemon.process_opts () {
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then                        # user and platform settings (implement here, always up to date)
+daemon.systemd () {
+    # systemd method
+
+    local cmd=$1 ; shift
+    case $cmd in
+            install|remove|enable|disable)
+                        daemon.systemd_$cmd $@
+                        return $?
+                    ;;
+              * ) gmsg -c yellow "unknown command '$cmd'"
+                  return 127
+        esac
+}
+
+
+daemon.systemd_install () {
+    # setup systemd service
+
+    temp="/tmp/starter.temp"
+    gmsg -v1 -V2 -n "setting starter script.. "
+    gmsg -v2 -n "setting starter script $daemon_service_script.. "
+
+    if ! [[ -d  ${daemon_service_script%/*} ]] ; then
+        mkdir -p ${daemon_service_script%/*} \
+        || gmsg -x 100 "no permission to create folder ${daemon_service_script%/*}"
+    fi
+
+    [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
+    [[ -f $temp ]] && rm $temp
+
+cat >"$temp" <<EOL
+[Unit]
+Description=guru daemon process manager
+
+[Service]
+ExecStart=bash -c '/home/$USER/bin/core.sh start'
+ExecStop=bash -c '/home/$USER/bin/core.sh stop'
+Type=simple
+Restart=always
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical-session.target
+EOL
+
+    if ! cp -f $temp $daemon_service_script ; then
+            gmsg -c red "script copy failed"
+            return 101
+        fi
+
+    chmod +x $daemon_service_script
+    systemctl --user enable guru.service
+    systemctl --user daemon-reload
+    systemctl --user restart guru.service
+
+    # clean
+    rm -f $temp
+    gmsg -v1 -c green "ok"
+    return 0
+
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         source $GURU_RC
+        source $GURU_BIN/common.sh
+        source $GURU_BIN/corsair.sh
         daemon.process_opts $@
         daemon.main $ARGUMENTS
         exit $?

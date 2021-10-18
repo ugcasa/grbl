@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # simple file based counter for guru-client
 
 counter.main () {
@@ -14,8 +13,9 @@ counter.main () {
     case "$argument" in
 
                 status)
+                    gmsg -n -t -V1 "${FUNCNAME[0]}: " ; gmsg -V1 -c green "ok"
                     for _counter in $(ls $GURU_LOCAL_COUNTER/*) ; do
-                            gmsg -c light_blue "${_counter//"$GURU_LOCAL_COUNTER/"/""} : $(cat $_counter)"
+                            gmsg -v1 -c light_blue "${_counter//"$GURU_LOCAL_COUNTER/"/""} : $(cat $_counter)"
                         done
                         ;;
 
@@ -89,7 +89,7 @@ counter.main () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    source "$GURU_BIN/deco.sh"
+    source common.sh
     counter.main "$@"
 fi
 

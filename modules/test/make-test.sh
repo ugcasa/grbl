@@ -23,8 +23,20 @@ process_opts $@
 
 # module filename name is needed
 [[ "$1" ]] && module=$1 || read -p "module name to create test for (no file ending): " module
-[[ -f "../core/$module.sh" ]] && module_to_test="../core/$module.sh"
-[[ -f "../modules/$module.sh" ]] && module_to_test="../modules/$module.sh"
+
+if [[ -f "../../core/$module.sh" ]] ; then
+        module_to_test="../../core/$module.sh"
+    else
+        module_to_test="$GURU_BIN/$module.sh"
+    fi
+
+if [[ -f "../../modules/$module.sh" ]] ; then
+        module_to_test="../../modules/$module.sh"
+    else
+        module_to_test="$GURU_BIN/$module_to_test.sh"
+    fi
+
+
 [[ "$module_to_test" ]] || gmsg -x 127 -c yellow "shell script $module.sh not found within core or modules"
 
 # inldes only if space is left between function name and "()"
@@ -39,6 +51,7 @@ gmsg "${#functions_to_test[@]} functions to test"
 if [[ -f $tester_file_name ]] ; then
         gask "overwrite $tester_file_name" && echo "#!/bin/bash" > $tester_file_name || gmsg -c red "aboting.."
     fi
+echo "#!/bin/bash "  > $tester_file_name
 echo "# automatically generated tester for guru-client $module.sh $(date) casa@ujo.guru 2020"  >> $tester_file_name
 echo                                                                        >> $tester_file_name
 
@@ -54,7 +67,7 @@ echo "$module.test() {"                                                     >> $
 echo '    local test_case=$1'                                               >> $tester_file_name
 echo '    local _err=($0)'                                                  >> $tester_file_name
 echo '    case "$test_case" in'                                             >> $tester_file_name
-echo "           1) $module.check ; return $? ;;  # 1) quick check"         >> $tester_file_name
+echo "           1) $module.status ; return $? ;;  # 1) quick check"        >> $tester_file_name
 
 # all tests = all functions in introduction order
 echo '         all) '                                                       >> $tester_file_name
@@ -63,7 +76,7 @@ _i=100
 for _function in "${functions_to_test[@]}" ; do
         test_function_name=${_function//"$module."/"$module.test_"}
         (( _i++ ))
-        echo "              $test_function_name"' || _err=("${_err[@]}" "'"$_i"'") ' >> $tester_file_name
+        echo "              echo ; $test_function_name"' || _err=("${_err[@]}" "'"$_i"'") ' >> $tester_file_name
     done
 
 # "all" test error colletor
@@ -115,3 +128,5 @@ echo                                                                        >> $
 
 # make runnable
 chmod +x "$tester_file_name"
+# open for edit
+$GURU_PREFERRED_EDITOR $tester_file_name

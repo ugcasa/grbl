@@ -2,11 +2,13 @@
 # guru-client keyboard shortcut functions
 # casa@ujo.guru 2020
 source $GURU_BIN/common.sh
+source $GURU_BIN/os.sh
+
 
 
 keyboard.main() {
     # keyboard command parser
-    distro="$(check_distro)" # ; gmsg -v2 "|$distro|"
+    distro="$(os.check_distro)" # ; gmsg -v2 "|$distro|"
     [[ "$GURU_INSTALL_TYPE" == "server" ]] && return 0
 
     command="$1" ; shift
@@ -49,7 +51,7 @@ keyboard.help () {
 
 keyboard.set_shortcut_ubuntu () {           # set ubuntu keyboard shorcuts
     # usage: keyboard.set_ubuntu_shortcut [name] [command] [binding]
-    compatible_with "ubuntu" || return 1
+    os.compatible_with "ubuntu" || return 1
     [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
 
     current_keys=$(gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings)
@@ -72,7 +74,7 @@ keyboard.set_shortcut_ubuntu () {           # set ubuntu keyboard shorcuts
 
 
 keyboard.reset_ubuntu () {        # resets all custom shortcuts to default
-    compatible_with "ubuntu" || return 1
+    os.compatible_with "ubuntu" || return 1
     [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
     gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings || return 100
     return 0
@@ -87,7 +89,7 @@ keyboard.release_ubuntu(){        # release single shortcut
 
 keyboard.set_guru_ubuntu(){       # set guru defaults
 
-    compatible_with "ubuntu" || return 1
+    os.compatible_with "ubuntu" || return 1
     [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
 
     keyboard.reset_ubuntu
@@ -146,7 +148,7 @@ keyboard.set_shortcut_linuxmint () {
 
 keyboard.reset_linuxmint() {
     # ser cinnamon chortcut
-    compatible_with "linuxmint" || return 1
+    os.compatible_with "linuxmint" || return 1
     [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
 
     backup=$GURU_CFG/keyboard.backup-mint.cfg

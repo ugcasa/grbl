@@ -23,7 +23,7 @@ ssh.key () {
     case "$command" in
         ps|active)      ssh-add -l  ;;
         renerate|new)   ssh.generate_key $@ ; return $? ;;
-        ls|files)       ls "$HOME/.ssh" | grep "rsa" | grep -v "pub" ;;
+        ls|files)       gmsg -c light_blue $(ls "$HOME/.ssh" | grep "rsa" | grep -v "pub") ;;
         add)            ssh.add_key "$@" ;;
         rm)             ssh.rm_key "$@" ;;
         send)           ssh.copy-id "$@" ;;
@@ -181,11 +181,12 @@ ssh.copy-id () {
 ssh.add_rule () {
     local key_file=$1
     local server="$GURU_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
+    #local port="$GURU_ACCESS_PORT" ; [[ $3 ]] && port=$3
     local user="$GURU_USER" ; [[ $3 ]] && user=$3
     if cat $HOME/.ssh/config | grep "$user-$server" >/dev/null ; then
         gmsg -c green "rule already exist, ok"
     else
-        if printf "\nHost *$server \n\tIdentityFile %s\n" "$key_file" >> "$HOME/.ssh/config" ; then
+        if printf "\nHost *$server \n\tIdentityFile %s\n" $key_file >> "$HOME/.ssh/config" ; then
                 gmsg -c green "ok"
             else
                 gmsg -c red "rule add error"

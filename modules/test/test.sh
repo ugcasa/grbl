@@ -15,11 +15,14 @@
 
 source $GURU_RC
 source $GURU_BIN/common.sh
+source $GURU_BIN/counter.sh
 
-test.main() {
+
+test.main () {
     # main test case parser
-    export all_tools=("mount" "remote" "project" "note" "system" "corsair")
-    export GURU_VERBOSE=true
+
+    export all_tools=("mount" "mqtt" "project" "note" "system" "tunnel" "corsair")
+    export GURU_VERBOSE=2
     export LOGGING=true
 
     case "$1" in
@@ -34,6 +37,8 @@ test.main() {
 
 
 test.help () {
+    # gneneral main
+
     gmsg -v1 -c white "guru-client main test help -------------------------------------"
     gmsg -v2
     gmsg -v0 "usage: $GURU_CALL test <tool>|all|release <tc_nr>|all "
@@ -52,9 +57,11 @@ test.help () {
 }
 
 
-test.tool() {
+test.tool () {
     # Tool to test tools. Simply call sourced tool main function and parse normal commands
+
     # sources under test
+    source $GURU_BIN/counter.sh
 
     local _tool=""
     local _case=""
@@ -107,38 +114,47 @@ test.tool() {
 }
 
 
-test.all() {
+test.all () {
     # run all module tests and all cases
-    local _error=0
+
+    declare -la _error=()
+
+    gmsg -c white "INTEGRATION TEST $_test_id: guru-client v.$GURU_VERSION $(date)"
+
     for _tool in ${all_tools[@]} ; do
-            test.tool $_tool "$1" || _error=$((_error+1))
+            test.tool $_tool "$1" || _error=($_error "$?")
         done
 
-    gmsg -N -n -c white "Test run result is "
-    if ((_error<1)) ; then
-            gmsg -c green "PASSED"
-        else
+    gmsg -N -n -c white "INTEGRATION $_test_id RESULT IS "
+
+    if (( ${#_error} > 0 )) ; then
             gmsg -c red "FAILED"
-            gmsg -c yellow "counted $_error error(s)"
+            gmsg -c yellow "counted ${#_error} error(s): ${_error[@]}"
+        else
+            gmsg -c green "PASSED"
         fi
 
     return $_error
 }
 
 
-test.release() {
+test.release () {
     # validation test, tests all but prints out only module reports
+
+    source $GURU_BIN/counter.sh
     local _error=0
     local _test_id=$(counter.main add guru-client_validation_test_id)
 
-        msg "\n${WHT}RELEASE TEST $_test_id: guru-client v.$GURU_VERSION $(date)${NC}\n"
-        test.all | grep --color=never "result is:" | grep "TEST" || _error=$?
+
+        gmsg -c white "RELEASE TEST $_test_id: guru-client v.$GURU_VERSION $(date)"
+        gmsg "found issues: "
+        test.all | grep -e "PASSED" -e "FAILED" | grep "TEST" --color=never || _error=$?
 
         if ((_error<9)); then
-                gmsg -n -c white "RELEASE $_test_id RESULT IS "
+                gmsg -N -n -c white "RELEASE $_test_id RESULT IS "
                 gmsg -c green "PASSED"
             else
-                gmsg -n -c white "RELEASE $_test_id RESULT IS "
+                gmsg -N -n -c white "RELEASE $_test_id RESULT IS "
                 gmsg -c red "FAILED"
                 gmsg -c yellow "last error code were: $_error"
             fi
@@ -149,6 +165,7 @@ test.release() {
 
 test.terminal () {
     # printout unit test output
+
     export GURU_VERBOSE=true
     # do not log to file
     export LOGGING=
@@ -156,7 +173,7 @@ test.terminal () {
     local _case="$2"
     # time output format
     local TIMEFORMAT='%R'
-    msg "loop $_tool #$_case. usage: [1-9|t|n|b|r|q|]. any other key will run test\n"
+    gmsg "loop $_tool #$_case. usage: [1-9|t|n|b|r|q|]. any other key will run test\n"
     while read -n 1 -e -p "$_tool:$_case > " _cmd; do
 
         case $_cmd in
@@ -178,7 +195,7 @@ test.terminal () {
           # source user settings
           source $HOME/.gururc
           # source function under test
-          source $GURU_BIN/$_tool.sh
+          source $HOME/bin/$_tool.sh
           # source tester functions
           source $GURU_BIN/test/test-$_tool.sh
 
@@ -197,6 +214,9 @@ test.terminal () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    source $GURU_RC
+    source $GURU_BIN/common.sh
+    source $GURU_BIN/counter.sh
     case "$1" in
         loop) shift ; test.terminal $@ ; exit $? ;;
         esac

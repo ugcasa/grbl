@@ -8,28 +8,27 @@ TARGET_CFG="$HOME/.config/guru"
 # check if colors possible
 if echo "$TERM" | grep "256" >/dev/null ; then
     if echo "$COLORTERM" | grep "true" >/dev/null ; then
-            GURU_FLAG_COLOR=true
+        GURU_FLAG_COLOR=true
+            # set only needed colors
+            C_NORMAL='\033[0m'
+            C_GRAY='\033[38;2;169;169;169m'
+            C_GREY='\033[38;2;169;169;169m'
+            C_DARK_GRAY='\033[38;2;128;128;128m'
+            C_DARK_GREY='\033[38;2;128;128;128m'
+            C_GREEN='\033[38;2;0;128;0m'
+            C_RED='\033[38;2;255;0;0m'
+            C_LIGHT_BLUE='\033[38;2;173;216;230m'
+            C_WHITE='\033[38;2;255;255;255m'
         fi
     fi
 
-# set only needed colors
-if [[ "$GURU_FLAG_COLOR" ]] ; then
-        C_NORMAL='\033[0m'
-        C_GRAY='\033[38;2;169;169;169m'
-        C_GREY='\033[38;2;169;169;169m'
-        C_DARK_GRAY='\033[38;2;128;128;128m'
-        C_DARK_GREY='\033[38;2;128;128;128m'
-        C_GREEN='\033[38;2;0;128;0m'
-        C_RED='\033[38;2;255;0;0m'
-        C_LIGHT_BLUE='\033[38;2;173;216;230m'
-        C_WHITE='\033[38;2;255;255;255m'
-    fi
 
 # use new modules durin installation
 export GURU_BIN="core"
-source core/common.sh
-source core/config.sh
-source core/keyboard.sh
+#source core/common.sh
+source $GURU_BIN/config.sh
+source $GURU_BIN/keyboard.sh
+source $GURU_BIN/system.sh
 # set target locations for uninstaller
 export GURU_CFG="$HOME/.config/guru"
 export GURU_BIN="$HOME/bin"
@@ -37,17 +36,17 @@ export GURU_BIN="$HOME/bin"
 bash_rc="$HOME/.bashrc"
 core_rc="$HOME/.gururc"    # TODO change name to '.gururc' when cleanup next time
 backup_rc="$HOME/.bashrc.backup-by-guru"
-
 # modules where user have direct access
-core_module_access=(counter install uninstall config corsair daemon keyboard remote system)
-
+core_module_access=(counter install uninstall config mount unmount daemon keyboard system path)
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(mount mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news)
+modules_to_install=(mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news program tmux tunnel corsair backup convert telegram)
 
 install.main () {
 
     # Step 1) parse arguments
     install.arguments $@ || gmsg -x 100 "argumentation error"
+
+    # store current core rc if not no port install configure
 
     # Step 2) check previous installation
     install.check || gmsg -x 110 "check caused exit"
@@ -71,7 +70,7 @@ install.main () {
     # development stuff (flag: -d)
     if [[ $install_dev ]] ; then
             install.dev || gmsg -x 160 "error during installing dev"
-            check.dev
+            #check.dev
         fi
 
     # platform related stuff (flag: -p <platform>)
@@ -121,6 +120,10 @@ install.main () {
     gmsg -v1 -c light_blue "copied ${#installed_files[@]} files"
     gmsg -v2 -c dark_grey "${installed_files[@]}"
 
+    if system.flag running ; then
+            system.flag rm pause
+            sleep 1
+        fi
     # pass
     return 0
 }
@@ -130,6 +133,7 @@ install.desktop () {
     gmsg -v2 -c navy "$FUNCNAME TBD"
     return 0
 }
+
 
 install.server () {
     # add server module to install list
@@ -152,7 +156,6 @@ check.server () {
                     # continue anuweay
             fi
         done
-
     # pass
     return 0
 }
@@ -181,8 +184,7 @@ install.help () {
     gmsg " -p [platform]    select installation platform: desktop|laptop|server|phone "
     gmsg " -d               install also dev stuff "
     gmsg " -r               install all module requirements (experimental)"
-    gmsg " -v               low verbose (normally quite silent) "
-    gmsg " -V               high verbose "
+    gmsg " -v 0..3          set verbose level "
     gmsg " -h               print this help "
     gmsg
     gmsg -c white "example:"
@@ -193,19 +195,30 @@ install.help () {
 
 install.arguments () {
     ## Process flags and arguments
+    export GURU_VERBOSE=0
 
-    TEMP=`getopt --long -o "dfrvVhu:p:" "$@"`
+    TEMP=`getopt --long -o "dfcrhlv:u:p:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
-            -d) install_dev=true           ; shift ;;
-            -f) force_overwrite=true       ; shift ;;
-            -r) install_requiremets=true   ; shift ;;
-            -v) export GURU_VERBOSE=1      ; shift ;;
-            -V) export GURU_VERBOSE=2      ; shift ;;
-            -h) install.help               ; shift ;;
-            -u) export GURU_USER=$2        ; shift 2 ;;
-            -p) export install_platform=$2 ; shift 2 ;;
+            -d) install_dev=true
+                shift ;;
+            -f) force_overwrite=true
+                shift ;;
+            -c) configure_after_install=true
+                shift ;;
+            -r) install_requiremets=true
+                shift ;;
+            -h) install.help
+                shift ;;
+            -l) export LIGTH_INSTALL=true
+                shift ;;
+            -v) export GURU_VERBOSE=$2
+                shift 2 ;;
+            -u) export GURU_USER=$2
+                shift 2 ;;
+            -p) export install_platform=$2
+                shift 2 ;;
              *) break
         esac
     done
@@ -244,13 +257,25 @@ install.copy () {
 
 install.check () {
     ## Check installation, reinstall if -f or user input
-    gmsg  -v1 "checking current installation.. "
+    gmsg -v1 "checking current installation.. "
     if grep -q "gururc" "$bash_rc" ; then
         [[ $force_overwrite ]] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer
 
         if ! [[ "$answer" == "y" ]]; then
                 gmsg -c red -x 2 "aborting.."
             fi
+
+        if [[ $LIGTH_INSTALL ]] ; then
+            install.core || gmsg -x 150 "error during installing core"
+            check.core
+            install.modules && check.modules || gmsg -x 170 "error when installing modules"
+            exit 0
+        fi
+
+        if ! [[ $configure_after_install ]] && [[ -f $core_rc ]]; then
+            cp $core_rc /tmp/temp.rc
+        fi
+
 
         if [[ -f "$TARGET_BIN/uninstall.sh" ]] ; then
                 $TARGET_BIN/uninstall.sh
@@ -350,7 +375,6 @@ check.folders () {
 }
 
 
-
 install.core () {
     # install core files
     install.copy cfg $TARGET_CFG "copying configurations"
@@ -359,6 +383,7 @@ install.core () {
     installed_core=( ${installed_core[@]} $(ls core | cut -f1 -d '.') )
     return 0
 }
+
 
 check.core () {
     # check core were installed
@@ -391,6 +416,7 @@ check.core () {
 
 }
 
+
 install.dev () {
     # install foray, test and all modules
 
@@ -399,29 +425,28 @@ install.dev () {
     modules_to_install=($(ls modules -p | grep -v / | cut -f1 -d '.'))
 
     # copy foray modules
-    install.copy "foray" "$TARGET_BIN" "copying trial scripts"
+    # install.copy "foray" "$TARGET_BIN" "copying trial scripts"
     return 0
 }
 
 
-check.dev () {
-    # check installed tester files
-    gmsg -v1 "checking development files"
-    local _modules_to_install=($(ls foray -p | grep -v /))
+# check.dev () {
+#     # check installed tester files
+#     gmsg -v1 "checking development files"
+#     local _modules_to_install=($(ls foray -p | grep -v /))
 
-    for _file in ${_modules_to_install[@]} ; do
+#     for _file in ${_modules_to_install[@]} ; do
 
-            gmsg -n -v2 -c grey "$_file.. "
-            if [[ -f $TARGET_BIN/$_file ]] ; then
-                gmsg -v2 -c green "ok"
-            else
-                gmsg -c yellow "warning: development file $_file missing"
-            fi
-        done
-    # pass
-    return 0
-}
-
+#             gmsg -n -v2 -c grey "$_file.. "
+#             if [[ -f $TARGET_BIN/$_file ]] ; then
+#                 gmsg -v2 -c green "ok"
+#             else
+#                 gmsg -c yellow "warning: development file $_file missing"
+#             fi
+#         done
+#     # pass
+#     return 0
+# }
 
 
 install.modules () {
@@ -472,10 +497,7 @@ install.modules () {
                             gmsg -c yellow "module $_module folder copying error"
                         fi
                 done
-
-
             fi
-
         done
     # pass
     gmsg -v1 -V2 -c green " done"
@@ -505,18 +527,24 @@ install.config () {
     # config
     if ! [[ -f "$TARGET_CFG/$GURU_USER/user.cfg" ]] ; then
          gmsg -c yellow "user specific configuration not found, using default.."
-
          cp -f $TARGET_CFG/user-default.cfg "$TARGET_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
     fi
 
-    config.export "$GURU_USER" || gmsg -c red "user config export error"
-    source "$core_rc" || gmsg -c red "$core_rc error"
-    #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
+    # post install configure
+    if [[ $configure_after_install ]] ; then
+            gmsg -c white "configuring $GURU_USER.."
+            config.export "$GURU_USER" || gmsg -c red "user config export error"
+            source "$core_rc" || gmsg -c red "$core_rc error"
+            #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
 
-    # set keyboard shortcuts
-    gmsg -n -v1 "setting keyboard shortcuts "
-    keyboard.main add all || gmsg -c yellow "error by setting keyboard shortcuts"
-    installed_files=( ${installed_files[@]} $TARGET_CFG/kbbind.backup.cfg )
+            # set keyboard shortcuts
+            gmsg -n -v1 "setting keyboard shortcuts "
+            keyboard.main add all || gmsg -c yellow "error by setting keyboard shortcuts"
+            installed_files=( ${installed_files[@]} $TARGET_CFG/kbbind.backup.cfg )
+        else
+            [[ -f /tmp/temp.rc ]] && mv -f /tmp/temp.rc $core_rc
+        fi
+
     return 0
 
 }

@@ -1,50 +1,81 @@
 #!/bin/bash
-# install functions for giocon client ujo.guru / juha.palm 2019
-# TODO: move all these to guru-install
+# install applications casa@ujo.guru 2019-2021
+# module or module adapter scripts should have install and remove functions called by <module>.main install/remove
+# these are stand alone installers for application no worth to make module (or adapter script)
+
 source $GURU_BIN/common.sh
 
 install.main () {
-    [ "$1" ] && argument="$1" && shift || read -r -p "input module name: " argument
-    local _temp_vebose=$GURU_VERBOSE ; GURU_VERBOSE=true
-    case "$argument" in
-        tiv|java|webmin|conda|hackrf|st-link|mqtt-client|visual-code|tor|django|virtualbox|help)
-                                      install.$argument "$@" ;;
-        kaldi|listener)               install.kaldi 4 ;; # number of cores used during compiling
-        pk2|pickit2|pickit|pic)       gnome-terminal --geometry=80x28 -- /bin/bash -c "$GURU_BIN/install-pk2.sh; exit; $SHELL; " ;;
-        spectrumanalyzer|SA)          install.spectrumanalyzer "$@"; install.fosphor "$@" ;;
-        status)                       echo "no status data" ;;
-        all)                          echo "TBD" ;;
-        *)                            echo "no installer for '$argument'"; install.help
+    if [[ "$1" ]] ; then
+            argument="$1"
+            shift
+        fi
+
+    # architecture selection
+    case $(uname -m) in
+        aarch64|arm64) SYSTEM_ARCHITECTURE="arm64" ;;
+        amd64|x86_64) SYSTEM_ARCHITECTURE="amd64" ;;
+        *) gmsg -c red "unknown architecture" -k esc
     esac
-    GURU_VERBOSE=$_temp_vebose
+
+    case "$argument" in
+        help|virtualbox|tiv|java|\
+        client|hackrf|fosphor|spectrumanalyzer|\
+        radio|webmin|kaldi|vscode|\
+        django|anaconda|python)
+                    install.$argument "$@" ;;
+        status|poll|start|stop)
+                    gmsg -v dark_grey "no polling functions" ;;
+        *)          gmsg -v dark_grey "no installer for '$argument'"; install.help
+    esac
 }
 
 
 install.help () {
-    gmsg -v1 -c white "guru-client dev tools installer help "
+    gmsg -v1 -c white "guru-client installer help "
     gmsg -v2
     gmsg -v0  "usage:    $GURU_CALL install [keyword] "
     gmsg -v2
     gmsg -v1 -c white  "keywords:"
-    gmsg -v1  " mqtt-client                 mosquitto client"
-    gmsg -v1  " mqtt-server                 mosquitto server"
-    gmsg -v1  " conda                       anaconda environment tool for python"
-    gmsg -v1  " django                      django platform for python web"
-    gmsg -v1  " pk2                         pickit2 programmer interface"
-    gmsg -v1  " st-link                     st_link programmer for SM32"
-    gmsg -v1  " kaldi                       speech to text ai"
-    gmsg -v1  " tor                         tor browser"
-    gmsg -v1  " webmin                      webmin tool for server configuratio"
+    gmsg -v1 " vscode               ms visual code "
+    gmsg -v1 " virtualbox           virtualbox "
+    gmsg -v1 " kaldi                speech recognize AI "
+    gmsg -v1 " java                 java runtime "
+    gmsg -v1 " python               python3 and venv "
+    gmsg -v1 " anaconda             anaconda dev tool"
+    gmsg -v1 " django               django framework "
+    gmsg -v1 " mqtt-client          mopsquitto MQTT clients "
+    gmsg -v1 " webmin               webmin tools "
+    gmsg -v1 " radio                gnuradio, HackRF, spectrumanalyzer and fosphor "
+    gmsg -v2 " gnuradio             install radio software separately: "
+    gmsg -v2 " hackrf               "
+    gmsg -v2 " spectrumanalyzer     "
+    gmsg -v2 " fosphor              "
+    gmsg -v1 " tiv                  tiv text mode picture viewer "
     gmsg -v2
 }
 
+
+install.question () {
+    [[ "$1" ]] || return 2
+    read -p "$1 [y/n]: " answer
+    [[ $answer ]] || return 1
+    [[ $answer == "y" ]]  && return 0
+    return 1
+}
+
+
 install.virtualbox () {
     # add to sources list
-    if [[ -f /etc/apt/sources.list.d/virtualbox.list ]] ; then 
-            echo "already in sources list"  
-        else
-            echo "deb http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
-        fi
+    if [[ -f /etc/apt/sources.list.d/virtualbox.list ]] ; then
+        echo "already in sources list"
+    else
+        #  According to your distribution, replace '<mydist>' with 'eoan', 'bionic', 'xenial', 'buster', 'stretch', or 'jessie'
+        # ulyssa <- $(lsb_release -cs) not worky
+        # not possible to get ubuntu release name out of mint :/
+        source /etc/os-release
+        echo "deb [arch=$SYSTEM_ARCHITECTURE] http://download.virtualbox.org/virtualbox/debian $UBUNTU_CODENAME contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+    fi
     # get key
     wget https://www.virtualbox.org/download/oracle_vbox_2016.asc
     # add key
@@ -52,17 +83,18 @@ install.virtualbox () {
 
     # install
     sudo apt-get update
-    sudo apt-get install -y virtualbox-6.1
+    sudo apt-get install -y virtualbox virtualbox-ext-pack
 
-    # full screen 
+    # full screen
     sudo apt-get install -y build-essential module-assistant
     sudo m-a prepare
 
     # install usb support
     echo "file > preferences > extencions > [+]"
-    $GURU_BROWSER https://download.virtualbox.org/virtualbox/6.1.16/VirtualBoxSDK-6.1.16-140961.zip
+    $GURU_PREFERRED_BROWSER https://download.virtualbox.org/virtualbox/6.1.16/VirtualBoxSDK-6.1.16-140961.zip
     sudo usermod -aG vboxusers $USER
 }
+
 
 install.tiv () {
     #install text mode picture viewer
@@ -83,15 +115,6 @@ install.django () {
 }
 
 
-install.question () {
-    [ "$1" ] || return 2
-    read -p "$1 [y/n]: " answer
-    [ $answer ] || return 1
-    [ $answer == "y" ]  && return 0
-    return 1
-}
-
-
 install.java () {
     #install and remove needed applications. input "install" or "remove"
     local action=$1
@@ -103,23 +126,13 @@ install.java () {
 }
 
 
-install.mqtt-client () {   #not tested
 
-    sudo apt-get update || return $?
-    sudo apt install mosquitto-clients || return $?
-    #sudo add-apt-repository ppa:certbot/certbot || return $?
-    #sudo apt-get install certbot || return $?
-    printf "\n guru is now ready to mqtt\n\n"
-    return 0
-}
-
-
+# combined to radio
 install.hackrf () {
     # full
     # sudo apt install hackrf
-    gnuradio-companion --help >/dev/null ||sudo apt-get install build-essential python3-dev libqt4-dev gnuradio gqrx-sdr hackrf gr-osmosdr libusb-dev python-qwt5-qt4 -y
     read -r -p "Connect HacrkRF One and press anykey: " nouse
-    hackrf_info && echo "successfully installed" ||echo "HackrRF One not found, pls. re-plug or re-install"
+    hackrf_info && echo "successfully installed" || echo "HackrRF One not found, pls. re-plug or re-install"
     mkdir -p $HOME/git/labtools/radio
     cd $HOME/git/labtools/radio
     git clone https://github.com/mossmann/hackrf.git
@@ -128,7 +141,6 @@ install.hackrf () {
     echo "Documentation file://$HOME/git/labtools/radio/hackrf.wiki"
     printf "\n guru is now ready to radio\n\n"
     read -r -p "to start GNU radio press anykey (or CTRL+C to exit): " nouse
-    gnuradio-companion &
     return 0
 }
 
@@ -151,7 +163,7 @@ install.fosphor () {
 
 install.spectrumanalyzer () {
 
-    [ -f /usr/local/bin/qspectrumanalyzer ] && return 0
+    [[ -f /usr/local/bin/qspectrumanalyzer ]] && return 0
 
     sudo add-apt-repository -y ppa:myriadrf/drivers
     sudo apt-get update
@@ -167,18 +179,34 @@ install.spectrumanalyzer () {
 }
 
 
-install.webmin() {
+install.radio () {
+
+    if ! gnuradio-companion --help >/dev/null ; then
+            sudo apt-get install -y \
+                "build-essential python3-dev libqt4-dev gnuradio gqrx-sdr hackrf \
+                gr-osmosdr libusb-dev python-qwt5-qt4"
+        fi
+    install.hackrf || gmsg -v yellow "hackrf isntall error"
+    install.spectrumanalyzer || gmsg -v yellow "spectrumanalyzer isntall error"
+    install.fosphor || gmsg -v yellow "fosphor isntall error"
+
+    # launch
+    [[ $GURU_FORCE ]] && gnuradio-companion &
+}
+
+
+install.webmin () {
 
     cat /etc/apt/sources.list |grep "download.webmin.com" >/dev/null
-    if ! [ $? ]; then
-        sudo sh -c "echo 'deb http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list"
+    if ! [[ $? ]] ; then
+        sudo sh -c "echo 'deb [arch=$SYSTEM_ARCHITECTURE] http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list"
         wget http://www.webmin.com/jcameron-key.asc #&&\
         sudo apt-key add jcameron-key.asc #&&\
         rm jcameron-key.asc
     fi
 
     cat /etc/apt/sources.list |grep "webmin" >/dev/null
-    if ! [ $? ]; then
+    if ! [[ $? ]] ; then
         sudo apt update
         sudo apt install webmin
         echo "webmin installed, connect http://localhost:10000"
@@ -189,35 +217,33 @@ install.webmin() {
 }
 
 
-install.conda () {
+install.anaconda () {
 
-    conda list && return 13 || echo "no conda installed"
+    conda list && return 13 || echo "no anaconda installed"
 
     sudo apt-get install -y libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6
 
-    [ "$1" ] && conda_version=$1 || conda_version="2019.03"
-    conda_installer="Anaconda3-$conda_version-Linux-x86_64.sh"
-    conda_sum=45c851b7497cc14d5ca060064394569f724b67d9b5f98a926ed49b834a6bb73a
+    [[ "$1" ]] && anaconda_version=$1 || anaconda_version="2019.03"
+    anaconda_installer="Anaconda3-$anaconda_version-Linux-x86_64.sh"
+    anaconda_sum=45c851b7497cc14d5ca060064394569f724b67d9b5f98a926ed49b834a6bb73a
 
-    curl -O https://repo.anaconda.com/archive/$conda_installer
-    sha256sum $conda_installer >installer_sum
+    curl -O https://repo.anaconda.com/archive/$anaconda_installer
+    sha256sum $anaconda_installer >installer_sum
     printf "checking sum, if exit it's invalid: "
-    cat installer_sum |grep $conda_sum && echo "ok" || return 11
+    cat installer_sum | grep $anaconda_sum && echo "ok" || return 11
 
-    chmod +x $conda_installer
-    bash $conda_installer -u && rm $conda_installer installer_sum || return 12
+    chmod +x $anaconda_installer
+    bash $anaconda_installer -u && rm $anaconda_installer installer_sum || return 12
     source ~/.bashrc
-    echo 'conda install done, next run setup by typing: "'$GURU_CALL' set conda"'
+    gmsg -c green  "anaconda install done"
+    gmsg -c1 "run setup by typing: '$GURU_CALL anaconda set'"
     return 0
 }
 
 
-install.kaldi(){
+install.kaldi (){
 
-    if [  $1 == ""  ]; then
-        read -p "how many cores you like to use for compile?  : " cores
-        cores=8
-    fi
+    local cores=8
     echo "installing kaldi.."
     sudo apt install g++ subversion
     cd git
@@ -236,37 +262,52 @@ install.kaldi(){
 }
 
 
-install.st_link () {
-    # did not work properly - not mutch testing done dow
-    st-flash --version && exit 0
-    cmake >>/dev/null ||sudo apt install cmake
-    sudo apt install --reinstall build-essential -y
-    dpkg -l libusb-1.0-0-dev >>/dev/null ||sudo apt-get install libusb-1.0-0-dev
-    cd /tmp
-    [ -d stlink ] && rm -rf stlink
-    git clone https://github.com/texane/stlink
-    cd stlink
-    make release
-    #install binaries:
-    sudo cp build/Release/st-* /usr/local/bin -f
-    #install udev rules
-    sudo cp etc/udev/rules.d/49-stlinkv* /etc/udev/rules.d/ -f
-    #and restart udev
-    sudo udevadm control --reload
-    printf "\n guru is now ready to program st mcu's\n\n"
-    echo "usage: st-flash --reset read test.bin 0x8000000 4096"
-    exit 0
+install.python () {
+    # raw install python tools
+    sudo apt update
+    if python -V ; then
+            gmsg -c green "python2.7 installed"
+        else
+            sudo apt install python2 || gmsg -c yellow "error $? during python2.7 install"
+        fi
+
+    if python3 -V ; then
+            gmsg -c green "python3 installed"
+        else
+            sudo apt install -y python3.9 python3-pip python3-venv python3-dev \
+            || gmsg -c yellow "error $? during python3.9 install"
+        fi
+
+    sudo apt install build-essential libssl-dev libffi-dev
 }
 
 
-install.visual_code () {
-    code --version >>/dev/null && return 1
-    curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
-    sudo install -o root -g root -m 644 packages.microsoft.gpg /usr/share/keyrings/
-    sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
-    sudo apt-get install apt-transport-https                    # https://whydoesaptnotusehttps.com/
-    sudo apt-get update
-    sudo apt-get install code && printf "\n guru is now ready to code \n\n"
+install.vscode () {
+    # install ms visual code editor
+
+    gmsg "installing vscode.."
+    sudo apt update
+    sudo apt install software-properties-common apt-transport-https wget
+
+    wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
+    sudo apt update
+
+    if sudo apt install code ; then
+            gmsg -c green "installed"
+            return 0
+        else
+            gmsg -c yellow "error $? during install"
+            return $?
+        fi
+
+    # code --version >>/dev/null && return 1
+    # curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+    # sudo install -o root -g root -m 644 packages.microsoft.gpg /usr/share/keyrings/
+    # sudo sh -c 'echo "deb [arch=$SYSTEM_ARCHITECTURE signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
+    # sudo apt-get install apt-transport-https                    # https://whydoesaptnotusehttps.com/
+    # sudo apt-get update
+    # sudo apt-get install code && printf "\n guru is now ready to code \n\n"
 }
 
 

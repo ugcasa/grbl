@@ -1,55 +1,35 @@
 #!/bin/bash
 # timer for giocon client ujo.guru / juha.palm 2019
+source common.sh
 
 stamp.main () {    # main command parser
 
+    local command=$1 ; shift
+    local stamp=""
+
     case $command in
-                date)
-                    [ "$1" == "-h" ] && stamp=$(date +$GURU_DATE_FORMAT) || stamp=$(date +$GURU_FILE_DATE_FORMAT)
-                    ;;
+            date)   stamp=$(date +$GURU_FORMAT_FILE_DATE) ;;
+            time)   stamp=$(date +$GURU_FORMAT_TIME) ;;
+            start)  stamp=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M") ;;
+            end)    stamp=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M") ;;
+            round)  stamp=$(date -d @$(( (($(date +%s) + 450) / 900) * 900)) "+%H:%M") ;;
+            transaction)
+                    stamp="## Transaction\n\tAccount\t\tAmount\t\tVAT\tto/frm\tDescription\n\t" ;;
+            signature)
+                    stamp="$GURU_REAL_NAME, $GURU_TEAM_NAME, $GURU_USER_PHONE, $GURU_USER_EMAIL" ;;
+            sweekplan)
+                    stamp.weekplan $@ ; return 0 ;;
+            picture-md)
+                [ "$1" ] && file="$GURU_LOCAL_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$1" || file="$GURU_LOCAL_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
+                [[ -f "$file" ]] || exit 234
+                stamp="![]($file){ width=500px }"
+                ;;
 
-                time)
-                    stamp=$(date +$GURU_TIME_FORMAT)
-                    ;;
+            status)  echo "no status data" ; return 0 ;;
+            help|*) stamp.help ; return 0 ;;
+        esac
 
-                start)
-                    stamp=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
-                    ;;
-
-                end)
-                    stamp=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M")
-                    ;;
-
-                round)
-                    stamp=$(date -d @$(( (($(date +%s) + 450) / 900) * 900)) "+%H:%M")
-                    ;;
-
-                transaction)
-                    stamp="## Transaction\n\tAccount\t\tAmount\t\tVAT\tto/frm\tDescription\n\t"
-                    ;;
-
-                signature)
-                    stamp="$GURU_REAL_NAME, $GURU_TEAM_NAME, $GURU_USER_PHONE, $GURU_USER_EMAIL"
-                    ;;
-
-                sweekplan)
-                    stamp.weekplan $@
-                    exit 0
-                    ;;
-
-                picture-md)
-                    [ "$1" ] && file="$GURU_LOCAL_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$1" || file="$GURU_LOCAL_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
-                    [[ -f "$file" ]] || exit 234
-                    stamp="![]($file){ width=500px }"
-                    ;;
-
-                status)  echo "no status data" ; exit 0 ;;
-
-                help|*) stamp.help ; return 0 ;;
-
-    esac
-
-    printf "$stamp\n"
+    gmsg "$stamp"
     printf "$stamp" | xclip -i -selection clipboard
 
 }
@@ -78,13 +58,13 @@ stamp.weekplan () {
     declare -a day_dates day_names_en day_names_fi
     day_names_en=("Week" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
     day_names_fi=("Viikko" "Maanantai" "Tiistai" "Keskiviikko" "Torstai" "Perjantai" "Lauvantai" "Sunnuntai")
-    target_file=$(guru note location $(date +$GURU_FILE_DATE_FORMAT))                                               #;echo "notefile $target_file"
-    # [ "$1" ] && target_file="$1" || target_file=$(guru note location $(date +$GURU_FILE_DATE_FORMAT))                                               #;echo "notefile $target_file"
+    target_file=$(guru note location $(date +$GURU_FORMAT_FILE_DATE))                                               #;echo "notefile $target_file"
+    # [ "$1" ] && target_file="$1" || target_file=$(guru note location $(date +$GURU_FORMAT_FILE_DATE))                                               #;echo "notefile $target_file"
     # [ -f "$target_file" ] || exit 123
 
     get_dates() {
         for i in {1..7} ; do
-            day_dates[$i]=$(date --date="this ${day_names_en[$i]}" +$GURU_FILE_DATE_FORMAT)                 #;echo "day_dates[$i] : $i"
+            day_dates[$i]=$(date --date="this ${day_names_en[$i]}" +$GURU_FORMAT_FILE_DATE)                 #;echo "day_dates[$i] : $i"
         done
     }
 
@@ -94,7 +74,7 @@ stamp.weekplan () {
     }
 
     note_change() {
-        printf " $(date +$GURU_FILE_DATE_FORMAT)-$(date +$GURU_TIME_FORMAT) | $GURU_USER | $1\n" >>$target_file
+        printf " $(date +$GURU_FORMAT_FILE_DATE)-$(date +$GURU_FORMAT_TIME) | $GURU_USER | $1\n" >>$target_file
     }
 
     week_plan () {
@@ -117,7 +97,7 @@ stamp.weekplan () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$GURU_RC"
-    command=$1 ; shift
+    #command=$1 ; shift
     stamp.main $@
     exit $?
 fi

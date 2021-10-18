@@ -1,14 +1,13 @@
 #!/bin/bash
 # guru shell work time tracker
-# casa@ujo.guru 2019-2020
-
+# casa@ujo.guru 2019-2020|
+# TODO timer module neewds to be write again.. this is useless, still partly working and in use. yes useless.. rotten
+# python might be better than bash for mathematics
 source common.sh
-source mount.sh
-
 
 timer.main () {
-    mount.system
-    indicator_key="f$(poll_order timer)"
+    # main command parser
+
     command="$1" ; shift
     case "$command" in
 
@@ -23,6 +22,8 @@ timer.main () {
 
 
 timer.help () {
+    # general help
+
     gmsg -v1 -c white "guru-client timer help "
     gmsg -v2
     gmsg -v0 "usage:    $GURU_CALL timer [start|end|cancel|log|edit|report] <task> <project> <customer> "
@@ -43,49 +44,61 @@ timer.help () {
 
 timer.toggle () {
     # key press action
-    indicator_key="f$(poll_order timer)"    #viiksilanka, tämä kirjoitetaan uusiksi anyway, jaksa korjata =D
+
     if timer.status >/dev/null ; then
         timer.end
-        indicator_key="f$(poll_order timer)"    #viiksilanka, tämä kirjoitetaan uusiksi anyway, jaksa korjata =D
     else
         timer.start
     fi
-    # let user to see stuff
     sleep 4
 }
 
 
-timer.check() {
+timer.check () {
+    # check timer state
 
     timer.status human && return 0 || return 100
     }
 
 
-timer.status() {
+timer.status () {
+    # output timer status
 
-    #indicator_key="f$(poll_order timer)"
+    timer_indicator_key="f$(daemon.poll_order timer)"
+    gmsg -n -t -v1 "${FUNCNAME[0]}: "
 
+    # enabled?
+    if [[ $GURU_TIMER_ENABLED ]] ; then
+            gmsg -n -v1 -c green "enabled, " -k $timer_indicator_key
+        else
+            gmsg -v1 -c reset "disabled" -k $timer_indicator_key
+            return 1
+        fi
 
-    if [ ! -f "$GURU_FILE_TRACKSTATUS" ]; then
-        gmsg -c reset -k $indicator_key "no timer tasks"
-        return 1
+    # check is timer set
+    if [[ ! -f "$GURU_FILE_TRACKSTATUS" ]] ; then
+        gmsg -v1 -c reset "no timer tasks" -k $timer_indicator_key
+        return 2
     fi
 
+    # get timer variables
     source "$GURU_FILE_TRACKSTATUS"
 
+    # fill variables
     timer_now=$(date +%s)
     timer_state=$(($timer_now-$timer_start))
     nice_start_date=$(date -d $start_date '+%d.%m.%Y')
+    # static for mathematics
     hours=$(($timer_state/3600))
     minutes=$(($timer_state%3600/60))
     seconds=$(($timer_state%60))
 
+    # format output
     [[ $hours > 0 ]] && print_h=$(printf "%0.2f hours " $hours) || print_h=""
     [[ $minutes > 0 ]] && print_m=$(printf "%0.2f minutes " $minutes) || print_m=""
     [[ $hours > 0 ]] && print_s="" || print_s=$(printf "%0.2f seconds" $seconds)
 
-    gmsg -t -v1 -c aqua -k $indicator_key "current invoice status $print_h$print_m$print_s for $customer $project $task" -q $GURU_USER/status "working $hours:$minutes"
-
+    # select output format
     case "$1" in
 
         -h|human)
@@ -108,7 +121,7 @@ timer.status() {
             ;;
 
         simple|*)
-            gmsg -c aqua_marine $(printf "$start_time > "'%.2d:%.2d:%.2d'" > $customer $project $task\n" $(($timer_state/3600)) $(($timer_state%3600/60)) $(($timer_state%60)))
+            gmsg -v1 -c aqua "$customer $project $task spend: $hours:$minutes" -k $timer_indicator_key
             ;;
     esac
 
@@ -116,7 +129,9 @@ timer.status() {
 }
 
 
-timer.last() {
+timer.last () {
+    # get last timer state
+
     if [[ -f $GURU_FILE_TRACKLAST ]] ; then
             gmsg -c light_blue "$(cat $GURU_FILE_TRACKLAST)"
         else
@@ -125,19 +140,18 @@ timer.last() {
 }
 
 
-timer.start() {
-    # check and force mount system (~/.data) where timer record files are kept
-    indicator_key="f$(poll_order timer)"
+timer.start () {
+    # Start timer TBD rewrite this thole module
 
-    gmsg -v1 "starting timer.."
+    timer_indicator_key="f$(daemon.poll_order timer)"
     [[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
 
+    # check is timer alredy set
     if [[ -f "$GURU_FILE_TRACKSTATUS" ]] ; then
         timer.main end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
     fi
 
-    indicator_key="f$(poll_order timer)"    #viiksilanka, tämä kirjoitetaan uusiksi anyway, jaksa korjata =D
-
+    # parse given arguments
     case "$1" in
 
         at|from)
@@ -167,6 +181,7 @@ timer.start() {
             ;;
     esac
 
+    # is this really needed? Don't think so
     start_date="$date"
     start_time="$time"
     nice_date=$(date -d $start_date '+%d.%m.%Y')
@@ -182,25 +197,29 @@ timer.start() {
     printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_FILE_TRACKSTATUS
 
     # signal user and others
-    gmsg -v4 -t -c aqua -k $indicator_key -q $GURU_USER/status "working - please do not disturb"
-    gmsg -v0 -c aqua_marine "start: $nice_date $start_time $customer $project $task"
-
+    gmsg -v1 -c aqua -k $timer_indicator_key "$start_time $customer $project $task"
+    gmsg -v4 -m $GURU_USER/message $GURU_TIMER_START_MESSAGE
+    gmsg -v4 -m $GURU_USER/status $GURU_TIMER_START_STATUS
     return 0
 }
 
 
-timer.end() {
+timer.end () {
+    # end timer and save to database (file)
 
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
         source $GURU_FILE_TRACKSTATUS
     else
-        gmsg "timer not started"
+        gmsg -v1 "timer not started"
         return 13
     fi
 
-    case "$1" in
+    timer_indicator_key="f$(daemon.poll_order timer)"
+    local command=$1 ; shift
+
+    case "$command" in
         at|to|till)
-            if ! [[ "$2" ]] ; then
+            if ! [[ "$1" ]] ; then
                     gmsg "input end time"
                     return 124
                 fi
@@ -240,8 +259,8 @@ timer.end() {
     (( spend_hour = spend_min / 60 ))
     (( spend_min_div = spend_min % 60 ))
 
-    spend_min_dec=$(python -c "print(int(round($spend_min_div * 1.6666, 0)))")
-    hours="$spend_hour.$spend_min_dec"
+    # round were pain in the bee with bash
+    spend_min_dec=$(python3 -c "print(int(round($spend_min_div * 1.6666, 0)))")
 
     if [[ "$nice_start_date" == "$nice_end_date" ]]; then
         option_end_date=""
@@ -250,42 +269,57 @@ timer.end() {
     fi
 
     # close track file
-    [[ -f $GURU_FILE_TRACKDATA ]] || printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n" >$GURU_FILE_TRACKDATA
-    [[ $hours > 0.11 ]] && printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n" >>$GURU_FILE_TRACKDATA
+    if ! [[ -f $GURU_FILE_TRACKDATA ]] ; then
+            printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n" >$GURU_FILE_TRACKDATA
+        fi
+
+    hours="$spend_hour.$spend_min_dec"
+    #if (( spend_min_dec > 11 )) ; then
+            printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n" >>$GURU_FILE_TRACKDATA
+    #    fi
+
     printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_FILE_TRACKLAST
+
     rm $GURU_FILE_TRACKSTATUS
 
-
-    # inform user
-    gmsg -v4 -t -c reset -k $indicator_key -q $GURU_USER/status "working paused - feel free to contact"
-    gmsg -c dark_cyan "end: $nice_start_date $start_time - $end_time$option_end_date $hours h:$minutes $customer $project $task"
-
+    # inform
+    gmsg -v1 -c reset -k $timer_indicator_key "$start_time - $end_time$option_end_date $customer $project $task spend $hours"
+    gmsg -v4 -m $GURU_USER/message $GURU_TIMER_END_MESSAGE
+    gmsg -v4 -m $GURU_USER/status $GURU_TIMER_END_STATUS
     return 0
 }
 
 
 timer.stop () {
     # alias stop for end
+
     timer.end "$@"
     return 0
 }
 
 
-timer.change() {
+timer.change () {
     # alias change for start
+
+
     timer.start "$@"
+    gmsg -v1 -c dark_golden_rod "work topic changed"
     return $?
 }
 
 
-timer.cancel() {
+timer.cancel () {
+    # cancel exits timer
+
+    timer_indicator_key="f$(daemon.poll_order timer)"
 
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
             rm $GURU_FILE_TRACKSTATUS
-            gmsg -v4 -t -c reset -k $indicator_key -q $GURU_USER/status "work canceled - probably something still going on.. "
-            gmsg -c dark_golden_rod "canceled"
+            gmsg -v1 -t -c reset -k $timer_indicator_key "work canceled"
+            gmsg -v4 -m $GURU_USER/message "glitch in the matrix, something changed"
+            gmsg -v4 -m $GURU_USER/status "available"
         else
-            gmsg "not active timer"
+            gmsg -v1 "not active timer"
         fi
     return 0
 }
@@ -293,20 +327,23 @@ timer.cancel() {
 
 timer.log () {
     # printout short list of recent records
+
     printf "last logged records:\n$(tail $GURU_FILE_TRACKDATA | tr ";" "  ")\n"
     return 0
 }
 
 
-timer.edit  () {
+timer.edit () {
     # edit data csv file
-    $GURU_EDITOR "$GURU_FILE_TRACKDATA" &
+
+    $GURU_PREFERRED_EDITOR "$GURU_FILE_TRACKDATA" &
     return 0
 }
 
 
 timer.report() {
     # make a report
+
     [ "$1" ] && team="$1" || team="$GURU_TEAM"
     report_file="work-track-report-$(date +%Y%m%d)-$team.csv"
     output_folder=$HOME/Documents
@@ -314,22 +351,23 @@ timer.report() {
     [ -f $GURU_FILE_TRACKDATA ] || return 13
 
     cat $GURU_FILE_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
-    $GURU_OFFICE_DOC $output_folder/$report_file &
+    $GURU_PREFERRED_OFFICE_DOC $output_folder/$report_file &
     timer.end $""
 }
 
 
 timer.poll () {
+    # daemon interface
 
-    indicator_key="f$(poll_order timer)"
+    timer_indicator_key="f$(daemon.poll_order timer)"
 
     local _cmd="$1" ; shift
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: timer status polling started" -k $indicator_key
+            gmsg -v1 -t -c black "${FUNCNAME[0]}: timer status polling started" -k $timer_indicator_key
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: timer status polling ended" -k $indicator_key
+            gmsg -v1 -t -c reset "${FUNCNAME[0]}: timer status polling ended" -k $timer_indicator_key
             ;;
         status )
             timer.status $@
@@ -337,7 +375,6 @@ timer.poll () {
         *)  timer.help
             ;;
         esac
-
 }
 
 
