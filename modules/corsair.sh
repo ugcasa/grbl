@@ -1,7 +1,9 @@
 #!/bin/bash
-# guru-client corsair led notification functions casa@ujo.guru 2020-2021
-# WARNING: this module can fuck up system suspend, # if taht happends just
-# weit until login window activates, it should take less than 2 minutes (cinnamon)
+# guru-client corsair led notification functions
+# casa@ujo.guru 2020-2021
+
+# WARNING: this module can fuck up system suspend, # if that happens just
+# wait until login window activates, it should take less than 2 minutes (cinnamon)
 # and remove file '/lib/systemd/system-sleep/guru-client-suspend.sh'
 
 source $GURU_BIN/common.sh
@@ -31,6 +33,61 @@ if [[ -f $pipelist_file ]] ; then
         gmsg -c red "pipelist file $pipelist_file missing"
     fi
 
+corsair.help () {
+    # general help
+
+    gmsg -v1 -c white "guru-client corsair keyboard indicator help"
+    gmsg -v2
+    gmsg -v0 "usage:           $GURU_CALL corsair start|init|reset|end|status|help|set|blink <key/profile> <color>"
+    gmsg -v1 "setup:           install|compile|patch|remove"
+    gmsg -v2 "without systemd: raw start|raw status|raw stop "
+    gmsg -v2
+    gmsg -v1 -c white "commands:"
+    gmsg -v1 " status                            printout status "
+    gmsg -v1 " start                             start ckb-next-daemon "
+    gmsg -v1 " stop                              stop ckb-next-daemon"
+    gmsg -v1 " init <mode>                       initialize keyboard mode "
+    gmsg -v2 "   modes:  status, red, olive, dark, orange, eq, trippy, yes-no and rainbow"
+    gmsg -v1 " set <key> <color>                 write key color <color> to keyboard key <key> "
+    gmsg -v1 " reset <key>                       reset one key or if empty, all pipes "
+    gmsg -v1 " blink set|stop|kill               control blinking keys, for more detailed help, use '-v 2'" -V2
+    gmsg -v2 " blink set|stop|kill               control blinking keys. to set key give following:"
+    gmsg -v2 "   set <key color1 color2 speed delay leave_color>  "
+    gmsg -v2 "   stop <key>                      release one key from blink loop"
+    gmsg -v2 "   kill <key>                      kill all or just one key blink"
+    gmsg -v1 " indicate <state> <key>            set varies blinks to indicate states. see states by-v 2" -V2
+    gmsg -v2 " indicate <state> <key>            set varies blinks to indicate states. states below:"
+    gmsg -v2 "   done, active, pause, cancel, error, warning, alert, "
+    gmsg -v2 "   panic, passed, ok, failed, message, call, customer, calm and hacker"
+    gmsg -v1 " end                               end playing with keyboard, set to normal "
+    gmsg -v1 " install                           install requirements "
+    gmsg -v2 " compile                           only compile, do not clone or patch"
+    gmsg -v2 " patch <device>                    edit source devices: K68, IRONCLAW"
+    gmsg -v2 " set-suspend                       active suspend control to avoid suspend issues"
+    gmsg -v1 " remove                            remove corsair driver "
+    gmsg -v2
+    gmsg -v1 -c white "examples:"
+    gmsg -v1 " '$GURU_CALL corsair help -v2'           get more detailed help by adding verbosity flag"
+    gmsg -v1 " '$GURU_CALL corsair status'             printout status report "
+    gmsg -v1 " '$GURU_CALL corsair init trippy'        initialize trippy color profile"
+    gmsg -v1 " '$GURU_CALL corsair indicate panic esc set esc' "
+    gmsg -v1 "                                   to blink red and white wildly "
+    gmsg -v2 " '$GURU_CALL corsair blink set f1 red blue '0.5' 10 green'"
+    gmsg -v2 "                                   set f1 to blink red and blue second interval "
+    gmsg -v2 "                                   for 10 seconds and leave green when exit"
+    gmsg -v1 " '$GURU_CALL corsair end'                stop playing with colors, return to normal"
+    gmsg -v2
+    gmsg -v2 -c white "setting up corsair keyboard and mice indication functions "
+    gmsg -v2 -c white "1) to show how configure profile run: "
+    gmsg -v2 "              $GURU_CALL corsair help profile "
+    gmsg -v2 -c white "2) to enable service run: "
+    gmsg -v2 "              $GURU_CALL corsair enable "
+    gmsg -v2 -c white "3) to set suspend support run: "
+    gmsg -v2 "              $GURU_CALL system suspend install "
+
+    return 0
+}
+
 
 corsair.main () {
     # command parser
@@ -46,9 +103,20 @@ corsair.main () {
 
     case "$cmd" in
             # indicator functions
-            status|init|set|reset|clear|end)
+            status|init|set|reset|clear|end|indicate)
                     corsair.$cmd $@
                     return $?
+                    ;;
+            # blink functions
+            blink)
+                    local tool=$1 ; shift
+                    case $tool in
+                        set|stop|kill|test)
+                            corsair.blink_$tool $@
+                            return $?
+                            ;;
+                        *)  return 1
+                        esac
                     ;;
             # systemd method is used after v0.6.4.5
             enable|start|restart|stop|disable)
@@ -84,49 +152,6 @@ corsair.main () {
                     ;;
             *)  gmsg -c yellow "corsair: unknown command: $cmd"
         esac
-
-    return 0
-}
-
-
-corsair.help () {
-    # general help
-
-    gmsg -v1 -c white "guru-client corsair keyboard indicator help"
-    gmsg -v2
-    gmsg -v0 "usage:           $GURU_CALL corsair start|init|reset|end|status|help|set <key/profile> <color>"
-    gmsg -v1 "setup:           install|compile|patch|remove"
-    gmsg -v2 "without systemd: raw start|raw status|raw stop "
-    gmsg -v2
-    gmsg -v1 -c white "commands:"
-    gmsg -v1 " status                      printout status "
-    gmsg -v1 " start                       start ckb-next-daemon "
-    gmsg -v1 " stop                        stop ckb-next-daemon"
-    gmsg -v1 " init <mode>                 initialize keyboard mode "
-    gmsg -v2 "                             [status|red|olive|dark|orange|eq] able to set keys "
-    gmsg -v2 "                             [trippy|yes-no|rainbow] animations only "
-    gmsg -v1 " set <key> <color>           write key color <color> to keyboard key <key> "
-    gmsg -v1 " reset <key>                 reset one key or if empty, all pipes "
-    gmsg -v1 " end                         end playing with keyboard, set to normal "
-    gmsg -v1 " install                     install requirements "
-    gmsg -v2 " compile                     only compile, do not clone or patch"
-    gmsg -v2 " patch <device>              edit source devices: K68, IRONCLAW"
-    gmsg -v2 " set-suspend                 active suspend control to avoid suspend issues"
-    gmsg -v1 " remove                      remove corsair driver "
-    gmsg -v1 " help -v|-V                  get more detailed help by adding verbosity flag"
-    gmsg -v2
-    gmsg -v1 -c white "examples:"
-    gmsg -v1 " $GURU_CALL corsair status        printout status report "
-    gmsg -v1 " $GURU_CALL corsair init trippy   initialize trippu color profile"
-    gmsg -v1 " $GURU_CALL corsair end           stop playing with colors, return to normal"
-    gmsg -v2
-    gmsg -v1 -c white "setting up corsair keyboard and mice indication functions "
-    gmsg -v1 -c white "1) to show how configure profile run: "
-    gmsg -v1 "              $GURU_CALL corsair help profile "
-    gmsg -v1 -c white "2) to enable service run: "
-    gmsg -v1 "              $GURU_CALL corsair enable "
-    gmsg -v1 -c white "3) to set suspend support run: "
-    gmsg -v1 "              $GURU_CALL system suspend install "
 
     return 0
 }
@@ -355,6 +380,211 @@ corsair.check_pipe () {
     done
     return 127
 }
+
+
+corsair.indicate () {
+
+    local level="warning"
+    local key="esc"
+
+    [[ $1 ]] && level=$1 ; shift
+    [[ $1 ]] && key=$1 ; shift
+
+    case $level in
+
+            done)
+                        corsair.blink_set $key lime green 6 300 green 2>/dev/null;;
+            doing|active|working)
+                        corsair.blink_set $key aqua aqua_marine 1.2 10 aqua 2>/dev/null;;
+            pause)
+                        corsair.blink_set $key yellow black 1 3600 2>/dev/null;;
+            cancel)
+                        corsair.blink_set $key red green 0.5 3 2>/dev/null;;
+            error)
+                        corsair.blink_set $key orange yellow 1 600 yellow >/dev/null;;
+            warning)
+                        corsair.blink_set $key red orange 0.5 3600 orange 2>/dev/null;;
+            alert)
+                        corsair.blink_set $key red black 0.25 3600 white 2>/dev/null;;
+            panic)
+                        corsair.blink_set $key red white 0.1 3600 white 2>/dev/null;;
+            passed|pass|ok)
+                        corsair.blink_set $key lime $GURU_CORSAIR_MODE 1 300 2>/dev/null;;
+            fail|failed)
+                        corsair.blink_set $key red $GURU_CORSAIR_MODE 1 300 2>/dev/null;;
+            message)
+                        corsair.blink_set $key deep_pink dark_orchid 2 1200 dark_orchid 2>/dev/null;;
+            call)
+                        corsair.blink_set $key deep_pink black 0.75 30 dark_orchid 2>/dev/null;;
+            customer)
+                        corsair.blink_set $key deep_pink white 0.75 30 deep_pink  2>/dev/null;;
+            finland|suomi)
+                        corsair.blink_set $key medium_blue white 0.3 60 2>/dev/null;;
+            cops|poliisi)
+                        corsair.blink_set $key medium_blue red 0.5 60 white 2>/dev/null;;
+            breath|calm)
+                        corsair.blink_set $key dark_cyan dark_turquoise 6 600 2>/dev/null;;
+            hacker)
+                        corsair.blink_set $key white black 0.1 3600 white 2>/dev/null;;
+            russia|china)
+                        corsair.blink_set $key red yellow 0.75 3600 white 2>/dev/null;;
+
+        esac
+
+    return 0
+}
+
+
+corsair.blink_set () {
+    # start to blink
+
+    local key="esc"
+    local base_c="red"
+    local high_c="orange"
+    local delay=0
+    local timeout=0
+    local leave_color=$GURU_CORSAIR_MODE
+
+    [[ $1 ]] && key=$1 ; shift
+    [[ $1 ]] && base_c=$1 ; shift
+    [[ $1 ]] && high_c=$1 ; shift
+    [[ $1 ]] && delay=$1 ; shift
+    [[ $1 ]] && timeout=$1 ; shift
+    [[ $1 ]] && leave_color=$1 ; shift
+
+    if [[ -f /tmp/blink_pid ]] && cat /tmp/blink_pid | grep "\b$key\b" 2>/dev/null ; then
+            corsair.blink_kill $key 2>/dev/null
+        fi
+
+    touch /tmp/blink_$key
+    time_out=$(date +%s)
+    time_out=$(( time_out + timeout ))
+
+    while true ; do
+
+            time_now=$(date +%s)
+
+            if ! [[ -f /tmp/blink_$key ]] || (( time_now > time_out )) ; then
+                # gmsg -n -c $leave_color -k $key
+                corsair.set $key $leave_color
+                #echo "$pid;$key" >>/tmp/blink_pid
+                grep -v "\b$key\b" /tmp/blink_pid >/tmp/tmp_blink_pid
+                mv -f /tmp/tmp_blink_pid /tmp/blink_pid
+                break
+            else
+                # gmsg -n -k $key -c $base_c
+                corsair.set $key $base_c
+                [[ $delay ]] && sleep $delay
+                # gmsg -n -k $key -c $high_c
+                corsair.set $key $high_c
+                [[ $delay ]] && sleep $delay
+            fi
+
+
+        done & 2>/dev/null
+    pid=$!
+    echo "$pid;$key" >>/tmp/blink_pid
+    return 0
+}
+
+
+corsair.blink_stop () {
+
+    local key="esc"
+    [[ $1 ]] && key=$1 ; shift
+
+    [[ -f /tmp/blink_$key ]] && rm /tmp/blink_$key
+    return 0
+
+}
+
+
+corsair.blink_kill () {
+
+    [[ -f /tmp/blink_pid ]] && pids_to_kill=($(cat /tmp/blink_pid))
+
+    local pid=""
+    local key=""
+    local _pid=""
+    local leave_color="$GURU_CORSAIR_MODE"
+
+    for _to_kill in ${pids_to_kill[@]} ; do
+
+        if [[ $1 ]] ; then
+                key=$1
+                _pid=$(cat /tmp/blink_pid | grep "\b$key\b")
+                pid=$(echo ${_pid} | cut -d ';' -f1)
+            else
+                key=$(echo ${_to_kill[@]} | cut -d ';' -f2)
+                pid=$(echo ${_to_kill[@]} | cut -d ';' -f1)
+            fi
+
+        #gmsg -c deep_pink "key:$key pid:$pid"
+
+        [[ $pid ]] || return 0
+
+        [[ -f "/tmp/blink_$key" ]] && rm "/tmp/blink_$key"
+
+        if kill -15 $pid 2>/dev/null ; then
+                # gmsg -n -c reset -k $key
+                corsair.set $key $leave_color
+                #echo "$pid;$key" >>/tmp/blink_pid
+                grep -v "\b$key\b" /tmp/blink_pid >/tmp/tmp_blink_pid
+                mv -f /tmp/tmp_blink_pid /tmp/blink_pid
+                [[ $1 ]] && return 0
+
+            else
+                kill -9 $pid 2>/dev/null || \
+                    gmsg -v1 -c yellow "failed to kill $pid" -k $key
+                    return 100
+            fi
+        done
+    return 0
+}
+
+
+
+corsair.blink_test () {
+
+    list=(working pause cancel error warning alert panic passed failed message call customer)
+
+    system.main flag set pause
+
+    gmsg -c white -n "testing set, stop and kill with arguments.. "
+    corsair.blink_set esc white black 0 3 red
+    sleep 0.5
+    corsair.blink_kill esc
+    corsair.blink_set esc yellow blue 0 5 green
+    corsair.blink_stop esc
+    gmsg -c green "ok"
+
+    key=1
+    gmsg -c white -n "testing corsair.indicate: "
+    for item in ${list[@]} ; do
+
+            (( key > 12 )) && key=1
+
+            if corsair.indicate $item "f$key" 2>/dev/null ; then
+                    gmsg -n "f$key "
+                else
+                    gmsg -n -c yellow "f$key $? "
+                fi
+            (( key++ ))
+
+        done \
+            && gmsg -c green "passed" \
+            || gmsg -c red "failed"
+
+    sleep 3
+
+    gmsg -c white -n "testing corsair.blink_kill.. "
+    corsair.blink_kill 2>/dev/null
+    file /tmp/blink_pid | grep "empty" >/dev/null && gmsg -c green "passed" || gmsg -c red "failed $?"
+    #gr corsair end
+    system.main flag rm pause
+    return 0
+}
+
 
 
 ############################ systemd method ###############################
