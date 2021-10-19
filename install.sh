@@ -1,4 +1,4 @@
-#!/bin/bash
+git#!/bin/bash
 # installer for guru-client. ujo.guru casa@ujo.guru 2017-2020
 export GURU_CALL="guru"
 export GURU_USER="$USER"
@@ -48,8 +48,9 @@ install.main () {
 
     # store current core rc if not no port install configure
 
-    # Step 2) check previous installation
+    # Step 2) check and uninstall previous version
     install.check || gmsg -x 110 "check caused exit"
+
     # return
     gmsg -v1 -c white "installing $(core/core.sh version)"
 
@@ -379,6 +380,8 @@ install.core () {
     # install core files
     install.copy cfg $TARGET_CFG "copying configurations"
     install.copy core $TARGET_BIN "copying core files"
+
+    cp version $TARGET_BIN
 
     installed_core=( ${installed_core[@]} $(ls core | cut -f1 -d '.') )
     return 0
