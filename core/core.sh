@@ -3,9 +3,9 @@
 # caa@ujo.guru 2020
 
 # global variables variable
-declare -x GURU_VERSION="0.6.7.0"
 declare -x GURU_RC="$HOME/.gururc"
 declare -x GURU_BIN="$HOME/bin"
+declare -x GURU_VERSION=$(echo $(head -n1 $GURU_BIN/version) | tr -d '\n')
 
 #export GURU_SYSTEM_RESERVED_CMD=($GURU_SYSTEM_RESERVED_CMD)
 
