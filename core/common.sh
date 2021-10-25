@@ -137,7 +137,7 @@ gmsg () {
 
 
     # -k) set corsair key is '-k <key>' used
-    if [[ $_indicator_key ]] && [[ $GURU_CORSAIR_ENABLED ]]; then
+    if [[ $_indicator_key ]] && [[ $GURU_CORSAIR_ENABLED ]] ; then
         # TBD: check corsair (or other kb led) module installed
         #      now in corsair is part of core what it should not to be
         source corsair.sh
@@ -207,6 +207,91 @@ gmsg () {
     [[ $_exit ]] && exit $_exit
 
     return 0
+}
+
+gindicate () {
+    # indicate status by message, voice  and keyboard indicators
+
+    local _timestamp=
+    local _mqtt_topic="/status/$(hostname)"
+    local _indicator_key="esc"
+    local _color="black"
+    local _status="message"
+    local _message=""
+
+    # parse arguments
+    TEMP=`getopt --long -o "tlnhNx:w:V:v:c:C:q:k:m:" "$@"`
+    eval set -- "$TEMP"
+
+    while true ; do
+            case "$1" in
+                -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
+                -m ) _message="$2 "                             ; shift 2 ;;
+                -k ) _indicator_key=$2                          ; shift 2 ;;
+                -c ) _color=$2                                  ; shift 2 ;;
+                 * ) break
+            esac
+        done
+    # --) check message for long parameters (don't remember why like this)
+    local _arg="$@"
+    [[ "$_arg" != "--" ]] && _status="${_arg#* }"
+
+    if ! [[ $_status ]] ; then
+            return 0
+        fi
+
+    if [[ $_color ]] ; then
+            gmsg -c $_color "$timestamp$_status: $_message"
+        else
+            gmsg "$timestamp$_status: $_message"
+        fi
+
+    if [[ $GURU_CORSAIR_ENABLED ]] && [[ $_indicator_key ]] ; then
+            source corsair.sh
+            corsair.main indicate $_status $_indicator_key
+        fi
+
+    if [[ $GURU_MQTT_ENABLED ]] && [[ $_mqtt_topic ]] ; then
+            source mqtt.sh
+            #mqtt.pub $_mqtt_topic $_message
+            mqtt.pub $_mqtt_topic "$timestamp$_status $_message"
+        fi
+
+    if [[ $GURU_SOUND_ENABLED ]] ; then
+        #source sound.sh
+        #sound.main nnn
+        [[ $_message ]] || _message=$_status
+        case $_status in
+            done)       espeak -p 100 -s 120 -v en "Done $_message. " ;;
+            working)    espeak -p 85 -s 130 -v en "working... $_message" ;;
+            pause)      espeak -p 85 -s 130 -v en "$_message is paused" ;;
+            cancel)     espeak -p 85 -s 130 -v en "$_message is canceled. I repeat, $_message is canceled" ;;
+            error)      espeak -p 85 -s 130 -v en "Error! $_message. I repeat, $_message" ;;
+            warning)    espeak -p 85 -s 130 -v en "Warning! $_message. I repeat, $_message" ;;
+            alert)      espeak -p 85 -s 130 -v en "Alarm! $_message. I repeat, $_message" ;;
+            panic)      espeak -p 85 -s 130 -v en-sc "mayday.. Mayday? Mayday! $_message... ${_message^}? ${_message^^}!" ;;
+            passed|pass|ok)     espeak -p 85 -s 130 -v en-us  "$_message... passed" ;;
+            fail|failed)    espeak -p 85 -s 130 -v en-us "$_message... failed" ;;
+            message)    espeak -p 85 -s 130 -v en-us  "Message! $_message!, a new: $_message" ;;
+            call)       espeak -p 60 -s 100 -v en-sc "Incoming call from number $(echo $_message | sed 's/./& /g')" ;;
+            customer)
+                        for i in {0..5} ; do
+                            espeak -p 75 -s 90 -v finnish "$_message,"
+                            espeak -p 75 -s 90 -v en-us  "is calling! "
+                            [[ -f /tmp/blink_$_indicator_key ]] || break
+                            sleep 2
+                        done ;;
+
+            flash)      espeak -p 0 -s 100 -v fi "Thunder" ;;
+            cops|poliisi)   espeak -p 85 -s 130 -v en-us  "uuee uuee, Polis in block! uuee uuee. Dump your stash and duck. $_message" ;;
+            breath|calm)   espeak -p 0 -s 80 -v en-us  "Breath... slowly... in... and... out. and calm down. You motherfucker" ;;
+            hacker)     espeak -p 85 -s 130 -v en-us  "Warning! An hacker activity detected. $_message" ;;
+            russia)     espeak -p 5 -s 90 -v russian  "Warning! An Russian hacker activity detected... releasing honeypot vodka bottles on the battle field" ;;
+            china)      espeak -p 10 -s 180 -v cantonese "Warning! An Chinese hacker activity detected. Disconnecting mainframe from internetz" ;;
+        esac
+    fi
+    espeak -p 85 -s 130 -v en-us  "weeeoooeee
+
 }
 
 

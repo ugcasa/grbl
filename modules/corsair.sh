@@ -434,21 +434,32 @@ corsair.check_pipe () {
 
 
 corsair.indicate () {
-    # indicate state to given ke. input: mode_name key_name
+    # indicate state to given key. input: mode_name key_name
+
+    #corsair.check is too slow to go trough here
+    if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
+            gmsg -k1 -c dark_grey "corsair disabled"
+            return 1
+        fi
 
     # default settings
     local level="warning"
     local key="esc"
+    local color="aqua_marine"
 
     [[ $1 ]] && level=$1 ; shift
     [[ $1 ]] && key=$1 ; shift
+    [[ $GURU_PROJECT_COLOR ]] && color=$GURU_PROJECT_COLOR
+
 
     case $level in
 
             done)       # relax green jungle, all fine
                         corsair.blink_set $key green lime 6 300 green 2>/dev/null;;
-            doing|active|working)  # indicate active job by
-                        corsair.blink_set $key aqua aqua_marine 1.25 10 aqua 2>/dev/null;;
+            working)    # indicate
+                        corsair.blink_set $key $color aqua 3 $GURU_DAEMON_INTERVAL aqua 2>/dev/null;;
+            active)     # indicate active that something is up
+                        corsair.blink_set $key aqua_marine aqua 0.5 2 aqua 2>/dev/null;;
             pause)      # yellow/black pause indication
                         corsair.blink_set $key yellow black 1 3600 2>/dev/null;;
             cancel)     # blink red/green shortly
