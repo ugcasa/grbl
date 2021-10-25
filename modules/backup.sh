@@ -331,7 +331,7 @@ backup.now () {
     local store_param="$store_location"
     local command_param="-a --progress --update"
 
-    gmsg -v3 "backup active" -c $GURU_BACKUP_COLOR -k $backup_indicator_key
+    gmsg -v3 "backup active" -c aqua_marine -k $backup_indicator_key
     #local command_param="-avh '-e ssh -p $from_port' --progress --update"
 
 ### 2) check and plase variables for rsynck based on user.cfg
