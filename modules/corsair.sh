@@ -23,15 +23,66 @@ suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh"
 corsair_indicator_key="f$(daemon.poll_order corsair)"
 pipelist_file="$GURU_CFG/corsair-pipelist.cfg"
 
-# import colors
+# import colors f
 [[ -f "$GURU_CFG/rgb-color.cfg" ]] && source "$GURU_CFG/rgb-color.cfg"
 
-# load key pipe file list
-if [[ -f $pipelist_file ]] ; then
-        source $pipelist_file
-    else
-        gmsg -c red "pipelist file $pipelist_file missing"
-    fi
+# # load key pipe file list
+# if [[ -f $pipelist_file ]] ; then
+#         source $pipelist_file
+#     else
+#         gmsg -c red "pipelist file $pipelist_file missing"
+#     fi
+
+declare -a corsair_keytable=(\
+    esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12          print scroll pause      stop brev play next\
+    half 1 2 3 4 5 6 7 8 9 0 query backscape            insert home pageup      numlc div mul sub\
+    tab q w e r t y u i o p å tilde enter               del end pagedown        np7 np8 np9 add\
+    caps a s d f g h j k l ö ä asterix                                          np4 np5 np6\
+    shiftl less z x c v b n m comma perioid minus shiftr     up                 np1 np2 np3\
+    lctrl func alt space altgr fn set rctrl             left down right         np0 decimal count\
+    )
+
+corsair.get_key_id () {
+
+    local find_list=($@)
+    local got_value=
+
+    for to_find in ${find_list[@]} ; do
+        for (( i=0 ; i < ${#corsair_keytable[@]} ; i++ )) ; do
+            if [[ ${corsair_keytable[$i]} == $to_find ]] ; then
+                    got_value=$i
+                    printf "%03d" $got_value
+                    break
+                fi
+            done
+        done
+
+    [[ $got_value ]] && return 0 || return 1
+}
+
+
+
+corsair.get_pipefile () {
+
+    local id=$(corsair.get_key_id $1)
+
+    if (( $? > 0 )) ; then
+            gmsg -c yellow "key not found"
+            return 1
+        fi
+
+    local pipefile="/tmp/ckbpipe$id"
+
+    if ! ls $pipefile 2>/dev/null; then
+            gmsg -c yellow "pipefile not exist"
+            # try to stop blink
+            corsair.blink_stop $1
+            return 2
+        fi
+    return 0
+}
+
+
 
 corsair.help () {
     # general help
@@ -270,22 +321,21 @@ corsair.init () {
 
 
 corsair.set () {
-    # write color to key: input <key> <color>
+    # write color to key: input <key> <color>  speed test: ~25 ms
 
-    corsair.check | return $?
-    local _button=${1^^}
+    #corsair.check is too slow to go trough here
+    if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
+            # gmsg -c dark_grey "corsair disabled"
+            return 1
+        fi
+
+    local _key=$1
+    # corsairlize RGB code
     local _color='rgb_'"$2"
     local _bright="FF" ; [[ $3 ]] && _bright="$3"
 
-    #gmsg -v4 -n "${FUNCNAME[0]}: $_button color to "
-    gmsg -v4 -c $2 "$_button $2 "
-
     # get input key pipe file location
-    _button=$(eval echo '$'$_button)
-    if ! [[ $_button ]] ; then
-            gmsg -v3 -c yellow "no such button '$_button'"
-            return 101
-        fi
+    local key_pipefile=$(corsair.get_pipefile $_key || return 100)
 
     # get input color code
     _color=$(eval echo '$'$_color)
@@ -294,16 +344,17 @@ corsair.set () {
             return 102
         fi
 
-    # corsailize RGB code with brightness value
+    # add brightness code to color code
     _color="$_color""$_bright"
 
     # write color code to button pipe file and let device to receive and process command (surprisingly slow)
-    if file $_button | grep fifo >/dev/null ; then
-            echo "rgb $_color" > "$_button"
-            sleep 0.05
+    if file $key_pipefile | grep fifo >/dev/null ; then
+            echo "rgb $_color" > "$key_pipefile"
+            # sleep 0.005, hmm.. gmsg take same time: sys 0m0,005s,
+            gmsg -v4 -t -c $2 "$1 < $2"
             return 0
         else
-            gmsg -c yellow "io error, pipe file $_button is not set in cbk-next"
+            gmsg -c yellow "io error, $key_pipefile check cbk-next profile settings"
             return 103
         fi
 }
@@ -318,7 +369,7 @@ corsair.pipe () {
     # write color code to button pipe file
     echo "rgb $_color$_bright" > "$_button"
     # let device to receive and process command (surprisingly slow)
-    sleep 0.1
+    #sleep 0.1
     return 0
 }
 
@@ -383,7 +434,9 @@ corsair.check_pipe () {
 
 
 corsair.indicate () {
+    # indicate state to given ke. input: mode_name key_name
 
+    # default settings
     local level="warning"
     local key="esc"
 
@@ -392,43 +445,42 @@ corsair.indicate () {
 
     case $level in
 
-            done)
-                        corsair.blink_set $key lime green 6 300 green 2>/dev/null;;
-            doing|active|working)
-                        corsair.blink_set $key aqua aqua_marine 1.2 10 aqua 2>/dev/null;;
-            pause)
+            done)       # relax green jungle, all fine
+                        corsair.blink_set $key green lime 6 300 green 2>/dev/null;;
+            doing|active|working)  # indicate active job by
+                        corsair.blink_set $key aqua aqua_marine 1.25 10 aqua 2>/dev/null;;
+            pause)      # yellow/black pause indication
                         corsair.blink_set $key yellow black 1 3600 2>/dev/null;;
-            cancel)
-                        corsair.blink_set $key red green 0.5 3 2>/dev/null;;
-            error)
-                        corsair.blink_set $key orange yellow 1 600 yellow >/dev/null;;
+            cancel)     # blink red/green shortly
+                        corsair.blink_set $key red green 0.75 3 2>/dev/null;;
+            error)      # indicate that error happened, stay blinky for one daemon cycle
+                        corsair.blink_set $key orange yellow 1 $GURU_DAEMON_INTERVAL yellow >/dev/null;;
             warning)
-                        corsair.blink_set $key red orange 0.5 3600 orange 2>/dev/null;;
+                        corsair.blink_set $key red orange 0.75 3600 orange 2>/dev/null;;
             alert)
-                        corsair.blink_set $key red black 0.25 3600 white 2>/dev/null;;
+                        corsair.blink_set $key orange_red black 0.5 3600 orange_red 2>/dev/null;;
             panic)
-                        corsair.blink_set $key red white 0.1 3600 white 2>/dev/null;;
+                        corsair.blink_set $key red white 0.2 3600 red 2>/dev/null;;
             passed|pass|ok)
-                        corsair.blink_set $key lime $GURU_CORSAIR_MODE 1 300 2>/dev/null;;
+                        corsair.blink_set $key lime $GURU_CORSAIR_MODE 1 300 green 2>/dev/null;;
             fail|failed)
-                        corsair.blink_set $key red $GURU_CORSAIR_MODE 1 300 2>/dev/null;;
+                        corsair.blink_set $key red $GURU_CORSAIR_MODE 1 300 red 2>/dev/null;;
             message)
                         corsair.blink_set $key deep_pink dark_orchid 2 1200 dark_orchid 2>/dev/null;;
             call)
-                        corsair.blink_set $key deep_pink black 0.75 30 dark_orchid 2>/dev/null;;
+                        corsair.blink_set $key deep_pink black 0.75 30 deep_pink 2>/dev/null;;
             customer)
-                        corsair.blink_set $key deep_pink white 0.75 30 deep_pink  2>/dev/null;;
-            finland|suomi)
-                        corsair.blink_set $key medium_blue white 0.3 60 2>/dev/null;;
+                        corsair.blink_set $key deep_pink white 0.75 30 deep_pink 2>/dev/null;;
+            flash)
+                        corsair.blink_set $key white black 0.01 1 2>/dev/null;;
             cops|poliisi)
-                        corsair.blink_set $key medium_blue red 0.5 60 white 2>/dev/null;;
+                        corsair.blink_set $key medium_blue red 0.75 60 2>/dev/null;;
             breath|calm)
                         corsair.blink_set $key dark_cyan dark_turquoise 6 600 2>/dev/null;;
             hacker)
-                        corsair.blink_set $key white black 0.1 3600 white 2>/dev/null;;
+                        corsair.blink_set $key white black 0.2 3600 red 2>/dev/null;;
             russia|china)
-                        corsair.blink_set $key red yellow 0.75 3600 white 2>/dev/null;;
-
+                        corsair.blink_set $key red yellow 0.75 3600 red 2>/dev/null;;
         esac
 
     return 0
@@ -436,8 +488,10 @@ corsair.indicate () {
 
 
 corsair.blink_set () {
-    # start to blink
+    # start to blink input: key_name base_color high_color delay_sec timeout_sec leave_color_name
+    # leave color is color what shall be left on key shen stoppend or killed.
 
+    # all options are optional but position is criticalcause read from left to right default setting below:
     local key="esc"
     local base_c="red"
     local high_c="orange"
@@ -452,6 +506,7 @@ corsair.blink_set () {
     [[ $1 ]] && timeout=$1 ; shift
     [[ $1 ]] && leave_color=$1 ; shift
 
+    # TBD slow method, do better
     if [[ -f /tmp/blink_pid ]] && cat /tmp/blink_pid | grep "\b$key\b" 2>/dev/null ; then
             corsair.blink_kill $key 2>/dev/null
         fi
@@ -489,17 +544,18 @@ corsair.blink_set () {
 
 
 corsair.blink_stop () {
+    # stop blinking in next cycle
 
     local key="esc"
     [[ $1 ]] && key=$1 ; shift
 
     [[ -f /tmp/blink_$key ]] && rm /tmp/blink_$key
     return 0
-
 }
 
 
 corsair.blink_kill () {
+    # stop blinking process now, input keyname
 
     [[ -f /tmp/blink_pid ]] && pids_to_kill=($(cat /tmp/blink_pid))
 
@@ -545,6 +601,7 @@ corsair.blink_kill () {
 
 
 corsair.blink_test () {
+    # quick test that lights up esc and function keys
 
     list=(working pause cancel error warning alert panic passed failed message call customer)
 
@@ -881,22 +938,26 @@ corsair.compile () {
 corsair.requirements () {
     # install required libs and apps
 
-    gmsg -c white "installing needed software "
+    local _needed="git
+                   cmake
+                   build-essential
+                   pavucontrol
+                   ibudev-dev
+                   qt5-default
+                   zlib1g-dev
+                   libappindicator-dev
+                   libpulse-dev
+                   libquazip5-dev
+                   libqt5x11extras5-dev
+                   libxcb-screensaver0-dev
+                   libxcb-ewmh-dev
+                   libxcb1-dev qttools5-dev
+                   libdbusmenu-qt5-2
+                   libdbusmenu-qt5-dev"
 
-    sudo apt-get install -y git cmake build-essential \
-                                pavucontrol \
-                                libudev-dev \
-                                qt5-default \
-                                zlib1g-dev \
-                                libappindicator-dev \
-                                libpulse-dev \
-                                libquazip5-dev \
-                                libqt5x11extras5-dev \
-                                libxcb-screensaver0-dev \
-                                libxcb-ewmh-dev \
-                                libxcb1-dev qttools5-dev \
-                                libdbusmenu-qt5-2 \
-                                libdbusmenu-qt5-dev \
+    gmsg -c white "installing needed software: $_needed "
+
+    sudo apt-get install -y $_needed \
             || gmsg -x 101 -c yellow "apt-get error $?" \
             && gmsg -c green "ok"
 
