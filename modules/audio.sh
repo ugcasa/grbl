@@ -4,8 +4,6 @@
 source $GURU_BIN/common.sh
 source $GURU_BIN/corsair.sh
 
-# back compatibly
-[[ $GURU_CORSAIR_CONNECTED_COLOR ]] || GURU_CORSAIR_CONNECTED_COLOR=deep_pink
 
 audio.help () {
     gmsg -v1 -c white "guru-client audio help "
@@ -49,7 +47,7 @@ audio.main () {
 
 audio.close () {
     # close audio tunnel
-    corsair.main set F8 $GURU_CORSAIR_EFECT_COLOR
+    corsair.main set F8 aqua
     $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME || corsair.main set F8 red
     corsair.main reset F8
     return $?
@@ -84,9 +82,9 @@ audio.tunnel () {
     if [[ $1 ]] ; then _user=$1 ; shift ; fi
 
     gmsg -v1 "tunneling mic to $_user@$_host:$_port"
-    corsair.main set F8 $GURU_CORSAIR_EFECT_COLOR
+    corsair.main set F8 aqua
     if $GURU_BIN/audio/voipt.sh open -h $_host -p $_port -u $_user ; then
-            corsair.main set F8 $GURU_CORSAIR_CONNECTED_COLOR
+            corsair.main set F8 green
         else
             corsair.main set F8 red
         fi
@@ -97,7 +95,7 @@ audio.tunnel () {
 
 audio.tunnel_toggle () {
     # audio toggle for keyboard shortcut usage
-    corsair.main set F8 $GURU_CORSAIR_EFECT_COLOR
+    corsair.main set F8 aqua
     if audio.status ; then
             if $GURU_BIN/audio/fast_voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT ; then
                     corsair.main reset F8
@@ -109,7 +107,7 @@ audio.tunnel_toggle () {
         fi
 
     if $GURU_BIN/audio/fast_voipt.sh open -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME ; then
-            corsair.main set F8 $GURU_CORSAIR_CONNECTED_COLOR
+            corsair.main set F8 green
             return 0
         else
             corsair.main set F8 red
