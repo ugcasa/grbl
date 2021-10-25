@@ -1,4 +1,4 @@
-git#!/bin/bash
+#!/bin/bash
 # installer for guru-client. ujo.guru casa@ujo.guru 2017-2020
 export GURU_CALL="guru"
 export GURU_USER="$USER"
