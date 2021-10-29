@@ -83,8 +83,6 @@ daemon.start () {
             kill -9 $_pid
         fi
 
-    corsiar.main blink stop $daemon_indicator_key
-
     if system.suspend flag ; then
             [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
             system.suspend rm_flag
