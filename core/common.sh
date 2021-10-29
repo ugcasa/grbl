@@ -260,32 +260,38 @@ gindicate () {
     if [[ $GURU_SOUND_ENABLED ]] ; then
         #source sound.sh
         #sound.main nnn
+
         [[ $_message ]] || _message=$_status
         case $_status in
-            done)       espeak -p 100 -s 120 -v en "Done $_message. " ;;
-            working)    espeak -p 85 -s 130 -v en "working... $_message" ;;
-            pause)      espeak -p 85 -s 130 -v en "$_message is paused" ;;
-            cancel)     espeak -p 85 -s 130 -v en "$_message is canceled. I repeat, $_message is canceled" ;;
-            error)      espeak -p 85 -s 130 -v en "Error! $_message. I repeat, $_message" ;;
-            warning)    espeak -p 85 -s 130 -v en "Warning! $_message. I repeat, $_message" ;;
-            alert)      espeak -p 85 -s 130 -v en "Alarm! $_message. I repeat, $_message" ;;
-            panic)      espeak -p 85 -s 130 -v en-sc "mayday.. Mayday? Mayday! $_message... ${_message^}? ${_message^^}!" ;;
-            passed|pass|ok)     espeak -p 85 -s 130 -v en-us  "$_message... passed" ;;
+            done)           espeak -p 100 -s 120 -v en "Done $_message. " ;;
+            working)        espeak -p 85 -s 130 -v en "working... $_message" ;;
+            pause)          espeak -p 85 -s 130 -v en "$_message is paused" ;;
+            cancel)         espeak -p 85 -s 130 -v en "$_messagasde is canceled. I repeat, $_message is canceled" ;;
+            error)          espeak -p 85 -s 130 -v en "Error! $_message. I repeat, $_message" ;;
+            warning)        espeak -p 85 -s 130 -v en "Warning! $_message. I repeat, $_message" ;;
+            alert)          espeak -p 85 -s 130 -v en "Alarm! $_message. I repeat, $_message" ;;
+            panic)          espeak -p 85 -s 130 -v en-sc "mayday.. Mayday? Mayday! $_message... ${_message^}? ${_message^^}" ;;
+            passed|pass)    espeak -p 85 -s 130 -v en-us  "$_message... passed" ;;
             fail|failed)    espeak -p 85 -s 130 -v en-us "$_message... failed" ;;
-            message)    espeak -p 85 -s 130 -v en-us  "Message! $_message! new message $_message" ;;
-            call)       espeak -p 60 -s 100 -v en-sc "Incoming call from number $(echo $_message | sed 's/./& /g')" ;;
-            customer)   for i in {0..5} ; do
-                            espeak -p 75 -s 90 -v finnish "$_message,"
-                            espeak -p 75 -s 90 -v en-us  "is calling! "
-                            [[ -f /tmp/blink_$_indicator_key ]] || break
-                            sleep 2
-                        done ;;
-            flash)      espeak -p 0 -s 100 -v fi "Thunder" ;;
-            cops|poliisi)   espeak -p 85 -s 130 -v en-us  "eu eu, Polis in block! eu eu. Dump your stash and duck. $_message" ;;
-            breath|calm)   espeak -p 0 -s 80 -v en-us  "Breath... slowly... in... and... out. and calm down. You motherfucker" ;;
-            hacker)     espeak -p 85 -s 130 -v en-us  "Warning! An hacker activity detected. $_message" ;;
-            russia)     espeak -p 5 -s 90 -v russian  "Warning! An Russian hacker activity detected... releasing honeypot vodka bottles on the battle field" ;;
-            china)      espeak -p 10 -s 180 -v cantonese "Warning! An Chinese hacker activity detected. Disconnecting mainframe from internetz" ;;
+            message)        espeak -p 85 -s 130 -v fi  "Message! $_message! new message $_message" ;;
+            call)       for i in {0..5} ; do
+                                espeak -p 60 -s 80 -v en-sc "Incoming call from number $(echo $_message | sed 's/./& /g')"
+                                [[ -f /tmp/blink_$_indicator_key ]] || break
+                                sleep 2
+                            done ;;
+            customer)       for i in {0..5} ; do
+                                espeak -p 75 -s 90 -v finnish "$_message,"
+                                espeak -p 75 -s 90 -v en-us  "is calling! "
+                                [[ -f /tmp/blink_$_indicator_key ]] || break
+                                sleep 2
+                            done ;;
+            flash)          espeak -p 0 -s 100 -v fi "Thunder" ;;
+            cops)           espeak -p 85 -s 130 -v en "Police patrol located at $_message" ;;
+            police)         espeak -p 85 -s 130 -v en "Police in block! Dump your stash and duck! ... $_message" ;;
+            calm)           espeak -p 0 -s 80 -v en-us  "Breath... slowly... in... and... out. and calm down. " ;;
+            hacker)         espeak -p 85 -s 130 -v en-us  "Warning! An hacker activity detected. $_message" ;;
+            russia)         espeak -p 5 -s 90 -v russian  "Warning! An Russian hacker activity detected... releasing honeypot vodka bottles on the battle field" ;;
+            china)          espeak -p 10 -s 180 -v cantonese "Warning! An Chinese hacker activity detected. Disconnecting mainframe from internetz" ;;
         esac
     fi
 }
