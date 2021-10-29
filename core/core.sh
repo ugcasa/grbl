@@ -99,7 +99,7 @@ core.process_opts () {
     # default values
     GURU_HOSTNAME=$(hostname)
     GURU_VERBOSE=$GURU_FLAG_VERBOSE
-    GURU_COLOR=$GURU_FLAG_COLOR
+    [[ $COLORTERM ]] && export GURU_COLOR=true
     #GURU_DEBUG=$GURU_FLAG_DEBUG
     GURU_FORCE=
     GURU_LOGGING=
