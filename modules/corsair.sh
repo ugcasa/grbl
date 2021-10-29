@@ -47,8 +47,10 @@ corsair.get_key_id () {
     local find_list=($@)
     local got_value=
 
+    #echo "${find_list[@]}" >>/home/casa/temp.log
     for to_find in ${find_list[@]} ; do
         for (( i=0 ; i < ${#corsair_keytable[@]} ; i++ )) ; do
+            # echo "$i:$got_value" >>/home/casa/temp.log
             if [[ ${corsair_keytable[$i]} == $to_find ]] ; then
                     got_value=$i
                     printf "%03d" $got_value
@@ -64,6 +66,8 @@ corsair.get_key_id () {
 
 corsair.get_pipefile () {
 
+    [[ $1 ]] || return 124
+
     local id=$(corsair.get_key_id $1)
 
     if (( $? > 0 )) ; then
@@ -73,13 +77,15 @@ corsair.get_pipefile () {
 
     local pipefile="/tmp/ckbpipe$id"
 
-    if ! ls $pipefile 2>/dev/null; then
+    #gmsg -c deep_pink $pipefile
+    if file $pipefile | grep fifo >/dev/null; then
+            echo $pipefile
+            return 0
+        else
             gmsg -c yellow "pipefile not exist"
-            # try to stop blink
             corsair.blink_stop $1
             return 2
         fi
-    return 0
 }
 
 
@@ -194,7 +200,7 @@ corsair.main () {
                     ;;
             # hmm..
             '--')
-                    return 12
+                    return 123
                     ;;
             #
             help)   case $1 in  profile) corsair.help-profile ;;
@@ -436,7 +442,7 @@ corsair.check_pipe () {
 corsair.indicate () {
     # indicate state to given key. input: mode_name key_name
 
-    #corsair.check is too slow to go trough here
+    # corsair.check is too slow to go trough here
     if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
             gmsg -k1 -c dark_grey "corsair disabled"
             return 1
@@ -446,53 +452,38 @@ corsair.indicate () {
     local level="warning"
     local key="esc"
     local color="aqua_marine"
+    local _blink="white black 0.2 1"
 
     [[ $1 ]] && level=$1 ; shift
     [[ $1 ]] && key=$1 ; shift
     [[ $GURU_PROJECT_COLOR ]] && color=$GURU_PROJECT_COLOR
 
-
     case $level in
+                        #color1 color2 interval timeout leave-color
+        ok)             _blink="green $GURU_CORSAIR_MODE 0.2 3 green" ;;
+        cancel)         _blink="orange $GURU_CORSAIR_MODE 0.2 3 orange" ;;
+        init)           _blink="blue dark_blue 0.1 3 " ;;
+        passed|pass)    _blink="lime $GURU_CORSAIR_MODE 1 300 green" ;;
+        fail|failed)    _blink="red $GURU_CORSAIR_MODE 1 300 red" ;;
+        done)           _blink="green lime 6 $GURU_DAEMON_INTERVAL green" ;;
+        doing)          _blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL aqua" ;;
+        working)        _blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL aqua" ;;
+        active)         _blink="aqua_marine aqua 0.5 2" ;;
+        pause)          _blink="black $GURU_CORSAIR_MODE 1 3600" ;;
+        error)          _blink="orange yellow 1 $GURU_DAEMON_INTERVAL yellow" ;;
+        message)        _blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
+        call)           _blink="deep_pink black 0.75 30 deep_pink" ;;
+        customer)       _blink="deep_pink white 0.75 30 deep_pink" ;;
+        warning)        _blink="red orange 0.75 3600 orange" ;;
+        alert)          _blink="orange_red black 0.5 3600 orange_red" ;;
+        panic)          _blink="red white 0.2 3600 red" ;;
+        breath|calm)    _blink="dark_cyan dark_turquoise 6 600" ;;
+        cops|police)    _blink="medium_blue red 0.75 60" ;;
+        hacker)         _blink="white black 0.2 3600 red" ;;
+        russia|china)   _blink="red yellow 0.75 3600 red" ;;
+    esac
 
-            done)       # relax green jungle, all fine
-                        corsair.blink_set $key green lime 6 300 green 2>/dev/null;;
-            working)    # indicate
-                        corsair.blink_set $key $color aqua 3 $GURU_DAEMON_INTERVAL aqua 2>/dev/null;;
-            active)     # indicate active that something is up
-                        corsair.blink_set $key aqua_marine aqua 0.5 2 aqua 2>/dev/null;;
-            pause)      # yellow/black pause indication
-                        corsair.blink_set $key yellow black 1 3600 2>/dev/null;;
-            cancel)     # blink red/green shortly
-                        corsair.blink_set $key red green 0.75 3 2>/dev/null;;
-            error)      # indicate that error happened, stay blinky for one daemon cycle
-                        corsair.blink_set $key orange yellow 1 $GURU_DAEMON_INTERVAL yellow >/dev/null;;
-            warning)
-                        corsair.blink_set $key red orange 0.75 3600 orange 2>/dev/null;;
-            alert)
-                        corsair.blink_set $key orange_red black 0.5 3600 orange_red 2>/dev/null;;
-            panic)
-                        corsair.blink_set $key red white 0.2 3600 red 2>/dev/null;;
-            passed|pass|ok)
-                        corsair.blink_set $key lime $GURU_CORSAIR_MODE 1 300 green 2>/dev/null;;
-            fail|failed)
-                        corsair.blink_set $key red $GURU_CORSAIR_MODE 1 300 red 2>/dev/null;;
-            message)
-                        corsair.blink_set $key deep_pink dark_orchid 2 1200 dark_orchid 2>/dev/null;;
-            call)
-                        corsair.blink_set $key deep_pink black 0.75 30 deep_pink 2>/dev/null;;
-            customer)
-                        corsair.blink_set $key deep_pink white 0.75 30 deep_pink 2>/dev/null;;
-            flash)
-                        corsair.blink_set $key white black 0.01 1 2>/dev/null;;
-            cops|poliisi)
-                        corsair.blink_set $key medium_blue red 0.75 60 2>/dev/null;;
-            breath|calm)
-                        corsair.blink_set $key dark_cyan dark_turquoise 6 600 2>/dev/null;;
-            hacker)
-                        corsair.blink_set $key white black 0.2 3600 red 2>/dev/null;;
-            russia|china)
-                        corsair.blink_set $key red yellow 0.75 3600 red 2>/dev/null;;
-        esac
+    corsair.blink_set $key $_blink >/dev/null
 
     return 0
 }
@@ -652,6 +643,18 @@ corsair.blink_test () {
     system.main flag rm pause
     return 0
 }
+
+
+# source common.sh
+# gindicate call -m +55840051500
+# gindicate customer -m "Teppo Temputtaja"
+# gindicate done -m workig
+# gindicate calm
+# gindicate error -m "everything is broken"
+# gindicate russia
+# gindicate china
+# gindicate cops
+
 
 
 

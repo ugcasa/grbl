@@ -6,7 +6,7 @@ daemon_service_script="$HOME/.config/systemd/user/guru.service"
 daemon_pid_file="/tmp/guru.daemon-pid"
 
 # use same key than system.sh
-daemon_indicator_key="f$(daemon.poll_order system)"
+daemon_indicator_key=esc #"f$(daemon.poll_order system)"
 
 source $GURU_BIN/system.sh
 
@@ -57,16 +57,16 @@ daemon.status () {
 
     if [[ -f "$daemon_pid_file" ]] ; then
             local _pid="$(cat $daemon_pid_file)"
-            gmsg -v 1 -c green "${FUNCNAME[0]}: $_pid"
+            gmsg -v1 -c green "${FUNCNAME[0]}: $_pid"
         else
-            gmsg -v 1 -c dark_grey "${FUNCNAME[0]}: no pid reserved"
+            gmsg -v1 -c dark_grey "${FUNCNAME[0]}: no pid reserved"
             _err=$((_err+10))
         fi
 
     if ps auxf | grep "$HOME/bin/core.sh start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
-            gmsg -v 1 -c green "${FUNCNAME[0]}: running"
+            gmsg -v1 -c green "${FUNCNAME[0]}: running"
         else
-            gmsg -v 1 -c red "${FUNCNAME[0]}: not running"
+            gmsg -v1 -c red "${FUNCNAME[0]}: not running"
             _err=$((_err+10))
         fi
 
@@ -79,9 +79,11 @@ daemon.start () {
 
     if [[ -f "$daemon_pid_file" ]] ; then
             local _pid=$(cat "$daemon_pid_file")
-            gmsg -v 1 "${FUNCNAME[0]}:  killing $_pid"
+            gmsg -v2 "${FUNCNAME[0]}: killing $_pid"
             kill -9 $_pid
         fi
+
+    corsiar.main blink stop $daemon_indicator_key
 
     if system.suspend flag ; then
             [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
@@ -90,7 +92,7 @@ daemon.start () {
         fi
 
     #for module in ${GURU_DAEMON_POLL_ORDER[@]} ; do
-    for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
+    for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
 
         module=${GURU_DAEMON_POLL_ORDER[i-1]}
         case $module in
@@ -131,7 +133,7 @@ daemon.stop () {
     gmsg -t -v1 "stopping modules.. "
     #for module in ${GURU_DAEMON_POLL_ORDER[@]} ; do
 
-    for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
+    for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
 
         module=${GURU_DAEMON_POLL_ORDER[i-1]}
         #gmsg -v3 -c dark_golden_rod "$i $module"
@@ -156,8 +158,22 @@ daemon.stop () {
     gmsg -t -v1 "stopping guru-daemon.. "
     [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
     system.flag rm running
-    gmsg -V1 -c green "ok"
-    kill -9 "$_pid"
+    if ! kill -15 "$_pid" ; then
+        gindicate failed $daemon_indicator_key
+        if kill -9 "$_pid" ; then
+             gmsg -V1 -c green "ok"
+             corsiar.main blink stop $daemon_indicator_key
+        else
+             gmsg -V1 -c red "failed to kill daemon pid: $_pid"
+             gindicate failed $daemon_indicator_key
+            return 124
+        fi
+    else
+        gmsg -V1 -c green "ok"
+        corsiar.main blink stop $daemon_indicator_key
+    fi
+
+
 }
 
 
@@ -172,10 +188,12 @@ daemon.kill () {
 
     if ps auxf | grep "$GURU_BIN/guru" | grep "start" | grep -v "grep" >/dev/null ; then
             gmsg -v1 -c yellow "daemon still running, try to 'sudo guru kill' again"
+            gindicate failed $daemon_indicator_key
             return 100
         else
             gmsg -v3 -c white "kill verified"
             [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
+            corsiar.main blink stop $daemon_indicator_key
             return 0
         fi
 }
@@ -209,7 +227,8 @@ daemon.poll () {
 
         # if paused stay here 300 seconds
         if system.flag pause ; then
-                gmsg -N -t -v1 -c yellow "daemon paused " -k $daemon_indicator_key
+                gmsg -N -t -v1 -c yellow "daemon paused "
+                gindicate pause $daemon_indicator_key
                 for (( i = 0; i < 150; i++ )); do
                     system.flag pause || break
                     system.flag stop && break
@@ -217,26 +236,28 @@ daemon.poll () {
                     sleep 2
                 done
                 system.flag rm pause
-                gmsg -v1 -t -c green "daemon continued" -k $daemon_indicator_key
+                corsiar.main blink stop $daemon_indicator_key
+                gmsg -v1 -t -c green "daemon continued"
             fi
 
         if system.flag stop ; then
                 gmsg -N -t -v1 "daemon got requested to stop "
+                gindicate cancel $daemon_indicator_key
                 daemon.stop
                 return $?
             fi
 
         # light esc key to signal user daemon is active
-        gmsg -N -t -v3 -c aqua "daemon active" -k $daemon_indicator_key
-        gmsg -v4 -c aqua -k cplc
+        gmsg -N -t -v3 -c aqua "daemon active"
+        gindicate doing $daemon_indicator_key
 
         # go trough poll list
-        local i=
-        for ((i=0; i <= ${#GURU_DAEMON_POLL_ORDER[@]}; i++)) ; do
+        for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
+
                 module=${GURU_DAEMON_POLL_ORDER[i-1]}
                 case $module in
-                    null|empty|na|NA)
-                        gmsg -v4 -c dark_grey "skipping $module"
+                    null|empty|na|NA|'-')
+                        gmsg -v3 -c dark_grey "$i:$module skipping "
                         ;;
                     *)
                         gmsg -v2 -c dark_golden_rod "$i:$module: "
@@ -251,8 +272,8 @@ daemon.poll () {
                     esac
             done
 
-        gmsg -n -v2 -c green -k $daemon_indicator_key "sleep ${GURU_DAEMON_INTERVAL}s: "
-        gmsg -v4 -c reset -k cplc
+        gmsg -n -v2 "sleep ${GURU_DAEMON_INTERVAL}s: "
+        gindicate done $daemon_indicator_key
 
         local _seconds=
         for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )) ; do
@@ -264,7 +285,9 @@ daemon.poll () {
             done
         gmsg -v2 ""
     done
-    gmsg -N -t -v1 "daemon got got tired and dropped out "
+
+    gmsg -N -t -v1 "daemon got tired and dropped out "
+    gindicate cancel $daemon_indicator_key
     daemon.stop
 }
 
