@@ -148,7 +148,7 @@ tunnel.ls () {
         for service in ${all_services[@]} ; do
             tunnel.get_config $service
             if ps -x | grep -v grep | grep "ssh" | grep "$to_port:" >/dev/null; then
-                    gmsg  "$service"
+                    gmsg "$service"
                     _return=0
                 fi
             done
@@ -239,7 +239,7 @@ tunnel.open () {
         fi
 
     local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
-    local ssh_param="-o ClearAllForwardings=yes -o ServerAliveInterval=15"
+    local ssh_param="-o ServerAliveInterval=15"
 
     for _service in ${service_name[@]} ; do
 
@@ -344,7 +344,7 @@ tunnel.close () {
 
     # check that pid is number
     if ! [[ ${pid_list[@]} ]] ; then
-        gmsg "no tunnels"
+        gmsg -v1 "no tunnels"
         return 0
     fi
 
@@ -358,7 +358,7 @@ tunnel.close () {
                 fi
 
             if kill -15 $pid ; then
-                    gmsg -c green "$pid killed"
+                    gmsg -v1 -c green "$pid killed"
                     gindicate ok $tunnel_indicator_key
                 else
                     kill -9 $pid || gmsg -c yellow "$pid kill failed"

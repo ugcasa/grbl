@@ -564,29 +564,29 @@ project.status () {
     project.configure $1
 
     # check project file locaton is accessavle
-    gmsg -n -v1 -t "${FUNCNAME[0]}: "
+    gmsg -v1 -n -t "${FUNCNAME[0]}: "
     if [[ -d "$project_base" ]] ; then
             gmsg -v1 -n -c green "installed, "
         else
-            gmsg -n -c red "$project_base not installed, " -k $project_indicator_key
+            gmsg -v1 -n -c red "$project_base not installed, " -k $project_indicator_key
             return 100
         fi
 
     # check are projects mounted
     if [[ -f "$project_mount/.online" ]] ; then
-            gmsg -n -v1 -c green "mounted "
+            gmsg -v1 -n -c green "mounted "
         else
             gmsg -v1 -c yellow "not mounted" -k $project_indicator_key
             return 100
         fi
 
     # print
-    project.ls
+    [[ $GURU_VERBOSE -gt 0 ]] && project.ls
 
     if [[ -f $project_base/active ]]; then
             local active=$(cat $project_base/active)
             #gmsg -v2 -n "active: "
-            gmsg -n -v4 -c $project_key_color -k $project_indicator_key
+            gmsg -v4 -n -c $project_key_color -k $project_indicator_key
         else
             gmsg -v3 -c reset "no active projects "  -k $project_indicator_key
         fi
