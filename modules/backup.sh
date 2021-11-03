@@ -36,7 +36,7 @@ backup.main () {
     local command="$1" ; shift
     case "$command" in
 
-                ls|now|restore|status|help|install|poll|all|at)
+                ls|restore|status|help|install|poll|all|at)
                     gmsg -v3 -c beep_pink "backup.$command $@"
                     backup.$command "$@"
                     return $? ;;
@@ -184,7 +184,18 @@ backup.status () {
 backup.ls () {
     # list available backups and its status
 
-    for source in ${GURU_BACKUP_ACTIVE[@]} ; do
+    gmsg -c white "daily:"
+    for source in ${GURU_BACKUP_DAILY[@]} ; do
+            gmsg -n -c light_blue "$source"
+        done
+
+    gmsg -c white "weekly:"
+    for source in ${GURU_BACKUP_DAILY[@]} ; do
+            gmsg -n -c light_blue "$source"
+        done
+
+    gmsg -c white "mounthly:"
+    for source in ${GURU_BACKUP_DAILY[@]} ; do
             gmsg -n -c light_blue "$source"
         done
 
@@ -507,10 +518,10 @@ backup.all () {
     local _active_list=()
 
     case $_lists_name in
+        daily)      _active_list=(${GURU_BACKUP_DAILY[@]}) ;;
         weekly)     _active_list=(${GURU_BACKUP_WEEKLY[@]}) ;;
         monthly)    _active_list=(${GURU_BACKUP_MONTHLY[@]}) ;;
         all)        _active_list=(${GURU_BACKUP_DAILY[@]} ${GURU_BACKUP_WEEKLY[@]} ${GURU_BACKUP_MONTHLY[@]}) ;;
-        daily)      _active_list=(${GURU_BACKUP_DAILY[@]}) ;;
             *)      gmsg -c yellow "unknown schedule '$_lists_name', try daily, weekly, monthly or all"
                     read -p "run daily? " answer
                     if [[ ${answer^^} == 'Y' ]] ; then
