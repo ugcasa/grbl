@@ -123,14 +123,14 @@ tunnel.toggle () {
 
     declare -l state="/tmp/tunnel.toggle"
 
-    if [[ -f $state ]] && tunnel.ls ; then
+    if [[ -f $state ]] && tunnel.ls >/dev/null; then
             tunnel.close # &&
             rm $state
         else
-            tunnel.open # &&
+            tunnel.open ${GURU_TUNNEL_DEFAULT[@]} # &&
             touch $state
         fi
-    tunnel.ls
+    #tunnel.ls
     return 0
 }
 
@@ -138,22 +138,21 @@ tunnel.toggle () {
 tunnel.ls () {
     # list of ssh tunnels
 
-    local all_services=${GURU_TUNNEL_LIST[@]}
-    local service=
-    [[ $1 ]] && service=$1
+    local all_services=(${GURU_TUNNEL_LIST[@]})
+    [[ $1 ]] && all_services=($@)
     local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
     local _return=1
 
     # non color system get only list og active tunnels and do not set corsair stuff
-    if ! [[ $GURU_COLOR ]] ; then
+    if ! [[ $DISPLAY ]] ; then
         for service in ${all_services[@]} ; do
             tunnel.get_config $service
             if ps -x | grep -v grep | grep "ssh" | grep "$to_port:" >/dev/null; then
-                    gmsg -n "$service "
+                    gmsg  "$service"
                     _return=0
                 fi
             done
-        [[ $return ]] && echo
+
         return $_return
         fi
 
@@ -181,6 +180,7 @@ tunnel.ls () {
             fi
         done
     echo
+
     if (( _return > 0 )) ; then
         gmsg -v3 -c green "reset" -k $tunnel_indicator_key
         return 1
@@ -224,32 +224,47 @@ tunnel.get_config () {
 tunnel.open () {
     # open local ssh tunnel
 
-    declare -la service_name
+    local service_name=()
+
+    if ! [[ $DISPLAY ]] ; then
+            gmsg -v1 "Seems that session is not local, least it does not have DISPLAY variable set."
+            gmsg -v2 "Therefore multible terminal windows cannot be lauched automatically."
+            gmsg -v0 "Open another terminal and paste following commands to avoid tunnel to open here."
+        fi
+
     if [[ $1 ]] ; then
             service_name=($@)
         else
-            service_name=${GURU_TUNNEL_DEFAULT[@]}
+            service_name=(${GURU_TUNNEL_DEFAULT[@]})
         fi
 
     local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
-    local ssh_param="-o ClearAllForwardings=yes -o ServerAliveInterval=15 "
+    local ssh_param="-o ClearAllForwardings=yes -o ServerAliveInterval=15"
 
     for _service in ${service_name[@]} ; do
-            tunnel.get_config $_service || continue
+
+            if ! tunnel.get_config $_service ; then
+                gindicate error $tunnel_indicator_key
+                continue
+            fi
+
             local url="http://localhost:$to_port"
             [[ $url_end ]] && url="$url/$url_end"
 
             if tunnel.ls $_service ; then
-                    gmsg -v2 -n -c light_blue "$_service "
-                    gmsg -v1 -c white "$url"
+                    # gmsg -v2 -n -c light_blue "$_service "
+                    gmsg -v1 -c white "$_service: $url"
                     continue
                 fi
 
             if [[ $DISPLAY ]] ; then
 
-                    gnome-terminal --hide-menubar --geometry 47x10 --zoom 0.5 \
-                                            --title "$_service"  -- \
-                                            ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port ; pidof gnome-terminal & #$ssh_param
+                    gnome-terminal  --hide-menubar --geometry 47x10 --zoom 0.5 \
+                                    --title "$_service"  -- \
+                                    ssh -L $to_port:localhost:$from_port \
+                                    $user@$domain -p $ssh_port \
+                                    $ssh_param \
+                                    ; pidof gnome-terminal &
 
                     # echo $_output
                     # TBD not able to get pig of gnome-terminal session =/
@@ -275,19 +290,19 @@ tunnel.open () {
                     #local window_id=$(system.get_window_id $tunnel_pid)
                     # local window_id=$(system.get_window_id $process_id)
 
-                    # if [[ $window_id ]] ; then
+                    # if [[ $window_ssh id ]] ; then
                     #         # gmsg -v2 -c white -n "window_id: $window_id "
                     #         xdotool windowminimize ${window_id}
                     #     fi
 
                 else
                     # console environment
-                    gmsg -v2 -c white "to avoid ssh session start here, launch new terminal and run: "
                     gmsg -v0 -c light_blue "ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port"
-                    return 1
+                    #gindicate fail $tunnel_indicator_key
+
                 fi
 
-            gmsg -v1 -c white "$url" -k $tunnel_indicator_key
+            gmsg -v1 -c aqua "$_service: $url" -k $tunnel_indicator_key
 
         done
     return 0
@@ -333,7 +348,7 @@ tunnel.close () {
         return 0
     fi
 
-    # kill thjose tunnels
+    # kill those tunnels
     for pid in ${pid_list[@]} ; do
 
             gmsg -v2 "killing pid $pid"
@@ -344,13 +359,15 @@ tunnel.close () {
 
             if kill -15 $pid ; then
                     gmsg -c green "$pid killed"
+                    gindicate ok $tunnel_indicator_key
                 else
                     kill -9 $pid || gmsg -c yellow "$pid kill failed"
                 fi
         done
 
     if tunnel.ls >/dev/null; then
-            gmsg -v2 -c aqua "active tunnels detected" -k $tunnel_indicator_key
+            gmsg -v2 -c yellow "active tunnels detected"
+            gindicate error $tunnel_indicator_key
         fi
 
     return 0
