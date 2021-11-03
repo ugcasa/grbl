@@ -160,7 +160,7 @@ daemon.stop () {
         gindicate failed $daemon_indicator_key
         if kill -9 "$_pid" ; then
              gmsg -V1 -c green "ok"
-             corsiar.main blink stop $daemon_indicator_key
+             gend_blink $daemon_indicator_key
         else
              gmsg -V1 -c red "failed to kill daemon pid: $_pid"
              gindicate failed $daemon_indicator_key
@@ -168,7 +168,7 @@ daemon.stop () {
         fi
     else
         gmsg -V1 -c green "ok"
-        corsiar.main blink stop $daemon_indicator_key
+        gend_blink $daemon_indicator_key
     fi
 
 
@@ -191,7 +191,7 @@ daemon.kill () {
         else
             gmsg -v3 -c white "kill verified"
             [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
-            corsiar.main blink stop $daemon_indicator_key
+            gend_blink $daemon_indicator_key
             return 0
         fi
 }
@@ -234,7 +234,7 @@ daemon.poll () {
                     sleep 2
                 done
                 system.flag rm pause
-                corsiar.main blink stop $daemon_indicator_key
+                gend_blink $daemon_indicator_key
                 gmsg -v1 -t -c green "daemon continued"
             fi
 

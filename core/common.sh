@@ -207,6 +207,18 @@ gmsg () {
     return 0
 }
 
+
+gend_blink () {
+    # stop blinking in next cycle
+
+    local key="esc"
+    [[ $1 ]] && key=$1 ; shift
+
+    [[ -f /tmp/blink_$key ]] && rm /tmp/blink_$key
+    return 0
+}
+
+
 gindicate () {
     # indicate status by message, voice  and keyboard indicators
 

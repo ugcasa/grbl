@@ -165,15 +165,15 @@ backup.status () {
     local diff=$(( $epic_backup - $(date '+%s') ))
 
     # indicate backup time
-    if [[ $diff -lt 10000 ]] ; then
-        # indicate that backup is close ~3h
+    if [[ $diff -lt 3600 ]] ; then
+        # indicate that backup will be done within a hour
         gmsg -n -v1 -c aqua_marine -k $backup_indicator_key \
             "scheduled backup at $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
         # indicate that that backup is very soon, ~minutes
         [[ $diff -lt $GURU_DAEMON_INTERVAL ]] && gmsg -n -v1 -c deep_pink -k $backup_indicator_key \ "($diff seconds)"
         echo
     else
-        # all fine, no backup for three least hours
+        # all fine, no backup soon
         gmsg -n -v1 -c green -k $backup_indicator_key "on service "
         gmsg -v1 -c reset "next backup $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
     fi
