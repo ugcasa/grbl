@@ -108,8 +108,8 @@ gmsg () {
                 -N ) _pre_newline="\n"                          ; shift ;;
                 -x ) _exit=$2                                   ; shift 2 ;;
                 -w ) _column_width=$2                           ; shift 2 ;;
-                -V ) verbose_limiter=$2                        ; shift 2 ;;
-                -v ) verbose_trigger=$2                        ; shift 2 ;;
+                -V ) verbose_limiter=$2                         ; shift 2 ;;
+                -v ) verbose_trigger=$2                         ; shift 2 ;;
                 -m ) _mqtt_topic="$2"                           ; shift 2 ;;
                 -q ) _mqtt_topic="$GURU_HOSTNAME/$2"            ; shift 2 ;;
                 -k ) _indicator_key=$2                          ; shift 2 ;;
@@ -125,8 +125,6 @@ gmsg () {
                  * ) break
             esac
         done
-
-
 
     # --) check message for long parameters (don't remember why like this)
     local _arg="$@"
@@ -240,21 +238,24 @@ gindicate () {
             return 0
         fi
 
-    if [[ $_color ]] ; then
-            gmsg -c $_color "$timestamp$_status: $_message"
-        else
-            gmsg "$timestamp$_status: $_message"
-        fi
-
     if [[ $GURU_CORSAIR_ENABLED ]] && [[ $_indicator_key ]] ; then
             source corsair.sh
             corsair.main indicate $_status $_indicator_key
         fi
 
-    if [[ $GURU_MQTT_ENABLED ]] && [[ $_mqtt_topic ]] ; then
-            source mqtt.sh
-            #mqtt.pub $_mqtt_topic $_message
-            mqtt.pub $_mqtt_topic "$timestamp$_status $_message"
+    if [[ $_message ]] ; then
+
+            if [[ $_color ]] ; then
+                    gmsg -c $_color "$timestamp$_status: $_message"
+                else
+                    gmsg "$timestamp$_status: $_message"
+                fi
+
+            if [[ $GURU_MQTT_ENABLED ]] && [[ $_mqtt_topic ]] ; then
+                    source mqtt.sh
+                    #mqtt.pub $_mqtt_topic $_message
+                    mqtt.pub $_mqtt_topic "$timestamp$_status $_message"
+                fi
         fi
 
     if [[ $GURU_SOUND_ENABLED ]] ; then
@@ -274,7 +275,14 @@ gindicate () {
             passed|pass)    espeak -p 85 -s 130 -v en-us  "$_message... passed" ;;
             fail|failed)    espeak -p 85 -s 130 -v en-us "$_message... failed" ;;
             message)        espeak -p 85 -s 130 -v fi  "Message! $_message! new message $_message" ;;
-            call)       for i in {0..5} ; do
+            flash)          espeak -p 0 -s 100 -v fi "Thunder" ;;
+            cops)           espeak -p 85 -s 130 -v en "Police patrol located at $_message" ;;
+            police)         espeak -p 85 -s 130 -v en "Police in block! Dump your stash and duck! ... $_message" ;;
+            calm)           espeak -p 0 -s 80 -v en-us  "Breath... slowly... in... and... out. and calm down. " ;;
+            hacker)         espeak -p 85 -s 130 -v en-us  "Warning! An hacker activity detected. $_message" ;;
+            russia)         espeak -p 5 -s 90 -v russian  "Warning! An Russian hacker activity detected... releasing honeypot vodka bottles on the battle field" ;;
+            china)          espeak -p 10 -s 180 -v cantonese "Warning! An Chinese hacker activity detected. Disconnecting mainframe from internetz" ;;
+            call)           for i in {0..5} ; do
                                 espeak -p 60 -s 80 -v en-sc "Incoming call from number $(echo $_message | sed 's/./& /g')"
                                 [[ -f /tmp/blink_$_indicator_key ]] || break
                                 sleep 2
@@ -285,13 +293,6 @@ gindicate () {
                                 [[ -f /tmp/blink_$_indicator_key ]] || break
                                 sleep 2
                             done ;;
-            flash)          espeak -p 0 -s 100 -v fi "Thunder" ;;
-            cops)           espeak -p 85 -s 130 -v en "Police patrol located at $_message" ;;
-            police)         espeak -p 85 -s 130 -v en "Police in block! Dump your stash and duck! ... $_message" ;;
-            calm)           espeak -p 0 -s 80 -v en-us  "Breath... slowly... in... and... out. and calm down. " ;;
-            hacker)         espeak -p 85 -s 130 -v en-us  "Warning! An hacker activity detected. $_message" ;;
-            russia)         espeak -p 5 -s 90 -v russian  "Warning! An Russian hacker activity detected... releasing honeypot vodka bottles on the battle field" ;;
-            china)          espeak -p 10 -s 180 -v cantonese "Warning! An Chinese hacker activity detected. Disconnecting mainframe from internetz" ;;
         esac
     fi
 }
