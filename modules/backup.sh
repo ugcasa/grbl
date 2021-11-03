@@ -12,7 +12,7 @@ backup.help () {
     gmsg -v0 "          $GURU_CALL backup <category> now|at <YYYYMMDD> <HH:MM> "
     gmsg -v2
     gmsg -v1 -c white "commands: "
-    gmsg -v1 " now                      make backup now "
+    #gmsg -v1 " now                      make backup now "
     gmsg -v1 " at <YYMMDD> <H:M>        make backup at date"
     gmsg -v1 " ls                       list of backups "
     gmsg -v1 " restore                  not clear hot to be done  "
@@ -59,6 +59,9 @@ backup.main () {
                         if grep -w "$list_item" <<<${mount_lists[@]} >/dev/null; then
                                 gmsg -v2 -c dark_golden_rod "backing up $list_item.. "
                                 backup.now $list_item
+                            else
+                                gmsg "pls input daily, weekly, mounthly or all"
+                                return 0
                             fi
                         done
                     return $? ;;
