@@ -40,7 +40,12 @@ declare -a corsair_keytable=(\
     caps a s d f g h j k l ö ä asterix                                          np4 np5 np6\
     shiftl less z x c v b n m comma perioid minus shiftr     up                 np1 np2 np3\
     lctrl func alt space altgr fn set rctrl             left down right         np0 decimal count\
+    m_logo m_thumb m_other1 m_other2
     )
+
+# declare -a mouse_keytable=(\
+#     logo thumb
+#     )
 
 corsair.get_key_id () {
 
