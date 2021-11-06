@@ -274,8 +274,8 @@ note.add_change () {
     [[ "$2" ]] && _author="$2"
 
     # add header if not exist
-    if ! grep "## Change log" "$note" >/dev/null ; then
-            printf  "\n\n## Change log\n\n" >>$note
+    if ! grep "**Change log**" "$note" >/dev/null ; then
+            printf  "\n\n**Change log**\n\n" >>$note
             printf  "%-17s | %-10s | %-30s \n" "Date" "Author" "Changes" >>$note
             printf "%s|:%s:|%s\n" "$(_line 18)" "$(_line 10)" "$(_line 30)" >>$note
         fi
