@@ -25,22 +25,22 @@ convert.main () {
 				convert.$format $@
 				return $?
 				;;
-			*)
-				# check chat format user is targeting, lazy
-				if grep "webp" <<< $format >/dev/null ; then
-						convert.webp $format $@
-						return $?
-					fi
-				if grep "webm" <<< $format >/dev/null ; then
-						convert.webm $format $@
-						return $?
-					fi
-				if grep "mkv" <<< $format >/dev/null ; then
-						convert.mkv $format $@
-						return $?
-					fi
-				;;
-			"")  gmsg -c yellow "unknown format $format"
+			*) 	gmsg -c yellow "unknown format $format"
+				# # check what format user is targeting, lazy
+				# if grep "webp" <<< $format >/dev/null ; then
+				# 		convert.webp $format $@
+				# 		return $?
+				# 	fi
+				# if grep "webm" <<< $format >/dev/null ; then
+				# 		convert.webm $format $@
+				# 		return $?
+				# 	fi
+				# if grep "mkv" <<< $format >/dev/null ; then
+				# 		convert.mkv $format $@
+				# 		return $?
+				# 	fi
+				# ;;
+			# "")  gmsg -c yellow "unknown format $format"
 		esac
 	return 0
 }
