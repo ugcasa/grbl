@@ -272,13 +272,13 @@ convert.dokuwiki () {
                 gmsg -c yellow "no files found"
             fi
 
-        local rand=""
+        # local rand=""
         local _format="txt"
         local files_done=()
 
         for file in ${found_files[@]} ; do
 
-                rand=""
+                # rand=""
                 file_base_name=${file%%.*}
 
                 gmsg -v3 -c aqua "$file_base_name" -k $convert_indicator_key
@@ -289,24 +289,16 @@ convert.dokuwiki () {
                         continue
                     fi
 
-                # convert
-                #msg -n -c light_blue "$file_base_name$rand.${_format}.. "
-                gmsg -n -v2 "converting "
-                gmsg -n -c light_blue "$file "
+                gmsg -n -v2 -c light_blue "$file "
 
                 # there is a file with same name
-                if [[ -f "$file_base_name.${_format}" ]] ; then
-                        rand="$(date +%s%N | cut -b10-13)"
-                        [[ $GURU_FORCE ]] || file_base_name="$file_base_name-$rand"
-                        gmsg -v2 -n "to $file_base_name.${_format} "
-                    fi
-
-                # pandoc -s -r html https://www.dokuwiki.org/tips:htmltowiki -t dokuwiki > tips.txt
-                # md2doku -o $file_base_name.${_format} $file
-                # pandoc -s -r markdown -t dokuwiki $file > $file_base_name.${_format}
+                # if [[ -f "$file_base_name.${_format}" ]] ; then
+                #         rand="$(date +%s%N | cut -b10-13)"
+                #         gmsg -v2 -n "to $file_base_name.${_format} "
+                #     fi
 
                 if pandoc -s -r markdown -t dokuwiki $file > $file_base_name.${_format} ; then
-                        gmsg -c green "ok" -k $convert_indicator_key
+                        gmsg -v2 -c green "converted" -k $convert_indicator_key
 
                         if grep "tag: " $file -q ; then
                                 tag="{{tag>$(grep 'tag: ' $file | cut -d ' ' -f2-)}}"
@@ -323,9 +315,9 @@ convert.dokuwiki () {
             done
 
             ## publish prototype hardcoded for notes tbd create publish.sh module
-            local option=
 
             if ! [[ ${files_done[0]} ]] ; then
+                    gmsg -c reset "nothing to do" -k $convert_indicator_key
                     return 0
                 fi
 
@@ -336,28 +328,28 @@ convert.dokuwiki () {
                     cd $GURU_BIN
                     if ! timeout -k 10 10 ./mount.main wikipages ; then
                             gmsg -c red "mount failed: $?" -k $convert_indicator_key
-                            return 123
+                            return 122
                         fi
                 fi
 
-            gmsg -n -V2 "${#files_done[@]} file(s) "
+            local option="-a --ignore-existing "
+            local message="up tp date "
+
+            if [[ $GURU_FORCE ]] ; then
+                    option="--recursive --delete "
+                    message="updated (force)"
+                fi
+
+            (( $GURU_VERBOSE >= 1)) && option="--progress $option "
+
+            gmsg -n -v1 "${#files_done[@]} file(s) "
             gmsg -n -v2 -c light_blue "${files_done[@]} "
             gmsg -n -v2 "to $GURU_MOUNT_WIKIPAGES/notes.. "
 
-            if [[ $GURU_FORCE ]] ; then option="-f"
-                fi
+            rsync $option ${files_done[@]} $GURU_MOUNT_WIKIPAGES/notes
 
-            if cp $option ${files_done[@]} "$GURU_MOUNT_WIKIPAGES/notes" ; then
-
-                    gmsg -c green "published" -k $convert_indicator_key
-                    rm ${files_done[@]}
-                else
-                    gmsg -c red "copy failed: $?" -k $convert_indicator_key
-                    return 123
-                fi
-
-            return 0
-
+            gmsg -v2 -c green "$message" -k $convert_indicator_key
+            rm ${files_done[@]}
 }
 
 
