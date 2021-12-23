@@ -319,28 +319,41 @@ convert.dokuwiki () {
                         gmsg -c red "failed: $?" -k $convert_indicator_key
                     fi
 
-                # force remove original if convert success
-                # [[ $GURU_FORCE ]] && [[ $file_base_name$rand.${_format} ]] && rm $file_base_name.mkv
-                if ! [[ -d $GURU_MOUNT_WIKIPAGES ]] ; then
-                        cd $GURU_BIN
-                        timeout -k 10 10 ./guru mount wikipages
-                    fi
-
 
             done
 
-            # tbd ask user or -f copy to local wiki or not?
-            if [[ ${files_done[0]} ]] ; then
-                    gmsg -n -V2 "${#files_done[@]} file(s) "
-                    gmsg -n -v2 -c light_blue "${files_done[@]} "
-                    gmsg -n -v2 "to $GURU_MOUNT_WIKIPAGES/notes.. "
-                    if cp -f ${files_done[@]} "$GURU_MOUNT_WIKIPAGES/notes" ; then
-                            gmsg -c green "published" -k $convert_indicator_key
-                            rm ${files_done[@]}
-                        else
-                            gmsg -c red "copy failed: $?" -k $convert_indicator_key
+            ## publish prototype hardcoded for notes tbd create publish.sh module
+            local option=
+
+            if ! [[ ${files_done[0]} ]] ; then
+                    return 0
+                fi
+
+            # force remove original if convert success
+            # [[ $GURU_FORCE ]] && [[ $file_base_name$rand.${_format} ]] && rm $file_base_name.mkv
+            if ! [[ -d $GURU_MOUNT_WIKIPAGES ]] ; then
+                    source mount.sh
+                    cd $GURU_BIN
+                    if ! timeout -k 10 10 ./mount.main wikipages ; then
+                            gmsg -c red "mount failed: $?" -k $convert_indicator_key
                             return 123
                         fi
+                fi
+
+            gmsg -n -V2 "${#files_done[@]} file(s) "
+            gmsg -n -v2 -c light_blue "${files_done[@]} "
+            gmsg -n -v2 "to $GURU_MOUNT_WIKIPAGES/notes.. "
+
+            if [[ $GURU_FORCE ]] ; then option="-f"
+                fi
+
+            if cp $option ${files_done[@]} "$GURU_MOUNT_WIKIPAGES/notes" ; then
+
+                    gmsg -c green "published" -k $convert_indicator_key
+                    rm ${files_done[@]}
+                else
+                    gmsg -c red "copy failed: $?" -k $convert_indicator_key
+                    return 123
                 fi
 
             return 0
