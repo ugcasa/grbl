@@ -81,12 +81,15 @@ tunnel.status () {
         fi
 
     # list of tunnels all verbose levels
-    [[ $GURU_VERBOSE -gt 0 ]] && tunnel.ls
+    [[ $GURU_VERBOSE ]] && tunnel.ls
 
     # indicate user if active tunnels
     if ps -x | grep -v grep | grep "ssh -L " | grep localhost >/dev/null; then
-            gmsg -v4 -c aqua "active tunnels detected" -k $tunnel_indicator_key
+            gmsg -n -v4 -c aqua "active tunnels" -k $tunnel_indicator_key
+        else
+            gmsg -n -v4 -c reset "no active tunnels"
         fi
+    echo
     return 0
 }
 
