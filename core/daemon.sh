@@ -78,9 +78,9 @@ daemon.start () {
     # staart daemon
 
     if [[ -f "$daemon_pid_file" ]] ; then
-            local _pid=$(cat "$daemon_pid_file")
-            gmsg -v2 "${FUNCNAME[0]}: killing $_pid"
-            kill -9 $_pid
+            local last_pid=$(cat "$daemon_pid_file")
+            gmsg -v2 "${FUNCNAME[0]}: killing $last_pid"
+            kill -9 $last_pid
         fi
 
     if system.suspend flag ; then
@@ -223,7 +223,7 @@ daemon.poll () {
                 system.flag rm suspend
             fi
 
-        # if paused stay here 300 seconds
+        # if paused
         if system.flag pause ; then
                 gmsg -N -t -v1 -c yellow "daemon paused "
                 gindicate pause $daemon_indicator_key
