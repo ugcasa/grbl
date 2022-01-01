@@ -75,22 +75,24 @@ backup.main () {
 backup.config () {
     # get tunnel configuration an populate common variables
 
-    declare -ga backup_name=($1)
-    declare -la header=(store method from ignore)
-    declare -ga active_list=(${GURU_BACKUP_DAILY[@]} ${GURU_BACKUP_WEEKLY[@]} ${GURU_BACKUP_MONTHLY[@]})
-    declare -g backup_indicator_key="f$(daemon.poll_order backup)"
-
     # check is enabled
     if ! [[ $GURU_BACKUP_ENABLED ]] ; then
             gmsg -c dark_grey "backup module disabled"
             return 1
         fi
 
+    # declare of global variables
+    declare -ga active_list=(${GURU_BACKUP_DAILY[@]} ${GURU_BACKUP_WEEKLY[@]} ${GURU_BACKUP_MONTHLY[@]})
+
     # exit if not in list
     if ! echo "${active_list[@]}" | grep "$backup_name" >/dev/null ; then
         gmsg -c yellow "no configuration for backup $backup_name"
         return 2
         fi
+
+    declare -ga backup_name=($1)
+    declare -la header=(store method from ignore)
+    declare -g backup_indicator_key="f$(daemon.poll_order backup)"
 
     gmsg -v3 -c white "active_list: ${active_list[@]}"
 
@@ -168,19 +170,21 @@ backup.status () {
     local diff=$(( $epic_backup - $(date '+%s') ))
 
     # indicate backup time
-    if [[ $diff -lt 3600 ]] ; then
-        # indicate that backup will be done within a hour
+    if [[ $diff -lt 7200 ]] ; then
+        # indicate that backup will be done soon
         gmsg -n -v1 -c aqua_marine -k $backup_indicator_key \
             "scheduled backup at $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
         # indicate that that backup is very soon, ~minutes
         [[ $diff -lt $GURU_DAEMON_INTERVAL ]] && gmsg -n -v1 -c deep_pink -k $backup_indicator_key \ "($diff seconds)"
         echo
+        return 0
     else
-        # all fine, no backup soon
+        # all fine, no cheduled backup in few hours
         gmsg -n -v1 -c green -k $backup_indicator_key "on service "
-        gmsg -v1 -c reset "next backup $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
+        gmsg -v1 "next backup $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
+        return 0
     fi
-    return 0
+
 }
 
 
@@ -201,6 +205,7 @@ backup.ls () {
     for source in ${GURU_BACKUP_DAILY[@]} ; do
             gmsg -n -c light_blue "$source"
         done
+    echo
 
     return 0
 }
@@ -214,7 +219,7 @@ backup.at () {
     [[ $1 ]] && local backup_time=$1 || read -p "backup time (H:M): " backup_time
     shift
 
-    local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
+    local backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
 
     [[ -d $backup_data_folder ]] || mkdir -p $backup_data_folder
 
@@ -264,9 +269,9 @@ backup.restore () {
                 echo "TBD git server backup restore"
                 ;;
         *)      gmsg -c yellow "unknown method '$backup_method'"
+                return 127
     esac
 
-    return 127
 }
 
 
@@ -556,12 +561,13 @@ backup.scheduled () {
 
         local schedule=$1
         local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
-        local epic_backup=$(cat $backup_data_folder/next)
 
         # if not shedule file, return
         if ! [[ -f $backup_data_folder/next ]] ; then
             return 0
         fi
+
+        local epic_backup=$(cat $backup_data_folder/next)
 
         # if not shedule file, return
         if [[ $(date '+%s') -lt $epic_backup ]] ; then
@@ -574,10 +580,12 @@ backup.scheduled () {
 
         # chedule next backup
         if [[ $_error -lt 100 ]] ; then
-            epic_backup=$(( $epic_backup + 86400))
-            echo $epic_backup > $backup_data_folder/next
+            # epic_backup=$(( $epic_backup + 86400))
+            # echo $epic_backup > $backup_data_folder/next
+            echo $(( $epic_backup + 86400)) > $backup_data_folder/next
+
             gmsg -c white \
-                "next backup scheduled to $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
+                "next backup scheduled to $(date -d @$(cat $backup_data_folder/next) '+%d.%m.%Y %H:%M')"
             return $_error
         fi
 }
@@ -598,7 +606,7 @@ backup.poll () {
             ;;
         status )
             backup.status
-            backup.scheduled all
+            backup.scheduled daily
             ;;
         *)  gmsg -c dark_grey "function not written"
             return 0
@@ -618,7 +626,7 @@ backup.install () {
 backup.remove () {
     # remove stuff
 
-    gmsg "no point ro remove so basic tools.."
+    gmsg "no point to remove so basic tools.."
     return 0
 }
 
