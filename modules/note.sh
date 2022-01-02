@@ -197,12 +197,26 @@ note.add () {
     [[  -d "$GURU_MOUNT_TEMPLATES" ]] || mkdir -p "$GURU_MOUNT_TEMPLATES"
 
     if [[ ! -f "$note" ]]; then
+
+            printf "$note\n\n" >$note
+
+            # add calendar blog
+            if [[ -f $GURU_BIN/cal.sh ]] ; then
+                    source cal.sh
+                    printf "\n"'```calendar'"\n" >>$note
+                    cal.main notes | grep -v $(date -d now +%Y) >>$note
+                    printf '```'"\n" >>$note
+                fi
+
             # header
-            printf "$note\n\n# $GURU_NOTE_HEADER $nice_datestamp\n\n" >$note
+            printf "\n\n# $GURU_NOTE_HEADER $nice_datestamp\n\n" >>$note
+
             # template
             [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note
+
             # changes table
             note.add_change "created"
+
             # tags
             tag.main "$note" add "note $(date +$GURU_FORMAT_FILE_DATE)"
             return 0
@@ -337,31 +351,7 @@ note.office () {
 
 note.web () {
     # created html of given days note
-
-    # check is note and template folder mounted, mount if not
-    note.online || note.remount
-
-    if [[ "$1" ]] ; then
-            _date=$(date +$GURU_FORMAT_FILE_DATE -d $1)
-        else
-            _date=$(date +$GURU_FORMAT_FILE_DATE)
-        fi
-
-    note.config "$_date"
-
-    echo "$_date:$note_file:$note:${note%%.*}.odt"
-
-    if [ -f "$note" ]; then
-            template="ujo.guru"
-            pandoc "$note" --reference-odt="$GURU_MOUNT_TEMPLATES/$template-template.odt" \
-                    -f markdown -o  "${note%%.*}.odt"
-        else
-            echo "no note for $(date +$GURU_FORMAT_DATE -d $1)"
-            return 123
-        fi
-
-    $GURU_OFFICE_DOC "${note%%.*}.odt" &
-    echo "report file: ${notefile%%.*}.odt"
+    echo TBD
 }
 
 ################## daemon functions #####################
