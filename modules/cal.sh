@@ -1,23 +1,27 @@
 #!/bin/bash
-# guru-client calender playground casa@ujo.guru 2022
+# guru-client calendar playground casa@ujo.guru 2022
 
 source $GURU_BIN/common.sh
 
 cal.help () {
     # general help
-    gmsg -v1 -c white "guru-client calender help "
+    gmsg -v1 -c white "guru-client calendar help "
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL cal mounth(s) year mounth(s) ..."
+    gmsg -v1  "printout month date numbers to std and clipboard"
+    gmsg -v0 "usage:    $GURU_CALL cal months|days|year <wide|single> <year> <month_list> <year> <month_list> "
     gmsg -v2
     gmsg -v1 -c white "commands: "
-    gmsg -v1 " mounths  printout  "
-    gmsg -v2 "          varies typos are accepted"
-    gmsg -v3 "          mouths, mouths, moutht, mouths, mounts, mounth"
-    gmsg -v2 " help     printout this help "
+    gmsg -v1 " year         printout year full of month date numbers "
+    gmsg -v1 " months       printout day number list of given months "
+    gmsg -v2 "    wide|single     wide it three on row, single just one month"
+    gmsg -v1 " year-ahead   print rest of year dates"
+    gmsg -v1 " days         same but no different than upper one "
+    gmsg -v2 " help         printout this help "
     # TBD gmsg -v3 " poll start|end           start or end module status polling "
     gmsg -v2
     gmsg -v1 -c white "example: "
-    gmsg -v1 "   $GURU_CALL cal 4 5 2020 4 5 2100 4 5"
+    gmsg -v1 "   $GURU_CALL cal months 1 2 2005 2 3 1917 3 4"
+    gmsg -v1 "   $GURU_CALL cal days wide "
     gmsg -v2
 }
 
@@ -29,75 +33,112 @@ cal.main () {
 
     case "$command" in
 
-        days|mouth|moutht|mounth)
-            cal.months $@
-            ;;
-
-        months|mouths|mouths|mouths|mounts)
-            cal.months $@
+        days|mouth|months)
+            cal.print_month $@
             ;;
 
         year)
             local year=$(date -d now +%Y)
             [[ $1 ]] && year=$1
-            cal.months wide $year 2 6 9 12
+            cal.print_month no-highlight $year 2 5 8 11
+            ;;
+
+        year-ahead)
+            local year=$(date -d now +%Y)
+            [[ $1 ]] && year=$1
+
+            local month_list=()
+
+            for (( i = ($(date -d now +%m) + 1) ; i < 12 ; i=$i + 3 )); do
+                month_list[${#month_list[@]}]=$i
+            done
+
+            cal.print_month no-highlight $year ${month_list[@]}
             ;;
 
         *)
             cal.help
             ;;
+
         esac
+
     return 0
 }
 
 
 
-cal.months () {
-    # mouth caleder printout
+cal.print_month () {
+    # calendar table of month days
+    # wide/single (optional)
+    # and a list of month numbers and years
 
     local year=$(date -d now +%Y)
-    local list=$(date -d now +%m)
+    local month=$(date -d now +%m)
+    local list=
     local item=
-    local month=
+    local next_item=
+
+    # limited style selection
     local _style=
+
     case $1 in
         single) _style='-1' ; shift ;;
         wide)   _style='-3' ; shift ;;
+        no-highlight)   _style='-h -3' ; shift ;;
     esac
 
-
+    # take given list of years and months
     [[ $@ ]] && list=($@)
 
-    for (( i = 0; i < ${#list[@]}; i++ )); do
+    # go that trough
+    for (( i = 0 ; i < ${#list[@]} ; i++ )) ; do
 
         item=${list[$i]}
-        next_item=${list[$i+1]}
 
-        if (( item > 12 )) ; then
+        if (( item < 13 )) ; then
 
-            year=$item
-
-            if [[ ${list[$i+1]} ]] && (( next_item < 13 ))  ; then
-                month=
-                continue
-            else
-                month=
-            fi
+            # item is a month
+            month=$item
 
         else
+            # item is a year
+            year=$item
+            next_item=${list[$i+1]}
 
-            month=$item
+            if (( next_item > 0 )) && (( next_item < 13 )) ; then
+                # just change year, skip printout
+                month=
+                #_style=
+
+                continue
+            else
+                # only year given, print whole year
+                month=
+                _style=
+            fi
         fi
 
+        gmsg -v3 -c dark_grey "style=$_style month=$month year=$year"
+        gmsg -v3 -c dark_grey "list=(${list[@]}) item=$item"
+
+        # save to wait
         ncal -s FI -w -b -M -h $_style $month $year  >> /tmp/cal.tmp
+
+        # print to user
         echo
-        ncal -s FI -w -b -M $_style $month $year
+        ncal -s FI -w -b -M $_style $month $year | grep -v $year
 
     done
 
-    cat /tmp/cal.tmp | xclip -i -selection clipboard
-    rm -f /tmp/cal.tmp
+    # printout all matches and remove tracks
+    cat /tmp/cal.tmp | xclip -i -selection clipboard || return 100
+    rm -f /tmp/cal.tmp && return 0
+}
 
+
+cal.install () {
+
+    sudo apt update && sudo apt install calcurse
 }
 
 
