@@ -3,6 +3,9 @@
 
 source $GURU_BIN/common.sh
 
+declare -g clipboard_flag=true
+declare -g temp_file="/tmp/cal.tmp"
+
 cal.help () {
     # general help
     gmsg -v1 -c white "guru-client calendar help "
@@ -35,6 +38,19 @@ cal.main () {
 
         days|mouth|months)
             cal.print_month $@
+            ;;
+
+        notes)
+            local _month=
+            if [[ $1 ]] ; then
+                    _month=$1
+                    shift
+                else
+                    _month=$(date -d now +%m)
+            fi
+            [[ $GURU_FORCE ]] || clipboard_flag=
+            cal.print_month note $_month $@
+
             ;;
 
         year)
@@ -82,9 +98,10 @@ cal.print_month () {
     local _style=
 
     case $1 in
-        single) _style='-1' ; shift ;;
-        wide)   _style='-3' ; shift ;;
+        single)         _style='-1' ; shift ;;
+        wide)           _style='-3' ; shift ;;
         no-highlight)   _style='-h -3' ; shift ;;
+        note)           _style='-h -A 2 ' ; shift ;;
     esac
 
     # take given list of years and months
@@ -122,17 +139,23 @@ cal.print_month () {
         gmsg -v3 -c dark_grey "list=(${list[@]}) item=$item"
 
         # save to wait
-        ncal -s FI -w -b -M -h $_style $month $year  >> /tmp/cal.tmp
+        if [[ $clipboard_flag ]] ; then
+            ncal -s FI -w -b -M -h $_style $month $year >> $temp_file
+        fi
 
         # print to user
-        echo
-        ncal -s FI -w -b -M $_style $month $year | grep -v $year
+        gmsg -v2
+        ncal -s FI -w -b -M $_style $month $year
 
     done
 
     # printout all matches and remove tracks
-    cat /tmp/cal.tmp | xclip -i -selection clipboard || return 100
-    rm -f /tmp/cal.tmp && return 0
+    if [[ -f $temp_file ]] ; then
+        cat $temp_file | xclip -i -selection clipboard || return 100
+        rm -f $temp_file && return 0
+    fi
+
+    return 0
 }
 
 

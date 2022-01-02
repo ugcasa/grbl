@@ -39,7 +39,7 @@ backup_rc="$HOME/.bashrc.backup-by-guru"
 # modules where user have direct access
 core_module_access=(counter install uninstall config mount unmount daemon keyboard system path)
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news program tmux tunnel corsair backup convert telegram)
+modules_to_install=(mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news program tmux tunnel corsair backup convert telegram cal)
 
 install.main () {
 
@@ -530,7 +530,8 @@ install.config () {
     # config
     if ! [[ -f "$TARGET_CFG/$GURU_USER/user.cfg" ]] ; then
          gmsg -c yellow "user specific configuration not found, using default.."
-         cp -f $TARGET_CFG/user-default.cfg "$TARGET_CFG/$GURU_USER/user.cfg" || gmsg -c red -x 181 "default user configuration failed"
+         cp -f $TARGET_CFG/user-default.cfg "$TARGET_CFG/$GURU_USER/user.cfg" \
+            || gmsg -c red -x 181 "default user configuration failed"
     fi
 
     # post install configure
