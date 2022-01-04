@@ -291,11 +291,19 @@ convert.dokuwiki () {
 
                 gmsg -n -v2 -c light_blue "$file "
 
-                # there is a file with same name
+                ## Fun block to write, magic room
+                # TBD flag or ghost to check is content modified in web interface
+                # TBD version file if upper situation, yes, shit way it is but easy and better then data loses
+
+                # check there is a file with same name and rand four digits blog to new file name
                 # if [[ -f "$file_base_name.${_format}" ]] ; then
                 #         rand="$(date +%s%N | cut -b10-13)"
                 #         gmsg -v2 -n "to $file_base_name.${_format} "
                 #     fi
+
+                # TBD create a temp file to ram that han cen modified (see new features)
+                # TBD remove all headers content with dot as first letter
+                # TBD remove all lines that start with dot
 
                 if pandoc -s -r markdown -t dokuwiki $file > $file_base_name.${_format} ; then
                         gmsg -v2 -c green "converted" -k $convert_indicator_key
@@ -326,7 +334,7 @@ convert.dokuwiki () {
             if ! [[ -d $GURU_MOUNT_WIKIPAGES ]] ; then
                     source mount.sh
                     cd $GURU_BIN
-                    if ! timeout -k 10 10 ./mount.main wikipages ; then
+                    if ! timeout -k 10 10 ./mount.sh wikipages ; then
                             gmsg -c red "mount failed: $?" -k $convert_indicator_key
                             return 122
                         fi
