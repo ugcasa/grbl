@@ -336,7 +336,7 @@ gask () {
     # just for showup ;)=
     if [[ GURU_CORSAIR_ENABLED ]] ; then
             source $GURU_BIN/corsair.sh
-            corsair.init yes-no
+            # corsair.init yes-no
         fi
 
     if [[ $kill_time ]] ; then

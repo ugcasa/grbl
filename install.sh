@@ -77,8 +77,10 @@ install.main () {
     # platform related stuff (flag: -p <platform>)
     case $install_platform in
             server|phone|raspi)
-                    install.$install_platform || gmsg -c yellow "warning: something went wrong while installing $install_platform" ;;
-            *)      install.desktop          || gmsg -c yellow "warning: something went wrong while installing $install_platform" ;;
+                    install.$install_platform \
+                        || gmsg -c yellow "warning: something went wrong while installing $install_platform" ;;
+            *)      install.desktop \
+                        || gmsg -c yellow "warning: something went wrong while installing $install_platform" ;;
         esac
 
     # Step 7) install modules

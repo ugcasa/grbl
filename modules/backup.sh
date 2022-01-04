@@ -82,17 +82,17 @@ backup.config () {
         fi
 
     # declare of global variables
+    declare -ga backup_name=($1)
     declare -ga active_list=(${GURU_BACKUP_DAILY[@]} ${GURU_BACKUP_WEEKLY[@]} ${GURU_BACKUP_MONTHLY[@]})
+    declare -la header=(store method from ignore)
+    declare -g backup_indicator_key="f$(daemon.poll_order backup)"
 
     # exit if not in list
     if ! echo "${active_list[@]}" | grep "$backup_name" >/dev/null ; then
-        gmsg -c yellow "no configuration for backup $backup_name"
+        gmsg -c yellow "no '$backup_name' in active backup list: '${active_list[@]}'"
+        gmsg -c yellow "no '$backup_name' in active backup list: '${active_list[@]}'"
         return 2
         fi
-
-    declare -ga backup_name=($1)
-    declare -la header=(store method from ignore)
-    declare -g backup_indicator_key="f$(daemon.poll_order backup)"
 
     gmsg -v3 -c white "active_list: ${active_list[@]}"
 
