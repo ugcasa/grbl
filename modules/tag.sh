@@ -54,17 +54,19 @@ tag.text () {
         _get_tags
 
         if [[ "$current_tags" ]] ; then
-            sed '2d' $tag_file_name  >temp_file.txt && mv -f temp_file.txt $tag_file_name
+            sed '2d' $tag_file_name > temp_file.txt \
+                && mv -f temp_file.txt $tag_file_name
         else
             current_tags="text ${tag_file_format,,} $GURU_USER $GURU_TEAM"
         fi
 
-        sed "2i\\tag: $current_tags ${_new_tags[@]}" "$tag_file_name" >"temp_file.txt" && mv -f "temp_file.txt" "$tag_file_name"
+        sed "2i\\tag: $current_tags ${_new_tags[@]}" "$tag_file_name" > "temp_file.txt" \
+            && mv -f "temp_file.txt" "$tag_file_name"
 
-        printf "%-17s | %-10s | %s \n" \
-            "$(date +$GURU_FORMAT_FILE_DATE)-$(date +$GURU_FORMAT_TIME)" \
-            "$GURU_USER" "tags ${_new_tags[@]} added" \
-            >>$tag_file_name
+        # printf "%-17s | %-10s | %s \n" \
+        #     "$(date +$GURU_FORMAT_FILE_DATE)-$(date +$GURU_FORMAT_TIME)" \
+        #     "$GURU_USER" "tags ${_new_tags[@]} added" \
+        #     >>$tag_file_name
     }
 
     _rm_tags () {
