@@ -50,7 +50,7 @@ note.help () {
     gmsg -v1 "  <tuesday>...   - open last week day notes "
     gmsg -v1 " tag            read or add tags to note file "
     gmsg -v1 " locate         returns file location of note given YYYYMMDD "
-    gmsg -v1 " report         open note with template to $GURU_OFFICE_DOC "
+    gmsg -v1 " report         open note with template to $GURU_PREFERRED_OFFICE_DOC "
     gmsg -v2
 }
 
@@ -198,7 +198,14 @@ note.add () {
 
     if [[ ! -f "$note" ]]; then
 
-            printf "$note\n\n" >$note
+            # print file location
+            printf "$note\n" >$note
+
+            # tag
+            printf "tag: note $GURU_USER $(date -d now +$GURU_FORMAT_FILE_DATE)\n" >>$note
+
+            # place template line 1 to third line
+            [[ -f "$template" ]] && cat "$template" | head -n1 "$template" >>$note
 
             # add calendar blog
             if [[ -f $GURU_BIN/cal.sh ]] ; then
@@ -212,13 +219,13 @@ note.add () {
             printf "\n\n# $GURU_NOTE_HEADER $nice_datestamp\n\n" >>$note
 
             # template
-            [[ -f "$template" ]] && cat "$template" >>$note || printf "customize your template to $template" >>$note
+            [[ -f "$template" ]] && cat "$template"  |tail -n+2 >>$note || printf "customize your template to $template" >>$note
 
             # changes table
             note.add_change "created"
 
             # tags
-            tag.main "$note" add "note $(date +$GURU_FORMAT_FILE_DATE)"
+            #tag.main "$note" add "note $(date +$GURU_FORMAT_FILE_DATE)"
             return 0
         fi
 }
@@ -337,14 +344,14 @@ note.office () {
 
     if [ -f "$note" ]; then
             template="ujo.guru"
-            pandoc "$note" --reference-odt="$GURU_MOUNT_TEMPLATES/$template-template.odt" \
+            pandoc "$note" --reference-doc="$GURU_MOUNT_TEMPLATES/$template-template.odt" \
                     -f markdown -o  "${note%%.*}.odt"
         else
             echo "no note for $(date +$GURU_FORMAT_DATE -d $1)"
             return 123
         fi
 
-    $GURU_OFFICE_DOC "${note%%.*}.odt" &
+    $GURU_PREFERRED_OFFICE_DOC "${note%%.*}.odt" &
     echo "report file: ${notefile%%.*}.odt"
 }
 
