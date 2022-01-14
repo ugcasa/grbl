@@ -159,9 +159,139 @@ cal.print_month () {
 }
 
 
+cal.setup_caldav () {
+    #
+    declare config_file="/home/casa/.calcurse/caldav/config"
+    declare config_folder=${config_file%%/*}
+    local open_fox=true
+
+    # install httplib2 and oauth2client for Python 3 using pip
+    # pip3 install --user httplib2 oauth2client
+    cal.install
+
+    [[ -d $config_folder ]] || mkdir -p $config_folder
+
+    touch $config_file \
+        && gmsg -c green "ok" \
+        || gmsg -c yellow "config file creation error: $?"
+
+    gmsg "tip: when creating project Scope: I did give all rights, but owned files rwd, other rw is better"
+    gmsg "will open links with firefox. to see links use verbose level 2 '-v2'"
+    gmsg "just print guide and exit pres 'q' "
+
+    read -p "ready to go?" got
+
+    case got in
+            q|Q|quit|exit) open_fox= ;;
+        esac
+
+    gmsg -c white "1) sing in to google account wanna use"
+    gmsg -v2 -c light_blue "https://myaccount.google.com/"
+    [[ $open_fox ]] && firefox "https://myaccount.google.com/"
+
+    gmsg -c white "2) go to google cloud-resource-manager and Create a Project"
+    gmsg -v2 -c light_blue "https://console.cloud.google.com/cloud-resource-manager"
+    [[ $open_fox ]] && firefox "https://console.cloud.google.com/cloud-resource-manager"
+
+    gmsg -c white "3) install caldav api "
+    gmsg -v2 -c light_blue "https://console.cloud.google.com/apis/library/caldav.googleapis.com"
+    [[ $open_fox ]] && firefox "https://console.cloud.google.com/apis/library/caldav.googleapis.com"
+
+    gmsg -c white "4) go and create credentials for OAuth 2.0 Client IDs "
+    gmsg -v2 -c light_blue "https://console.cloud.google.com/projectselector2/projectselector/apis/credentials"
+    [[ $open_fox ]] && firefox "https://console.cloud.google.com/projectselector2/projectselector/apis/credentials"
+
+    gmsg -c white "5) get the 'OAuth 2.0 Client ID and place it to guru-cli user.cfg"
+    # CALCURSE_CALDAV_PASSWORD=$(pass show calcurse) calcurse-caldav
+    # TBD secrets.cfg
+    read -p "let me do it?" yes_man
+
+    case yes_man in
+            y|Y|Yes|yes|yep|YES)
+
+            read -p "gimmy your ID: " tha_id
+            local user_conf="$GURU_CFG/$GURU_USER/user.cfg"
+
+            cat $user_conf | grep google] \
+                || printf "\n[google]\n" >>$user_conf
+
+            cat $user_conf | grep caldav_id= \
+                && gmsg -c yellow "already set, change manually from $user_conf"
+                || printf "caldav_id=$tha_id\n" >>$user_conf
+
+            # take configuration in use
+            source config.sh
+            config.export
+
+            ;;
+            *) gmsg -c pink "no bad man, add your self, it fine, here's file: $user_conf"
+               gmsg "go or add '[google]' chapter and fill variable 'caldav_id=with_your_ID'"
+               gmsg "then save and run '$GURU_CALL export config'"
+        esac
+
+    gmsg -c white "6) ready to download stuff from server, all local data will be overwritten. press crtl+c if not sure"
+    read -p "ready to go?" got
+    sleep 3
+    calcurse-caldav --init keep-remote --authcode $GURU_GOOGLE_CALDAV_ID
+}
+
+
+cal.sync_remote () {
+    # two-way       - Copy local objects to the CalDAV server and vice versa
+    # keep-remote   - Remove all local calcurse items and import remote objects
+    # keep-local    - Remove all remote objects and push local calcurse items
+
+    local method="keep-local"
+    [[ $1 ]] && method=$1
+    local backup_location="/tmp/calcurse-backup"
+    local local_folder="/home/casa/.calcurse"
+    local files=(apts todo)
+    local did_mount=
+
+    # check that mount location exist
+    if [[ -d ${GURU_BACKUP_FILES[2]} ]] ; then
+
+        backup_location="${GURU_BACKUP_FILES[2]}/${GURU_BACKUP_FILES[3]}"
+
+    else
+
+        if gio mount -d ${GURU_BACKUP_FILES[0]} ${GURU_BACKUP_FILES[2]} ; then
+                gmsg -c green "mounted to ${GURU_BACKUP_FILES[2]}"
+                did_mount=true
+                backup_location="${GURU_BACKUP_FILES[2]}/${GURU_BACKUP_FILES[3]}"
+            else
+                mkdir -p "$backup_location"
+            fi
+    fi
+
+    # make backup folder (contains year so can be non exist)
+    [[ -d $backup_location ]] || mkdir -p $backup_location
+
+    backup_location="$backup_location/calcurse-$(date -d now +%s)"
+    mkdir "$backup_location"
+
+    for file in ${files[@]} ; do
+            gmsg "$file -> $backup_location"
+            cp "$local_folder/$file" "$backup_location"
+        done
+
+    # to only get stuff from härvel go:
+
+    calcurse-caldav --authcode $GURU_GOOGLE_CALDAV_ID
+
+    if [[ $did_mount ]] ; then
+            gio mount -u ${GURU_BACKUP_FILES[2]}
+        fi
+    #return $?
+}
+
+
 cal.install () {
 
     sudo apt update && sudo apt install calcurse
+
+    # install httplib2 and oauth2client for Python 3 using pip
+    pip3 install --user httplib2 oauth2client
 }
 
 
