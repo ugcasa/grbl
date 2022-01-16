@@ -106,7 +106,7 @@ $HOME/bin/uninstall.sh
 
 ## getting account to ujo.guru server
 
-Cause of global cyber security state after yaer 2018.
+Cause of global cyber security state after year 2018.
 
 Not available.
 Ever.
