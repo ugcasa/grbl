@@ -1,16 +1,23 @@
 #!/bin/bash 
-# webp to png multible files
-# guru archive formats
+# convert file to another formats. Wrap around for good known stand stone: pandoc, imagemagic, dwebp, ffmpeg ..
+# guru preferred archive formats TBD config what to want from user.cfg
+# for now hard written as following:
 #  all images -> png
-#  all videfo -> mp4
+#  all video  -> mp4
 #  all photos -> jpg
-# tbd remve: paljon toistoa, saisi tehtyä yhden installeri funktion
-# tuntuu olevan tarpeeksi samankaltaisia nuo asennustavat
+
+# TODO: paljon toistoa, saisi tehtyä yhden installeri funktion. tuntuu olevan tarpeeksi samankaltaisia nuo asennustavat
 
 source common.sh
 
 convert.main () {
     # convert format parser
+    # TBD: analysis: from - to periaate oletuksilla?
+    #   input filun formaatti kun on tiedossa niin output kiinnostelee
+    #   gr convert dokuwiki, oletus = to_dokuwiki = ok
+    #   gr convert markdown, oletus = to_markdown oli input ketä vaan jos from ja to löytyy = ok
+    #   kerii listan jos ei inputtia määritelty
+    # new shit: nielee myös option '--i as input_file' ja '--f as format' jos filun nimestä ei selkene (TBD core.sh second level options: upvote!)
 
     local format=$1
     shift
@@ -18,15 +25,15 @@ convert.main () {
     case $format in
 
             # list of supported input formats
-            webp|webm|mkv)
+            webp|webm|mkv|a)
                 ##convert.install
-                convert.$format $@
+                convert.from_$format $@
                 return $?
                 ;;
             # list of supported output formats
-            dokuwiki)
+            dokuwiki|png)
                 ##convert.install
-                convert.$format $@
+                convert.to_$format $@
                 return $?
                 ;;
 
@@ -72,9 +79,12 @@ convert.help () {
 }
 
 
-## TBD issue #59 make one convert.format <format> all there three are almost identical
 
-convert.webp () {
+## convert from methods. Always convert to png
+
+# TBD issue #59 make one convert.format <format> all there three are almost identical
+
+convert.from_webp () {
     # convert all webp in folder of given file
 
     if [[ $1 ]] ; then
@@ -138,7 +148,7 @@ convert.webp () {
 }
 
 
-convert.webm () {
+convert.from_webm () {
 
     local convert_indicator_key="f$(daemon.poll_order convert)"
 
@@ -191,7 +201,7 @@ convert.webm () {
 }
 
 
-convert.mkv () {
+convert.from_mkv () {
 
     local convert_indicator_key="f$(daemon.poll_order convert)"
 
@@ -244,7 +254,9 @@ convert.mkv () {
 }
 
 
-convert.dokuwiki () {
+## convert to methods
+
+convert.to_dokuwiki () {
 
     local convert_indicator_key="f$(daemon.poll_order convert)"
     # input list of files to export, expects that input is "note ans pushes it to wiki/notes tbd fix next
@@ -367,7 +379,7 @@ convert.install () {
 
     # webp format support
     dwebp -version -quiet >/dev/null && \
-    ffmpeg -version -quiet >/dev/null && \
+    ffmpeg -version >/dev/null && \
         return 0
         ## tbd detox install check
 
