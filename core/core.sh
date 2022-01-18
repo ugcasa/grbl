@@ -2,24 +2,22 @@
 # guru-client core
 # casa@ujo.guru 2020 - 2022
 
-# global variables variable
+# global variables
 declare -x GURU_RC="$HOME/.gururc"
 declare -x GURU_BIN="$HOME/bin"
 declare -x GURU_VERSION=$(echo $(head -n1 $GURU_BIN/version) | tr -d '\n')
 
-#export GURU_SYSTEM_RESERVED_CMD=($GURU_SYSTEM_RESERVED_CMD)
-
-case "$1" in
-        ver|version|--ver|--version)
-            echo "guru-client v$GURU_VERSION"
-            exit 0
+# early exits
+case $1 in version)
+        echo $GURU_VERSION
+        exit 0
     esac
 
+# check that config rc file exits
 if [[ -f $GURU_RC ]] ; then
         source $GURU_RC
     else
         # run user configuration if not exist
-        # yes it needs it cause it is almost all what guru-client is, a my_configuration
         source $HOME/bin/config.sh
         config.main export $USER
         source $GURU_RC
@@ -30,30 +28,6 @@ if [[ -f $GURU_RC ]] ; then
 
 # everybody have daemons
 source $GURU_BIN/daemon.sh
-# TBD really? hmm.. yes I do..
-
-
-core.mount_system_base () {
-    # check is access point enabled and mount is not
-
-    # is access functionality enabled?
-    if ! [[ $GURU_ACCESS_ENABLED ]] ; then
-        return 1
-    fi
-
-    # is mount functionality enabled?
-    if ! [[ $GURU_MOUNT_ENABLED ]] ; then
-        return 2
-    fi
-
-    # is it already mounted?
-    if ! mount.online ; then
-        # get tools for mounting
-        source $GURU_BIN/mount.sh
-        # check and mount system folder mounted
-        mount.main system
-    fi
-}
 
 
 core.main () {
@@ -76,9 +50,12 @@ core.main () {
                     daemon.$module
                     return $? ;;
 
-            "")
-                    core.shell
+            help|version)
+                    core.$module
                     return $? ;;
+            # "")
+            #         core.shell
+            #         return $? ;;
 
             *)
                     core.run_module "$module" "$@"
@@ -114,99 +91,27 @@ core.pause () {
 }
 
 
-core.process_opts () {
-    # process first level options (given with one '-')
-
-    # default values of (to be as) global control variables
-    GURU_FORCE=
-    GURU_LOGGING=
-    GURU_HOSTNAME=$(hostname)
-    GURU_VERBOSE=$GURU_FLAG_VERBOSE
-    [[ $COLORTERM ]] \
-        && export GURU_COLOR=true
-
-    # go trough possible arguments if set or value is given, other vice use default
-    TEMP=`getopt --long -o "cCfh:lsu:v:" "$@"`
-    eval set -- "$TEMP"
-
-    while true ; do
-        case "$1" in
-            -c ) GURU_COLOR=true        ; shift     ;;
-            -C ) GURU_COLOR=false       ; shift     ;;
-            -f ) GURU_FORCE=true        ; shift     ;;
-            -h ) GURU_HOSTNAME=$2       ; shift 2   ;;
-            -l ) GURU_LOGGING=true      ; shift     ;;
-            -s ) GURU_VERBOSE=          ; shift     ;;
-            -u ) core.change_user "$2"  ; shift 2   ;;
-            -v ) GURU_VERBOSE=$2        ; shift 2   ;;
-            #-- ) echo "option selected $2"     ; shift 2   ;;
-             * ) break                  ;;
-        esac
-    done;
-
-    _arg="$@"
-
-    # can this use to deliver -- variables to modules, and even long options =) ?
-    # TBD i think better to make own
-
-    # from convert.sh:
-    # nielee myös option '--i as input_file' ja '--f as format' jos filun nimestä ei selkene (TBD core.sh second level options: upvote!)
-
-    # miks tää cleanup? mitä hyötyi kun sepa on space et toi trim ottaa spacet pois (eiks?) jos näi, mitä jiitä?
-    [[ "$_arg" != "--" ]] && ARGUMENTS="${_arg#* }" # || ARGUMENTS=$_arg
-
-    # meneekse nyt ihan  että kun vaan päästän läpi ja ignoreen tyhjyyden?
-    # mite se nyt käyttäytyy?
-    #   casa@electra#:~$ gr --help
-    #   getopt: unrecognized option '--help'
-    #   guru in shell mode (type 'help' enter for help)
-    #   casa@guru:~$
-    # päästää läpi ja kohtelee kun ilman argumenttia, jopa '--help'
-
-    # hmm..
-
-    # debug shit
-    gmsg -v4 "raw: $_arg"
-    gmsg -v4 "got: $ARGUMENTS"
-    gmsg -v4 "term: $COLORTERM||$COLORTERM"
-
-    # check if colors possible, and overwrite user input and user.cfg
-    #if echo "$TERM" | grep "256" >/dev/null ; then
-    if [[ $TERM != "xterm-256color" ]] || [[ $COLORTERM != "truecolor" ]]; then
-            export GURU_COLOR=
-        #if ! echo "$COLORTERM" | grep "true" >/dev/null ; then
-        #    fi
-        fi
-
-    # past control variables for following modules
-    export GURU_FORCE
-    export GURU_COLOR
-    export GURU_VERBOSE
-    export GURU_HOSTNAME
-    export GURU_LOGGING
-}
-
-
 core.run_module () {
     # check is input in module list and if so, call module main
 
     local type_list=(".sh" ".py" "")
+    local run_me=
+    # echo "core.run_module got: $@" # debug shit
 
     # check is given command in reserved words, if so change argument order
-    if ! grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
+    if grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
+            local function=$1 ; shift
             local module=$1 ; shift
             local command=$1 ; shift
-            local function=$1 ; shift
-            gmsg -v4 "non reserved word: $command"
+            # echo "reserved word: $command" # debug shit
          else
-            local function=$1 ; shift
             local module=$1 ; shift
             local command=$1 ; shift
-            gmsg -v4 "reserved word: $command"
+            local function=$1 ; shift
+            # echo "non reserved word: $command" # debug shit
         fi
 
-    # debug shit
-    gmsg -v4 "module:'$module' command:'$command' function:'$function' '$@'"
+    # echo "module:'$module' command:'$command' function:'$function' list:'$@'" # debug shit
 
     # go trough $modules if match do the $command and pas $function ans rest
     for _module in ${GURU_MODULES[@]} ; do
@@ -219,15 +124,18 @@ core.run_module () {
             for _type in ${type_list[@]} ; do
                     # module in recognized format found
                     if [[ -f "$GURU_BIN/$_module$_type" ]] ; then
-                            # do the shit
-                            $_module$_type $command $function $@
-                            # return what ever module did return
+                            # make command
+                            run_me="$_module$_type $command $function $@"
+
+                            # run the command and return what ever module did return
+                            # echo "running module: ${run_me[@]//  / }" # debug shit
+                            ${run_me[@]//  / }
                             return $?
                         fi
                 done
         done
 
-    gmsg -v1 "guru no recognize request '$module'"
+    echo "guru recognize no module named '$module'"
     return $?
 
     # if gask "passing to request to operating system?" ; then
@@ -254,28 +162,28 @@ core.run_module_function () {
             gmsg -v4 "reserved word: $command"
         fi
 
-    gmsg -v4 "module:'$module' command:'$command' function:'$function' '$@'"
+    # echo "module:'$module' command:'$command' function:'$function' '$@'" # debug shit
 
     for _module in ${GURU_MODULES[@]} ; do
-                if [[ "$_module" == "$module" ]] ; then
+            if [[ "$_module" == "$module" ]] ; then
 
-                    # include all module functions and run called
-                    if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
-                            source $GURU_BIN/$_module.sh
-                            $_module.main "$command" "$function" "$@"
-                            return $?
-                        fi
-                    # run one function in python script
-                    if [[ -f "$GURU_BIN/$_module.py" ]] ; then
-                            $_module.py "$command" "$function" "$@"
-                            return $?
-                        fi
-                    # run binaries
-                    if [[ -f "$GURU_BIN/$_module" ]] ; then
-                            $_module "$command" "$function" "$@"
-                            return $?
-                        fi
+                # include all module functions and run called
+                if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
+                        source $GURU_BIN/$_module.sh
+                        $_module.main "$command" "$function" "$@"
+                        return $?
                     fi
+                # run one function in python script
+                if [[ -f "$GURU_BIN/$_module.py" ]] ; then
+                        $_module.py "$command" "$function" "$@"
+                        return $?
+                    fi
+                # run binaries
+                if [[ -f "$GURU_BIN/$_module" ]] ; then
+                        $_module "$command" "$function" "$@"
+                        return $?
+                    fi
+                fi
         done
     # if here something went wrong, raise warning
     gmsg -v2 -c yellow "in core.run_module_function something went wrong when tried to run "$function" in '$module'"
@@ -289,21 +197,21 @@ core.multi_module_function () {
     local function_to_run=$1 ; shift
 
     for _module in ${GURU_MODULES[@]} ; do
-                gmsg -c dark_golden_rod "$_module $function_to_run"
+            gmsg -c dark_golden_rod "$_module $function_to_run"
 
-                # fun shell script module functions
-                if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
-                        source $GURU_BIN/$_module.sh
-                        $_module.main "$function_to_run" "$@"
-                    fi
-                # run python module functions
-                if [[ -f "$GURU_BIN/$_module.py" ]] ; then
-                        $_module.py "$function_to_run" "$@"
-                    fi
-                # run binary module functions
-                if [[ -f "$GURU_BIN/$_module" ]] ; then
-                        $_module "$function_to_run" "$@"
-                    fi
+            # fun shell script module functions
+            if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
+                    source $GURU_BIN/$_module.sh
+                    $_module.main "$function_to_run" "$@"
+                fi
+            # run python module functions
+            if [[ -f "$GURU_BIN/$_module.py" ]] ; then
+                    $_module.py "$function_to_run" "$@"
+                fi
+            # run binary module functions
+            if [[ -f "$GURU_BIN/$_module" ]] ; then
+                    $_module "$function_to_run" "$@"
+                fi
         done
 
     gmsg -v2 -c yellow "in core.multi_module_function something went wrong when tried to run "$function_to_run" in '$_module'"
@@ -329,70 +237,6 @@ core.change_user () {
         else
             gmsg -c yellow "user configuration not exits"
         fi
-}
-
-
-core.shell () {
-    # terminal loop
-    # TBD remove but save somewhere vote +1?
-
-    render_path () {
-            # TBD: path location shit is broken when long input, hard to solve. vote for remove +1?
-            local _path="$(pwd)"
-            if [[ "$_path" == "$HOME" ]] ; then _path='~' ; fi
-            local _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
-            local c_user=$(eval echo '$C_'"${GURU_COLOR_PATH_USER^^}")
-            local c_at=$(eval echo '$C_'"${GURU_COLOR_PATH_AT^^}")
-            local c_call=$(eval echo '$C_'"${GURU_COLOR_PATH_CALL^^}")
-            local c_sepa=$(eval echo '$C_'"${GURU_COLOR_PATH_SEPA^^}")
-            local c_dir=$(eval echo '$C_'"${GURU_COLOR_PATH_DIR^^}")
-            local c_input=$(eval echo '$C_'"${GURU_COLOR_PATH_INPUT^^}")
-
-            printf "$c_user$GURU_USER$c_at@$c_call$_GURU_CALL$c_sepa:$c_dir$_path$ $c_input"
-            gmsg -n -c normal
-        }
-
-    inc_verbose () {
-
-            (( _verbose<2 )) && let _verbose++
-            cmd=
-        }
-
-    dec_verbose () {
-            (( _verbose>0 )) && let _verbose--
-            cmd=
-        }
-
-
-    gmsg "$GURU_CALL in shell mode (type 'help' enter for help)"
-
-    local _verbose=1
-
-    while true ; do
-
-            # TBD config.hs: to update every time
-            # TBD faster method to apply config needed before this is possible
-            # config.export "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
-
-            # source current configuration
-            source $GURU_RC
-            GURU_VERBOSE=$_verbose
-
-            # set call name off for sub processes, affects some help content
-            local _GURU_CALL="$GURU_CALL"
-            GURU_CALL=
-
-            read -e -p "$(render_path)" "cmd"
-
-            case "$cmd" in exit|q|quit)  break ;;
-                                     '+')  inc_verbose ;;
-                                     '-')  dec_verbose ;;
-                esac
-            [[ $cmd ]] && core.parser $cmd
-        done
-
-    gmsg -v2 "take care!"
-    return $?
 }
 
 
@@ -429,6 +273,7 @@ core.help () {
             gmsg -v2 "to refer detailed tool help, type '$GURU_CALL <module> help'"
             return 0
         }
+
 
     core.help_newbie () {
         if [[ -f $HOME/.data/.newbie ]] ; then
@@ -480,14 +325,87 @@ core.help () {
     gmsg -v1
     gmsg -v1 -c white  "More detailed help, type '$GURU_CALL <tool> help'"
     gmsg -v1 "Use verbose mode '-v2' to get more information in help printout. "
-    mmsg -v1
+    gmsg -v1
 
+}
+
+
+core.process_opts () {
+    # process first level options (given with one '-')
+
+    local left_overs=
+    local commands=
+
+    # default values of (to be as) global control variables
+    declare -g GURU_FORCE=
+    declare -g GURU_LOGGING=
+    declare -g GURU_HOSTNAME=$(hostname)
+    declare -g GURU_VERBOSE=$GURU_FLAG_VERBOSE
+    declare -g GURU_COLOR=true
+
+    # go trough possible arguments if set or value is given, other vice use default
+    TEMP=`getopt --long -o "cCfh:lsu:v:" "$@"`
+    eval set -- "$TEMP"
+
+    while true ; do
+        case "$1" in
+            -c ) GURU_COLOR=true        ; shift   ;;
+            -C ) GURU_COLOR=            ; shift   ;;
+            -f ) GURU_FORCE=true        ; shift   ;;
+            -h ) GURU_HOSTNAME=$2       ; shift 2 ;;
+            -l ) GURU_LOGGING=true      ; shift   ;;
+            -s ) GURU_VERBOSE=          ; shift   ;;
+            -u ) core.change_user "$2"  ; shift 2 ;;
+            -v ) GURU_VERBOSE=$2        ; shift 2 ;;
+             * ) break                  ;;
+        esac
+    done
+
+    # place module name and commands to leftovers before cleaning it up
+    left_overs="$@"
+
+    # clean rest of user input
+    if [[ "$left_overs" != "--" ]] ; then
+            module_commands="${left_overs#* }"
+        fi
+
+    # compose command
+    GURU_COMMAND=${module_commands[@]}
+
+    # check if colors possible, and overwrite user input and user.cfg
+    if [[ $TERM != "xterm-256color" ]] || [[ $COLORTERM != "truecolor" ]]; then
+            declare -x GURU_COLOR=
+        fi
+
+}
+
+
+core.mount_system_base () {
+    # check is access point enabled and mount is not
+
+    # is access functionality enabled?
+    if ! [[ $GURU_ACCESS_ENABLED ]] ; then
+        return 1
+    fi
+
+    # is mount functionality enabled?
+    if ! [[ $GURU_MOUNT_ENABLED ]] ; then
+        return 2
+    fi
+
+    # is it already mounted?
+    if ! mount.online ; then
+        # get tools for mounting
+        source $GURU_BIN/mount.sh
+        # check and mount system folder mounted
+        mount.main system
+    fi
 }
 
 # if launched as a script, not as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 
-    # process '-' arguments, returns rest of argument in $ARGUMENTS variable
+    # process arguments and return cleaned command
     core.process_opts $@
 
     # import needed modules
@@ -497,7 +415,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     core.mount_system_base
 
     # do the hassle
-    core.main $ARGUMENTS
+    declare -x GURU_FORCE
+    declare -x GURU_COLOR
+    declare -x GURU_VERBOSE
+    declare -x GURU_HOSTNAME
+    declare -x GURU_LOGGING
+    declare -xa GURU_COMMAND
+
+    core.main ${GURU_COMMAND[@]}
     _error_code=$?
 
     # all fine
@@ -515,3 +440,69 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     exit $_error_code
 
 fi
+
+
+# removed functions
+
+# core.shell () {
+#     # terminal loop
+#     # TBD remove but save somewhere vote +1?
+
+#     render_path () {
+#             # TBD: path location shit is broken when long input, hard to solve. vote for remove +1?
+#             local _path="$(pwd)"
+#             if [[ "$_path" == "$HOME" ]] ; then _path='~' ; fi
+#             local _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
+#             local c_user=$(eval echo '$C_'"${GURU_COLOR_PATH_USER^^}")
+#             local c_at=$(eval echo '$C_'"${GURU_COLOR_PATH_AT^^}")
+#             local c_call=$(eval echo '$C_'"${GURU_COLOR_PATH_CALL^^}")
+#             local c_sepa=$(eval echo '$C_'"${GURU_COLOR_PATH_SEPA^^}")
+#             local c_dir=$(eval echo '$C_'"${GURU_COLOR_PATH_DIR^^}")
+#             local c_input=$(eval echo '$C_'"${GURU_COLOR_PATH_INPUT^^}")
+
+#             printf "$c_user$GURU_USER$c_at@$c_call$_GURU_CALL$c_sepa:$c_dir$_path$ $c_input"
+#             gmsg -n -c normal
+#         }
+
+#     inc_verbose () {
+
+#             (( _verbose<2 )) && let _verbose++
+#             cmd=
+#         }
+
+#     dec_verbose () {
+#             (( _verbose>0 )) && let _verbose--
+#             cmd=
+#         }
+
+
+#     gmsg "$GURU_CALL in shell mode (type 'help' enter for help)"
+
+#     local _verbose=1
+
+#     while true ; do
+
+#             # TBD config.hs: to update every time
+#             # TBD faster method to apply config needed before this is possible
+#             # config.export "$GURU_CFG/$GURU_USER/user.cfg" >/dev/null
+
+#             # source current configuration
+#             source $GURU_RC
+#             GURU_VERBOSE=$_verbose
+
+#             # set call name off for sub processes, affects some help content
+#             local _GURU_CALL="$GURU_CALL"
+#             GURU_CALL=
+
+#             read -e -p "$(render_path)" "cmd"
+
+#             case "$cmd" in exit|q|quit)  break ;;
+#                                      '+')  inc_verbose ;;
+#                                      '-')  dec_verbose ;;
+#                 esac
+#             [[ $cmd ]] && core.parser $cmd
+#         done
+
+#     gmsg -v2 "take care!"
+#     return $?
+# }
