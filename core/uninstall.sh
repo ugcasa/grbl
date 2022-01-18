@@ -1,6 +1,12 @@
 #!/bin/bash
-[[ -f $GURU_BIN/keyboard.sh ]] && source $GURU_BIN/keyboard.sh || gmsg -c white "module keboard not found, unable to return keyboard shortcuts"
-[[ -f $GURU_BIN/config.sh ]] && source $GURU_BIN/config.sh || gmsg -c white "config keboard not found, unable send config data to server"
+
+[[ -f $GURU_BIN/keyboard.sh ]] \
+    && source $GURU_BIN/keyboard.sh \
+    || gmsg -c white "keboard module not found, unable to return keyboard shortcuts"
+
+[[ -f $GURU_BIN/config.sh ]] \
+    && source $GURU_BIN/config.sh \
+    || gmsg -c white "config module not found, unable send config data to server"
 
 backup_rc="$HOME/.bashrc.backup-by-guru"
 guru_rc="$GURU_RC"
@@ -10,10 +16,11 @@ uninstall.main () {
 
     command="$1" ; shift
     case "$command" in
-        config) remove_user_configs=true ; uninstall.remove ; return $? ;;
-        status) uninstall.status                       ; return 0 ;;
-          help) uninstall.help                         ; return 0 ;;
-             *) uninstall.remove                       ; return $? ;;
+        config) remove_user_configs=true
+                uninstall.remove            ; return $? ;;
+        status) uninstall.status            ; return $? ;;
+          help) uninstall.help              ; return 0 ;;
+             *) uninstall.remove            ; return $? ;;
     esac
 }
 
@@ -23,7 +30,7 @@ uninstall.status () {
     local _error=0
 
     gmsg -n -v2 ".bashrc.. "
-    if cat $HOME/.bashrc |grep ".gururc" >/dev/null ; then
+    if cat $HOME/.bashrc | grep ".gururc" >/dev/null ; then
             gmsg -v2 -c green "modified"
         else
             gmsg -v2 -c red "not modified"
@@ -216,5 +223,6 @@ uninstall.remove () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     [[ -f "$guru_rc" ]] && source "$guru_rc"
     uninstall.main "$@"
+    exit $?
 fi
 
