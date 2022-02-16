@@ -10,8 +10,8 @@ config.main () {
                     config.$_cmd $@
                     return $?
                     ;;
-            status)
-                    gmsg "no status data"
+            status|log|debug)
+                    gmsg "no $_cmd data"
                     ;;
 
                  *) echo "unknown config action '$_cmd'"
@@ -310,8 +310,8 @@ config.get (){
     # get environmental value of variable
 
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
-    #set |grep "GURU_${_variable^^}"
     set | grep "GURU_${_variable^^}" | head -1 | cut -d "=" -f2
+    # set |grep "GURU_${_variable^^}"
     return $?
 }
 
@@ -322,11 +322,14 @@ config.set () {
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
     [[ "$2" ]] && _value="$2" || read -r -p "$_variable value: " _value
 
-    if ! cat $GURU_RC | grep "GURU_${_variable^^}=" >/dev/null; then
+    #if ! cat $GURU_RC | grep "GURU_${_variable^^}=" >/dev/null; then
+    if ! grep "GURU_${_variable^^}=" -q $GURU_RC ; then
             gmsg -c yellow "no variable 'GURU_${_variable^^}' found"
             return 2
         fi
-    local _found=$(cat $GURU_RC | grep "GURU_${_variable^^}=" | cut -d '=' -f 2)
+
+    #local _found=$(cat $GURU_RC | grep "GURU_${_variable^^}=" | cut -d '=' -f 2)
+    local _found=$(grep -q "GURU_${_variable^^}=" $GURU_RC | cut -d '=' -f 2)
     sed -i "s/GURU_${_variable^^}=.*/GURU_${_variable^^}='${_value}'/" $GURU_RC
     gmsg -v1 "changing GURU_${_variable^^} from $_found to '$_value'"
     source $GURU_RC
