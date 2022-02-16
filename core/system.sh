@@ -426,7 +426,7 @@ system.upgrade () {
     sudo apt-get autoremove --purge \
         || gmsg -c yellow "autoremove returned warning"
 
-    sudo apt-get autoclean
+    sudo apt-get autoclean \
         || gmsg -c yellow "autoclean returned warning"
 
     sudo apt-get check \
