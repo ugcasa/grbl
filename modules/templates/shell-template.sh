@@ -2,7 +2,7 @@
 # guru-client single file module template casa@ujo.guru 2022
 ##
 ## instructions for using this template
-## 1) copy shell-template.sh to <your_module_name>.sh remember to chmod +x
+## 1) copy shell-template.sh to ../<your_module_name>.sh remember to chmod +x
 ## 2) find all 'module' words in this file and replace with your module name
 ## 3) do the same to 'MODULE' by replacing with your module name written in UPCASE
 ## 4) try it './module.sh help'
