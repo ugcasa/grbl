@@ -393,6 +393,7 @@ core.mount_system_base () {
         return 2
     fi
 
+    source mount.sh
     # is it already mounted?
     if ! mount.online ; then
         # get tools for mounting
