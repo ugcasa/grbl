@@ -44,6 +44,9 @@ system.suspend_help () {
     gmsg -v1 " install      add suspend script "
     gmsg -v1 " remove       remove suspend script"
     gmsg -v2
+    gmsg -v1 " BE CAREFUL Save the state of your system before install"
+    gmsg -v1 " or remove parts to/from working system. Proceed in your own risk"
+    gmsg -v2
 }
 
 
