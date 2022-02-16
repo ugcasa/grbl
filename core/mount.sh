@@ -84,14 +84,20 @@ mount.info () {
 
     # get the mount data
     while read mount ; do
-        # Iterate over them
+        # iterate over them
         mount | grep -w "$mount" |
         # Get the details of this mount
         perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1 $2 $3"'
         # perl magic thanks terdon! https://unix.stackexchange.com/users/22222/terdon
         _error=$?
-        local _mount_pid="$(pgrep -f $mount | head -1)"
-        _mount_age="$(ps -p $_mount_pid o etime | grep -v ELAPSED | xargs)"
+
+        local _mount_pid="$(pgrep -f $mount \
+                        | head -1)"
+
+        local _mount_age="$(ps -p $_mount_pid o etime \
+                        | grep -v ELAPSED \
+                        | xargs)"
+
         echo " $_mount_age $_mount_pid"
 
     done
@@ -143,21 +149,23 @@ mount.check () {
     # check mountpoint is mounted, output status
 
     local _err=0
-    local _target_folder="$GURU_SYSTEM_MOUNT"
+    local _target_folder=$GURU_SYSTEM_MOUNT
     [[ "$1" ]] && _target_folder="$1"
 
     gmsg -n -v1 -V2 -c light_blue "${_target_folder##*/} "
     gmsg -n -v2 -c light_blue "$_target_folder "
 
-    mount.online "$_target_folder" ; _err=$?
+    mount.online $_target_folder
+    _err=$?
 
     if [[ $_err -gt 0 ]] ; then
             gmsg -v2 -c dark_grey "not mounted"
             return 1
         fi
 
+    # colors
     case $_target_folder in
-        *'.data'*)  gmsg -v2 -c blue "mounted"
+        *'.data'*)  gmsg -v2 -c cadet_blue "system"
                     ;;
             *'.'*)  gmsg -v2 -c deep_pink "private"
                     ;;
@@ -587,8 +595,8 @@ unmount.all () {  # unmount all GURU_CLOUD_* defined in userrc
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        source "$GURU_RC"
-        mount.main "$@"
-        exit "$?"
+if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then
+        source $GURU_RC
+        mount.main $@
+        exit $?
     fi
