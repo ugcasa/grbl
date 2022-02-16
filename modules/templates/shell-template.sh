@@ -22,18 +22,20 @@ declare -g module_indicator_key="f$(daemon.poll_order module)"
 ## functions, keeping help at first position it might be even updated
 module.help () {
     # user help
-    gmsg -v1 -c white "module help "
+    export GURU_VERBOSE=0
+    export GURU_COLOR=
+    gmsg -n -v2 -c white "guru-cli module help "
+    gmsg -v1 "few clause description what module exists"
     gmsg -v2
-    gmsg -v1 "few clause description"
-    gmsg -v2
-    gmsg -v0 "usage:  $GURU_CALL module command variables "
+    gmsg -c white -n -v0 "usage:    "
+    gmsg -v0 "$GURU_CALL module command variables"
     gmsg -v2
     gmsg -v1 -c white "commands: "
-    gmsg -v2 " ls           list something "
-    gmsg -v2 " help         printout this help "
+    gmsg -v2 " ls       list something "
+    gmsg -v2 " help     printout this help "
     gmsg -v2
-    gmsg -v1 -c white "example: "
-    gmsg -v1 "   $GURU_CALL module <command>"
+    gmsg -n -v1 -c white "example:  "
+    gmsg -v1 "$GURU_CALL module <command>"
     gmsg -v2
 }
 
@@ -80,9 +82,14 @@ module.status () {
 
     # check module is enabled
     if [[ $GURU_MODULE_ENABLED ]] ; then
-            gmsg -n -v1 -c green "enabled, " -k $module_indicator_key
+            gmsg -n -v1 \
+            -k $module_indicator_key \
+            -c green "enabled, "
+
         else
-            gmsg -v1 -c reset "disabled" -k $module_indicator_key
+            gmsg -v1 \
+            -c reset "disabled" \
+            -k $module_indicator_key
             return 1
         fi
 
