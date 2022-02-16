@@ -1,5 +1,11 @@
+#!/bin/bash
 # guru-client common functions
-# TODO remove common.sh, not practical way cause of namespacing
+# collection of functions be sourced every time module needs it
+# casa@ujo.guru 2019 - 2022
+
+## TODO remove common.sh, not practical way cause of namespacing
+##  - no rush, good enough for now
+##  - ISSUE function naming should be fixed dough
 
 system.core-dump () {
     # dump environmental status to file
@@ -78,7 +84,6 @@ gsource () {
 gmsg () {
     # function for output messages and make log notifications
 
-    # default values
     local verbose_trigger=0                         # prinout if verbose trigger is not set in options
     local verbose_limiter=5                         # maximum + 1 verbose level
     local _newline="\n"                             # newline is on by default
@@ -160,7 +165,7 @@ gmsg () {
         fi
 
     # -v) given verbose level is lower than trigger level, do not print
-    # "print only if higer verbose level than this"
+    # "print only if higher verbose level than this"
     if [[ $verbose_trigger -gt $GURU_VERBOSE ]] ; then
             return 0
         fi
@@ -187,7 +192,7 @@ gmsg () {
             printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline${C_NORMAL}" "${_timestamp}" "${_message:0:$_column_width}"
 
         else
-            # *) normal printout no formatting
+            # *) normal printout without formatting
             printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
             return 0
     fi
@@ -271,8 +276,9 @@ gindicate () {
         fi
 
     if [[ $GURU_SOUND_ENABLED ]] ; then
-        #source sound.sh
-        #sound.main nnn
+
+        # TBD source sound.sh
+        # TBD sound.main nnn
 
         [[ $_message ]] || _message=$_status
         case $_status in
@@ -293,7 +299,7 @@ gindicate () {
             calm)           espeak -p 0 -s 80 -v en-us  "Breath... slowly... in... and... out. and calm down. " ;;
             hacker)         espeak -p 85 -s 130 -v en-us  "Warning! An hacker activity detected. $_message" ;;
             russia)         espeak -p 5 -s 90 -v russian  "Warning! An Russian hacker activity detected... releasing honeypot vodka bottles on the battle field" ;;
-            china)          espeak -p 10 -s 180 -v cantonese "Warning! An Chinese hacker activity detected. Disconnecting mainframe from internetz" ;;
+            china)          espeak -p 10 -s 180 -v cantonese "Warning! An Chinese hacker activity detected. please disconnect mainframe from internetz" ;;
             call)           for i in {0..5} ; do
                                 espeak -p 60 -s 80 -v en-sc "Incoming call from number $(echo $_message | sed 's/./& /g')"
                                 [[ -f /tmp/blink_$_indicator_key ]] || break
@@ -403,7 +409,7 @@ module.installed () {
 
 
 
-#`TBD`declase -xf ? rather than export?
+#`TBD`declare -xf ? rather than export? - no
 export -f system.core-dump
 export -f daemon.poll_order
 export -f gmsg
