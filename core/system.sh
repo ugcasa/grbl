@@ -411,13 +411,24 @@ system.client_update () {
 system.upgrade () {
     # upgrade system
 
-    sudo apt-get update || gmsg -c red -x 100 "apt update failed"
+    sudo apt-get update \
+        || gmsg -c red -x 100 "update failed"
+
     gmsg -v2 -c white "upgradable list: "
     gmsg -v2 -c light_blue "$(sudo apt list --upgradable)"
-    sudo apt-get upgrade -y || gmsg -c red -x 101 "apt updgrade failed"
-    sudo apt-get autoremove
+
+    sudo apt-get upgrade -y \
+        || gmsg -c red -x 101 "upgrade failed"
+
+    sudo apt-get autoremove --purge \
+        || gmsg -c yellow "autoremove returned warning"
+
     sudo apt-get autoclean
-    sudo apt-get check || gmsg -c yellow "warning: $? check did nod pass"
+        || gmsg -c yellow "autoclean returned warning"
+
+    sudo apt-get check \
+        && gmsg -c green "check ok" \
+        || gmsg -c yellow "warning: $? check log above to see what did not pass"
 }
 
 
