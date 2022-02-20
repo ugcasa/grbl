@@ -433,7 +433,7 @@ system.upgrade () {
         && gmsg -c green "check ok" \
         || gmsg -c yellow "warning: $? check log above"
 
-    /usr/bin/python3 -m pip install --upgrade pip
+    /usr/bin/python3 -m pip install --upgrade pip \
         && gmsg -c green "pip upgrade ok" \
         || gmsg -c yellow "pip upgrade warning: $? check log above"
 }
