@@ -4,11 +4,11 @@
 source $GURU_BIN/common.sh
 
 all_list=($(\
-        cat $GURU_RC | \
-        grep 'GURU_MOUNT_' | \
-        grep -v "DEFAULT_LIST" | \
+        grep "GURU_MOUNT_" $GURU_RC | \
+        grep -ve "_LIST" -ve "_ENABLED" | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
+
 all_list=(${all_list[@],,})
 
 mount_indicator_key='f'"$(daemon.poll_order mount)"
@@ -315,6 +315,7 @@ mount.list () {
             return 1
         fi
 
+    #gmsg -v2 -c white "mounted: "
     for _item in ${_mount_list[@]} ; do
             # go trough of found variables
             _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
@@ -333,6 +334,10 @@ mount.list () {
         done
     mount.status >/dev/null
     IFS="$_IFS"
+
+    gmsg -v2 -n -c white "available: "
+    gmsg -v1 -c light_blue "${all_list[@]}"
+
     return $_error
 }
 
