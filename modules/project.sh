@@ -31,36 +31,39 @@ project.main () {
 
 project.help () {
     # help
-    gmsg -v1 -c white "guru-client project help "
+    gmsg -v1 -c white "guru-cli project module help "
+    gmsg -v2
+    gmsg -v1 "tools for project control"
     gmsg -v2
     gmsg -V2 -v0 "usage:    $GURU_CALL project ls|info|add|rm|open|close "
     gmsg -v2 "usage:    $GURU_CALL project ls|new|open|status|close|rm|sublime|help  name/id"
     gmsg -v2
     gmsg -v1 -c white "commands:"
     gmsg -v1 "  ls                      list of projects "
-    gmsg -v1 "  info                    more detailed information of projects "
+    gmsg -v2 "  info                    more detailed information of projects "
     gmsg -v1 "  add <name|id>           add new projects "
     gmsg -v1 "  open <name|id>          open project "
-    gmsg -v1 "  close                   close project, keep data "
-    gmsg -v1 "  change <name|id>        same as close and open  "
-    #gmsg -v1 "  archive <name|id>       move to archive"
-    #gmsg -v1 "  active <name|id>        return archived project "
-    gmsg -v2 "  rm <name|id>            remove project and files for good "
-    gmsg -v2 "  install                 install requirements "
-    gmsg -v2 "  remove                  remove requirements "
+    gmsg -v2 "  edit <name>             edit project script and configuration TBD" -c todo
     gmsg -v1 "  change <name>           change project"
-    gmsg -v2 "  sublime <name>          open only sublime project "
+    gmsg -v1 "  close                   close project, keep data "
+    gmsg -v2 "  archive <name>          move to archive TBD"
+    gmsg -v2 "  active <name|id>        return archived project TBD" -c todo
+    gmsg -v3 "  rm <name|id>            remove project and files for good "
+    gmsg -v1 "  install                 install requirements "
+    gmsg -v3 "  remove                  remove requirements "
+    gmsg -v3 "  terminal <name>         open termional tools TBD" -c todo
+    gmsg -v3 "  sublime <name>          open sublime project "
     gmsg -v1 "  status                  status of project module"
-    gmsg -v2 "  poll start|stop         daemon poll function"
+    gmsg -v3 "  poll start|stop         daemon poll function"
     gmsg -v1 "  help                    this help "
     gmsg -v1
-    gmsg -v1 "most of commands takes project name (or id) as an variable "
-    gmsg -v2
     gmsg -v1 -c white "example:"
-    gmsg -v1 " $GURU_CALL project new demo       # initialize new project called 'demo'"
-    #gmsg -v2 " $GURU_CALL project archive        # list of archived projects "
-    #gmsg -v1 " $GURU_CALL project archive demo   # archive demo "
-    gmsg -v2 " $GURU_CALL project rm demo        # remove all demo project files "
+    gmsg -v1 "  $GURU_CALL project ls             # list of projects "
+    gmsg -v1 "  $GURU_CALL project add demo       # initialize new project called 'demo'"
+    gmsg -v2 "  $GURU_CALL project archive        # list of archived projects "
+    gmsg -v2 "  $GURU_CALL project edit demo      # edit 'demo' config and launcher script "
+    gmsg -v2 "  $GURU_CALL project archive demo   # archive 'demo', needs to be done before rm "
+    gmsg -v3 "  $GURU_CALL project rm demo        # remove all 'demo' project files "
     gmsg -v2
     return 0
 }
@@ -434,10 +437,10 @@ project.add () {
             touch "$sublime_project_file"
         fi
 
+    gmsg -v3 -c dark_grey "${FUNCNAME[0]} TBD: add project details and copy default config.sh"
     cp $GURU_CFG/project-default.cfg $project_folder/config.sh
-
     gmsg -c white "project added, config project $project_folder/config.sh "
-    gmsg -v3 -c blue "${FUNKNAME[0]} TBD add project detailt and copy default config.sh"
+
 
 }
 
