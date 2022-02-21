@@ -109,6 +109,10 @@ get_media_metadata () {
     error=""
     meta_data="$yle_temp/meta.json"
 
+    # make temp if not exist already
+    [[ -d "$yle_temp" ]] || mkdir -p "$yle_temp"
+    cd "$yle_temp"
+
     # do not add base url if it already given
     if echo $1 | grep "https" ; then
         base_url=""
@@ -145,16 +149,12 @@ get_media_metadata () {
 get_media () {
     # get media from server and place it to /$USER/tmp
 
-    # make temp if not exist already
-    [[ -d "$yle_temp" ]] || mkdir -p "$yle_temp"
-    cd "$yle_temp"
-
     # detox filename
     output_filename=${media_filename//:/-}
     output_filename=${output_filename// /}
     output_filename=${output_filename//'"'/}
 
-    gmsg -c deep_pink "output filename: $output_filename"
+    #gmsg -c deep_pink "output filename: $output_filename"
 
     # check is tmp file alredy there
     if [[ -f $output_filename ]] ; then
@@ -163,15 +163,24 @@ get_media () {
         fi
 
     # download stuff
-
     yle-dl "$media_url" -o "$output_filename" --sublang all
 
+    # to check did yle-dl change format
     local got_filename=$(echo ${output_filename%.*}*)
-    gmsg -v2 -c deep_pink "got_filename: $got_filename"
 
-    return $?
+    if [[ -f $got_filename ]] ; then
+            # got valid filename, update global variables
+            media_filename=$got_filename
+            return 0
+        else
+            # update global variables
+            media_filename=$output_filename
+            return 0
+        fi
 
+    return 127
 }
+
 
 get_subtitles () {
 
@@ -200,13 +209,19 @@ place_media () {
 
     #$GURU_CALL tag "$media_filename" "yle $(date +$GURU_FILE_DATE_FORMAT) $media_title $media_url"
 
+    source mount.sh
     case "$media_file_format" in
 
         mp3|wav)
+            mount.main audio
             location="$GURU_MOUNT_AUDIO" ;;
-        mp4|src|sub|avi)
+
+
+        mkv|mp4|src|sub|avi)
+            mount.main video
             location="$GURU_MOUNT_VIDEO" ;;
         *)
+            mount.main downloads
             location="$GURU_MOUNT_DOWNLOADS" ;;
     esac
 
