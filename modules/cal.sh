@@ -216,7 +216,7 @@ cal.setup_caldav () {
                 || printf "\n[google]\n" >>$user_conf
 
             cat $user_conf | grep caldav_id= \
-                && gmsg -c yellow "already set, change manually from $user_conf"
+                && gmsg -c yellow "already set, change manually from $user_conf" \
                 || printf "caldav_id=$tha_id\n" >>$user_conf
 
             # take configuration in use
