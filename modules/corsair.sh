@@ -33,7 +33,8 @@ pipelist_file="$GURU_CFG/corsair-pipelist.cfg"
 #         gmsg -c red "pipelist file $pipelist_file missing"
 #     fi
 
-declare -a corsair_keytable=(\
+# for now only esc,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12, y, n and caps are piped in ckb_next 20220222
+declare -ga corsair_keytable=(\
     esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12          print scroll pause      stop brev play next\
     half 1 2 3 4 5 6 7 8 9 0 query backscape            insert home pageup      numlc div mul sub\
     tab q w e r t y u i o p å tilde enter               del end pagedown        np7 np8 np9 add\
@@ -82,7 +83,7 @@ corsair.get_pipefile () {
 
     local pipefile="/tmp/ckbpipe$id"
 
-    #gmsg -c deep_pink $pipefile
+    # gmsg -c deep_pink $pipefile
     if file $pipefile | grep fifo >/dev/null; then
             echo $pipefile
             return 0
@@ -122,11 +123,11 @@ corsair.help () {
     gmsg -v2 "   done, active, pause, cancel, error, warning, alert, "
     gmsg -v2 "   panic, passed, ok, failed, message, call, customer, calm and hacker"
     gmsg -v1 " end                               end playing with keyboard, set to normal "
-    gmsg -v1 " install                           install requirements "
-    gmsg -v2 " compile                           only compile, do not clone or patch"
     gmsg -v2 " patch <device>                    edit source devices: K68, IRONCLAW"
-    gmsg -v2 " set-suspend                       active suspend control to avoid suspend issues"
+    gmsg -v2 " compile                           only compile, do not clone or patch"
+    gmsg -v1 " install                           install requirements "
     gmsg -v1 " remove                            remove corsair driver "
+    gmsg -v2 " set-suspend                       active suspend control to avoid suspend issues"
     gmsg -v2
     gmsg -v1 -c white "examples:"
     gmsg -v1 " '$GURU_CALL corsair help -v2'           get more detailed help by adding verbosity flag"
@@ -151,6 +152,86 @@ corsair.help () {
 }
 
 
+corsair.key-id () {
+    # printout key number for key pipe file '/tmp/ckbpipeNNN'
+
+    local to_find=$1
+    # if individual key is asked, print it out and exit
+
+    # if no user input printout all
+    if ! [[ $to_find ]] ; then
+
+        for (( i = 0; i < ${#corsair_keytable[@]}; i++ )); do
+            gmsg -n -c white "${corsair_keytable[$i]}"
+            gmsg -n -c gray ":$(printf "%03d" $i) "
+        done
+
+        gmsg
+        return 0
+    fi
+
+    # otherwise go trough key table to find requested word
+    for (( i = 0; i < ${#corsair_keytable[@]}; i++ )); do
+
+        if [[ "${corsair_keytable[$i]}" == "$to_find" ]] ; then
+
+            # print out findings if verbose less than 1
+            gmsg -V2 -v1 "${corsair_keytable[$i]}:" -n
+            gmsg -V2 "$(printf "%03d" $i)"
+
+            # print out with colors if verbose more than 1
+            if [[ $GURU_VERBOSE -gt 1 ]] ; then
+                gmsg -c white -v$GURU_VERBOSE "${corsair_keytable[$i]}" -n
+                gmsg -c grey -v2 ":$(printf "%03d" $i)"
+            fi
+            return 0
+        fi
+
+    done
+
+    gmsg -c yellow "no '$1' found in key table"
+    return 1
+
+}
+
+
+corsair.keytable () {
+    # printout
+    case $1 in number|numbers) GURU_VERBOSE=2 ;; esac
+    gmsg -v1
+    gmsg -v1 "keyboard indicator pipe file id's"
+    gmsg -v1
+    gmsg -v0 -c white "esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12        print  scroll  pause      stop brev play next"
+    gmsg -v2 -c dark  " 0   1  2  3  4  5  6  7  8  9  10  11  12         13     14     15          16   17   18   19"
+    gmsg -v3
+    gmsg -v0 -c white "half 1 2 3 4 5 6 7 8 9 0 query backscape         insert  home   pageup      numlc div  mul  sub"
+    gmsg -v2 -c dark  " 20  1 2 3 4 5 6 7 8 9 30  31     32               33     34     35          36   37   38   39"
+    gmsg -v3
+    gmsg -v0 -c white "tab q w e r t y u i o p  å tilde enter             del   end  pagedown      np7   np8  np9  add"
+    gmsg -v2 -c dark  " 40 1 2 3 4 5 6 7 8 9 50 1  52    53               54     55     56          57   58   59   60"
+    gmsg -v3
+    gmsg -v0 -c white "caps a s d f g h j k  l ö ä asterix                                         np4   np5  np6"
+    gmsg -v2 -c dark  " 61  2 3 4 5 6 7 8 9 70 1 2   73                                             74   75   76"
+    gmsg -v3
+    gmsg -v0 -c white "shiftl less z x  c v b n m comma perioid minus shiftr     up                np1   np2  np3"
+    gmsg -v2 -c dark  "  77    78  9 80 1 2 3 4 5  86     87     88     89       90                 91   92   93"
+    gmsg -v3
+    gmsg -v0 -c white "lctrl func alt space altgr fn set rctrl           left   down  right        np0    decimal count"
+    gmsg -v2 -c dark  " 94    95  96   97    98   99 100  101            102    103    104         105      106    107"
+    gmsg -v1
+    gmsg -v2 "mouse indicator pipe file id's "
+    gmsg -v2
+    gmsg -v2 -c white "m_logo m_thumb m_other1 m_other2"
+    gmsg -v2 -c dark  "  108    109     110      111"
+    gmsg -v1
+    gmsg -v2 " use thee digits to indicate id in file name example: 'F12' pipe is '/tmp/ckbpipe012'"
+    gmsg -v3
+    gmsg -v3 "corsair_key_table list: "
+    gmsg -v3 "$(corsair.key-id)}"
+    return 0
+}
+
+
 corsair.main () {
     # command parser
 
@@ -165,7 +246,7 @@ corsair.main () {
 
     case "$cmd" in
             # indicator functions
-            status|init|set|reset|clear|end|indicate)
+            status|init|set|reset|clear|end|indicate|keytable|key-id)
                     corsair.$cmd $@
                     return $?
                     ;;
@@ -182,6 +263,7 @@ corsair.main () {
                     ;;
             # systemd method is used after v0.6.4.5
             enable|start|restart|stop|disable)
+                    gmsg -n -v2 "checking launch system.. "
                     if ! system.init_system_check systemd ; then
                             gmsg -c yellow -x 133 "systemd not in use, try raw_start or raw_stop"
                         fi
