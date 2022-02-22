@@ -182,7 +182,7 @@ gmsg () {
     fi
 
     # print to shell
-    if [[ $_color_code ]] && [[ $GURU_COLOR ]] ; then
+    if [[ $_color_code ]] && [[ $GURU_COLOR ]] && [[ $GURU_VERBOSE -gt 0 ]] ; then
 
             # -w) fill message length to column limiter
             if ! [[ $_column_width ]] ; then
