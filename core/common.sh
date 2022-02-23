@@ -282,7 +282,8 @@ gindicate () {
 
         [[ $_message ]] || _message=$_status
         case $_status in
-            done)           espeak -p 100 -s 120 -v en "Done $_message. " ;;
+            say)            espeak -p 85 -s 130 -v en "$_message" ;;
+            done)           espeak -p 100 -s 120 -v en "$_message done! " ;;
             working)        espeak -p 85 -s 130 -v en "working... $_message" ;;
             pause)          espeak -p 85 -s 130 -v en "$_message is paused" ;;
             cancel)         espeak -p 85 -s 130 -v en "$_messagasde is canceled. I repeat, $_message is canceled" ;;
