@@ -249,5 +249,39 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 
 
+# same but for youtube
+
+# video.build () {
+
+#     data_location="/home/casa/karsulle"
+#     data_file="karsulle_katsottavaa.cfg"
+#     url_base="https://www.youtube.com/watch?v"
+
+#     [[ -d $data_location ]] || mkdir -p $data_location
+#     [[ -f $data_file ]] || gmsg -x 100 -c yellow "data tiedosto $data_file puuttuu"
+
+#     ids=$(cut -d " " -f 1 $data_file)
+#     headers=$(cut -d " " -f 2- $data_file)
+
+#     lines=$(cat $data_file)
+#     youtube-dl --version || video.install
+
+#     for id in ${ids[@]} ; do
+#         gmsg -c white "downloading $url_base=$id to $data_location.. "
+#         youtube-dl --ignore-errors --continue --no-overwrites \
+#                --output "$data_location/%(title)s.%(ext)s" \
+#                "$url_base=$id"
+#     done
 
 
+# }
+
+
+# video.install () {
+#     sudo apt update || gmsg -x 101 -c yellow "apt update failed"
+#     sudo apt install youtube-dl ffmpeg
+# }
+
+
+
+# video.build
