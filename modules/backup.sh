@@ -1,31 +1,38 @@
 #!/bin/bash
-# guru-client backup system casa@ujo.guru 2021
+# guru-client backup system module
+# automated backups from server to local, local to local or server to server based on rsync archiving functionalities.
+# launching is based on guru daemon.sh poll request, not on crond mainly to avoid permission issues and shit.
+# can be run individually but needs specific set of environment variables (~/.gururc).
+# more of bash shit github.com/ugcasa/guru-client casa@ujo.guru 2021
 
-source $GURU_BIN/common.sh
+source common.sh
+
 
 backup.help () {
     # general help
 
-    gmsg -v1 -c white "guru-client backup help "
+    gmsg -v1 -c white "guru-cli backup help "
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL backup status|list|poll|install|remove  "
-    gmsg -v0 "          $GURU_CALL backup <category> now|at <YYYYMMDD> <HH:MM> "
+    gmsg -v0 "usage:  $GURU_CALL backup <entry_name> at <YYYYMMDD> <HH:MM> "
+    gmsg -v1 "        $GURU_CALL backup status|ls|restore|poll|install|remove  "
     gmsg -v2
     gmsg -v1 -c white "commands: "
-    #gmsg -v1 " now                      make backup now "
-    gmsg -v1 " at <YYMMDD> <H:M>        make backup at date"
+    gmsg -v1 " <empty>                  make daily backup now "
+    gmsg -v1 " <entry_name>             run <entry_name> backup right away "
+    gmsg -v2 "     at <YYMMDD> <H:M>    make backup at date and time    "
     gmsg -v1 " ls                       list of backups "
-    gmsg -v1 " restore                  not clear hot to be done  "
-    gmsg -v1 " install                  install client requirements "
-    gmsg -v1 " remove                   remove installed requirements "
-    gmsg -v2 " help                     printout this help "
+    gmsg -v1 " status                   printout status string"
+    gmsg -v2 " restore                  not clear hot to be done  "
+    gmsg -v2 " install                  install client requirements "
+    gmsg -v2 " remove                   remove installed requirements "
+    gmsg -v1 " help                     printout this help "
     gmsg -v3 " poll start|end           start or end module status polling "
     gmsg -v2
     gmsg -v1 -c white "example: "
     gmsg -v1 " $GURU_CALL backup status           # printout current backup status"
-    gmsg -v1 " $GURU_CALL backup git now          # backup category 'work'" -c todo
-    gmsg -v1 " $GURU_CALL backup family at 21:00  # backup family stuff at evening "
-    gmsg -v1 " $GURU_CALL backup photos at Monday # backup family stuff next Monday"
+    gmsg -v1 " $GURU_CALL backup git              # backup entry_name 'git' now"
+    gmsg -v2 " $GURU_CALL backup family at 21:00  # backup family stuff at evening "
+    gmsg -v2 " $GURU_CALL backup photos at Monday # backup family stuff next Monday"
     gmsg -v2
 }
 
@@ -33,45 +40,99 @@ backup.help () {
 backup.main () {
     # command parser
 
-    local command="$1" ; shift
-    case "$command" in
+    local command=$1 ; shift
 
-                ls|restore|status|help|install|poll|all|at)
-                    backup.$command "$@"
-                    return $? ;;
+    case $command in
 
-                daily|weekly|monthly)
-                    backup.all $command
-                    return $? ;;
-                "")
-                    backup.all daily
-                    return $? ;;
-                *)
-                    # go trough given items
-                    local given_items=("$command" "$@")
+        ls|restore|status|help|install|poll|at|debug)
+            backup.$command "$@"
+            return $? ;;
 
-                    for given_item in ${given_items[@]} ; do
-                        # check is in list
+        all)
+            backup.all $command
+            return $? ;;
 
-                        for active_item in ${GURU_BACKUP_ACTIVE[@]} ; do
+        daily|weekly|monthly)
+            backup.all $command
+            return $? ;;
+        "")
+            backup.all daily
+            return $? ;;
+        *)
+            # go trough given items
+            local given_entrys=("$command" "$@")
 
-                            if [[ $active_item == $given_item ]]; then
-                                    gmsg -n -c dark_golden_rod "backing up $given_item.. "
-                                    backup.now $given_item \
-                                        && gmsg -v2 -c green "$given_item backup done" \
-                                        || gmsg -c yellow "$given_item backup failed"
-                                    break
-                            fi
+            gmsg -c pink "given_entrys: ${given_entrys[@]}"
+            # go trough given entries..
+            for given_entry in ${given_entrys[@]} ; do
 
-                        done
-                        gmsg -v3 "$given_item not in active list"
+                gmsg -c pink "given_entry: $given_entry"
+                # .. then trough active entry name list..
+                for enabled_entry in ${GURU_BACKUP_ACTIVE[@]} ; do
 
-                    done
-                    gmsg -v3 "$given_item not found"
-                    ;;
+                    gmsg -c pink "enabled_entry: $enabled_entry"
+                    # ..and check that given item is the requested item
+                    if [[ $given_entry == $enabled_entry ]]; then
+
+                        gmsg -n -c dark_golden_rod "backing up $given_entry.. "
+
+                        backup.now $given_entry \
+                            && gmsg -v2 -c green "$given_entry backup done" \
+                            || gmsg -c yellow "$given_entry backup failed"
+
+                        break
+                    fi
+
+                done
+
+            done
+            # gmsg -v3 "$given_entry not found"
+            ;;
         esac
 
     return 0
+}
+
+backup.variables () {
+
+        gmsg -N -v3 -c white "backup_name: $backup_name"
+
+        gmsg -v3 -n -c white "active_list: "
+        gmsg -v3 -c light_blue " ${active_list[@]}"
+
+        gmsg -v3 -n -c white "from_config (can be empty):"
+        gmsg -v3 -c light_blue " ${from_config[@]}"
+
+        gmsg -v3 -n -c white "store_config (can be empty):"
+        gmsg -v3 -c light_blue " ${store_config[@]}"
+
+        gmsg -v3 -c light_pink "from_user: $from_user"
+        gmsg -v3 -c light_pink "from_domain: $from_domain"
+        gmsg -v3 -c light_pink "from_port: $from_port"
+        gmsg -v3 -c light_pink "from_location: $from_location"
+        gmsg -v3 -c light_pink "store_device: $store_device"
+
+        gmsg -v3 -c light_green "store_device_file: $store_device_file"
+        gmsg -v3 -c light_green "store_file_system: $store_file_system"
+        gmsg -v3 -c light_green "store_folder: $store_folder"
+        gmsg -v3 -c light_green "store_location: $store_location"
+        gmsg -v3 -c light_green "store_user: $store_user"
+        gmsg -v3 -c light_green "store_domain: $store_domain"
+        gmsg -v3 -c light_green "store_port: $store_port"
+        gmsg -v3 -c light_green "store_mount_point: $store_mount_point"
+
+        gmsg -v3 -c grey "backup_ignore: $backup_ignore"
+        gmsg -v3 -c grey "backup_method: $backup_method"
+        gmsg -v3 -c grey "honeypot_file: $honeypot_file"
+        gmsg -v3 -c grey "backup_indicator_key: $backup_indicator_key"
+        gmsg -v3 -c grey "backup_stat_file: $backup_stat_file"
+}
+
+
+backup.debug () {
+
+    export GURU_VERBOSE=3
+
 }
 
 
@@ -86,89 +147,70 @@ backup.config () {
 
     # declare of global variables
     declare -ga backup_name=$1
-    declare -ga active_list=(${GURU_BACKUP_DAILY[@]} ${GURU_BACKUP_WEEKLY[@]} ${GURU_BACKUP_MONTHLY[@]})
+    declare -ga active_list=(${GURU_BACKUP_ACTIVE[@]})
     declare -la header=(store method from ignore)
     declare -g backup_indicator_key="f$(daemon.poll_order backup)"
+    declare -g backup_stat_file=$GURU_SYSTEM_MOUNT/backup/$backup_name.stat
 
     # exit if not in list
-    if ! echo "${active_list[@]}" | grep -q $backup_name ; then
-            gmsg -c yellow "no '$backup_name' in active backup list: '${active_list[@]}'"
+    if ! echo "${active_list[@]}" | grep $backup_name >/dev/null; then
+            gmsg -c yellow "no '$backup_name' in active backup list"
             return 2
         fi
 
-    gmsg -v3 -c white "active_list: ${active_list[@]}"
-
-
     for bu_name in ${active_list[@]} ; do
             if [[ "$bu_name" == "$backup_name" ]] ; then
-                local backup_config="GURU_BACKUP_${bu_name^^}[@]"
-                backup_config=(${!backup_config})
-                declare -l store_device=${backup_config[0]}
-                declare -l method=${backup_config[1]}
-                declare -l from=${backup_config[2]}
-                declare -l ignore="${backup_config[3]//:/" "}"
-                local store="GURU_BACKUP_${store_device^^}[@]"
-                store=(${!store})
-                break
-            fi
+                    local from_config="GURU_BACKUP_${bu_name^^}[@]"
+
+                    from_config=(${!from_config})
+                    declare -g store_device=${from_config[0]}
+                    declare -l method=${from_config[1]}
+                    declare -l from_string=${from_config[2]}
+                    declare -l ignore="${from_config[3]//:/" "}"
+
+                    local store_config="GURU_BACKUP_${store_device^^}[@]"
+                    store_config=(${!store_config})
+                    break
+                fi
         done
 
-        # gmsg -v3 -c red "backup_config: ${backup_config[@]}"
-        # gmsg -v3 -c red "store: ${store[@]}"
-        # gmsg -v3 -c pink "from: ${from[@]}"
-        # gmsg -v3 -c green "store_device: $store_device"
-        # gmsg -v3 -c green "method: $method"
-        # gmsg -v3 -c green "from: $from"
-        # gmsg -v3 -c green "ignore: $ignore"
-
         # fill parameters if from seems to be a remote location
-        if echo $from | grep -q ":" ; then
-            declare -g from_user=$(echo $from | cut -d ":" -f1)
-            declare -g from_domain=$(echo $from | cut -d ":" -f2)
-            declare -g from_port=$(echo $from | cut -d ":" -f3)
-            declare -g from_location=$(echo $from | cut -d ":" -f4)
-        else
-            # fill only one parameter if from is local drive
-            declare -g from_location=$from
-        fi
+        if echo $from_string | grep -q ":" ; then
+                declare -g from_user=$(echo $from_string | cut -d ":" -f1)
+                declare -g from_domain=$(echo $from_string | cut -d ":" -f2)
+                declare -g from_port=$(echo $from_string | cut -d ":" -f3)
+                declare -g from_location=$(echo $from_string | cut -d ":" -f4)
+            else
+                # fill only one parameter if from is local drive
+                declare -g from_location=$from
+            fi
+
         # if store is remote drive
         if echo ${store[@]} | grep -q ":" ; then
-            declare -g store_user=$(echo ${store[1]} | cut -d ":" -f1)
-            declare -g store_domain=$(echo ${store[1]} | cut -d ":" -f2)
-            declare -g store_port=$(echo ${store[1]} | cut -d ":" -f3)
-            declare -g store_location=$(echo ${store[1]} | cut -d ":" -f4)
-        else
-            # fill parameters if store is local drive
-            declare -g store_device_file=${store[0]}
-            declare -g store_file_system=${store[1]}
-            declare -g store_mount_point=${store[2]}
-            declare -g store_folder=${store[3]}
-            declare -g store_location="$store_mount_point/$store_folder"
-        fi
+                declare -g store_user=$(echo ${store_config[1]} | cut -d ":" -f1)
+                declare -g store_domain=$(echo ${store_config[1]} | cut -d ":" -f2)
+                declare -g store_port=$(echo ${store_config[1]} | cut -d ":" -f3)
+                declare -g store_location=$(echo ${store_config[1]} | cut -d ":" -f4)
+            else
+                # fill parameters if store is local drive
+                declare -g store_device_file=${store_config[0]}
+                declare -g store_file_system=${store_config[1]}
+                declare -g store_mount_point=${store_config[2]}
+                declare -g store_folder=${store_config[3]}
+                declare -g store_location="$store_mount_point/$store_folder"
+            fi
 
         declare -ga backup_ignore=($ignore)
         declare -g backup_method=$method
-        declare -g honeypot_file="$from_location/honeypot.txt"
 
-        # gmsg -v3 -c light_blue "from_user: $from_user"
-        # gmsg -v3 -c light_blue "from_domain: $from_domain"
-        # gmsg -v3 -c light_blue "from_port: $from_port"
-        # gmsg -v3 -c light_blue "from_location: $from_location"
+        if [[ ${from_location: -1} == '/' ]] ; then
+                declare -g honeypot_file=$from_location"honeypot.txt"
+            else
+                declare -g honeypot_file="$from_location/honeypot.txt"
+            fi
 
-        # gmsg -v3 -c light_blue "store_user: $store_user"
-        # gmsg -v3 -c light_blue "store_domain: $store_domain"
-        # gmsg -v3 -c light_blue "store_port: $store_port"
-        # gmsg -v3 -c light_blue "store_location: $store_location"
-        # gmsg -v3 -c light_blue "store_folder: $store_folder"
-        # gmsg -v3 -c light_blue "store_device_file: $store_device_file"
-        # gmsg -v3 -c light_blue "store_file_system: $store_file_system"
-        # gmsg -v3 -c light_blue "store_mount_point: $store_mount_point"
+        backup.variables
 
-        # gmsg -v3 -c light_blue "backup_ignore: $backup_ignore"
-        # gmsg -v3 -c light_blue "backup_method: $backup_method"
-        # gmsg -v3 -c light_blue "honeypot_file: $honeypot_file"
-
-        #return 1
     return 0
 }
 
@@ -222,14 +264,18 @@ backup.status () {
 backup.ls () {
     # list available backups and its status
 
+    gmsg -v2 "last run time"
+    gmsg -v3 -c todo "TBD last time backed up per entry table"
+
+    gmsg -v2 "schedule"
     gmsg -n -c white "daily: "
-    gmsg -c light_blue "${GURU_BACKUP_DAILY[@]}"
+    gmsg -c light_blue "${GURU_BACKUP_SCHEDULE_DAILY[@]}"
 
     gmsg -n -c white "weekly: "
-    gmsg -c light_blue "${GURU_BACKUP_WEEKLY[@]}"
+    gmsg -c light_blue "${GURU_BACKUP_SCHEDULE_WEEKLY[@]}"
 
     gmsg -n -c white "mounthly: "
-    gmsg -c light_blue "${GURU_BACKUP_MONTHLY[@]}"
+    gmsg -c light_blue "${GURU_BACKUP_SCHEDULE_MONTHLY[@]}"
 
     return 0
 }
@@ -309,6 +355,8 @@ backup.wekan () {
 
     # stop container
     gmsg -v2 -n "stopping docker container.. "
+    gmsg -v3 -N -c deep_pink "ssh ${_user}@${_domain} -p ${_port} ssh ${_user}@${_domain} -p ${_port} -- docker stop wekan"
+
     if ssh ${_user}@${_domain} -p ${_port} -- docker stop wekan >/dev/null ; then
             gmsg -v2 -c green "ok"
         else
@@ -318,6 +366,7 @@ backup.wekan () {
 
     # delete current dump
     gmsg -v2 -n "delete last dump.. "
+    gmsg -v3 -N -c deep_pink "${_user}@${_domain} -p ${_port} -- docker exec wekan-db rm -rf /data/dump"
     if ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db rm -rf /data/dump >/dev/null ; then
             gmsg -v2 -c green "ok"
         else
@@ -327,6 +376,7 @@ backup.wekan () {
 
     # take a dump
     gmsg -v2 -n "take a dump /data/dump.. "
+    gmsg -v3 -N -c deep_pink "ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db mongodump -o /data/dump"
     if ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db mongodump -o /data/dump 2>/dev/null ; then
             gmsg -c green "ok"
         else
@@ -336,7 +386,7 @@ backup.wekan () {
 
     # copy to where to rsyck it to final location
     gmsg -v2 -n "copy to ${_location}.. "
-    ssh ${_user}@${_domain} -p ${_port} -- "[[ -d ${_location} ]] || mkdir -p ${_location}>/dev/null "
+    gmsg -v3 -N -c deep_pink "ssh ${_user}@${_domain} -p ${_port} -- [[ -d ${_location} ]] || mkdir -p ${_location}"
 
     if ssh ${_user}@${_domain} -p ${_port} -- docker cp wekan-db:/data/dump ${_location} >/dev/null ; then
             gmsg -v2 -c green "ok"
@@ -347,6 +397,7 @@ backup.wekan () {
 
     # start container
     gmsg -v2 -n "starting docker container.. "
+    gmsg -v3 -N -c deep_pink "ssh ${_user}@${_domain} -p ${_port} -- docker start wekan"
     if ssh ${_user}@${_domain} -p ${_port} -- docker start wekan >/dev/null ; then
             gmsg -v2 -c green "ok"
         else
@@ -397,6 +448,7 @@ backup.now () {
 
                 if [[ $DISPLAY ]] ; then
                         gmsg -v2 -n "mounting store media $store_device_file.. "
+                        gmsg -v3 -N -c deep_pink "gio mount -d $store_device_file"
                         gio mount -d $store_device_file \
                             && gmsg -v1 -c green "ok" \
                             || gmsg -v1 -c yellow "error: $?" -k $backup_indicator_key
@@ -412,6 +464,7 @@ backup.now () {
 
                         #     fi
 
+                        gmsg -v3 -N -c deep_pink "sudo mount -t $store_file_system $store_device_file $store_mount_point"
                         if sudo mount -t $store_file_system $store_device_file $store_mount_point ; then
                                 gmsg -v1 -c green "ok"
                             else
@@ -500,7 +553,8 @@ backup.now () {
             gmsg -v2 -n "getting honeypot file.. "
             # get honeypot file
 
-            if eval rsync "$command_param" $from_user@$from_domain:$honeypot_file /tmp >/dev/null ; then
+            gmsg -v3 -N -c deep_pink "eval rsync $command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null"
+            if eval rsync "$command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null" ; then
                 gmsg -v2 -c green "ok"
             else
                 gmsg -c yellow "cannot get honeypot file "
@@ -513,28 +567,39 @@ backup.now () {
             gmsg -v2 -n "checking honeypot file.. "
             local contain=($(cat /tmp/honeypot.txt))
             rm -f /tmp/honeypot.txt
+
+            gmsg -n -v3 "expecting 'honeypot' got '${contain[3]}' "
+
             if ! [[ ${contain[3]} == "honeypot" ]] ; then
                 gmsg -c yellow \
                      "honeypot file changed! got '${contain[3]}' when 'honeypot' expected."
                 gmsg -c light_blue "${contain[@]}"
                 gmsg -c red -k $backup_indicator_key \
                      "backup canceled cause of potential crypto virus action detected!"
-                #export GURU_BACKUP_ENABLED=false
+                export GURU_BACKUP_ENABLED=
                 return 102
             fi
         gmsg -v2 -c green "ok"
     fi
 
 ### 5) perform copy
+
     gmsg -v3 -c deep_pink "eval rsync $command_param $from_param $store_param/$backup_name"
+
+
+
     eval rsync $command_param $from_param $store_param/$backup_name
 
     local _error=$?
+
+
     if [[ $_error -gt 0 ]] ; then
-            gmsg -v1 "$from_location error: $backup_method $_error" \
+            gmsg "$from_location error: $backup_method $_error" \
                  -c red -k $backup_indicator_key
+
             return 12
         else
+
             gmsg -v3 "$from_location ok" \
                  -c green -k $backup_indicator_key
             return 0
@@ -551,68 +616,85 @@ backup.all () {
     local _active_list=()
 
     case $_lists_name in
-        daily)      _active_list=(${GURU_BACKUP_DAILY[@]}) ;;
-        weekly)     _active_list=(${GURU_BACKUP_WEEKLY[@]}) ;;
-        monthly)    _active_list=(${GURU_BACKUP_MONTHLY[@]}) ;;
-        all)        _active_list=(${GURU_BACKUP_DAILY[@]} ${GURU_BACKUP_WEEKLY[@]} ${GURU_BACKUP_MONTHLY[@]}) ;;
-            *)      gmsg -c yellow "unknown schedule '$_lists_name', try daily, weekly, monthly or all"
-                    read -p "run daily? " answer
-                    if [[ ${answer^^} == 'Y' ]] ; then
-                            _active_list=(${GURU_BACKUP_DAILY[@]})
-                        else
-                            return 0
-                        fi
-        esac
+        daily)      _active_list=(${GURU_BACKUP_SCHEDULE_DAILY[@]}) ;;
+        weekly)     _active_list=(${GURU_BACKUP_SCHEDULE_WEEKLY[@]}) ;;
+        monthly)    _active_list=(${GURU_BACKUP_SCHEDULE_MONTHLY[@]}) ;;
+        all)        _active_list=(${GURU_BACKUP_ACTIVE[@]}) ;;
+        *)          _active_list=(${GURU_BACKUP_SCHEDULE_DAILY[@]}) ;;
+    esac
 
     for source in ${_active_list[@]} ; do
-            gmsg -n -c dark_golden_rod "backing up $source $item/${#_active_list[@]}.. "
-            #if ! [[ $GURU_BACKUP_ENABLED ]] ; then gmsg -c yellow "canceled" ; break ; fi
-            backup.now $source || (( _error++ ))
-            (( item++ ))
-        done
+        gmsg -n -c dark_golden_rod "backing up $source $item/${#_active_list[@]}.. "
+        #if ! [[ $GURU_BACKUP_ENABLED ]] ; then gmsg -c yellow "canceled" ; break ; fi
+        backup.now $source || (( _error++ ))
+        (( item++ ))
+    done
 
     if [[ $_error -gt 0 ]] ; then
-            gmsg -v1 "$_error warnings, check log above" -c yellow -k $backup_indicator_key
-            return 12
-        else
-            gmsg -v3 "backup done" -c reset -k $backup_indicator_key
-            return 0
-        fi
+        gmsg -v1 "$_error warnings, check log above" -c yellow -k $backup_indicator_key
+        gindicate say -m "$_error warnings during backup"
+        return 12
+    else
+        gmsg -v3 -c green "backup.all done"
+        gindicate done -m "backup successfully" -k $backup_indicator_key
+        return 0
+    fi
 }
 
 
 backup.scheduled () {
         # run an set scheduled backup
 
-        local schedule=$1
-        local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
+    local schedule=$1
+    local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
 
-        # if not shedule file, return
-        if ! [[ -f $backup_data_folder/next ]] ; then
-            return 0
-        fi
+    # if not shedule file, return
+    if [[ -f $backup_stat_file ]] ; then
+        source $backup_stat_file
+    fi
 
-        local epic_backup=$(cat $backup_data_folder/next)
+    local epic_backup=$(cat $backup_data_folder/next)
 
-        # if not shedule file, return
-        if [[ $(date '+%s') -lt $epic_backup ]] ; then
-            return 0
-        fi
+    # if not shedule file, return
+    if [[ $(date '+%s') -lt $epic_backup ]] ; then
+        return 0
+    fi
 
-        # run given schedule list
-        backup.all $schedule
-        local _error=$?
+    # run given schedule list
+    backup.all $schedule
+    local _error=$?
 
-        # chedule next backup
-        if [[ $_error -lt 100 ]] ; then
-            # epic_backup=$(( $epic_backup + 86400))
-            # echo $epic_backup > $backup_data_folder/next
-            echo $(( $epic_backup + 86400)) > $backup_data_folder/next
+    # schedule next backup
+    if [[ $_error -lt 100 ]] ; then
+        local now=$(date -d now +%s)
 
-            gmsg -c white \
-                "next backup scheduled to $(date -d @$(cat $backup_data_folder/next) '+%d.%m.%Y %H:%M')"
-            return $_error
-        fi
+        case ${schedule} in
+            hourly) till_next=3600 ;;
+            daily) till_next=86400 ;;
+            weekly) till_next=604800 ;;
+            monthly) till_next=2629743 ;;
+            yearly) till_next=31556926 ;;
+            *) till_next=99999999 ;;
+        esac
+
+        next_time=$(( now + till_next ))
+        # epic_backup=$(( $epic_backup + 86400))
+        # echo $epic_backup > $backup_data_folder/next
+        # echo $(( $now + 86400)) > $backup_data_folder/next
+
+    # $GURU_SYSTEM_MOUNT/<entry_name>.stat
+        echo "next_time=1645715582" > $backup_stat_file
+        last_time=1645715582
+
+
+    # last_note="last time got $_error"
+
+        local rechedule="next backup scheduled to $(date -d @$(cat $backup_data_folder/next) '+%d.%m.%Y %H:%M')"
+        gmsg -c white $rechedule
+        gindicate say -m "next backup scheduled for tomorrow"
+
+        return $_error
+    fi
 }
 
 
@@ -639,6 +721,31 @@ backup.poll () {
 }
 
 
+
+backup.stand-alone () {
+    # this just a test is it even possible
+
+    # to get this running
+    declare -g GURU_VERBOSE=1
+    declare -g GURU_COLOR=true
+    declare -g GURU_CALL=guru
+    declare -g PATH="$PATH;$(pwd)/modules;$(pwd)/core"
+    declare -g GURU_SYSTEM_MOUNT=/tmp/guru
+
+    declare -g GURU_BACKUP_ENABLED=true
+    #declare -g GURU_BACKUP_COLOR=aqua
+    declare -g GURU_BACKUP_ACTIVE=(git Pictures)
+    declare -g GURU_BACKUP_SCHEDULE_DAILY=(git)
+    declare -g GURU_BACKUP_SCHEDULE_WEEKLY=(Pictures)
+    declare -g GURU_BACKUP_SCHEDULE_MONTHLY=()
+
+    # example
+    declare -g GURU_BACKUP_REPOSITORY=(/dev/sda1 ext4 $USER/backup/$(date +%Y)/git)
+    declare -g GURU_BACKUP_GIT=(repository rsync $HOME/git/)
+    declare -g GURU_DAEMON_INTERVAL=300
+
+}
+
 backup.install () {
     # install needed tools
 
@@ -657,7 +764,12 @@ backup.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+
+    backup.debug
+
+    [[ -f ~/.gururc ]] && source ~/.gururc \
+                       || backup.stand-alone
+
     backup.main "$@"
     exit "$?"
 fi
