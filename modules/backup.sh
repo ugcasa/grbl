@@ -56,6 +56,7 @@ backup.main () {
             backup.all $command
             return $? ;;
         "")
+
             backup.all daily
             return $? ;;
         *)
@@ -197,17 +198,16 @@ backup.config () {
                 declare -g store_file_system=${store_config[1]}
                 declare -g store_mount_point=${store_config[2]}
                 declare -g store_folder=${store_config[3]}
-                declare -g store_location="$store_mount_point/$store_folder"
+                # [[ ${store_mount_point: -1} == '/' ]] \
+                #     && declare -g store_location="$store_mount_point$store_folder" \
+                #     || declare -g store_location="$store_mount_point/$store_folder"
             fi
 
         declare -ga backup_ignore=($ignore)
         declare -g backup_method=$method
-
-        if [[ ${from_location: -1} == '/' ]] ; then
-                declare -g honeypot_file=$from_location"honeypot.txt"
-            else
-                declare -g honeypot_file="$from_location/honeypot.txt"
-            fi
+        [[ ${from_location: -1} == '/' ]] \
+                && declare -g honeypot_file=$from_location"honeypot.txt" \
+                || declare -g honeypot_file="$from_location/honeypot.txt"
 
         backup.variables
 
@@ -252,7 +252,7 @@ backup.status () {
         echo
         return 0
     else
-        # all fine, no cheduled backup in few hours
+        # all fine, no scheduled backup in few hours
         gmsg -n -v1 -c green -k $backup_indicator_key "on service "
         gmsg -v1 "next backup $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
         return 0
@@ -274,7 +274,7 @@ backup.ls () {
     gmsg -n -c white "weekly: "
     gmsg -c light_blue "${GURU_BACKUP_SCHEDULE_WEEKLY[@]}"
 
-    gmsg -n -c white "mounthly: "
+    gmsg -n -c white "monthly: "
     gmsg -c light_blue "${GURU_BACKUP_SCHEDULE_MONTHLY[@]}"
 
     return 0
@@ -483,7 +483,12 @@ backup.now () {
                     command_param="$command_param --exclude '*$_ignore'"
                 done
             fi
-            store_param="$store_mount_point/$store_folder"
+
+            # TBD remove these local variables and use global store_location
+            [[ ${store_mount_point: -1} == '/' ]] \
+                && store_location="$store_mount_point$store_folder" \
+                || store_location="$store_mount_point/$store_folder"
+
             from_param="$from_user@$from_domain:$from_location"
 
         # .. or if local to server copy..
@@ -584,14 +589,16 @@ backup.now () {
 
 ### 5) perform copy
 
-    gmsg -v3 -c deep_pink "eval rsync $command_param $from_param $store_param/$backup_name"
+    # TBD remove these local variables and use global store_location
+    [[ ${store_param: -1} == '/' ]] \
+        && store_param="$store_mount_point$backup_name" \
+        || store_param="$store_mount_point/$backup_name"
 
+    gmsg -v3 -c deep_pink "eval rsync $command_param $from_param $store_param"
 
-
-    eval rsync $command_param $from_param $store_param/$backup_name
+    eval rsync $command_param $from_param $store_param
 
     local _error=$?
-
 
     if [[ $_error -gt 0 ]] ; then
             gmsg "$from_location error: $backup_method $_error" \
@@ -610,33 +617,36 @@ backup.now () {
 backup.all () {
     # backup all in active list
 
-    local _lists_name=$1
-    local item=1;
+    local schedule=$1
+    local _item=1;
     local _error=
-    local _active_list=()
+    local entries=()
+    local backup_indicator_key="f$(daemon.poll_order backup)"
 
-    case $_lists_name in
-        daily)      _active_list=(${GURU_BACKUP_SCHEDULE_DAILY[@]}) ;;
-        weekly)     _active_list=(${GURU_BACKUP_SCHEDULE_WEEKLY[@]}) ;;
-        monthly)    _active_list=(${GURU_BACKUP_SCHEDULE_MONTHLY[@]}) ;;
-        all)        _active_list=(${GURU_BACKUP_ACTIVE[@]}) ;;
-        *)          _active_list=(${GURU_BACKUP_SCHEDULE_DAILY[@]}) ;;
+    gmsg -c pink "backup_indicator_key:$backup_indicator_key"
+
+    case $schedule in
+        daily)      entries=(${GURU_BACKUP_SCHEDULE_DAILY[@]}) ;;
+        weekly)     entries=(${GURU_BACKUP_SCHEDULE_WEEKLY[@]}) ;;
+        monthly)    entries=(${GURU_BACKUP_SCHEDULE_MONTHLY[@]}) ;;
+        all)        entries=(${GURU_BACKUP_ACTIVE[@]}) ;;
+        *)          entries=(${GURU_BACKUP_SCHEDULE_DAILY[@]}) ;;
     esac
 
-    for source in ${_active_list[@]} ; do
-        gmsg -n -c dark_golden_rod "backing up $source $item/${#_active_list[@]}.. "
+    for entry in ${entries[@]} ; do
+        gmsg -n -c dark_golden_rod "backing up $entry $_item/${#entries[@]}.. "
         #if ! [[ $GURU_BACKUP_ENABLED ]] ; then gmsg -c yellow "canceled" ; break ; fi
-        backup.now $source || (( _error++ ))
-        (( item++ ))
+        backup.now $entry || (( _error++ ))
+        (( _item++ ))
     done
 
     if [[ $_error -gt 0 ]] ; then
-        gmsg -v1 "$_error warnings, check log above" -c yellow -k $backup_indicator_key
+        gmsg "$_error warnings, check log above" -c yellow -k $backup_indicator_key
         gindicate say -m "$_error warnings during backup"
         return 12
     else
-        gmsg -v3 -c green "backup.all done"
-        gindicate done -m "backup successfully" -k $backup_indicator_key
+        gmsg -v3 -c green "$schedule backup done"
+        gindicate done -m "$schedule backup done" -k $backup_indicator_key
         return 0
     fi
 }
