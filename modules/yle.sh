@@ -9,39 +9,29 @@ declare -g episodes=()
 declare -g media_address
 declare -g media_filename
 
-yle_main () {
+yle.main () {
 
-    case "$1" in
+    local command=$1
+    shift
 
-        install)
-            pip3 install --upgrade pip
-            [[ -f yle-dl ]] || pip3 install --user --upgrade yle-dl
-            ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
-            jq --version >/dev/null || sudo apt install jq -y
-            sudo apt install detox vlc
-            echo "Successfully installed"
-            ;;
+    case "$command" in
 
-        uninstall)
-            sudo -H pip3 remove --user yle-dl
-            sudo apt remove ffmpeg jq -y
-            echo "uninstalled"
+        install|uninstall)
+            yle.$command $@
             ;;
 
         play)
-            shift
-            echo "$1" | grep "http" && base_url="" || base_url="https://areena.yle.fi/"
-            yle-dl --pipe "base_url$1" 2>/dev/null | vlc - &
+            echo "$command" | grep "http" && base_url="" || base_url="https://areena.yle.fi/"
+            yle-dl --pipe "base_url$command" 2>/dev/null | vlc - &
             exit 0
             ;;
 
         get|dl|download)
-            shift
             for item in "$@"
                 do
-                   get_media_metadata "$item" || return 127
-                   get_media
-                   place_media
+                   yle.get_metadata "$item" || return 127
+                   yle.get_media
+                   yle.place_media
                 done
             ;;
 
@@ -51,23 +41,20 @@ yle_main () {
             ;;
 
         episodes)
-            shift
-            get_media_metadata "$1" || return 127
+            yle.get_metadata "$command" || return 127
             [[ "$episodes" ]] && echo "$episodes" || echo "single episode"
             ;;
 
         play)
-            shift
-            get_media_metadata "$1" || return 127
+            yle.get_metadata "$command" || return 127
             echo "osoite: $media_address"
             yle-dl --pipe "$media_address" 2>/dev/null | vlc - 2>/dev/null &
             ;;
 
         subtitle|subtitles|sub|subs)
-            shift
-            get_media_metadata "$1" || return 127
-            get_subtitles
-            place_media "$run_folder"
+            yle.get_metadata "$command" || return 127
+            yle.get_subtitles
+            yle.place_media "$run_folder"
             ;;
 
         weekly|relax|suosikit)
@@ -81,20 +68,20 @@ yle_main () {
         status)  echo "no status data" ;;
 
         meta|data|metadata|information|info)
-            shift
+
             for item in "$@"
                 do
-                   get_media_metadata "$item" && get_media
+                   yle.get_metadata "$item" && yle.get_media
                 done
             ;;
 
-            help)
-                echo "usage:    $GURU_CALL yle [install|uninstall|play|get|news|episodes|play|subtitle|weekly|meta]" ;;
+        help)
+            echo "usage:    $GURU_CALL yle [install|uninstall|play|get|news|episodes|play|subtitle|weekly|meta]" ;;
 
         *)
             for item in "$@"
                 do
-                   get_media_metadata "$item"
+                   yle.get_metadata "$item"
                 done
             ;;
 
@@ -104,7 +91,7 @@ yle_main () {
 }
 
 
-get_media_metadata () {
+yle.get_metadata () {
 
     error=""
     meta_data="$yle_temp/meta.json"
@@ -115,46 +102,50 @@ get_media_metadata () {
 
     # do not add base url if it already given
     if echo $1 | grep "https" ; then
-        base_url=""
-    else
-        base_url="https://areena.yle.fi/"
-    fi
+            base_url=""
+        else
+            base_url="https://areena.yle.fi/"
+        fi
 
     media_url="$base_url$1"                              #;echo "$media_url"; exit 0
 
     # Check if id contain episodes, then select first one (newest)
-    episodes=$(yle-dl --showepisodepage $media_url |grep -v $media_url)
+    episodes=$(yle-dl --showepisodepage $media_url | grep -v $media_url)
     latest=$(echo $episodes | cut -d " " -f 1)          #; echo "latest: $latest"; exit 0
     [[ "$latest" ]] && media_url=$latest              #; echo "media_url: $media_url"; exit 0
 
     # Get metadata
-    yle-dl "$media_url" --showmetadata >"$meta_data"
+    yle-dl $media_url --showmetadata >$meta_data
 
     grep "error" "$meta_data" && error=$(cat "$meta_data" | jq '.[].flavors[].error')
     if [[ "$error" ]] ; then
-        echo "$error"
-        return 100
-    fi
+            echo "$error"
+            return 100
+        fi
 
     # set variables (like they be local anyway)
     media_title="$(cat "$meta_data" | jq '.[].title')"          #;echo "title: $media_title"
+    echo "${media_title//'"'/""}"
+
     media_address="$media_url "
     #$(cat "$meta_data" | jq '.[].webpage')                     #;echo "address: $media_address"
     #media_address=${media_address//'"'/""}                     #;echo "$media_address"                         # remove " signs
     media_filename=$(cat "$meta_data" | jq '.[].filename')     #;echo "meta: $media_filename"
-    echo "${media_title//'"'/""}"
 }
 
 
-get_media () {
+yle.get_media () {
     # get media from server and place it to /$USER/tmp
 
     # detox filename
-    output_filename=${media_filename//:/-}
-    output_filename=${output_filename// /}
+    output_filename=${media_filename//. /-}
+    output_filename=${output_filename//.: /-}
+    output_filename=${output_filename//: /-}
+    output_filename=${output_filename// /-}
     output_filename=${output_filename//'"'/}
+    output_filename=${output_filename,,}
 
-    #gmsg -c deep_pink "output filename: $output_filename"
+    gmsg -v3 -c deep_pink "output filename: $output_filename"
 
     # check is tmp file alredy there
     if [[ -f $output_filename ]] ; then
@@ -182,7 +173,7 @@ get_media () {
 }
 
 
-get_subtitles () {
+yle.get_subtitles () {
 
 
     [ -d "$yle_temp" ] && rm -rf "$yle_temp"
@@ -193,7 +184,7 @@ get_subtitles () {
     #media_filename=${media_filename#*"-> "}                   #;echo "cut: $media_filename"
 }
 
-place_media () {
+yle.place_media () {
 
     #location="$@"
 
@@ -214,38 +205,58 @@ place_media () {
 
         mp3|wav)
             mount.main audio
-            location="$GURU_MOUNT_AUDIO" ;;
+            location="$GURU_MOUNT_AUDIO/yle" ;;
 
 
         mkv|mp4|src|sub|avi)
             mount.main video
-            location="$GURU_MOUNT_VIDEO" ;;
+            location="$GURU_MOUNT_VIDEO/yle" ;;
         *)
             mount.main downloads
-            location="$GURU_MOUNT_DOWNLOADS" ;;
+            location="$GURU_MOUNT_DOWNLOADS/yle" ;;
     esac
 
-    # input overwrites
-    [[ "$1" ]] && location="$1"
+    # input overwrites basic shit
+    if [[ "$1" ]] ; then
+            location="$1"
+            shift
+        fi
+
+    [[ -d $location ]] || mkdir -p $location
 
     # moving to default location
-    echo "saving to: $location/$media_filename"
-    mv -f "$media_filename" "$location"
+    gmsg -c white "saving to: $location/$media_filename"
+    mv -f $media_filename $location
 
-    # play after download
-    media_file=$location/$media_filename
-    [ "$2" == "play" ] && play_media "$media_file"
 }
 
 
-play_media () {
+yle.play_media () {
     vlc --play-and-exit "$1" &
+}
+
+
+yle.install() {
+    pip3 install --upgrade pip
+    [[ -f yle-dl ]] || pip3 install --user --upgrade yle-dl
+    ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
+    jq --version >/dev/null || sudo apt install jq -y
+    sudo apt install detox vlc
+    echo "Successfully installed"
+}
+
+
+uninstall(){
+
+    sudo -H pip3 remove --user yle-dl
+    sudo apt remove ffmpeg jq -y
+    echo "uninstalled"
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$GURU_RC"
-    yle_main "$@"
+    yle.main "$@"
 fi
 
 
