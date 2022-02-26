@@ -775,7 +775,7 @@ backup.remove () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
-    backup.debug
+    # backup.debug
 
     [[ -f ~/.gururc ]] && source ~/.gururc \
                        || backup.stand-alone
