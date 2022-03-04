@@ -76,7 +76,7 @@ yle.main () {
             ;;
 
         help)
-            echo "usage:    $GURU_CALL yle [install|uninstall|play|get|news|episodes|play|subtitle|weekly|meta]" ;;
+            echo "usage:    $GURU_CALL yle install|uninstall|play|get|news|episodes|play|subtitle|weekly|meta" ;;
 
         *)
             for item in "$@"
@@ -91,9 +91,118 @@ yle.main () {
 }
 
 
+# block_rev () {
+#     # trick to reverse array without reversing strings
+#     array=($@)
+
+#     f() { array=("${BASH_ARGV[@]}"); }
+
+#     shopt -s extdebug
+#     f "${array[@]}"
+#     shopt -u extdebug
+
+#     echo "${array[@]}"
+# }
+
+
+# yle.place () {
+
+#     find_files () {
+#         for entry in $@ ; do
+#               [[ -f $entry ]] && echo $entry
+#             done
+#     }
+
+#     split_filename () {
+#         local filename=$1
+#         local pos=0
+#         local episode=
+#         local name=
+
+#         sepa='-'
+
+#         for type in ${left[@]} ; do
+
+#             (( pos++ ))
+
+#             case $type in
+#                 name)
+#                         name="$name$(echo $filename | cut -f $pos -d $sepa) "
+#                         ;;
+#                 episode)
+#                         word="$(echo $filename | cut -f $pos -d $sepa) "
+
+#                         if grep -ve 's0' -ve 'e0' <<<$word ; then
+#                             episode="$episode$word"
+#                         else
+#                             code=$word
+#                             break
+#                         fi
+
+#                         ;;
+#                     esac
+#             done
+
+#         pos=0
+#         for type in ${right[@]} ; do
+
+#                 (( pos++ ))
+
+#                 case $type in
+#                     ending)
+#                             sepa='.'
+#                             ending="$(echo $filename | cut -f 1 -d $sepa)"
+#                             ;;
+#                     time)
+#                             sepa='t'
+#                             time="$(echo $filename | cut -f $pos -d $sepa)"
+#                             ;;
+#                     day)
+#                             day="$(echo $filename | cut -f $pos -d $sepa)"
+#                             ;;
+#                     month)  month="$(echo $filename | cut -f $pos -d $sepa)"
+#                             ;;
+#                     year)   year="$(echo $filename | cut -f $pos -d $sepa)"
+#                             ;;
+#                         esac
+#                 done
+
+#         gmsg "name: $name"
+#         gmsg "episode: $episode"
+#         gmsg "ending: $ending"
+#         gmsg "day: $day"
+#         gmsg "month: $month"
+#         gmsg "time: $time"
+
+#         }
+
+#     files=($(find_files '*mp4 *mkv'))
+#     gmsg -v3 -c light_blue "files: ${files[@]}"
+
+#     sepa='-'
+#     left=(name name name name name episode episode episode episode episode episode episode)
+
+
+#     #right_rev=(ending time day month year code)
+#     right=(code year month day time ending)
+
+#     # gmsg "order: ${left[@]} $(block_rev ${right_rev[@]})"
+#     gmsg "order: ${left[@]} ${right[@]}"
+
+#     for file in ${files[@]} ; do
+#         split_filename $file
+
+#         done
+
+# }
+
+
+
+
+
 yle.get_metadata () {
 
-    error=""
+    error=
     meta_data="$yle_temp/meta.json"
 
     # make temp if not exist already
@@ -107,12 +216,12 @@ yle.get_metadata () {
             base_url="https://areena.yle.fi/"
         fi
 
-    media_url="$base_url$1"                              #;echo "$media_url"; exit 0
+    media_url="$base_url$1"
 
     # Check if id contain episodes, then select first one (newest)
     episodes=$(yle-dl --showepisodepage $media_url | grep -v $media_url)
-    latest=$(echo $episodes | cut -d " " -f 1)          #; echo "latest: $latest"; exit 0
-    [[ "$latest" ]] && media_url=$latest              #; echo "media_url: $media_url"; exit 0
+    latest=$(echo $episodes | cut -d " " -f 1)
+    [[ "$latest" ]] && media_url=$latest
 
     # Get metadata
     yle-dl $media_url --showmetadata >$meta_data
@@ -124,13 +233,13 @@ yle.get_metadata () {
         fi
 
     # set variables (like they be local anyway)
-    media_title="$(cat "$meta_data" | jq '.[].title')"          #;echo "title: $media_title"
+    media_title="$(cat "$meta_data" | jq '.[].title')"
     echo "${media_title//'"'/""}"
 
     media_address="$media_url "
-    #$(cat "$meta_data" | jq '.[].webpage')                     #;echo "address: $media_address"
-    #media_address=${media_address//'"'/""}                     #;echo "$media_address"                         # remove " signs
-    media_filename=$(cat "$meta_data" | jq '.[].filename')     #;echo "meta: $media_filename"
+    #$(cat "$meta_data" | jq '.[].webpage')
+    #media_address=${media_address//'"'/""}
+    media_filename=$(cat "$meta_data" | jq '.[].filename')
 }
 
 
@@ -180,17 +289,17 @@ yle.get_subtitles () {
     mkdir -p "$yle_temp"
     cd "$yle_temp"
     yle-dl "$media_url" --subtitlesonly #2>/dev/null
-    #media_filename=$(detox -v * | grep -v "Scanning")          #;echo "detox: $media_filename"
-    #media_filename=${media_filename#*"-> "}                   #;echo "cut: $media_filename"
+    #media_filename=$(detox -v * | grep -v "Scanning")
+    #media_filename=${media_filename#*"-> "}
 }
 
 yle.place_media () {
 
     #location="$@"
 
-    media_file_format="${media_filename: -5}"      #; echo "media_file_format:$media_file_format|"     # read last characters of filename
-    media_file_format="${media_file_format#*.}"     #; echo "media_file_format:$media_file_format|"     # read after separator
-    #media_file_format="${media_file_format^^}"      #; echo "media_file_format:$media_file_format|"     # upcase
+    media_file_format="${media_filename: -5}"
+    media_file_format="${media_file_format#*.}"
+    #media_file_format="${media_file_format^^}"
     gmsg -c deep_pink "media_file_format: $media_file_format, media_filename $media_filename"
 
     if ! [[ -f $media_filename ]] ; then
@@ -205,15 +314,15 @@ yle.place_media () {
 
         mp3|wav)
             mount.main audio
-            location="$GURU_MOUNT_AUDIO/yle" ;;
+            location="$GURU_MOUNT_AUDIO" ;;
 
 
         mkv|mp4|src|sub|avi)
             mount.main video
-            location="$GURU_MOUNT_VIDEO/yle" ;;
+            location="$GURU_MOUNT_TV" ;;
         *)
             mount.main downloads
-            location="$GURU_MOUNT_DOWNLOADS/yle" ;;
+            location="$GURU_MOUNT_DOWNLOADS" ;;
     esac
 
     # input overwrites basic shit
@@ -238,7 +347,7 @@ yle.play_media () {
 
 yle.install() {
     pip3 install --upgrade pip
-    [[ -f yle-dl ]] || pip3 install --user --upgrade yle-dl
+    [[ -f /home/casa/.local/bin/yle-dl ]] || pip3 install --user --upgrade yle-dl
     ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
     jq --version >/dev/null || sudo apt install jq -y
     sudo apt install detox vlc
@@ -248,7 +357,7 @@ yle.install() {
 
 uninstall(){
 
-    sudo -H pip3 remove --user yle-dl
+    sudo -H pip3 unisntall --user yle-dl
     sudo apt remove ffmpeg jq -y
     echo "uninstalled"
 }
