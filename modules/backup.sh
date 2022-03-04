@@ -48,30 +48,30 @@ backup.main () {
             backup.$command "$@"
             return $? ;;
 
-        all)
-            backup.all $command
+        plan)
+            backup.plan $@
             return $? ;;
 
-        daily|weekly|monthly)
-            backup.all $command
+        all|daily|weekly|monthly)
+            backup.plan $command
             return $? ;;
         "")
 
-            backup.all daily
+            backup.plan daily
             return $? ;;
         *)
             # go trough given items
             local given_entrys=("$command" "$@")
 
-            gmsg -c pink "given_entrys: ${given_entrys[@]}"
+            #gmsg -c pink "given_entrys: ${given_entrys[@]}"
             # go trough given entries..
             for given_entry in ${given_entrys[@]} ; do
 
-                gmsg -c pink "given_entry: $given_entry"
+                #gmsg -c pink "given_entry: $given_entry"
                 # .. then trough active entry name list..
                 for enabled_entry in ${GURU_BACKUP_ACTIVE[@]} ; do
 
-                    gmsg -c pink "enabled_entry: $enabled_entry"
+                    #gmsg -c pink "enabled_entry: $enabled_entry"
                     # ..and check that given item is the requested item
                     if [[ $given_entry == $enabled_entry ]]; then
 
@@ -151,8 +151,8 @@ backup.config () {
     declare -ga active_list=(${GURU_BACKUP_ACTIVE[@]})
     declare -la header=(store method from ignore)
     declare -g backup_indicator_key="f$(daemon.poll_order backup)"
-    declare -g backup_stat_file=$GURU_SYSTEM_MOUNT/backup/$backup_name.stat
-
+    # TBD declare -g backup_stat_file=$GURU_SYSTEM_MOUNT/backup/$backup_name.stat
+    declare -g backup_stat_file=$GURU_SYSTEM_MOUNT/backup/next
     # exit if not in list
     if ! echo "${active_list[@]}" | grep $backup_name >/dev/null; then
             gmsg -c yellow "no '$backup_name' in active backup list"
@@ -416,6 +416,7 @@ backup.now () {
     # 3) check backup method get files out of service containers
     # 4) file checks to avoid broken/infected copy over good files
     # 5) perform copy
+    # TBD make functions out of these parts
 
 ### 1) get config for backup name
 
@@ -546,7 +547,7 @@ backup.now () {
                         ;;
 
                  *WORM*)
-                        echo "TBD other virus track marks here"
+                        gmsg -c tbd "TBD other virus track marks here"
                         return 102
                         ;;
                 esac
@@ -595,7 +596,6 @@ backup.now () {
         || store_param="$store_mount_point/$backup_name"
 
     gmsg -v3 -c deep_pink "eval rsync $command_param $from_param $store_param"
-
     eval rsync $command_param $from_param $store_param
 
     local _error=$?
@@ -614,24 +614,35 @@ backup.now () {
 }
 
 
-backup.all () {
+backup.plan () {
     # backup all in active list
 
-    local schedule=$1
+    local schedule='daily'
+    [[ $1 ]] && schedule=$1
     local _item=1;
     local _error=
     local entries=()
     local backup_indicator_key="f$(daemon.poll_order backup)"
 
-    gmsg -c pink "backup_indicator_key:$backup_indicator_key"
+    gmsg -v3 -c pink "schedule: $schedule"
 
     case $schedule in
         daily)      entries=(${GURU_BACKUP_SCHEDULE_DAILY[@]}) ;;
         weekly)     entries=(${GURU_BACKUP_SCHEDULE_WEEKLY[@]}) ;;
         monthly)    entries=(${GURU_BACKUP_SCHEDULE_MONTHLY[@]}) ;;
         all)        entries=(${GURU_BACKUP_ACTIVE[@]}) ;;
-        *)          entries=(${GURU_BACKUP_SCHEDULE_DAILY[@]}) ;;
+        *)          variable="GURU_BACKUP_SCHEDULE_${schedule^^}[@]"
+                    entries=($(eval echo ${!variable}))
+                    ;;
+
     esac
+
+    if ! [[ $entries ]] ; then
+        gmsg "no entries"
+        return 0
+    fi
+
+    gmsg -v3 -c pink "entries: ${entries[@]}"
 
     for entry in ${entries[@]} ; do
         gmsg -n -c dark_golden_rod "backing up $entry $_item/${#entries[@]}.. "
@@ -642,11 +653,11 @@ backup.all () {
 
     if [[ $_error -gt 0 ]] ; then
         gmsg "$_error warnings, check log above" -c yellow -k $backup_indicator_key
-        gindicate say -m "$_error warnings during backup"
+        gindicate say -m "$_error warnings during $schedule backup"
         return 12
     else
-        gmsg -v3 -c green "$schedule backup done"
-        gindicate done -m "$schedule backup done" -k $backup_indicator_key
+        #gmsg -v3 -c green "$schedule done"
+        gindicate done -m "$schedule backup" -k $backup_indicator_key
         return 0
     fi
 }
@@ -655,49 +666,44 @@ backup.all () {
 backup.scheduled () {
         # run an set scheduled backup
 
-    local schedule=$1
+    local schedule='daily'
+    [[ $1 ]] && schedule=$1
+
     local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
-
-    # if not shedule file, return
-    if [[ -f $backup_stat_file ]] ; then
-        source $backup_stat_file
-    fi
-
     local epic_backup=$(cat $backup_data_folder/next)
 
-    # if not shedule file, return
     if [[ $(date '+%s') -lt $epic_backup ]] ; then
         return 0
     fi
 
     # run given schedule list
-    backup.all $schedule
+    backup.plan $schedule
     local _error=$?
 
     # schedule next backup
     if [[ $_error -lt 100 ]] ; then
         local now=$(date -d now +%s)
 
-        case ${schedule} in
-            hourly) till_next=3600 ;;
-            daily) till_next=86400 ;;
-            weekly) till_next=604800 ;;
-            monthly) till_next=2629743 ;;
-            yearly) till_next=31556926 ;;
-            *) till_next=99999999 ;;
-        esac
+        # konepelti näemmä aika auki jääny
+        # case ${schedule} in
+        #     hourly) till_next=3600 ;;
+        #     daily) till_next=86400 ;;
+        #     weekly) till_next=604800 ;;
+        #     monthly) till_next=2629743 ;;
+        #     yearly) till_next=31556926 ;;
+        #     *) till_next=99999999 ;;
+        # esac
 
-        next_time=$(( now + till_next ))
-        # epic_backup=$(( $epic_backup + 86400))
-        # echo $epic_backup > $backup_data_folder/next
-        # echo $(( $now + 86400)) > $backup_data_folder/next
+        #epic_backup=$(( $epic_backup + 86400))
+        #echo $epic_backup > $backup_data_folder/next
+        echo $(( $now + 86400 )) > $backup_data_folder/next
+        #next_time=$(( now + till_next ))
 
-    # $GURU_SYSTEM_MOUNT/<entry_name>.stat
-        echo "next_time=1645715582" > $backup_stat_file
-        last_time=1645715582
-
-
-    # last_note="last time got $_error"
+        # $GURU_SYSTEM_MOUNT/<entry_name>.stat
+        # $next_time > $backup_data_folder/next
+        #echo "next_time=$next_time" > $backup_stat_file
+        #last_time=1645715582
+        # last_note="last time got $_error"
 
         local rechedule="next backup scheduled to $(date -d @$(cat $backup_data_folder/next) '+%d.%m.%Y %H:%M')"
         gmsg -c white $rechedule
