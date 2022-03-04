@@ -2,10 +2,6 @@
 # guru-client corsair led notification functions
 # casa@ujo.guru 2020-2021
 
-# WARNING: this module can fuck up system suspend, # if that happens just
-# wait until login window activates, it should take less than 2 minutes (cinnamon)
-# and remove file '/lib/systemd/system-sleep/guru-client-suspend.sh'
-
 source $GURU_BIN/common.sh
 source $GURU_BIN/system.sh
 
@@ -25,13 +21,6 @@ pipelist_file="$GURU_CFG/corsair-pipelist.cfg"
 
 # import colors f
 [[ -f "$GURU_CFG/rgb-color.cfg" ]] && source "$GURU_CFG/rgb-color.cfg"
-
-# # load key pipe file list
-# if [[ -f $pipelist_file ]] ; then
-#         source $pipelist_file
-#     else
-#         gmsg -c red "pipelist file $pipelist_file missing"
-#     fi
 
 # for now only esc,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12, y, n and caps are piped in ckb_next 20220222
 declare -ga corsair_keytable=(\
@@ -546,7 +535,7 @@ corsair.indicate () {
     [[ $GURU_PROJECT_COLOR ]] && color=$GURU_PROJECT_COLOR
 
     case $level in
-                        #color1 color2 interval timeout leave-color
+                             # color1 color2 interval timeout leave-color
         ok)             _blink="green lime 0.5 3 green" ;;
         cancel)         _blink="orange $GURU_CORSAIR_MODE 0.2 3 " ;;
         init)           _blink="blue dark_blue 0.1 3 " ;;
@@ -932,7 +921,7 @@ corsair.systemd_enable () {
     corsair.make_daemon_service
     sudo systemctl daemon-reload                         || gmsg -c yellow "daemon daemon-reload failed"
     sudo systemctl enable ${corsair_daemon_service##*/}  || gmsg -c yellow "daemon enable failed"
-    sudo systemctl start ${corsair_daemon_service##*/}   || gmsg -c yellow "deamon start failed"
+    sudo systemctl start ${corsair_daemon_service##*/}   || gmsg -c yellow "daemon start failed"
 
     ## ckb-next application service
     gmsg -v1 "generating ckb-next application service file.. "
@@ -1010,8 +999,8 @@ corsair.patch () {
 
     case $1 in
             K68|k68|keyboard)
-                gmsg -c pink "1) find 'define NEEDS_UNCLEAN_EXIT(kb)' somewhere near line ~195"
-                gmsg -c pink "2) add '|| (kb)->product == P_K68_NRGB' to end of line before ')'"
+                gmsg -c white "1) find 'define NEEDS_UNCLEAN_EXIT(kb)' somewhere near line ~195"
+                gmsg -c white "2) add '|| (kb)->product == P_K68_NRGB' to end of line before ')'"
                 subl src/daemon/usb.h
                 ;;
             IRONCLAW|ironclaw|mouse)
@@ -1168,3 +1157,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         exit "$?"
 fi
 
+
+# WARNING: this module can fuck up system suspend, # if that happens just
+# wait until login window activates, it should take less than 2 minutes (cinnamon)
+# and remove file '/lib/systemd/system-sleep/guru-client-suspend.sh'
+
+# # load key pipe file list
+# if [[ -f $pipelist_file ]] ; then
+#         source $pipelist_file
+#     else
+#         gmsg -c red "pipelist file $pipelist_file missing"
+#     fi
