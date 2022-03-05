@@ -36,7 +36,7 @@ audio.main () {
     case "$_command" in
 
             playlist)
-                audio.play_playlist $@
+                audio.playlist_play $@
                 return $?
                 ;;
 
@@ -62,12 +62,94 @@ audio.main () {
 }
 
 
-audio.play_playlist () {
+audio.playlist_config () {
+
+    local user_reguest=$1
+    local found_line=$(cat $GURU_RC | grep "GURU_AUDIO_PLAYLIST_${user_reguest^^}=")
+
+    if ! [[ $found_line ]] ; then
+            gmsg -c yellow "list '$user_reguest' not found"
+            return 126
+        fi
+
+    gmsg -v3 "found_line: $found_line"
+
+    declare -g playlist_found_name=$(echo $found_line | cut -f4 -d '_' | cut -f1 -d '=')
+    gmsg -v3 "playlist_found_name: $playlist_found_name"
+
+    local variable="GURU_AUDIO_PLAYLIST_${playlist_found_name}[@]"
+    local found_settings=($(eval echo ${!variable}))
+    gmsg -v3 "found_settings: ${found_settings[@]}"
+
+    declare -g playlist_location=${found_settings[0]}
+    gmsg -v3 "playlist_location: $playlist_location"
+
+    declare -g playlist_phase=${found_settings[1]}
+    gmsg -v3 "playlist_phase: $playlist_phase"
+
+    declare -g playlist_option=${found_settings[2]}
+    gmsg -v3 "playlist_option: $playlist_option"
+
+    declare -g list_description="${playlist_location##*/}"
+    list_description="${list_description//_/' '}"
+    list_description="${list_description//'-'/' - '}"
+    gmsg -v3 "description: $list_description"
+
+
+    if ! [[ $playlist_found_name ]] ; then
+            gmsg -c yellow "'$user_reguest' not found"
+            return 127
+        fi
+
+    return 0
+}
+
+
+audio.playlist_list () {
+
+    local _list=($(cat $GURU_RC | grep "GURU_AUDIO_PLAYLIST_" | grep -v "local" | cut -f4 -d '_' | cut -f1 -d '='))
+    _list=(${_list[@],,})
+
+    # if verbose is lover than 1
+    gmsg -V2 -c light_blue "${_list[@]}"
+
+    # higher verbose
+    if [[ $GURU_VERBOSE -gt 1 ]] ; then
+
+            for _list_item in ${_list[@]} ; do
+
+                     audio.playlist_config $_list_item
+                     gmsg -n -c light_blue "$_list_item: "
+                     gmsg "$list_description"
+                 done
+
+         fi
+
+    return 0
+}
+
+
+audio.playlist_compose () {
+    # check is list named as request exist
+
+    local user_reguest=$1
+
+    audio.playlist_config $user_reguest
+
+    if [[ "$playlist_found_name" == "${user_reguest^^}" ]] ; then
+            ls $playlist_location/$playlist_phase | grep -e wav -e mp3 -e m4a | sort -$playlist_option > $temp_file # | head -n 5
+            gmsg -v2 "$(cat $temp_file)"
+            return 0
+        else
+            gmsg -c yellow "list name '$user_reguest' not found"
+            return 124
+        fi
+}
+
+
+audio.playlist_play () {
 
     local temp_file='/tmp/audio.playlist'
-
-    # in user.cfg [audio]
-    # playlist_perttu=($GURU_MOUNT_AUDIO/yle *phase*)
 
     local user_reguest=$1
     gmsg -v3 "user_reguest: $user_reguest "
@@ -79,11 +161,7 @@ audio.play_playlist () {
 
     case $user_reguest in
         list|ls)
-            # local list=($(set | grep "GURU_AUDIO_PLAYLIST_" | cut -f4 -d '_' | cut -f1 -d '='))
-            local list=($(set | grep "GURU_AUDIO_PLAYLIST_" | grep -v "local" | cut -f4 -d '_' | cut -f1 -d '='))
-            list=(${list[@],,})
-            gmsg -n -v2 "current lists: "
-            gmsg -c light_blue "${list[@]}"
+            audio.playlist_list $user_reguest
             return 0
         esac
 
@@ -98,57 +176,21 @@ audio.play_playlist () {
                 fi
 
             mpv --playlist=$user_reguest
+            return $?
 
-            return 0
         else
             gmsg -v3 "file '$user_reguest' not found or format mismatch"
         fi
 
+    local options=
+    [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet $options "
 
-    # check is list named as request exist
-    local found_line=$(set | grep "GURU_AUDIO_PLAYLIST_${user_reguest^^}=")
-
-    if ! [[ $found_line ]] ; then
-            gmsg -c yellow "list '$user_reguest' not found"
-            return 126
-        fi
-
-    gmsg -v3 "found_line: $found_line"
-
-    local found_name=$(echo $found_line | cut -f4 -d '_' | cut -f1 -d '=')
-    gmsg -v3 "found_name: $found_name"
-
-    local variable="GURU_AUDIO_PLAYLIST_${found_name}[@]"
-    local found_settings=($(eval echo ${!variable}))
-    gmsg -v3 "found_settings: ${found_settings[@]}"
-
-    local location=${found_settings[0]}
-    gmsg -v3 "location: $location"
-
-    local phase=${found_settings[1]}
-    gmsg -v3 "phase: $phase"
-
-    local option=${found_settings[2]}
-    gmsg -v3 "option: $option"
-
-
-    if ! [[ $found_name ]] ; then
-            gmsg -c yellow "'$user_reguest' not found"
-            return 127
-        fi
-
-    if [[ "$found_name" == "${user_reguest^^}" ]] ; then
-            ls $location/$phase | grep -e wav -e mp3 -e m4a | sort $option > $temp_file # | head -n 5
-            gmsg -v2 "$(cat $temp_file)"
-
-            mpv --playlist="$temp_file"
-
-            return 0
-        else
-            gmsg -c yellow "list name '$user_reguest' not found"
+    # if not file check is it configured in user.cfg
+    if audio.playlist_compose $user_reguest ; then
+            mpv --playlist="$temp_file" $options
+            return $?
         fi
 }
-
 
 
 audio.close () {
