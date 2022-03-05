@@ -16,6 +16,10 @@ yle.main () {
 
     case "$command" in
 
+        listen|radio)
+            yle.radio_listen $@
+            ;;
+
         install|uninstall)
             yle.$command $@
             ;;
@@ -197,9 +201,6 @@ yle.main () {
 # }
 
 
-
-
-
 yle.get_metadata () {
 
     error=
@@ -293,6 +294,28 @@ yle.get_subtitles () {
     #media_filename=${media_filename#*"-> "}
 }
 
+
+yle.radio_listen () {
+
+    case $1 in
+        ls|list)
+            local possible=('puhe' 'radio1' 'kajaani' 'klassinen' 'x' 'x3 m' 'vega' 'kemi' 'turku' \
+                            'pohjanmaa' 'kokkola' 'pori' 'kuopio' 'mikkeli' 'oulu' 'lahti' 'kotka' 'rovaniemi' \
+                            'hameenlinna' 'tampere' 'vega aboland' 'vega osterbotten' 'vega ostnyland' 'vega vastnyland' 'sami')
+            gmsg -c light_blue ${possible[@]}
+            return 0
+            ;;
+        esac
+
+
+    local channel="yle $1"
+    channel=$(echo $channel | sed -r 's/(^| )([a-z])/\U\2/g' )
+    local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
+    mpv $url
+
+}
+
+
 yle.place_media () {
 
     #location="$@"
@@ -355,7 +378,7 @@ yle.install() {
 }
 
 
-uninstall(){
+yle.uninstall(){
 
     sudo -H pip3 unisntall --user yle-dl
     sudo apt remove ffmpeg jq -y

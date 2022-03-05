@@ -35,6 +35,12 @@ audio.main () {
 
     case "$_command" in
 
+            listen)
+                audio.stream_$_command $@
+                return $?
+                ;;
+
+
             playlist)
                 audio.playlist_play $@
                 return $?
@@ -59,6 +65,31 @@ audio.main () {
                 gmsg -c red "unknown command"
                 return 1 ;;
         esac
+}
+
+
+
+audio.stream_listen () {
+
+    case $1 in
+        ls|list)
+            local possible=('yle puhe' 'yle radio1' 'yle kajaani' 'yle klassinen' 'yle x' 'yle x3 m' 'yle vega' 'yle kemi' 'yle turku' \
+                            'yle pohjanmaa' 'yle kokkola' 'yle pori' 'yle kuopio' 'yle mikkeli' 'yle oulu' 'yle lahti' 'yle kotka' 'yle rovaniemi' \
+                            'yle hameenlinna' 'yle tampere' 'yle vega aboland' 'yle vega osterbotten' 'yle vega ostnyland' 'yle vega vastnyland' 'yle sami')
+
+            for station in "${possible[@]}" ; do
+                    gmsg -c light_blue $station
+                done
+            ;;
+        esac
+
+
+    local channel=$@
+    if [[ ${1,,} == "yle" ]] ; then
+            channel=$(echo $channel | sed -r 's/(^| )([a-z])/\U\2/g' )
+            local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
+            mpv $url
+        fi
 }
 
 
