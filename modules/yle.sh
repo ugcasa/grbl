@@ -2,12 +2,42 @@
 
 source common.sh
 
-declare -g run_folder="$(pwd)"
+declare -g yle_run_folder="$(pwd)"
 declare -g yle_temp="$HOME/tmp/yle"
-declare -g media_title="no media"
-declare -g episodes=()
-declare -g media_address
-declare -g media_filename
+declare -g yle_media_title="no media"
+declare -g yle_episodes=()
+declare -g yle_media_address=
+declare -g yle_media_filename=
+
+
+yle.help () {
+
+    gmsg -v1 "guru-cli yle help " -c white
+    gmsg -v2
+    gmsg -v0  "usage:    $GURU_CALL yle get|play|radio|radio|news|episodes|sub|metadata|install|uninstall|help"
+    gmsg -v2
+    gmsg -v1 "commands: " -c white
+    gmsg -v1 "  get|dl <id|url>     download media to media folder "
+    gmsg -v1 "  play <id|url>       play episode from stream"
+    gmsg -v1 "  radio <station>     listen radio <station>"
+    gmsg -v1 "  radio ls            list of known yle radio stations"
+    gmsg -v1 "  news                play latest yle tv news "
+    gmsg -v1 "  episodes <url>      get episodes of collection page"
+    gmsg -v1 "  sub <id|url>        get subtitles for video"
+    gmsg -v1 "  metadata            get media metadata"
+    gmsg -v1 "  install             install requirements"
+    gmsg -v1 "  uninstall           remove requirements "
+    gmsg -V2 "  help                this help window"
+    gmsg -v2
+    gmsg -v1 "examples: " -c white
+    gmsg -v2
+    gmsg -v1 "  $GURU_CALL yle get 1-4454526    # download media id (or url)"
+    gmsg -v1 "  $GURU_CALL yle play 1-2707315   # play media id (or url) vit mpv"
+    gmsg -v1 "  $GURU_CALL yle radio puhe       # to play yle puhe stream"
+    gmsg -v1 "  $GURU_CALL yle episodes https://areena.yle.fi/audio/1-1792200   "
+    gmsg -v2
+}
+
 
 yle.main () {
 
@@ -25,9 +55,10 @@ yle.main () {
             ;;
 
         play)
-            echo "$command" | grep "http" && base_url="" || base_url="https://areena.yle.fi/"
-            yle-dl --pipe "base_url$command" 2>/dev/null | vlc - &
-            exit 0
+            echo "$1" | grep "https://" && base_url="" || base_url="https://areena.yle.fi/"
+            gmsg "getting from url $base_url$1"
+            yle-dl --pipe "$base_url$1" 2>/dev/null | mpv -
+            return $?
             ;;
 
         get|dl|download)
@@ -41,32 +72,41 @@ yle.main () {
 
         news|uutiset)
             news_core="https://areena.yle.fi/1-3235352"
-            yle-dl --pipe --latestepisode "$news_core" | vlc - &
+            yle-dl --pipe --latestepisode "$news_core" 2>/dev/null | mpv -
             ;;
 
-        episodes)
-            yle.get_metadata "$command" || return 127
-            [[ "$episodes" ]] && echo "$episodes" || echo "single episode"
+        episode|episodes)
+
+            yle.get_metadata $@ || return 127
+
+            if ! [[ $yle_episodes ]] ; then
+                gmsg -c white "single episode"
+                return 0
+            fi
+
+            gmsg -c light_blue "${yle_episodes[@]}"
+
+            # if [[ $2 == "dl" ]] || gask "download all ${#yle_episodes[@]} episodes?" ; then
+            if gask "download all ${#yle_episodes[@]} episodes?" ; then
+
+                    for episode in ${yle_episodes[@]} ; do
+                        yle.get_metadata $episode && \
+                        yle.get_media && \
+                        yle.place_media
+                        done
+                fi
             ;;
 
         play)
             yle.get_metadata "$command" || return 127
-            echo "osoite: $media_address"
-            yle-dl --pipe "$media_address" 2>/dev/null | vlc - 2>/dev/null &
+            echo "osoite: $yle_media_address"
+            yle-dl --pipe "$yle_media_address" 2>/dev/null | mpv -
             ;;
 
         subtitle|subtitles|sub|subs)
-            yle.get_metadata "$command" || return 127
+            yle.get_metadata $command || return 127
             yle.get_subtitles
-            yle.place_media "$run_folder"
-            ;;
-
-        weekly|relax|suosikit)
-            printf "To remove notification do next:  \n 1. In VLC, click Tools ► Preferences \n 2. At the bottom left, for Show settings, click All \n 3. At the top left, for Search, paste the string: unimportant \n 4. In the box below Search, click: Qt \n 5. On the right-side, near the very bottom, uncheck Show unimportant error and warnings dialogs \n 6. Click Save \n 7. Close VLC to commit the pref change (otherwise, if VLC crashes, this change {or some changes} might not be saved) \n 8. Run VLC & see if that fixes the problem\n"
-            yle-dl --pipe --latestepisode https://areena.yle.fi/1-3251215 2>/dev/null | vlc -
-            yle-dl --pipe --latestepisode https://areena.yle.fi/1-3245752 2>/dev/null | vlc -
-            yle-dl --pipe --latestepisode https://areena.yle.fi/1-4360930 2>/dev/null | vlc -
-            exit 0
+            yle.place_media "$yle_run_folder"
             ;;
 
         status)  echo "no status data" ;;
@@ -75,17 +115,17 @@ yle.main () {
 
             for item in "$@"
                 do
-                   yle.get_metadata "$item" && yle.get_media
+                   yle.get_metadata $item && yle.get_media
                 done
             ;;
 
         help)
-            echo "usage:    $GURU_CALL yle install|uninstall|play|get|news|episodes|play|subtitle|weekly|meta" ;;
-
+            yle.help $@
+            ;;
         *)
             for item in "$@"
                 do
-                   yle.get_metadata "$item"
+                   yle.get_metadata $item
                 done
             ;;
 
@@ -93,7 +133,6 @@ yle.main () {
 
     return 0
 }
-
 
 # block_rev () {
 #     # trick to reverse array without reversing strings
@@ -203,44 +242,49 @@ yle.main () {
 
 yle.get_metadata () {
 
-    error=
-    meta_data="$yle_temp/meta.json"
+    local error=
+    local meta_data="$yle_temp/meta.json"
 
     # make temp if not exist already
     [[ -d "$yle_temp" ]] || mkdir -p "$yle_temp"
     cd "$yle_temp"
 
+    local base_url="https://areena.yle.fi/"
     # do not add base url if it already given
-    if echo $1 | grep "https" ; then
-            base_url=""
-        else
-            base_url="https://areena.yle.fi/"
+    if echo $1 | grep "http" ; then
+            base_url=
         fi
 
     media_url="$base_url$1"
 
-    # Check if id contain episodes, then select first one (newest)
-    episodes=$(yle-dl --showepisodepage $media_url | grep -v $media_url)
-    latest=$(echo $episodes | cut -d " " -f 1)
-    [[ "$latest" ]] && media_url=$latest
+    gmsg -v3 -c deep_pink "media_url: $media_url"
+
+    # Check if id contain yle_episodes, then select first one (newest)
+    yle_episodes=($(yle-dl --showepisodepage $media_url | grep -v $media_url))
+    # episode_ids=($(yle-dl $media_url --showmetadata | jq '.[].program_id'))
+    gmsg -v3 -c light_blue "yle_episodes: ${yle_episodes[@]}"
+
+    # change media address poin to first episode
+    [[ ${yle_episodes[0]} ]] && media_url=${yle_episodes[0]}
 
     # Get metadata
-    yle-dl $media_url --showmetadata >$meta_data
+    yle-dl $media_url --showmetadata > $meta_data
 
-    grep "error" "$meta_data" && error=$(cat "$meta_data" | jq '.[].flavors[].error')
-    if [[ "$error" ]] ; then
+    grep "error" $meta_data && error=$(cat $meta_data | jq '.[].flavors[].error')
+
+    if [[ $error ]] ; then
             echo "$error"
             return 100
         fi
 
     # set variables (like they be local anyway)
-    media_title="$(cat "$meta_data" | jq '.[].title')"
-    echo "${media_title//'"'/""}"
+    yle_media_title="$(cat "$meta_data" | jq '.[].title')"
+    gmsg -v2 "${yle_media_title//'"'/""}"
 
-    media_address="$media_url "
+    yle_media_address="$media_url "
     #$(cat "$meta_data" | jq '.[].webpage')
-    #media_address=${media_address//'"'/""}
-    media_filename=$(cat "$meta_data" | jq '.[].filename')
+    #yle_media_address=${yle_media_address//'"'/""}
+    yle_media_filename=$(cat "$meta_data" | jq '.[].filename')
 }
 
 
@@ -248,10 +292,12 @@ yle.get_media () {
     # get media from server and place it to /$USER/tmp
 
     # detox filename
-    output_filename=${media_filename//. /-}
+    output_filename=${yle_media_filename//. /-}
     output_filename=${output_filename//.: /-}
     output_filename=${output_filename//: /-}
     output_filename=${output_filename// /-}
+    output_filename=${output_filename//-_-/-}
+    output_filename=${output_filename//--/-}
     output_filename=${output_filename//'"'/}
     output_filename=${output_filename,,}
 
@@ -271,11 +317,11 @@ yle.get_media () {
 
     if [[ -f $got_filename ]] ; then
             # got valid filename, update global variables
-            media_filename=$got_filename
+            yle_media_filename=$got_filename
             return 0
         else
             # update global variables
-            media_filename=$output_filename
+            yle_media_filename=$output_filename
             return 0
         fi
 
@@ -290,8 +336,8 @@ yle.get_subtitles () {
     mkdir -p "$yle_temp"
     cd "$yle_temp"
     yle-dl "$media_url" --subtitlesonly #2>/dev/null
-    #media_filename=$(detox -v * | grep -v "Scanning")
-    #media_filename=${media_filename#*"-> "}
+    #yle_media_filename=$(detox -v * | grep -v "Scanning")
+    #yle_media_filename=${yle_media_filename#*"-> "}
 }
 
 
@@ -307,12 +353,12 @@ yle.radio_listen () {
             ;;
         esac
 
-
-    local channel="yle $1"
+    local channel="yle $@"
+    local options=
+    [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
     channel=$(echo $channel | sed -r 's/(^| )([a-z])/\U\2/g' )
     local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
-    mpv $url
-
+    mpv $options $url
 }
 
 
@@ -320,17 +366,17 @@ yle.place_media () {
 
     #location="$@"
 
-    media_file_format="${media_filename: -5}"
+    media_file_format="${yle_media_filename: -5}"
     media_file_format="${media_file_format#*.}"
     #media_file_format="${media_file_format^^}"
-    gmsg -c deep_pink "media_file_format: $media_file_format, media_filename $media_filename"
+    gmsg -c deep_pink "media_file_format: $media_file_format, yle_media_filename $yle_media_filename"
 
-    if ! [[ -f $media_filename ]] ; then
-            gmsg -c yellow "file $media_filename not found"
+    if ! [[ -f $yle_media_filename ]] ; then
+            gmsg -c yellow "file $yle_media_filename not found"
             return 124
         fi
 
-    #$GURU_CALL tag "$media_filename" "yle $(date +$GURU_FILE_DATE_FORMAT) $media_title $media_url"
+    #$GURU_CALL tag "$yle_media_filename" "yle $(date +$GURU_FILE_DATE_FORMAT) $yle_media_title $media_url"
 
     source mount.sh
     case "$media_file_format" in
@@ -357,14 +403,14 @@ yle.place_media () {
     [[ -d $location ]] || mkdir -p $location
 
     # moving to default location
-    gmsg -c white "saving to: $location/$media_filename"
-    mv -f $media_filename $location
+    gmsg -c white "saving to: $location/$yle_media_filename"
+    mv -f $yle_media_filename $location
 
 }
 
 
 yle.play_media () {
-    vlc --play-and-exit "$1" &
+    mpv --play-and-exit "$1" &
 }
 
 
@@ -373,7 +419,7 @@ yle.install() {
     [[ -f /home/casa/.local/bin/yle-dl ]] || pip3 install --user --upgrade yle-dl
     ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
     jq --version >/dev/null || sudo apt install jq -y
-    sudo apt install detox vlc
+    sudo apt install detox mpv
     echo "Successfully installed"
 }
 
@@ -381,7 +427,7 @@ yle.install() {
 yle.uninstall(){
 
     sudo -H pip3 unisntall --user yle-dl
-    sudo apt remove ffmpeg jq -y
+    sudo apt remove ffmpeg jq  -y
     echo "uninstalled"
 }
 
