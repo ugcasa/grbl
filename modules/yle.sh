@@ -17,6 +17,7 @@ yle.help () {
     gmsg -v0  "usage:    $GURU_CALL yle get|play|radio|radio|news|episodes|sub|metadata|install|uninstall|help"
     gmsg -v2
     gmsg -v1 "commands: " -c white
+    gmsg -v2
     gmsg -v1 "  get|dl <id|url>     download media to media folder "
     gmsg -v1 "  play <id|url>       play episode from stream"
     gmsg -v1 "  radio <station>     listen radio <station>"
@@ -27,12 +28,12 @@ yle.help () {
     gmsg -v1 "  metadata            get media metadata"
     gmsg -v1 "  install             install requirements"
     gmsg -v1 "  uninstall           remove requirements "
-    gmsg -V2 "  help                this help window"
+    gmsg -v1 "  help                this help window"
     gmsg -v2
     gmsg -v1 "examples: " -c white
     gmsg -v2
     gmsg -v1 "  $GURU_CALL yle get 1-4454526    # download media id (or url)"
-    gmsg -v1 "  $GURU_CALL yle play 1-2707315   # play media id (or url) vit mpv"
+    gmsg -v1 "  $GURU_CALL yle play 1-2707315   # play media id (or url)"
     gmsg -v1 "  $GURU_CALL yle radio puhe       # to play yle puhe stream"
     gmsg -v1 "  $GURU_CALL yle episodes https://areena.yle.fi/audio/1-1792200   "
     gmsg -v2
