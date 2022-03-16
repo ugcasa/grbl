@@ -215,6 +215,7 @@ unmount.all () {  # unmount all GURU_CLOUD_* defined in userrc
             cat $GURU_RC | \
             grep 'GURU_MOUNT_' | \
             grep -v "DEFAULT_LIST" | \
+            grep -v '$GURU_MOUNT' | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
 

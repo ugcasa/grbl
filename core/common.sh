@@ -321,7 +321,7 @@ gask () {
     # yes or no shortcut
 
     local _message="$1"
-    local _ans
+    local _ans=
      #TBD --kill-after
 
    # parse flags
@@ -348,7 +348,7 @@ gask () {
 
     if [[ $kill_time ]] ; then
             # NOT TESTED, not even run. ever
-            timeout 10 "read -n 1 -p $_message [y/n]: " _ans
+            timeout 10 read -n 1 -p "$_message [y/n]: " _ans
         else
             read -n 1 -p "$_message [y/n]: " _ans
         fi

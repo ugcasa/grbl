@@ -182,8 +182,8 @@ mount.remote () {
     # set defaults
     local _target_folder=
     local _source_folder=
-    local _source_server="$GURU_CLOUD_DOMAIN"
-    local _source_port="$GURU_CLOUD_PORT"
+    local _source_server=$GURU_CLOUD_DOMAIN
+    local _source_port=$GURU_CLOUD_PORT
     local _symlink=
 
     # temporary
@@ -497,107 +497,112 @@ mount.remove () {
 }
 
 
-unmount.remote () {  # unmount mount point
+# unmount.remote () {  # unmount mount point
 
-    local _mountpoint="$1"
-    local _numbers='^[0-9]+$'
-    local _symlink=
-    local _i=0
+#     local _mountpoint="$1"
+#     local _numbers='^[0-9]+$'
+#     local _symlink=
+#     local _i=0
 
-    if ! [[ "$_mountpoint" ]] ; then
+#     if ! [[ "$_mountpoint" ]] ; then
 
-            local _list=($(unmount.ls | grep -v $GURU_SYSTEM_MOUNT))
-            for item in "${_list[@]}" ; do
-                gmsg -n -c white "$_i: "
-                gmsg -c light_blue "${_list[_i]}"
-                let _i++
-            done
-            let _i--
+#             local _list=($(unmount.ls | grep -v $GURU_SYSTEM_MOUNT))
+#             for item in "${_list[@]}" ; do
+#                 gmsg -n -c white "$_i: "
+#                 gmsg -c light_blue "${_list[_i]}"
+#                 let _i++
+#             done
+#             let _i--
 
-            (( $_i < 1 )) && return 0
-            read -p "select mount point (0..$_i) " _ii
+#             (( $_i < 1 )) && return 0
+#             read -p "select mount point (0..$_i) " _ii
 
-            [[ $_ii ]] || return 0
+#             [[ $_ii ]] || return 0
 
-            if [[ $_ii =~ $_numbers ]] && (( _ii <= _i )) && (( _ii >= 0 ))  ; then
-                    _mountpoint=${_list[_ii]}
-                else
-                    gmsg -c yellow "invalid selection"
-                    return 12
-                fi
-        fi
+#             if [[ $_ii =~ $_numbers ]] && (( _ii <= _i )) && (( _ii >= 0 ))  ; then
+#                     _mountpoint=${_list[_ii]}
+#                 else
+#                     gmsg -c yellow "invalid selection"
+#                     return 12
+#                 fi
+#         fi
 
-    # empty
-    gmsg -n -v2 "unmounting "
-    gmsg -n -v1 "$_mountpoint.. "
+#     # empty
+#     gmsg -n -v2 "unmounting "
+#     gmsg -n -v1 "$_mountpoint.. "
 
-    # check is mounted
-    if ! grep -wq "$_mountpoint" /etc/mtab ; then
-            gmsg -v1 -c dark_gray "is not mounted"
-            return 0
-        fi
+#     # check is mounted
+#     if ! grep -wq "$_mountpoint" /etc/mtab ; then
+#             gmsg -v1 -c dark_gray "is not mounted"
+#             return 0
+#         fi
 
-    if ! [[ -f "$_mountpoint/.online" ]] ; then
-            gmsg -n -v2 -c yellow ".online flag file missing "
-         fi
+#     if ! [[ -f "$_mountpoint/.online" ]] ; then
+#             gmsg -n -v2 -c yellow ".online flag file missing "
+#          fi
 
-    # unmount (normal)
-    if ! fusermount -u "$_mountpoint" ; then
-            gmsg -v2 -c yellow "error $? "
-        fi
+#     # unmount (normal)
+#     if ! fusermount -u "$_mountpoint" ; then
+#             gmsg -v2 -c yellow "error $? "
+#         fi
 
-    if ! mount.online "$_mountpoint" ; then
-            gmsg -v1 -c green "ok"
-            rmdir $_mountpoint
-            return 0
-        fi
+#     if ! mount.online "$_mountpoint" ; then
+#             gmsg -v1 -c green "ok"
+#             rmdir $_mountpoint
+#             return 0
+#         fi
 
-    gmsg -n -v1 "trying to force unmount.. "
+#     gmsg -n -v1 "trying to force unmount.. "
 
-    if sudo umount -l "$_mountpoint" ; then
-            gmsg -v1 -c green "ok"
-            rmdir $_mountpoint
-            return 0
-        else
-            gmsg -c red "failed to force unmount"
-            gmsg -v1 -c white "seems that some of open program like terminal or editor is blocking unmount, try to close those first"
-            return 124
-        fi
-}
+#     if sudo umount -l "$_mountpoint" ; then
+#             gmsg -v1 -c green "ok"
+#             rmdir $_mountpoint
+#             return 0
+#         else
+#             gmsg -c red "failed to force unmount"
+#             gmsg -v1 -c white "seems that some of open program like terminal or editor is blocking unmount, try to close those first"
+#             return 124
+#         fi
+# }
 
 
 
-unmount.all () {  # unmount all GURU_CLOUD_* defined in userrc
-    # unmount all local/cloud pairs defined in userrc
+# unmount.all () {  # unmount all GURU_CLOUD_* defined in userrc
+#     # unmount all local/cloud pairs defined in userrc
 
-    local _default_list=($(\
-            cat $GURU_RC | \
-            grep 'GURU_MOUNT_' | \
-            grep -v "DEFAULT_LIST" | \
-            sed 's/^.*MOUNT_//' | \
-            cut -d '=' -f1))
+#     local _default_list=
 
-    [[ "$1" ]] && _default_list=(${1[@]})
+#     if [[ "$1" ]] ; then
+#             _default_list=(${1[@]})
+#         else
+#             _default_list=($(\
+#                 cat $GURU_RC | \
+#                 grep 'GURU_MOUNT_' | \
+#                 grep -v '$GURU_' | \
+#                 grep -v "LIST" | \
+#                 sed 's/^.*MOUNT_//' | \
+#                 cut -d '=' -f1))
+#         fi
 
-    if [[ $_default_list ]] ; then
-            gmsg -v3 -c light_blue "$_default_list"
-        else
-            gmsg -c yellow "default list is empty"
-            return 1
-        fi
+#     if [[ $_default_list ]] ; then
+#             gmsg -v3 -c light_blue "$_default_list"
+#         else
+#             gmsg -c yellow "default list is empty"
+#             return 1
+#         fi
 
-    for _item in "${_default_list[@]}" ; do
-            # go trough of found variables
-            _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
-            gmsg -v3 -c pink "$FUNCNAME: ${_item,,} "
+#     for _item in "${_default_list[@]}" ; do
+#             # go trough of found variables
+#             _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
+#             gmsg -v3 -c pink "$FUNCNAME: ${_item,,} "
+#             source unmount.sh
+#             unmount.remote "$_target" || _error=$?
+#         done
 
-            unmount.remote "$_target" || _error=$?
-        done
+#     mount.status >/dev/null
 
-    mount.status >/dev/null
-
-    return $_error
-}
+#     return $_error
+# }
 
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then

@@ -81,7 +81,20 @@ daemon.start () {
             local last_pid=$(cat "$daemon_pid_file")
             gmsg -v2 "${FUNCNAME[0]}: killing $last_pid"
             kill -9 $last_pid
+            sleep 2
         fi
+
+    still_running=$(ps auxf | grep -e "daemon.sh start" -e "guru start" \
+                            | grep -v grep \
+                            | grep -v $$ \
+                            | sed 's/  */ /' \
+                            | cut -f 2 -d ' ' )
+
+    if [[ $still_running ]] ; then
+            gmsg -v1 "killing old damons ${still_running[@]}"
+            kill -9 ${still_running[@]}
+        fi
+
 
     if system.suspend flag ; then
             [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
