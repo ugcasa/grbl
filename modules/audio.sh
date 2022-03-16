@@ -1,34 +1,46 @@
 #!/bin/bash
 # guru-client audio adapter
-# casa@ujo.guru 2020
-source $GURU_BIN/common.sh
-source $GURU_BIN/corsair.sh
+# casa@ujo.guru 2020 - 2022
+
+source $GURU_RC
+source common.sh
+
+declare -g data_folder="$GURU_SYSTEM_MOUNT/audio"
+declare -g playlist_folder="$data_folder/playlists"
+declare -g temp_file="/tmp/audio.playlist"
+
+[[ ! -d $data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $playlist_folder
 
 
 audio.help () {
 
-    gmsg -v1 -c white "guru-client audio help "
+    gmsg -v1 -c white "guru-cli audio help "
     gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL audio status|close|install|remove|toggle|fast|playlist help|tunnel <host|ip> "
+    gmsg -v0 "usage:    $GURU_CALL audio play|install|remove|white|tunnel|close|ls|ls_remote|toggle|fast|help <host|ip> "
     gmsg -v2
     gmsg -v1 -c white "commands: "
-    gmsg -v1 "  tunnel <host>               open tunnel to host "
-    gmsg -v2 "  toggle <host>               check is tunnel on them stop it, else open tunnel "
-    gmsg -v1 "  playlist <playlist>         play list name configured in user.cfg or playlist file"
-    gmsg -v1 "  playlist ls|list            list of playlists set in user.cfg "
-    gmsg -v1 "  close                       close tunnel "
-    gmsg -v1 "  ls                          list of local audio devices "
-    gmsg -v1 "  ls_remote                   list of local remote audio devices "
+    gmsg -v1 "  play <playlist>             play list name configured in user.cfg or playlist file"
+    gmsg -v1 "  play ls|list                list of playlists set in user.cfg "
     gmsg -v1 "  install                     install requirements "
     gmsg -v1 "  remove                      remove requirements "
+    gmsg -v1 "  help                        printout this help "
+    gmsg -v2
+    gmsg -v2 -c white "tunnel: "
+    gmsg -v2 "  tunnel <host>               build audio tunnel (ssh) to host audio device "
+    gmsg -v2 "  close                       close current audio tunnel "
+    gmsg -v2 "  ls                          list of local audio devices "
+    gmsg -v2 "  ls_remote                   list of local remote audio devices "
+    gmsg -v2 "  toggle <host>               check is tunnel on them stop it, else open tunnel "
     gmsg -v2 "  fast [command] <host>       quick open tunnel, does not check stuff, just brute force"
-    gmsg -v1 "  fast help                   check fast tool help for more detailed instructions"
+    gmsg -v2 "  fast help                   check fast tool help for more detailed instructions"
     gmsg -v2
 }
 
 
 audio.main () {
     # main command parser
+
+    # [[ -d $data_folder ]] ||
 
     local _command="$1"
     shift
@@ -40,8 +52,7 @@ audio.main () {
                 return $?
                 ;;
 
-
-            playlist)
+            play)
                 audio.playlist_play $@
                 return $?
                 ;;
@@ -62,17 +73,16 @@ audio.main () {
                 return $? ;;
 
             *)
-                gmsg -c red "unknown command"
+                gmsg -c white "audio module: unknown command '$_command'"
                 return 1 ;;
         esac
 }
 
 
-
 audio.stream_listen () {
 
     case $1 in
-        ls|list)
+        ls|list|"")
             local possible=('yle puhe' 'yle radio1' 'yle kajaani' 'yle klassinen' 'yle x' 'yle x3 m' 'yle vega' 'yle kemi' 'yle turku' \
                             'yle pohjanmaa' 'yle kokkola' 'yle pori' 'yle kuopio' 'yle mikkeli' 'yle oulu' 'yle lahti' 'yle kotka' 'yle rovaniemi' \
                             'yle hameenlinna' 'yle tampere' 'yle vega aboland' 'yle vega osterbotten' 'yle vega ostnyland' 'yle vega vastnyland' 'yle sami')
@@ -83,12 +93,14 @@ audio.stream_listen () {
             ;;
         esac
 
-
     local channel=$@
+    local options=
+    [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
+
     if [[ ${1,,} == "yle" ]] ; then
             channel=$(echo $channel | sed -r 's/(^| )([a-z])/\U\2/g' )
             local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
-            mpv $url
+            mpv $options $url
         fi
 }
 
@@ -97,6 +109,8 @@ audio.playlist_config () {
 
     local user_reguest=$1
     local found_line=$(cat $GURU_RC | grep "GURU_AUDIO_PLAYLIST_${user_reguest^^}=")
+
+    found_line="${found_line//'export '/''}"
 
     if ! [[ $found_line ]] ; then
             gmsg -c yellow "list '$user_reguest' not found"
@@ -148,10 +162,9 @@ audio.playlist_list () {
     if [[ $GURU_VERBOSE -gt 1 ]] ; then
 
             for _list_item in ${_list[@]} ; do
-
-                     audio.playlist_config $_list_item
-                     gmsg -n -c light_blue "$_list_item: "
-                     gmsg "$list_description"
+                    audio.playlist_config $_list_item
+                    gmsg -n -c light_blue "$_list_item: "
+                    gmsg "$list_description"
                  done
 
          fi
@@ -164,11 +177,13 @@ audio.playlist_compose () {
     # check is list named as request exist
 
     local user_reguest=$1
-
     audio.playlist_config $user_reguest
 
+    local sort_option=
+    [[ $playlist_option ]] && sort_option="-$playlist_option"
+
     if [[ "$playlist_found_name" == "${user_reguest^^}" ]] ; then
-            ls $playlist_location/$playlist_phase | grep -e wav -e mp3 -e m4a | sort -$playlist_option > $temp_file # | head -n 5
+            ls $playlist_location/$playlist_phase | grep -e wav -e mp3 -e m4a -e mkv -e mp4 | sort $sort_option > $temp_file # | head -n 5
             gmsg -v2 "$(cat $temp_file)"
             return 0
         else
@@ -180,20 +195,18 @@ audio.playlist_compose () {
 
 audio.playlist_play () {
 
-    local temp_file='/tmp/audio.playlist'
-
     local user_reguest=$1
     gmsg -v3 "user_reguest: $user_reguest "
-
-    if ! [[ $user_reguest ]] ; then
-            gmsg -c yellow "please input lists name or playlist file "
-            return 126
-        fi
 
     case $user_reguest in
         list|ls)
             audio.playlist_list $user_reguest
             return 0
+            ;;
+        "")
+            gmsg -c yellow "please input list name or playlist file "
+            audio.playlist_list
+            return 1
         esac
 
     # check is input a filename and is file ascii
@@ -216,6 +229,12 @@ audio.playlist_play () {
     local options=
     [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet $options "
 
+    # check is there saved playlists on that name
+    if [[ -f "$playlist_folder/$user_reguest.list" ]] && file $user_reguest | grep -q "text" ; then
+            mpv $options --playlist="$playlist_folder/$user_reguest.list"
+            return $?
+        fi
+
     # if not file check is it configured in user.cfg
     if audio.playlist_compose $user_reguest ; then
             mpv --playlist="$temp_file" $options
@@ -227,8 +246,11 @@ audio.playlist_play () {
 audio.close () {
     # close audio tunnel
 
+    source $GURU_BIN/corsair.sh
     corsair.main set F8 aqua
+
     $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME || corsair.main set F8 red
+
     corsair.main reset F8
     return $?
 }
@@ -251,7 +273,7 @@ audio.ls_remote () {
 
 audio.tunnel () {
     # open tunnel adapter for voipt. input host, port, user (all optional)
-
+    source $GURU_BIN/corsair.sh
     # fill default
     local _host=$GURU_ACCESS_DOMAIN
     local _port=$GURU_ACCESS_PORT
@@ -276,7 +298,7 @@ audio.tunnel () {
 
 audio.tunnel_toggle () {
     # audio toggle for keyboard shortcut usage
-
+    source $GURU_BIN/corsair.sh
     corsair.main set F8 aqua
     if audio.status ; then
             if $GURU_BIN/audio/fast_voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT ; then
@@ -327,7 +349,6 @@ audio.status () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $GURU_RC
     audio.main "$@"
     exit $?
 fi
