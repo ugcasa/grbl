@@ -236,11 +236,13 @@ corsair.main () {
     case "$cmd" in
             # indicator functions
             status|init|set|reset|clear|end|indicate|keytable|key-id)
+                    [[ $GURU_CORSAIR_ENABLED ]] || return 1
                     corsair.$cmd $@
                     return $?
                     ;;
             # blink functions
             blink)
+                    [[ $GURU_CORSAIR_ENABLED ]] || return 1
                     local tool=$1 ; shift
                     case $tool in
                         set|stop|kill|test)
@@ -753,7 +755,13 @@ corsair.systemd_start_application () {
 
     sleep 2
     corsair.init
-    return $?
+    local _error=$?
+
+    # is non clean way to start daemon, but for now enought
+    source daemon.shift
+    daemon.start &
+
+    return $_error
 }
 
 
