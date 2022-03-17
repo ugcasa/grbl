@@ -409,6 +409,30 @@ module.installed () {
 
 
 
+google () {
+    # open google search in browser, query as argument
+
+    local url=https://www.google.com/search?q="$(sed 's/ /%20/g' <<< ${@})"
+
+
+    case $GURU_PREFERRED_BROWSER in
+
+        firefox|chromium)
+            $GURU_PREFERRED_BROWSER --new-window $url
+            ;;
+
+        lynx|curl|wget)
+            $GURU_PREFERRED_BROWSER $url
+            ;;
+        *)
+            gmsg -c -v2 -c yellow "non supported browser, here's link: "
+            gmsg -c $url
+        esac
+
+    return $?
+}
+
+
 
 #`TBD`declare -xf ? rather than export? - no
 export -f system.core-dump
