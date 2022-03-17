@@ -154,7 +154,7 @@ backup.config () {
     # TBD declare -g backup_stat_file=$GURU_SYSTEM_MOUNT/backup/$backup_name.stat
     declare -g backup_stat_file=$GURU_SYSTEM_MOUNT/backup/next
     # exit if not in list
-    if ! echo "${active_list[@]}" | grep $backup_name >/dev/null; then
+    if ! echo "${active_list[@]}" | grep -q $backup_name ; then # >/dev/null
             gmsg -c yellow "no '$backup_name' in active backup list"
             return 2
         fi

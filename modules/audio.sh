@@ -5,11 +5,12 @@
 source $GURU_RC
 source common.sh
 
-declare -g data_folder="$GURU_SYSTEM_MOUNT/audio"
-declare -g playlist_folder="$data_folder/playlists"
-declare -g temp_file="/tmp/audio.playlist"
+declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
+declare -g audio_playlist_folder="$audio_data_folder/playlists"
+declare -g audio_temp_file="/tmp/audio.playlist"
+declare -g audio_blink_key="f$(daemon.poll_order audio)"
 
-[[ ! -d $data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $playlist_folder
+[[ ! -d $audio_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $audio_playlist_folder
 
 
 audio.help () {
@@ -40,7 +41,7 @@ audio.help () {
 audio.main () {
     # main command parser
 
-    # [[ -d $data_folder ]] ||
+    # [[ -d $audio_data_folder ]] ||
 
     local _command="$1"
     shift
@@ -48,34 +49,63 @@ audio.main () {
     case "$_command" in
 
             listen)
+
+                gindicate playing $audio_blink_key
                 audio.stream_$_command $@
+                gend_blink $audio_blink_key
+
                 return $?
                 ;;
 
             play)
+                gindicate playing $audio_blink_key
                 audio.playlist_play $@
+                gend_blink $audio_blink_key
                 return $?
                 ;;
 
             status|ls|tunnel|close|install|remove|help)
                 audio.$_command $@
-                return $? ;;
+                return $?
+                ;;
 
             fast)
                 $GURU_BIN/audio/fast_voipt.sh $1 \
                 -h $GURU_ACCESS_DOMAIN \
                 -p $GURU_ACCESS_PORT \
                 -u $GURU_ACCESS_USERNAME
-                return $? ;;
+                return $?
+                ;;
 
-            toggle)
-                audio.tunnel_toggle $@
-                return $? ;;
+            toggle|tunnel_toggle)
+                audio.$_command $@
+                return $?
+            ;;
+
 
             *)
                 gmsg -c white "audio module: unknown command '$_command'"
                 return 1 ;;
         esac
+}
+
+
+audio.toggle () {
+
+    if ps auxf | grep mpv | grep -v grep ; then
+            pkill mpv && gend_blink $audio_blink_key
+            return 0
+        fi
+
+    if [[ -f $audio_temp_file ]] ; then
+            gindicate playing -k $audio_blink_key
+            mpv --playlist=$audio_temp_file
+            gend_blink $audio_blink_key
+        else
+            audio.main listen "yle puhe"
+        fi
+
+    return 0
 }
 
 
@@ -108,7 +138,7 @@ audio.stream_listen () {
 audio.playlist_config () {
 
     local user_reguest=$1
-    local found_line=$(cat $GURU_RC | grep "GURU_AUDIO_PLAYLIST_${user_reguest^^}=")
+    local found_line=$(grep "GURU_AUDIO_PLAYLIST_${user_reguest^^}=" $GURU_RC)
 
     found_line="${found_line//'export '/''}"
 
@@ -183,8 +213,8 @@ audio.playlist_compose () {
     [[ $playlist_option ]] && sort_option="-$playlist_option"
 
     if [[ "$playlist_found_name" == "${user_reguest^^}" ]] ; then
-            ls $playlist_location/$playlist_phase | grep -e wav -e mp3 -e m4a -e mkv -e mp4 | sort $sort_option > $temp_file # | head -n 5
-            gmsg -v2 "$(cat $temp_file)"
+            ls $playlist_location/$playlist_phase | grep -e wav -e mp3 -e m4a -e mkv -e mp4 | sort $sort_option > $audio_temp_file # | head -n 5
+            gmsg -v2 "$(cat $audio_temp_file)"
             return 0
         else
             gmsg -c yellow "list name '$user_reguest' not found"
@@ -196,7 +226,9 @@ audio.playlist_compose () {
 audio.playlist_play () {
 
     local user_reguest=$1
-    gmsg -v3 "user_reguest: $user_reguest "
+    local _wanna_hear=
+    [[ $2 ]] && local _wanna_hear=$2
+    gmsg -v3 "user_reguest: $user_reguest $_wanna_hear"
 
     case $user_reguest in
         list|ls)
@@ -212,7 +244,7 @@ audio.playlist_play () {
     # check is input a filename and is file ascii
     if [[ -f $user_reguest ]] && file $user_reguest | grep -q "text" ; then
 
-            # check that first itet exists
+            # check that first item exists
             local first_item=$(head -n 1 $user_reguest)
             if ! [[ -f $first_item ]] ; then
                     gmsg -c yellow "playlist item '$first_item' does not exist"
@@ -226,32 +258,49 @@ audio.playlist_play () {
             gmsg -v3 "file '$user_reguest' not found or format mismatch"
         fi
 
+    # be silent is asked
     local options=
     [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet $options "
 
     # check is there saved playlists on that name
-    if [[ -f "$playlist_folder/$user_reguest.list" ]] && file $user_reguest | grep -q "text" ; then
-            mpv $options --playlist="$playlist_folder/$user_reguest.list"
+    if [[ -f "$audio_playlist_folder/$user_reguest.list" ]] && file $user_reguest | grep -q "text" ; then
+            mpv $options --playlist="$audio_playlist_folder/$user_reguest.list"
             return $?
         fi
 
     # if not file check is it configured in user.cfg
-    if audio.playlist_compose $user_reguest ; then
-            mpv --playlist="$temp_file" $options
-            return $?
+    audio.playlist_compose $user_reguest || return 123
+
+    # play requests from list
+    if [[ $_wanna_hear ]] ; then
+            gmsg -v3 "wanted hear $_wanna_hear"
+            local _list=($(cat $audio_temp_file))
+
+            for _list_item in ${_list[@]} ; do
+                gmsg -v3 "$_list_item:$_wanna_hear"
+                grep  $_wanna_hear <<< $_list_item && mpv $_list_item $options
+            done
+
+            return 0
         fi
+
+    # play whole list
+    mpv --playlist="$audio_temp_file" $options
+
+    return $?
+
 }
 
 
 audio.close () {
     # close audio tunnel
 
-    source $GURU_BIN/corsair.sh
-    corsair.main set F8 aqua
+    # source $GURU_BIN/corsair.sh
+    gmsg -k $audio_blink_key -c aqua
 
-    $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME || corsair.main set F8 red
+    $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME || gmsg -k $audio_blink_key -c red
 
-    corsair.main reset F8
+    gmsg -k $audio_blink_key -c reset
     return $?
 }
 
@@ -273,7 +322,7 @@ audio.ls_remote () {
 
 audio.tunnel () {
     # open tunnel adapter for voipt. input host, port, user (all optional)
-    source $GURU_BIN/corsair.sh
+    # source $GURU_BIN/corsair.sh
     # fill default
     local _host=$GURU_ACCESS_DOMAIN
     local _port=$GURU_ACCESS_PORT
@@ -285,11 +334,11 @@ audio.tunnel () {
     if [[ $1 ]] ; then _user=$1 ; shift ; fi
 
     gmsg -v1 "tunneling mic to $_user@$_host:$_port"
-    corsair.main set F8 aqua
+    gmsg -k $audio_blink_key -c aqua
     if $GURU_BIN/audio/voipt.sh open -h $_host -p $_port -u $_user ; then
-            corsair.main set F8 green
+            gmsg -k $audio_blink_key -c green
         else
-            corsair.main set F8 red
+            gmsg -k $audio_blink_key -c red
         fi
 
     return 0
@@ -298,23 +347,23 @@ audio.tunnel () {
 
 audio.tunnel_toggle () {
     # audio toggle for keyboard shortcut usage
-    source $GURU_BIN/corsair.sh
-    corsair.main set F8 aqua
+    # source $GURU_BIN/corsair.sh
+    gmsg -k $audio_blink_key -c aqua
     if audio.status ; then
             if $GURU_BIN/audio/fast_voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT ; then
-                    corsair.main reset F8
+                    gmsg -k $audio_blink_key -c reset
                     return 0
                 else
-                    corsair.main set F8 red
+                    gmsg -k $audio_blink_key -c red
                     return 1
                 fi
         fi
 
     if $GURU_BIN/audio/fast_voipt.sh open -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME ; then
-            corsair.main set F8 green
+            gmsg -k $audio_blink_key -c green
             return 0
         else
-            corsair.main set F8 red
+            gmsg -k $audio_blink_key -c red
             return 1
         fi
 }

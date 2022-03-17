@@ -538,15 +538,16 @@ corsair.indicate () {
 
     case $level in
                              # color1 color2 interval timeout leave-color
-        ok)             _blink="green lime 0.5 3 green" ;;
+        ok)             _blink="green slime 0.5 3 green" ;;
         cancel)         _blink="orange $GURU_CORSAIR_MODE 0.2 3 " ;;
         init)           _blink="blue dark_blue 0.1 3 " ;;
-        passed|pass)    _blink="lime $GURU_CORSAIR_MODE 1 300 green" ;;
+        passed|pass)    _blink="slime $GURU_CORSAIR_MODE 1 300 green" ;;
         fail|failed)    _blink="red $GURU_CORSAIR_MODE 1 300 red" ;;
-        done)           _blink="green lime 6 $GURU_DAEMON_INTERVAL green" ;;
+        done)           _blink="green slime 6 $GURU_DAEMON_INTERVAL green" ;;
         doing)          _blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL aqua" ;;
         working)        _blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL aqua" ;;
-        active)         _blink="aqua_marine aqua 0.5 2" ;;
+        playing)        _blink="green slime 2 3600" ;;
+        active)         _blink="slime aqua 0.5 2" ;;
         pause)          _blink="black $GURU_CORSAIR_MODE 1 3600" ;;
         error)          _blink="orange yellow 1 $GURU_DAEMON_INTERVAL yellow" ;;
         message)        _blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
