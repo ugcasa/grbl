@@ -169,7 +169,7 @@ mount.check () {
                     ;;
             *'.'*)  gmsg -v2 -c deep_pink "private"
                     ;;
-                *)  gmsg -v2 -c green "mounted"
+                *)  gmsg -v2 -c green "available"
                     ;;
                 esac
     return 0
@@ -207,7 +207,7 @@ mount.remote () {
         fi
 
     # double check is already mounted
-    if grep "$_target_folder" /etc/mtab >/dev/null ; then
+    if grep -qw "$_target_folder" /etc/mtab ; then #>/dev/null
             gmsg -v1 -c green "mounted"
             return 0
         fi
@@ -245,7 +245,11 @@ mount.remote () {
 
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
 
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -p "$_source_port" "$GURU_CLOUD_USERNAME@$_source_server:$_source_folder" "$_target_folder"
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
+          -p "$_source_port" \
+          "$GURU_CLOUD_USERNAME@$_source_server:$_source_folder" \
+          "$_target_folder"
+
     error=$?
 
     # copy files from temp if exist
