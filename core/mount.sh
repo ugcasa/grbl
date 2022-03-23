@@ -200,14 +200,9 @@ mount.remote () {
 
     gmsg -v1 -n "$_target_folder.. "
 
-    # check is already mounted
-    if  [[ -f $_target_folder/.online ]] ; then
-            gmsg -v1 -c green "mounted"
-            return 0
-        fi
 
-    # double check is already mounted
-    if grep -qw "$_target_folder" /etc/mtab ; then #>/dev/null
+    # double check is in /etc/mtab  already mounted and .online file exists
+    if [[ -f $_target_folder/.online ]] && grep -qw "$_target_folder" /etc/mtab ; then #>/dev/null
             gmsg -v1 -c green "mounted"
             return 0
         fi
