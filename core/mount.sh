@@ -4,7 +4,7 @@
 source $GURU_BIN/common.sh
 
 all_list=($(\
-        grep "GURU_MOUNT_" $GURU_RC | \
+        grep "export GURU_MOUNT_" $GURU_RC | \
         grep -ve "_LIST" -ve "_ENABLED" | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
@@ -200,14 +200,9 @@ mount.remote () {
 
     gmsg -v1 -n "$_target_folder.. "
 
-    # check is already mounted
-    if  [[ -f $_target_folder/.online ]] ; then
-            gmsg -v1 -c green "mounted"
-            return 0
-        fi
 
-    # double check is already mounted
-    if grep -qw "$_target_folder" /etc/mtab ; then #>/dev/null
+    # double check is in /etc/mtab  already mounted and .online file exists
+    if [[ -f $_target_folder/.online ]] && grep -qw "$_target_folder" /etc/mtab ; then #>/dev/null
             gmsg -v1 -c green "mounted"
             return 0
         fi
@@ -300,7 +295,7 @@ mount.remote () {
 
 
 mount.list () {
-    # mount all GURU_CLOUD_* defined in userrc
+    # mount all GURU_MOUNT_<list_name>_LIST defined in userrc
 
     local _error=0
     local _IFS="$IFS"
@@ -310,7 +305,7 @@ mount.list () {
     #local _mount_list=(${GURU_MOUNT_DEFAULT_LIST[@]^^})
     local _mount_list=$(eval echo '${GURU_MOUNT_'"${_list_name^^}_LIST[@]^^}")
 
-    #[[ ${_mount_list[@]} ]] || _mount_list=(${all_list[@]})
+    [[ ${_mount_list[@]} ]] || _mount_list=(${all_list[@]})
 
     if [[ ${_mount_list} ]] ; then
                 gmsg -v3 -c light_blue "${_mount_list[@]}"
@@ -339,8 +334,8 @@ mount.list () {
     mount.status >/dev/null
     IFS="$_IFS"
 
-    gmsg -v2 -n -c white "available: "
-    gmsg -v1 -c light_blue "${all_list[@]}"
+    # gmsg -v2 -n -c white "available: "
+    # gmsg -v1 -c light_blue "${all_list[@]}"
 
     return $_error
 }
