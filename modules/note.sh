@@ -194,7 +194,11 @@ note.add () {
     note.config "$1"
 
     [[  -d "$note_dir" ]] || mkdir -p "$note_dir"
-    [[  -d "$GURU_MOUNT_TEMPLATES" ]] || mkdir -p "$GURU_MOUNT_TEMPLATES"
+    # TODO picture/ mounter/linker
+    # [[ -f $note_dir/pictures ]] || guru mount pictures
+    # ! [[ -d $note_dir/pictures ]] || ln -s $GURU_MOUNT_PICTURES/notes $note_dir/pictures
+
+    #[[  -d "$GURU_MOUNT_TEMPLATES" ]] || mkdir -p "$GURU_MOUNT_TEMPLATES"
 
     if [[ ! -f "$note" ]]; then
 
