@@ -447,7 +447,7 @@ backup.now () {
             # check is target location mounted and try to mount if not
             if ! mount | grep $store_mount_point >/dev/null ; then
 
-                if [[ $DISPLAY ]] ; then
+                if [[ $DISPLAY ]] && [[ $store_device_file ]] ; then
                         gmsg -v2 -n "mounting store media $store_device_file.. "
                         gmsg -v3 -N -c deep_pink "gio mount -d $store_device_file"
                         gio mount -d $store_device_file \
