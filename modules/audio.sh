@@ -221,8 +221,15 @@ audio.playlist_compose () {
                 | grep -e wav -e mp3 -e m4a -e mkv -e mp4 \
                 | sort $sort_option > $audio_temp_file
                 #\ | head -n 5
-            gmsg -v2 "$(cat $audio_temp_file)"
-            return 0
+            local test=$(cat $audio_temp_file)
+
+            if [[ $test ]] ; then
+                    gmsg -v2 "$(cat $audio_temp_file)"
+                    return 0
+                else
+                    gmsg -c yellow "empty playlist, try to mount media"
+                    return 123
+                fi
         else
             gmsg -c yellow "list name '$user_reguest' not found"
             return 124

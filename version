@@ -1,13 +1,15 @@
 0.6.8.0
 'lazy maggot'
-guru-cli-v0.6.8-change-log.md
+"when rc system sucks a lots and need acute janitoring focus."
 
 # 0.6.8. 'lazy maggot' features
 
 Yeap, another feature branch.
 This time to fix fundamentals.
 
-rc system sucks a lot and need acute focus of janitor.
+rc system sucks a lot and need acute focus of(for/as?) janitor.
+
+This branch shall be called as 'rc-clean'
 
 
 ## 0) new version file
@@ -29,9 +31,37 @@ I'll try it, lets see.
 - [ ] try it
     - [ ] like it
     - [ ] hate it
+- [ ] $GURU_VERSION_DESCRIPTION option
+- [x] 'guru description' works
 
 
-## 1) modules can run stand alone by default
+## 1) Next bad idea
+
+
+## 2) speak synthesizer
+
+Guru needs a voice.
+
+**todo:**
+
+- [x] POC is working already, try option '-s'.
+- [ ] make it really work
+- [ ] how to inform module to produce readable text, verbose level 5?
+- [ ] needs tag/whatever 'speaker ready module' or empty output
+
+
+## 3) rc system rewrite
+
+Stink this trough.
+It makes now no sense, it grow like that, not designed.
+
+- [ ] core rc clean up
+- [ ] learn how it works now ;D
+- [ ] changes to project.sh
+- [ ] changes to config.sh
+
+
+## 4) modules can run stand alone by default
 
 Modules need to be able to run without .gururc.
 Exception is core level modules,
@@ -40,10 +70,40 @@ those have veto do shit ever they want.
 **todo:**
 
 - [x] bash -x
-- [ ] learn how it works now ;D
-- [ ] **rc clean up**
 - [ ] .gururc is generated badly
-- [ ] re- write config.sh
 
 
-## 2) next bad idea
+## 9) test
+
+check all works with these:
+
+- [ ] audio.sh
+- [ ] android.sh
+- [ ] backup.sh
+- [ ] cal.sh
+- [ ] conda.sh
+- [ ] convert.sh
+- [ ] corsair-raw.sh
+- [ ] corsair.sh
+- [ ] mqtt.sh
+- [ ] note.sh
+- [ ] place.sh
+- [ ] print.sh
+- [ ] program.sh
+- [ ] project.sh
+- [ ] scan.sh
+- [ ] ssh.sh
+- [ ] stamp.sh
+- [ ] tag.sh
+- [ ] telegram.sh
+- [ ] test.sh
+- [ ] timer.sh
+- [ ] tmux.sh
+- [ ] tor.sh
+- [ ] trans.sh
+- [ ] tunnel.sh
+- [ ] user.sh
+- [ ] vol.sh
+- [ ] yle.sh
+- [ ] copy this file to `logs/guru-cli-v0.6.8-change-log.md` and clean it for next iteration
+

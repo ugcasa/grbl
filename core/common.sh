@@ -91,6 +91,7 @@ gmsg () {
     local _timestamp=                               # timestamp is disabled by default
     local _message=                                 # message container
     local _logging=                                 # logging is disabled by default
+    local _say=                                     # speak
     local _color=
     local _color_code=                              # default color if none
     local _exit=                                    # exit with code (exit not return!)
@@ -101,13 +102,14 @@ gmsg () {
     local _column_width
 
     # parse flags
-    TEMP=`getopt --long -o "tlnhNx:w:V:v:c:C:q:k:m:" "$@"`
+    TEMP=`getopt --long -o "tlsnhNx:w:V:v:c:C:q:k:m:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
             case "$1" in
                 -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
                 -l ) _logging=true                              ; shift ;;
+                -s ) _say=true                                  ; shift ;;
                 -h ) _color_code="$C_HEADER"                    ; shift ;;
                 -n ) _newline=                                  ; shift ;;
                 -N ) _pre_newline="\n"                          ; shift ;;
@@ -138,17 +140,23 @@ gmsg () {
     # -x) add exit code to message
     [[ $_exit -gt 0 ]] && _message="$_exit: $_message"
 
+    if [[ $_say ]] ; then
+            #_color_code=
+            [[ $GURU_VERBOSE -gt 0 ]] && printf "%s\n" "$_message"
+            espeak -p $GURU_SPEAK_PITCH -s $GURU_SPEAK_SPEED -v $GURU_SPEAK_LANG "$_message"
+            return 0
+        fi
 
     # -k) set corsair key is '-k <key>' used
     if [[ $_indicator_key ]] && [[ $GURU_CORSAIR_ENABLED ]] ; then
-        # TBD: check corsair (or other kb led) module installed
-        #      now in corsair is part of core what it should not to be
-        source corsair.sh
-        if [[ "$_color" == "reset" ]] ; then
-                corsair.main reset "$_indicator_key"
-            else
-                corsair.main set "$_indicator_key" "$_color"
-            fi
+            # TBD: check corsair (or other kb led) module installed
+            #      now in corsair is part of core what it should not to be
+            source corsair.sh
+            if [[ "$_color" == "reset" ]] ; then
+                    corsair.main reset "$_indicator_key"
+                else
+                    corsair.main set "$_indicator_key" "$_color"
+                fi
        fi
 
     # -m) publish to mqtt if '-q|-m <topic>' used
@@ -178,8 +186,8 @@ gmsg () {
 
     # On verbose level 3+ timestamp is always on
     if [[ $verbose_trigger -gt 3 ]] && [[ ${#_message} -gt 1 ]]; then
-        _timestamp="$(date +$GURU_FORMAT_TIME.%3N) "
-    fi
+            _timestamp="$(date +$GURU_FORMAT_TIME.%3N) "
+        fi
 
     # print to shell
     if [[ $_color_code ]] && [[ $GURU_COLOR ]] && [[ $GURU_VERBOSE -gt 0 ]] ; then
@@ -195,7 +203,7 @@ gmsg () {
             # *) normal printout without formatting
             printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
             return 0
-    fi
+        fi
 
 
     # echo "saata $GURU_VERBOSE:$verbose_trigger<$verbose_limiter"

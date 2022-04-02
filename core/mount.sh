@@ -604,21 +604,21 @@ mount.remove () {
 # }
 
 
-get_env () {
-    gmsg -v4 -c pink "BIN:${GURU_BIN[@]}"
-    gmsg -v4 -c pink "RC:${GURU_RC[@]}"
-    gmsg -v4 -c pink "SYSTEM_MOUNT:${GURU_SYSTEM_MOUNT[@]}"
-    gmsg -v4 -c pink "CALL:${GURU_CALL[@]}"
-    gmsg -v4 -c pink "CFG:${GURU_CFG[@]}"
-    gmsg -v4 -c pink "CLOUD_DOMAIN:${GURU_CLOUD_DOMAIN[@]}"
-    gmsg -v4 -c pink "CLOUD_PORT:${GURU_CLOUD_PORT[@]}"
-    gmsg -v4 -c pink "FORCE:${GURU_FORCE[@]}"
-    gmsg -v4 -c pink "CLOUD_USERNAME:${GURU_CLOUD_USERNAME[@]}"
-    gmsg -v4 -c pink "USER:${GURU_USER[@]}"
-}
+# get_env () {
+#     gmsg -v4 -c pink "BIN:${GURU_BIN[@]}"
+#     gmsg -v4 -c pink "RC:${GURU_RC[@]}"
+#     gmsg -v4 -c pink "SYSTEM_MOUNT:${GURU_SYSTEM_MOUNT[@]}"
+#     gmsg -v4 -c pink "CALL:${GURU_CALL[@]}"
+#     gmsg -v4 -c pink "CFG:${GURU_CFG[@]}"
+#     gmsg -v4 -c pink "CLOUD_DOMAIN:${GURU_CLOUD_DOMAIN[@]}"
+#     gmsg -v4 -c pink "CLOUD_PORT:${GURU_CLOUD_PORT[@]}"
+#     gmsg -v4 -c pink "FORCE:${GURU_FORCE[@]}"
+#     gmsg -v4 -c pink "CLOUD_USERNAME:${GURU_CLOUD_USERNAME[@]}"
+#     gmsg -v4 -c pink "USER:${GURU_USER[@]}"
+# }
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then
-        get_env
+        #get_env
         [[ $GURU_SYSTEM_MOUNT ]] || source $GURU_RC
         mount.main $@
         exit $?

@@ -10,10 +10,94 @@ declare -x GURU_BIN="$HOME/bin"
 declare -x GURU_VERSION=$(echo $(head -n1 $GURU_BIN/version) | tr -d '\n')
 declare -x GURU_VERSION_NAME=$(echo $(tail $GURU_BIN/version -n +2 | head -n 1 ) | tr -d '\n')
 
+
+core.help () {
+    # functional core help
+
+    core.help_flags () {
+            gmsg -v2
+            gmsg -v1 -c white "option flags:"
+            gmsg -v2
+            gmsg -v1 " -v 1..4          verbose level, adds headers and some details"
+            gmsg -v1 " -u <user_name>   change guru user name temporary  "
+            gmsg -v1 " -h <host_name>   change computer host name name temporary "
+            gmsg -v1 " -l               set logging on to file $GURU_LOG"
+            gmsg -v1 " -q               be quiet"
+            gmsg -v1 " -s               speak out output"
+            gmsg -v1 " -f               set force mode on, be more aggressive"
+            gmsg -v1 " -c               disable colors in terminal"
+            gmsg -v1 " --option         module options TBD"
+            gmsg -v2
+            return 0
+        }
+
+
+    core.help_system () {
+            gmsg -v2
+            gmsg -v1 -c white  "system tools"
+            gmsg -v1 "  install         install tools "
+            gmsg -v1 "  uninstall       remove guru toolkit "
+            gmsg -v1 "  upgrade         upgrade guru toolkit "
+            gmsg -v1 "  status          status of stuff"
+            gmsg -v1 "  shell           start guru shell"
+            gmsg -v1 "  version         printout version "
+            gmsg -v2
+            gmsg -v2 "to refer detailed tool help, type '$GURU_CALL <module> help'"
+            return 0
+        }
+
+
+    core.help_newbie () {
+        if [[ -f $HOME/guru/.data/.newbie ]] ; then
+            gmsg -c white "if problems after installation"
+            gmsg "  1) logout and login to set path by .profiles or set path:"
+            gmsg '       PATH=$PATH:$HOME/bin'
+            gmsg "  2) if no access to ujo.guru access point, create fake data mount"
+            gmsg '      mkdir $HOME/guru/.data ; touch $HOME/guru/.data/.online'
+            gmsg "  3) to edit user configurations run:"
+            gmsg "      $GURU_CALL config user"
+            gmsg "  4) remove newbie help view by: "
+            gmsg "      rm $HOME/guru/.data/.newbie"
+            export GURU_VERBOSE=1
+        fi
+    }
+
+    # if [[ $1 ]] ; then
+    #     core.multi_module_function help
+
+    gmsg -v1 -c white "guru-client help "
+    gmsg -v2
+    gmsg -v0  "usage:    $GURU_CALL [-flags] [tool] [argument] [variables]"
+    core.help_flags
+    gmsg -v2
+    gmsg -v1 -c white  "examples"
+    gmsg -v1 "  $GURU_CALL note yesterday           open yesterdays notes"
+    gmsg -v2 "  $GURU_CALL install mqtt-server      install mqtt server"
+    gmsg -v1 "  $GURU_CALL ssh key add github       add ssh keys to github server"
+    gmsg -v1 "  $GURU_CALL timer start at 12:00     start work time timer"
+    gmsg -v1
+    gmsg -v1 -c white  "More detailed help, type '$GURU_CALL <tool> help'"
+    #gmsg -v1 "Use verbose mode '-v2' to get more information in help printout. "
+    gmsg -v1
+
+    core.help_newbie
+}
+
+
 # early exits
-case $1 in version)
+case $1 in
+    version|--version|--ver)
         echo "$GURU_VERSION $GURU_VERSION_NAME"
         exit 0
+        ;;
+    description|--description)
+        echo "$GURU_VERSION $GURU_VERSION_NAME $(tail $GURU_BIN/version -n +3 | head -n 1 )"
+        exit 0
+        ;;
+    help|--help)
+        core.help $@
+        exit 0
+        ;;
     esac
 
 # check that config rc file exits
@@ -26,6 +110,7 @@ if [[ -f $GURU_RC ]] ; then
         config.main export $USER
         source $GURU_RC
     fi
+
 
 # determinate how to call guru, I prefer 'guru' or now more often alias 'gr'
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
@@ -250,97 +335,6 @@ core.change_user () {
         else
             gmsg -c yellow "user configuration not exits"
         fi
-}
-
-
-core.help () {
-    # functional core help
-
-    core.help_flags () {
-            gmsg -v2
-            gmsg -v1 -c white "option flags:"
-            gmsg -v2
-            gmsg -v1 " -v 1..4          verbose level, adds headers and some details"
-            gmsg -v1 " -u <user_name>   change guru user name temporary  "
-            gmsg -v1 " -h <host_name>   change computer host name name temporary "
-            gmsg -v1 " -l               set logging on to file $GURU_LOG"
-            gmsg -v1 " -q               be quiet"
-            gmsg -v1 " -s               speak out output"
-            gmsg -v1 " -f               set force mode on, be more aggressive"
-            gmsg -v1 " -c               disable colors in terminal"
-            gmsg -v1 " --option         module options TBD"
-            gmsg -v2
-            return 0
-        }
-
-
-    core.help_system () {
-            gmsg -v2
-            gmsg -v1 -c white  "system tools"
-            gmsg -v1 "  install         install tools "
-            gmsg -v1 "  uninstall       remove guru toolkit "
-            gmsg -v1 "  upgrade         upgrade guru toolkit "
-            gmsg -v1 "  status          status of stuff"
-            gmsg -v1 "  shell           start guru shell"
-            gmsg -v1 "  version         printout version "
-            gmsg -v2
-            gmsg -v2 "to refer detailed tool help, type '$GURU_CALL <module> help'"
-            return 0
-        }
-
-
-    core.help_newbie () {
-        if [[ -f $HOME/.data/.newbie ]] ; then
-            gmsg
-            gmsg -c white "if problems after installation"
-            gmsg
-            gmsg "1) logout and login to set path by .profiles or set path:"
-            gmsg
-            gmsg '   PATH=$PATH:$HOME/bin'
-            gmsg
-            gmsg "2) if no access to ujo.guru access point, create fake data mount"
-            gmsg
-            gmsg '   mkdir $HOME/.data ; touch $HOME/.data/.online'
-            gmsg
-            gmsg "3) to edit user configurations run:"
-            gmsg
-            gmsg "   $GURU_CALL config user"
-            gmsg
-            gmsg "4) remove newbie help view by: "
-            gmsg
-            gmsg "   rm $HOME/.data/.newbie"
-            gmsg
-            export GURU_VERBOSE=1
-        fi
-    }
-
-
-    local _arg="$1"
-    if [[ "$_arg" ]] ; then
-
-            case "$_arg" in
-                    all) core.multi_module_function help        ; return 0 ;;
-                    flags) core.help_flags                      ; return 0 ;;
-                      *) core.run_module_function "$_arg" help  ; return 0 ;;
-                    esac
-        fi
-
-    core.help_newbie
-    gmsg -v1 -c white "guru-client help "
-    gmsg -v2
-    gmsg -v0  "usage:    $GURU_CALL [-flags] [tool] [argument] [variables]"
-    core.help_flags
-    gmsg -v2
-    gmsg -v1 -c white  "examples"
-    gmsg -v1 "  $GURU_CALL note yesterday           open yesterdays notes"
-    gmsg -v2 "  $GURU_CALL install mqtt-server      install mqtt server"
-    gmsg -v1 "  $GURU_CALL ssh key add github       add ssh keys to github server"
-    gmsg -v1 "  $GURU_CALL timer start at 12:00     start work time timer"
-    gmsg -v1
-    gmsg -v1 -c white  "More detailed help, type '$GURU_CALL <tool> help'"
-    gmsg -v1 "Use verbose mode '-v2' to get more information in help printout. "
-    gmsg -v1
-
 }
 
 
