@@ -18,7 +18,10 @@ I'll try it, lets see.
 
 **todo:**
 
-- [x] done
+- [x] change done
+- [ ] try it
+    - [ ] like it
+    - [ ] hate it
 
 
 ## 1) modules can run stand alone by default
