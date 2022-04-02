@@ -133,7 +133,7 @@ convert.from_webp () {
                         gmsg -v2 -n "identical content, "
                         # skip
                         if ! [[ $GURU_FORCE ]] ; then
-                                gmsg -v1 -c brown "skipping "
+                                gmsg -v1 -c dark_grey "skipping "
                                 continue
                             fi
                         # overwrite
