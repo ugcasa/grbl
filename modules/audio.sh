@@ -147,29 +147,28 @@ audio.playlist_config () {
             return 126
         fi
 
-    gmsg -v3 "found_line: $found_line"
+    # gmsg -v3 "found_line: $found_line"
 
     declare -g playlist_found_name=$(echo $found_line | cut -f4 -d '_' | cut -f1 -d '=')
-    gmsg -v3 "playlist_found_name: $playlist_found_name"
+    # gmsg -v3 "playlist_found_name: $playlist_found_name"
 
     local variable="GURU_AUDIO_PLAYLIST_${playlist_found_name}[@]"
     local found_settings=($(eval echo ${!variable}))
-    gmsg -v3 "found_settings: ${found_settings[@]}"
+    # gmsg -v3 "found_settings: ${found_settings[@]}"
 
     declare -g playlist_location=${found_settings[0]}
-    gmsg -v3 "playlist_location: $playlist_location"
+    # gmsg -v3 "playlist_location: $playlist_location"
 
     declare -g playlist_phase=${found_settings[1]}
-    gmsg -v3 "playlist_phase: $playlist_phase"
+    # gmsg -v3 "playlist_phase: $playlist_phase"
 
     declare -g playlist_option=${found_settings[2]}
-    gmsg -v3 "playlist_option: $playlist_option"
+    # gmsg -v3 "playlist_option: $playlist_option"
 
     declare -g list_description="${playlist_location##*/}"
     list_description="${list_description//_/' '}"
     list_description="${list_description//'-'/' - '}"
-    gmsg -v3 "description: $list_description"
-
+    # gmsg -v3 "description: $list_description"
 
     if ! [[ $playlist_found_name ]] ; then
             gmsg -c yellow "'$user_reguest' not found"
@@ -213,7 +212,10 @@ audio.playlist_compose () {
     [[ $playlist_option ]] && sort_option="-$playlist_option"
 
     if [[ "$playlist_found_name" == "${user_reguest^^}" ]] ; then
-            ls $playlist_location/$playlist_phase | grep -e wav -e mp3 -e m4a -e mkv -e mp4 | sort $sort_option > $audio_temp_file # | head -n 5
+            ls $playlist_location/$playlist_phase \
+                | grep -e wav -e mp3 -e m4a -e mkv -e mp4 \
+                | sort $sort_option > $audio_temp_file
+                #\ | head -n 5
             gmsg -v2 "$(cat $audio_temp_file)"
             return 0
         else
@@ -228,7 +230,7 @@ audio.playlist_play () {
     local user_reguest=$1
     local _wanna_hear=
     [[ $2 ]] && local _wanna_hear=$2
-    gmsg -v3 "user_reguest: $user_reguest $_wanna_hear"
+    # gmsg -v3 "user_reguest: $user_reguest $_wanna_hear"
 
     case $user_reguest in
         list|ls)
@@ -273,12 +275,12 @@ audio.playlist_play () {
 
     # play requests from list
     if [[ $_wanna_hear ]] ; then
-            gmsg -v3 "wanted hear $_wanna_hear"
+            # gmsg -v3 "wanted hear $_wanna_hear"
             local _list=($(cat $audio_temp_file))
 
             for _list_item in ${_list[@]} ; do
-                gmsg -v3 "$_list_item:$_wanna_hear"
-                grep  $_wanna_hear <<< $_list_item && mpv $_list_item $options
+                # gmsg -v3 "$_list_item:$_wanna_hear"
+                grep -i $_wanna_hear <<< $_list_item && mpv $_list_item $options
             done
 
             return 0
