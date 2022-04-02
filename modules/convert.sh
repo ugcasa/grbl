@@ -24,9 +24,14 @@ convert.main () {
 
     case $format in
 
+            install|remove)
+                convert.$format
+                return $?
+                ;;
             # list of supported input formats
             webp|webm|mkv|a)
                 ##convert.install
+                convert.install
                 convert.from_$format $@
                 return $?
                 ;;
@@ -90,12 +95,12 @@ convert.from_webp () {
     if [[ $1 ]] ; then
             found_files=($@)
         else
-            eval 'detox *webp'
-            found_files=($(eval 'ls *webp'))
+            detox *webp
+            found_files=$(ls *webp 2>/dev/null)
         fi
 
     if ! [[ $found_files ]] ; then
-            gmsg -c yellow "no files found"
+            gmsg -v2 -c yellow "no files found"
         fi
 
     local rand=""
@@ -105,44 +110,58 @@ convert.from_webp () {
 
             rand=""
             file_base_name=$(sed 's/\.[^.]*$//' <<< "$file")
-            gmsg -v3 -c deep_pink "$file_base_name"
+            gmsg -v3 -c pink "file_base_name: $file_base_name"
 
             # check do original exist
             if ! [[ -f "$file_base_name.webp" ]] ; then
-                    gmsg -c yellow "file $file_base_name.webp not found"
+                    gmsg -v1 -c yellow "file $file_base_name.webp lost"
                     continue
                 fi
 
             # there is a file with same name
             if [[ -f "$file_base_name.${_format}" ]] ; then
-                gmsg -n -c yellow "$file_base_name.${_format} file found "
+                gmsg -v1 -n "$file_base_name.${_format} exists, "
                 # convert webp to temp
                 dwebp -quiet "$file_base_name.webp" -o "/tmp/$file_base_name.${_format}"
 
-                # check does picture have same contetn
+                # check does picture have same content
                 orig=$(identify -quiet -format "%#" "$file_base_name.${_format}" )
                 new=$(identify -quiet -format "%#" "/tmp/$file_base_name.${_format}")
 
+                # check file contains same data, rename if not
                 if [[ "$orig" == "$new" ]] ; then
-                        # overwrite existing file
-                        gmsg -c yellow "with same content, overwriting"
+                        gmsg -v2 -n "identical content, "
+                        # skip
+                        if ! [[ $GURU_FORCE ]] ; then
+                                gmsg -v1 -c dark_grey "skipping "
+                                continue
+                            fi
+                        # overwrite
+                        gmsg -n -v2 -c yellow "overwriting "
                         rm -f "$file_base_name.${_format}"
                     else
-                        gmsg -c yellow "with different content, renaming"
+                        # append
+                        gmsg -n -v1 -c light_blue "appending "
                         rand="-$(shuf -i 1000-9999 -n 1)"
                     fi
                 fi
 
             # convert
-            gmsg -c light_blue "$file_base_name$rand.${_format}.. "
-            dwebp -quiet $file_base_name.webp -o $file_base_name$rand.${_format}
+            #gmsg -v1 -n "converting $file_base_name$rand.${_format}.. "
+            gmsg -v1 -n "$file_base_name$rand.${_format}.. "
+
+            if dwebp -quiet $file_base_name.webp -o $file_base_name$rand.${_format} ; then
+                    gmsg -v1 -c green "ok"
+                else
+                    gmsg -c yellow "error: $?"
+                    continue
+                fi
 
             # force remove original if convert success
-            [[ $GURU_FORCE ]] && [[ $file_base_name$rand.${_format} ]] && rm $file_base_name.webp
+            [[ $GURU_FORCE ]] && [[ -f $file_base_name$rand.${_format} ]] && rm $file_base_name.webp
 
             # clean up
             [[ -f /tmp/$file_base_name.${_format} ]] && rm /tmp/$file_base_name.${_format}
-
         done
     return 0
 }
@@ -194,7 +213,7 @@ convert.from_webm () {
                     fi
 
                 # force remove original if convert success
-                [[ $GURU_FORCE ]] && [[ $file_base_name$rand.${_format} ]] && rm $file_base_name.webm
+                [[ $GURU_FORCE ]] && [[ -f $file_base_name$rand.${_format} ]] && rm $file_base_name.webm
 
             done
         return 0
@@ -247,7 +266,7 @@ convert.from_mkv () {
                     fi
 
                 # force remove original if convert success
-                [[ $GURU_FORCE ]] && [[ $file_base_name$rand.${_format} ]] && rm $file_base_name.mkv
+                [[ $GURU_FORCE ]] && [[ -f $file_base_name$rand.${_format} ]] && rm $file_base_name.mkv
 
             done
         return 0
@@ -378,12 +397,15 @@ convert.install () {
     # install needed
 
     # webp format support
-    dwebp -version -quiet >/dev/null && \
+    convert -version >/dev/null && \
     ffmpeg -version >/dev/null && \
+    dwebp -version -quiet >/dev/null && \
+    detox --help >/dev/null && \
         return 0
         ## tbd detox install check
 
-    sudo apt update && sudo apt install webp ffmpeg detox
+    sudo apt update && \
+    sudo apt install webp ffmpeg detox imagemagick
 }
 
 
