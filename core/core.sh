@@ -5,17 +5,20 @@
 # global variables
 declare -x GURU_RC="$HOME/.gururc"
 declare -x GURU_BIN="$HOME/bin"
+
+
 declare -x GURU_VERSION=$(echo $(head -n1 $GURU_BIN/version) | tr -d '\n')
+declare -x GURU_VERSION_NAME=$(echo $(tail $GURU_BIN/version -n +2 | head -n 1 ) | tr -d '\n')
 
 # early exits
 case $1 in version)
-        echo $GURU_VERSION
+        echo "$GURU_VERSION $GURU_VERSION_NAME"
         exit 0
     esac
 
 # check that config rc file exits
 if [[ -f $GURU_RC ]] ; then
-        gmsg -c deep_pink "sourcing configs.. "
+        gmsg -v3 -c deep_pink "sourcing configs.. "
         source $GURU_RC
     else
         # run user configuration if not exist
