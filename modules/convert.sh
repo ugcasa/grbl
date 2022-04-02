@@ -110,7 +110,7 @@ convert.from_webp () {
 
             rand=""
             file_base_name=$(sed 's/\.[^.]*$//' <<< "$file")
-            gmsg -v3 -c deep_pink "$file_base_name"
+            gmsg -v3 -c pink "file_base_name: $file_base_name"
 
             # check do original exist
             if ! [[ -f "$file_base_name.webp" ]] ; then
@@ -137,17 +137,18 @@ convert.from_webp () {
                                 continue
                             fi
                         # overwrite
-                        gmsg -v2 -c yellow "overwriting "
+                        gmsg -n -v2 -c yellow "overwriting "
                         rm -f "$file_base_name.${_format}"
                     else
                         # append
-                        gmsg -v2 -c white "appending "
+                        gmsg -n -v1 -c light_blue "appending "
                         rand="-$(shuf -i 1000-9999 -n 1)"
                     fi
                 fi
 
             # convert
-            gmsg -v1 -n "converting $file_base_name$rand.${_format}.. "
+            #gmsg -v1 -n "converting $file_base_name$rand.${_format}.. "
+            gmsg -v1 -n "$file_base_name$rand.${_format}.. "
 
             if dwebp -quiet $file_base_name.webp -o $file_base_name$rand.${_format} ; then
                     gmsg -v1 -c green "ok"
