@@ -1,1 +1,12 @@
-0.6.7.9
+0.6.8.0
+'lazy maggot'
+
+# 0.6.8.0 'lazy maggot' chage log
+
+**feature 1)**
+modules need to be able to run without .gururc.
+
+-[ ] rc clean up
+-[ ] .gururc is generated badly
+-[ ] re- write config.sh
+
