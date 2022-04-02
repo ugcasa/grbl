@@ -15,6 +15,7 @@ case $1 in version)
 
 # check that config rc file exits
 if [[ -f $GURU_RC ]] ; then
+        gmsg -c deep_pink "sourcing configs.. "
         source $GURU_RC
     else
         # run user configuration if not exist
@@ -128,8 +129,17 @@ core.run_module () {
                             run_me="$_module$_type $command $function $@"
 
                             # run the command and return what ever module did return
-                            # echo "running module: ${run_me[@]//  / }" # debug shit
+
+                            # speak out what ever module returns
+                            if [[ $GURU_SPEAK ]]  ; then
+                                    local module_output="$(${run_me[@]//  / })"
+                                    gmsg "guru replies: '$module_output'"
+                                    espeak -p $GURU_SPEAK_PITCH -s $GURU_SPEAK_SPEED -v $GURU_SPEAK_LANG "$module_output"
+                                    return $?
+                                fi
+
                             ${run_me[@]//  / }
+                            # echo "running module: ${run_me[@]//  / }" # debug shit
                             return $?
                         fi
                 done
@@ -247,11 +257,12 @@ core.help () {
             gmsg -v2
             gmsg -v1 -c white "option flags:"
             gmsg -v2
-            gmsg -v1 " -s               be more silent, printout only errors and warnings"
             gmsg -v1 " -v 1..4          verbose level, adds headers and some details"
             gmsg -v1 " -u <user_name>   change guru user name temporary  "
             gmsg -v1 " -h <host_name>   change computer host name name temporary "
             gmsg -v1 " -l               set logging on to file $GURU_LOG"
+            gmsg -v1 " -q               be quiet"
+            gmsg -v1 " -s               speak out output"
             gmsg -v1 " -f               set force mode on, be more aggressive"
             gmsg -v1 " -c               disable colors in terminal"
             gmsg -v1 " --option         module options TBD"
@@ -344,20 +355,32 @@ core.process_opts () {
     declare -g GURU_COLOR=true
 
     # go trough possible arguments if set or value is given, other vice use default
-    TEMP=`getopt --long -o "cCfh:lsu:v:" "$@"`
+    TEMP=`getopt --long -o "cCsflqh:u:v:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
         case "$1" in
-            -c ) GURU_COLOR=true        ; shift   ;;
-            -C ) GURU_COLOR=            ; shift   ;;
-            -f ) GURU_FORCE=true        ; shift   ;;
-            -h ) GURU_HOSTNAME=$2       ; shift 2 ;;
-            -l ) GURU_LOGGING=true      ; shift   ;;
-            -s ) GURU_VERBOSE=          ; shift   ;;
-            -u ) core.change_user "$2"  ; shift 2 ;;
-            -v ) GURU_VERBOSE=$2        ; shift 2 ;;
-             * ) break                  ;;
+            -c) export GURU_COLOR=true
+                shift ;;
+            -C) export GURU_COLOR=
+                shift ;;
+            -s) export GURU_SPEAK=true
+                export GURU_COLOR=
+                #export GURU_VERBOSE=2
+                shift ;;
+            -f) export GURU_FORCE=true
+                shift ;;
+            -h) export GURU_HOSTNAME=$2
+                shift 2 ;;
+            -l) export GURU_LOGGING=true
+                shift ;;
+            -q) export GURU_VERBOSE=
+                shift ;;
+            -u) core.change_user "$2"
+                shift 2 ;;
+            -v) export GURU_VERBOSE=$2
+                shift 2 ;;
+             *) break
         esac
     done
 

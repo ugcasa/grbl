@@ -2,7 +2,7 @@
 # guru-client audio adapter
 # casa@ujo.guru 2020 - 2022
 
-source $GURU_RC
+#source $GURU_RC
 source common.sh
 
 declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
@@ -22,6 +22,7 @@ audio.help () {
     gmsg -v1 -c white "commands: "
     gmsg -v1 "  play <playlist>             play list name configured in user.cfg or playlist file"
     gmsg -v1 "  play ls|list                list of playlists set in user.cfg "
+    gmsg -v1 "  install-voip                install tools to voip over ssh"
     gmsg -v1 "  install                     install requirements "
     gmsg -v1 "  remove                      remove requirements "
     gmsg -v1 "  help                        printout this help "
@@ -69,6 +70,10 @@ audio.main () {
                 return $?
                 ;;
 
+            install-voip)
+                voip_install $@
+                return $?
+                ;;
             fast)
                 $GURU_BIN/audio/fast_voipt.sh $1 \
                 -h $GURU_ACCESS_DOMAIN \
@@ -371,10 +376,15 @@ audio.tunnel_toggle () {
 }
 
 
+audi.voip_install () {
+    $GURU_BIN/audio/voipt.sh install
+}
+
+
 audio.install () {
     # install function is required by core
 
-    $GURU_BIN/audio/voipt.sh install
+    sudo apt-get install espeak -y
     # TBD add mpv vlc
 }
 

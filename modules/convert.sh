@@ -95,12 +95,13 @@ convert.from_webp () {
     if [[ $1 ]] ; then
             found_files=($@)
         else
-            detox *webp
+            detox *webp 2>/dev/null
             found_files=$(ls *webp 2>/dev/null)
         fi
 
     if ! [[ $found_files ]] ; then
-            gmsg -v2 -c yellow "no files found"
+            gmsg -v1 -c white "no files found"
+            return 1
         fi
 
     local rand=""
@@ -108,7 +109,7 @@ convert.from_webp () {
 
     for file in ${found_files[@]} ; do
 
-            rand=""
+            rand=
             file_base_name=$(sed 's/\.[^.]*$//' <<< "$file")
             gmsg -v3 -c pink "file_base_name: $file_base_name"
 
@@ -124,7 +125,7 @@ convert.from_webp () {
                 # convert webp to temp
                 dwebp -quiet "$file_base_name.webp" -o "/tmp/$file_base_name.${_format}"
 
-                # check does picture have same content
+                # check does pictures have same content
                 orig=$(identify -quiet -format "%#" "$file_base_name.${_format}" )
                 new=$(identify -quiet -format "%#" "/tmp/$file_base_name.${_format}")
 
@@ -461,7 +462,7 @@ convert.poll () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    source "$GURU_RC"
+    #source "$GURU_RC"
 
     convert.main $@
     exit $?
