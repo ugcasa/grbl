@@ -6,7 +6,20 @@
 ## TODO remove common.sh, not practical way cause of namespacing
 ##  - no rush, good enough for now
 ##  - ISSUE function naming should be fixed dough
+
 # TBD re think function naming
+# gr.dump <- system.core-dump
+# gr.poll <- daemon.poll_order
+# gr.source <- gsource
+# gr.msg <- gmsg
+# gr.end <- gend_blink
+# gr.ind <- gindicate
+# gr.ask <- gask
+# gr.contain <- contains
+# gr.import <- import
+# gr.installed <- module.installed
+# gr.google <- google
+# then alias google='gr.google'
 
 system.core-dump () {
     # dump environmental status to file
