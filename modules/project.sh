@@ -31,40 +31,40 @@ project.main () {
 
 project.help () {
     # help
-    gmsg -v1 -c white "guru-cli project module help "
-    gmsg -v2
-    gmsg -v1 "tools for project control"
-    gmsg -v2
-    gmsg -V2 -v0 "usage:    $GURU_CALL project ls|info|add|rm|open|close "
-    gmsg -v2 "usage:    $GURU_CALL project ls|new|open|status|close|rm|sublime|help  name/id"
-    gmsg -v2
-    gmsg -v1 -c white "commands:"
-    gmsg -v1 "  ls                      list of projects "
-    gmsg -v2 "  info                    more detailed information of projects "
-    gmsg -v1 "  add <name|id>           add new projects "
-    gmsg -v1 "  open <name|id>          open project "
-    gmsg -v2 "  edit <name>             edit project script and configuration TBD" -c todo
-    gmsg -v1 "  change <name>           change project"
-    gmsg -v1 "  close                   close project, keep data "
-    gmsg -v2 "  archive <name>          move to archive TBD"
-    gmsg -v2 "  active <name|id>        return archived project TBD" -c todo
-    gmsg -v3 "  rm <name|id>            remove project and files for good "
-    gmsg -v1 "  install                 install requirements "
-    gmsg -v3 "  remove                  remove requirements "
-    gmsg -v3 "  terminal <name>         open termional tools TBD" -c todo
-    gmsg -v3 "  sublime <name>          open sublime project "
-    gmsg -v1 "  status                  status of project module"
-    gmsg -v3 "  poll start|stop         daemon poll function"
-    gmsg -v1 "  help                    this help "
-    gmsg -v1
-    gmsg -v1 -c white "example:"
-    gmsg -v1 "  $GURU_CALL project ls             # list of projects "
-    gmsg -v1 "  $GURU_CALL project add demo       # initialize new project called 'demo'"
-    gmsg -v2 "  $GURU_CALL project archive        # list of archived projects "
-    gmsg -v2 "  $GURU_CALL project edit demo      # edit 'demo' config and launcher script "
-    gmsg -v2 "  $GURU_CALL project archive demo   # archive 'demo', needs to be done before rm "
-    gmsg -v3 "  $GURU_CALL project rm demo        # remove all 'demo' project files "
-    gmsg -v2
+    gr.msg -v1 -c white "guru-cli project module help "
+    gr.msg -v2
+    gr.msg -v1 "tools for project control"
+    gr.msg -v2
+    gr.msg -V2 -v0 "usage:    $GURU_CALL project ls|info|add|rm|open|close "
+    gr.msg -v2 "usage:    $GURU_CALL project ls|new|open|status|close|rm|sublime|help  name/id"
+    gr.msg -v2
+    gr.msg -v1 -c white "commands:"
+    gr.msg -v1 "  ls                      list of projects "
+    gr.msg -v2 "  info                    more detailed information of projects "
+    gr.msg -v1 "  add <name|id>           add new projects "
+    gr.msg -v1 "  open <name|id>          open project "
+    gr.msg -v2 "  edit <name>             edit project script and configuration TBD" -c todo
+    gr.msg -v1 "  change <name>           change project"
+    gr.msg -v1 "  close                   close project, keep data "
+    gr.msg -v2 "  archive <name>          move to archive TBD"
+    gr.msg -v2 "  active <name|id>        return archived project TBD" -c todo
+    gr.msg -v3 "  rm <name|id>            remove project and files for good "
+    gr.msg -v1 "  install                 install requirements "
+    gr.msg -v3 "  remove                  remove requirements "
+    gr.msg -v3 "  terminal <name>         open termional tools TBD" -c todo
+    gr.msg -v3 "  sublime <name>          open sublime project "
+    gr.msg -v1 "  status                  status of project module"
+    gr.msg -v3 "  poll start|stop         daemon poll function"
+    gr.msg -v1 "  help                    this help "
+    gr.msg -v1
+    gr.msg -v1 -c white "example:"
+    gr.msg -v1 "  $GURU_CALL project ls             # list of projects "
+    gr.msg -v1 "  $GURU_CALL project add demo       # initialize new project called 'demo'"
+    gr.msg -v2 "  $GURU_CALL project archive        # list of archived projects "
+    gr.msg -v2 "  $GURU_CALL project edit demo      # edit 'demo' config and launcher script "
+    gr.msg -v2 "  $GURU_CALL project archive demo   # archive 'demo', needs to be done before rm "
+    gr.msg -v3 "  $GURU_CALL project rm demo        # remove all 'demo' project files "
+    gr.msg -v2
     return 0
 }
 
@@ -74,7 +74,7 @@ project.configure () {
 
     declare -g project_base="$GURU_SYSTEM_MOUNT/project"
     declare -g project_arhive="$GURU_SYSTEM_MOUNT/project/arhive"
-    declare -g project_indicator_key="f$(daemon.poll_order project)"
+    declare -g project_indicator_key="f$(gr.poll project)"
     declare -g project_mount="$GURU_MOUNT_PROJECTS"
 
     if [[ $1 ]] ; then
@@ -87,11 +87,11 @@ project.configure () {
         project_name=$(cat $project_base/last)
 
     else
-        gmsg -c yellow "project name '$project_name' does not exist"
+        gr.msg -c yellow "project name '$project_name' does not exist"
         return 100
     fi
 
-    gmsg -v3 "$GURU_USER working on $project_name"
+    gr.msg -v3 "$GURU_USER working on $project_name"
 
     declare -g project_folder="$project_base/projects/$project_name"
     declare -g project_cfg="$project_folder/config.sh"
@@ -99,7 +99,7 @@ project.configure () {
 
     # check that project is in projects list
     if ! project.exist $project_name ; then
-            gmsg -c yellow "$project_name does not exist"
+            gr.msg -c yellow "$project_name does not exist"
             return 3
         fi
 
@@ -107,7 +107,7 @@ project.configure () {
 
     [[ $GURU_PROJECT_COLOR ]] && declare -g project_key_color=$GURU_PROJECT_COLOR || declare -g project_key_color="aqua"
 
-    # gmsg -c deep_pink "$GURU_PROJECT_GIT:$GURU_PREFERRED_TERMINAL:$project_folder/config.sh"
+    # gr.msg -c deep_pink "$GURU_PROJECT_GIT:$GURU_PREFERRED_TERMINAL:$project_folder/config.sh"
 
 }
 
@@ -117,53 +117,53 @@ project.info () {
 
     project.configure $1
 
-    gmsg -n -c white "system folder.. "
+    gr.msg -n -c white "system folder.. "
     if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
-        gmsg -c green "mounted"
+        gr.msg -c green "mounted"
     else
-        gmsg -c red "not mounted"
-        gmsg "cannot continue, exiting"
+        gr.msg -c red "not mounted"
+        gr.msg "cannot continue, exiting"
         return 100
     fi
     # check is project file folder mounted
-    gmsg -n -c white "project folder.. "
+    gr.msg -n -c white "project folder.. "
     if [[ -f $GURU_MOUNT_PROJECTS/.online ]] ; then
-        gmsg -c green "mounted"
+        gr.msg -c green "mounted"
     else
-        gmsg -c red "not mounted"
+        gr.msg -c red "not mounted"
     fi
 
     # printout
-    gmsg -n -c white "projects: "
+    gr.msg -n -c white "projects: "
     project.ls | tr '\n' ' ' ; echo
 
     if [[ -f $project_base/active ]] ; then
             local active=$(cat $project_base/active)
-            gmsg -c white "active project: '$active' "
+            gr.msg -c white "active project: '$active' "
         else
-            gmsg -c reset "no active projects "
+            gr.msg -c reset "no active projects "
             return 0
         fi
 
-    gmsg -c white "project $active data "
+    gr.msg -c white "project $active data "
     # active project information
     if [[ -f $project_cfg ]] ; then
-            gmsg -c light_blue -w17 -n "name: " ; gmsg -c light_blue "$GURU_PROJECT_NAME"
-            gmsg -c light_blue -w17 -n "desription:" ; gmsg -c light_blue "$GURU_PROJECT_DESCRIPTION"
-            gmsg -c light_blue -w17 -n "folder:" ; gmsg -c light_blue "$GURU_PROJECT_FOLDER"
-            gmsg -c light_blue -w17 -n "git folder:" ; gmsg -c light_blue "$GURU_PROJECT_GIT"
-            gmsg -c light_blue -w17 -n "project color:" ; gmsg -c light_blue "$GURU_PROJECT_COLOR"
-            gmsg -c light_blue -w17 -n "indicator key:" ; gmsg -c light_blue "$project_indicator_key"
-            gmsg -c light_blue -w17 -n "base folder:" ; gmsg -c light_blue "$project_base"
-            gmsg -c light_blue -w17 -n "mount point:" ; gmsg -c light_blue "$project_mount"
-            gmsg -c light_blue -w17 -n "project folder:" ; gmsg -c light_blue "$project_folder"
-            gmsg -c light_blue -w17 -n "cfg location:" ; gmsg -c light_blue "$project_cfg"
-            gmsg -c light_blue -w17 -n "sublime project:" ; gmsg -c light_blue "$sublime_project_file"
+            gr.msg -c light_blue -w17 -n "name: " ; gr.msg -c light_blue "$GURU_PROJECT_NAME"
+            gr.msg -c light_blue -w17 -n "desription:" ; gr.msg -c light_blue "$GURU_PROJECT_DESCRIPTION"
+            gr.msg -c light_blue -w17 -n "folder:" ; gr.msg -c light_blue "$GURU_PROJECT_FOLDER"
+            gr.msg -c light_blue -w17 -n "git folder:" ; gr.msg -c light_blue "$GURU_PROJECT_GIT"
+            gr.msg -c light_blue -w17 -n "project color:" ; gr.msg -c light_blue "$GURU_PROJECT_COLOR"
+            gr.msg -c light_blue -w17 -n "indicator key:" ; gr.msg -c light_blue "$project_indicator_key"
+            gr.msg -c light_blue -w17 -n "base folder:" ; gr.msg -c light_blue "$project_base"
+            gr.msg -c light_blue -w17 -n "mount point:" ; gr.msg -c light_blue "$project_mount"
+            gr.msg -c light_blue -w17 -n "project folder:" ; gr.msg -c light_blue "$project_folder"
+            gr.msg -c light_blue -w17 -n "cfg location:" ; gr.msg -c light_blue "$project_cfg"
+            gr.msg -c light_blue -w17 -n "sublime project:" ; gr.msg -c light_blue "$sublime_project_file"
         else
-            gmsg "no $active project data available"
+            gr.msg "no $active project data available"
         fi
 
-    if module.installed tmux ; then
+    if gr.installed tmux ; then
             source tmux.sh
             tmux.status
         fi
@@ -179,16 +179,16 @@ project.sublime () {
     project.configure $1
 
     if ! [[ -d $project_folder ]] ; then
-            gmsg -c yellow "project not exist"
+            gr.msg -c yellow "project not exist"
             return 131
         fi
 
     if [[ -f "$sublime_project_file" ]] ; then
-            gmsg -v2 "using $sublime_project_file"
+            gr.msg -v2 "using $sublime_project_file"
             # TBD edit/subl.sh?  << subl --project "$sublime_project_file" -a
             subl --project "$sublime_project_file" -a
         else
-            gmsg -c yellow "$sublime_project_file not found"
+            gr.msg -c yellow "$sublime_project_file not found"
             return 132
         fi
 }
@@ -213,7 +213,7 @@ project.open () {
             && [[ "$project_name" == "$(cat $project_base/active)" ]] \
             && ! [[ $GURU_FORCE ]]
         then
-            gmsg -c green "project $project_name is active"
+            gr.msg -c green "project $project_name is active"
             return 0
         fi
 
@@ -229,7 +229,7 @@ project.open () {
     declare -l key_color="aqua"
     [[ $GURU_PROJECT_COLOR ]] && key_color=$GURU_PROJECT_COLOR
 
-    gmsg -v1 -c $key_color "$project_name" -m "$GURU_USER/project" -k $project_indicator_key
+    gr.msg -v1 -c $key_color "$project_name" -m "$GURU_USER/project" -k $project_indicator_key
 
     # open editor
     case $GURU_PREFERRED_EDITOR in
@@ -239,9 +239,9 @@ project.open () {
                     ;;
 
             code|vcode|v-code|visual-code|vs)
-                    gmsg "TBD add support for vcode project files" ;;
-            vi|vim) gmsg "TBD add support for vim project files" ;;
-            joe)    gmsg "TBD add support for joe project files" ;;
+                    gr.msg "TBD add support for vcode project files" ;;
+            vi|vim) gr.msg "TBD add support for vim project files" ;;
+            joe)    gr.msg "TBD add support for joe project files" ;;
         esac
 
     project.terminal $project_name
@@ -255,11 +255,11 @@ project.terminal () {
 
     project.configure $1
 
-    # gmsg -c pink "$GURU_PROJECT_GIT:$GURU_PREFERRED_TERMINAL:$project_folder/config.sh"
+    # gr.msg -c pink "$GURU_PROJECT_GIT:$GURU_PREFERRED_TERMINAL:$project_folder/config.sh"
 
     case $GURU_PREFERRED_TERMINAL in
 
-            tmux)   if module.installed tmux ; then
+            tmux)   if gr.installed tmux ; then
                             source tmux.sh
                             tmux.attach $project_name
                             return $?
@@ -288,7 +288,7 @@ project.terminal () {
                             fi
                         fi
                     ;;
-            *)      gmsg "non supported terminal"
+            *)      gr.msg "non supported terminal"
                     ;;
         esac
 
@@ -320,7 +320,7 @@ project.close () {
 
     # check that project is in projects list
     if ! project.exist $project_name ; then
-            gmsg -c yellow "$project_name does not exist ${FUNCNAME[0]}"
+            gr.msg -c yellow "$project_name does not exist ${FUNCNAME[0]}"
             return 3
         fi
 
@@ -329,7 +329,7 @@ project.close () {
     # check active project
     if [[ -f $project_base/active ]] ; then
             mv -f $project_base/active $project_base/last
-            gmsg -v1 -c reset "$active_project closed" -k $project_indicator_key
+            gr.msg -v1 -c reset "$active_project closed" -k $project_indicator_key
         fi
     GURU_VERBOSE=0
     project.status
@@ -366,22 +366,22 @@ project.ls () {
     # is there projects
 
     if (( ${#_project_list[$@]} < 1 )) ; then
-            gmsg -c dark_grey "no projects"
+            gr.msg -c dark_grey "no projects"
             return 1
         fi
 
-    gmsg -v2 -c white "project count: ${#_project_list[@]}"
+    gr.msg -v2 -c white "project count: ${#_project_list[@]}"
 
     # check active project
     [[ -f $project_base/active ]] && local _active_project=$(cat $project_base/active)
-    gmsg -v2 -c aqua "active: $_active_project"
+    gr.msg -v2 -c aqua "active: $_active_project"
 
     # list of projects
     for _project in ${_project_list[@]} ; do
         if [[ "$_project" == "$_active_project" ]] ; then
-                gmsg -n -c aqua "$_project "
+                gr.msg -n -c aqua "$_project "
             else
-                gmsg -n -c light_blue "$_project "
+                gr.msg -n -c light_blue "$_project "
             fi
         done
 
@@ -396,7 +396,7 @@ project.ls () {
     #     | rev))
 
      for _project in ${archived_project_list[@]} ; do
-             gmsg -n -c dark_grey "$_project "
+             gr.msg -n -c dark_grey "$_project "
          done
 
     echo
@@ -422,12 +422,12 @@ project.add () {
     local sublime_project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
 
     if [[ -d "$archive_folder/$project_name" ]] ; then
-            gmsg -c yellow "project named $project_name exist in archive"
+            gr.msg -c yellow "project named $project_name exist in archive"
             return 1
         fi
 
     if [[ -d $project_folder ]] ; then
-            gmsg -c yellow "project $project_name exist"
+            gr.msg -c yellow "project $project_name exist"
             return 1
         fi
 
@@ -437,9 +437,9 @@ project.add () {
             touch "$sublime_project_file"
         fi
 
-    gmsg -v3 -c dark_grey "${FUNCNAME[0]} TBD: add project details and copy default config.sh"
+    gr.msg -v3 -c dark_grey "${FUNCNAME[0]} TBD: add project details and copy default config.sh"
     cp $GURU_CFG/project-default.cfg $project_folder/config.sh
-    gmsg -c white "project added, config project $project_folder/config.sh "
+    gr.msg -c white "project added, config project $project_folder/config.sh "
 
 
 }
@@ -459,22 +459,22 @@ project.archive () {
 
             # check that project to remove is not active, is so close it
             if [[ -f $project_base/active ]] ; then
-                    # gmsg -v0 -n "active project: "
+                    # gr.msg -v0 -n "active project: "
                     if cat $project_base/active | grep $project_name ; then
-                        gmsg -v0 "closing project $project_name"
+                        gr.msg -v0 "closing project $project_name"
                         project.close $project_name
                     fi
                 fi
 
             # move
             if [[ -d $project_base/projects/$project_name ]] ; then
-                    gmsg "project $project_name moved to $project_base/archived/$project_name"
+                    gr.msg "project $project_name moved to $project_base/archived/$project_name"
 
                     mv -b "$project_base/projects/$project_name" "$project_base/archived" && continue
-                    gmsg -c yellow "error while movin project files $project_name"
+                    gr.msg -c yellow "error while movin project files $project_name"
 
                 else
-                    gmsg -c yellow "no project files found from $project_base/projects/$project_name"
+                    gr.msg -c yellow "no project files found from $project_base/projects/$project_name"
                     continue
             fi
         done
@@ -500,29 +500,29 @@ project.rm () {
 
             # check project forlder and arhive
             if [[ -d $project_folder ]] ; then
-                    gmsg -v0 -c white "project needs to be archived before removeing"
-                    gmsg -v0 "to arvhive type: '$GURU_CALL project archive $project_name'"
+                    gr.msg -v0 -c white "project needs to be archived before removeing"
+                    gr.msg -v0 "to arvhive type: '$GURU_CALL project archive $project_name'"
                     continue
 
             elif [[ -d $archive_folder ]] ; then
-                    gmsg -v2 "project found in archive"
+                    gr.msg -v2 "project found in archive"
                 else
-                    gmsg -c yellow "no project '$project_name' found in archive"
+                    gr.msg -c yellow "no project '$project_name' found in archive"
                     continue
                 fi
 
             # ask final approve from customer
-            if ! gask "sure to remove project $project_name?" ; then
-                    gmsg -v1 -c dark_grey "nothing changed"
+            if ! gr.ask "sure to remove project $project_name?" ; then
+                    gr.msg -v1 -c dark_grey "nothing changed"
                     continue
                 fi
 
             # remove project database
             if rm -fr $archive_folder ; then
-                gmsg -v1 -c dark_grey "$archive_folder removed"
+                gr.msg -v1 -c dark_grey "$archive_folder removed"
                 continue
             else
-                gmsg -v0 -c yellow "error while deleting $project_name "
+                gr.msg -v0 -c yellow "error while deleting $project_name "
                 continue
             fi
 
@@ -538,10 +538,10 @@ project.exist () {
     project_base="$GURU_SYSTEM_MOUNT/project"
 
     if [[ -d $project_base/projects/$project_name ]] ; then
-            gmsg -v3 -c green "project $project_name exist"
+            gr.msg -v3 -c green "project $project_name exist"
               return 0
         else
-            gmsg -v2 -c yellow "project $project_name does not exist"
+            gr.msg -v2 -c yellow "project $project_name does not exist"
             return 100
         fi
 }
@@ -555,7 +555,7 @@ project.change () {
 
     echo $project_name > "$project_base/active"
     echo $project_name > "$project_base/last"
-    gmsg -v2 "$project_name" -m "$GURU_USER/project"
+    gr.msg -v2 "$project_name" -m "$GURU_USER/project"
 }
 
 
@@ -567,19 +567,19 @@ project.status () {
     project.configure $1
 
     # check project file locaton is accessavle
-    gmsg -v1 -n -t "${FUNCNAME[0]}: "
+    gr.msg -v1 -n -t "${FUNCNAME[0]}: "
     if [[ -d "$project_base" ]] ; then
-            gmsg -v1 -n -c green "installed, "
+            gr.msg -v1 -n -c green "installed, "
         else
-            gmsg -v1 -n -c red "$project_base not installed, " -k $project_indicator_key
+            gr.msg -v1 -n -c red "$project_base not installed, " -k $project_indicator_key
             return 100
         fi
 
     # check are projects mounted
     if [[ -f "$project_mount/.online" ]] ; then
-            gmsg -v1 -n -c green "mounted "
+            gr.msg -v1 -n -c green "mounted "
         else
-            gmsg -v1 -c yellow "not mounted" -k $project_indicator_key
+            gr.msg -v1 -c yellow "not mounted" -k $project_indicator_key
             return 100
         fi
 
@@ -588,10 +588,10 @@ project.status () {
 
     if [[ -f $project_base/active ]]; then
             local active=$(cat $project_base/active)
-            #gmsg -v2 -n "active: "
-            gmsg -v4 -n -c $project_key_color -k $project_indicator_key
+            #gr.msg -v2 -n "active: "
+            gr.msg -v4 -n -c $project_key_color -k $project_indicator_key
         else
-            gmsg -v3 -c reset "no active projects "  -k $project_indicator_key
+            gr.msg -v3 -c reset "no active projects "  -k $project_indicator_key
         fi
 
     return 0
@@ -603,15 +603,15 @@ project.poll () {
 
     local _cmd="$1" ; shift
 
-    local project_indicator_key="f$(daemon.poll_order project)"
+    local project_indicator_key="f$(gr.poll project)"
     case $_cmd in
         start )
-            gmsg -v1 -t -c black \
+            gr.msg -v1 -t -c black \
                 -k $project_indicator_key \
                 "${FUNCNAME[0]}: project status polling started"
             ;;
         end )
-            gmsg -v1 -t -c reset \
+            gr.msg -v1 -t -c reset \
                 -k $project_indicator_key \
                 "${FUNCNAME[0]}: project status polling ended"
             ;;
@@ -626,15 +626,15 @@ project.poll () {
 
 project.install () {
 
-gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:"; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">"
-    gmsg "no special software needed"
+gr.msg -v0 -n -c dark_cyan "${FUNCNAME[0]}:"; gr.msg -n -c deep_pink "$@" ; gr.msg -n -c white ">"
+    gr.msg "no special software needed"
 }
 
 
 project.rewmove () {
 
-gmsg -v0 -n -c dark_cyan "${FUNCNAME[0]}:"; gmsg -n -c deep_pink "$@" ; gmsg -n -c white ">"
-    gmsg "no special software installed"
+gr.msg -v0 -n -c dark_cyan "${FUNCNAME[0]}:"; gr.msg -n -c deep_pink "$@" ; gr.msg -n -c white ">"
+    gr.msg "no special software installed"
 }
 
 

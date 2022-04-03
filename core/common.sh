@@ -8,20 +8,20 @@
 ##  - ISSUE function naming should be fixed dough
 
 # TBD re think function naming
-# gr.dump <- system.core-dump
-# gr.poll <- daemon.poll_order
-# gr.source <- gsource
-# gr.msg <- gmsg
-# gr.end <- gend_blink
-# gr.ind <- gindicate
-# gr.ask <- gask
+# gr.dump <- gr.dump
+# gr.poll <- gr.poll
+# gr.source <- gr.source
+# gr.msg <- gr.msg
+# gr.end <- gr.end
+# gr.ind <- gr.ind
+# gr.ask <- gr.ask
 # gr.contain <- contains
 # gr.import <- import
-# gr.installed <- module.installed
+# gr.installed <- gr.installed
 # gr.google <- google
 # then alias google='gr.google'
 
-system.core-dump () {
+gr.dump () {
     # dump environmental status to file
     # TBD revisit this
     echo "core dumped to $GURU_CORE_DUMP"
@@ -29,7 +29,7 @@ system.core-dump () {
 }
 
 
-daemon.poll_order () {
+gr.poll () {
     # set get polling order
 
     local _to_find="$1"
@@ -51,7 +51,7 @@ daemon.poll_order () {
         fi
 }
 
-gsource () {
+gr.source () {
     # source only wanted functions. slow ~0,03 sec, but saves environment space
 
     local file=$1 ; shift
@@ -77,7 +77,7 @@ gsource () {
 }
 
 
-gmsg () {
+gr.msg () {
     # function for output messages and make log notifications
 
     local verbose_trigger=0
@@ -210,7 +210,7 @@ gmsg () {
 }
 
 
-gend_blink () {
+gr.end () {
     # stop blinking in next cycle
 
     local key="esc"
@@ -221,7 +221,7 @@ gend_blink () {
 }
 
 
-gindicate () {
+gr.ind () {
     # indicate status by message, voice  and keyboard indicators
 
     local _timestamp=
@@ -260,9 +260,9 @@ gindicate () {
     if [[ $_message ]] ; then
 
             if [[ $_color ]] ; then
-                    gmsg -c $_color "$timestamp$_status: $_message"
+                    gr.msg -c $_color "$timestamp$_status: $_message"
                 else
-                    gmsg "$timestamp$_status: $_message"
+                    gr.msg "$timestamp$_status: $_message"
                 fi
 
             if [[ $GURU_MQTT_ENABLED ]] && [[ $_mqtt_topic ]] ; then
@@ -314,7 +314,7 @@ gindicate () {
 }
 
 
-gask () {
+gr.ask () {
     # yes or no shortcut
 
     local _message="$1"
@@ -373,23 +373,23 @@ import () {
     local _type=sh ; [[ $1 ]] && _type=$1
 
     if ! [[ -d $_module ]] ; then
-            gmsg -c yellow "no module $_module exist"
+            gr.msg -c yellow "no module $_module exist"
             return 100
         fi
 
     for lib in $_module/*$_type ; do
-            gmsg -v2 "library $lib"
+            gr.msg -v2 "library $lib"
 
             if [[ -f $lib ]] ; then
                     source $lib
                 else
-                    gmsg -c yellow "no $_type files in $_module/ folder"
+                    gr.msg -c yellow "no $_type files in $_module/ folder"
                     return 101
                 fi
         done
 }
 
-module.installed () {
+gr.installed () {
     # check is module installed
 
     local i=0
@@ -422,8 +422,8 @@ google () {
             $GURU_PREFERRED_BROWSER $url
             ;;
         *)
-            gmsg -c -v2 -c yellow "non supported browser, here's link: "
-            gmsg -c $url
+            gr.msg -c -v2 -c yellow "non supported browser, here's link: "
+            gr.msg -c $url
         esac
 
     return $?
@@ -432,10 +432,10 @@ google () {
 
 
 #`TBD`declare -xf ? rather than export? - no
-export -f system.core-dump
-export -f daemon.poll_order
-export -f gmsg
-export -f gask
+export -f gr.dump
+export -f gr.poll
+export -f gr.msg
+export -f gr.ask
 export -f import
 
 

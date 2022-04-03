@@ -14,7 +14,7 @@ config.test() {
                    config.test_set                || _err=("${_err[@]}" "62")
                    if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi
                    ;;
-               *)  gmsg -c dark_grey "test case '$test_case' not written"
+               *)  gr.msg -c dark_grey "test case '$test_case' not written"
                    return 1
     esac
 }
@@ -23,10 +23,10 @@ config.test() {
 config.test_get () {
     # get system values test
     if config.get "audio_enabled" | grep "true" >/dev/null ; then
-        gmsg -c green "${FUNCNAME[0]} passed"
+        gr.msg -c green "${FUNCNAME[0]} passed"
         return 0
     else
-        gmsg -c red "${FUNCNAME[0]} failed"
+        gr.msg -c red "${FUNCNAME[0]} failed"
         return 101
     fi
 }
@@ -35,14 +35,14 @@ config.test_get () {
 config.test_set () {
     # WILL FAIL sed broken fix later
     config.set "audio_enabled" "test"
-    gmsg "returns: $(config.get audio_enabled)"
+    gr.msg "returns: $(config.get audio_enabled)"
 
     if config.get "audio_enabled" | grep "test" >/dev/null ; then
-            gmsg -c green "${FUNCNAME[0]} passed"
+            gr.msg -c green "${FUNCNAME[0]} passed"
             config.set "audio_enabled" "true"             # cleanup
             return 0
     else
-            gmsg -c red "${FUNCNAME[0]} failed"
+            gr.msg -c red "${FUNCNAME[0]} failed"
             config.set "audio_enabled" "true"             # cleanup
             return 101
     fi

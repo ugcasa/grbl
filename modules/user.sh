@@ -24,8 +24,8 @@ user_main () {
             ;;
         status)
             [[ "$GURU_USER" == "$GURU_USER_NAME" ]] \
-                && gmsg -c green "username OK" \
-                || gmsg -c red "username mismatch! $GURU_USER:$GURU_USER_NAME"
+                && gr.msg -c green "username OK" \
+                || gr.msg -c red "username mismatch! $GURU_USER:$GURU_USER_NAME"
             ;;
         change|*)
             change_user "$@"

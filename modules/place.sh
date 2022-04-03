@@ -4,24 +4,24 @@
 source $GURU_BIN/common.sh
 
 declare -g temp_file="/tmp/guru-place.tmp"
-declare -g place_indicator_key="f$(daemon.poll_order place)"
+declare -g place_indicator_key="f$(gr.poll place)"
 
 
 place.help () {
     # user help
-    gmsg -n -v2 -c white "guru-cli place help "
-    gmsg -v1 "fuzzy logic to place files to right locations."
-    gmsg -v2
-    gmsg -c white -n -v0 "usage:    "
-    gmsg -v0 "$GURU_CALL place "
-    gmsg -v2
-    gmsg -v1 -c white "commands: "
-    gmsg -v2 " ls       list of places "
-    gmsg -v2 " help     printout this help "
-    gmsg -v2
-    gmsg -n -v1 -c white "example:  "
-    gmsg -v1 "$GURU_CALL place ls"
-    gmsg -v2
+    gr.msg -n -v2 -c white "guru-cli place help "
+    gr.msg -v1 "fuzzy logic to place files to right locations."
+    gr.msg -v2
+    gr.msg -c white -n -v0 "usage:    "
+    gr.msg -v0 "$GURU_CALL place "
+    gr.msg -v2
+    gr.msg -v1 -c white "commands: "
+    gr.msg -v2 " ls       list of places "
+    gr.msg -v2 " help     printout this help "
+    gr.msg -v2
+    gr.msg -n -v1 -c white "example:  "
+    gr.msg -v1 "$GURU_CALL place ls"
+    gr.msg -v2
 }
 
 
@@ -61,7 +61,7 @@ place.ls () {
 place.status () {
     # output place status
 
-    gmsg -n -t -v1 "${FUNCNAME[0]}: "
+    gr.msg -n -t -v1 "${FUNCNAME[0]}: "
 
     # other tests with output, return errors
 
@@ -73,15 +73,15 @@ place.poll () {
 
     # check is indicator set (should be, but wanted to be sure)
     [[ $place_indicator_key ]] || \
-        place_indicator_key="f$(daemon.poll_order place)"
+        place_indicator_key="f$(gr.poll place)"
 
     local _cmd="$1" ; shift
     case $_cmd in
         start)
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: place status polling started" -k $place_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: place status polling started" -k $place_indicator_key
             ;;
         end)
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: place status polling ended" -k $place_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: place status polling ended" -k $place_indicator_key
             ;;
         status)
             place.status $@
@@ -94,10 +94,10 @@ place.poll () {
 
 place.install () {
 
-    # sudo apt update || gmsg -c red "not able to update"
+    # sudo apt update || gr.msg -c red "not able to update"
     # sudo apt install -y ...
     # pip3 install --user ...
-    gmsg "nothing to install"
+    gr.msg "nothing to install"
     return 0
 }
 
@@ -105,7 +105,7 @@ place.remove () {
 
     # sudo apt remove -y ...
     # pip3 remove --user ...
-    gmsg "nothing to remove"
+    gr.msg "nothing to remove"
     return 0
 }
 

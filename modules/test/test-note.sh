@@ -37,9 +37,9 @@ note.test() {
 
 note.test_online() {
     if note.online ; then
-            gmsg -c green "${FUNCNAME[0]} passed" ; return 0
+            gr.msg -c green "${FUNCNAME[0]} passed" ; return 0
         else
-            gmsg -c red "${FUNCNAME[0]} failed" ; return 10
+            gr.msg -c red "${FUNCNAME[0]} failed" ; return 10
         fi
     return $?
 }
@@ -50,9 +50,9 @@ note.test_list () {
     local _should_contain=$(date -d $exist_note +$GURU_FORMAT_FILE_DATE)
     echo $_should_contain
     if note.check $_should_contain ; then
-      gmsg -c green "passed" ; return 0
+      gr.msg -c green "passed" ; return 0
     else
-      gmsg -c red "failed" ; return 44
+      gr.msg -c red "failed" ; return 44
     fi
 }
 
@@ -77,10 +77,10 @@ note.test_check () {
 note.test_add () {
     printf "adding note %s.. " $test_note
     if note.add $test_note ; then
-          gmsg -c green "passed"
+          gr.msg -c green "passed"
           return 0
       else
-          gmsg -c red "failed"
+          gr.msg -c red "failed"
           return 45
       fi
 }
@@ -90,10 +90,10 @@ note.test_open () {
     printf "opening note %s.. " $test_note
     export GURU_PREFERRED_EDITOR="cat"
     if note.open $test_note | grep "18.5.2020" >/dev/null ; then
-          gmsg -c green "passed"
+          gr.msg -c green "passed"
           return 0
       else
-          gmsg -c red "failed"
+          gr.msg -c red "failed"
           return 46
       fi
 }
@@ -102,10 +102,10 @@ note.test_open () {
 note.test_rm () {
     printf "removing note %s.. " $test_note
     if note.rm $test_note ; then
-          gmsg -c green "passed"
+          gr.msg -c green "passed"
           return 0
       else
-          gmsg -c red "failed"
+          gr.msg -c red "failed"
           return 47
       fi
 }

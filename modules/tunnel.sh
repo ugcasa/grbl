@@ -7,24 +7,24 @@ source common.sh
 tunnel.help () {
     # genereal help
 
-    gmsg -v1 -c white "guru-client tunnel help "
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL tunnel status|ls|open|close|add|rm|start|end|install|remove] "
-    gmsg -v2
-    gmsg -v1 -c white  "commands:"
-    gmsg -v1 " ls               list, active highlighted"
-    gmsg -v1 " status           tunnel status "
-    gmsg -v1 " open <service>   open known tunnel set in user.cfg"
-    gmsg -v1 " close <service>  close open tunnels"
-    gmsg -v2 " add              add tunnel to .ssh/config"
-    gmsg -v2 " rm               remove tunnel from .ssh/config"
-    gmsg -v1 " install          install requirements "
-    gmsg -v1 " remove           remove installed requirements "
-    gmsg -v2 " poll start|end   start or end module status polling "
-    gmsg -v2
-    gmsg -v1 -c white  "example:"
-    gmsg -v1 "    $GURU_CALL tunnel open wiki"
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client tunnel help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL tunnel status|ls|open|close|add|rm|start|end|install|remove] "
+    gr.msg -v2
+    gr.msg -v1 -c white  "commands:"
+    gr.msg -v1 " ls               list, active highlighted"
+    gr.msg -v1 " status           tunnel status "
+    gr.msg -v1 " open <service>   open known tunnel set in user.cfg"
+    gr.msg -v1 " close <service>  close open tunnels"
+    gr.msg -v2 " add              add tunnel to .ssh/config"
+    gr.msg -v2 " rm               remove tunnel from .ssh/config"
+    gr.msg -v1 " install          install requirements "
+    gr.msg -v1 " remove           remove installed requirements "
+    gr.msg -v2 " poll start|end   start or end module status polling "
+    gr.msg -v2
+    gr.msg -v1 -c white  "example:"
+    gr.msg -v1 "    $GURU_CALL tunnel open wiki"
+    gr.msg -v2
 }
 
 
@@ -68,15 +68,15 @@ tunnel.status () {
     # check tunnel is reachable
 
     # ptrintout timestamp and function name
-    gmsg -n -v1 -t "${FUNCNAME[0]}: "
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
-    local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
+    local tunnel_indicator_key='f'"$(gr.poll tunnel)"
 
     # check system is able to service
     if [[ -f /usr/bin/ssh ]] ; then
-            gmsg -v1 -n -c green "available " -k $tunnel_indicator_key
+            gr.msg -v1 -n -c green "available " -k $tunnel_indicator_key
         else
-            gmsg -v1 -c red "not installed" -k $tunnel_indicator_key
+            gr.msg -v1 -c red "not installed" -k $tunnel_indicator_key
             return 2
         fi
 
@@ -85,9 +85,9 @@ tunnel.status () {
 
     # indicate user if active tunnels
     if ps -x | grep -v grep | grep "ssh -L " | grep localhost >/dev/null; then
-            gmsg -n -v4 -c aqua "active tunnels" -k $tunnel_indicator_key
+            gr.msg -n -v4 -c aqua "active tunnels" -k $tunnel_indicator_key
         else
-            gmsg -n -v4 -c reset "no active tunnels"
+            gr.msg -n -v4 -c reset "no active tunnels"
         fi
     echo
     return 0
@@ -143,7 +143,7 @@ tunnel.ls () {
 
     local all_services=(${GURU_TUNNEL_LIST[@]})
     [[ $1 ]] && all_services=($@)
-    local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
+    local tunnel_indicator_key='f'"$(gr.poll tunnel)"
     local _return=1
 
     # non color system get only list og active tunnels and do not set corsair stuff
@@ -151,7 +151,7 @@ tunnel.ls () {
         for service in ${all_services[@]} ; do
             tunnel.get_config $service
             if ps -x | grep -v grep | grep "ssh" | grep "$to_port:" >/dev/null; then
-                    gmsg "$service"
+                    gr.msg "$service"
                     _return=0
                 fi
             done
@@ -163,29 +163,29 @@ tunnel.ls () {
     if [[ $service ]] ; then
             tunnel.get_config $service
             if ps -x | grep -v grep | grep "ssh -L $to_port:localhost:" >/dev/null; then
-                    gmsg -v2 -c aqua "$service"  -k $tunnel_indicator_key
+                    gr.msg -v2 -c aqua "$service"  -k $tunnel_indicator_key
                     return 0
                 else
-                    gmsg -v3 -c green "$service" -k $tunnel_indicator_key
+                    gr.msg -v3 -c green "$service" -k $tunnel_indicator_key
                     return 1
                 fi
         fi
 
     # check all tunnels
-    gmsg -n -v2 "tunnels: "
+    gr.msg -n -v2 "tunnels: "
     for service in ${all_services[@]} ; do
         tunnel.get_config $service
         if ps -x | grep -v grep | grep "ssh" | grep "$to_port:" >/dev/null; then
-                gmsg -n -c aqua "$service " -k $tunnel_indicator_key
+                gr.msg -n -c aqua "$service " -k $tunnel_indicator_key
                 _return=0
             else
-                gmsg -n -c light_blue "$service "
+                gr.msg -n -c light_blue "$service "
             fi
         done
     echo
 
     if (( _return > 0 )) ; then
-        gmsg -v3 -c green "reset" -k $tunnel_indicator_key
+        gr.msg -v3 -c green "reset" -k $tunnel_indicator_key
         return 1
     else
         return 0
@@ -202,7 +202,7 @@ tunnel.get_config () {
 
     # exit is not in list
     if ! echo "${all_services[@]}" | grep "$service_name" >/dev/null ; then
-        gmsg -c yellow "no service $service_name in user configuration"
+        gr.msg -c yellow "no service $service_name in user configuration"
         return 1
         fi
 
@@ -216,7 +216,7 @@ tunnel.get_config () {
     local i=0
     for parameter in ${options[@]} ; do
         local value="GURU_TUNNEL_${GURU_TUNNEL_LIST[$service_nr]^^}[$i]"
-        #gmsg -c pink "$value $parameter=${!value}"
+        #gr.msg -c pink "$value $parameter=${!value}"
         eval $parameter=${!value}
         (( i++ ))
         done
@@ -230,9 +230,9 @@ tunnel.open () {
     local service_name=()
 
     if ! [[ $DISPLAY ]] ; then
-            gmsg -v1 "Seems that session is not local, least it does not have DISPLAY variable set."
-            gmsg -v2 "Therefore multible terminal windows cannot be lauched automatically."
-            gmsg -v0 "Open another terminal and paste following commands to avoid tunnel to open here."
+            gr.msg -v1 "Seems that session is not local, least it does not have DISPLAY variable set."
+            gr.msg -v2 "Therefore multible terminal windows cannot be lauched automatically."
+            gr.msg -v0 "Open another terminal and paste following commands to avoid tunnel to open here."
         fi
 
     if [[ $1 ]] ; then
@@ -241,13 +241,13 @@ tunnel.open () {
             service_name=(${GURU_TUNNEL_DEFAULT[@]})
         fi
 
-    local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
+    local tunnel_indicator_key='f'"$(gr.poll tunnel)"
     local ssh_param="-o ServerAliveInterval=15"
 
     for _service in ${service_name[@]} ; do
 
             if ! tunnel.get_config $_service ; then
-                gindicate error $tunnel_indicator_key
+                gr.ind error $tunnel_indicator_key
                 continue
             fi
 
@@ -255,8 +255,8 @@ tunnel.open () {
             [[ $url_end ]] && url="$url/$url_end"
 
             if tunnel.ls $_service ; then
-                    # gmsg -v2 -n -c light_blue "$_service "
-                    gmsg -v1 -c white "$_service: $url"
+                    # gr.msg -v2 -n -c light_blue "$_service "
+                    gr.msg -v1 -c white "$_service: $url"
                     continue
                 fi
 
@@ -274,10 +274,10 @@ tunnel.open () {
                     # local process_id=$(sh -c "echo && ; gnome-terminal --hide-menubar --geometry 47x10 --zoom 0.5 --title $_service  -- ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port")
                     # process_id=$(sh -c 'gnome-terminal --hide-menubar --geometry 47x10 --zoom 0.5 --title kukka  -- ssh -L 8181:localhost:8181 casa@roima -p 22')
                     # process_id=$(sh -c 'echo $$; exec gnome-terminal --hide-menubar --geometry 47x10 --zoom 0.5 --title kukka  -- ssh -L 8181:localhost:8181 casa@roima -p 22')
-                    #gmsg -v2 -c white -n "$_service $from_port "
+                    #gr.msg -v2 -c white -n "$_service $from_port "
                     # check if graphical environment or forced not to open window
                     # local process_id=$!
-                    # gmsg -v2 -c white -n "pid: $process_id "
+                    # gr.msg -v2 -c white -n "pid: $process_id "
 
                     # get tunnel pid
                     # local tunnel_pid=$(ps a | \
@@ -287,25 +287,25 @@ tunnel.open () {
                     #         head -n 1  | sed 's/^[[:space:]]*//' | \
                     #         cut -d " "  -f 1 \
                     #     )
-                    # # gmsg -v2 -c white -n "tunnel_process: $tunnel_pid "
+                    # # gr.msg -v2 -c white -n "tunnel_process: $tunnel_pid "
 
                     # try to minimaze window
                     #local window_id=$(system.get_window_id $tunnel_pid)
                     # local window_id=$(system.get_window_id $process_id)
 
                     # if [[ $window_ssh id ]] ; then
-                    #         # gmsg -v2 -c white -n "window_id: $window_id "
+                    #         # gr.msg -v2 -c white -n "window_id: $window_id "
                     #         xdotool windowminimize ${window_id}
                     #     fi
 
                 else
                     # console environment
-                    gmsg -v0 -c light_blue "ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port"
-                    #gindicate fail $tunnel_indicator_key
+                    gr.msg -v0 -c light_blue "ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port"
+                    #gr.ind fail $tunnel_indicator_key
 
                 fi
 
-            gmsg -v1 -c aqua "$_service: $url" -k $tunnel_indicator_key
+            gr.msg -v1 -c aqua "$_service: $url" -k $tunnel_indicator_key
 
         done
     return 0
@@ -316,7 +316,7 @@ tunnel.close () {
     # close ssh tunnel
 
     local data_folder="$GURU_SYSTEM_MOUNT/tunnel/$(hostname)"
-    local tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
+    local tunnel_indicator_key='f'"$(gr.poll tunnel)"
     local pid_list=()
 
     if [[ $1 ]] ; then
@@ -347,30 +347,30 @@ tunnel.close () {
 
     # check that pid is number
     if ! [[ ${pid_list[@]} ]] ; then
-        gmsg -v1 "no tunnels"
+        gr.msg -v1 "no tunnels"
         return 0
     fi
 
     # kill those tunnels
     for pid in ${pid_list[@]} ; do
 
-            gmsg -v2 "killing pid $pid"
+            gr.msg -v2 "killing pid $pid"
             if ! echo $pid | grep -E ^\-?[0-9]?\.?[0-9]+$ >/dev/null; then
-                    gmsg -v2 -c yellow "tunnel '$service_name' not found "
+                    gr.msg -v2 -c yellow "tunnel '$service_name' not found "
                     return 0
                 fi
 
             if kill -15 $pid ; then
-                    gmsg -v1 -c green "$pid killed"
-                    gindicate ok $tunnel_indicator_key
+                    gr.msg -v1 -c green "$pid killed"
+                    gr.ind ok $tunnel_indicator_key
                 else
-                    kill -9 $pid || gmsg -c yellow "$pid kill failed"
+                    kill -9 $pid || gr.msg -c yellow "$pid kill failed"
                 fi
         done
 
     if tunnel.ls >/dev/null; then
-            gmsg -v2 -c yellow "active tunnels detected"
-            gindicate error $tunnel_indicator_key
+            gr.msg -v2 -c yellow "active tunnels detected"
+            gr.ind error $tunnel_indicator_key
         fi
 
     return 0
@@ -380,7 +380,7 @@ tunnel.close () {
 tunnel.tmux () {
     # add new session "tunnels", open new pane to main window for all tunnel sessions
 
-    gmsg -v2 -c blue "TBD tmux ahve A lot of vibstagels, later"
+    gr.msg -v2 -c blue "TBD tmux ahve A lot of vibstagels, later"
     # local session=tunnels
     # local window=${session}:0
     # local pane=${window}.0
@@ -388,9 +388,9 @@ tunnel.tmux () {
     # if ! tmux attach -t $session ; then
     #         gnome-terminal -- tmux new -s $session &
 
-    #         sleep 1 ; gmsg "sending C-b"
+    #         sleep 1 ; gr.msg "sending C-b"
     #         tmux send-keys -t "$pane" C-b C-b
-    #         sleep 0,2 : gmsg "sending d"
+    #         sleep 0,2 : gr.msg "sending d"
     #         tmux send-keys -t "$pane" d
     #     fi
 
@@ -405,14 +405,14 @@ tunnel.poll () {
     # daemon poller will run this
 
     local _cmd="$1" ; shift
-    tunnel_indicator_key='f'"$(daemon.poll_order tunnel)"
+    tunnel_indicator_key='f'"$(gr.poll tunnel)"
 
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: tunnel status polling started" -k $tunnel_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: tunnel status polling started" -k $tunnel_indicator_key
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: tunnel status polling ended" -k $tunnel_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: tunnel status polling ended" -k $tunnel_indicator_key
             ;;
         status )
             tunnel.status $@
@@ -430,8 +430,8 @@ tunnel.requirements () {
     local action=$1
     [[ "$action" ]] || read -r -p "install or remove? :" action
     local require="ssh rsync"
-    gmsg -c yellow "need to install $require, ctrl+c? or input local "
-    sudo apt update && eval sudo apt "$action" "$require" && gmsg -c yellow "guru is now ready to tunnel"
+    gr.msg -c yellow "need to install $require, ctrl+c? or input local "
+    sudo apt update && eval sudo apt "$action" "$require" && gr.msg -c yellow "guru is now ready to tunnel"
 }
 
 

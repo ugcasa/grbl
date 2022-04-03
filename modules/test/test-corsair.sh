@@ -36,7 +36,7 @@ corsair.test() {
               corsair.test_remove || _err=("${_err[@]}" "113")
               if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi ;;
 
-         *) gmsg "test case $test_case not written"
+         *) gr.msg "test case $test_case not written"
             return 1
     esac
 }
@@ -45,7 +45,7 @@ corsair.test() {
 corsair.test_main () {
     # function to test corsair module function corsair.main
     local _error=0
-    gmsg -v0 -c white 'testing corsair.main'
+    gr.msg -v0 -c white 'testing corsair.main'
 
       ## TODO: add pre-conditions here
 
@@ -56,10 +56,10 @@ corsair.test_main () {
       ## TODO: add analysis here and manipulate $_error
 
     if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.main passed'
+       gr.msg -v0 -c green 'corsair.main passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.main failed'
+       gr.msg -v0 -c red 'corsair.main failed'
        return $_error
   fi
 }
@@ -68,7 +68,7 @@ corsair.test_main () {
 corsair.test_help () {
     # function to test corsair module function corsair.help
     local _error=0
-    gmsg -v0 -c white 'testing corsair.help'
+    gr.msg -v0 -c white 'testing corsair.help'
 
       ## TODO: add pre-conditions here
 
@@ -77,10 +77,10 @@ corsair.test_help () {
       ## TODO: add analysis here and manipulate $_error
 
     if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.help passed'
+       gr.msg -v0 -c green 'corsair.help passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.help failed'
+       gr.msg -v0 -c red 'corsair.help failed'
        return $_error
   fi
 }
@@ -89,7 +89,7 @@ corsair.test_help () {
 corsair.test_check () {
     # function to test corsair module function corsair.check
     local _error=0
-    gmsg -v0 -c white 'testing corsair.check'
+    gr.msg -v0 -c white 'testing corsair.check'
 
       ## TODO: add pre-conditions here
 
@@ -98,10 +98,10 @@ corsair.test_check () {
       ## TODO: add analysis here and manipulate $_error
 
     if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.check passed'
+       gr.msg -v0 -c green 'corsair.check passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.check failed'
+       gr.msg -v0 -c red 'corsair.check failed'
        return $_error
   fi
 }
@@ -110,7 +110,7 @@ corsair.test_check () {
 corsair.test_status () {
     # function to test corsair module function corsair.status
     local _error=0
-    gmsg -v0 -c white 'testing corsair.status'
+    gr.msg -v0 -c white 'testing corsair.status'
 
       ## TODO: add pre-conditions here
 
@@ -119,10 +119,10 @@ corsair.test_status () {
       ## TODO: add analysis here and manipulate $_error
 
     if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.status passed'
+       gr.msg -v0 -c green 'corsair.status passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.status failed'
+       gr.msg -v0 -c red 'corsair.status failed'
        return $_error
   fi
 }
@@ -131,7 +131,7 @@ corsair.test_status () {
 # corsair.test_start () {
 #     # function to test corsair module function corsair.start
 #     local _error=0
-#     gmsg -v0 -c white 'testing corsair.start'
+#     gr.msg -v0 -c white 'testing corsair.start'
 
 #       ## TODO: add pre-conditions here
 
@@ -141,10 +141,10 @@ corsair.test_status () {
 #       ## TODO: add analysis here and manipulate $_error
 
 #     if  ((_error<1)) ; then
-#        gmsg -v0 -c green 'corsair.start passed'
+#        gr.msg -v0 -c green 'corsair.start passed'
 #        return 0
 #     else
-#        gmsg -v0 -c red 'corsair.start failed'
+#        gr.msg -v0 -c red 'corsair.start failed'
 #        return $_error
 #   fi
 # }
@@ -153,7 +153,7 @@ corsair.test_status () {
 corsair.test_init () {
     # function to test corsair module function corsair.init
     local _error=0
-    gmsg -v0 -c white 'testing corsair.init'
+    gr.msg -v0 -c white 'testing corsair.init'
 
       ## TODO: add pre-conditions here
 
@@ -163,10 +163,10 @@ corsair.test_init () {
       ## TODO: add analysis here and manipulate $_error
 
     if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.init passed'
+       gr.msg -v0 -c green 'corsair.init passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.init failed'
+       gr.msg -v0 -c red 'corsair.init failed'
        return $_error
   fi
 }
@@ -175,7 +175,7 @@ corsair.test_init () {
 # corsair.test_raw_write () {
 #     # function to test corsair module function corsair.raw_write
 #     local _error=0
-#     gmsg -v0 -c white 'testing corsair.raw_write'
+#     gr.msg -v0 -c white 'testing corsair.raw_write'
 
 #       ## TODO: add pre-conditions here
 
@@ -184,10 +184,10 @@ corsair.test_init () {
 #       ## TODO: add analysis here and manipulate $_error
 
 #     if  ((_error<1)) ; then
-#        gmsg -v0 -c green 'corsair.raw_write passed'
+#        gr.msg -v0 -c green 'corsair.raw_write passed'
 #        return 0
 #     else
-#        gmsg -v0 -c red 'corsair.raw_write failed'
+#        gr.msg -v0 -c red 'corsair.raw_write failed'
 #        return $_error
 #   fi
 # }
@@ -196,7 +196,7 @@ corsair.test_init () {
 corsair.test_set () {
     # function to test corsair module function corsair.set
     local _error=0
-    gmsg -v0 -c white 'testing corsair.set'
+    gr.msg -v0 -c white 'testing corsair.set'
 
       ## TODO: add pre-conditions here
 
@@ -207,10 +207,10 @@ corsair.test_set () {
       ## TODO: add analysis here and manipulate $_error
 
     if ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.set passed'
+       gr.msg -v0 -c green 'corsair.set passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.set failed'
+       gr.msg -v0 -c red 'corsair.set failed'
        return $_error
   fi
 }
@@ -219,7 +219,7 @@ corsair.test_set () {
 corsair.test_reset () {
     # function to test corsair module function corsair.reset
     local _error=0
-    gmsg -v0 -c white 'testing corsair.reset'
+    gr.msg -v0 -c white 'testing corsair.reset'
 
       ## TODO: add pre-conditions here
 
@@ -228,10 +228,10 @@ corsair.test_reset () {
       ## TODO: add analysis here and manipulate $_error
 
     if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.reset passed'
+       gr.msg -v0 -c green 'corsair.reset passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.reset failed'
+       gr.msg -v0 -c red 'corsair.reset failed'
        return $_error
   fi
 }
@@ -240,7 +240,7 @@ corsair.test_reset () {
 corsair.test_end () {
     # function to test corsair module function corsair.end
     local _error=0
-    gmsg -v0 -c white 'testing corsair.end'
+    gr.msg -v0 -c white 'testing corsair.end'
 
       ## TODO: add pre-conditions here
 
@@ -250,10 +250,10 @@ corsair.test_end () {
       ## TODO: add analysis here and manipulate $_error
 
     if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.end passed'
+       gr.msg -v0 -c green 'corsair.end passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.end failed'
+       gr.msg -v0 -c red 'corsair.end failed'
        return $_error
   fi
 }
@@ -262,7 +262,7 @@ corsair.test_end () {
 corsair.test_kill () {
     # function to test corsair module function corsair.kill
     local _error=0
-    gmsg -v0 -c white 'testing corsair.kill'
+    gr.msg -v0 -c white 'testing corsair.kill'
 
       ## TODO: add pre-conditions here
 
@@ -271,10 +271,10 @@ corsair.test_kill () {
       ## TODO: add analysis here and manipulate $_error
 
     if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.kill passed'
+       gr.msg -v0 -c green 'corsair.kill passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.kill failed'
+       gr.msg -v0 -c red 'corsair.kill failed'
        return $_error
   fi
 }
@@ -283,7 +283,7 @@ corsair.test_kill () {
 corsair.test_install () {
     # function to test corsair module function corsair.install
     local _error=0
-    gmsg -v0 -c white 'testing corsair.install'
+    gr.msg -v0 -c white 'testing corsair.install'
 
       ## TODO: add pre-conditions here
 
@@ -292,10 +292,10 @@ corsair.test_install () {
       ## TODO: add analysis here and manipulate $_error
 
     if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.install passed'
+       gr.msg -v0 -c green 'corsair.install passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.install failed'
+       gr.msg -v0 -c red 'corsair.install failed'
        return $_error
   fi
 }
@@ -304,7 +304,7 @@ corsair.test_install () {
 corsair.test_remove () {
     # function to test corsair module function corsair.remove
     local _error=0
-    gmsg -v0 -c white 'testing corsair.remove'
+    gr.msg -v0 -c white 'testing corsair.remove'
 
       ## TODO: add pre-conditions here
 
@@ -313,10 +313,10 @@ corsair.test_remove () {
       ## TODO: add analysis here and manipulate $_error
 
     if  ((_error<1)) ; then
-       gmsg -v0 -c green 'corsair.remove passed'
+       gr.msg -v0 -c green 'corsair.remove passed'
        return 0
     else
-       gmsg -v0 -c red 'corsair.remove failed'
+       gr.msg -v0 -c red 'corsair.remove failed'
        return $_error
   fi
 }

@@ -7,61 +7,61 @@ core.help () {
     source $GURU_BIN/common.sh
 
     core.help_usage () {
-        gmsg -c white "guru-client core help "
-        gmsg
-        gmsg "usage:            $GURU_CALL -options module command arguments"
-        gmsg "                  options are not place oriented"
+        gr.msg -c white "guru-client core help "
+        gr.msg
+        gr.msg "usage:            $GURU_CALL -options module command arguments"
+        gr.msg "                  options are not place oriented"
     }
 
     core.help_flags () {
-        gmsg -c white "options:"
-        gmsg " -v 1..4          verbose level, adds headers and some details"
-        gmsg " -u <user_name>   change guru user name temporary  "
-        gmsg " -h <host_name>   change computer host name name temporary "
-        gmsg " -s               speak out all output "
-        gmsg " -f               set force mode on, be more aggressive "
-        gmsg " -c               disable colors in terminal "
-        gmsg " -q               be quiet "
-        gmsg
-        gmsg "to refer module help, type '$GURU_CALL <module> help'"
-        gmsg
-        # gmsg " -l             set logging on to file $GURU_LOG"
-        # gmsg " -o '-t 1 -a'   transmit options to module TBD"
-        # gmsg " --o argument   module options TBD"
+        gr.msg -c white "options:"
+        gr.msg " -v 1..4          verbose level, adds headers and some details"
+        gr.msg " -u <user_name>   change guru user name temporary  "
+        gr.msg " -h <host_name>   change computer host name name temporary "
+        gr.msg " -s               speak out all output "
+        gr.msg " -f               set force mode on, be more aggressive "
+        gr.msg " -c               disable colors in terminal "
+        gr.msg " -q               be quiet "
+        gr.msg
+        gr.msg "to refer module help, type '$GURU_CALL <module> help'"
+        gr.msg
+        # gr.msg " -l             set logging on to file $GURU_LOG"
+        # gr.msg " -o '-t 1 -a'   transmit options to module TBD"
+        # gr.msg " --o argument   module options TBD"
     }
 
     core.help_system () {
-        gmsg -c white  "system tools:"
-        gmsg "  install         install tools "
-        gmsg "  uninstall       remove guru toolkit "
-        gmsg "  upgrade         upgrade guru toolkit "
-        gmsg "  status          status of stuff"
-        gmsg "  shell           start guru shell"
-        gmsg "  --ver           printout version "
-        gmsg "  --help          printout help "
+        gr.msg -c white  "system tools:"
+        gr.msg "  install         install tools "
+        gr.msg "  uninstall       remove guru toolkit "
+        gr.msg "  upgrade         upgrade guru toolkit "
+        gr.msg "  status          status of stuff"
+        gr.msg "  shell           start guru shell"
+        gr.msg "  --ver           printout version "
+        gr.msg "  --help          printout help "
     }
 
     core.help_examples () {
-        gmsg -c white  "examples:"
-        gmsg "  $GURU_CALL note yesterday           open yesterdays notes"
-        gmsg "  $GURU_CALL install mqtt-server      install mqtt server"
-        gmsg "  $GURU_CALL ssh key add github       add ssh keys to github server"
-        gmsg "  $GURU_CALL timer start at 12:00     start work time timer"
-        gmsg
+        gr.msg -c white  "examples:"
+        gr.msg "  $GURU_CALL note yesterday           open yesterdays notes"
+        gr.msg "  $GURU_CALL install mqtt-server      install mqtt server"
+        gr.msg "  $GURU_CALL ssh key add github       add ssh keys to github server"
+        gr.msg "  $GURU_CALL timer start at 12:00     start work time timer"
+        gr.msg
     }
 
     core.help_newbie () {
         if [[ -f $HOME/guru/.data/.newbie ]] ; then
-            gmsg -c white "if problems after installation"
-            gmsg "  1) logout and login to set path by .profiles or set path:"
-            gmsg '       PATH=$PATH:$HOME/bin'
-            gmsg "  2) if no access to ujo.guru access point, create fake data mount"
-            gmsg '      mkdir $HOME/guru/.data ; touch $HOME/guru/.data/.online'
-            gmsg "  3) to edit user configurations run:"
-            gmsg "      $GURU_CALL config user"
-            gmsg "  4) remove newbie help view by: "
-            gmsg "      rm $HOME/guru/.data/.newbie"
-            gmsg
+            gr.msg -c white "if problems after installation"
+            gr.msg "  1) logout and login to set path by .profiles or set path:"
+            gr.msg '       PATH=$PATH:$HOME/bin'
+            gr.msg "  2) if no access to ujo.guru access point, create fake data mount"
+            gr.msg '      mkdir $HOME/guru/.data ; touch $HOME/guru/.data/.online'
+            gr.msg "  3) to edit user configurations run:"
+            gr.msg "      $GURU_CALL config user"
+            gr.msg "  4) remove newbie help view by: "
+            gr.msg "      rm $HOME/guru/.data/.newbie"
+            gr.msg
             export GURU_VERBOSE=2
         fi
     }
@@ -70,7 +70,7 @@ core.help () {
     core.help_flags
     core.help_examples
     core.help_newbie
-    gmsg "version: $GURU_VERSION_NAME v$GURU_VERSION (2022) casa@ujo.guru"
+    gr.msg "version: $GURU_VERSION_NAME v$GURU_VERSION (2022) casa@ujo.guru"
 
 }
 
@@ -165,7 +165,7 @@ core.run_module () {
                 # speak out what ever module returns
                 if [[ $GURU_SPEAK ]]  ; then
                     local module_output="$(${run_me[@]//  / })"
-                    gmsg "guru replies: '$module_output'"
+                    gr.msg "guru replies: '$module_output'"
                     espeak -p $GURU_SPEAK_PITCH \
                            -s $GURU_SPEAK_SPEED \
                            -v $GURU_SPEAK_LANG \
@@ -183,7 +183,7 @@ core.run_module () {
     echo "guru recognize no module named '$module'"
     return $?
 
-    # if gask "passing to request to operating system?" ; then
+    # if gr.ask "passing to request to operating system?" ; then
     #    $module $@
     #   fi
 }
@@ -197,12 +197,12 @@ core.run_module_function () {
         local module=$1 ; shift # note: there was reason to use shift over $2, $3, may just be cleaner
         local command=$1 ; shift
         local function=$1 ; shift
-        gmsg -v4 "non reserved word: $command"
+        gr.msg -v4 "non reserved word: $command"
      else
         local function=$1 ; shift
         local module=$1 ; shift
         local command=$1 ; shift
-        gmsg -v4 "reserved word: $command"
+        gr.msg -v4 "reserved word: $command"
     fi
 
     for _module in ${GURU_MODULES[@]} ; do
@@ -231,7 +231,7 @@ core.run_module_function () {
     done
 
     # if here something went wrong, raise warning
-    gmsg -v2 -c yellow "in core.run_module_function something went wrong when tried to run "$function" in '$module'"
+    gr.msg -v2 -c yellow "in core.run_module_function something went wrong when tried to run "$function" in '$module'"
     return 12
 }
 
@@ -242,7 +242,7 @@ core.multi_module_function () {
     local function_to_run=$1 ; shift
 
     for _module in ${GURU_MODULES[@]} ; do
-        gmsg -c dark_golden_rod "$_module $function_to_run"
+        gr.msg -c dark_golden_rod "$_module $function_to_run"
 
         # fun shell script module functions
         if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
@@ -259,7 +259,7 @@ core.multi_module_function () {
             fi
     done
 
-    gmsg -v2 -c yellow "in core.multi_module_function something went wrong when tried to run "$function_to_run" in '$_module'"
+    gr.msg -v2 -c yellow "in core.multi_module_function something went wrong when tried to run "$function_to_run" in '$_module'"
     return 13
 }
 
@@ -269,7 +269,7 @@ core.change_user () {
 
     local _input_user=$1
     if [[ "$_input_user" == "$GURU_USER" ]] ; then
-        gmsg -c yellow "user is already $_input_user"
+        gr.msg -c yellow "user is already $_input_user"
         return 0
     fi
 
@@ -277,10 +277,10 @@ core.change_user () {
     source $GURU_BIN/config.sh
 
     if [[ -d "$GURU_CFG/$GURU_USER" ]] ; then
-        gmsg -c white "changing user to $_input_user"
+        gr.msg -c white "changing user to $_input_user"
         config.main export $_input_user
     else
-        gmsg -c yellow "user configuration not exits"
+        gr.msg -c yellow "user configuration not exits"
     fi
 }
 
@@ -398,7 +398,7 @@ case $1 in
 
 # check that config rc file exits
 if [[ -f $GURU_RC ]] ; then
-        gmsg -v3 -c deep_pink "sourcing configs.. "
+        gr.msg -v3 -c deep_pink "sourcing configs.. "
         source $GURU_RC
     else
         # run user configuration if not exist
@@ -445,9 +445,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 
     # less than 10 are warnings
     if (( _error_code < 100 )) ; then
-        gmsg -v2 -c yellow "warning: $_error_code $GURU_LAST_ERROR" # TBD for hard exits
+        gr.msg -v2 -c yellow "warning: $_error_code $GURU_LAST_ERROR" # TBD for hard exits
     else
-        gmsg -v1 -c red  "error: $_error_code $GURU_LAST_ERROR" # TBD for hard exits
+        gr.msg -v1 -c red  "error: $_error_code $GURU_LAST_ERROR" # TBD for hard exits
     fi
 
     exit $_error_code

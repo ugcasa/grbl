@@ -37,19 +37,19 @@ if [[ -f "../../modules/$module.sh" ]] ; then
     fi
 
 
-[[ "$module_to_test" ]] || gmsg -x 127 -c yellow "shell script $module.sh not found within core or modules"
+[[ "$module_to_test" ]] || gr.msg -x 127 -c yellow "shell script $module.sh not found within core or modules"
 
 # inldes only if space is left between function name and "()"
 functions_to_test=($(cat $module_to_test |grep " ()" |cut -f1 -d " "))
 tester_file_name="test-""$module"".sh"
 
-gmsg -v1 -c blue "module: $module_to_test"
-gmsg -v1 -c blue "output: $tester_file_name"
-gmsg "${#functions_to_test[@]} functions to test"
+gr.msg -v1 -c blue "module: $module_to_test"
+gr.msg -v1 -c blue "output: $tester_file_name"
+gr.msg "${#functions_to_test[@]} functions to test"
 
 # start file manipulating
 if [[ -f $tester_file_name ]] ; then
-        gask "overwrite $tester_file_name" && echo "#!/bin/bash" > $tester_file_name || gmsg -c red "aboting.."
+        gr.ask "overwrite $tester_file_name" && echo "#!/bin/bash" > $tester_file_name || gr.msg -c red "aboting.."
     fi
 echo "#!/bin/bash "  > $tester_file_name
 echo "# automatically generated tester for guru-client $module.sh $(date) casa@ujo.guru 2020"  >> $tester_file_name
@@ -83,7 +83,7 @@ for _function in "${functions_to_test[@]}" ; do
 echo '              if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi ;; ' >> $tester_file_name
 
 # no case and close function
-echo '         *) gmsg "test case $test_case not written"'                  >> $tester_file_name
+echo '         *) gr.msg "test case $test_case not written"'                  >> $tester_file_name
 echo '            return 1'                                                 >> $tester_file_name
 echo '    esac'                                                             >> $tester_file_name
 echo '}'                                                                    >> $tester_file_name
@@ -91,14 +91,14 @@ echo                                                                        >> $
 # test function processor
 for _function in "${functions_to_test[@]}" ; do
         test_function_name=${_function//"$module."/"$module.test_"}
-        gmsg -v2 -c light_blue "$_function"
-        gmsg -v2 -c light_green "$test_function_name"
+        gr.msg -v2 -c light_blue "$_function"
+        gr.msg -v2 -c light_green "$test_function_name"
 
         echo                                                                >> $tester_file_name
         echo  "$test_function_name () {"                                    >> $tester_file_name
         echo "    # function to test $module module function $_function"    >> $tester_file_name
         echo '    local _error=0'                                           >> $tester_file_name
-        echo "    gmsg -v0 -c white 'testing $_function'"                   >> $tester_file_name
+        echo "    gr.msg -v0 -c white 'testing $_function'"                   >> $tester_file_name
         echo                                                                >> $tester_file_name
         echo '      ## TODO: add pre-conditions here '                      >> $tester_file_name
         echo                                                                >> $tester_file_name
@@ -107,10 +107,10 @@ for _function in "${functions_to_test[@]}" ; do
         echo '      ## TODO: add analysis here and manipulate $_error '     >> $tester_file_name
         echo                                                                >> $tester_file_name
         echo '    if  ((_error<1)) ; then '                                 >> $tester_file_name
-        echo "       gmsg -v0 -c green '$_function passed' "                >> $tester_file_name
+        echo "       gr.msg -v0 -c green '$_function passed' "                >> $tester_file_name
         echo '       return 0'                                              >> $tester_file_name
         echo '    else'                                                     >> $tester_file_name
-        echo "       gmsg -v0 -c red '$_function failed' "                  >> $tester_file_name
+        echo "       gr.msg -v0 -c red '$_function failed' "                  >> $tester_file_name
         echo '       return $_error'                                        >> $tester_file_name
         echo '  fi'                                                         >> $tester_file_name
         echo "}"                                                            >> $tester_file_name
