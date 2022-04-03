@@ -109,7 +109,7 @@ install.main () {
     install.config || gmsg -x 180 "user configuration error"
 
     # printout pass and statistics if verbose set
-    gmsg -c white "$($TARGET_BIN/core.sh version) installed"
+    gmsg -c white "guru-cli v$($TARGET_BIN/core.sh version) installed"
 
     gmsg -v1 -c light_blue "installed ${#installed_core[@]} core modules"
     gmsg -v2 -c dark_grey "${installed_core[@]}"
