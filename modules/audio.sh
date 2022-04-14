@@ -41,61 +41,45 @@ audio.help () {
 
 audio.main () {
     # main command parser
-
-    # [[ -d $audio_data_folder ]] ||
-
     local _command="$1"
     shift
-
     case "$_command" in
 
-            listen)
-
-                gr.ind playing $audio_blink_key
-                audio.stream_$_command $@
-                gr.end $audio_blink_key
-
-                return $?
-                ;;
-
-            play)
-                gr.ind playing $audio_blink_key
-                audio.playlist_play $@
-                gr.end $audio_blink_key
-                return $?
-                ;;
-
-            status|ls|tunnel|close|install|remove|help)
-                audio.$_command $@
-                return $?
-                ;;
-
-            install-voip)
-                voip_install $@
-                return $?
-                ;;
-            fast)
-                $GURU_BIN/audio/fast_voipt.sh $1 \
-                -h $GURU_ACCESS_DOMAIN \
-                -p $GURU_ACCESS_PORT \
-                -u $GURU_ACCESS_USERNAME
-                return $?
-                ;;
-
-            toggle|tunnel_toggle)
-                audio.$_command $@
-                return $?
+        status|ls|tunnel|close|install|remove|toggle|tunnel_toggle|help)
+            audio.$_command $@
+            return $?
             ;;
-
-
-            *)
-                gr.msg -c white "audio module: unknown command '$_command'"
-                return 1 ;;
-        esac
+        listen)
+            gr.ind playing $audio_blink_key
+            audio.stream_$_command $@
+            gr.end $audio_blink_key
+            return $?
+            ;;
+        play)
+            gr.ind playing $audio_blink_key
+            audio.playlist_play $@
+            gr.end $audio_blink_key
+            return $?
+            ;;
+        fast) # fast tunnel move this under 'tunnel' parser
+            $GURU_BIN/audio/fast_voipt.sh $1 \
+            -h $GURU_ACCESS_DOMAIN \
+            -p $GURU_ACCESS_PORT \
+            -u $GURU_ACCESS_USERNAME
+            return $?
+            ;;
+        *)
+            gr.msg -c white "audio module: unknown command '$_command'"
+            return 1
+            ;;
+    esac
 }
 
 
 audio.toggle () {
+
+    local default_radio='yle puhe'
+    [[ $GURU_RADIO_WAKEUP_STATION ]] && default_radio=$GURU_RADIO_WAKEUP_STATION
 
     if ps auxf | grep mpv | grep -v grep ; then
             pkill mpv && gr.end $audio_blink_key
@@ -107,11 +91,12 @@ audio.toggle () {
             mpv --playlist=$audio_temp_file
             gr.end $audio_blink_key
         else
-            audio.main listen "yle puhe"
+            audio.main listen "$default_radio"
         fi
 
     return 0
 }
+
 
 
 audio.stream_listen () {
@@ -383,16 +368,21 @@ audio.tunnel_toggle () {
 }
 
 
-audi.voip_install () {
-    $GURU_BIN/audio/voipt.sh install
-}
-
-
 audio.install () {
     # install function is required by core
 
-    sudo apt-get install espeak -y
-    # TBD add mpv vlc
+    case $1 in
+
+        tunnel|voip)
+            $GURU_BIN/audio/voipt.sh install
+        ;;
+        dev)
+
+
+        ;;
+        *)
+            sudo apt-get install espeak mpv vlc -y
+        esac
 }
 
 
@@ -400,6 +390,8 @@ audio.remove () {
     # remove function is required by core
 
     $GURU_BIN/audio/voipt.sh remove
+    gmsg "remove manually: 'sudo apt-get remove espeak mpv vlc'"
+
 }
 
 
