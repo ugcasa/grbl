@@ -21,7 +21,7 @@ mount.main () {
     case "$command" in
 
             defaults|system|all|help|ls|info|check|\
-            poll|status|start|stop|toggle|list)
+            poll|status|start|stop|toggle|list|kill)
 
                             mount.$command $@
                             return $? ;;
@@ -58,15 +58,16 @@ mount.help () {
     gr.msg -v0 "usage:    $GURU_CALL mount|unount|check|check-system <source> <target>"
     gr.msg -v2
     gr.msg -v1 -c white "commands:"
-    gr.msg -v1 " ls                       list of mounted folders "
-    gr.msg -v1 " check [target]           check that mount point is mounted "
-    gr.msg -v2 " check-system             check that guru system folder is mounted "
-    gr.msg -v1 " mount [source] [target]  mount folder in file server to local folder "
-    gr.msg -v1 " mount all                mount all known folders in server "
-    gr.msg -v2 "                          edit $GURU_CFG/$USER/user.cfg or run "
-    gr.msg -v2 "                          '$GURU_CALL config user' to setup default mountpoints "
-    gr.msg -v2 "                          more information of adding default mountpoint type: $GURU_CALL mount help-default"
-    gr.msg -v3 " poll start|end           start or end module status polling "
+    gr.msg -v1 " ls                         list of mounted folders "
+    gr.msg -v1 " check mount_name           check that mount point is mounted "
+    gr.msg -v2 " check-system               check that guru system folder is mounted "
+    gr.msg -v1 " mount mount_name           mount folder in file server to local folder "
+    gr.msg -v1 " mount all                  mount all known folders in server "
+    gr.msg -v1 " mount kill mount_name      kill mount process "
+    gr.msg -v2 "                            edit $GURU_CFG/$USER/user.cfg or run "
+    gr.msg -v2 "                            '$GURU_CALL config user' to setup default mountpoints "
+    gr.msg -v2 "                            more information of adding default mountpoint type: $GURU_CALL mount help-default"
+    gr.msg -v3 " poll start|end             start or end module status polling "
     gr.msg -v2
     gr.msg -v1 -c white "example:"
     gr.msg -v1 "      $GURU_CALL mount /home/$GURU_CLOUD_USERNAME/share /home/$USER/guru/projects"
@@ -473,6 +474,73 @@ mount.poll () {
             ;;
         esac
 }
+
+
+mount.kill () {
+    # Kill single mount process by mount_name or mount_point
+    source mount.sh
+    source common.sh
+
+    if ! [[ $1 ]] ; then
+            gr.msg -c yellow "enter mount_name"
+            return 2
+        fi
+
+    local _mount_name="$1"
+    local _find=
+
+    # Check is given string in mountable list
+    if grep -q $_mount_name <<<${all_list[@]} ; then
+            _find=$(eval echo '${GURU_MOUNT_'"${_mount_name^^}}")
+        fi
+
+    # Check is given string mount_point
+    if [[ -d $_mount_name ]] ; then
+            _find=$_mount_name
+        fi
+
+    # Debug
+    gr.msg -v3 -c pink "m:$_mount_name|f:$_find|p:$_pid|a:${all_list[@]}"
+
+    # Exit if nothing to find
+    if ! [[ $_find ]] ; then
+            gr.msg -c yellow "mount name '$_mount_name' not recognized"
+            return 3
+        fi
+
+    # Find pid of mount_name or mount_point
+    local _pid=$(ps auxf \
+        | grep -v grep \
+        | grep sshfs \
+        | grep "$_find" \
+        | sed -e 's/  */ /g'  \
+        | cut -d' ' -f2 \
+        | head -n1)
+
+    gr.msg -v3 -c pink "p:$_pid"
+
+    if ! [[ $_pid ]] ; then
+    # Find it but not find pid
+            gr.msg -c yellow "'$_mount_name' not mounted"
+            return 3
+        fi
+
+    # Kill the pid and exit
+    gr.msg -v2 "killing $_pid.. "
+    kill $_pid
+    local _error=$?
+
+    # Check errors
+    if [[ $_error -lt 1 ]] ; then
+            gr.msg -v1 -c green "killed"
+            return 0
+        else
+            gr.msg -v1 -c yellow "error $?"
+            return $_error
+        fi
+}
+
+
 
 
 mount.install () {

@@ -160,15 +160,15 @@ unmount.remote () {  # unmount mount point
             return 0
         fi
 
-    gr.msg -n -v1 "trying to force unmount.. "
+    gr.msg -n -v1 "force unmount.. "
 
-    if sudo umount -l "$_mountpoint" ; then
-            gr.msg -v1 -c green "ok"
+    # force unmount
+    if mount.kill "$_mountpoint" ; then
+            #gr.msg -v1 -c green "ok"
             rmdir $_mountpoint
             return 0
         else
-            gr.msg -c red "failed to force unmount"
-            gr.msg -v1 -c white "seems that some of open program like terminal or editor is blocking unmount, try to close those first"
+            gr.msg -c red "failed to force unmount '$_mountpoint' "
             return 124
         fi
 }
