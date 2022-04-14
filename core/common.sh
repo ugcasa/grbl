@@ -8,18 +8,9 @@
 ##  - ISSUE function naming should be fixed dough
 
 # TBD re think function naming
-# gr.dump <- gr.dump
-# gr.poll <- gr.poll
-# gr.source <- gr.source
-# gr.msg <- gr.msg
-# gr.end <- gr.end
-# gr.ind <- gr.ind
-# gr.ask <- gr.ask
 # gr.contain <- contains
 # gr.import <- import
-# gr.installed <- gr.installed
-# gr.google <- google
-# then alias google='gr.google'
+# gr.google <- google -> alias google='gr.google'
 
 gr.dump () {
     # dump environmental status to file
@@ -190,14 +181,11 @@ gr.msg () {
             _column_width=${#_message}
         fi
 
-    # print to shell
-    if [[ $_color_code ]] && [[ $GURU_COLOR ]] && [[ $GURU_VERBOSE -gt 0 ]] ; then
-
-
-            # -c) color printout
-            printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline${C_NORMAL}" "${_timestamp}" "${_message:0:$_column_width}"
-            return 0
-        fi
+    # -c) color printout
+    if [[ $_color_code ]] && [[ $GURU_COLOR ]] && ! [[ $GURU_VERBOSE = 0 ]]; then
+        printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m" "${_timestamp}" "${_message:0:$_column_width}"
+        return 0
+    fi
 
     # *) normal printout without formatting
     printf "$_pre_newline%s%-${_column_width}s$_newline" "${_timestamp}" "${_message:0:$_column_width}"
@@ -361,34 +349,6 @@ gr.ask () {
 }
 
 
-contains() {
-    [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && return 0 || return 1
-}
-
-
-import () {
-    # source all bash function in module. input: import <module_name> <py|sh|php..>
-
-    local _module=$1 ; shift
-    local _type=sh ; [[ $1 ]] && _type=$1
-
-    if ! [[ -d $_module ]] ; then
-            gr.msg -c yellow "no module $_module exist"
-            return 100
-        fi
-
-    for lib in $_module/*$_type ; do
-            gr.msg -v2 "library $lib"
-
-            if [[ -f $lib ]] ; then
-                    source $lib
-                else
-                    gr.msg -c yellow "no $_type files in $_module/ folder"
-                    return 101
-                fi
-        done
-}
-
 gr.installed () {
     # check is module installed
 
@@ -405,38 +365,11 @@ gr.installed () {
 }
 
 
-
-google () {
-    # open google search in browser, query as argument
-
-    local url=https://www.google.com/search?q="$(sed 's/ /%20/g' <<< ${@})"
-
-
-    case $GURU_PREFERRED_BROWSER in
-
-        firefox|chromium)
-            $GURU_PREFERRED_BROWSER --new-window $url
-            ;;
-
-        lynx|curl|wget)
-            $GURU_PREFERRED_BROWSER $url
-            ;;
-        *)
-            gr.msg -c -v2 -c yellow "non supported browser, here's link: "
-            gr.msg -c $url
-        esac
-
-    return $?
-}
-
-
-
 #`TBD`declare -xf ? rather than export? - no
-export -f gr.dump
 export -f gr.poll
 export -f gr.msg
 export -f gr.ask
-export -f import
+
 
 
 
