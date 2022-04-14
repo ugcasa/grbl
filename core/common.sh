@@ -6,10 +6,11 @@
 ## TODO remove common.sh, not practical way cause of namespacing
 ##  - no rush, good enough for now
 ##  - ISSUE function naming should be fixed dough
+# TBD re think function naming
 
 system.core-dump () {
     # dump environmental status to file
-
+    # TBD revisit this
     echo "core dumped to $GURU_CORE_DUMP"
     set > "$GURU_CORE_DUMP"
 }
@@ -20,7 +21,6 @@ daemon.poll_order () {
 
     local _to_find="$1"
     local i=0
-
     source "$HOME/.gururc"
 
     for val in ${GURU_DAEMON_POLL_ORDER[@]} ; do
@@ -37,23 +37,6 @@ daemon.poll_order () {
             return 0
         fi
 }
-
-
-daemon.poll_order_old () {
-    # old way to get polling order
-
-    local i=0
-    local _to_find=$1
-    # while [[ "$i" -lt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] && [[ "${GURU_DAEMON_POLL_ORDER[$i]}" != "$_to_find" ]] ; do
-    while [[ "$i" -lt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] ; do
-             if [[ "${GURU_DAEMON_POLL_ORDER[$i]}" == "$_to_find" ]] ; then break; fi
-            ((i++))
-        done
-    ((i=i+1))
-    echo $i
-    #return $i
-}
-
 
 gsource () {
     # source only wanted functions. slow ~0,03 sec, but saves environment space
@@ -84,7 +67,7 @@ gsource () {
 gmsg () {
     # function for output messages and make log notifications
 
-    local verbose_trigger=0                         # prinout if verbose trigger is not set in options
+    local verbose_trigger=0
     local verbose_limiter=5                         # maximum + 1 verbose level
     local _newline="\n"                             # newline is on by default
     local _pre_newline=                             # newline before text disable by default
@@ -189,30 +172,23 @@ gmsg () {
             _timestamp="$(date +$GURU_FORMAT_TIME.%3N) "
         fi
 
+    # -w) fill message length to column limiter
+    if ! [[ $_column_width ]] ; then
+            _column_width=${#_message}
+        fi
+
     # print to shell
     if [[ $_color_code ]] && [[ $GURU_COLOR ]] && [[ $GURU_VERBOSE -gt 0 ]] ; then
 
-            # -w) fill message length to column limiter
-            if ! [[ $_column_width ]] ; then
-                    _column_width=${#_message}
-                fi
+
             # -c) color printout
             printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline${C_NORMAL}" "${_timestamp}" "${_message:0:$_column_width}"
-
-        else
-            # *) normal printout without formatting
-            printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
             return 0
         fi
 
-
-    # echo "saata $GURU_VERBOSE:$verbose_trigger<$verbose_limiter"
-    # echo "$_pre_newline:pre_newline"
-    # echo "$_color_code:color_code"
-    # echo "$_column_width:column_width"
-    # echo "$_newline:newline"
-    # echo "$_timestamp:timestamp"
-    # echo "$_message:message"
+    # *) normal printout without formatting
+    printf "$_pre_newline%s%-${_column_width}s$_newline" "${_timestamp}" "${_message:0:$_column_width}"
+    return 0
 
     # -x) printout and exit for development use
     [[ $_exit ]] && exit $_exit

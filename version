@@ -9,7 +9,17 @@ This time to fix fundamentals.
 
 rc system sucks a lot and need acute focus of(for/as?) janitor.
 
+
+## dev details
+
 This branch shall be called as 'rc-clean'
+
+repository
+https://github.com/ugcasa/guru-client
+
+branch in web
+https://github.com/ugcasa/guru-client/tree/rc-clean
+
 
 
 ## 0) new version file
@@ -29,13 +39,19 @@ I'll try it, lets see.
 
 - [x] change done
 - [ ] try it
-    - [ ] like it
+    - [x] like it
     - [ ] hate it
 - [ ] $GURU_VERSION_DESCRIPTION option
 - [x] 'guru description' works
 
 
 ## 1) Next bad idea
+
+Core clean up. Is messy now.
+
+- [ ] new functions.sh what combines core level functions and functions from common.sh?
+
+
 
 
 ## 2) speak synthesizer
@@ -77,6 +93,29 @@ those have veto do shit ever they want.
 
 check all works with these:
 
+
+speak should be supported by these modules
+
+- [ ] audio.sh
+- [ ] backup.sh
+- [ ] cal.sh
+- [ ] convert.sh
+- [ ] mqtt.sh
+- [ ] note.sh
+- [ ] place.sh
+- [ ] project.sh
+- [ ] ssh.sh
+- [ ] stamp.sh
+- [ ] tag.sh
+- [ ] telegram.sh
+- [ ] test.sh
+- [ ] timer.sh
+- [ ] trans.sh
+- [ ] tunnel.sh
+- [ ] yle.sh
+
+rc changes should work with all modules
+
 - [ ] audio.sh
 - [ ] android.sh
 - [ ] backup.sh
@@ -98,12 +137,13 @@ check all works with these:
 - [ ] telegram.sh
 - [ ] test.sh
 - [ ] timer.sh
-- [ ] tmux.sh
-- [ ] tor.sh
 - [ ] trans.sh
 - [ ] tunnel.sh
 - [ ] user.sh
 - [ ] vol.sh
 - [ ] yle.sh
+
+documentation and cleanup
+
 - [ ] copy this file to `logs/guru-cli-v0.6.8-change-log.md` and clean it for next iteration
 

@@ -215,7 +215,7 @@ uninstall.remove () {
     rm -f "$guru_rc" || gmsg -v1 -c yellow "error while removing $guru_rc "
 
     # pass
-    gmsg -c white "$version_to_uninstall removed"
+    gmsg -c white "guru-cli v$version_to_uninstall removed"
     return 0
 }
 
