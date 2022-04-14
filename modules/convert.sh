@@ -393,6 +393,28 @@ convert.to_dokuwiki () {
 }
 
 
+convert.install_avif () {
+    # avif support
+
+    sudo apt-get update
+    sudo apt-get install libheif-dev libaom-dev libjpeg-dev libpng-dev
+    sudo apt build-dep imagemagick
+    wget https://imagemagick.org/download/ImageMagick.tar.gz
+    tar xvzf ImageMagick.tar.gz
+    cd into the dir
+    ./configure --with-heic=yes --with-webp=yes
+    # PS: If you also want webp, also use this flag: --with-webp=yes
+    # PPS: If you also want vips, also turn on the --with-modules flag
+    #      (see https://github.com/libvips/libvips/issues/343 and https://github.com/libvips/libvips/issues/418)
+    sudo make
+    sudo make install
+    sudo ldconfig /usr/local/lib
+    sudo identify -version   # to check if installed ok
+    make check  # optional run in-depth check
+    identify -list format | grep AVIF  # It should print a line
+
+}
+
 
 convert.install () {
     # install needed
@@ -407,7 +429,8 @@ convert.install () {
 
     sudo apt update && \
     sudo apt install webp ffmpeg detox imagemagick
-}
+
+    }
 
 
 convert.remove () {
@@ -462,8 +485,7 @@ convert.poll () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    #source "$GURU_RC"
-
+    source "$GURU_RC"
     convert.main $@
     exit $?
 fi
