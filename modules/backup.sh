@@ -44,7 +44,7 @@ backup.main () {
 
     case $command in
 
-        ls|restore|status|help|install|poll|at|debug)
+        ls|restore|status|help|install|poll|at|debug|config)
             backup.$command "$@"
             return $? ;;
 
