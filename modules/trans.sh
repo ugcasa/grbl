@@ -13,13 +13,13 @@ trans.main() {
 
 
 trans.help () {
-    gmsg -v0 "usage:    $GURU_CALL trans source_l:targed_l <text>"
+    gr.msg -v0 "usage:    $GURU_CALL trans source_l:targed_l <text>"
     return 0
 }
 
 
 trans.status () {
-    gmsg -v1 "no status information"
+    gr.msg -v1 "no status information"
     return 0
 }
 

@@ -6,9 +6,13 @@
 ## TODO remove common.sh, not practical way cause of namespacing
 ##  - no rush, good enough for now
 ##  - ISSUE function naming should be fixed dough
-# TBD re think function naming
 
-system.core-dump () {
+# TBD re think function naming
+# gr.contain <- contains
+# gr.import <- import
+# gr.google <- google -> alias google='gr.google'
+
+gr.dump () {
     # dump environmental status to file
     # TBD revisit this
     echo "core dumped to $GURU_CORE_DUMP"
@@ -16,7 +20,7 @@ system.core-dump () {
 }
 
 
-daemon.poll_order () {
+gr.poll () {
     # set get polling order
 
     local _to_find="$1"
@@ -38,7 +42,7 @@ daemon.poll_order () {
         fi
 }
 
-gsource () {
+gr.source () {
     # source only wanted functions. slow ~0,03 sec, but saves environment space
 
     local file=$1 ; shift
@@ -64,7 +68,7 @@ gsource () {
 }
 
 
-gmsg () {
+gr.msg () {
     # function for output messages and make log notifications
 
     local verbose_trigger=0
@@ -177,14 +181,11 @@ gmsg () {
             _column_width=${#_message}
         fi
 
-    # print to shell
-    if [[ $_color_code ]] && [[ $GURU_COLOR ]] && [[ $GURU_VERBOSE -gt 0 ]] ; then
-
-
-            # -c) color printout
-            printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline${C_NORMAL}" "${_timestamp}" "${_message:0:$_column_width}"
-            return 0
-        fi
+    # -c) color printout
+    if [[ $_color_code ]] && [[ $GURU_COLOR ]] && ! [[ $GURU_VERBOSE = 0 ]]; then
+        printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m" "${_timestamp}" "${_message:0:$_column_width}"
+        return 0
+    fi
 
     # *) normal printout without formatting
     printf "$_pre_newline%s%-${_column_width}s$_newline" "${_timestamp}" "${_message:0:$_column_width}"
@@ -197,7 +198,7 @@ gmsg () {
 }
 
 
-gend_blink () {
+gr.end () {
     # stop blinking in next cycle
 
     local key="esc"
@@ -208,7 +209,7 @@ gend_blink () {
 }
 
 
-gindicate () {
+gr.ind () {
     # indicate status by message, voice  and keyboard indicators
 
     local _timestamp=
@@ -247,9 +248,9 @@ gindicate () {
     if [[ $_message ]] ; then
 
             if [[ $_color ]] ; then
-                    gmsg -c $_color "$timestamp$_status: $_message"
+                    gr.msg -c $_color "$timestamp$_status: $_message"
                 else
-                    gmsg "$timestamp$_status: $_message"
+                    gr.msg "$timestamp$_status: $_message"
                 fi
 
             if [[ $GURU_MQTT_ENABLED ]] && [[ $_mqtt_topic ]] ; then
@@ -301,7 +302,7 @@ gindicate () {
 }
 
 
-gask () {
+gr.ask () {
     # yes or no shortcut
 
     local _message="$1"
@@ -348,35 +349,7 @@ gask () {
 }
 
 
-contains() {
-    [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && return 0 || return 1
-}
-
-
-import () {
-    # source all bash function in module. input: import <module_name> <py|sh|php..>
-
-    local _module=$1 ; shift
-    local _type=sh ; [[ $1 ]] && _type=$1
-
-    if ! [[ -d $_module ]] ; then
-            gmsg -c yellow "no module $_module exist"
-            return 100
-        fi
-
-    for lib in $_module/*$_type ; do
-            gmsg -v2 "library $lib"
-
-            if [[ -f $lib ]] ; then
-                    source $lib
-                else
-                    gmsg -c yellow "no $_type files in $_module/ folder"
-                    return 101
-                fi
-        done
-}
-
-module.installed () {
+gr.installed () {
     # check is module installed
 
     local i=0
@@ -392,38 +365,11 @@ module.installed () {
 }
 
 
-
-google () {
-    # open google search in browser, query as argument
-
-    local url=https://www.google.com/search?q="$(sed 's/ /%20/g' <<< ${@})"
-
-
-    case $GURU_PREFERRED_BROWSER in
-
-        firefox|chromium)
-            $GURU_PREFERRED_BROWSER --new-window $url
-            ;;
-
-        lynx|curl|wget)
-            $GURU_PREFERRED_BROWSER $url
-            ;;
-        *)
-            gmsg -c -v2 -c yellow "non supported browser, here's link: "
-            gmsg -c $url
-        esac
-
-    return $?
-}
-
-
-
 #`TBD`declare -xf ? rather than export? - no
-export -f system.core-dump
-export -f daemon.poll_order
-export -f gmsg
-export -f gask
-export -f import
+export -f gr.poll
+export -f gr.msg
+export -f gr.ask
+
 
 
 

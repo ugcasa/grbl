@@ -26,7 +26,7 @@ mqtt.test() {
               # mqtt.test_install || _err=("${_err[@]}" "111")
               # mqtt.test_remove || _err=("${_err[@]}" "112")
               if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi ;; 
-         *) gmsg "test case $test_case not written"
+         *) gr.msg "test case $test_case not written"
             return 1
     esac
 }
@@ -35,7 +35,7 @@ mqtt.test() {
 mqtt.test_help () {
     # function to test mqtt module function mqtt.help
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.help'
+    gr.msg -v0 -c white 'testing mqtt.help'
 
       ## TODO: add pre-conditions here 
 
@@ -44,10 +44,10 @@ mqtt.test_help () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.help passed' 
+       gr.msg -v0 -c green 'mqtt.help passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.help failed' 
+       gr.msg -v0 -c red 'mqtt.help failed'
        return $_error
   fi
 }
@@ -56,7 +56,7 @@ mqtt.test_help () {
 mqtt.test_main () {
     # function to test mqtt module function mqtt.main
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.main'
+    gr.msg -v0 -c white 'testing mqtt.main'
 
       ## TODO: add pre-conditions here 
 
@@ -65,10 +65,10 @@ mqtt.test_main () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.main passed' 
+       gr.msg -v0 -c green 'mqtt.main passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.main failed' 
+       gr.msg -v0 -c red 'mqtt.main failed'
        return $_error
   fi
 }
@@ -77,7 +77,7 @@ mqtt.test_main () {
 mqtt.test_enabled () {
     # function to test mqtt module function mqtt.enabled
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.enabled'
+    gr.msg -v0 -c white 'testing mqtt.enabled'
 
       ## TODO: add pre-conditions here 
 
@@ -86,10 +86,10 @@ mqtt.test_enabled () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.enabled passed' 
+       gr.msg -v0 -c green 'mqtt.enabled passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.enabled failed' 
+       gr.msg -v0 -c red 'mqtt.enabled failed'
        return $_error
   fi
 }
@@ -98,7 +98,7 @@ mqtt.test_enabled () {
 mqtt.test_online () {
     # function to test mqtt module function mqtt.online
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.online'
+    gr.msg -v0 -c white 'testing mqtt.online'
 
       ## TODO: add pre-conditions here 
 
@@ -107,10 +107,10 @@ mqtt.test_online () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.online passed' 
+       gr.msg -v0 -c green 'mqtt.online passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.online failed' 
+       gr.msg -v0 -c red 'mqtt.online failed'
        return $_error
   fi
 }
@@ -119,7 +119,7 @@ mqtt.test_online () {
 mqtt.test_status () {
     # function to test mqtt module function mqtt.status
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.status'
+    gr.msg -v0 -c white 'testing mqtt.status'
 
       ## TODO: add pre-conditions here 
 
@@ -128,10 +128,10 @@ mqtt.test_status () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.status passed' 
+       gr.msg -v0 -c green 'mqtt.status passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.status failed' 
+       gr.msg -v0 -c red 'mqtt.status failed'
        return $_error
   fi
 }
@@ -140,7 +140,7 @@ mqtt.test_status () {
 mqtt.test_sub () {
     # function to test mqtt module function mqtt.sub
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.sub'
+    gr.msg -v0 -c white 'testing mqtt.sub'
 
       ## TODO: add pre-conditions here 
     export -f mqtt.sub
@@ -149,10 +149,10 @@ mqtt.test_sub () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.sub passed' 
+       gr.msg -v0 -c green 'mqtt.sub passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.sub failed' 
+       gr.msg -v0 -c red 'mqtt.sub failed'
        return $_error
   fi
 }
@@ -161,7 +161,7 @@ mqtt.test_sub () {
 mqtt.test_pub () {
     # function to test mqtt module function mqtt.pub
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.pub'
+    gr.msg -v0 -c white 'testing mqtt.pub'
 
       ## TODO: add pre-conditions here 
 
@@ -170,10 +170,10 @@ mqtt.test_pub () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.pub passed' 
+       gr.msg -v0 -c green 'mqtt.pub passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.pub failed' 
+       gr.msg -v0 -c red 'mqtt.pub failed'
        return $_error
   fi
 }
@@ -182,7 +182,7 @@ mqtt.test_pub () {
 mqtt.test_single () {
     # function to test mqtt module function mqtt.single
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.single'
+    gr.msg -v0 -c white 'testing mqtt.single'
 
       ## TODO: add pre-conditions here 
        export -f mqtt.single
@@ -191,10 +191,10 @@ mqtt.test_single () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.single passed' 
+       gr.msg -v0 -c green 'mqtt.single passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.single failed' 
+       gr.msg -v0 -c red 'mqtt.single failed'
        return $_error
   fi
 }
@@ -203,7 +203,7 @@ mqtt.test_single () {
 mqtt.test_log () {
     # function to test mqtt module function mqtt.log
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.log'
+    gr.msg -v0 -c white 'testing mqtt.log'
 
       ## TODO: add pre-conditions here 
     export -f mqtt.log
@@ -212,10 +212,10 @@ mqtt.test_log () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.log passed' 
+       gr.msg -v0 -c green 'mqtt.log passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.log failed' 
+       gr.msg -v0 -c red 'mqtt.log failed'
        return $_error
   fi
 }
@@ -224,7 +224,7 @@ mqtt.test_log () {
 mqtt.test_poll () {
     # function to test mqtt module function mqtt.poll
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.poll'
+    gr.msg -v0 -c white 'testing mqtt.poll'
 
       ## TODO: add pre-conditions here 
 
@@ -234,10 +234,10 @@ mqtt.test_poll () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.poll passed' 
+       gr.msg -v0 -c green 'mqtt.poll passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.poll failed' 
+       gr.msg -v0 -c red 'mqtt.poll failed'
        return $_error
   fi
 }
@@ -246,7 +246,7 @@ mqtt.test_poll () {
 mqtt.test_install () {
     # function to test mqtt module function mqtt.install
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.install'
+    gr.msg -v0 -c white 'testing mqtt.install'
 
       ## TODO: add pre-conditions here 
 
@@ -255,10 +255,10 @@ mqtt.test_install () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.install passed' 
+       gr.msg -v0 -c green 'mqtt.install passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.install failed' 
+       gr.msg -v0 -c red 'mqtt.install failed'
        return $_error
   fi
 }
@@ -267,7 +267,7 @@ mqtt.test_install () {
 mqtt.test_remove () {
     # function to test mqtt module function mqtt.remove
     local _error=0
-    gmsg -v0 -c white 'testing mqtt.remove'
+    gr.msg -v0 -c white 'testing mqtt.remove'
 
       ## TODO: add pre-conditions here 
 
@@ -276,10 +276,10 @@ mqtt.test_remove () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'mqtt.remove passed' 
+       gr.msg -v0 -c green 'mqtt.remove passed'
        return 0
     else
-       gmsg -v0 -c red 'mqtt.remove failed' 
+       gr.msg -v0 -c red 'mqtt.remove failed'
        return $_error
   fi
 }

@@ -11,7 +11,7 @@ config.main () {
                     return $?
                     ;;
             status|log|debug)
-                    gmsg "no $_cmd data"
+                    gr.msg "no $_cmd data"
                     ;;
 
                  *) echo "unknown config action '$_cmd'"
@@ -24,22 +24,22 @@ config.main () {
 
 config.help () {
     # general help
-    gmsg -v1 "guru-client config help " -c white
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help"
-    gmsg -v2
-    gmsg -v1 "actions:"
-    gmsg -v1 " export        export configuration to environment"
-    gmsg -v1 " pull          poll user configuration from server "
-    gmsg -v1 " push          push user configuration to server "
-    gmsg -v1 " user          open user configuration in dialog "
-    gmsg -v1 " edit          edit user config file with preferred editor "
-    gmsg -v1 " get           get single value from user config"
-    gmsg -v1 " set           set value to user config and current environment "
-    gmsg -v1 " help          try 'help -V' full help" -V2
-    gmsg -v1 "examples:" -c white
-    gmsg -v1 "     '$GURU_CALL config user'                            get current host and user settings"
-    gmsg -v1 "     '$GURU_CALL pull -h <host_name> -u <user_name>'     get user and host specific setting from server  "
+    gr.msg -v1 "guru-client config help " -c white
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help"
+    gr.msg -v2
+    gr.msg -v1 "actions:"
+    gr.msg -v1 " export        export configuration to environment"
+    gr.msg -v1 " pull          poll user configuration from server "
+    gr.msg -v1 " push          push user configuration to server "
+    gr.msg -v1 " user          open user configuration in dialog "
+    gr.msg -v1 " edit          edit user config file with preferred editor "
+    gr.msg -v1 " get           get single value from user config"
+    gr.msg -v1 " set           set value to user config and current environment "
+    gr.msg -v1 " help          try 'help -V' full help" -V2
+    gr.msg -v1 "examples:" -c white
+    gr.msg -v1 "     '$GURU_CALL config user'                            get current host and user settings"
+    gr.msg -v1 "     '$GURU_CALL pull -h <host_name> -u <user_name>'     get user and host specific setting from server  "
 }
 
 
@@ -51,11 +51,11 @@ config.make_rc () {
     local _append_rc="$3"
     local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
 
-    gmsg -v2 -c gray "$_source_cfg $_mode $_target_rc"
+    gr.msg -v2 -c gray "$_source_cfg $_mode $_target_rc"
 
     #_source_cfg=$HOME/.config/guru/$GURU_USER_NAME/user.cfg
 
-    if ! [[ -f $_source_cfg ]] ; then gmsg -c yellow "$_source_cfg not found" ; return 100 ; fi
+    if ! [[ -f $_source_cfg ]] ; then gr.msg -c yellow "$_source_cfg not found" ; return 100 ; fi
     #if [[ -f $_target_rc ]] ; then rm -f $_target_rc ; fi
 
     # write system configs to rc file
@@ -89,10 +89,10 @@ config.make_color_rc () {
     local _append_rc="$3"
     local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
     # use same style file than corsair
-    [[ -f "$_source_cfg" ]] && source $_source_cfg || gmsg -x 100 -red "$_source_cfg missing"
+    [[ -f "$_source_cfg" ]] && source $_source_cfg || gr.msg -x 100 -red "$_source_cfg missing"
 
-    gmsg -n -v1 "setting color codes " ; gmsg -v2
-    gmsg -v2 -c gray "$_source_cfg $_mode $_target_rc"
+    gr.msg -n -v1 "setting color codes " ; gr.msg -v2
+    gr.msg -v2 -c gray "$_source_cfg $_mode $_target_rc"
     [[ $_append_rc ]] || echo "#!/bin/bash" > $_target_rc
     printf 'if [[ "$GURU_FLAG_COLOR" ]] ; then \n' >> $_target_rc
     printf "\texport C_NORMAL=%s\n" "'\033[0m'"  >> $_target_rc
@@ -119,13 +119,13 @@ config.make_color_rc () {
             color=${color//''/'\033'}  # bubblecum
             # printout
             #echo -e "$color $color_name $color_value"
-            gmsg -n -v1 -V2 -c $color_name "."
-            gmsg -n -v2 -c $color_name "$color_name "
+            gr.msg -n -v1 -V2 -c $color_name "."
+            gr.msg -n -v2 -c $color_name "$color_name "
             # make stylerc
             printf "\texport C_%s='%s'\n" "${color_name^^}" "$color"  >> $_target_rc
         done
     printf 'fi\n\n' >> $_target_rc
-    gmsg -v1 -c green " done"
+    gr.msg -v1 -c green " done"
 }
 
 
@@ -141,27 +141,27 @@ config.export () {
     [[ -f "$_target_rc" ]] && mv -f "$_target_rc" "$_target_rc.old"
 
     # include system configuration
-    gmsg -n -v1 "setting system configuration " ; gmsg -v2
+    gr.msg -n -v1 "setting system configuration " ; gr.msg -v2
     if config.make_rc "$GURU_CFG/system.cfg" "$_target_rc" ; then
-            gmsg -c green -V2 -v1 "done"
+            gr.msg -c green -V2 -v1 "done"
         else
-            gmsg -c red -V2 -v1 "failed"
+            gr.msg -c red -V2 -v1 "failed"
         fi
 
     # add module lists made by installer to environment
     GURU_MODULES=( $(cat $GURU_CFG/installed.core) $(cat $GURU_CFG/installed.modules) )
-    gmsg -n -v1 "setting module information "
-    gmsg -N -v2 -c dark_grey "installed modules: '${GURU_MODULES[@]}'"
+    gr.msg -n -v1 "setting module information "
+    gr.msg -N -v2 -c dark_grey "installed modules: '${GURU_MODULES[@]}'"
     echo "export GURU_MODULES=(${GURU_MODULES[@]})" >>$_target_rc
     if grep "export GURU_MODULES" "$_target_rc" >/dev/null ; then
-            gmsg -c green -V2 -v1 "done"
+            gr.msg -c green -V2 -v1 "done"
         else
-            gmsg -c red -V2 -v1 "failed"
+            gr.msg -c red -V2 -v1 "failed"
         fi
 
     # include system configuration
-    gmsg -n -v1 "setting user configuration " ; gmsg -v2
-    config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gmsg -v1 -V2 -c green "done"
+    gr.msg -n -v1 "setting user configuration " ; gr.msg -v2
+    config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gr.msg -v1 -V2 -c green "done"
     config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
     # set path
     echo "source $GURU_BIN/path.sh" >> $_target_rc
@@ -180,9 +180,9 @@ config.export () {
                     corsair.main init
                 fi
         else
-            gmsg -c yellow "somethign went wrong, recovering old user configuration"
+            gr.msg -c yellow "somethign went wrong, recovering old user configuration"
             [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" \
-                || gmsg -x 100 -c red "no old backup found, unable to recover"
+                || gr.msg -x 100 -c red "no old backup found, unable to recover"
             return 10
         fi
 }
@@ -191,8 +191,8 @@ config.export () {
 config.pull () {
     # pull configuration files from server
 
-    gmsg -v1 -n -V2 "pulling $GURU_USER@$GURU_HOSTNAME configs.. "
-    gmsg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
+    gr.msg -v1 -n -V2 "pulling $GURU_USER@$GURU_HOSTNAME configs.. "
+    gr.msg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
 
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
@@ -201,10 +201,10 @@ config.pull () {
     _error=$?
 
     if ((_error<9)) ; then
-            gmsg -c green "ok"
+            gr.msg -c green "ok"
             return 0
         else
-            gmsg -c red "failed"
+            gr.msg -c red "failed"
             return $_error
         fi
 }
@@ -213,8 +213,8 @@ config.pull () {
 config.push () {
     # save configuration to server
 
-    gmsg -v1 -n -V2 "pushing $GURU_USER@$GURU_HOSTNAME configs.. "
-    gmsg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
+    gr.msg -v1 -n -V2 "pushing $GURU_USER@$GURU_HOSTNAME configs.. "
+    gr.msg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
 
     # "if not"
@@ -233,10 +233,10 @@ config.push () {
 
     _error=$?
     if ((_error<9)) ; then
-            gmsg -c green "ok"
+            gr.msg -c green "ok"
             return 0
         else
-            gmsg -c red "failed"
+            gr.msg -c red "failed"
             return $_error
         fi
 }
@@ -248,13 +248,13 @@ config.edit () {
     local _config_file=$GURU_CFG/$GURU_USER/user.cfg
 
     if ! [[ -f $_config_file ]] ; then
-        if gask "user configuration fur user did not found, create local config for $GURU_USER" ; then
+        if gr.ask "user configuration fur user did not found, create local config for $GURU_USER" ; then
                 mkdir -p $_config_file
                 cp $GURU_CFG/user-default.cfg $_config_file
             fi
         fi
 
-    $GURU_PREFERRED_EDITOR $_config_file  || gmsg -v2 -c yello "error while editing $_config_file.."
+    $GURU_PREFERRED_EDITOR $_config_file  || gr.msg -v2 -c yello "error while editing $_config_file.."
 
 }
 
@@ -265,7 +265,7 @@ config.user () {
     local _config_file=$GURU_CFG/$GURU_USER/user.cfg
 
     if ! [[ -f $_config_file ]] ; then
-        if gask "user configuration fur user did not found, create local config for $GURU_USER" ; then
+        if gr.ask "user configuration fur user did not found, create local config for $GURU_USER" ; then
                 mkdir -p $_config_file
                 cp $GURU_CFG/user-default.cfg $_config_file
             else
@@ -273,7 +273,7 @@ config.user () {
             fi
         fi
 
-    gmsg -v1 "checking dialog installation.."
+    gr.msg -v1 "checking dialog installation.."
     dialog --version >>/dev/null || sudo apt install dialog
 
     # open temporary file handle and redirect it to stdout
@@ -286,21 +286,21 @@ config.user () {
     clear
 
     if (( return_code > 0 )) ; then
-            gmsg "nothing changed.."
+            gr.msg "nothing changed.."
             return 0
         fi
 
-    if gask "overwrite settings" ; then
+    if gr.ask "overwrite settings" ; then
             cp -f "$_config_file" "$GURU_CFG/$GURU_USER/user.cfg.backup"
-            gmsg "backup saved $GURU_CFG/$GURU_USER/user.cfg.backup"
+            gr.msg "backup saved $GURU_CFG/$GURU_USER/user.cfg.backup"
             echo "$_new_file" >"$_config_file"
-            gmsg -c white "configure saved, taking configuration in use.."
+            gr.msg -c white "configure saved, taking configuration in use.."
             config.export
-            #gmsg -c white "to save new configuration to sever type: '$GURU_CALL config push'"
+            #gr.msg -c white "to save new configuration to sever type: '$GURU_CALL config push'"
             config.push
         else
-            gmsg -c dark_golden_rod "ignored"
-            gmsg -c white "to get previous configurations from sever type: '$GURU_CALL config pull'"
+            gr.msg -c dark_golden_rod "ignored"
+            gr.msg -c white "to get previous configurations from sever type: '$GURU_CALL config pull'"
         fi
     return 0
 }
@@ -324,14 +324,14 @@ config.set () {
 
     #if ! cat $GURU_RC | grep "GURU_${_variable^^}=" >/dev/null; then
     if ! grep "GURU_${_variable^^}=" -q $GURU_RC ; then
-            gmsg -c yellow "no variable 'GURU_${_variable^^}' found"
+            gr.msg -c yellow "no variable 'GURU_${_variable^^}' found"
             return 2
         fi
 
     #local _found=$(cat $GURU_RC | grep "GURU_${_variable^^}=" | cut -d '=' -f 2)
     local _found=$(grep -q "GURU_${_variable^^}=" $GURU_RC | cut -d '=' -f 2)
     sed -i "s/GURU_${_variable^^}=.*/GURU_${_variable^^}='${_value}'/" $GURU_RC
-    gmsg -v1 "changing GURU_${_variable^^} from $_found to '$_value'"
+    gr.msg -v1 "changing GURU_${_variable^^} from $_found to '$_value'"
     source $GURU_RC
     return 0
 }

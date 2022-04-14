@@ -5,14 +5,14 @@ source common.sh
 
 stlink.main () {
     # command parser
-    program_indicator_key="f$(daemon.poll_order program)"
+    program_indicator_key="f$(gr.poll program)"
 
     local _cmd="$1" ; shift
     case "$_cmd" in
                status|help|install|remove)
                     stlink.$_cmd "$@" ; return $? ;;
                *)
-                    gmsg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
+                    gr.msg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
                     return 127
         esac
 
@@ -21,28 +21,28 @@ stlink.main () {
 
 
 stlink.help () {
-    gmsg -v1 -c white "guru-client st-link help "
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL st-link start|end|status|help|install|remove"
-    gmsg -v2
-    gmsg -v1 -c white "commands: "
-    gmsg -v1 " install                  install st-link programmer for st mcu "
-    gmsg -v1 " remove                   remove installationa and requirements "
-    gmsg -v2 " help                     printout this help "
-    gmsg -v2
-    gmsg -v1 -c white "example: "
-    gmsg -v1 "         $GURU_CALL programmer st-link status "
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client st-link help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL st-link start|end|status|help|install|remove"
+    gr.msg -v2
+    gr.msg -v1 -c white "commands: "
+    gr.msg -v1 " install                  install st-link programmer for st mcu "
+    gr.msg -v1 " remove                   remove installationa and requirements "
+    gr.msg -v2 " help                     printout this help "
+    gr.msg -v2
+    gr.msg -v1 -c white "example: "
+    gr.msg -v1 "         $GURU_CALL programmer st-link status "
+    gr.msg -v2
 }
 
 
 stlink.status () {
 
     if locate st-flash >/dev/null ; then
-        gmsg -v2 -c green "installed" -k $program_indicator_key
+        gr.msg -v2 -c green "installed" -k $program_indicator_key
         return 0
     else
-        gmsg -v2 -c red "not installed" -k $program_indicator_key
+        gr.msg -v2 -c red "not installed" -k $program_indicator_key
         return 1
     fi
 }
@@ -52,8 +52,8 @@ stlink.install () {
 
     # check installation
     if st-flash -v ; then
-        gmsg -c green "already installed"
-        gmsg -v2 "to reinstall perform 'remove' first"
+        gr.msg -c green "already installed"
+        gr.msg -v2 "to reinstall perform 'remove' first"
         return 0
     fi
 
@@ -79,8 +79,8 @@ stlink.install () {
     sudo cp etc/udev/rules.d/49-stlinkv* /etc/udev/rules.d/ -f
     #and restart udev
     sudo udevadm control --reload
-    gmsg -c green "guru is now ready to program st mcu's"
-    gmsg -v1 "usage: st-flash --reset read test.bin 0x8000000 4096"
+    gr.msg -c green "guru is now ready to program st mcu's"
+    gr.msg -v1 "usage: st-flash --reset read test.bin 0x8000000 4096"
 
 }
 
@@ -91,10 +91,10 @@ stlink.poll () {
 
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: st-link programmer polling started" -k $program_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: st-link programmer polling started" -k $program_indicator_key
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: st-link programmer polling ended" -k $program_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: st-link programmer polling ended" -k $program_indicator_key
             ;;
         status )
             stlink.status

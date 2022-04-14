@@ -222,7 +222,7 @@ tag.picture () {
 }
 
 tag.status () {
-    gmsg -c gray "status unknown"
+    gr.msg -c gray "status unknown"
     return 0
 }
 

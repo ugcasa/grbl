@@ -38,20 +38,20 @@ note.main () {
 note.help () {
     # general help
 
-    gmsg -v1 -c white "guru-client note help "
-    gmsg -v2
-    gmsg -v0 "Usage:    $GURU_CALL note [ls|add|open|rm|check|report|locate|tag] <date> "
-    gmsg -v1 -c white "Commands:"
-    gmsg -v2
-    gmsg -v1 " check          check do note exist, returns 0 if i do "
-    gmsg -v1 " list           list of notes. first month (MM), then year (YYYY "
-    gmsg -v1 " open|edit|*    open given date notes (use time format $GURU_FORMAT_FILE_DATE "
-    gmsg -v1 "  <yesterday>    - open yesterdays notes "
-    gmsg -v1 "  <tuesday>...   - open last week day notes "
-    gmsg -v1 " tag            read or add tags to note file "
-    gmsg -v1 " locate         returns file location of note given YYYYMMDD "
-    gmsg -v1 " report         open note with template to $GURU_PREFERRED_OFFICE_DOC "
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client note help "
+    gr.msg -v2
+    gr.msg -v0 "Usage:    $GURU_CALL note [ls|add|open|rm|check|report|locate|tag] <date> "
+    gr.msg -v1 -c white "Commands:"
+    gr.msg -v2
+    gr.msg -v1 " check          check do note exist, returns 0 if i do "
+    gr.msg -v1 " list           list of notes. first month (MM), then year (YYYY "
+    gr.msg -v1 " open|edit|*    open given date notes (use time format $GURU_FORMAT_FILE_DATE "
+    gr.msg -v1 "  <yesterday>    - open yesterdays notes "
+    gr.msg -v1 "  <tuesday>...   - open last week day notes "
+    gr.msg -v1 " tag            read or add tags to note file "
+    gr.msg -v1 " locate         returns file location of note given YYYYMMDD "
+    gr.msg -v1 " report         open note with template to $GURU_PREFERRED_OFFICE_DOC "
+    gr.msg -v2
 }
 
 
@@ -89,12 +89,12 @@ note.check () {
 
     if ! note.online ; then note.remount ; fi
     note.config "$1"
-    gmsg -n -v1 "checking note file.. "
+    gr.msg -n -v1 "checking note file.. "
     if [[ -f "$note" ]] ; then
-            gmsg -v1 -c green "$note found"
+            gr.msg -v1 -c green "$note found"
             return 0
         else
-            gmsg -v1 -c yellow "$note not found"
+            gr.msg -v1 -c yellow "$note not found"
             return 41
         fi
 }
@@ -107,12 +107,12 @@ note.locate () {
         # make variables
 
         note.config "$1"
-        gmsg -v1 "$note "        
+        gr.msg -v1 "$note "
         if [[ -f $note ]] ; then
-                # gmsg -v1 -c green "exist"
+                # gr.msg -v1 -c green "exist"
                 return 0
             else
-                #gmsg -v1 -c red "non exist"
+                #gr.msg -v1 -c red "non exist"
                 return 1
             fi
     }
@@ -142,15 +142,15 @@ note.online () {
     # check that needed folders are mounted
 
     if ! [[ "$GURU_MOUNT_NOTES" ]] && [[ "$GURU_MOUNT_TEMPLATES" ]] ; then
-            gmsg -c yellow "empty variable: '$GURU_MOUNT_NOTES' or '$GURU_MOUNT_TEMPLATES'"
+            gr.msg -c yellow "empty variable: '$GURU_MOUNT_NOTES' or '$GURU_MOUNT_TEMPLATES'"
             return 100
         fi
 
     if mount.online "$GURU_MOUNT_NOTES" && mount.online "$GURU_MOUNT_TEMPLATES" ; then
-            gmsg -v2 -c green "note database mounted"
+            gr.msg -v2 -c green "note database mounted"
             return 0
         else
-            gmsg -v2 -c red "note database not mounted"
+            gr.msg -v2 -c red "note database not mounted"
             return 1
         fi
 }
@@ -177,10 +177,10 @@ note.ls () {
     directory="$GURU_MOUNT_NOTES/$GURU_USER_NAME/$year/$month"
 
     if [[ -d "$directory" ]] ; then
-        gmsg -c light_blue "$(ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted")"
+        gr.msg -c light_blue "$(ls "$directory" | grep ".md" | grep -v "~" | grep -v "conflicted")"
         return 0
     else
-        gmsg "no folder exist"
+        gr.msg "no folder exist"
         return 45
     fi
 }
@@ -247,7 +247,7 @@ note.open () {
     for _note_date in ${_date_list[@]} ; do
 
         note.config "$_note_date"
-        gmsg -v3 -c pink "$_note_date"
+        gr.msg -v3 -c pink "$_note_date"
 
         if [[ -f "$note" ]]; then
                 note.add_change "opened"
@@ -255,7 +255,7 @@ note.open () {
                 note.add "$_note_date"
             fi
 
-        gmsg -v3 -c pink "opening $_note_date"
+        gr.msg -v3 -c pink "opening $_note_date"
         note.open_editor "$note"
 
     done
@@ -269,10 +269,10 @@ note.rm () {
     note.online || note.remount
 
     note.config "$1"
-    [[ -f $note ]] || gmsg -x 1 -c white "no note for date $(date -d $1 +$GURU_FORMAT_DATE)"
+    [[ -f $note ]] || gr.msg -x 1 -c white "no note for date $(date -d $1 +$GURU_FORMAT_DATE)"
 
-    if gask "remove $note" ; then
-        rm -rf "$note" || gmsg -c yellow "note remove failed"
+    if gr.ask "remove $note" ; then
+        rm -rf "$note" || gr.msg -c yellow "note remove failed"
     fi
     return 0
 }
@@ -317,8 +317,8 @@ note.open_editor () {
             local project_folder=$GURU_SYSTEM_MOUNT/project/projects/notes
             local sublime_project_file="$project_folder/$GURU_USER_NAME-notes.sublime-project"
 
-            [[ -d $project_folder ]] || gmsg -x 100 -c yellow "$project_folder not exist"
-            [[ -f $sublime_project_file ]] || gmsg -c yellow "sublime project file missing"
+            [[ -d $project_folder ]] || gr.msg -x 100 -c yellow "$project_folder not exist"
+            [[ -f $sublime_project_file ]] || gr.msg -c yellow "sublime project file missing"
 
             subl "$note" -n --project "$sublime_project_file" -a
             return $?

@@ -16,7 +16,7 @@ source $GURU_BIN/common.sh
 
 ## declare run wide global variables
 declare -g temp_file="/tmp/guru-module.tmp"
-declare -g module_indicator_key="f$(daemon.poll_order module)"
+declare -g module_indicator_key="f$(gr.poll module)"
 
 
 ## functions, keeping help at first position it might be even updated
@@ -24,19 +24,19 @@ module.help () {
     # user help
     export GURU_VERBOSE=0
     export GURU_COLOR=
-    gmsg -n -v2 -c white "guru-cli module help "
-    gmsg -v1 "few clause description what module exists"
-    gmsg -v2
-    gmsg -c white -n -v0 "usage:    "
-    gmsg -v0 "$GURU_CALL module command variables"
-    gmsg -v2
-    gmsg -v1 -c white "commands: "
-    gmsg -v2 " ls       list something "
-    gmsg -v2 " help     printout this help "
-    gmsg -v2
-    gmsg -n -v1 -c white "example:  "
-    gmsg -v1 "$GURU_CALL module <command>"
-    gmsg -v2
+    gr.msg -n -v2 -c white "guru-cli module help "
+    gr.msg -v1 "few clause description what module exists"
+    gr.msg -v2
+    gr.msg -c white -n -v0 "usage:    "
+    gr.msg -v0 "$GURU_CALL module command variables"
+    gr.msg -v2
+    gr.msg -v1 -c white "commands: "
+    gr.msg -v2 " ls       list something "
+    gr.msg -v2 " help     printout this help "
+    gr.msg -v2
+    gr.msg -n -v1 -c white "example:  "
+    gr.msg -v1 "$GURU_CALL module <command>"
+    gr.msg -v2
 }
 
 
@@ -68,7 +68,7 @@ module.main () {
 ## example function
 module.ls () {
     # list something
-    gmsg "nothing to list"
+    gr.msg "nothing to list"
     # test and return result
     return 0
 }
@@ -78,16 +78,16 @@ module.ls () {
 module.status () {
     # output module status
 
-    gmsg -n -t -v1 "${FUNCNAME[0]}: "
+    gr.msg -n -t -v1 "${FUNCNAME[0]}: "
 
     # check module is enabled
     if [[ $GURU_MODULE_ENABLED ]] ; then
-            gmsg -n -v1 \
+            gr.msg -n -v1 \
             -k $module_indicator_key \
             -c green "enabled, "
 
         else
-            gmsg -v1 \
+            gr.msg -v1 \
             -c reset "disabled" \
             -k $module_indicator_key
             return 1
@@ -107,15 +107,15 @@ module.poll () {
 
     # check is indicator set (should be, but wanted to be sure)
     [[ $module_indicator_key ]] || \
-        module_indicator_key="f$(daemon.poll_order module)"
+        module_indicator_key="f$(gr.poll module)"
 
     local _cmd="$1" ; shift
     case $_cmd in
         start)
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: module status polling started" -k $module_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: module status polling started" -k $module_indicator_key
             ;;
         end)
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: module status polling ended" -k $module_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: module status polling ended" -k $module_indicator_key
             ;;
         status)
             module.status $@
@@ -129,10 +129,10 @@ module.poll () {
 ## if module requires tools or libraries to work installation is done here
 module.install () {
 
-    # sudo apt update || gmsg -c red "not able to update"
+    # sudo apt update || gr.msg -c red "not able to update"
     # sudo apt install -y ...
     # pip3 install --user ...
-    gmsg "nothing to install"
+    gr.msg "nothing to install"
     return 0
 }
 
@@ -142,7 +142,7 @@ module.remove () {
 
     # sudo apt remove -y ...
     # pip3 remove --user ...
-    gmsg "nothing to remove"
+    gr.msg "nothing to remove"
     return 0
 }
 

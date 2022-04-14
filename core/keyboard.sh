@@ -8,7 +8,7 @@ source $GURU_BIN/os.sh
 
 keyboard.main() {
     # keyboard command parser
-    distro="$(os.check_distro)" # ; gmsg -v2 "|$distro|"
+    distro="$(os.check_distro)" # ; gr.msg -v2 "|$distro|"
     [[ "$GURU_INSTALL_TYPE" == "server" ]] && return 0
 
     command="$1" ; shift
@@ -25,26 +25,26 @@ keyboard.main() {
 }
 
 keyboard.status () {
-    gmsg "nothing to report"
+    gr.msg "nothing to report"
     return 0
 }
 
 keyboard.help () {
-    gmsg -v1 -c white "guru-client keyboard help "
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL keyboard [add|rm] {all}"
-    gmsg -v2
-    gmsg -v1 -c white "commands:"
-    gmsg -v1 "  add <key> <cmd>   add shortcut"
-    gmsg -v1 "  rm <key>          releases shortcut"
-    gmsg -v2
-    gmsg -v1 "'all' will add shortcuts set in '~/.config/guru/$GURU_USER/userrc'"
-    gmsg -v2
-    gmsg -v1 -c white  "example:"
-    gmsg -v1 "      $GURU_CALL keyboard add terminal $GURU_TERMINAL F1"
-    gmsg -v1 "      $GURU_CALL keyboard add all"
-    gmsg -v1 "      $GURU_CALL keyboard rm all"
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client keyboard help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL keyboard [add|rm] {all}"
+    gr.msg -v2
+    gr.msg -v1 -c white "commands:"
+    gr.msg -v1 "  add <key> <cmd>   add shortcut"
+    gr.msg -v1 "  rm <key>          releases shortcut"
+    gr.msg -v2
+    gr.msg -v1 "'all' will add shortcuts set in '~/.config/guru/$GURU_USER/userrc'"
+    gr.msg -v2
+    gr.msg -v1 -c white  "example:"
+    gr.msg -v1 "      $GURU_CALL keyboard add terminal $GURU_TERMINAL F1"
+    gr.msg -v1 "      $GURU_CALL keyboard add all"
+    gr.msg -v1 "      $GURU_CALL keyboard rm all"
+    gr.msg -v2
 
 }
 
@@ -83,7 +83,7 @@ keyboard.reset_ubuntu () {        # resets all custom shortcuts to default
 
 keyboard.release_ubuntu(){        # release single shortcut
     # usage: keyboard.release_ubuntu_shortcutss [key_binding] {directory}
-    gmsg -v1 -x 101 "TBD ${FUNCNAME[0]}"
+    gr.msg -v1 -x 101 "TBD ${FUNCNAME[0]}"
     return 9
 }
 
@@ -116,22 +116,22 @@ local _backup=$GURU_CFG/keyboard.backup-mint.cfg
 
 if [[ ! -f "$_backup" ]] ; then
 
-        gmsg -n -v2 -c gray "backup $_backup "
+        gr.msg -n -v2 -c gray "backup $_backup "
 
         if dconf dump /org/cinnamon/desktop/keybindings/ > "$_backup" ; then
-                gmsg -v1 -c green "done"
+                gr.msg -v1 -c green "done"
             else
-                gmsg -c yellow "error saving shortcut backup to $_backup"
+                gr.msg -c yellow "error saving shortcut backup to $_backup"
             fi
     fi
 
-gmsg -n -v2 -c gray "$_new "
+gr.msg -n -v2 -c gray "$_new "
 
 if dconf load /org/cinnamon/desktop/keybindings/ < "$_new" ; then
-        gmsg -v1 -c green "done"
+        gr.msg -v1 -c green "done"
         return 0
     else
-        gmsg -c yellow "error setting keyboard shortcuts $_new"
+        gr.msg -c yellow "error setting keyboard shortcuts $_new"
         return 1
     fi
 
@@ -141,7 +141,7 @@ return 0
 
 keyboard.set_shortcut_linuxmint () {
     [[ "$GURU_INSTALL_TYPE" == "server" ]] || return 0
-    gmsg -v1 -x 101 "TBD ${FUNCNAME[0]}"
+    gr.msg -v1 -x 101 "TBD ${FUNCNAME[0]}"
     return 9
 }
 
@@ -156,14 +156,14 @@ keyboard.reset_linuxmint() {
     if [ -f "$backup" ]; then
         dconf load /org/cinnamon/desktop/keybindings/ < "$backup" || return 101
     else
-        gmsg -c yellow "no backup found"
+        gr.msg -c yellow "no backup found"
         return 2
     fi
 }
 
 
 keyboard.release_linuxmint () {
-    gmsg -v1 -x 101 "TBD ${FUNCNAME[0]}"
+    gr.msg -v1 -x 101 "TBD ${FUNCNAME[0]}"
     return 9
 }
 

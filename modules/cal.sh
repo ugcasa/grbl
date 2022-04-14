@@ -8,24 +8,24 @@ declare -g temp_file="/tmp/cal.tmp"
 
 cal.help () {
     # general help
-    gmsg -v1 -c white "guru-client calendar help "
-    gmsg -v2
-    gmsg -v1  "printout month date numbers to std and clipboard"
-    gmsg -v0 "usage:    $GURU_CALL cal months|days|year <wide|single> <year> <month_list> <year> <month_list> "
-    gmsg -v2
-    gmsg -v1 -c white "commands: "
-    gmsg -v1 " year         printout year full of month date numbers "
-    gmsg -v1 " months       printout day number list of given months "
-    gmsg -v2 "    wide|single     wide it three on row, single just one month"
-    gmsg -v1 " year-ahead   print rest of year dates"
-    gmsg -v1 " days         same but no different than upper one "
-    gmsg -v2 " help         printout this help "
-    # TBD gmsg -v3 " poll start|end           start or end module status polling "
-    gmsg -v2
-    gmsg -v1 -c white "example: "
-    gmsg -v1 "   $GURU_CALL cal months 1 2 2005 2 3 1917 3 4"
-    gmsg -v1 "   $GURU_CALL cal days wide "
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client calendar help "
+    gr.msg -v2
+    gr.msg -v1  "printout month date numbers to std and clipboard"
+    gr.msg -v0 "usage:    $GURU_CALL cal months|days|year <wide|single> <year> <month_list> <year> <month_list> "
+    gr.msg -v2
+    gr.msg -v1 -c white "commands: "
+    gr.msg -v1 " year         printout year full of month date numbers "
+    gr.msg -v1 " months       printout day number list of given months "
+    gr.msg -v2 "    wide|single     wide it three on row, single just one month"
+    gr.msg -v1 " year-ahead   print rest of year dates"
+    gr.msg -v1 " days         same but no different than upper one "
+    gr.msg -v2 " help         printout this help "
+    # TBD gr.msg -v3 " poll start|end           start or end module status polling "
+    gr.msg -v2
+    gr.msg -v1 -c white "example: "
+    gr.msg -v1 "   $GURU_CALL cal months 1 2 2005 2 3 1917 3 4"
+    gr.msg -v1 "   $GURU_CALL cal days wide "
+    gr.msg -v2
 }
 
 
@@ -135,8 +135,8 @@ cal.print_month () {
             fi
         fi
 
-        gmsg -v3 -c dark_grey "style=$_style month=$month year=$year"
-        gmsg -v3 -c dark_grey "list=(${list[@]}) item=$item"
+        gr.msg -v3 -c dark_grey "style=$_style month=$month year=$year"
+        gr.msg -v3 -c dark_grey "list=(${list[@]}) item=$item"
 
         # save to wait
         if [[ $clipboard_flag ]] ; then
@@ -144,7 +144,7 @@ cal.print_month () {
         fi
 
         # print to user
-        gmsg -v2
+        gr.msg -v2
         ncal -s FI -w -b -M $_style $month $year
 
     done
@@ -172,12 +172,12 @@ cal.setup_caldav () {
     [[ -d $config_folder ]] || mkdir -p $config_folder
 
     touch $config_file \
-        && gmsg -c green "ok" \
-        || gmsg -c yellow "config file creation error: $?"
+        && gr.msg -c green "ok" \
+        || gr.msg -c yellow "config file creation error: $?"
 
-    gmsg "tip: when creating project Scope: I did give all rights, but owned files rwd, other rw is better"
-    gmsg "will open links with firefox. to see links use verbose level 2 '-v2'"
-    gmsg "just print guide and exit pres 'q' "
+    gr.msg "tip: when creating project Scope: I did give all rights, but owned files rwd, other rw is better"
+    gr.msg "will open links with firefox. to see links use verbose level 2 '-v2'"
+    gr.msg "just print guide and exit pres 'q' "
 
     read -p "ready to go?" got
 
@@ -185,23 +185,23 @@ cal.setup_caldav () {
             q|Q|quit|exit) open_fox= ;;
         esac
 
-    gmsg -c white "1) sing in to google account wanna use"
-    gmsg -v2 -c light_blue "https://myaccount.google.com/"
+    gr.msg -c white "1) sing in to google account wanna use"
+    gr.msg -v2 -c light_blue "https://myaccount.google.com/"
     [[ $open_fox ]] && firefox "https://myaccount.google.com/"
 
-    gmsg -c white "2) go to google cloud-resource-manager and Create a Project"
-    gmsg -v2 -c light_blue "https://console.cloud.google.com/cloud-resource-manager"
+    gr.msg -c white "2) go to google cloud-resource-manager and Create a Project"
+    gr.msg -v2 -c light_blue "https://console.cloud.google.com/cloud-resource-manager"
     [[ $open_fox ]] && firefox "https://console.cloud.google.com/cloud-resource-manager"
 
-    gmsg -c white "3) install caldav api "
-    gmsg -v2 -c light_blue "https://console.cloud.google.com/apis/library/caldav.googleapis.com"
+    gr.msg -c white "3) install caldav api "
+    gr.msg -v2 -c light_blue "https://console.cloud.google.com/apis/library/caldav.googleapis.com"
     [[ $open_fox ]] && firefox "https://console.cloud.google.com/apis/library/caldav.googleapis.com"
 
-    gmsg -c white "4) go and create credentials for OAuth 2.0 Client IDs "
-    gmsg -v2 -c light_blue "https://console.cloud.google.com/projectselector2/projectselector/apis/credentials"
+    gr.msg -c white "4) go and create credentials for OAuth 2.0 Client IDs "
+    gr.msg -v2 -c light_blue "https://console.cloud.google.com/projectselector2/projectselector/apis/credentials"
     [[ $open_fox ]] && firefox "https://console.cloud.google.com/projectselector2/projectselector/apis/credentials"
 
-    gmsg -c white "5) get the 'OAuth 2.0 Client ID and place it to guru-cli user.cfg"
+    gr.msg -c white "5) get the 'OAuth 2.0 Client ID and place it to guru-cli user.cfg"
     # CALCURSE_CALDAV_PASSWORD=$(pass show calcurse) calcurse-caldav
     # TBD secrets.cfg
     read -p "let me do it?" yes_man
@@ -216,7 +216,7 @@ cal.setup_caldav () {
                 || printf "\n[google]\n" >>$user_conf
 
             cat $user_conf | grep caldav_id= \
-                && gmsg -c yellow "already set, change manually from $user_conf" \
+                && gr.msg -c yellow "already set, change manually from $user_conf" \
                 || printf "caldav_id=$tha_id\n" >>$user_conf
 
             # take configuration in use
@@ -224,12 +224,12 @@ cal.setup_caldav () {
             config.export
 
             ;;
-            *) gmsg -c pink "no bad man, add your self, it fine, here's file: $user_conf"
-               gmsg "go or add '[google]' chapter and fill variable 'caldav_id=with_your_ID'"
-               gmsg "then save and run '$GURU_CALL export config'"
+            *) gr.msg -c pink "no bad man, add your self, it fine, here's file: $user_conf"
+               gr.msg "go or add '[google]' chapter and fill variable 'caldav_id=with_your_ID'"
+               gr.msg "then save and run '$GURU_CALL export config'"
         esac
 
-    gmsg -c white "6) ready to download stuff from server, all local data will be overwritten. press crtl+c if not sure"
+    gr.msg -c white "6) ready to download stuff from server, all local data will be overwritten. press crtl+c if not sure"
     read -p "ready to go?" got
     sleep 3
     calcurse-caldav --init keep-remote --authcode $GURU_GOOGLE_CALDAV_ID
@@ -256,7 +256,7 @@ cal.sync_remote () {
     else
 
         if gio mount -d ${GURU_BACKUP_FILES[0]} ${GURU_BACKUP_FILES[2]} ; then
-                gmsg -c green "mounted to ${GURU_BACKUP_FILES[2]}"
+                gr.msg -c green "mounted to ${GURU_BACKUP_FILES[2]}"
                 did_mount=true
                 backup_location="${GURU_BACKUP_FILES[2]}/${GURU_BACKUP_FILES[3]}"
             else
@@ -271,7 +271,7 @@ cal.sync_remote () {
     mkdir "$backup_location"
 
     for file in ${files[@]} ; do
-            gmsg "$file -> $backup_location"
+            gr.msg "$file -> $backup_location"
             cp "$local_folder/$file" "$backup_location"
         done
 

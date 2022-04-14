@@ -39,20 +39,20 @@ test.main () {
 test.help () {
     # gneneral main
 
-    gmsg -v1 -c white "guru-client main test help -------------------------------------"
-    gmsg -v2
-    gmsg -v0 "usage: $GURU_CALL test <tool>|all|release <tc_nr>|all "
-    gmsg -v2
-    gmsg -v1 -c white "tools:"
-    gmsg -v1 " <tool> <tc_nr>|all     all test cases "
-    gmsg -v1 " <tool> release        validation tests prints out only results "
-    gmsg -v1 " release               run full validation test "
-    gmsg -v2
-    gmsg -v1 -c white "example:"
-    gmsg -v1 " $GURU_CALL test mount 1 "
-    gmsg -v1 " $GURU_CALL test remote all "
-    gmsg -v1 " $GURU_CALL test release "
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client main test help -------------------------------------"
+    gr.msg -v2
+    gr.msg -v0 "usage: $GURU_CALL test <tool>|all|release <tc_nr>|all "
+    gr.msg -v2
+    gr.msg -v1 -c white "tools:"
+    gr.msg -v1 " <tool> <tc_nr>|all     all test cases "
+    gr.msg -v1 " <tool> release        validation tests prints out only results "
+    gr.msg -v1 " release               run full validation test "
+    gr.msg -v2
+    gr.msg -v1 -c white "example:"
+    gr.msg -v1 " $GURU_CALL test mount 1 "
+    gr.msg -v1 " $GURU_CALL test remote all "
+    gr.msg -v1 " $GURU_CALL test release "
+    gr.msg -v2
     return 0
 }
 
@@ -75,16 +75,16 @@ test.tool () {
     _test_id=$(counter.main get guru-client_test_id)
     counter.main add guru-client_test_id
     echo
-    gmsg -c white "TEST $_test_id: guru-client $_tool #$_case - $(date)"
+    gr.msg -c white "TEST $_test_id: guru-client $_tool #$_case - $(date)"
 
     if [[ -f "$GURU_BIN/$_tool.sh" ]] ; then
                 _lang="sh"
     elif [[ -f "$GURU_BIN/$_tool.py" ]] ; then
                 _lang="py"
         else
-                gmsg "tool '$_tool' not found\n"
-                gmsg -c white "TEST $_test_id $_tool "
-                gmsg -c red "FAILED"
+                gr.msg "tool '$_tool' not found\n"
+                gr.msg -c white "TEST $_test_id $_tool "
+                gr.msg -c red "FAILED"
                 return 10
         fi
 
@@ -97,18 +97,18 @@ test.tool () {
     $1.test "$_case" ; _error=$?
 
     if ((_error==1)) ; then
-         gmsg -n -c white "TEST $_test_id $_tool.$_lang "
-         gmsg -c dark_gold_rod "IGNORED"
+         gr.msg -n -c white "TEST $_test_id $_tool.$_lang "
+         gr.msg -c dark_gold_rod "IGNORED"
         return 0
         fi
 
     if ((_error<1)) ; then
-            gmsg -n -c white "TEST $_test_id $_tool.$_lang "
-            gmsg -c green "PASSED"
+            gr.msg -n -c white "TEST $_test_id $_tool.$_lang "
+            gr.msg -c green "PASSED"
             return 0
         else
-            gmsg -n -c white "TEST $_test_id $_tool.$_lang "
-            gmsg -c red "FAILED"
+            gr.msg -n -c white "TEST $_test_id $_tool.$_lang "
+            gr.msg -c red "FAILED"
             return $_error
         fi
 }
@@ -119,19 +119,19 @@ test.all () {
 
     declare -la _error=()
 
-    gmsg -c white "INTEGRATION TEST $_test_id: guru-client v.$GURU_VERSION $(date)"
+    gr.msg -c white "INTEGRATION TEST $_test_id: guru-client v.$GURU_VERSION $(date)"
 
     for _tool in ${all_tools[@]} ; do
             test.tool $_tool "$1" || _error=($_error "$?")
         done
 
-    gmsg -N -n -c white "INTEGRATION $_test_id RESULT IS "
+    gr.msg -N -n -c white "INTEGRATION $_test_id RESULT IS "
 
     if (( ${#_error} > 0 )) ; then
-            gmsg -c red "FAILED"
-            gmsg -c yellow "counted ${#_error} error(s): ${_error[@]}"
+            gr.msg -c red "FAILED"
+            gr.msg -c yellow "counted ${#_error} error(s): ${_error[@]}"
         else
-            gmsg -c green "PASSED"
+            gr.msg -c green "PASSED"
         fi
 
     return $_error
@@ -146,17 +146,17 @@ test.release () {
     local _test_id=$(counter.main add guru-client_validation_test_id)
 
 
-        gmsg -c white "RELEASE TEST $_test_id: guru-client v.$GURU_VERSION $(date)"
-        gmsg "found issues: "
+        gr.msg -c white "RELEASE TEST $_test_id: guru-client v.$GURU_VERSION $(date)"
+        gr.msg "found issues: "
         test.all | grep -e "PASSED" -e "FAILED" | grep "TEST" --color=never || _error=$?
 
         if ((_error<9)); then
-                gmsg -N -n -c white "RELEASE $_test_id RESULT IS "
-                gmsg -c green "PASSED"
+                gr.msg -N -n -c white "RELEASE $_test_id RESULT IS "
+                gr.msg -c green "PASSED"
             else
-                gmsg -N -n -c white "RELEASE $_test_id RESULT IS "
-                gmsg -c red "FAILED"
-                gmsg -c yellow "last error code were: $_error"
+                gr.msg -N -n -c white "RELEASE $_test_id RESULT IS "
+                gr.msg -c red "FAILED"
+                gr.msg -c yellow "last error code were: $_error"
             fi
         return $_error
 }
@@ -173,7 +173,7 @@ test.terminal () {
     local _case="$2"
     # time output format
     local TIMEFORMAT='%R'
-    gmsg "loop $_tool #$_case. usage: [1-9|t|n|b|r|q|]. any other key will run test\n"
+    gr.msg "loop $_tool #$_case. usage: [1-9|t|n|b|r|q|]. any other key will run test\n"
     while read -n 1 -e -p "$_tool:$_case > " _cmd; do
 
         case $_cmd in
@@ -189,7 +189,7 @@ test.terminal () {
               # quit # next line  open new terminal
               q)  return 0                          ;;
               r)  gnome-terminal -- /bin/bash -c $GURU_CALL' test loop '$_tool' '$_case'; exec bash' ;;
-              *)  gmsg -c red "$_cmd"
+              *)  gr.msg -c red "$_cmd"
           esac
 
           # source user settings

@@ -15,7 +15,7 @@ install.main () {
     case $(uname -m) in
         aarch64|arm64) SYSTEM_ARCHITECTURE="arm64" ;;
         amd64|x86_64) SYSTEM_ARCHITECTURE="amd64" ;;
-        *) gmsg -c red "unknown architecture" -k esc
+        *) gr.msg -c red "unknown architecture" -k esc
     esac
 
     case "$argument" in
@@ -25,34 +25,34 @@ install.main () {
         django|anaconda|python)
                     install.$argument "$@" ;;
         status|poll|start|stop)
-                    gmsg -v dark_grey "no polling functions" ;;
-        *)          gmsg -v dark_grey "no installer for '$argument'"; install.help
+                    gr.msg -v dark_grey "no polling functions" ;;
+        *)          gr.msg -v dark_grey "no installer for '$argument'"; install.help
     esac
 }
 
 
 install.help () {
-    gmsg -v1 -c white "guru-client installer help "
-    gmsg -v2
-    gmsg -v0  "usage:    $GURU_CALL install [keyword] "
-    gmsg -v2
-    gmsg -v1 -c white  "keywords:"
-    gmsg -v1 " vscode               ms visual code "
-    gmsg -v1 " virtualbox           virtualbox "
-    gmsg -v1 " kaldi                speech recognize AI "
-    gmsg -v1 " java                 java runtime "
-    gmsg -v1 " python               python3 and venv "
-    gmsg -v1 " anaconda             anaconda dev tool"
-    gmsg -v1 " django               django framework "
-    gmsg -v1 " mqtt-client          mopsquitto MQTT clients "
-    gmsg -v1 " webmin               webmin tools "
-    gmsg -v1 " radio                gnuradio, HackRF, spectrumanalyzer and fosphor "
-    gmsg -v2 " gnuradio             install radio software separately: "
-    gmsg -v2 " hackrf               "
-    gmsg -v2 " spectrumanalyzer     "
-    gmsg -v2 " fosphor              "
-    gmsg -v1 " tiv                  tiv text mode picture viewer "
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client installer help "
+    gr.msg -v2
+    gr.msg -v0  "usage:    $GURU_CALL install [keyword] "
+    gr.msg -v2
+    gr.msg -v1 -c white  "keywords:"
+    gr.msg -v1 " vscode               ms visual code "
+    gr.msg -v1 " virtualbox           virtualbox "
+    gr.msg -v1 " kaldi                speech recognize AI "
+    gr.msg -v1 " java                 java runtime "
+    gr.msg -v1 " python               python3 and venv "
+    gr.msg -v1 " anaconda             anaconda dev tool"
+    gr.msg -v1 " django               django framework "
+    gr.msg -v1 " mqtt-client          mopsquitto MQTT clients "
+    gr.msg -v1 " webmin               webmin tools "
+    gr.msg -v1 " radio                gnuradio, HackRF, spectrumanalyzer and fosphor "
+    gr.msg -v2 " gnuradio             install radio software separately: "
+    gr.msg -v2 " hackrf               "
+    gr.msg -v2 " spectrumanalyzer     "
+    gr.msg -v2 " fosphor              "
+    gr.msg -v1 " tiv                  tiv text mode picture viewer "
+    gr.msg -v2
 }
 
 
@@ -186,9 +186,9 @@ install.radio () {
                 "build-essential python3-dev libqt4-dev gnuradio gqrx-sdr hackrf \
                 gr-osmosdr libusb-dev python-qwt5-qt4"
         fi
-    install.hackrf || gmsg -v yellow "hackrf isntall error"
-    install.spectrumanalyzer || gmsg -v yellow "spectrumanalyzer isntall error"
-    install.fosphor || gmsg -v yellow "fosphor isntall error"
+    install.hackrf || gr.msg -v yellow "hackrf isntall error"
+    install.spectrumanalyzer || gr.msg -v yellow "spectrumanalyzer isntall error"
+    install.fosphor || gr.msg -v yellow "fosphor isntall error"
 
     # launch
     [[ $GURU_FORCE ]] && gnuradio-companion &
@@ -235,8 +235,8 @@ install.anaconda () {
     chmod +x $anaconda_installer
     bash $anaconda_installer -u && rm $anaconda_installer installer_sum || return 12
     source ~/.bashrc
-    gmsg -c green  "anaconda install done"
-    gmsg -c1 "run setup by typing: '$GURU_CALL anaconda set'"
+    gr.msg -c green  "anaconda install done"
+    gr.msg -c1 "run setup by typing: '$GURU_CALL anaconda set'"
     return 0
 }
 
@@ -266,16 +266,16 @@ install.python () {
     # raw install python tools
     sudo apt update
     if python -V ; then
-            gmsg -c green "python2.7 installed"
+            gr.msg -c green "python2.7 installed"
         else
-            sudo apt install python2 || gmsg -c yellow "error $? during python2.7 install"
+            sudo apt install python2 || gr.msg -c yellow "error $? during python2.7 install"
         fi
 
     if python3 -V ; then
-            gmsg -c green "python3 installed"
+            gr.msg -c green "python3 installed"
         else
             sudo apt install -y python3.9 python3-pip python3-venv python3-dev \
-            || gmsg -c yellow "error $? during python3.9 install"
+            || gr.msg -c yellow "error $? during python3.9 install"
         fi
 
     sudo apt install build-essential libssl-dev libffi-dev
@@ -285,7 +285,7 @@ install.python () {
 install.vscode () {
     # install ms visual code editor
 
-    gmsg "installing vscode.."
+    gr.msg "installing vscode.."
     sudo apt update
     sudo apt install software-properties-common apt-transport-https wget
 
@@ -294,10 +294,10 @@ install.vscode () {
     sudo apt update
 
     if sudo apt install code ; then
-            gmsg -c green "installed"
+            gr.msg -c green "installed"
             return 0
         else
-            gmsg -c yellow "error $? during install"
+            gr.msg -c yellow "error $? during install"
             return $?
         fi
 
