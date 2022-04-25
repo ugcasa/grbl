@@ -1,4 +1,4 @@
-0.6.8.0
+0.6.8.1
 'lazy maggot'
 "when rc system sucks a lots and need acute janitoring focus."
 
@@ -51,8 +51,11 @@ Core clean up. Is messy now.
 
 - [ ] new functions.sh what combines core level functions and functions from common.sh?
 
+## 1) memes and crusal fixes to backup
 
-
+- [x] backup fix for store location folder issue
+- [x] convert read, mostly variable name changes
+- [x] placer can handle meme files. 'gr place memes' 9gsg patterns added
 
 ## 2) speak synthesizer
 
