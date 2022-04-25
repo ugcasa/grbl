@@ -31,7 +31,7 @@ place.main () {
     local function="$1" ; shift
 
     case "$function" in
-            ls|help|poll)
+            ls|help|poll|memes)
                 place.$function $@
                 return $?
                 ;;
@@ -40,6 +40,31 @@ place.main () {
                 return 0
                 ;;
         esac
+}
+
+
+place.memes () {
+
+    # 9gag patterns
+    local picture_pattern='*bwp.* *swp* *w_0.* *wp_0.*'
+    local video_pattern='*_460s* *_700w*'
+    local meme_folder="$GURU_MOUNT_PICTURES/memes"
+
+    if ! [[ -f $GURU_MOUNT_PICTURES/.online ]] ; then
+            source mount.sh
+            mount.main pictures || return 123
+        fi
+
+    if ! [[ -d $meme_folder ]] ; then
+        mkdir -p $meme_folder
+        fi
+
+    # look for 9gag pictures
+    mv $(printf '%s\n' $picture_pattern | grep -e webp -e png -e jpg -e avif) $meme_folder >/dev/null 2>/dev/null
+
+    # look for 9gag videos
+    mv $(printf '%s\n' $video_pattern | grep -e webm -e mp4) $meme_folder >/dev/null 2>/dev/null
+
 }
 
 
