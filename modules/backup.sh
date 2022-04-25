@@ -48,11 +48,7 @@ backup.main () {
             backup.$command "$@"
             return $? ;;
 
-        plan)
-            backup.plan $@
-            return $? ;;
-
-        all|daily|weekly|monthly)
+        hourly|daily|weekly|monthly|yearly|all)
             backup.plan $command
             return $? ;;
         "")
@@ -98,42 +94,45 @@ backup.variables () {
 
         gr.msg -N -v3 -c white "backup_name: $backup_name"
 
-        gr.msg -v3 -n -c white "active_list: "
-        gr.msg -v3 -c light_blue " ${active_list[@]}"
-
-        gr.msg -v3 -n -c white "from_config (can be empty):"
-        gr.msg -v3 -c light_blue " ${from_config[@]}"
-
-        gr.msg -v3 -n -c white "store_config (can be empty):"
-        gr.msg -v3 -c light_blue " ${store_config[@]}"
-
-        gr.msg -v3 -c light_pink "from_user: $from_user"
-        gr.msg -v3 -c light_pink "from_domain: $from_domain"
-        gr.msg -v3 -c light_pink "from_port: $from_port"
+        gr.msg -v3 -c light_blue "from_config: ${from_config[@]}"
         gr.msg -v3 -c light_pink "from_location: $from_location"
-        gr.msg -v3 -c light_pink "store_device: $store_device"
+        gr.msg -v3 -c light_pink "from_user (o): $from_user"
+        gr.msg -v3 -c light_pink "from_domain (o): $from_domain"
+        gr.msg -v3 -c light_pink "from_port (o): $from_port"
 
+        gr.msg -v3 -c light_blue "store_config: ${store_config[@]}"
         gr.msg -v3 -c light_green "store_device_file: $store_device_file"
+        gr.msg -v3 -c light_green "store_device: $store_device"
+        gr.msg -v3 -c light_green "store_mount_point: $store_mount_point"
         gr.msg -v3 -c light_green "store_file_system: $store_file_system"
         gr.msg -v3 -c light_green "store_folder: $store_folder"
-        gr.msg -v3 -c light_green "store_location: $store_location"
-        gr.msg -v3 -c light_green "store_user: $store_user"
-        gr.msg -v3 -c light_green "store_domain: $store_domain"
-        gr.msg -v3 -c light_green "store_port: $store_port"
-        gr.msg -v3 -c light_green "store_mount_point: $store_mount_point"
+        gr.msg -v3 -c light_green "store_location (o): $store_location"
+        gr.msg -v3 -c light_green "store_user (o): $store_user"
+        gr.msg -v3 -c light_green "store_domain (o): $store_domain"
+        gr.msg -v3 -c light_green "store_port (o): $store_port"
 
         gr.msg -v3 -c grey "backup_ignore: $backup_ignore"
         gr.msg -v3 -c grey "backup_method: $backup_method"
         gr.msg -v3 -c grey "honeypot_file: $honeypot_file"
         gr.msg -v3 -c grey "backup_indicator_key: $backup_indicator_key"
+
         gr.msg -v3 -c grey "backup_stat_file: $backup_stat_file"
+        [[ -f $backup_stat_file ]] && source $backup_stat_file
+        gr.msg -v3 -c grey "last_backup_name: $last_backup_type"
+        gr.msg -v3 -c grey "last_backup_time: $last_backup_time"
+        gr.msg -v3 -c grey "last_backup_version: $last_backup_version"
+        gr.msg -v3 -c grey "last_backup_error: $last_backup_error"
+
+        gr.msg -v3 -c light_blue "active_list: ${active_list[@]}"
 }
 
 
 backup.debug () {
 
     export GURU_VERBOSE=3
-
+    local name=${GURU_BACKUP_ACTIVE[0]}
+    [[ $1 ]] && name=$1
+    backup.config $name
 }
 
 
@@ -152,13 +151,14 @@ backup.config () {
     declare -la header=(store method from ignore)
     declare -g backup_indicator_key="f$(gr.poll backup)"
     # TBD declare -g backup_stat_file=$GURU_SYSTEM_MOUNT/backup/$backup_name.stat
-    declare -g backup_stat_file=$GURU_SYSTEM_MOUNT/backup/next
-    # exit if not in list
-    if ! echo "${active_list[@]}" | grep -q $backup_name ; then # >/dev/null
+
+    # exit if not in active list
+    if ! echo "${active_list[@]}" | grep -q $backup_name ; then
             gr.msg -c yellow "no '$backup_name' in active backup list"
             return 2
         fi
 
+    # go trough active backups and find match
     for bu_name in ${active_list[@]} ; do
             if [[ "$bu_name" == "$backup_name" ]] ; then
                     local from_config="GURU_BACKUP_${bu_name^^}[@]"
@@ -169,39 +169,44 @@ backup.config () {
                     declare -l from_string=${from_config[2]}
                     declare -l ignore="${from_config[3]//:/" "}"
 
-                    local store_config="GURU_BACKUP_${store_device^^}[@]"
+                    declare -g store_config="GURU_BACKUP_${store_device^^}[@]"
                     store_config=(${!store_config})
                     break
                 fi
         done
 
-        # fill parameters if from seems to be a remote location
+        # fill source lotaion variables
         if echo $from_string | grep -q ":" ; then
+                # when remote location
                 declare -g from_user=$(echo $from_string | cut -d ":" -f1)
                 declare -g from_domain=$(echo $from_string | cut -d ":" -f2)
                 declare -g from_port=$(echo $from_string | cut -d ":" -f3)
                 declare -g from_location=$(echo $from_string | cut -d ":" -f4)
             else
-                # fill only one parameter if from is local drive
+                # when local drive
                 declare -g from_location=$from
             fi
 
-        # if store is remote drive
+        # fill store location variables
         if echo ${store[@]} | grep -q ":" ; then
+                # store is remote drive
                 declare -g store_user=$(echo ${store_config[1]} | cut -d ":" -f1)
                 declare -g store_domain=$(echo ${store_config[1]} | cut -d ":" -f2)
                 declare -g store_port=$(echo ${store_config[1]} | cut -d ":" -f3)
                 declare -g store_location=$(echo ${store_config[1]} | cut -d ":" -f4)
             else
-                # fill parameters if store is local drive
+                # store is local drive
                 declare -g store_device_file=${store_config[0]}
                 declare -g store_file_system=${store_config[1]}
                 declare -g store_mount_point=${store_config[2]}
                 declare -g store_folder=${store_config[3]}
-                # [[ ${store_mount_point: -1} == '/' ]] \
-                #     && declare -g store_location="$store_mount_point$store_folder" \
-                #     || declare -g store_location="$store_mount_point/$store_folder"
+                [[ ${store_mount_point: -1} == '/' ]] \
+                    && declare -g store_location="$store_mount_point$store_folder" \
+                    || declare -g store_location="$store_mount_point/$store_folder"
             fi
+
+
+        declare -g backup_stat_file="$store_mount_point/$store_folder/$backup_name/backup.stat"
 
         declare -ga backup_ignore=($ignore)
         declare -g backup_method=$method
@@ -420,10 +425,17 @@ backup.now () {
 
 ### 1) get config for backup name
 
-    backup.config $1
+    [[ $backup_name ]] || backup.config $1
 
     local from_param="$from_location"
+
+
+    [[ -f $backup_stat_file ]] && echo "### $backup_name $(date '+%d.%m.%Y %H:%M')" >$backup_stat_file
+
+
+    # store_location is empty if no remote storepoint, should be something else. + non intuitive variable name
     local store_param="$store_location"
+
     local command_param="-a --progress --update"
 
     gr.msg -v3 "backup active" -c aqua_marine -k $backup_indicator_key
@@ -439,7 +451,7 @@ backup.now () {
             from_param="$from_user@$from_domain 'rsync -ave ssh $from_location $store_user@$store_domain:$from_port:$store_location'"
             store_param=
 
-        # .. or if server to local copy..
+    # .. or if server to local copy..
         elif [[ $from_domain ]] ; then
             # build remote to local command variables
             command_param="-a -e 'ssh -p $from_port' --progress --update"
@@ -470,6 +482,7 @@ backup.now () {
                                 gr.msg -v1 -c green "ok"
                             else
                                 gr.msg -v1 -c yellow "error: $?" -k $backup_indicator_key
+                                echo "last_backup_error=32" >>$backup_stat_file
                                 return 32
                             fi
 
@@ -485,14 +498,16 @@ backup.now () {
                 done
             fi
 
-            # TBD remove these local variables and use global store_location
-            [[ ${store_mount_point: -1} == '/' ]] \
-                && store_location="$store_mount_point$store_folder" \
-                || store_location="$store_mount_point/$store_folder"
-
             from_param="$from_user@$from_domain:$from_location"
 
-        # .. or if local to server copy..
+            # TBD remove these local variables and use global store_location. yes, messed me up again..
+            [[ ${store_location: -1} == '/' ]] \
+                && store_param="$store_location$backup_name" \
+                || store_param="$store_location/$backup_name"
+
+            gr.msg -v3 "location: $store_location folder: $store_folder param: $store_param "
+
+    # .. or if local to server copy..
         elif [[ $store_domain ]] ; then
             # build local to remote command variables
             gr.ask "local to server NEVER TESTED!! continue? " || return 1
@@ -543,11 +558,13 @@ backup.now () {
                             "POTENTIAL VIRUS: wannacry tracks detected!"
                         gr.msg -c light_blue "$file"
                         gr.msg -c yellow "backup of $from_location canceled"
+                        echo "last_backup_error=101" >>$backup_stat_file
                         return 101
                         ;;
 
                  *WORM*)
                         gr.msg -c tbd "TBD other virus track marks here"
+                        echo "last_backup_error=102" >>$backup_stat_file
                         return 102
                         ;;
                 esac
@@ -583,17 +600,14 @@ backup.now () {
                 gr.msg -c red -k $backup_indicator_key \
                      "backup canceled cause of potential crypto virus action detected!"
                 export GURU_BACKUP_ENABLED=
-                return 102
+                echo "last_backup_error=104" >>$backup_stat_file
+                return 104
             fi
         gr.msg -v2 -c green "ok"
     fi
 
 ### 5) perform copy
 
-    # TBD remove these local variables and use global store_location
-    [[ ${store_param: -1} == '/' ]] \
-        && store_param="$store_mount_point$backup_name" \
-        || store_param="$store_mount_point/$backup_name"
 
     gr.msg -v3 -c deep_pink "eval rsync $command_param $from_param $store_param"
     eval rsync $command_param $from_param $store_param
@@ -603,14 +617,21 @@ backup.now () {
     if [[ $_error -gt 0 ]] ; then
             gr.msg "$from_location error: $backup_method $_error" \
                  -c red -k $backup_indicator_key
-
-            return 12
+                 echo "last_backup_error=120" >>$backup_stat_file
+            return 120
         else
+
+            echo "last_backup_time=$(date +%s)" >>$backup_stat_file
+            echo "last_backup_version='$(head -n1 $GURU_BIN/version)'" >>$backup_stat_file
+            echo "last_backup_name=$backup_name" >>$backup_stat_file
+            echo "last_backup_error=$_error" >>$backup_stat_file
 
             gr.msg -v3 "$from_location ok" \
                  -c green -k $backup_indicator_key
             return 0
         fi
+
+
 }
 
 
@@ -622,19 +643,21 @@ backup.plan () {
     local _item=1;
     local _error=
     local entries=()
+    local entry=
     local backup_indicator_key="f$(gr.poll backup)"
 
     gr.msg -v3 -c pink "schedule: $schedule"
 
     case $schedule in
-        daily)      entries=(${GURU_BACKUP_SCHEDULE_DAILY[@]}) ;;
-        weekly)     entries=(${GURU_BACKUP_SCHEDULE_WEEKLY[@]}) ;;
-        monthly)    entries=(${GURU_BACKUP_SCHEDULE_MONTHLY[@]}) ;;
-        all)        entries=(${GURU_BACKUP_ACTIVE[@]}) ;;
-        *)          variable="GURU_BACKUP_SCHEDULE_${schedule^^}[@]"
-                    entries=($(eval echo ${!variable}))
-                    ;;
-
+        hourly|daily|weekly|monthly|yearly|all|panic)
+                 entries=($(eval echo '${GURU_BACKUP_SCHEDULE_'"${schedule^^}[@]}"))
+                 # variable="GURU_BACKUP_SCHEDULE_${schedule^^}[@]"
+                 # entries=($(eval echo ${!variable}))
+                 ;;
+        *)
+                 gr.msg -c yellow "unknown schedule '$schedule'"
+                 return 11
+                 ;;
     esac
 
     if ! [[ $entries ]] ; then
@@ -642,14 +665,37 @@ backup.plan () {
         return 0
     fi
 
-    gr.msg -v3 -c pink "entries: ${entries[@]}"
+    gr.msg -v3 -c light_blue "entries: ${entries[@]}"
 
-    for entry in ${entries[@]} ; do
-        gr.msg -n -c dark_golden_rod "backing up $entry $_item/${#entries[@]}.. "
-        #if ! [[ $GURU_BACKUP_ENABLED ]] ; then gr.msg -c yellow "canceled" ; break ; fi
-        backup.now $entry || (( _error++ ))
-        (( _item++ ))
-    done
+    for (( i = 0; i < ${#entries[@]}; i++ )); do
+            entry=${entries[$i]}
+            gr.msg -n -c dark_golden_rod "backing up $entry $(( $i + 1 ))/${#entries[@]}.. "
+
+            backup.config $entry
+
+            # check is last backup old enough
+            if [[ -f $backup_stat_file ]] ; then
+                    source $backup_stat_file
+
+                    case $schedule in
+                             hourly) add_seconds=3600 ;;
+                             daily) add_seconds=86400 ;;
+                             weekly) add_seconds=604800 ;;
+                             monthly) add_seconds=2629743 ;;
+                             yearly) add_seconds=31556926 ;;
+                        esac
+
+                    next_backup=$(( last_backup_time + add_seconds ))
+                    # gr.msg "next_backup: $next_backup last_backup_time: $last_backup_time add_seconds: $add_seconds"
+
+                    if [[ $(date +%s) -lt $next_backup ]] ; then
+                            gr.msg "waiting $(date -d @$next_backup '+%d.%m.%Y %H:%M')"
+                            continue
+                        fi
+                fi
+
+            backup.now $entry || (( _error++ ))
+        done
 
     if [[ $_error -gt 0 ]] ; then
         gr.msg "$_error warnings, check log above" -c yellow -k $backup_indicator_key
@@ -682,7 +728,7 @@ backup.scheduled () {
 
     # schedule next backup
     if [[ $_error -lt 100 ]] ; then
-        local now=$(date -d now +%s)
+        local now=$(date +%s)
 
         # konepelti näemmä aika auki jääny
         # case ${schedule} in

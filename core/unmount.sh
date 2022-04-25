@@ -151,7 +151,7 @@ unmount.remote () {  # unmount mount point
 
     # unmount (normal)
     if ! fusermount -u "$_mountpoint" ; then
-            gr.msg -v2 -c yellow "error $? "
+            gr.msg -v3 -c yellow "error $? "
         fi
 
     if ! mount.online "$_mountpoint" ; then
