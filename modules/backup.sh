@@ -434,18 +434,9 @@ backup.now () {
                         gio mount -d $store_device_file \
                             && gr.msg -v1 -c green "ok" \
                             || gr.msg -v1 -c yellow "error: $?" -k $backup_indicator_key
-
                     else
                         gr.msg -c white "to mount -t $store_file_system $store_device_file $store_mount_point sudo needed"
-
                         [[ -d $store_mount_point ]] || sudo mkdir -p $store_mount_point
-
-                        # if [[ $store_file_system == "luks" ]] ; then
-                        #         sudo mount -t $store_file_system "/dev/mapper/dev/luks_$store_device_file" $store_mount_point
-                        #     else
-
-                        #     fi
-
                         gr.msg -v3 -N -c deep_pink "sudo mount -t $store_file_system $store_device_file $store_mount_point"
                         if sudo mount -t $store_file_system $store_device_file $store_mount_point ; then
                                 gr.msg -v1 -c green "ok"
@@ -476,6 +467,32 @@ backup.now () {
                 || store_param="$store_location/$backup_name"
 
             gr.msg -v3 "location: $store_location folder: $store_folder param: $store_param "
+    }
+
+    local_to_local () {
+
+        if ! mount | grep $store_mount_point >/dev/null ; then
+                if [[ $DISPLAY ]] && [[ $store_device_file ]] ; then
+                        gr.msg -v2 -n "mounting store media $store_device_file.. "
+                        gr.msg -v3 -N -c deep_pink "gio mount -d $store_device_file"
+                        gio mount -d $store_device_file \
+                            && gr.msg -v1 -c green "ok" \
+                            || gr.msg -v1 -c yellow "error: $?" -k $backup_indicator_key
+                    fi
+            fi
+        command_param="-a --progress --update"
+        from_param="$from_location"
+
+        if [[ $backup_ignore ]] ; then
+                for _ignore in  ${backup_ignore[@]} ; do
+                        command_param="$command_param --exclude '*$_ignore'"
+                    done
+            fi
+
+        [[ ${store_location: -1} == '/' ]] \
+            && store_param="$store_location$backup_name" \
+            || store_param="$store_location/$backup_name"
+
     }
 
     local_to_server () {
@@ -516,6 +533,8 @@ backup.now () {
             server_to_local
         elif [[ $store_domain ]] ; then
             local_to_server
+        else
+            local_to_local
         fi
 
     # make dir if not exist (like when year changes)
