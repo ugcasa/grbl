@@ -442,7 +442,7 @@ backup.now () {
                                 gr.msg -v1 -c green "ok"
                             else
                                 gr.msg -v1 -c yellow "error: $?" -k $backup_indicator_key
-                                echo "last_backup_error=32" >>$backup_stat_file
+                                # echo "last_backup_error=32" >>$backup_stat_file
                                 return 32
                             fi
 
@@ -523,9 +523,6 @@ backup.now () {
     gr.msg -v3 "backup active" -c aqua_marine -k $backup_indicator_key
 
 ### 2) check and plase variables for rsynck based on user.cfg
-    echo "### $backup_name $(date '+%d.%m.%Y %H:%M')" >$backup_stat_file
-    echo "last_backup_version='$(head -n1 $GURU_BIN/version)'" >>$backup_stat_file
-    echo "last_backup_name=$backup_name" >>$backup_stat_file
 
     if [[ $from_domain ]] && [[ $store_domain ]] ; then
             server_to_server
@@ -571,14 +568,14 @@ backup.now () {
                                         "POTENTIAL VIRUS: wannacry tracks detected!"
                                     gr.msg -c light_blue "$file"
                                     gr.msg -c yellow "backup of $from_location canceled"
-                                    echo "last_backup_error=101" >>$backup_stat_file
-                                    echo "### POTENTIAL VIRUS: wannacry tracks detected!" >>$backup_stat_file
+                                    # echo "last_backup_error=101" >>$backup_stat_file
+                                    # echo "### POTENTIAL VIRUS: wannacry tracks detected!" >>$backup_stat_file
                                     return 101
                                     ;;
 
                              *WORM*)
                                     gr.msg -c tbd "TBD other virus track marks here"
-                                    echo "last_backup_error=102" >>$backup_stat_file
+                                    # echo "last_backup_error=102" >>$backup_stat_file
                                     return 102
                                     ;;
                             esac
@@ -615,8 +612,8 @@ backup.now () {
                          "backup canceled cause of potential crypto virus action detected!"
                     export GURU_BACKUP_ENABLED=
 
-                    echo "last_backup_error=104" >>$backup_stat_file
-                    echo "### backup canceled cause of potential crypto virus action detected!" >>$backup_stat_file
+                    # echo "last_backup_error=104" >>$backup_stat_file
+                    # echo "### backup canceled cause of potential crypto virus action detected!" >>$backup_stat_file
                     return 104
                 fi
             gr.msg -v2 -c green "ok"
@@ -634,6 +631,9 @@ backup.now () {
                  echo "last_backup_error=120" >>$backup_stat_file
             return 120
         else
+            echo "### $backup_name $(date '+%d.%m.%Y %H:%M')" >$backup_stat_file
+            echo "last_backup_version='$(head -n1 $GURU_BIN/version)'" >>$backup_stat_file
+            echo "last_backup_name=$backup_name" >>$backup_stat_file
             echo "last_backup_time=$(date +%s)" >>$backup_stat_file
             echo "last_backup_error=$_error" >>$backup_stat_file
             gr.msg -v3 "$from_location ok" -c green -k $backup_indicator_key
