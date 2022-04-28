@@ -89,7 +89,7 @@ android.mount () {
     gr.msg -v1 -N -c white "mounting $_mount_point"
 
     if [[ -d "$_mount_point" ]] ; then mkdir -p "$_mount_point" ; fi
-    sshfs -o HostKeyAlgorithms=androiddss -p "$GURU_ANDROID_LAN_PORT" \
+    sshfs -o HostKeyAlgorithms=+ssh-dss -p "$GURU_ANDROID_LAN_PORT" \
         "$GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP:/storage/emulated/0" \
         "$_mount_point"
     return $?
@@ -183,7 +183,7 @@ android.process_photos () {
             gr.msg -v2 "month: $_month"
 
             # tag file   # $_recognized
-            tag_main "$android_temp_folder/photos/$_file" add "phone photo $_date" >/dev/null 2>&1
+            tag.main "$android_temp_folder/photos/$_file" add "phone photo $_date" >/dev/null 2>&1
 
             # move file to target location
             if ! [[ -d $GURU_MOUNT_PHOTOS/$_year/$_month ]] ; then
@@ -199,10 +199,7 @@ android.process_photos () {
                 else
                     gr.msg -N -c yellow  "$FUNCNAME error: file $android_temp_folder/photos/$_file not found"
                 fi
-
-
         done
-
     gr.msg -N -v1 -c green "done"
     return 0
 }
@@ -249,9 +246,7 @@ android.process_videos () {
                 else
                     gr.msg -N -c yellow  "$FUNCNAME error: $android_temp_folder/videos/$_file not found"
                 fi
-
         done
-
     gr.msg -v1
     return 0
 }
@@ -324,8 +319,6 @@ android.media () {
             gr.msg -v1 -V2 -n "."
             gr.msg -n -v2 -c dark_crey "$_title > $_target "
             if ! [[ -d "$_target" ]] ; then mkdir -p "$_target" ; fi
-
-
 
             # check folder exits
             if sshpass -p $GURU_ANDROID_PASSWORD \
