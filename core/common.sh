@@ -269,6 +269,7 @@ gr.ind () {
         case $_status in
             say)            espeak -p 85 -s 130 -v en "$_message" ;;
             done)           espeak -p 100 -s 120 -v en "$_message done! " ;;
+            available)      espeak -p 100 -s 130 -v en "$_message" ;;
             working)        espeak -p 85 -s 130 -v en "working... $_message" ;;
             pause)          espeak -p 85 -s 130 -v en "$_message is paused" ;;
             cancel)         espeak -p 85 -s 130 -v en "$_messagasde is canceled. I repeat, $_message is canceled" ;;
@@ -362,6 +363,57 @@ gr.installed () {
             ((i++))
         done
     return 100
+}
+
+
+gr.local () {
+
+    case $1 in
+        stop|end)
+                touch /tmp/hello.killer
+                return 0
+                ;;
+            esac
+
+    [[ -f /tmp/hello.killer ]] && rm /tmp/hello.killer
+
+    source android.sh
+    local _interv=5
+
+    gr.msg "checking $GURU_ANDROID_NAME wifi every $_interv seconds.."
+
+    while true ; do
+
+            if [[ -f /tmp/hello.killer ]] ; then
+                    rm /tmp/hello.killer
+                    gr.msg "stopping.."
+                    return 0
+                fi
+
+            if android.connected ; then
+
+                if [[ -f /tmp/hello.indicator ]] ; then
+                        guru start
+                        gr.ind available -m "$GURU_USER seems to be activated"
+                        guru mount
+                        # guru note
+                        rm /tmp/hello.indicator
+                    fi
+
+                else
+                    # me leaving
+                    if ! [[ -f /tmp/hello.indicator ]] ; then
+                            touch /tmp/hello.indicator
+                            gr.ind available -m "$GURU_USER has left the building"
+                            guru unmount all
+                            guru daemon stop
+                            cinnamon-screensaver-command --lock
+                            # sleep 10
+                            # guru system suspend now
+                        fi
+                fi
+            sleep $_interv
+        done
 }
 
 
