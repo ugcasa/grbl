@@ -31,7 +31,7 @@ place.main () {
     local function="$1" ; shift
 
     case "$function" in
-            ls|help|poll|memes)
+            ls|help|poll|memes|photos|videos|media)
                 place.$function $@
                 return $?
                 ;;
@@ -68,6 +68,160 @@ place.memes () {
 }
 
 
+
+
+
+source mount.sh
+
+place.photos () {
+    # analyze, tag and relocate photo files
+
+    local phone_temp_folder="/tmp/guru/android"
+    local _photo_format="jpg"
+    [[ $1 ]] && _photo_format=$1
+
+    mount.online $GURU_MOUNT_PHOTOS || mount.known_remote photos
+
+    # when $phone_temp_folder/photos if filled?
+
+    # read file list
+    local _file_list=($(ls "$phone_temp_folder/photos" 2>/dev/null | grep ".$_photo_format" ))
+
+    if ! [[ ${_file_list[@]} ]]; then
+            gr.msg -c dark_crey "no new photos"
+            return 0
+        fi
+
+    gr.msg -v2 -c white "tagging and moving photos to $GURU_MOUNT_PHOTOS "
+
+    local _year=1970
+    local _month=1
+    local _date=
+    local _recognized=
+    local android_file_count=0
+
+    for _file in ${_file_list[@]}; do
+
+            # count and printout
+            android_file_count=$((android_file_count+1))
+
+            # get date for location
+            _date=${_file#*_} ; _date=${_date%_*} ; _date=${_date%_*} ; _date=${_date%_*}
+            gr.msg -v2 "date: $_date"
+            _year=$(date -d $_date +'%Y' || date +'%Y')
+            gr.msg -v2 "year: $_year"
+            _month=$(date -d $_date +'%m' || date +'%m')
+            gr.msg -v2 "month: $_month"
+
+            # tag file   # $_recognized
+            tag.main "$phone_temp_folder/photos/$_file" add "phone photo $_date" >/dev/null 2>&1
+
+            # move file to target location
+            if ! [[ -d $GURU_MOUNT_PHOTOS/$_year/$_month ]] ; then
+                    mkdir -p "$GURU_MOUNT_PHOTOS/$_year/$_month"
+                    gr.msg -n -v1 -V2 "o"
+                    gr.msg -N -v2 "$GURU_MOUNT_PHOTOS/$_year/$_month"
+                fi
+
+            # place photos to right folders
+            if mv "$phone_temp_folder/photos/$_file" "$GURU_MOUNT_PHOTOS/$_year/$_month" ; then
+                    gr.msg -n -v1 -V2 "."
+                    gr.msg -n -v2 "$_file "
+                else
+                    gr.msg -N -c yellow  "$FUNCNAME error: file $phone_temp_folder/photos/$_file not found"
+                fi
+        done
+    gr.msg -N -v1 -c green "done"
+    return 0
+}
+
+
+place.videos () {
+    # analyze, tag and relocate video files
+
+    local phone_temp_folder="/tmp/guru/android"
+    local _video_format="mp4"
+    [[ $1 ]] && _video_format=$1
+
+    mount.online $GURU_MOUNT_VIDEO || mount.known_remote video
+
+    # read file list
+    local _file_list=($(ls "$phone_temp_folder/videos" 2>/dev/null | grep ".$_video_format" ))
+
+    if ! [[ ${_file_list[@]} ]]; then
+            gr.msg -c dark_crey "no new videos"
+            return 0
+        fi
+
+    gr.msg -n -c white "moving videos to $GURU_MOUNT_VIDEO "
+    local _year=1970
+    local android_file_count=0
+
+    for _file in ${_file_list[@]}; do
+            # count and printout
+            android_file_count=$((android_file_count+1))
+
+            # get date for location
+            _date=${_file#*_} ; _date=${_date%_*}
+            # echo "date: $_date"
+            _year=$(date -d $_date +'%Y') || _year=$(date +'%Y')
+            # echo "year: $_year"
+
+            # move file to target location
+            if ! [[ -d $GURU_MOUNT_VIDEO/$_year ]] ; then
+                    mkdir -p "$GURU_MOUNT_VIDEO/$_year"
+                    gr.msg -n -v1 -V2 "o"
+                    gr.msg -N -v2 "$GURU_MOUNT_VIDEO/$_year"
+                fi
+
+            # place videos to right folders
+            if mv "$phone_temp_folder/videos/$_file" "$GURU_MOUNT_VIDEO/$_year" ; then
+                    gr.msg -n -v1 -V2 "."
+                    gr.msg -n -v2 "$_file "
+                else
+                    gr.msg -N -c yellow  "$FUNCNAME error: $phone_temp_folder/videos/$_file not found"
+                fi
+        done
+    gr.msg -v1
+    return 0
+}
+
+
+place.media () {
+    # process photos and videos from camera
+    # expects that filesa are already copied/moved from home to $phone_temp_folder
+
+    mount.online $GURU_MOUNT_PHOTOS || mount.known_remote photos
+    mount.online $GURU_MOUNT_VIDEO || mount.known_remote video
+
+    place.photos "jpg"
+    place.videos "mp4"
+
+    local phone_temp_folder="/tmp/guru/android"
+    local _left_over=$(ls $phone_temp_folder)
+
+    if [[ "$_left_over" ]] ; then
+            gr.msg -v1 "left over files:"
+            gr.msg -v1 -c light_blue "$_left_over"
+
+            if gr.ask "remove leftovers from temp" ; then
+                    [[ -d "$phone_temp_folder" ]] && rm -rf "$phone_temp_folder"
+                fi
+        fi
+
+ #   if ((android_file_count<1)) ; then
+ #           return 0
+ #       fi
+
+    gr.msg -c white "$android_file_count files processed"
+
+    if [[ $GURU_FORCE ]] || gr.ask "remove source files from phone" ; then
+            source android.sh
+            android.rmdir "/storage/emulated/0/DCIM/Camera"
+        fi
+}
+
+
 place.ls () {
     # list something
     GURU_VERBOSE=2
@@ -86,7 +240,7 @@ place.ls () {
 place.status () {
     # output place status
 
-    gr.msg -n -t -v1 "${FUNCNAME[0]}: "
+    gr.msg -n -t -v1 "${FUNCNAME[0]}: nothing to report"
 
     # other tests with output, return errors
 
