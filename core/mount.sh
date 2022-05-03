@@ -66,7 +66,6 @@ mount.help () {
     gr.msg -v1 " mount kill mount_name      kill mount process "
     gr.msg -v2 "                            edit $GURU_CFG/$USER/user.cfg or run "
     gr.msg -v2 "                            '$GURU_CALL config user' to setup default mountpoints "
-    gr.msg -v2 "                            more information of adding default mountpoint type: $GURU_CALL mount help-default"
     gr.msg -v3 " poll start|end             start or end module status polling "
     gr.msg -v2
     gr.msg -v1 -c white "example:"
