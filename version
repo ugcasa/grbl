@@ -1,4 +1,4 @@
-0.6.8.1
+0.6.8.2
 'lazy maggot'
 "when rc system sucks a lots and need acute janitoring focus."
 
@@ -51,13 +51,22 @@ Core clean up. Is messy now.
 
 - [ ] new functions.sh what combines core level functions and functions from common.sh?
 
-## 1) memes and crusal fixes to backup
+## 1) memes and fixes to backup
 
 - [x] backup fix for store location folder issue
 - [x] convert read, mostly variable name changes
 - [x] placer can handle meme files. 'gr place memes' 9gsg patterns added
 
-## 2) speak synthesizer
+
+## 2) phone ssh tools
+
+- [x] recognize when phone is connected
+- [x] phone ssh server is on
+- [x] phone daemon tools
+- [x] test of all phone functions: passed
+- [x] audio module fixes
+
+## n) speak synthesizer
 
 Guru needs a voice.
 
@@ -69,7 +78,7 @@ Guru needs a voice.
 - [ ] needs tag/whatever 'speaker ready module' or empty output
 
 
-## 3) rc system rewrite
+## n) rc system rewrite
 
 Stink this trough.
 It makes now no sense, it grow like that, not designed.
@@ -80,7 +89,7 @@ It makes now no sense, it grow like that, not designed.
 - [ ] changes to config.sh
 
 
-## 4) modules can run stand alone by default
+## n) modules can run stand alone by default
 
 Modules need to be able to run without .gururc.
 Exception is core level modules,
