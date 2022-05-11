@@ -140,20 +140,20 @@ audio.playlist_config () {
     # gr.msg -v3 "found_line: $found_line"
 
     declare -g playlist_found_name=$(echo $found_line | cut -f4 -d '_' | cut -f1 -d '=')
-    # gr.msg -v3 "playlist_found_name: $playlist_found_name"
+    gr.msg -v3 "playlist_found_name: $playlist_found_name"
 
     local variable="GURU_AUDIO_PLAYLIST_${playlist_found_name}[@]"
     local found_settings=($(eval echo ${!variable}))
-    # gr.msg -v3 "found_settings: ${found_settings[@]}"
+    gr.msg -v3 "found_settings: ${found_settings[@]}"
 
     declare -g playlist_location=${found_settings[0]}
-    # gr.msg -v3 "playlist_location: $playlist_location"
+    gr.msg -v3 "playlist_location: $playlist_location"
 
     declare -g playlist_phase=${found_settings[1]}
-    # gr.msg -v3 "playlist_phase: $playlist_phase"
+    gr.msg -v3 "playlist_phase: $playlist_phase"
 
     declare -g playlist_option=${found_settings[2]}
-    # gr.msg -v3 "playlist_option: $playlist_option"
+    gr.msg -v3 "playlist_option: $playlist_option"
 
     declare -g list_description="${playlist_location##*/}"
     list_description="${list_description//_/' '}"
@@ -409,6 +409,7 @@ audio.status () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    source $GURU_RC
     audio.main "$@"
     exit $?
 fi
