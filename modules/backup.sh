@@ -700,7 +700,7 @@ backup.plan () {
                     # gr.msg "next_backup: $next_backup last_backup_time: $last_backup_time add_seconds: $add_seconds"
 
                     if [[ $(date +%s) -lt $next_backup ]] ; then
-                            gr.msg "waiting $(date -d @$next_backup '+%d.%m.%Y %H:%M')"
+                            gr.msg -c dark_grey "waiting $(date -d @$next_backup '+%d.%m.%Y %H:%M')"
                             continue
                         fi
                 fi
