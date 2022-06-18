@@ -304,46 +304,78 @@ gr.ind () {
 
 
 gr.ask () {
-    # yes or no shortcut
+    # yes or no with blinky bling. if first is number 1-99 it is set as timeout
 
-    local _message="$1"
-    local _ans=
-     #TBD --kill-after
+    local _answer=
+    local _def_answer='n'
+    local _ano_answer='y'
+    local _options=
+    local _timeout=
+    local _message=
+    local _box=
 
-   # parse flags
-    TEMP=`getopt --long -o "k:" "$@"`
+    # parse arguments
+    TEMP=`getopt --long -o "t:d:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
             case "$1" in
-                -k ) local kill_time=$1
+                -t )
+                    _timeout=$2
+                    _options="-t $_timeout "
+                    shift 2
                     ;;
-                 * ) break
+                -d )
+                    _def_answer=$2
+
+                        case $_def_answer in
+                            y) _ano_answer='n' ;;
+                            n) _ano_answer='y' ;;
+                            *) gr.msg "just 'y' or 'n' please" ;;
+                        esac
+                    _answer=$2
+                    shift 2
+                    ;;
+                 * )
+                  break
             esac
         done
 
-    # --) check message for long parameters (don't remember why like this)
     local _arg="$@"
     [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
-    # just for showup ;)=
+    # format timeout box
+    if [[ $_timeout ]] ; then
+            _message="$_message ($_timeout sec timeout)"
+         fi
+
+    # make y and n blinky on keyboard
     if [[ GURU_CORSAIR_ENABLED ]] ; then
-            source $GURU_BIN/corsair.sh
-            # corsair.init yes-no
+
+            source corsair.sh
+            corsair.init yes-no
         fi
 
-    if [[ $kill_time ]] ; then
-            # NOT TESTED, not even run. ever
-            timeout 10 read -n 1 -p "$_message [y/n]: " _ans
-        else
-            read -n 1 -p "$_message [y/n]: " _ans
-        fi
+    # format [Y/n]: box
+    case $_def_answer in
+        y) _box="[${_def_answer^^}/${_ano_answer,,}]: " ;;
+        n) _box="[${_ano_answer,,}/${_def_answer^^}]: " ;;
+    esac
 
+    # ask from user
+    read $_options-n 1 -p "$_message $_box" _answer
+
+    # sense timeout
+    (( $? > 128 )) && _answer=$_def_answer
     echo
 
-    [[ $GURU_CORSAIR_ENABLED ]] && corsair.init # $GURU_CORSAIR_MODE
+    # stop blinky
+    if [[ $GURU_CORSAIR_ENABLED ]] ; then
+        corsair.init $GURU_CORSAIR_MODE
+    fi
 
-    case ${_ans^^} in Y|YES|YEP)
+    # return for callers if statment
+    case ${_answer^^} in Y)
             return 0
         esac
     return 1
@@ -414,6 +446,19 @@ gr.local () {
                 fi
             sleep $_interv
         done
+}
+
+
+gr.check-net () {
+    # quick check networn connection, no analysis
+    gr.msg -v2 -n "checking connection.. "
+    if ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
+        gr.msg -v1 -c green "connected"
+        return 0
+    else
+        gr.msg -c red "network failed"
+        return 100
+    fi
 }
 
 
