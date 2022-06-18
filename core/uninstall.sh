@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# guru-cli uninstaller
+
+
 [[ -f $GURU_BIN/keyboard.sh ]] \
     && source $GURU_BIN/keyboard.sh \
     || gr.msg -c white "keboard module not found, unable to return keyboard shortcuts"
@@ -13,16 +16,66 @@ guru_rc="$GURU_RC"
 
 
 uninstall.main () {
-
+    # remove mobules and applications installed by guru-cli
     command="$1" ; shift
     case "$command" in
-        config) remove_user_configs=true
-                uninstall.remove            ; return $? ;;
-        status) uninstall.status            ; return $? ;;
-          help) uninstall.help              ; return 0 ;;
-             *) uninstall.remove            ; return $? ;;
-    esac
+
+            config)
+                    remove_user_configs=true
+                    uninstall.remove
+                    return $?
+                    ;;
+
+            status|help)
+                    uninstall.$command
+                    return $?
+                    ;;
+
+            help)
+                    uninstall.help
+                    return 0
+                    ;;
+
+            uninstall|remove|"")
+                    uninstall.remove
+                    ;;
+
+            *)
+                    if [[ -f $GURU_BIN/$command.sh ]] ; then
+
+                        # try to find uninstall method from module
+                        if grep -q "$command.uninstall ()" $GURU_BIN/$command.sh ; then
+
+                                source $GURU_BIN/$command.sh
+                                $command.uninstall
+                                return $?
+                            else
+                                gr.msg -c yellow "no unisntall method in module"
+                            fi
+
+                        # try to find uninstall method from installer
+                        if grep -q "install.$command ()" $GURU_BIN/install.sh ; then
+
+                                source $GURU_BIN/install.sh
+                                install.$command uninstall
+                                return $?
+                            else
+                                gr.msg -c yellow "no uninstall method in installer"
+                            fi
+
+                        gr.msg -c red "failed to uninstall '$command'"
+                        return 100
+
+                    else
+
+                        # did not found module
+                        gr.msg "application or module '$command' not found"
+                        return 1
+                    fi
+                    ;;
+        esac
 }
+
 
 
 uninstall.status () {
@@ -53,7 +106,6 @@ uninstall.status () {
             _error=1
         fi
 
-
     gr.msg -n -v2 "$GURU_CFG/$GURU_USER/user.cfg.. "
     if [[ -f $GURU_CFG/$GURU_USER/user.cfg ]] ; then
             gr.msg -v2 -c green "exist"
@@ -61,7 +113,6 @@ uninstall.status () {
             gr.msg -v2 -c red "not found"
             _error=1
         fi
-
 
     gr.msg -n -v2 "$GURU_BIN/common.sh..  "
     if [[ -f $GURU_BIN/common.sh ]] ; then
@@ -95,6 +146,14 @@ uninstall.status () {
             _error=10
         fi
 
+    gr.msg -n -v2 "$GURU_CFG/installed.modules.. "
+    if [[ -f $GURU_CFG/installed.files ]] ; then
+            gr.msg -v2 -c green "exist"
+        else
+            gr.msg -v2 -c red "not found"
+            _error=10
+        fi
+
     case $_error in
                0)  gr.msg -v1 -c green "guru.client installed and can be uninstalled" ; return 0 ;;
            [1-9])  gr.msg -v1 -c yellow "guru.client installation is not complete but can be uninstalled" ;;
@@ -111,7 +170,7 @@ uninstall.help () {
     gr.msg -v2
     gr.msg -v1 -c white "commands:"
     gr.msg -v1 " config                      remove also configurations"
-    gr.msg -v1 " status                      blink esc, print status and return "
+    gr.msg -v1 " status                      check installation status "
     gr.msg -v2 " help                        this help "
     gr.msg -v2
 }

@@ -22,7 +22,7 @@ install.main () {
         help|virtualbox|tiv|java|\
         client|hackrf|fosphor|spectrumanalyzer|\
         radio|webmin|kaldi|vscode|\
-        django|anaconda|python)
+        django|anaconda|python|minecraft)
                     install.$argument "$@" ;;
         status|poll|start|stop)
                     gr.msg -v dark_grey "no polling functions" ;;
@@ -34,25 +34,67 @@ install.main () {
 install.help () {
     gr.msg -v1 -c white "guru-client installer help "
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL install [keyword] "
+    gr.msg -v0  "usage:    $GURU_CALL install application_name "
     gr.msg -v2
-    gr.msg -v1 -c white  "keywords:"
-    gr.msg -v1 " vscode               ms visual code "
-    gr.msg -v1 " virtualbox           virtualbox "
-    gr.msg -v1 " kaldi                speech recognize AI "
-    gr.msg -v1 " java                 java runtime "
-    gr.msg -v1 " python               python3 and venv "
+    gr.msg -v1 -c white  "application list:"
     gr.msg -v1 " anaconda             anaconda dev tool"
     gr.msg -v1 " django               django framework "
-    gr.msg -v1 " mqtt-client          mopsquitto MQTT clients "
-    gr.msg -v1 " webmin               webmin tools "
-    gr.msg -v1 " radio                gnuradio, HackRF, spectrumanalyzer and fosphor "
-    gr.msg -v2 " gnuradio             install radio software separately: "
-    gr.msg -v2 " hackrf               "
-    gr.msg -v2 " spectrumanalyzer     "
     gr.msg -v2 " fosphor              "
+    gr.msg -v2 " hackrf               "
+    gr.msg -v1 " java                 java runtime "
+    gr.msg -v1 " kaldi                speech recognize AI "
+    gr.msg -v1 " python               python3 and venv "
+    gr.msg -v1 " radio                gnuradio, HackRF, spectrumanalyzer and fosphor "
+    gr.msg -v2 " spectrumanalyzer     "
     gr.msg -v1 " tiv                  tiv text mode picture viewer "
+    gr.msg -v1 " virtualbox           virtualbox "
+    gr.msg -v1 " vscode               ms visual code "
+    gr.msg -v1 " webmin               webmin tools "
+    gr.msg -v1 " minecraft            minecraft block game"
+
+    gr.msg -v2 " unity                TBD unity "
+    gr.msg -v2 " mqtt                 TBD mopsquitto MQTT client "
+    gr.msg -v2 " mqtt-server          TBD mopsquitto MQTT server "
+
+
     gr.msg -v2
+}
+
+install.minecraft () {
+
+    if [[ "$1" == "uninstall" ]] ; then
+        sudo apt --purge remove minecraft-launcher
+        rm -r ~/.minecraf
+        return $?
+    fi
+
+    cd /tmp
+    wget https://launcher.mojang.com/download/Minecraft.deb
+    sudo dpkg -i Minecraft.deb
+    sudo apt -f install
+}
+
+
+install.unity () {
+    # install unity 3D
+
+    if [[ "$1" == "uninstall" ]] ; then
+        install.question "remove unity" || return 0
+        sudo apt remove unityhub
+        return $?
+    fi
+
+    # if tiv -help >/tmp/tiv.help ; then
+    #     gr.msg "already installed: $(head -n1 /tmp/tiv.help) "
+    #     install.question "force reinstall" || return 0
+    # fi
+
+    sudo sh -c 'echo "deb https://hub.unity3d.com/linux/repos/deb stable main" > /etc/apt/sources.list.d/unityhub.list'
+    wget -qO - https://hub.unity3d.com/linux/keys/public | sudo apt-key add - || return 101
+    sudo apt update || return 102
+    sudo apt-get install unityhub || return 103
+
+    return 0
 }
 
 
@@ -98,6 +140,21 @@ install.virtualbox () {
 
 install.tiv () {
     #install text mode picture viewer
+
+    if [[ "$1" == "uninstall" ]] ; then
+        install.question "remove tiv" || return 0
+        rm /usr/local/bin/tiv
+
+        install.question "remove imagemagick" || return 0
+        sudo apt remove imagemagick
+        return $?
+    fi
+
+    if tiv -help ; then
+        gr.msg "already installed "
+        install.question "force reinstall" || return 0
+    fi
+
     [[ -d /tmp/TerminalImageViewer ]] && rm /tmp/TerminalImageViewer -rf
     cd /tmp
     sudo apt update && OK "update"
