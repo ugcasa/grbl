@@ -1,10 +1,12 @@
-0.6.8.2
+0.6.8.3
 'lazy maggot'
+"you asked me to janitor, did other shit instead like usually"
 "when rc system sucks a lots and need acute janitoring focus."
+
 
 # 0.6.8. 'lazy maggot' features
 
-Yeap, another feature branch.
+Yep, another feature branch.
 This time to fix fundamentals.
 
 rc system sucks a lot and need acute focus of(for/as?) janitor.
@@ -19,7 +21,6 @@ https://github.com/ugcasa/guru-client
 
 branch in web
 https://github.com/ugcasa/guru-client/tree/rc-clean
-
 
 
 ## 0) new version file
@@ -66,6 +67,17 @@ Core clean up. Is messy now.
 - [x] test of all phone functions: passed
 - [x] audio module fixes
 
+
+## 3) some new modules
+
+- [x] display module added to set brightness
+- [x] vpn module added to tunnel shit
+- [x] audio playlist updated to make it more intuitive
+- [x] installer tiv uninstall method added, minecraft and unity installers added
+- [x] mount uninstaller and availability check added
+- [x] common gr.ask rewritten
+
+
 ## n) speak synthesizer
 
 Guru needs a voice.
@@ -109,7 +121,7 @@ check all works with these:
 speak should be supported by these modules
 
 - [ ] audio.sh
-- [ ] backup.sh
+- [x] backup.sh
 - [ ] cal.sh
 - [ ] convert.sh
 - [ ] mqtt.sh
