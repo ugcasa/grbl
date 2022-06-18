@@ -125,11 +125,14 @@ display.set () {
     local value=1
     [[ $1 ]] && value=$1
 
-    if ps u | grep redshift -v grep -q ; then
+    if ps u | grep redshift | grep -v grep ; then
         pkill redshift
         # indicate user were using redshift
         [[ -f /tmp/redshift.flag ]] || touch /tmp/redshift.flag
     fi
+
+    sleep 1
+    # gsettings set org.gnome.settings-daemon.plugins.power ambient-enabled false
 
     display.check
 
@@ -137,6 +140,7 @@ display.set () {
     for (( i = 0; i < $monitors; i++ )); do
         stuff="monitor_$i[name]"
         xrandr --output ${!stuff} --brightness $value
+        sleep 0.5
     done
 }
 
@@ -145,11 +149,16 @@ display.reset () {
 
     # gsettings set org.gnome.settings-daemon.plugins.power ambient-enabled true
     display.check
-    xrandr --output ${monitor_0[name]} --brightness 1.0
-    xrandr --output ${monitor_2[name]} --brightness 1.0
-    xrandr --output ${monitor_1[name]} --brightness 1.0
 
-    if [[ /tmp/redshift.flag ]] && ! ps u | grep -q redshift -v grep ; then
+    for (( i = 0; i < $monitors; i++ )); do
+        stuff="monitor_$i[name]"
+        xrandr --output ${!stuff} --brightness 1.0
+        sleep 0.5
+    done
+
+    sleep 1
+
+    if [[ /tmp/redshift.flag ]] && ! ps u | grep redshift | grep -v grep ; then
         /usr/bin/redshift >/dev/null 2>/dev/null &
     fi
 
