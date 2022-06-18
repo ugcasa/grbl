@@ -20,8 +20,11 @@ audio.help () {
     gr.msg -v0 "usage:    $GURU_CALL audio play|install|remove|white|tunnel|close|ls|ls_remote|toggle|fast|help <host|ip> "
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
+    gr.msg -v1 "  play <playlist_name>             play list name configured in user.cfg or playlist file"
     gr.msg -v1 "  play <playlist>             play list name configured in user.cfg or playlist file"
-    gr.msg -v1 "  play ls|list                list of playlists set in user.cfg "
+    gr.msg -v1 "  play ls                     list of playlists set in user.cfg "
+    gr.msg -v1 "  play list <playlist_name>   play a playlist set in uiser.cfg"
+
     gr.msg -v1 "  install-voip                install tools to voip over ssh"
     gr.msg -v1 "  install                     install requirements "
     gr.msg -v1 "  remove                      remove requirements "
@@ -41,7 +44,7 @@ audio.help () {
 
 audio.main () {
     # main command parser
-    local _command="$1"
+    local _command=$1
     shift
     case "$_command" in
 
@@ -49,15 +52,57 @@ audio.main () {
             audio.$_command $@
             return $?
             ;;
-        listen)
+        listen|stream)
             gr.ind playing $audio_blink_key
-            audio.stream_$_command $@
+            audio.stream_listen $@
             gr.end $audio_blink_key
             return $?
             ;;
         play)
             gr.ind playing $audio_blink_key
-            audio.playlist_play $@
+
+            case $1 in
+                list)
+                    shift
+                    audio.playlist_play $@
+                    ;;
+                "")
+                    audio.stream_listen yle puhe
+                    ;;
+                *)
+                    # if file, play it
+                    [[ -f $1 ]] && mpv $1 && return 0
+
+                    # if part of name, look from folders
+                    if [[ $1 ]] ; then
+                        ifs=$IFS
+                        IFS=" "
+                        got=$(find $GURU_MOUNT_MUSIC -maxdepth 3 -iname *mp3)
+
+                        while [[ $1 ]] ; do
+                            got=$(echo -e $got | grep -i $1 | grep -v 'Trash-1000')
+                            shift
+                        done
+                        IFS=$ifs
+
+                        # printout artist and song name
+                        songs=${got//"$GURU_MOUNT_MUSIC/"/""}
+                        songs=${songs//'/'/'@'}                 # to remove word before '/' later
+                        songs=${songs//'_'/' '}
+                        songs=${songs//'-'/': '}
+                        songs=${songs//'.mp3'/''}
+
+                        if [[ $got ]] ; then
+                            gr.msg -v1 -c white "${songs}" | sed 's/.*@//'
+                            mpv --no-video $(echo -e $got) 2>/dev/null
+                            return $?
+                        fi
+                    fi
+
+                    gr.msg "nothing to play"
+                    ;;
+                esac
+
             gr.end $audio_blink_key
             return $?
             ;;
@@ -98,7 +143,6 @@ audio.toggle () {
 }
 
 
-
 audio.stream_listen () {
 
     case $1 in
@@ -116,6 +160,11 @@ audio.stream_listen () {
     local channel=$@
     local options=
     [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
+
+    if ! gr.check-net ; then
+            gr.msg "please check your network connection and try again"
+            return 100
+        fi
 
     if [[ ${1,,} == "yle" ]] ; then
             channel=$(echo $channel | sed -r 's/(^| )([a-z])/\U\2/g' )
@@ -203,7 +252,7 @@ audio.playlist_compose () {
 
     if [[ "$playlist_found_name" == "${user_reguest^^}" ]] ; then
             ls $playlist_location/$playlist_phase \
-                | grep -e wav -e mp3 -e m4a -e mkv -e mp4 \
+                | grep -e wav -e mp3 -e m4a -e mkv -e mp4 -e avi \
                 | sort $sort_option > $audio_temp_file
                 #\ | head -n 5
             local test=$(cat $audio_temp_file)
