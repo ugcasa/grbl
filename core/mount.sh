@@ -21,7 +21,7 @@ mount.main () {
     case "$command" in
 
             defaults|system|all|help|ls|info|check|\
-            poll|status|start|stop|toggle|list|kill)
+            poll|status|start|stop|toggle|list|kill|uninstall|available)
 
                             mount.$command $@
                             return $? ;;
@@ -111,6 +111,7 @@ mount.ls () {
     # simple list of mounted mountpoints
 
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
+
     return $?
 }
 
@@ -202,7 +203,7 @@ mount.remote () {
 
 
     # double check is in /etc/mtab  already mounted and .online file exists
-    if [[ -f $_target_folder/.online ]] && grep -qw "$_target_folder" /etc/mtab ; then #>/dev/null
+    if [[ -f $_target_folder/.online ]] && grep -qw "$_target_folder" /etc/mtab ; then
             gr.msg -v1 -c green "mounted"
             return 0
         fi
@@ -293,6 +294,22 @@ mount.remote () {
         fi
 }
 
+mount.available () {
+
+    gr.msg -c light_blue "${all_list[@]}"
+
+    # local lists=($(\
+    #         grep "export GURU_MOUNT_" $GURU_RC | \
+    #         grep -e "_LIST" -ve "_ENABLED" | \
+    #         sed 's/^.*MOUNT_//' | \
+    #         cut -d '=' -f1))
+    # lists=(${lists[@],,})
+
+    # gr.msg "available lists: ${lists[@]}"
+
+    return 0
+
+}
 
 mount.list () {
     # mount all GURU_MOUNT_<list_name>_LIST defined in userrc
@@ -555,7 +572,7 @@ mount.install () {
 }
 
 
-mount.remove () {
+mount.uninstall () {
     # install and remove install applications. input "install" or "remove"
 
     gr.msg "wont remove 'ssh' or 'rsync', do it manually if really needed"
