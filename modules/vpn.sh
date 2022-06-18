@@ -1,17 +1,20 @@
 #!/bin/bash
 # guru-client vpn functions
 
-#source $GURU_RC
 source common.sh
-
 
 vpn.main () {
 
-	case $1 in
+	local cmd=$1
+    shift
+
+    case $cmd in
 		open|close|install|uninstall )
+            vpn.$cmd
 			;;
 	esac
 }
+
 
 vpn.open () {
     # open vpn connection set in user.cfg
@@ -98,6 +101,7 @@ vpn.install () {
             echo "$GURU_VPN_PASSWORD" | sudo tee -a /etc/openvpn/credentials
         fi
 }
+
 
 vpn.uninstall () {
 
