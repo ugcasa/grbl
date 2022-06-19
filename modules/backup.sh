@@ -411,7 +411,6 @@ backup.wekan () {
 }
 
 
-
 backup.now () {
     # check things and if pass then make backup
     # 1) get config for backup name
@@ -445,10 +444,8 @@ backup.now () {
                                 # echo "last_backup_error=32" >>$backup_stat_file
                                 return 32
                             fi
-
                     fi
-
-                    # no rush, my friend
+                    # no rush my friend
                     sleep 3
                 fi
 
@@ -468,6 +465,7 @@ backup.now () {
 
             gr.msg -v3 "location: $store_location folder: $store_folder param: $store_param "
     }
+
 
     local_to_local () {
 
@@ -495,6 +493,7 @@ backup.now () {
 
     }
 
+
     local_to_server () {
             # build local to remote command variables
             gr.ask "local to server NEVER TESTED!! continue? " || return 1
@@ -514,6 +513,7 @@ backup.now () {
             from_param="$from_user@$from_domain 'rsync -ave ssh $from_location $store_user@$store_domain:$from_port:$store_location'"
             store_param=
         }
+
 
 ### 1) get config for backup name
     [[ $backup_name ]] || backup.config $1
@@ -689,11 +689,11 @@ backup.plan () {
                     source $backup_stat_file
 
                     case $schedule in
-                             hourly) add_seconds=3600 ;;
-                             daily) add_seconds=86400 ;;
-                             weekly) add_seconds=604800 ;;
+                             hourly)  add_seconds=3600 ;;
+                             daily)   add_seconds=86400 ;;
+                             weekly)  add_seconds=604800 ;;
                              monthly) add_seconds=2629743 ;;
-                             yearly) add_seconds=31556926 ;;
+                             yearly)  add_seconds=31556926 ;;
                         esac
 
                     next_backup=$(( last_backup_time + add_seconds ))
