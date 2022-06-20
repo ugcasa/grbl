@@ -21,6 +21,8 @@ tunnel.help () {
     gr.msg -v1 " install          install requirements "
     gr.msg -v1 " remove           remove installed requirements "
     gr.msg -v2 " poll start|end   start or end module status polling "
+    gr.msg -v3 " hop              TBD hopping tunnel support"
+
     gr.msg -v2
     gr.msg -v1 -c white  "example:"
     gr.msg -v1 "    $GURU_CALL tunnel open wiki"
