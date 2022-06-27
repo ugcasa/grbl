@@ -9,10 +9,102 @@ vpn.main () {
     shift
 
     case $cmd in
-		open|close|install|uninstall )
+		status|open|close|install|uninstall|toggle|check )
             vpn.$cmd
 			;;
 	esac
+}
+
+
+vpn.help () {
+    # genereal help
+
+    gr.msg -v1 -c white "guru-client vpn help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL vpn status|open|close|install|uninstall] "
+    gr.msg -v2
+    gr.msg -v1 -c white  "commands:"
+    gr.msg -v1 " status           vpn status "
+    gr.msg -v1 " open             open vpn connection to Helsinki "
+    gr.msg -v1 " close            close vpn connection"
+    gr.msg -v1 " install          install requirements "
+    gr.msg -v1 " remove           remove installed requirements "
+
+    gr.msg -v2
+    gr.msg -v1 -c white  "example:"
+    gr.msg -v1 "    $GURU_CALL vpn open "
+    gr.msg -v2
+}
+
+
+vpn.check () {
+
+    if ps u | grep openvpn | grep -v grep ; then
+            return 0
+        else
+            return 100
+        fi
+}
+
+
+vpn.toggle () {
+
+    if vpn.check ; then
+            gr.msg -v2 "session found, closing.."
+            vpn.close
+        else
+            gr.msg -v2 "session not found, opening.."
+            vpn.open
+        fi
+}
+
+
+vpn.status () {
+
+    gr.msg -v1 -n "vpn status: "
+
+    if [[ -f /usr/sbin/openvpn ]] ; then
+            gr.msg -n -v2 -c green "installed "
+        else
+            gr.msg -c red "application not installed"
+            gr.msg -v2 -c white "try to '$GURU_CALL vpn install'"
+            return 100
+        fi
+
+    gr.msg -n -v2 "server list: "
+    if [[ -d /etc/openvpn/tcp ]] ; then
+            gr.msg -n -v2 -c green "ok "
+        else
+            gr.msg -c red "not found"
+            return 101
+        fi
+
+    gr.msg -n -v2 "credentials: "
+    if [[ -f /etc/openvpn/credentials ]] ; then
+            gr.msg -n -v2 -c green "ok "
+        else
+            gr.msg -c red "not found"
+            return 102
+        fi
+
+    local ip_now="$(curl -s https://ipinfo.io/ip)"
+
+    gr.msg -n -v2 "ip: "
+    gr.msg -n -v2 -c green "$ip_now "
+
+    if [[ -f /tmp/guru.vpn.ip ]] ; then
+            local ip_last="$(cat /tmp/guru.vpn.ip)"
+            gr.msg -n -v3 -c dark_crey "$ip_last "
+        fi
+
+    gr.msg -n -v2 "currently: "
+    if [[ $ip_now == $ip_last ]] ; then
+            gr.msg -c aqua_marine "active"
+            return 0
+        else
+            gr.msg -c green "available"
+            return 0
+        fi
 }
 
 
@@ -41,9 +133,12 @@ vpn.open () {
                     return 100
                 fi
             gr.msg "our external ip is: $new_ip"
+            echo "$new_ip" >/tmp/guru.vpn.ip
         else
             gr.msg -c yellow "error during vpn connection"
+            return 101
         fi
+
     return 0
 }
 
@@ -67,6 +162,10 @@ vpn.close () {
             return 100
         fi
     gr.msg "our ip is now: $new_ip"
+
+    if [[ -f /tmp/guru.vpn.ip ]] ; then
+            rm -f §/tmp/guru.vpn.ip
+        fi
 
     return 0
 }
