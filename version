@@ -78,6 +78,16 @@ Core clean up. Is messy now.
 - [x] common gr.ask rewritten
 
 
+## 4) ssh proxy
+
+- [x] coal: one liners, zero conf
+- [x] prototype seems to work see note 2022
+- [ ] documentation (start the wiki - no I won't)
+- [ ]
+
+
+# wanted properties
+
 ## n) speak synthesizer
 
 Guru needs a voice.
