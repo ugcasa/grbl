@@ -1,7 +1,7 @@
 #!/bin/bash
 # mount tools for guru-client
 #source "$HOME/.gururc"
-source $GURU_BIN/common.sh
+source common.sh # 2>/dev/null?
 
 all_list=($(\
         grep "export GURU_MOUNT_" $GURU_RC | \
@@ -702,8 +702,25 @@ mount.uninstall () {
 # }
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then
-        #get_env
+
+        [[ "$1" == "test" ]] && is_test=true
+
+        # try to source guru variable set
         [[ $GURU_SYSTEM_MOUNT ]] || source $GURU_RC
+
+        # fulfill required variables when run as stand alone
+        [[ $GURU_BIN ]]     || declare -g GURU_BIN="$HOME/bin"  # 2>/dev/null?
+        [[ $GURU_RC ]]      || declare -g GURU_RC="$HOME/.gururc"
+        [[ $GURU_CALL ]]    || declare -g GURU_CALL='guru'
+        [[ $GURU_CFG ]]     || declare -g GURU_CFG="$HOME/.config/guru"
+        [[ $GURU_USER ]]    || declare -g GURU_USER=$USER
+
+        # if test of stand alone fulfill with guest information
+        [[ $is_test ]] || ! [[ $GURU_SYSTEM_MOUNT ]]    && declare -g GURU_SYSTEM_MOUNT=/tmp/guru-temp-data
+        [[ $is_test ]] || ! [[ $GURU_CLOUD_USERNAME ]]  && declare -g GURU_CLOUD_USERNAME=guest
+        [[ $is_test ]] || ! [[ $GURU_CLOUD_DOMAIN ]]    && declare -g GURU_CLOUD_DOMAIN=guest.ujo.guru
+        [[ $is_test ]] || ! [[ $GURU_CLOUD_PORT ]]      && declare -g GURU_CLOUD_PORT=2023
+
         mount.main $@
         exit $?
     fi
