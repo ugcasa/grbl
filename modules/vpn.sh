@@ -9,7 +9,7 @@ vpn.main () {
     shift
 
     case $cmd in
-		status|open|close|install|uninstall|toggle|check )
+		status|open|close|install|uninstall|toggle|check|ip )
             vpn.$cmd
 			;;
 	esac
@@ -25,10 +25,15 @@ vpn.help () {
     gr.msg -v2
     gr.msg -v1 -c white  "commands:"
     gr.msg -v1 " status           vpn status "
-    gr.msg -v1 " open             open vpn connection to Helsinki "
+    gr.msg -v1 " ip               display ip if vpn is active"
+    gr.msg -v2 " check            return zero if vpn connection is active"
+    gr.msg -v2 " toggle           toggle vpn connection"
+    gr.msg -v1 " open             open vpn connection to Helsinki ovpn server "
+    gr.msg -v3 " open <city>      TBD open vpn connection to ovpn  "
+    gr.msg -v3 " ls               TBD list of available vpn out "
     gr.msg -v1 " close            close vpn connection"
     gr.msg -v1 " install          install requirements "
-    gr.msg -v1 " remove           remove installed requirements "
+    gr.msg -v1 " uninstall        remove installed requirements "
 
     gr.msg -v2
     gr.msg -v1 -c white  "example:"
@@ -37,12 +42,27 @@ vpn.help () {
 }
 
 
+vpn.ip () {
+
+    local ip_now="$(curl -s https://ipinfo.io/ip)"
+
+    if vpn.check ; then
+        gr.msg "$ip_now"
+        return 0
+    else
+        gr.msg -v2 "not connected"
+        return 1
+    fi
+
+}
+
+
 vpn.check () {
 
-    if ps u | grep openvpn | grep -v grep ; then
+    if ps auxf | grep openvpn | grep -v grep >/dev/null ; then
             return 0
         else
-            return 100
+            return 1
         fi
 }
 
@@ -97,6 +117,7 @@ vpn.status () {
             gr.msg -n -v3 -c dark_crey "$ip_last "
         fi
 
+
     gr.msg -n -v2 "currently: "
     if [[ $ip_now == $ip_last ]] ; then
             gr.msg -c aqua_marine "active"
@@ -111,6 +132,11 @@ vpn.status () {
 vpn.open () {
     # open vpn connection set in user.cfg
     local original_ip="$(curl -s https://ipinfo.io/ip)"
+
+    if vpn.check ; then
+        gr.msg -c yellow "vpn connection already in use"
+        return 0
+    fi
 
     if [[ -f /etc/openvpn/credentials ]] ; then
         [[ $GURU_VPN_USERNAME ]] || GURU_VPN_USERNAME="$(sudo head -n1 /etc/openvpn/credentials)"
