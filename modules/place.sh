@@ -70,11 +70,10 @@ place.memes () {
 
 
 
-
-source mount.sh
-
 place.photos () {
     # analyze, tag and relocate photo files
+
+    source mount.sh
 
     local phone_temp_folder="/tmp/guru/android"
     local _photo_format="jpg"
