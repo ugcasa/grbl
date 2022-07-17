@@ -41,6 +41,10 @@ core_module_access=(counter install uninstall config mount unmount daemon keyboa
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
 modules_to_install=(mqtt note android print project scan audio display vpn ssh stamp tag timer tor trans user vol yle news program tmux tunnel corsair backup convert telegram cal place)
 
+# TBD
+# client_modules=
+# server_modules=(towsdf)
+
 install.main () {
 
     # Step 1) parse arguments
@@ -200,7 +204,7 @@ install.arguments () {
     ## Process flags and arguments
     export GURU_VERBOSE=0
 
-    TEMP=`getopt --long -o "dfcrhlv:u:p:" "$@"`
+    TEMP=`getopt --long -o "dfcrhlsv:u:p:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
@@ -211,6 +215,8 @@ install.arguments () {
             -c) configure_after_install=true
                 shift ;;
             -r) install_requiremets=true
+                shift ;;
+            -s) gr.msg "TBD"
                 shift ;;
             -h) install.help
                 shift ;;
