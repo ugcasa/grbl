@@ -9,7 +9,7 @@ vpn.main () {
     shift
 
     case $cmd in
-		status|open|close|install|uninstall|toggle|check|ip )
+		status|open|close|install|uninstall|toggle|check|ip|help )
             vpn.$cmd
 			;;
 	esac
