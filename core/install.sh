@@ -368,6 +368,30 @@ install.vscode () {
 }
 
 
+install.teams () {
+
+    # Step 1 make temp
+    temp_folder='/tmp/teams'
+    mkdir $temp_folder && cd $temp_folder
+
+    # Step 2 get package
+    if wget https://go.microsoft.com/fwlink/p/?LinkID=2112886 -O "$temp_folder/teams.deb" ; then
+        gr.msg -c yellow "unable to download package from https://go.microsoft.com/fwlink/p/?LinkID=2112886"
+        return 102
+    fi
+
+    # Step 3 install package
+    if sudo dpkg -i $temp_folder/teams.deb ; then
+        gr.msg -c yellow "Pachage installation failed"
+        return 103
+    fi
+
+    gr.msg -c green "teams installed"
+    gr.msg "type 'teams' to test installation"
+    return 0
+}
+
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$GURU_RC"
     install.main "$@"
