@@ -19,13 +19,8 @@ install.main () {
     esac
 
     case "$argument" in
-        help|virtualbox|tiv|java|\
-        client|hackrf|fosphor|spectrumanalyzer|\
-        radio|webmin|kaldi|vscode|\
-        django|anaconda|python|minecraft)
+        help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams)
                     install.$argument "$@" ;;
-        status|poll|start|stop)
-                    gr.msg -v dark_grey "no polling functions" ;;
         *)          gr.msg -v dark_grey "no installer for '$argument'"; install.help
     esac
 }
@@ -63,7 +58,7 @@ install.help () {
 install.minecraft () {
 
     if [[ "$1" == "uninstall" ]] ; then
-        sudo apt --purge remove minecraft-launcher
+        sudo apt-get --purge remove minecraft-launcher
         rm -r ~/.minecraf
         return $?
     fi
@@ -71,7 +66,7 @@ install.minecraft () {
     cd /tmp
     wget https://launcher.mojang.com/download/Minecraft.deb
     sudo dpkg -i Minecraft.deb
-    sudo apt -f install
+    sudo apt-get -f install
 }
 
 
@@ -79,31 +74,22 @@ install.unity () {
     # install unity 3D
 
     if [[ "$1" == "uninstall" ]] ; then
-        install.question "remove unity" || return 0
-        sudo apt remove unityhub
+        gr.ask "remove unity?" || return 0
+        sudo apt-get remove unityhub
         return $?
     fi
 
     # if tiv -help >/tmp/tiv.help ; then
     #     gr.msg "already installed: $(head -n1 /tmp/tiv.help) "
-    #     install.question "force reinstall" || return 0
+    #     gr.ask "force reinstall" || return 0
     # fi
 
     sudo sh -c 'echo "deb https://hub.unity3d.com/linux/repos/deb stable main" > /etc/apt/sources.list.d/unityhub.list'
     wget -qO - https://hub.unity3d.com/linux/keys/public | sudo apt-key add - || return 101
-    sudo apt update || return 102
+    sudo apt-get update || return 102
     sudo apt-get install unityhub || return 103
 
     return 0
-}
-
-
-install.question () {
-    [[ "$1" ]] || return 2
-    read -p "$1 [y/n]: " answer
-    [[ $answer ]] || return 1
-    [[ $answer == "y" ]]  && return 0
-    return 1
 }
 
 
@@ -142,23 +128,22 @@ install.tiv () {
     #install text mode picture viewer
 
     if [[ "$1" == "uninstall" ]] ; then
-        install.question "remove tiv" || return 0
+        gr.ask "remove tiv?" || return 0
         rm /usr/local/bin/tiv
 
-        install.question "remove imagemagick" || return 0
-        sudo apt remove imagemagick
+        gr.ask "remove imagemagick?" || return 0
+        sudo apt-get remove imagemagick
         return $?
     fi
 
     if tiv -help ; then
-        gr.msg "already installed "
-        install.question "force reinstall" || return 0
+        gr.ask "already installed force reinstall?" || return 0
     fi
 
     [[ -d /tmp/TerminalImageViewer ]] && rm /tmp/TerminalImageViewer -rf
     cd /tmp
-    sudo apt update && OK "update"
-    sudo apt install imagemagick && OK "imagemagick"
+    sudo apt-get update && OK "update"
+    sudo apt-get install imagemagick && OK "imagemagick"
     git clone https://github.com/stefanhaustein/TerminalImageViewer.git && OK "git clone"
     cd TerminalImageViewer/src/main/cpp
     make && OK "compile"
@@ -179,7 +164,7 @@ install.java () {
 
     [ "$action" ] || read -r -p "install or remove?: " action
     printf "need to install $require, ctrl+c or enter local "
-    sudo apt update && eval sudo apt "$action" "$require" && printf "\n guru is now ready to script java\n\n"
+    sudo apt-get update && eval sudo apt-get "$action" "$require" && printf "\n guru is now ready to script java\n\n"
 }
 
 
@@ -187,7 +172,7 @@ install.java () {
 # combined to radio
 install.hackrf () {
     # full
-    # sudo apt install hackrf
+    # sudo apt-get install hackrf
     read -r -p "Connect HacrkRF One and press anykey: " nouse
     hackrf_info && echo "successfully installed" || echo "HackrRF One not found, pls. re-plug or re-install"
     mkdir -p $HOME/git/labtools/radio
@@ -264,8 +249,8 @@ install.webmin () {
 
     cat /etc/apt/sources.list |grep "webmin" >/dev/null
     if ! [[ $? ]] ; then
-        sudo apt update
-        sudo apt install webmin
+        sudo apt-get update
+        sudo apt-get install webmin
         echo "webmin installed, connect http://localhost:10000"
         echo "if using ssh tunnel try http://localhost.localdomain:100000)"
     else
@@ -302,7 +287,7 @@ install.kaldi (){
 
     local cores=8
     echo "installing kaldi.."
-    sudo apt install g++ subversion
+    sudo apt-get install g++ subversion
     cd git
     mkdir speech
     cd speech
@@ -321,21 +306,21 @@ install.kaldi (){
 
 install.python () {
     # raw install python tools
-    sudo apt update
+    sudo apt-get update
     if python -V ; then
             gr.msg -c green "python2.7 installed"
         else
-            sudo apt install python2 || gr.msg -c yellow "error $? during python2.7 install"
+            sudo apt-get install python2 || gr.msg -c yellow "error $? during python2.7 install"
         fi
 
     if python3 -V ; then
             gr.msg -c green "python3 installed"
         else
-            sudo apt install -y python3.9 python3-pip python3-venv python3-dev \
+            sudo apt-get install -y python3.9 python3-pip python3-venv python3-dev \
             || gr.msg -c yellow "error $? during python3.9 install"
         fi
 
-    sudo apt install build-essential libssl-dev libffi-dev
+    sudo apt-get install build-essential libssl-dev libffi-dev
 }
 
 
@@ -343,14 +328,14 @@ install.vscode () {
     # install ms visual code editor
 
     gr.msg "installing vscode.."
-    sudo apt update
-    sudo apt install software-properties-common apt-transport-https wget
+    sudo apt-get update
+    sudo apt-get install software-properties-common apt-transport-https wget
 
     wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | sudo apt-key add -
     sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
-    sudo apt update
+    sudo apt-get update
 
-    if sudo apt install code ; then
+    if sudo apt-get install code ; then
             gr.msg -c green "installed"
             return 0
         else
