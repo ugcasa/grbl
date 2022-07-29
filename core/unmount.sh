@@ -17,20 +17,34 @@ unmount.main () {
     all_list=($(\
             cat $GURU_RC | \
             grep 'GURU_MOUNT_' | \
-            grep -v "DEFAULT_LIST" | \
+            grep -v "PROXY1_" | \
+            grep -v "ENABLED" | \
+            grep -v "LIST" | \
+            grep -v '$GURU_MOUNT' | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
-    all_list=(${all_list[@],,})
 
+    all_list=(${all_list[@],,})
+    gr.msg -v3 -c green "${all_list[@]}"
 
     indicator_key='f'"$(gr.poll mount)"
-    argument="$1" ; shift
+    local argument="$1" ; shift
+
     case "$argument" in
 
-        ls|all|defaults|status|help|system)
-            unmount.$argument $@    ; return $? ;;
-       "")  unmount.defaults        ; return $? ;;
+        all)
+            unmount.all
+            ;;
+
+        ls|defaults|status|help|system)
+            unmount.$argument $@
+            return $?
+            ;;
+       "")  unmount.defaults
+            return $?
+            ;;
        *)
+
             if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$argument" ; then
                     gr.msg -v3 -c green "found in defauls list"
                     unmount.known_remote $argument $@
@@ -54,7 +68,7 @@ unmount.main () {
                     gr.msg -v3 -c yellow "not in any list"
                     unmount.remote $argument $@
                 fi
-
+                source mount.sh
                 mount.status >/dev/null
     esac
 }
@@ -105,8 +119,22 @@ unmount.system () {
 }
 
 
-unmount.remote () {  # unmount mount point
-    source mount.sh
+unmount.online () {
+    # check if mountpoint "online", no printout, return code only input: mount point folder. usage: mount.online mount_point && echo "mounted" || echo "not mounted"
+
+    local _target_folder="$GURU_SYSTEM_MOUNT"
+    [[ "$1" ]] && _target_folder="$1"
+
+    if [[ -f "$_target_folder/.online" ]] ; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+unmount.remote () {
+# unmount single mount point name given as argument
+
     local _mountpoint="$1"
     local _numbers='^[0-9]+$'
     local _symlink=
@@ -149,21 +177,27 @@ unmount.remote () {  # unmount mount point
             gr.msg -n -v2 -c yellow ".online flag file missing "
          fi
 
-    # unmount (normal)
-    if ! fusermount -u "$_mountpoint" ; then
+    # unmount target (normal action)
+    if ! fusermount -u "$_mountpoint" 2>/dev/null; then
             gr.msg -v3 -c yellow "error $? "
         fi
 
-    if ! mount.online "$_mountpoint" ; then
+    # check is target unmounted
+    if ! unmount.online "$_mountpoint" ; then
             gr.msg -v1 -c green "ok"
             rmdir $_mountpoint
             return 0
         fi
 
-    gr.msg -n -v1 "force unmount.. "
+    if ! [[ $GURU_FORCE ]] ; then
+            gr.msg -c yellow "device busy"
+            return 0
+        fi
+
+    gr.msg -n -v1 -c white "force unmount.. "
 
     # force unmount
-    if mount.kill "$_mountpoint" ; then
+    if unmount.kill "$_mountpoint" ; then
             #gr.msg -v1 -c green "ok"
             rmdir $_mountpoint
             return 0
@@ -208,17 +242,87 @@ unmount.defaults () {  # unmount all GURU_CLOUD_* defined in userrc
 }
 
 
-unmount.all () {  # unmount all GURU_CLOUD_* defined in userrc
-    # unmount all local/cloud pairs defined in userrc
+unmount.kill () {
+    # Kill single mount process by mount_name or mount_point
+    #source mount.sh
+    source common.sh
 
+    if ! [[ $1 ]] ; then
+            gr.msg -c yellow "enter mount_name"
+            return 2
+        fi
+
+    local _mount_name="$1"
+    local _find=
+
+    # Check is given string in mountable list
+    if grep -q $_mount_name <<<${all_list[@]} ; then
+            _find=$(eval echo '${GURU_MOUNT_'"${_mount_name^^}}")
+        fi
+
+    # Check is given string mount_point
+    if [[ -d $_mount_name ]] ; then
+            _find=$_mount_name
+        fi
+
+    # Debug
+    gr.msg -v3 -c pink "m:$_mount_name|f:$_find|p:$_pid|a:${all_list[@]}"
+
+    # Exit if nothing to find
+    if ! [[ $_find ]] ; then
+            gr.msg -c yellow "mount name '$_mount_name' not recognized"
+            return 3
+        fi
+
+    # Find pid of mount_name or mount_point
+    local _pid=$(ps auxf \
+        | grep -v grep \
+        | grep sshfs \
+        | grep "$_find" \
+        | sed -e 's/  */ /g'  \
+        | cut -d' ' -f2 \
+        | head -n1)
+
+    gr.msg -v3 -c pink "p:$_pid"
+
+    if ! [[ $_pid ]] ; then
+    # Find it but not find pid
+            gr.msg -c yellow "'$_mount_name' not mounted"
+            return 3
+        fi
+
+    # Kill the pid and exit
+    gr.msg -v2 "killing $_pid.. "
+    kill $_pid
+    local _error=$?
+
+    # Check errors
+    if [[ $_error -lt 1 ]] ; then
+            gr.msg -v1 -c green "killed"
+            return 0
+        else
+            gr.msg -v1 -c yellow "error $?"
+            return $_error
+        fi
+}
+
+
+
+unmount.all () {
+# unmount all GURU_CLOUD_* defined in userrc
+# unmount all local/cloud pairs defined in userrc
+    # TBD this is terrible method to parse configs, figure some other way
     local _default_list=($(\
             cat $GURU_RC | \
             grep 'GURU_MOUNT_' | \
-            grep -v "DEFAULT_LIST" | \
+            grep -v "PROXY1_" | \
+            grep -v "ENABLED" | \
+            grep -v "LIST" | \
             grep -v '$GURU_MOUNT' | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
 
+    #[[ $1 ]] && _default_list=(${@})
     [[ "$1" ]] && _default_list=(${1[@]})
 
     if [[ $_default_list ]] ; then
@@ -235,7 +339,12 @@ unmount.all () {  # unmount all GURU_CLOUD_* defined in userrc
         unmount.remote "$_target" || _error=$?
     done
 
-    return $_error
+    if [[ $_error -lt 1 ]] ; then
+        gr.msg -c green "unmounted" -k $indicator_key
+    else
+        gr.msg -c red "error: $_error" -k $indicator_key
+        return $_error
+    fi
 }
 
 
