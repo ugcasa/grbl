@@ -1,16 +1,10 @@
 #!/bin/bash
 # unmount tools for guru-client
-#source "$HOME/.gururc"
 
-
-#### TBD 1) figure out how to minimalize unmount.sh
-#### TBD 2) remove this and integrate functions to mount.sh
-
-
-source $GURU_BIN/common.sh
+source common.sh
 
 unmount.main () {
-    # mount command parser
+# mount command parser
 
     mounted_list=($(unmount.ls))
 
@@ -24,8 +18,6 @@ unmount.main () {
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
     all_list=(${all_list[@],,})
-
-    #gr.msg -v3 -c green "${all_list[@]}"
 
     indicator_key='f'"$(gr.poll mount)"
     local argument="$1" ; shift
@@ -95,7 +87,7 @@ unmount.help () {
 
 
 unmount.ls () {
-    # simple list of mounted mountpoints
+# simple list of mounted mountpoints
     local list=$(mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)')
     gr.msg -c light_blue "$list"
     return $?
@@ -103,7 +95,7 @@ unmount.ls () {
 
 
 unmount.system () {
-    # unmount system data
+# unmount system data
     local system_indicator_key="f$(gr.poll system)"
 
     gr.msg -v2 -n "checking system data folder.."
@@ -120,7 +112,7 @@ unmount.system () {
 
 
 unmount.online () {
-    # check if mountpoint "online", no printout, return code only input: mount point folder. usage: mount.online mount_point && echo "mounted" || echo "not mounted"
+# check if mountpoint "online", no printout, return code only input: mount point folder. usage: mount.online mount_point && echo "mounted" || echo "not mounted"
 
     local _target_folder="$GURU_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
@@ -208,8 +200,8 @@ unmount.remote () {
 }
 
 
-unmount.defaults () {  # unmount all GURU_CLOUD_* defined in userrc
-                       # unmount all local/cloud pairs defined in userrc
+unmount.defaults () {
+# unmount all local/cloud pairs defined in userrc
 
     local _unmount_list=(${GURU_MOUNT_DEFAULT_LIST[@]^^})
 
@@ -243,9 +235,7 @@ unmount.defaults () {  # unmount all GURU_CLOUD_* defined in userrc
 
 
 unmount.kill () {
-    # Kill single mount process by mount_name or mount_point
-    #source mount.sh
-    source common.sh
+# Kill single mount process by mount_name or mount_point
 
     if ! [[ $1 ]] ; then
             gr.msg -c yellow "enter mount_name"
