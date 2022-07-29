@@ -17,15 +17,15 @@ unmount.main () {
     all_list=($(\
             cat $GURU_RC | \
             grep 'GURU_MOUNT_' | \
-            grep -v "PROXY1_" | \
+            grep -v "PROXY" | \
             grep -v "ENABLED" | \
             grep -v "LIST" | \
             grep -v '$GURU_MOUNT' | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
-
     all_list=(${all_list[@],,})
-    gr.msg -v3 -c green "${all_list[@]}"
+
+    #gr.msg -v3 -c green "${all_list[@]}"
 
     indicator_key='f'"$(gr.poll mount)"
     local argument="$1" ; shift

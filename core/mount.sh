@@ -1,52 +1,60 @@
 #!/bin/bash
 # mount tools for guru-client
-#source "$HOME/.gururc"
-source common.sh # 2>/dev/null?
+
+source common.sh
 
 all_list=($(\
         grep "export GURU_MOUNT_" $GURU_RC | \
-        grep -ve "_LIST" -ve "_ENABLED" | \
+        grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
-
 all_list=(${all_list[@],,})
 
 mount_indicator_key='f'"$(gr.poll mount)"
 
 mount.main () {
-    # mount command parser
-
-    local command="$1" ; shift
+# mount command parser
+    local _error=0
+    local command="$1"
+    shift
 
     case "$command" in
 
             defaults|system|all|help|ls|info|check|\
             poll|status|start|stop|toggle|list|uninstall|available)
+                mount.$command $@
+                _error=$?
+                ;;
 
-                            mount.$command $@
-                            return $? ;;
+            check-system)
+                mount.check "$GURU_SYSTEM_MOUNT"
+                _error=$?
+                ;;
 
-            check-system)   mount.check "$GURU_SYSTEM_MOUNT"
-                            return $? ;;
+            "")
+                mount.list default
+                _error=$?
+                ;;
 
-                      "")   mount.list default
-                            return $? ;;
-                       # TBD this is bullshit
-                       *)   if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$command" ; then
-                                    gr.msg -v4 -c pink "found in defauls list"
-                                    mount.known_remote $command $@
+            *)
+                if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$command" ; then
+                        gr.msg -v4 -c pink "found in defauls list"
+                        mount.known_remote $command $@
 
-                                elif echo ${all_list[@]} | grep -q -w "$command" ; then
-                                    gr.msg -v4 -c pink "found in all list"
-                                    mount.known_remote $command $@
+                    elif echo ${all_list[@]} | grep -q -w "$command" ; then
+                        gr.msg -v4 -c pink "found in all list"
+                        mount.known_remote $command $@
 
-                                else
-                                    gr.msg -v4 -c pink "not in any list"
-                                    mount.remote $command $@
-                                fi
-                            mount.status >/dev/null
-                            return $? ;;
+                    else
+                        gr.msg -v4 -c pink "not in any list"
+                        mount.remote $command $@
+                    fi
+                _error=$?
+                ;;
         esac
+        # lazy way to set kb indications
+        mount.status >/dev/null
+        return $_error
 }
 
 
@@ -75,7 +83,7 @@ mount.help () {
 
 
 mount.info () {
-    # detailed list of mounted mountpoints. nice list of information of sshfs mount points
+# detailed list of mounted mountpoints. nice list of information of sshfs mount points
 
     local _error=0
     # header (stdout if verbose rised)
@@ -108,7 +116,7 @@ mount.info () {
 
 
 mount.ls () {
-    # simple list of mounted mountpoints
+# simple list of mounted mountpoints
 
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
 
@@ -117,7 +125,7 @@ mount.ls () {
 
 
 mount.system () {
-    # mount system data
+# mount system data
 
     gr.msg -v3 -n "checking system data folder.."
     if [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] ; then
@@ -133,7 +141,7 @@ mount.system () {
 
 
 mount.online () {
-    # check if mountpoint "online", no printout, return code only input: mount point folder. usage: mount.online mount_point && echo "mounted" || echo "not mounted"
+# check if mountpoint "online", no printout,
 
     local _target_folder="$GURU_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
@@ -147,7 +155,7 @@ mount.online () {
 
 
 mount.check () {
-    # check mountpoint is mounted, output status
+# check mountpoint is mounted, output status
 
     local _err=0
     local _target_folder=$GURU_SYSTEM_MOUNT
@@ -178,7 +186,7 @@ mount.check () {
 
 
 mount.remote () {
-    # mount any remote location. usage: mount_point remote_folder optional: domain port symlink_to
+# mount any remote location. usage: mount_point remote_folder optional: domain port symlink_to
 
     # set defaults
     local _target_folder=
@@ -295,7 +303,7 @@ mount.remote () {
 }
 
 mount.available () {
-
+# printout list of available mountpoitts
     gr.msg -c light_blue "${all_list[@]}"
 
     # local lists=($(\
