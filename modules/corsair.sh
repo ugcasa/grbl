@@ -123,7 +123,7 @@ corsair.help () {
     gr.msg -v2 "  set-suspend                       active suspend control to avoid suspend issues"
     gr.msg -v1
     gr.msg -v1 "For more detailed help, increase verbose with option '-v2'" -V2
-    gr.msg -v1
+    gr.msg -v1 -V2
     gr.msg -v2 "WARNING: This module can prevent system to go suspend and stop keyboard for responding" -c white
     gr.msg -v2 "If this happens please be patient, control will be returned:"
     gr.msg -v2 "  - wait until login window reactivate, it should take less than 2 minutes "
