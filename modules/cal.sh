@@ -46,7 +46,7 @@ cal.main () {
                     _month=$1
                     shift
                 else
-                    _month=$(date -d now +%m)
+                    _month=$(date -d now +%-m)
             fi
             [[ $GURU_FORCE ]] || clipboard_flag=
             cal.print_month note $_month $@
@@ -152,7 +152,7 @@ cal.print_month () {
     # printout all matches and remove tracks
     if [[ -f $temp_file ]] ; then
         cat $temp_file | xclip -i -selection clipboard || return 100
-        rm -f $temp_file && return 0
+        rm -f $temp_file
     fi
 
     return 0

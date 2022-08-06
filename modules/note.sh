@@ -215,7 +215,7 @@ note.add () {
             if [[ -f $GURU_BIN/cal.sh ]] ; then
                     source cal.sh
                     printf "\n"'```calendar'"\n" >>$note
-                    cal.main notes | grep -v $(date -d now +%Y) >>$note
+                    cal.main notes >>$note # | grep -v $(date -d now +%Y)
                     printf '```'"\n" >>$note
                 fi
 
