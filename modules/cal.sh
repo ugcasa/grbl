@@ -49,7 +49,7 @@ cal.main () {
                     _month=$(date -d now +%-m)
             fi
             [[ $GURU_FORCE ]] || clipboard_flag=
-            cal.print_month note $_month $@
+            cal.print_month note $_month # $@
 
             ;;
 
@@ -82,14 +82,13 @@ cal.main () {
 }
 
 
-
 cal.print_month () {
     # calendar table of month days
     # wide/single (optional)
     # and a list of month numbers and years
 
     local year=$(date -d now +%Y)
-    local month=$(date -d now +%m)
+    local month=$(date -d now +%-m)
     local list=
     local item=
     local next_item=
@@ -105,17 +104,20 @@ cal.print_month () {
     esac
 
     # take given list of years and months
-    [[ $@ ]] && list=($@)
+    [[ $1 ]] && list=($@)
 
     # go that trough
     for (( i = 0 ; i < ${#list[@]} ; i++ )) ; do
 
         item=${list[$i]}
+        # remove leading zeros from ncal argument
+        item="${item#"${item%%[!0]*}"}"
 
         if (( item < 13 )) ; then
 
             # item is a month
             month=$item
+
 
         else
             # item is a year
@@ -124,9 +126,8 @@ cal.print_month () {
 
             if (( next_item > 0 )) && (( next_item < 13 )) ; then
                 # just change year, skip printout
-                month=
+                # month=
                 #_style=
-
                 continue
             else
                 # only year given, print whole year
