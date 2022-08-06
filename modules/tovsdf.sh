@@ -1,0 +1,196 @@
+#!/bin/bash 
+# tovsdf - Tools to Orchestrate Very Small Docker Farm
+
+# include guru-cli common functions if exists
+source common.sh 2>/dev/null || gr.msg () { echo "${@##-*}" | sed 's/^[[:space:]]*//' ; }
+
+tovsdf.main () {
+# input: <command> <target> <container_name> example: 'tosdf update dokuwiki ug-wiki'
+
+    local cmd=$1 ; shift
+    # default target is docker it self
+    local target=docker
+    # set
+    [[ $1 ]] && target=$1 ; shift
+
+    case $cmd in
+        install|start|restart|stop|update|uninstall)
+            $target.$cmd $@
+            return $?
+            ;;
+        *)  gr.msg -c yellow "unknown command $cmd"
+            tovsdf.help
+            ;;
+    esac
+}
+
+
+tovsdf.help () {
+    gr.msg -v1 -c white "Tools to Orchestrate Very Small Docker Farm - Help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL tovsdf install|start|restart|stop|update|uninstall service"
+    gr.msg -v2
+    gr.msg -v1 -c white  "commands:"
+    gr.msg -v1 " start <service>    Start service or platform"
+    gr.msg -v1 " restart            restart service or platform"
+    gr.msg -v1 " stop               stop service or platform"
+    gr.msg -v1 " update             update service or platform"
+    gr.msg -v1 " install            install requirements "
+    gr.msg -v1 " uninstall          remove installed requirements "
+    gr.msg -v2
+    gr.msg -v1 -c white  "services:"
+    gr.msg -v3 " docker             "
+    gr.msg -v3 " dokuwiki           "
+    gr.msg -v3 " wekan              "
+    gr.msg -v2
+    gr.msg -v1 -c white  "example:"
+    gr.msg -v1 "    $GURU_CALL tovsdf install docker"
+    gr.msg -v2
+}
+
+
+docker.restart () {
+    gr.msg -c blue "TBD"
+    return 0
+}
+
+
+docker.install () {
+# install docker to local
+# mainly based on https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04
+
+    source /etc/os-release
+
+    gr.msg "checking network connection.."
+    if ! ping  -W 3 -c 1 -q docker.com >/dev/null ; then
+            gr.msg -c yellow "cannot reach docker.com"
+            return 99
+        fi
+
+    if ! sudo apt update ; then
+            gr.msg -c yellow "source list cannot updated"
+            return 100
+        fi
+
+    # install needed stuff
+    sudo apt install apt-transport-https ca-certificates curl software-properties-common
+
+    # add apr key if not added already
+    if ! sudo apt-key list | grep 'docker@docker.com' ; then
+            gr.msg -v2 -c white "adding key to apt key list "
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        fi
+
+    # add docker source to sources list
+    # check is source listed in sources.list (previous standard location)
+    if ! /etc/apt/sources.list | grep download.docker.com ; then
+        # if not check is it se in additional-repositories.list and ad source there (current standard location)
+        if ! grep -v '#' /etc/apt/sources.d/additional-repositories.list | grep download.docker.com ; then
+                gr.msg -v2 -c white "adding repository to /etc/apt/sources.list "
+                sudo add-apt-repository "deb https://download.docker.com/linux/ubuntu $UBUNTU_CODENAME stable"
+            fi
+        fi
+
+    # check did package git installed
+    gr.msg -v2 -n "checking installation.. "
+    if sudo apt install docker-ce -y ; then
+            local _error=$?
+            gr.msg -c yellow "error $_error during installation"
+            return $_error
+        fi
+
+    # check installation by running Docker
+    gr.msg -v2 -n "running docker.. "
+    if ! sudo docker info ; then
+            gr.msg -c yellow "unable to to run docker"
+            gr.msg 'you may need to logout and login to enable changes'
+            return 100
+        fi
+
+    gr.msg -v1 -c green "ok"
+    return 0
+}
+
+
+docker.add-to-group () {
+# let user to use docker
+    sudo usermod -aG docker ${USER}
+    gr.msg 'please logout and log in to enable changes'
+}
+
+
+docker.start () {
+# sudo systemctl status docker || sudo dockerd
+    return 0
+}
+
+
+docker.restart () {
+    docker.stop
+    docker.start
+    return $?
+}
+
+
+docker.uninstall () {
+
+    dpkg -l | grep -i docker
+    sudo apt-get purge -y docker-engine docker docker.io docker-ce docker-ce-cli
+    sudo apt-get autoremove -y --purge docker-engine docker docker.io docker-ce
+
+    if grep -v '#' /etc/apt/sources.list | grep download.docker.com ; then
+        # remove repo
+        gr.msg -c dark_grey "TBD $FUNCNAME remove repo"
+        fi
+
+    if grep -v '#' /etc/apt/sources.list | grep download.docker.com ; then
+        # remove key
+        gr.msg -c dark_grey "TBD $FUNCNAME remove key"
+        fi
+}
+
+
+wekan.update () {
+    gr.msg -c dark_grey "TBD $FUNCNAME"
+    return 0
+}
+
+
+dokuwiki.update () {
+# update ghcr.io dokuwiki container
+
+    # default container name
+    local container_name="dokuwiki"
+
+    # overwrite if guru-cli variable set
+    [[ $GURU_WIKI_CONTAINER_NAME ]] && container_name=$GURU_WIKI_CONTAINER_NAME
+
+    # process user input
+    [[ $1 ]] && container_name=$1
+
+    # "we do not recommend or support updating apps inside the container"
+    # https://github.com/linuxserver/docker-dokuwiki/pkgs/container/dokuwiki
+    procedure=("echo docker inspect -f '{{ index .Config.Labels build_version }} $container_name"
+               "echo docker-compose pull $container_name"
+               "echo docker-compose up -d $container_name"
+               'echo docker image prune'
+               #'docker logs -f'
+               )
+
+    for (( i = 0; i < ${#procedure[@]}; i++ )); do
+        gr.msg -n -v2 "${procedure[$i]}.. "
+        if ${procedure[$i]}; then
+            gr.msg -v1 -cgreen "ok "
+        else
+            gr.msg -cyellow "error when '${procedure[$i]}'"
+            return $i
+        fi
+    done
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    [[ -f $GURU_RC ]] && source $GURU_RC
+    tovsdf.main $@
+    exit $?
+fi
+
