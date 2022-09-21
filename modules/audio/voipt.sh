@@ -47,13 +47,13 @@ voipt.arguments () {
 
 voipt.open () {
     voipt.start_listener || return 100
-    voipt.start_sender || return 100
+    voipt.start_sender || return 101
 }
 
 
 voipt.close () {
-    voipt.close_sender || return 100
-    voipt.close_listener || return 100
+    voipt.close_sender || return 102
+    voipt.close_listener || return 103
 }
 
 
@@ -237,4 +237,5 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         voipt.main $@
         exit $?
     fi
+
 
