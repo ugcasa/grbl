@@ -19,7 +19,7 @@ install.main () {
     esac
 
     case "$argument" in
-        help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams)
+        help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams|fail2ban)
                     install.$argument "$@" ;;
         *)          gr.msg -v dark_grey "no installer for '$argument'"; install.help
     esac
@@ -374,6 +374,30 @@ install.teams () {
     gr.msg -c green "teams installed"
     gr.msg "type 'teams' to test installation"
     return 0
+}
+
+
+install.fail2ban () {
+       # install and setup ssh brute force protection
+       if sudo apt-get update && sudo apt-get -y install fail2ban ; then
+              gr.msg -c green "installation ok"
+       else
+              gr.msg -c red "failed to install"
+              return 100
+       fi
+
+       sudo systemctl enable fail2ban.service
+
+       jail_conf='/etc/fail2ban/jail.local'
+
+       if [[ -f $jail_conf ]] && grep '[sshd]' $jail_conf ; then
+              gr.msg "already configured"
+       else
+              printf "\n[sshd] \nenables = true \nport = ssh \nfilter = sshd \nlogpath = /var/log/auth.log \nmaxretry = 3 \nfindtime = 300 \nbantime = 3600 \n" \
+                     | sudo tee -a $jail_conf
+       fi
+       sudo systemctl start fail2ban.service
+       sudo fail2ban-client status sshd && gr.msg -c green "setup ok" || gr.msg -c red "failed to setup"
 }
 
 
