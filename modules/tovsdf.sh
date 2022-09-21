@@ -39,9 +39,9 @@ tovsdf.help () {
     gr.msg -v1 " uninstall          remove installed requirements "
     gr.msg -v2
     gr.msg -v1 -c white  "services:"
-    gr.msg -v3 " docker             "
-    gr.msg -v3 " dokuwiki           "
-    gr.msg -v3 " wekan              "
+    gr.msg -v3 " docker             containing system"
+    gr.msg -v3 " dokuwiki           documentation platform4"
+    gr.msg -v3 " wekan              can ban ticket board"
     gr.msg -v2
     gr.msg -v1 -c white  "example:"
     gr.msg -v1 "    $GURU_CALL tovsdf install docker"
@@ -151,12 +151,42 @@ docker.uninstall () {
 
 
 wekan.update () {
+# update wekan
     gr.msg -c dark_grey "TBD $FUNCNAME"
     return 0
 }
 
 
 dokuwiki.update () {
+# pull up to date version from git repository
+
+
+    dokuwiki.backup $@
+
+# if like to update container
+    # local _platform="dokuwiki" # or container
+    # [[ $1 ]] && _platform=$1
+
+    # case $_platform in
+    #     container)
+    #         dokuwiki.container_update
+    #         return $?
+    #         ;;
+    #     dokuwiki)
+    #         ;;
+    #     all)
+    #         ;;
+    #       *)
+    #         return 1
+    #     esac
+
+# for now just update contaier
+    dokuwiki.container_update $@
+    return $?
+}
+
+
+dokuwiki.update_container () {
 # update ghcr.io dokuwiki container
 
     # default container name
@@ -187,6 +217,59 @@ dokuwiki.update () {
         fi
     done
 }
+
+
+dokuwiki.backup () {
+# make backup out of dokuwiki data and conf inside of container (opt $1) on server (opt $2)
+
+    # default values
+    local container_name="dokuwiki"
+    local server="roima"
+    local include_folders=(data conf)
+    local _date=$(date +%Y%m%d)
+    local to_where="${GURU_BACKUP_SERVER_BASE[2]}/${GURU_BACKUP_SERVER_BASE[3]}"
+
+    # overwrite default values if guru-cli variable set
+    [[ $GURU_WIKI_CONTAINER_NAME ]] && container_name=$GURU_WIKI_CONTAINER_NAME
+
+    # overwrite if user input
+    [[ $1 ]] && container_name=$1
+    [[ $2 ]] && server=$2
+
+    local data_folder="$to_where/$container_name-$_date"
+    local temp_folder="/tmp/$container_name"
+
+    gr.msg "making backup.. "
+    ssh $server -- "[[ -d $temp_folder ]] || mkdir $temp_folder"
+
+    for _inc_folder in ${include_folders[@]}; do
+            gr.msg -v2 "$_inc_folder.. "
+            ssh $server -- "docker cp $container_name:/config/dokuwiki/$_inc_folder $temp_folder"
+        done
+
+    if ssh $server -- "tar -cjf /tmp/$container_name.tar.bz2 $temp_folder" ; then
+            gr.msg -v2 -c green "ok"
+        fi
+
+    if [[ -d "$data_folder" ]] ; then
+            gr.msg -n "removing current backup $data_folder.. "
+            rm -fr $data_folder && gr.msg "ok"
+        else
+            mkdir "$data_folder"
+        fi
+
+    gr.msg -n "copying.. "
+    if scp "$server:/tmp/$container_name.tar.bz2" "$data_folder/" ; then
+            ssh $server -- "rm /tmp/$container_name.tar.bz2 ; rm -rf /tmp/$container_name"
+            gr.msg -v2 -c green "ok"
+        else
+            gr.msg -c yellow "error when copying $container_name.tar.bz2"
+            return 100
+        fi
+
+    return 0
+}
+
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     [[ -f $GURU_RC ]] && source $GURU_RC
