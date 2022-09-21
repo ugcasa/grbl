@@ -7,7 +7,7 @@ source common.sh
 
 declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
 declare -g audio_playlist_folder="$audio_data_folder/playlists"
-declare -g audio_temp_file="/tmp/audio.playlist"
+declare -g audio_temp_file="/tmp/guru/audio.playlist"
 declare -g audio_blink_key="f$(gr.poll audio)"
 
 [[ ! -d $audio_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $audio_playlist_folder
@@ -17,27 +17,31 @@ audio.help () {
 
     gr.msg -v1 -c white "guru-cli audio help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL audio play|install|remove|white|tunnel|close|ls|ls_remote|toggle|fast|help <host|ip> "
+    gr.msg -v0 "usage:    $GURU_CALL audio play|ls|list|listen|pause|resume|mute|stop|tunnel|toggle|install|remove|help"
     gr.msg -v2
-    gr.msg -v1 -c white "commands: "
-    gr.msg -v1 "  play <playlist_name>             play list name configured in user.cfg or playlist file"
-    gr.msg -v1 "  play <playlist>             play list name configured in user.cfg or playlist file"
-    gr.msg -v1 "  play ls                     list of playlists set in user.cfg "
-    gr.msg -v1 "  play list <playlist_name>   play a playlist set in uiser.cfg"
-
-    gr.msg -v1 "  install-voip                install tools to voip over ssh"
+    gr.msg -v2 "playing files and stream " -c white
+    gr.msg -v1 "  play <song|album|artist>    play files in $GURU_MOUNT_AUDIO"
+    gr.msg -v1 "  play list <playlist_name>   play a playlist set in user.cfg"
+    gr.msg -v1 "  play list ls                list of available playlists "
+    gr.msg -v1 "  listen <url>                listen audio stream"
+    gr.msg -v1 "  listen yle <station_name>   listen yle stations"
+    gr.msg -v2 "  listen ls                   list of stations"
+    gr.msg -v1 "  mute                        mute (or unmute) main audio device"
+    gr.msg -v1 "  stop                        try to stop audio sources (TBD)"
+    gr.msg -v1 "  pause                       pause all audio "
+    gr.msg -v2 "  toggle                      toggle last/default audio (for keyboard launch)"
+    gr.msg -v2 "  ls                          list of local audio devices "
     gr.msg -v1 "  install                     install requirements "
     gr.msg -v1 "  remove                      remove requirements "
+    gr.msg -v1 "  tunnel                      secure audio tunnel tools (rise verbose for more)" -V2
     gr.msg -v1 "  help                        printout this help "
     gr.msg -v2
-    gr.msg -v2 -c white "tunnel: "
-    gr.msg -v2 "  tunnel <host>               build audio tunnel (ssh) to host audio device "
-    gr.msg -v2 "  close                       close current audio tunnel "
-    gr.msg -v2 "  ls                          list of local audio devices "
-    gr.msg -v2 "  ls_remote                   list of local remote audio devices "
-    gr.msg -v2 "  toggle <host>               check is tunnel on them stop it, else open tunnel "
-    gr.msg -v2 "  fast [command] <host>       quick open tunnel, does not check stuff, just brute force"
-    gr.msg -v2 "  fast help                   check fast tool help for more detailed instructions"
+    gr.msg -v2 "tunneling commands " -c white
+    gr.msg -v2 "  tunnel open <host>            open audio tunnel (ssh) to host audio device "
+    gr.msg -v2 "  tunnel close                  close current audio tunnel "
+    gr.msg -v2 "  tunnel install                install tools to voip over ssh"
+    gr.msg -v2 "  tunnel toggle <host>          build tunnel or close active tunnel "
+    gr.msg -v2 "  tunnel fast [command] <host>  fast (and brutal) way to open tunnel"
     gr.msg -v2
 }
 
@@ -48,69 +52,13 @@ audio.main () {
     shift
     case "$_command" in
 
-        status|ls|tunnel|close|install|remove|toggle|tunnel_toggle|help)
+        play|ls|listen|pause|mute|stop|tunnel|toggle|install|remove|help)
             audio.$_command $@
             return $?
             ;;
-        listen|stream)
-            gr.ind playing $audio_blink_key
-            audio.stream_listen $@
-            gr.end $audio_blink_key
-            return $?
-            ;;
-        play)
-            gr.ind playing $audio_blink_key
-
-            case $1 in
-                list)
-                    shift
-                    audio.playlist_play $@
-                    ;;
-                "")
-                    audio.stream_listen yle puhe
-                    ;;
-                *)
-                    # if file, play it
-                    [[ -f $1 ]] && mpv $1 && return 0
-
-                    # if part of name, look from folders
-                    if [[ $1 ]] ; then
-                        ifs=$IFS
-                        IFS=" "
-                        got=$(find $GURU_MOUNT_MUSIC -maxdepth 3 -iname *mp3)
-
-                        while [[ $1 ]] ; do
-                            got=$(echo -e $got | grep -i $1 | grep -v 'Trash-1000')
-                            shift
-                        done
-                        IFS=$ifs
-
-                        # printout artist and song name
-                        songs=${got//"$GURU_MOUNT_MUSIC/"/""}
-                        songs=${songs//'/'/'@'}                 # to remove word before '/' later
-                        songs=${songs//'_'/' '}
-                        songs=${songs//'-'/': '}
-                        songs=${songs//'.mp3'/''}
-
-                        if [[ $got ]] ; then
-                            gr.msg -v1 -c white "${songs}" | sed 's/.*@//'
-                            mpv --no-video $(echo -e $got) 2>/dev/null
-                            return $?
-                        fi
-                    fi
-
-                    gr.msg "nothing to play"
-                    ;;
-                esac
-
-            gr.end $audio_blink_key
-            return $?
-            ;;
-        fast) # fast tunnel move this under 'tunnel' parser
-            $GURU_BIN/audio/fast_voipt.sh $1 \
-            -h $GURU_ACCESS_DOMAIN \
-            -p $GURU_ACCESS_PORT \
-            -u $GURU_ACCESS_USERNAME
+        list)
+            shift
+            audio.playlist_play $@
             return $?
             ;;
         *)
@@ -121,8 +69,72 @@ audio.main () {
 }
 
 
-audio.toggle () {
+audio.play () {
+# play playlist and song/album/artis name given as parameter
 
+    case $1 in
+            list)
+                shift
+                audio.playlist_play $@
+                ;;
+
+            "")
+                gr.ind playing $audio_blink_key
+
+                audio.listen yle kajaani
+
+                gr.end $audio_blink_key
+                ;;
+
+            *)
+                # if file, play it
+                if [[ -f $1 ]] ; then
+                        gr.ind playing $audio_blink_key
+
+                        mpv $1
+
+                        gr.end $audio_blink_key
+                        return $?
+                    fi
+
+                # if part of name, look from folders
+                if [[ $1 ]] ; then
+                    ifs=$IFS
+                    IFS=" "
+                    got=$(find $GURU_MOUNT_MUSIC -maxdepth 3 -iname *mp3)
+
+                    while [[ $1 ]] ; do
+                        got=$(echo -e $got | grep -i $1 | grep -v 'Trash-1000')
+                        shift
+                    done
+                    IFS=$ifs
+
+                    # printout artist and song name
+                    songs=${got//"$GURU_MOUNT_MUSIC/"/""}
+                    songs=${songs//'/'/'@'}                 # to remove word before '/' later
+                    songs=${songs//'_'/' '}
+                    songs=${songs//'-'/': '}
+                    songs=${songs//'.mp3'/''}
+
+                    if [[ $got ]] ; then
+                        gr.msg -v1 -c white "${songs}" | sed 's/.*@//'
+                        gr.ind playing $audio_blink_key
+
+                        mpv --no-video $(echo -e $got) 2>/dev/null
+
+                        gr.end $audio_blink_key
+                        return $?
+                    fi
+                fi
+
+                gr.msg "nothing to play"
+                ;;
+        esac
+}
+
+
+audio.toggle () {
+# start or stop to play last listened or default audio source
     local default_radio='yle puhe'
     [[ $GURU_RADIO_WAKEUP_STATION ]] && default_radio=$GURU_RADIO_WAKEUP_STATION
 
@@ -142,10 +154,14 @@ audio.toggle () {
     return 0
 }
 
-
-audio.stream_listen () {
+audio.listen () {
+# audio.listen_yle () {
+# listen yle radio stations from icecast stream
+    local options=
+    [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
 
     case $1 in
+
         ls|list|"")
             local possible=('yle puhe' 'yle radio1' 'yle kajaani' 'yle klassinen' 'yle x' 'yle x3 m' 'yle vega' 'yle kemi' 'yle turku' \
                             'yle pohjanmaa' 'yle kokkola' 'yle pori' 'yle kuopio' 'yle mikkeli' 'yle oulu' 'yle lahti' 'yle kotka' 'yle rovaniemi' \
@@ -155,11 +171,17 @@ audio.stream_listen () {
                     gr.msg -c light_blue $station
                 done
             ;;
+        url)
+            gr.msg -v1 "playing from $@"
+            gr.ind playing -k $audio_blink_key
+            shift
+            mpv $options $@
+            gr.end $audio_blink_key
+            return 0
+            ;;
         esac
 
     local channel=$@
-    local options=
-    [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
 
     if ! gr.check-net ; then
             gr.msg "please check your network connection and try again"
@@ -272,10 +294,10 @@ audio.playlist_compose () {
 
 
 audio.playlist_play () {
-
+# play playlist file or by nicknam set in user.cfg
     local user_reguest=$1
     local _wanna_hear=
-    [[ $2 ]] && local _wanna_hear=$2
+    [[ $2 ]] && _wanna_hear=$2
     # gr.msg -v3 "user_reguest: $user_reguest $_wanna_hear"
 
     case $user_reguest in
@@ -299,14 +321,18 @@ audio.playlist_play () {
                     return 125
                 fi
 
+            gr.ind playing $audio_blink_key
+
             mpv --playlist=$user_reguest
+
+            gr.end $audio_blink_key
             return $?
 
         else
             gr.msg -v3 "file '$user_reguest' not found or format mismatch"
         fi
 
-    # be silent is asked
+    # be silent if asked so
     local options=
     [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet $options "
 
@@ -336,42 +362,86 @@ audio.playlist_play () {
     mpv --playlist="$audio_temp_file" $options
 
     return $?
-
-}
-
-
-audio.close () {
-    # close audio tunnel
-
-    # source $GURU_BIN/corsair.sh
-    gr.msg -k $audio_blink_key -c aqua
-
-    $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME || gr.msg -k $audio_blink_key -c red
-
-    gr.msg -k $audio_blink_key -c reset
-    return $?
 }
 
 
 audio.ls () {
 
     local _device_list=$(aplay -l | awk -F \: '/,/{print $2}' | awk '{print $1}' | uniq)
-    gr.msg -v -c "audio device list (alsa card)"
     gr.msg -c light_blue "$_device_list"
 }
 
 
-audio.ls_remote () {
+audio.mute() {
+# mute master audio device
+    amixer -q -D pulse sset Master toggle
+    return $?
+}
 
-    local _device_list=$(aplay -l | awk -F \: '/,/{print $2}' | awk '{print $1}' | uniq)
-    gr.msg -c light_blue "$_device_list"
+
+audio.stop () {
+# send stop or brutal kill audio source
+    gr.msg TBD
+}
+
+
+audio.pause () {
+
+    local _flag="/tmp/guru/audio.pause.flag"
+
+    [[ -d "/tmp/guru" ]] || mkdir "/tmp/guru"
+
+    if ! [[ -f $_flag ]] ; then
+        # pause
+        /bin/bash -c "/usr/bin/amixer -q -D pulse sset Master mute; /usr/bin/killall -q -STOP 'pulseaudio'"
+        touch $_flag
+    else
+        # resume
+        /bin/bash -c "/usr/bin/killall -q -CONT 'pulseaudio'; /usr/bin/amixer -q -D pulse sset Master unmute"
+        rm $_flag
+    fi
 }
 
 
 audio.tunnel () {
-    # open tunnel adapter for voipt. input host, port, user (all optional)
-    # source $GURU_BIN/corsair.sh
-    # fill default
+# tunnel secure audio link to another computer
+    local _cmd=$1
+    shift
+    case $_cmd in
+            status|open|close|toggle|install)
+                audio.tunnel_$_cmd $@
+                ;;
+            fast) # for speed testing
+                $GURU_BIN/audio/fast_voipt.sh $1 \
+                    -h $GURU_ACCESS_DOMAIN \
+                    -p $GURU_ACCESS_PORT \
+                    -u $GURU_ACCESS_USERNAME
+                    return $?
+                ;;
+            *)
+                audio.tunnel_toggle $@
+                ;;
+        esac
+    return 0
+}
+
+
+audio.tunnel_status () {
+    # status function is required by core
+
+    if ps auxf | grep "ssh -L 10000:127.0.0.1:10001 " | grep -v grep >/dev/null ; then
+            gr.msg -c green "audio tunnel is active"
+            return 0
+        else
+            gr.msg -c dark_grey "no audio tunnels"
+            return 1
+        fi
+}
+
+
+audio.tunnel_open () {
+
+    # fill defaults to point to home server
     local _host=$GURU_ACCESS_DOMAIN
     local _port=$GURU_ACCESS_PORT
     local _user=$GURU_ACCESS_USERNAME
@@ -387,9 +457,23 @@ audio.tunnel () {
             gr.msg -k $audio_blink_key -c green
         else
             gr.msg -k $audio_blink_key -c red
+            return 233
+        fi
+}
+
+
+audio.tunnel_close () {
+# close audio tunnel
+
+    gr.msg -k $audio_blink_key -c aqua
+
+    if ! $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME ; then
+            gr.msg -c yellow "voip tunnel exited with code $?"
+            gr.msg -k $audio_blink_key -c red
         fi
 
-    return 0
+    gr.msg -k $audio_blink_key -c reset
+    return $?
 }
 
 
@@ -398,14 +482,15 @@ audio.tunnel_toggle () {
     # source $GURU_BIN/corsair.sh
     gr.msg -k $audio_blink_key -c aqua
     if audio.status ; then
+
             if $GURU_BIN/audio/fast_voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT ; then
                     gr.msg -k $audio_blink_key -c reset
                     return 0
                 else
                     gr.msg -k $audio_blink_key -c red
                     return 1
-                fi
-        fi
+            fi
+    fi
 
     if $GURU_BIN/audio/fast_voipt.sh open -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME ; then
             gr.msg -k $audio_blink_key -c green
@@ -417,43 +502,22 @@ audio.tunnel_toggle () {
 }
 
 
+audio.tunnel_install () {
+    # install function is required by core
+    $GURU_BIN/audio/voipt.sh install
+}
+
+
 audio.install () {
     # install function is required by core
-
-    case $1 in
-
-        tunnel|voip)
-            $GURU_BIN/audio/voipt.sh install
-        ;;
-        dev)
-
-
-        ;;
-        *)
-            sudo apt-get install espeak mpv vlc -y
-        esac
+    sudo apt-get install espeak mpv vlc -y
 }
 
 
 audio.remove () {
     # remove function is required by core
-
     $GURU_BIN/audio/voipt.sh remove
     gmsg "remove manually: 'sudo apt-get remove espeak mpv vlc'"
-
-}
-
-
-audio.status () {
-    # status function is required by core
-
-    if ps auxf | grep "ssh -L 10000:127.0.0.1:10001 " | grep -v grep >/dev/null ; then
-            gr.msg -c green "audio tunnel is active"
-            return 0
-        else
-            gr.msg -c dark_grey "no audio tunnels"
-            return 1
-        fi
 }
 
 
