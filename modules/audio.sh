@@ -4,6 +4,7 @@
 
 #source $GURU_RC
 source common.sh
+source net.sh
 
 declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
 declare -g audio_playlist_folder="$audio_data_folder/playlists"
@@ -183,7 +184,7 @@ audio.listen () {
 
     local channel=$@
 
-    if ! gr.check-net ; then
+    if ! net.check ; then
             gr.msg "please check your network connection and try again"
             return 100
         fi

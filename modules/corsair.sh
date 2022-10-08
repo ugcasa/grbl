@@ -562,6 +562,7 @@ corsair.indicate () {
         message)        _blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
         call)           _blink="deep_pink black 0.75 30 deep_pink" ;;
         customer)       _blink="deep_pink white 0.75 30 deep_pink" ;;
+        offline)        _blink="blue orange 1.25 $GURU_DAEMON_INTERVAL orange" ;;
         warning)        _blink="red orange 0.75 3600 orange" ;;
         alert)          _blink="orange_red black 0.5 3600 orange_red" ;;
         panic)          _blink="red white 0.2 3600 red" ;;

@@ -3,6 +3,8 @@
 # casa@ujo.guru 2022
 
 source common.sh
+redshift_flag="/tmp/guru-redshift.flag"
+last_brigh="/tmp/guru-display.bright"
 
 display.main () {
     # command parser
@@ -125,11 +127,26 @@ display.set () {
     local value=1
     [[ $1 ]] && value=$1
 
+    # case $value in
+    #         up)
+    #             last_value=$(cat $last_brigh)
+    #             value=$(let last_value++)
+
+    #             ;;
+    #         down)
+    #             last_value=$(cat $last_brigh)
+    #             value=$(let last_value)
+
+    #             ;;
+    #     esac
+
     if ps u | grep redshift | grep -v grep ; then
         pkill redshift
         # indicate user were using redshift
-        [[ -f /tmp/redshift.flag ]] || touch /tmp/redshift.flag
+        [[ -f $redshift_flag ]] || touch $redshift_flag
     fi
+
+    echo "$value" >$last_brigh
 
     sleep 1
     # gsettings set org.gnome.settings-daemon.plugins.power ambient-enabled false
@@ -156,16 +173,18 @@ display.reset () {
         sleep 0.5
     done
 
+    echo "1" >$last_brigh
+
     sleep 1
 
-    if [[ /tmp/redshift.flag ]] && ! ps u | grep redshift | grep -v grep ; then
+    if [[ $redshift_flag ]] && ! ps u | grep redshift | grep -v grep ; then
         /usr/bin/redshift >/dev/null 2>/dev/null &
     fi
 
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $GURU_RC
+    #source $GURU_RC
     display.main "$@"
     exit $?
 fi

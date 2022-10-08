@@ -285,18 +285,48 @@ core.change_user () {
 }
 
 
+
+core.online () {
+
+    source system.sh
+    source net.sh
+
+    declare -g offline_flag="/tmp/guru-offline.flag"
+
+    if net.check ; then
+            if [[ -f $offline_flag ]] ; then
+                    gr.end esc
+                    system.flag rm pause
+                    rm $offline_flag
+                fi
+            return 0
+        else
+            touch $offline_flag
+            gr.msg -v1 -c white "offline mode"
+            gr.end esc
+            system.flag set pause
+            return 127
+        fi
+}
+
+
 core.mount_system_base () {
     # check is access point enabled and mount is not
 
     # is access functionality enabled?
     if ! [[ $GURU_ACCESS_ENABLED ]] ; then
-        return 1
-    fi
+            return 1
+        fi
 
     # is mount functionality enabled?
     if ! [[ $GURU_MOUNT_ENABLED ]] ; then
-        return 2
-    fi
+            return 2
+        fi
+
+    # is nets online
+    if ! core.online ; then
+            return 3
+        fi
 
     source mount.sh
     # is it already mounted?
@@ -321,17 +351,15 @@ core.process_opts () {
     declare -g GURU_LOGGING=
     declare -g GURU_HOSTNAME=$(hostname)
     declare -g GURU_VERBOSE=$GURU_FLAG_VERBOSE
-    declare -g GURU_COLOR=true
+    declare -g GURU_COLOR=$GURU_FLAG_COLOR
 
     # go trough possible arguments if set or value is given, other vice use default
-    TEMP=`getopt --long -o "cCsflqh:u:v:" "$@"`
+    TEMP=`getopt --long -o "csflqh:u:v:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
         case "$1" in
-            -c) export GURU_COLOR=true
-                shift ;;
-            -C) export GURU_COLOR=
+            -c) export GURU_COLOR=
                 shift ;;
             -s) export GURU_SPEAK=true
                 export GURU_COLOR=
@@ -364,9 +392,9 @@ core.process_opts () {
     GURU_COMMAND=${module_commands[@]}
 
     # check if colors possible, and overwrite user input and user.cfg
-    if [[ $TERM != "xterm-256color" ]] || [[ $COLORTERM != "truecolor" ]]; then
-        declare -x GURU_COLOR=
-    fi
+    # if [[ $TERM != "xterm-256color" ]] || [[ $COLORTERM != "truecolor" ]]; then
+    #     declare -x GURU_COLOR=
+    # fi
 }
 
 
@@ -398,7 +426,7 @@ case $1 in
 
 # check that config rc file exits
 if [[ -f $GURU_RC ]] ; then
-        gr.msg -v3 -c deep_pink "sourcing configs.. "
+        gr.msg -v3 "sourcing config $GURU_RC.. "
         source $GURU_RC
     else
         # run user configuration if not exist
@@ -427,13 +455,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     # export global variables for sub processes
     declare -xa GURU_COMMAND
 
-    # TBD following not really need i stinks.. damn, this messy too
+    # TBD following not really needed
     declare -x GURU_FORCE
     declare -x GURU_COLOR
     declare -x GURU_VERBOSE
     declare -x GURU_HOSTNAME
     declare -x GURU_LOGGING
-
 
     core.parser ${GURU_COMMAND[@]}
     _error_code=$?

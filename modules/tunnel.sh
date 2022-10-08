@@ -433,7 +433,7 @@ tunnel.requirements () {
     [[ "$action" ]] || read -r -p "install or remove? :" action
     local require="ssh rsync"
     gr.msg -c yellow "need to install $require, ctrl+c? or input local "
-    sudo apt update && eval sudo apt "$action" "$require" && gr.msg -c yellow "guru is now ready to tunnel"
+    sudo apt update && eval sudo apt "$action" "$require" && gr.msg -c white "guru is now ready to tunnel"
 }
 
 

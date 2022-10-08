@@ -6,7 +6,7 @@ daemon_service_script="$HOME/.config/systemd/user/guru.service"
 daemon_pid_file="/tmp/guru.daemon-pid"
 
 # use same key than system.sh
-daemon_indicator_key=esc #"f$(gr.poll system)"
+daemon_indicator_key="esc" #"f$(gr.poll system)"
 
 source $GURU_BIN/system.sh
 
@@ -102,6 +102,8 @@ daemon.start () {
             corsair.systemd_restart
         fi
 
+    gr.ind doing $daemon_indicator_key
+
     #for module in ${GURU_DAEMON_POLL_ORDER[@]} ; do
     for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
 
@@ -123,6 +125,8 @@ daemon.start () {
             esac
         done
 
+    gr.end $daemon_indicator_key
+    gr.msg "start polling" -c reset -k $daemon_indicator_key
     daemon.poll &
 }
 
@@ -170,18 +174,19 @@ daemon.stop () {
     [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
     system.flag rm running
     if ! kill -15 "$_pid" ; then
-        gr.ind failed $daemon_indicator_key
+        gr.msg -V1 -c yellow "error $?, retry" -k $daemon_indicator_key
+
         if kill -9 "$_pid" ; then
-             gr.msg -V1 -c green "ok"
              gr.end $daemon_indicator_key
+             gr.msg -V1 -c green "ok" -k $daemon_indicator_key
         else
              gr.msg -V1 -c red "failed to kill daemon pid: $_pid"
              gr.ind failed $daemon_indicator_key
             return 124
         fi
     else
-        gr.msg -V1 -c green "ok"
         gr.end $daemon_indicator_key
+        gr.msg -V1 -c green "ok" -k $daemon_indicator_key
     fi
 
 
@@ -249,6 +254,7 @@ daemon.poll () {
                 system.flag rm pause
                 gr.end $daemon_indicator_key
                 gr.msg -v1 -t -c green "daemon continued"
+                # gr.ind active -k $daemon_indicator_key
             fi
 
         if system.flag stop ; then
@@ -283,8 +289,9 @@ daemon.poll () {
                     esac
             done
 
+        gr.end $daemon_indicator_key
+        gr.msg -c green -k $daemon_indicator_key
         gr.msg -n -v2 "sleep ${GURU_DAEMON_INTERVAL}s: "
-        gr.ind done $daemon_indicator_key
 
         local _seconds=
         for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )) ; do

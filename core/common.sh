@@ -42,6 +42,7 @@ gr.poll () {
         fi
 }
 
+
 gr.source () {
     # source only wanted functions. slow ~0,03 sec, but saves environment space
 
@@ -182,7 +183,7 @@ gr.msg () {
         fi
 
     # -c) color printout
-    if [[ $_color_code ]] && [[ $GURU_COLOR ]] && ! [[ $GURU_VERBOSE = 0 ]]; then
+    if [[ $GURU_COLOR ]] && [[ $GURU_VERBOSE -gt 0 ]]; then
         printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m" "${_timestamp}" "${_message:0:$_column_width}"
         return 0
     fi
@@ -248,9 +249,9 @@ gr.ind () {
     if [[ $_message ]] ; then
 
             if [[ $_color ]] ; then
-                    gr.msg -c $_color "$timestamp$_status: $_message"
+                    gr.msg -v3 -c $_color "$timestamp$_status: $_message"
                 else
-                    gr.msg "$timestamp$_status: $_message"
+                    gr.msg -v3 "$timestamp$_status: $_message"
                 fi
 
             if [[ $GURU_MQTT_ENABLED ]] && [[ $_mqtt_topic ]] ; then
@@ -274,6 +275,7 @@ gr.ind () {
             pause)          espeak -p 85 -s 130 -v en "$_message is paused" ;;
             cancel)         espeak -p 85 -s 130 -v en "$_messagasde is canceled. I repeat, $_message is canceled" ;;
             error)          espeak -p 85 -s 130 -v en "Error! $_message. I repeat, $_message" ;;
+            offline)        espeak -p 85 -s 130 -v en "$_message" ;;
             warning)        espeak -p 85 -s 130 -v en "Warning! $_message. I repeat, $_message" ;;
             alert)          espeak -p 85 -s 130 -v en "Alarm! $_message. I repeat, $_message" ;;
             panic)          espeak -p 85 -s 130 -v en-sc "mayday.. Mayday? Mayday! $_message... ${_message^}? ${_message^^}" ;;
@@ -448,25 +450,7 @@ gr.local () {
         done
 }
 
-
-gr.check-net () {
-    # quick check networn connection, no analysis
-    gr.msg -v2 -n "checking connection.. "
-    if ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
-        gr.msg -v1 -c green "connected"
-        return 0
-    else
-        gr.msg -c red "network failed"
-        return 100
-    fi
-}
-
-
-#`TBD`declare -xf ? rather than export? - no
-export -f gr.poll
+# export -f gr.poll
 export -f gr.msg
 export -f gr.ask
-
-
-
 

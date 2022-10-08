@@ -22,8 +22,6 @@ declare -g module_indicator_key="f$(gr.poll module)"
 ## functions, keeping help at first position it might be even updated
 module.help () {
     # user help
-    export GURU_VERBOSE=0
-    export GURU_COLOR=
     gr.msg -n -v2 -c white "guru-cli module help "
     gr.msg -v1 "few clause description what module exists"
     gr.msg -v2
