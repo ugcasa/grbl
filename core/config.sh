@@ -3,7 +3,7 @@
 source common.sh
 
 config.main () {
-    # main comman parser
+# main comman parser
     local _cmd="$1" ; shift
     case "$_cmd" in
             user|export|help|edit|get|set|pull|push)
@@ -23,7 +23,7 @@ config.main () {
 
 
 config.help () {
-    # general help
+# general help
     gr.msg -v1 "guru-client config help " -c white
     gr.msg -v2
     gr.msg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help"
@@ -44,7 +44,7 @@ config.help () {
 
 
 config.make_rc () {
-    # make rc file out of configuration file
+# make rc file out of configuration file
 
     local _source_cfg="$1"
     local _target_rc="$2"
@@ -82,7 +82,7 @@ config.make_rc () {
 
 
 config.make_color_rc () {
-    # export color configuration for shell scripts"
+# export color configuration for shell scripts"
 
     local _source_cfg="$1"
     local _target_rc="$2"
@@ -130,9 +130,7 @@ config.make_color_rc () {
 
 
 config.export () {
-    # export configuration to use
-
-    # source $GURU_RC
+# export configuration to use
 
     local _target_rc=$HOME/.gururc
     local _target_user=$GURU_USER ; [[ "$1" ]] && _target_user="$1"
@@ -189,7 +187,7 @@ config.export () {
 
 
 config.pull () {
-    # pull configuration files from server
+# pull configuration files from server
 
     gr.msg -v1 -n -V2 "pulling $GURU_USER@$GURU_HOSTNAME configs.. "
     gr.msg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
@@ -211,7 +209,7 @@ config.pull () {
 
 
 config.push () {
-    # save configuration to server
+# save configuration to server
 
     gr.msg -v1 -n -V2 "pushing $GURU_USER@$GURU_HOSTNAME configs.. "
     gr.msg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
@@ -243,7 +241,7 @@ config.push () {
 
 
 config.edit () {
-    # edit user config file with preferred editor
+# edit user config file with preferred editor
 
     local _config_file=$GURU_CFG/$GURU_USER/user.cfg
 
@@ -260,7 +258,7 @@ config.edit () {
 
 
 config.user () {
-    # open user dialog to make changes to user.cfg
+# open user dialog to make changes to user.cfg
 
     local _config_file=$GURU_CFG/$GURU_USER/user.cfg
 
@@ -307,7 +305,7 @@ config.user () {
 
 
 config.get (){
-    # get environmental value of variable
+# get environmental value of variable
 
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
     set | grep "GURU_${_variable^^}" | head -1 | cut -d "=" -f2
@@ -317,7 +315,7 @@ config.get (){
 
 
 config.set () {
-    # change environment temporary
+# change environment temporary
 
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
     [[ "$2" ]] && _value="$2" || read -r -p "$_variable value: " _value
