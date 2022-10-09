@@ -1,8 +1,6 @@
 #!/bin/bash
-# guru-client audio adapter
-# casa@ujo.guru 2020 - 2022
+# guru-client audio adapter casa@ujo.guru 2020 - 2022
 
-#source $GURU_RC
 source common.sh
 source net.sh
 
@@ -18,18 +16,20 @@ audio.help () {
 
     gr.msg -v1 -c white "guru-cli audio help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL audio play|ls|list|listen|pause|resume|mute|stop|tunnel|toggle|install|remove|help"
+    gr.msg -v0 "usage:    $GURU_CALL audio play|ls|list|listen|radio|pause|resume|mute|stop|tunnel|toggle|install|remove|help"
     gr.msg -v2
     gr.msg -v2 "playing files and stream " -c white
     gr.msg -v1 "  play <song|album|artist>    play files in $GURU_MOUNT_AUDIO"
     gr.msg -v1 "  play list <playlist_name>   play a playlist set in user.cfg"
     gr.msg -v1 "  play list ls                list of available playlists "
-    gr.msg -v1 "  listen <url>                listen audio stream"
-    gr.msg -v1 "  listen yle <station_name>   listen yle stations"
+    gr.msg -v1 "  listen yle <station>        listen yle stations"
     gr.msg -v2 "  listen ls                   list of stations"
+    gr.msg -v1 "  listen <url>                listen audio stream"
+    gr.msg -v2 "  radio ls                    list of finnish radio stations"
+    gr.msg -v2 "  radio <station> <city>      seartch and listen station  "
     gr.msg -v1 "  mute                        mute (or unmute) main audio device"
     gr.msg -v1 "  stop                        try to stop audio sources (TBD)"
-    gr.msg -v1 "  pause                       pause all audio "
+    gr.msg -v1 "  pause                       pause all audio and video"
     gr.msg -v2 "  toggle                      toggle last/default audio (for keyboard launch)"
     gr.msg -v2 "  ls                          list of local audio devices "
     gr.msg -v1 "  install                     install requirements "
@@ -53,7 +53,7 @@ audio.main () {
     shift
     case "$_command" in
 
-        play|ls|listen|pause|mute|stop|tunnel|toggle|install|remove|help)
+        play|ls|listen|radio|pause|mute|stop|tunnel|toggle|install|update|remove|help)
             audio.$_command $@
             return $?
             ;;
@@ -154,6 +154,37 @@ audio.toggle () {
 
     return 0
 }
+
+
+audio.radio () {
+# listen radio stations listed in raio.list in config
+
+    ifs=$IFS
+    case $1 in
+        ls) local _list=$(cat $GURU_CFG/radio.list | cut -d ' ' -f2- | tr '\n' ',')
+            gr.msg -c light_blue "$_list"
+            return 0
+            ;;
+        esac
+
+    IFS=$'\n'
+    local _2="http"
+    [[ $2 ]] && _2=$2
+
+    #stations=$(tr A-Z a-z < $GURU_CFG/radio.list)
+    station=$(cat $GURU_CFG/radio.list | grep $1 | grep $_2 | head -n1 )
+    url=$(echo $station |cut -d ' ' -f1 )
+    name=$(echo $station |cut -d ' ' -f2- )
+    [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
+    IFS=$ifs
+    gr.msg -v4 -c pink "got:$station > url:$url name:'$name'"
+
+    gr.msg -c white "📻 ${name^h} 🔊"
+
+    gr.msg -v4 -c pink "mpv $options $url"
+    mpv $options $url
+}
+
 
 audio.listen () {
 # audio.listen_yle () {
@@ -387,6 +418,7 @@ audio.stop () {
 
 
 audio.pause () {
+# pause all audio and video system wide
 
     local _flag="/tmp/guru/audio.pause.flag"
 
@@ -502,6 +534,9 @@ audio.tunnel_toggle () {
         fi
 }
 
+audio.update() {
+    sudo pip install -U youtube-dl
+}
 
 audio.tunnel_install () {
     # install function is required by core
