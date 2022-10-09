@@ -1,9 +1,30 @@
-
-
 # issues, analysis, nice and bad ideas for next version
 
 
-## speak synthesizer
+## daemon.sh - not running after user config reset
+
+- [x] fixes it self, firstly teted in old terminal with default user.cfg
+
+
+## daemon.sh - kill
+- [ ] 1) 'sudu guru kill' is inpossible, guru is not installed for root.
+- [ ] 2) does now kill or get wrong result 'killed..' or tester is getting wrong result and tries again
+- [ ] 3) sleep to get path printed on right position
+
+```
+	casa@electra#:~$ gr daemon kill -f
+	Terminated
+	casa@electra#:~$ daemon killed..
+	daemon still running, try to 'sudo guru kill' again
+
+	casa@electra#:~$ gr daemon kill -f
+	Terminated
+	casa@electra#:~$ daemon killed..
+	daemon still running, try to 'sudo guru kill' again
+	...
+```
+
+## common.sh - speak synthesizer
 
 Guru needs a voice.
 
@@ -15,7 +36,7 @@ Guru needs a voice.
 - [ ] needs tag/whatever 'speaker ready module' or empty output
 
 
-## rc system rewrite
+## config.sh - rc system rewrite
 
 Stink this trough.
 It makes now no sense, it grow like that, not designed.
@@ -26,7 +47,7 @@ It makes now no sense, it grow like that, not designed.
 - [ ] changes to config.sh
 
 
-## modules can run stand alone by default
+## config.sh - modules can run stand alone by default
 
 Modules need to be able to run without .gururc.
 Exception is core level modules,
