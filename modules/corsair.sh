@@ -762,10 +762,38 @@ corsair.type () {
             key="${string:$i:1}"
 
             case $key in
-              \ ) key="space"
+              \ )
                   gr.msg -n -v1  " "
+                  key="space"
                 ;;
-                *)
+              "."|":")
+                  gr.msg -n -v1 "$key"
+                  key="perioid"
+                ;;
+              ","|":")
+                  gr.msg -n -v1 "$key"
+                  key="comma"
+                ;;
+              "-"|"_")
+                  gr.msg -n -v1  "$key"
+                  key="minus"
+                ;;
+              "/")
+                  gr.msg -n -v1  "/"
+                  key="7"
+                ;;
+              "!")
+                  gr.msg -n -v1  ""
+                  key="1"
+                ;;
+              "?"|"+")
+                  gr.msg -n -v1  "$key"
+                  key="plus"
+                ;;
+              "'"|'"')
+                  continue
+                ;;
+              *)
                 gr.msg -n -v1  $key
                 ;;
             esac
@@ -778,6 +806,8 @@ corsair.type () {
 
     gr.msg -v1
 }
+
+
 
 
 ############################ systemd methods ###############################
