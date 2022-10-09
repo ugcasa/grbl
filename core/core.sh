@@ -468,7 +468,7 @@ case $1 in
 
 # check that config rc file exits
 if [[ -f $GURU_RC ]] ; then
-        gr.msg -v3 "sourcing config $GURU_RC.. "
+        gr.msg -v4 "sourcing config $GURU_RC.. "
         source $GURU_RC
     else
         # run user configuration if not exist
