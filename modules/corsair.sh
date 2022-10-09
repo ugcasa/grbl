@@ -24,18 +24,34 @@ pipelist_file="$GURU_CFG/corsair-pipelist.cfg"
 
 # for now only esc,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12, y, n and caps are piped in ckb_next 20220222
 declare -ga corsair_keytable=(\
-    esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12          print scroll pause      stop brev play next\
-    half 1 2 3 4 5 6 7 8 9 0 query backscape            insert home pageup      numlc div mul sub\
+    esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12          print scroll pause      stop prev play next\
+    half 1 2 3 4 5 6 7 8 9 0 plus query backscape       insert home pageup      numlc div mul sub\
     tab q w e r t y u i o p å tilde enter               del end pagedown        np7 np8 np9 add\
     caps a s d f g h j k l ö ä asterix                                          np4 np5 np6\
-    shiftl less z x c v b n m comma perioid minus shiftr     up                 np1 np2 np3\
-    lctrl func alt space altgr fn set rctrl             left down right         np0 decimal count\
-    m_logo m_thumb m_other1 m_other2
+    shiftl less z x c v b n m comma perioid minus shiftr      up                np1 np2 np3 count\
+    lctrl func alt space altgr fn set rctrl             left down right         np0 decimal\
+    thumb wheel logo mouse
     )
 
-# declare -a mouse_keytable=(\
-#     logo thumb
-#     )
+
+corsair.blink_all () {
+
+    for key in ${corsair_keytable[@]} ; do
+            # corsair.set $key $color
+            corsair.indicate panic $key
+        done
+
+    sleep 3
+
+    for key in ${corsair_keytable[@]} ; do
+            # corsair.set $key $color
+            gr.end $key
+        done
+
+    sleep 3
+    corsair.init olive
+}
+
 
 corsair.get_key_id () {
 # printout key id number
@@ -111,9 +127,10 @@ corsair.help () {
     gr.msg -v2 "  indicate <state> <key>            set varies blinks to indicate states. states below:"
     gr.msg -v2 "    done, active, pause, cancel, error, warning, alert, calm"
     gr.msg -v2 "    panic, passed, ok, failed, message, call, customer, hacker"
+    gr.msg -v1 "  type <strig>                      blink string characters by keylights "
     gr.msg -v1 "  end                               end playing with keyboard, reset all keys "
     gr.msg -v1 "  key-id                            printout key indication codes"
-    gr.msg -v1 "  key-table                         printout key table, with id's increase verbose -v2"
+    gr.msg -v1 "  keytable                          printout key table, with id's increase verbose -v2"
     gr.msg -v2
     gr.msg -v1 "installation and setup" -c white
     gr.msg -v2 "  patch <device>                    edit source devices: K68, IRONCLAW"
@@ -197,28 +214,28 @@ corsair.keytable () {
     gr.msg -v1
     gr.msg -v1 "keyboard indicator pipe file id's"
     gr.msg -v1
-    gr.msg -v0 -c white "esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12        print  scroll  pause      stop brev play next"
-    gr.msg -v2 -c dark  " 0   1  2  3  4  5  6  7  8  9  10  11  12         13     14     15          16   17   18   19"
+    gr.msg -v0 -c white "esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12        print  scroll  pause      stop prev play next"
+    gr.msg -v2 -c dark  " 0   1  2  3  4  5  6  7  8  9  10  11  12         13      14      15        16   17   18   19"
     gr.msg -v3
-    gr.msg -v0 -c white "half 1 2 3 4 5 6 7 8 9 0 query backscape         insert  home   pageup      numlc div  mul  sub"
-    gr.msg -v2 -c dark  " 20  1 2 3 4 5 6 7 8 9 30  31     32               33     34     35          36   37   38   39"
+    gr.msg -v0 -c white "half 1 2 3 4 5 6 7 8 9 0  plus query backscape    insert  home   pageup     numlc div  mul  sub"
+    gr.msg -v2 -c dark  " 20  1 2 3 4 5 6 7 8 9 30  31  32      33          34      35      36        37   38   39   40"
     gr.msg -v3
     gr.msg -v0 -c white "tab q w e r t y u i o p  å tilde enter             del   end  pagedown      np7   np8  np9  add"
-    gr.msg -v2 -c dark  " 40 1 2 3 4 5 6 7 8 9 50 1  52    53               54     55     56          57   58   59   60"
+    gr.msg -v2 -c dark  " 41 2 3 4 5 6 7 8 9 50 1 2  53    54               55      56      57        58   59   60   61"
     gr.msg -v3
     gr.msg -v0 -c white "caps a s d f g h j k  l ö ä asterix                                         np4   np5  np6"
-    gr.msg -v2 -c dark  " 61  2 3 4 5 6 7 8 9 70 1 2   73                                             74   75   76"
+    gr.msg -v2 -c dark  " 62  3 4 5 6 7 8 9 70 1 2 3    74                                            75   76   77"
     gr.msg -v3
-    gr.msg -v0 -c white "shiftl less z x  c v b n m comma perioid minus shiftr     up                np1   np2  np3"
-    gr.msg -v2 -c dark  "  77    78  9 80 1 2 3 4 5  86     87     88     89       90                 91   92   93"
+    gr.msg -v0 -c white "shiftl less z x  c v b n m comma perioid minus shiftr     up                np1   np2  np3 count"
+    gr.msg -v2 -c dark  "  78    79 80 1  2 3 4 5 6   87     88     89    90       91                92    93   94   95"
     gr.msg -v3
-    gr.msg -v0 -c white "lctrl func alt space altgr fn set rctrl           left   down  right        np0    decimal count"
-    gr.msg -v2 -c dark  " 94    95  96   97    98   99 100  101            102    103    104         105      106    107"
+    gr.msg -v0 -c white "lctrl func alt space altgr fn set rctrl           left   down  right        np0   decimal "
+    gr.msg -v2 -c dark  "  96   97   98   99  100  101 102  103            104    105    106         107     108"
     gr.msg -v1
     gr.msg -v2 "mouse indicator pipe file id's "
     gr.msg -v2
-    gr.msg -v2 -c white "m_logo m_thumb m_other1 m_other2"
-    gr.msg -v2 -c dark  "  108    109     110      111"
+    gr.msg -v2 -c white "thumb  wheel logo mouse"
+    gr.msg -v2 -c dark  " 109    110   111   112"
     gr.msg -v1
     gr.msg -v2 " use thee digits to indicate id in file name example: 'F12' pipe is '/tmp/ckbpipe012'"
     gr.msg -v3
@@ -242,7 +259,7 @@ corsair.main () {
 
     case "$cmd" in
             # indicator functions
-            status|init|set|reset|clear|end|indicate|keytable|key-id)
+            status|init|set|reset|clear|end|indicate|keytable|key-id|type)
                     [[ $GURU_CORSAIR_ENABLED ]] || return 1
                     corsair.$cmd $@
                     return $?
@@ -548,6 +565,8 @@ corsair.indicate () {
 
         ok)             _blink="green slime 0.5 3 green" ;;
         available)      _blink="green aqua_marine 0.2 1 green" ;;
+        yes)            _blink="green black 0.75 10 " ;;
+        no)             _blink="red black 0.75 10 " ;;
         cancel)         _blink="orange $GURU_CORSAIR_MODE 0.2 3 " ;;
         init)           _blink="blue dark_blue 0.1 3 " ;;
         passed|pass)    _blink="slime $GURU_CORSAIR_MODE 1 300 green" ;;
@@ -555,7 +574,7 @@ corsair.indicate () {
         done)           _blink="green slime 6 $GURU_DAEMON_INTERVAL green" ;;
         doing)          _blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL aqua" ;;
         working)        _blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL aqua" ;;
-        playing)        _blink="green slime 2 3600" ;;
+        playing)        _blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
         active)         _blink="slime aqua 0.5 2" ;;
         pause)          _blink="black $GURU_CORSAIR_MODE 1 3600" ;;
         error)          _blink="orange yellow 1 $GURU_DAEMON_INTERVAL yellow" ;;
@@ -731,6 +750,33 @@ corsair.blink_test () {
     #gr corsair end
     system.main flag rm pause
     return 0
+}
+
+corsair.type () {
+# blink string characters by key lights
+    string="${@,,}"
+    color="white"
+
+    for (( i=0 ; i < ${#string} ; i++ )) ; do
+
+            key="${string:$i:1}"
+
+            case $key in
+              \ ) key="space"
+                  gr.msg -n -v1  " "
+                ;;
+                *)
+                gr.msg -n -v1  $key
+                ;;
+            esac
+
+            corsair.main set $key $color
+            sleep 0.4
+            corsair.main reset $key
+            sleep 0.1
+        done
+
+    gr.msg -v1
 }
 
 
