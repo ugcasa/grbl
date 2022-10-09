@@ -118,10 +118,11 @@ core.parser () {
 core.debug () {
 
     local wanted=$1
-    local available=($(cat "$GURU_CFG/variable.list"))
+    # local available=($(cat "$GURU_CFG/variable.list"))
+    # local available=($(set | grep 'GURU_' | grep -v '$'))
+    local available=$(cat $GURU_RC| grep "export GURU_" | cut -d "=" -f1 | cut -d' ' -f2)
     local i=0
     local empty=0
-    # local available=($(set | grep 'GURU_' | grep -v '$'))
 
     for variable in ${available[@]} ; do
         gr.msg -n -c light_blue "$variable "
