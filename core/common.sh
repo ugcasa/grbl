@@ -174,7 +174,7 @@ gr.msg () {
 
     # On verbose level 3+ timestamp is always on
     if [[ $verbose_trigger -gt 3 ]] && [[ ${#_message} -gt 1 ]]; then
-            _timestamp="$(date +$GURU_FORMAT_TIME.%3N) "
+            _timestamp="$(date +$GURU_FORMAT_TIME.%3N) DEBUG: "
         fi
 
     # -w) fill message length to column limiter
