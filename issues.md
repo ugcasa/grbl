@@ -1,11 +1,6 @@
 # issues, analysis, nice and bad ideas for next version
 
 
-## daemon.sh - not running after user config reset
-
-- [x] fixes it self, firstly teted in old terminal with default user.cfg
-
-
 ## daemon.sh - kill
 - [ ] 1) 'sudu guru kill' is inpossible, guru is not installed for root.
 - [ ] 2) does now kill or get wrong result 'killed..' or tester is getting wrong result and tries again

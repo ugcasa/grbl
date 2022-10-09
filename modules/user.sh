@@ -3,7 +3,8 @@
 # casa@ujo.guru 2020
 
 
-# TBD NON FUNCTIONAL: Please remove after chec there is no usage.
+# TBD NON FUNCTIONAL: Please review after check there is no usage.
+# Do not remove, user.cfg is load cause this exists
 
 
 user.main () {
