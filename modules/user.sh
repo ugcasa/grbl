@@ -2,7 +2,11 @@
 # user settings for guru-client
 # casa@ujo.guru 2020
 
-user_main () {
+
+# TBD NON FUNCTIONAL: Please remove after chec there is no usage.
+
+
+user.main () {
     # command parser
 
     command="$1"; shift
@@ -28,7 +32,7 @@ user_main () {
                 || gr.msg -c red "username mismatch! $GURU_USER:$GURU_USER_NAME"
             ;;
         change|*)
-            change_user "$@"
+            user.change "$@"
             ;;
 
     esac
@@ -36,7 +40,7 @@ user_main () {
 
 }
 
-set_value () {
+user.set_value () {
     # set value to user (or any) config file
 
     [ -f "$GURU_SYSTEM_RC" ] && target_rc="$GURU_SYSTEM_RC" || target_rc="$GURU_RC"        #
@@ -45,8 +49,7 @@ set_value () {
 
 }
 
-
-add_user () {
+user.add () {
     # add user (futile)
 
     [ "$1" ] && new_user="$1" || read -p "user name to change to : " new_user
@@ -56,11 +59,10 @@ add_user () {
     # copy user config template to user name
     # add user add request to server
     # add keys to server
-    # change_user
+    # user.change
     return 0
 }
-
-add_user_server () {
+user.add_server () {
     # Run this only at accesspoint server for now
 
     echo "add user to access point server TBD"
@@ -69,7 +71,7 @@ add_user_server () {
     echo mkdir -p "usr/cfg"
 }
 
-change_user () {
+user.change () {
     # change user, futile done bu guru config export -u <username>
 
     [ "$1" ] && new_user="$1" || read -p "user name to change to : " new_user
@@ -78,7 +80,7 @@ change_user () {
 
     if [ -d "$new_user_rc" ]; then
         echo "user exist"
-        set_value GURU_USER "${new_user,,}"             # set user to en
+        user.set_value GURU_USER "${new_user,,}"             # set user to en
         source "$new_user_rc"                           # get user configuration on use
         pull_config_files                               # get newest configurations from server
     else
@@ -94,7 +96,7 @@ change_user () {
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     #source "$GURU_RC"
-    user_main "$@"
+    user.main "$@"
     return 0
 fi
 

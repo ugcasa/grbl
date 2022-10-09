@@ -160,6 +160,37 @@ config.export () {
     # include system configuration
     gr.msg -n -v1 "setting user configuration " ; gr.msg -v2
     config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gr.msg -v1 -V2 -c green "done"
+
+
+    local installed_modules=($(cat $GURU_CFG/installed.core))
+    installed_modules=(${installed_modules[@]} $(cat $GURU_CFG/installed.modules))
+
+    for module in ${installed_modules[@]} ; do
+
+        ## add modules default config
+        local _module_cfg="$GURU_CFG/$module.cfg"
+        gr.msg -v4 -c deep_pink "Looking default configs: $_module_cfg"
+
+        if [[ -f $_module_cfg ]] ; then
+            config.make_rc "$_module_cfg" "$_target_rc" append \
+                || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
+            fi
+
+        ## add user config
+        _module_cfg="$GURU_CFG/$GURU_USER/$module.cfg"
+        gr.msg -v4 -c deep_pink "Looking user configs: $_module_cfg"
+
+        if [[ -f $_module_cfg ]] ; then
+            config.make_rc "$_module_cfg" "$_target_rc" append \
+                || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
+            fi
+    done
+
+
+    gr.msg -n -v1 "setting module configuration " ; gr.msg -v2
+    config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gr.msg -v1 -V2 -c green "done"
+
+
     config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
     # set path
     echo "source $GURU_BIN/path.sh" >> $_target_rc
