@@ -84,24 +84,64 @@ core.parser () {
 
             all)
                     core.multi_module_function "$@"
-                    return $? ;;
+                    return $?
+                    ;;
 
             uninstall)
                     bash "$GURU_BIN/$module.sh" "$@"
-                    return $? ;;
+                    return $?
+                    ;;
 
             start|poll|kill)
                     source $GURU_BIN/daemon.sh
                     daemon.$module
-                    return $? ;;
+                    return $?
+                    ;;
+            debug)
+            # access to core functions
+                    core.$module
+                    return $?
+                    ;;
 
             help|version)
-                    core.$module
-                    return $? ;;
+                    core.$module $@
+                    return $?
+                    ;;
             *)
                     core.run_module "$module" "$@"
-                    return $? ;;
+                    return $?
+                    ;;
         esac
+}
+
+
+core.debug () {
+
+    local wanted=$1
+    local available=($(cat "$GURU_CFG/variable.list"))
+    local i=0
+    local empty=0
+    # local available=($(set | grep 'GURU_' | grep -v '$'))
+
+    for variable in ${available[@]} ; do
+        gr.msg -n -c light_blue "$variable "
+        #printf "${variable}="
+
+        if [[ ${!variable} ]] ; then
+            gr.msg -c light_green "${!variable}"
+            #printf "${!variable}\n"
+            let i++
+        else
+
+            [[ $GURU_COLOR ]] \
+                && gr.msg -c yellow "false (empty)" \
+                || echo "   <-------------------------------------- false (empty)"
+
+            let empty++
+        fi
+
+        done
+    gr.msg -N "$i variables where $empty empty one"
 }
 
 
@@ -165,7 +205,7 @@ core.run_module () {
                 # speak out what ever module returns
                 if [[ $GURU_SPEAK ]]  ; then
                     local module_output="$(${run_me[@]//  / })"
-                    gr.msg "guru replies: '$module_output'"
+                    gr.msg -v2 "guru replies: '$module_output'"
                     espeak -p $GURU_SPEAK_PITCH \
                            -s $GURU_SPEAK_SPEED \
                            -v $GURU_SPEAK_LANG \
@@ -180,8 +220,9 @@ core.run_module () {
         done
     done
 
-    echo "guru recognize no module named '$module'"
+    gr.msg -v2 "guru recognize no module named '$module'"
     return $?
+
 
     # if gr.ask "passing to request to operating system?" ; then
     #    $module $@
@@ -346,12 +387,12 @@ core.process_opts () {
     local commands=
 
     # default values for global control variables
-    declare -g GURU_FORCE=
-    declare -g GURU_SPEAK=
-    declare -g GURU_LOGGING=
-    declare -g GURU_HOSTNAME=$(hostname)
-    declare -g GURU_VERBOSE=$GURU_FLAG_VERBOSE
-    declare -g GURU_COLOR=$GURU_FLAG_COLOR
+    declare -gx GURU_FORCE=
+    declare -gx GURU_SPEAK=
+    declare -gx GURU_LOGGING=
+    declare -gx GURU_HOSTNAME=$(hostname)
+    declare -gx GURU_VERBOSE=$GURU_FLAG_VERBOSE
+    declare -gx GURU_COLOR=$GURU_FLAG_COLOR
 
     # go trough possible arguments if set or value is given, other vice use default
     TEMP=`getopt --long -o "csflqh:u:v:" "$@"`
@@ -454,13 +495,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 
     # export global variables for sub processes
     declare -xa GURU_COMMAND
-
-    # TBD following not really needed
-    declare -x GURU_FORCE
-    declare -x GURU_COLOR
-    declare -x GURU_VERBOSE
-    declare -x GURU_HOSTNAME
-    declare -x GURU_LOGGING
 
     core.parser ${GURU_COMMAND[@]}
     _error_code=$?
