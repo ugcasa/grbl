@@ -335,7 +335,7 @@ core.online () {
 
     declare -g offline_flag="/tmp/guru-offline.flag"
 
-    if net.check ; then
+    if net.check_server ; then
             if [[ -f $offline_flag ]] ; then
                     gr.end esc
                     system.flag rm pause
@@ -505,11 +505,17 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         exit 0
     fi
 
+    if [[ GURU_CORSAIR_ENABLED ]] ; then
+        source corsair.sh
+        corsair.indicate error
+        corsair.main type "er$_error_code" >/dev/null
+    fi
+
     # less than 10 are warnings
     if (( _error_code < 100 )) ; then
         gr.msg -v2 -c yellow "warning: $_error_code $GURU_LAST_ERROR" # TBD for hard exits
     else
-        gr.msg -v1 -c red  "error: $_error_code $GURU_LAST_ERROR" # TBD for hard exits
+        gr.msg -v2 -c red  "error: $_error_code $GURU_LAST_ERROR" # TBD for hard exits
     fi
 
     exit $_error_code

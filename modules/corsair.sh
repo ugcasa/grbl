@@ -458,7 +458,6 @@ corsair.set () {
     # write color code to button pipe file and let device to receive and process command (surprisingly slow)
     if file $key_pipefile | grep fifo >/dev/null ; then
             echo "rgb $_color" > "$key_pipefile"
-            # sleep 0.005, hmm.. gr.msg take same time: sys 0m0,005s,
             gr.msg -v4 -t -c $2 "$1 < $2"
             return 0
         else
@@ -474,10 +473,7 @@ corsair.pipe () {
     local _button=$1 ; shift
     local _color=$1 ; shift
     local _bright="FF" ; [[ $1 ]] && _bright="$1" ; shift
-    # write color code to button pipe file
     echo "rgb $_color$_bright" > "$_button"
-    # let device to receive and process command (surprisingly slow)
-    #sleep 0.1
     return 0
 }
 
@@ -485,18 +481,13 @@ corsair.pipe () {
 corsair.reset () {
 # application level function, not restarting daemon or application, return normal, if no input reset all
 
-    gr.msg -n -v3 "resetting keys "
-
     if [[ "$1" ]] ; then
-            # gr.msg -v2 " $1"
             corsair.set $1 $corsair_mode 10 && return 0 || return 100
         else
             for _key_pipe in $key_pipe_list ; do
-                gr.msg -n -v3 "."
                 corsair.pipe $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10 || return 100
             done
-           gr.msg -v3 -c green " done"
-           return 0
+            return 0
         fi
 }
 
@@ -505,14 +496,10 @@ corsair.clear () {
 # set key to black, input <known_key> default is F1 to F12
 
     local _keylist=($key_pipe_list)
-    gr.msg -n -v3 "setting keys "
     [[ "$1" ]] && _keylist=(${@})
     for _key in $_keylist ; do
-            gr.msg -n -v3 "."
-            gr.msg -n -V3 -v2 -c black "$_key "
             corsair.set $_key black
         done
-    gr.msg -v3 -c green " done"
 }
 
 
@@ -561,8 +548,7 @@ corsair.indicate () {
     [[ $GURU_PROJECT_COLOR ]] && color=$GURU_PROJECT_COLOR
 
     case $level in
-                             # color1 color2 interval timeout leave-color
-
+    # color1 color2 interval timeout leave-color
         ok)             _blink="green slime 0.5 3 green" ;;
         available)      _blink="green aqua_marine 0.2 1 green" ;;
         yes)            _blink="green black 0.75 10 " ;;
@@ -577,7 +563,7 @@ corsair.indicate () {
         playing)        _blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
         active)         _blink="slime aqua 0.5 2" ;;
         pause)          _blink="black $GURU_CORSAIR_MODE 1 3600" ;;
-        error)          _blink="orange yellow 1 $GURU_DAEMON_INTERVAL yellow" ;;
+        error)          _blink="orange yellow 1 5 yellow" ;;
         message)        _blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
         call)           _blink="deep_pink black 0.75 30 deep_pink" ;;
         customer)       _blink="deep_pink white 0.75 30 deep_pink" ;;
@@ -630,17 +616,13 @@ corsair.blink_set () {
             time_now=$(date +%s)
 
             if ! [[ -f /tmp/blink_$key ]] || (( time_now > time_out )) ; then
-                # gr.msg -n -c $leave_color -k $key
                 corsair.set $key $leave_color
-                #echo "$pid;$key" >>/tmp/blink_pid
                 grep -v "\b$key\b" /tmp/blink_pid >/tmp/tmp_blink_pid
                 mv -f /tmp/tmp_blink_pid /tmp/blink_pid
                 break
             else
-                # gr.msg -n -k $key -c $base_c
                 corsair.set $key $base_c
                 [[ $delay ]] && sleep $delay
-                # gr.msg -n -k $key -c $high_c
                 corsair.set $key $high_c
                 [[ $delay ]] && sleep $delay
             fi
@@ -684,8 +666,6 @@ corsair.blink_kill () {
                 key=$(echo ${_to_kill[@]} | cut -d ';' -f2)
                 pid=$(echo ${_to_kill[@]} | cut -d ';' -f1)
             fi
-
-        #gr.msg -c deep_pink "key:$key pid:$pid"
 
         [[ $pid ]] || return 0
 
@@ -763,38 +743,38 @@ corsair.type () {
 
             case $key in
               \ )
-                  gr.msg -n -v1  " "
+                  gr.msg -n -v3  " "
                   key="space"
                 ;;
               "."|":")
-                  gr.msg -n -v1 "$key"
+                  gr.msg -n -v3 "$key"
                   key="perioid"
                 ;;
               ","|":")
-                  gr.msg -n -v1 "$key"
+                  gr.msg -n -v3 "$key"
                   key="comma"
                 ;;
               "-"|"_")
-                  gr.msg -n -v1  "$key"
+                  gr.msg -n -v3 "$key"
                   key="minus"
                 ;;
               "/")
-                  gr.msg -n -v1  "/"
+                  gr.msg -n -v3 "/"
                   key="7"
                 ;;
               "!")
-                  gr.msg -n -v1  ""
+                  gr.msg -n -v3 ""
                   key="1"
                 ;;
               "?"|"+")
-                  gr.msg -n -v1  "$key"
+                  gr.msg -n -v3 "$key"
                   key="plus"
                 ;;
-              "'"|'"')
+              "'"|'"'|'('|')')
                   continue
                 ;;
               *)
-                gr.msg -n -v1  $key
+                gr.msg -n -v3 $key
                 ;;
             esac
 
@@ -802,9 +782,9 @@ corsair.type () {
             sleep 0.4
             corsair.main reset $key
             sleep 0.1
-        done
+        done & 2>/dev/null
 
-    gr.msg -v1
+    gr.msg -v3
 }
 
 

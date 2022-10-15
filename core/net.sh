@@ -18,7 +18,9 @@ net.help () {
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " status     return network status "
-    gr.msg -v2 " check      check net only return code "
+    gr.msg -v1 " check      check internet is reachable "
+    gr.msg -v1 " server     check accesspoint is reachable "
+    gr.msg -v1 " cloud      fileserver is reachable"
     gr.msg -v2 " help       printout this help "
     gr.msg -v2
     gr.msg -v1 -c white "examples:  "
@@ -40,23 +42,53 @@ net.main () {
                 net.$function $@
                 return $?
                 ;;
+            server|accesspoint|access)
+                net.check_server $@
+                return $?
+                ;;
+            cloud|fileserver|files)
+                net.check_server $GURU_CLOUD_DOMAIN
+                return $?
+                ;;
+
             *)
-                net.check && gr.msg -c green "online" || gr.msg -c orange "offline"
+                net.check_server && gr.msg -c green "server reachable" || gr.msg -c orange "server offline"
+                net.check && gr.msg -c green "internet available" || gr.msg -c orange "internet unreachable"
                 ;;
         esac
 }
 
 
-net.check () {
-# quick check network connection, no analysis
-    gr.msg -n -t -v3 "ping google.com.. "
-    if ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
+net.check_server () {
+# quick check accesspoint connection, no analysis
 
-        gr.msg -n -v3 "ok > "
+    local _server=$GURU_ACCESS_DOMAIN
+    [[ $1 ]] && _server=$1
+
+    gr.msg -n -t -v3 "ping $_server.. "
+    if timeout 2 ping $_server -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
+        gr.msg -v3 "ok "
         gr.end $net_indicator_key
         return 0
     else
-        gr.msg -n -v3 "unreachable! "
+        gr.msg -v3 "$_server unreachable! "
+        gr.ind offline -m "$_server unreachable" -k $net_indicator_key
+        return 127
+    fi
+}
+
+
+
+net.check () {
+# quick check network connection, no analysis
+    gr.msg -n -t -v3 "ping google.com.. "
+    if timeout 3 ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
+
+        gr.msg -v3 "ok "
+        gr.end $net_indicator_key
+        return 0
+    else
+        gr.msg -v3 "unreachable! "
         gr.ind offline -m "network offline" -k $net_indicator_key
         return 127
     fi
