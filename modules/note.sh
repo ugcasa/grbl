@@ -1,8 +1,13 @@
 #!/bin/bash
-# note tools for guru-client casa@ujo.guru 2017-2021
+# note tools for guru-client casa@ujo.guru 2017-2022
 source $GURU_BIN/common.sh
 source $GURU_BIN/mount.sh
 source $GURU_BIN/tag.sh
+
+declare -gx note=
+declare -gx note_date=
+declare -gx note_dir=
+declare -gx note_file=
 
 note.main () {
     # main command parser
@@ -10,7 +15,7 @@ note.main () {
     local command="$1" ; shift
 
     case "$command" in
-            status|ls|add|open|rm|check|locate)
+            status|ls|add|open|rm|check|locate|config)
                     note.$command "$@"
                     return $?
                     ;;
@@ -21,15 +26,19 @@ note.main () {
                     ;;
             tag)
                     tag.main "tag $note $user_input"
+                    return $?
                     ;;
             help)
                     note.help
+                    return $?
                     ;;
              "")
                     note.open $(date +"$GURU_FORMAT_FILE_DATE")
+                    return $?
                     ;;
               *)
                     note.open $(date +"$GURU_FORMAT_FILE_DATE" -d "$command")
+                    return $?
                     ;;
         esac
 }
@@ -40,61 +49,81 @@ note.help () {
 
     gr.msg -v1 -c white "guru-client note help "
     gr.msg -v2
-    gr.msg -v0 "Usage:    $GURU_CALL note [ls|add|open|rm|check|report|locate|tag] <date> "
+    gr.msg -v0 "Usage:    $GURU_CALL note ls|add|open|rm|check|report|locate|tag <date> "
     gr.msg -v1 -c white "Commands:"
     gr.msg -v2
     gr.msg -v1 " check          check do note exist, returns 0 if i do "
-    gr.msg -v1 " list           list of notes. first month (MM), then year (YYYY "
-    gr.msg -v1 " open|edit|*    open given date notes (use time format $GURU_FORMAT_FILE_DATE "
-    gr.msg -v1 "  <yesterday>    - open yesterdays notes "
-    gr.msg -v1 "  <tuesday>...   - open last week day notes "
-    gr.msg -v1 " tag            read or add tags to note file "
+    gr.msg -v1 " list           list of notes. first month (MM), then year (YYYY) "
+    gr.msg -v1 " open|edit      open given date notes (use time format $GURU_FORMAT_FILE_DATE "
+    gr.msg -v1 "  <yesterday>   literal date pointing available"
+    gr.msg -v1 "  <next month>  ... "
+    gr.msg -v1 " tag            read from or add tags to note file "
     gr.msg -v1 " locate         returns file location of note given YYYYMMDD "
-    gr.msg -v1 " report         open note with template to $GURU_PREFERRED_OFFICE_DOC "
+    gr.msg -v1 " report         open note with template with $GURU_PREFERRED_OFFICE_DOC "
     gr.msg -v2
 }
 
 
 note.config () {
-    # populates needed variables based on given date in format YYYMMDD
+# populates global note variables based on given date in format YYYMMDD or literal date like "next month"
+    set -e
+    local _input="${@}"
+    local _year _month _day _datestamp
 
-    input=$1
+    gr.msg -v4 "_input=$_input"
+    gr.msg -v4 "GURU_FORMAT_FILE_DATE='$GURU_FORMAT_FILE_DATE'"
 
-    if [ "$input" ]; then
-        # crashes here if date input is not in correct format YYYYMMDD
-        year=${input::-4}
-        month=${input:4:2}
-        day=${input:6:2}
+    if ! [[ $_input ]] ; then
+        _year=$(date -d now +%Y)
+        _month=$(date -d now +%m)
+        _day=$(date -d now +%d)
+        _datestamp=$(date -d now +$GURU_FORMAT_FILE_DATE)
+
     else
-        # current day if no input
-        year=$(date +%Y)
-        month=$(date +%m)
-        day=$(date +%d)
+        local _re='^[0-9]+$'
+
+        if [[ $_input =~ $_re ]] ; then
+            gr.msg -v4 "got date stamp format"
+            _year=${_input::-4}
+            _month=${_input:4:2}
+            _day=${_input:6:2}
+            _datestamp="${_year}${_month}${_day}"
+        else
+            gr.msg -v4 "got literal date"
+            _year=$(date -d "$_input" +%Y)
+            _month=$(date -d "$_input" +%m)
+            _day=$(date -d "$_input" +%d)
+            _datestamp="$(date +$GURU_FORMAT_FILE_DATE -d "$_input" )"
+        fi
     fi
 
-    short_datestamp=$(date -d $year-$month-$day +$GURU_FORMAT_FILE_DATE)
-    nice_datestamp=$(date -d $year-$month-$day +$GURU_FORMAT_DATE)
-
-    note_dir=$GURU_MOUNT_NOTES/$GURU_USER_NAME/$year/$month
-    note_file=$GURU_USER_NAME"_notes_"$short_datestamp.md
+    # fulfill note variables with given date in user config formats
+    note_date=$(date -d $_datestamp +$GURU_FORMAT_DATE)
+    note_dir=$GURU_MOUNT_NOTES/$GURU_USER_NAME/$_year/$_month
+    note_file=$GURU_USER_NAME"_notes_"$_datestamp.md
     note="$note_dir/$note_file"
-
     template_file_name="template.$GURU_USER_NAME.$GURU_USER_TEAM.md"
     template="$GURU_MOUNT_TEMPLATES/$template_file_name"
+
+    # debug shit
+    gr.msg -v4 -c light_blue "$(declare -p | grep 'declare --' | cut -d ' ' -f3)"
 }
 
 
 note.check () {
-    # chech that given date note file exist
+    # check that given date note file exist
 
     if ! note.online ; then note.remount ; fi
     note.config "$1"
-    gr.msg -n -v1 "checking note file.. "
+    gr.msg -n -v1 -V3 "checking note $note_date.. "
     if [[ -f "$note" ]] ; then
             gr.msg -v1 -c green "$note found"
             return 0
         else
-            gr.msg -v1 -c yellow "$note not found"
+            gr.msg -v0 -V1 "$note"
+            gr.msg -v1 -V2 -c white "not found"
+            gr.msg -v2 -V4 -c yellow "$note_file not found"
+            gr.msg -v4 -c yellow "$note not exist"
             return 41
         fi
 }
@@ -109,10 +138,8 @@ note.locate () {
         note.config "$1"
         gr.msg -v1 "$note "
         if [[ -f $note ]] ; then
-                # gr.msg -v1 -c green "exist"
                 return 0
             else
-                #gr.msg -v1 -c red "non exist"
                 return 1
             fi
     }
@@ -139,7 +166,7 @@ note.locate () {
 
 
 note.online () {
-    # check that needed folders are mounted
+# check that needed folders are mounted
 
     if ! [[ "$GURU_MOUNT_NOTES" ]] && [[ "$GURU_MOUNT_TEMPLATES" ]] ; then
             gr.msg -c yellow "empty variable: '$GURU_MOUNT_NOTES' or '$GURU_MOUNT_TEMPLATES'"
@@ -153,11 +180,12 @@ note.online () {
             gr.msg -v2 -c red "note database not mounted"
             return 1
         fi
+
 }
 
 
 note.remount () {
-    # mount needed folders
+# mount needed folders
 
     mount.known_remote notes || return 43
     mount.known_remote templates || return 43
@@ -166,7 +194,7 @@ note.remount () {
 
 
 note.ls () {
-    # list of notes given month/year
+# list of notes given month/year
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -187,7 +215,7 @@ note.ls () {
 
 
 note.add () {
-    # creates notes
+# creates notes
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -220,7 +248,7 @@ note.add () {
                 fi
 
             # header
-            printf "\n\n# $GURU_NOTE_HEADER $nice_datestamp\n\n" >>$note
+            printf "\n\n# $GURU_NOTE_HEADER $note_date\n\n" >>$note
 
             # template
             [[ -f "$template" ]] && cat "$template"  |tail -n+2 >>$note || printf "customize your template to $template" >>$note
@@ -236,7 +264,7 @@ note.add () {
 
 
 note.open () {
-    # select note to open and call editor input date in format YYYYMMDD
+# select note to open and call editor input date in format YYYYMMDD
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -259,11 +287,12 @@ note.open () {
         note.open_editor "$note"
 
     done
+
 }
 
 
 note.rm () {
-    # remove note of given date. input format YYYYMMDD
+# remove note of given date. input format YYYYMMDD
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -279,7 +308,7 @@ note.rm () {
 
 
 note.add_change () {
-    # add line to change log
+# add line to change log
 
     _line () {
         _len=$1
@@ -309,8 +338,9 @@ note.add_change () {
 }
 
 
+
 note.open_editor () {
-    # open note to preferred editor
+# open note to preferred editor
 
     case "$GURU_PREFERRED_EDITOR" in
         subl)
@@ -331,7 +361,7 @@ note.open_editor () {
 
 
 note.office () {
-    # created odt with team template out of given days note
+# create odt from team template out of given day note
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -357,15 +387,19 @@ note.office () {
 
     $GURU_PREFERRED_OFFICE_DOC "${note%%.*}.odt" &
     echo "report file: ${notefile%%.*}.odt"
+
+
+    # debug
+    gr.msg -v4 -N -c green "$(declare -p | grep -e 'GURU_PREFERRED'  -e 'GURU_MOUNT'  | cut -d ' ' -f3)"
 }
 
 
 note.web () {
-    # created html of given days note
+# create html of given day'note
     echo TBD
 }
 
-################## daemon functions #####################
+# daemon functions #####################
 
 # TDB poller
 
@@ -377,10 +411,10 @@ note.status () {
 }
 
 
-
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         source "$GURU_RC"
         note.main "$@"
+        gr.msg -v4 -N -c green "$(declare -p | grep -e 'GURU_NOTE' -e 'GURU_FORMAT'   | cut -d ' ' -f3)"
         exit $?
     fi
 
