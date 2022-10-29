@@ -584,7 +584,7 @@ corsair.indicate () {
 
 
 corsair.blink_set () {
-# start to blink input: key_name base_color high_color delay_sec timeout_sec leave_color_name
+# start to blink input: key_name base_color high_color delay_sec timeout_sec leave_color
 # leave color is color what shall be left on key shen stoppend or killed.
 
     # all options are optional but position is criticalcause read from left to right default setting below:
