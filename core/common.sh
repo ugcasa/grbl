@@ -353,9 +353,10 @@ gr.ask () {
 
     # make y and n blinky on keyboard
     if [[ GURU_CORSAIR_ENABLED ]] ; then
-
             source corsair.sh
-            corsair.init yes-no
+            corsair.indicate yes y 2>/dev/null >/dev/null
+            sleep 0.75
+            corsair.indicate no n 2>/dev/null >/dev/null
         fi
 
     # format [Y/n]: box
@@ -367,14 +368,14 @@ gr.ask () {
     # ask from user
     read $_options-n 1 -p "$_message $_box" _answer
 
+    if [[ GURU_CORSAIR_ENABLED ]] ; then
+            corsair.blink_stop y
+            corsair.blink_stop n
+        fi
+
     # sense timeout
     (( $? > 128 )) && _answer=$_def_answer
     echo
-
-    # stop blinky
-    if [[ $GURU_CORSAIR_ENABLED ]] ; then
-        corsair.init $GURU_CORSAIR_MODE
-    fi
 
     # return for callers if statment
     case ${_answer^^} in Y)
