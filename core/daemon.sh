@@ -2,11 +2,12 @@
 # guru client background servicer
 # casa@ujo.guru 2020
 
-daemon_service_script="$HOME/.config/systemd/user/guru.service"
-daemon_pid_file="/tmp/guru.daemon-pid"
+declare -xg daemon_service_script="$HOME/.config/systemd/user/guru.service"
+declare -xg daemon_pid_file="/tmp/guru.daemon-pid"
+declare -axg GURU_DAEMON_PID=
 
 # use same key than system.sh
-daemon_indicator_key="esc" #"f$(gr.poll system)"
+daemon_indicator_key="esc"
 
 source $GURU_BIN/system.sh
 
@@ -53,48 +54,76 @@ daemon.help () {
 daemon.status () {
     # printout status of daemon
 
-    local _err=0
+    gr.msg -n -v1 "${FUNCNAME[0]}: "
 
-    if [[ -f "$daemon_pid_file" ]] ; then
-            local _pid="$(cat $daemon_pid_file)"
-            gr.msg -v1 -c green "${FUNCNAME[0]}: $_pid"
-        else
-            gr.msg -v1 -c dark_grey "${FUNCNAME[0]}: no pid reserved"
-            _err=$((_err+10))
+    if [[ -f "$daemon_pid_file" ]]; then
+            local last_pid="$(cat $daemon_pid_file)"
+            gr.msg -n -v2 "(prev. PID: $last_pid) "
         fi
 
-    if ps auxf | grep "$HOME/bin/core.sh start" | grep -v "grep"  | grep -v "status" >/dev/null ; then
-            gr.msg -v1 -c green "${FUNCNAME[0]}: running"
-        else
-            gr.msg -v1 -c red "${FUNCNAME[0]}: not running"
-            _err=$((_err+10))
+    local _ifs=$IFS; IFS=$'\n'
+    process_list=($(ps auxf | grep -v grep | grep -e "$GURU_BIN/guru start" -e "daemon.sh start" | grep -e "$USER"))
+    IFS=$_ifs
+
+    GURU_DAEMON_PID=()
+
+    for (( i = 0; i < ${#process_list[@]}; i++ )); do
+            GURU_DAEMON_PID=(${GURU_DAEMON_PID[@]} $(echo ${process_list[$i]} | xargs | cut -f2 -d' '))
+            gr.msg -n -c light_blue "${GURU_DAEMON_PID[$i]} "
+            #statements
+        done
+
+    # GURU_DAEMON_PID=($(ps auxf | grep -v grep | grep -e "$GURU_BIN/guru start" -e "daemon.sh start" | grep -e "$USER" | xargs | cut -d' ' -f2))
+    #${GURU_DAEMON_PID[1]}
+
+    if ! [[ $GURU_DAEMON_PID ]]; then
+            gr.msg -v1 -c red "not running" -k $daemon_indicator_key
+            [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file && gr.msg -n -v2 "previous PID removed "
+            return 127
         fi
 
-    return $_err
+    if [[ ${#GURU_DAEMON_PID[@]} -gt 1 ]]; then
+            gr.msg -v1 -c yellow "multiple daemons detected, get a shotgun.." -k $daemon_indicator_key
+            gr.msg -v2 "kill daemons by '$GURU_CALL daemon kill' command and then start new one by '$GURU_CALL start'"
+            # gr.msg -c -v2 light_blue "${GURU_DAEMON_PID[@]} "
+            return 0
+        fi
+
+    if ! [[ $GURU_DAEMON_PID -eq $last_pid ]]; then
+            gr.msg -n -v2 -c yellow "previous PID mismatch " -k $daemon_indicator_key
+            echo $GURU_DAEMON_PID >$daemon_pid_file
+            # retest
+            last_pid="$(cat $daemon_pid_file)"
+            [[ $GURU_DAEMON_PID -eq $last_pid ]] \
+                && gr.msg -n -v2 -c white "fixed "\
+                || gr.msg -n -v2 -c red "failed to update previous PID " -k $daemon_indicator_key
+        fi
+
+    #export $GURU_DAEMON_PID
+    gr.msg -v0 -V1 "$GURU_DAEMON_PID"
+    gr.msg -v1 -c green "running"
+    gr.ind done $daemon_indicator_key
+    return 0
 }
 
 
 daemon.start () {
-    # staart daemon
+    # start daemon
 
-    if [[ -f "$daemon_pid_file" ]] ; then
+    # if daemon.status && ! [[ $GURU_FORCE ]]; then
+    #         gr.msg -v1 -c green "already running"
+    #         gr.msg -v2  "use force to restart"
+    #         return 0
+    #     fi
+
+    # daemon.status fixes previous PID file, so we can trust that $daemon_pid_file includes current pid of running daemon
+    # EDIT: $GURU_DAEMON_PID declared globally and is exported
+    if [[ -f "$daemon_pid_file" ]]; then
             local last_pid=$(cat "$daemon_pid_file")
             gr.msg -v2 "${FUNCNAME[0]}: killing $last_pid"
-            kill -9 $last_pid
+            kill -9 $last_pid || kill -9 $GURU_DAEMON_PID
             sleep 2
         fi
-
-    still_running=$(ps auxf | grep -e "daemon.sh start" -e "guru start" \
-                            | grep -v grep \
-                            | grep -v $$ \
-                            | sed 's/  */ /' \
-                            | cut -f 2 -d ' ' )
-
-    if [[ $still_running ]] ; then
-            gr.msg -v1 "killing old damons ${still_running[@]}"
-            kill -9 ${still_running[@]}
-        fi
-
 
     if system.suspend flag ; then
             [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
@@ -113,7 +142,7 @@ daemon.start () {
                 ;;
             *)
                 gr.msg -v2 -c dark_golden_rod "$i:$module: "
-                if [[ -f "$GURU_BIN/$module.sh" ]] ; then
+                if [[ -f "$GURU_BIN/$module.sh" ]]; then
                         source "$GURU_BIN/$module.sh"
                         # gr.msg -v3 ": $GURU_BIN/$GURU_BIN/$module.sh"
                         $module.main poll start
@@ -137,7 +166,7 @@ daemon.stop () {
     system.flag rm stop
     gr.msg -N -n -V1 -c white "stopping daemon.. "
     # if pid file is not exist
-    if ! [[ -f "$daemon_pid_file" ]] ; then
+    if ! [[ -f "$daemon_pid_file" ]]; then
             gr.msg "${FUNCNAME[0]}: daemon not running"
             gr.msg -v1 "start daemon by typing 'guru start'"
             return 0
@@ -158,7 +187,7 @@ daemon.stop () {
                 ;;
             * )
                 gr.msg -v2 -c dark_golden_rod "$i:$module: "
-                if [[ -f "$GURU_BIN/$module.sh" ]] ; then
+                if [[ -f "$GURU_BIN/$module.sh" ]]; then
                         source "$GURU_BIN/$module.sh"
                         $module.main poll end
                         # gr.msg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
@@ -171,8 +200,12 @@ daemon.stop () {
         done
 
     gr.msg -t -v1 "stopping guru-daemon.. "
+
+
     [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
+
     system.flag rm running
+
     if ! kill -15 "$_pid" ; then
         gr.msg -V1 -c yellow "error $?, retry" -k $daemon_indicator_key
 
@@ -196,22 +229,38 @@ daemon.stop () {
 daemon.kill () {
     # force stop daemon
 
-    if pkill guru ; then
-            gr.msg -v1 -c green "daemon killed.."
-        else
-            gr.msg -v2 -c dark_grey "daemon not running"
-        fi
-
-    if ps auxf | grep "$GURU_BIN/guru" | grep "start" | grep -v "grep" >/dev/null ; then
-            gr.msg -v1 -c yellow "daemon still running, try to 'sudo guru kill' again"
-            gr.ind failed $daemon_indicator_key
-            return 100
-        else
-            gr.msg -v3 -c white "kill verified"
-            [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
-            gr.end $daemon_indicator_key
+    if ! daemon.status ; then
             return 0
         fi
+
+    for (( i = 0; i < ${#GURU_DAEMON_PID[@]}; i++ )); do
+            gr.msg -v1 -n "killing ${GURU_DAEMON_PID[$i]}.. "
+            kill -9 ${GURU_DAEMON_PID[$i]} \
+                && gr.msg -v1 -c green "ok" -k $daemon_indicator_key \
+                || gr.msg -v1 -c red "failed" -k $daemon_indicator_key
+        done
+
+    if daemon.status ; then
+            gr.msg -c red "failed to kill daemons" -k $daemon_indicator_key
+        else
+            gr.msg -v1 -c green "done" -k $daemon_indicator_key
+        fi
+
+
+    #daemon.status && gr.msg -c red "failed to stop daemons"
+
+    # if ps auxf | grep "$GURU_BIN/guru" | grep "start" | grep -v "grep" >/dev/null ; then
+    #         gr.msg -v1 -c yellow "daemon still running, try to 'sudo guru kill' again"
+    #         gr.ind failed $daemon_indicator_key
+    #         return 100
+    #     else
+    #         gr.msg -v3 -c white "kill verified"
+    #         [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
+    #         gr.end $daemon_indicator_key
+    #         return 0
+    #     fi
+
+    #IFS=$_ifs
 }
 
 
@@ -226,8 +275,11 @@ daemon.poll () {
     system.flag rm stop
     GURU_FORCE=
 
+    gr.end $daemon_indicator_key
+
     # DAEMON POLL LOOP
     while true ; do
+        gr.msg -N -t -v3 -c aqua "daemon active" -k $daemon_indicator_key
 
         system.flag set running
         # to update configurations is user changes them
@@ -235,7 +287,7 @@ daemon.poll () {
 
         # check is system suspended during run and perform needed actions
         if system.flag suspend ; then
-                # restart ckb-next appication to reconnec led pipe files
+                # restart ckb-next application to reconnect led pipe files
                 gr.msg -N -t -v1 "daemon recovering from suspend.. "
                 [[ $GURU_CORSAIR_ENABLED ]] && corsair.suspend_recovery
                 system.flag rm suspend
@@ -253,7 +305,7 @@ daemon.poll () {
                 done
                 system.flag rm pause
                 gr.end $daemon_indicator_key
-                gr.msg -v1 -t -c green "daemon continued"
+                gr.msg -v1 -t -c aqua "daemon continued" -k $daemon_indicator_key
                 # gr.ind active -k $daemon_indicator_key
             fi
 
@@ -264,9 +316,6 @@ daemon.poll () {
                 return $?
             fi
 
-        # light esc key to signal user daemon is active
-        gr.msg -N -t -v3 -c aqua "daemon active"
-        gr.ind doing $daemon_indicator_key
 
         # go trough poll list
         for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
@@ -279,7 +328,7 @@ daemon.poll () {
                     *)
                         gr.msg -v2 -c dark_golden_rod "$i:$module: "
 
-                        if [[ -f "$GURU_BIN/$module.sh" ]] ; then
+                        if [[ -f "$GURU_BIN/$module.sh" ]]; then
                                 source "$GURU_BIN/$module.sh"
                                 $module.main poll status
                             else
@@ -289,7 +338,7 @@ daemon.poll () {
                     esac
             done
 
-        gr.end $daemon_indicator_key
+
         gr.msg -c green -k $daemon_indicator_key
         gr.msg -n -v2 "sleep ${GURU_DAEMON_INTERVAL}s: "
 
@@ -354,7 +403,7 @@ daemon.systemd_install () {
     gr.msg -v1 -V2 -n "setting starter script.. "
     gr.msg -v2 -n "setting starter script $daemon_service_script.. "
 
-    if ! [[ -d  ${daemon_service_script%/*} ]] ; then
+    if ! [[ -d  ${daemon_service_script%/*} ]]; then
         mkdir -p ${daemon_service_script%/*} \
         || gr.msg -x 100 "no permission to create folder ${daemon_service_script%/*}"
     fi

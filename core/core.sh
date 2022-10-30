@@ -97,7 +97,7 @@ core.parser () {
                     daemon.$module
                     return $?
                     ;;
-            debug)
+            debug|pause)
             # access to core functions
                     core.$module
                     return $?
