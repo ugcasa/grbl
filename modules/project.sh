@@ -381,7 +381,7 @@ project.ls () {
         if [[ "$_project" == "$_active_project" ]] ; then
                 gr.msg -n -c aqua "$_project "
             else
-                gr.msg -n -c light_blue "$_project "
+                gr.msg -n -c dark_cyan "$_project "
             fi
         done
 

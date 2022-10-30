@@ -166,7 +166,7 @@ tunnel.ls () {
                 gr.msg -n -c aqua "$service "
                 _return=0
             else
-                gr.msg -n -c light_blue "$service "
+                gr.msg -n -c dark_cyan "$service "
             fi
         done
     gr.msg
@@ -263,7 +263,7 @@ tunnel.open () {
 
                 else
                     # console environment
-                    gr.msg -v0 -c light_blue "ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port"
+                    gr.msg -v0 -c dark_cyan "ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port"
                     #gr.ind fail $tunnel_indicator_key
 
                 fi
