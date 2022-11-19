@@ -130,6 +130,7 @@ gr.msg () {
 
     if [[ $_say ]] ; then
             #_color_code=
+            _message=$(echo ${_message[@]} | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' )
             [[ $GURU_VERBOSE -gt 0 ]] && printf "%s\n" "$_message"
             espeak -p $GURU_SPEAK_PITCH -s $GURU_SPEAK_SPEED -v $GURU_SPEAK_LANG "$_message"
             return 0

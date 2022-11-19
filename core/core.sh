@@ -76,9 +76,10 @@ core.help () {
 
 
 core.parser () {
-    # parsing the commands aka. module names
+# parsing the commands
 
-    local module="$1" ; shift
+    local module="$1"
+    shift
 
     case "$module" in
 
@@ -92,11 +93,15 @@ core.parser () {
                     return $?
                     ;;
 
-            start|poll|kill)
+            start|poll|kill|stop)
                     source $GURU_BIN/daemon.sh
                     daemon.$module
                     return $?
                     ;;
+            silent)
+                    pkill espeak
+                    ;;
+
             debug|pause)
             # access to core functions
                     core.$module
@@ -110,6 +115,8 @@ core.parser () {
             *)
                     core.run_module "$module" "$@"
                     return $?
+                    ;;
+            "")     gr.msg "$GURU_CALL need more instructions"
                     ;;
         esac
 }
@@ -137,7 +144,7 @@ core.debug () {
 
             [[ $GURU_COLOR ]] \
                 && gr.msg -c yellow "false (empty)" \
-                || echo "   <-------------------------------------- false (empty)"
+                || echo "   <-------------------------------------- empty or false"
 
             let empty++
         fi
@@ -206,12 +213,13 @@ core.run_module () {
 
                 # speak out what ever module returns
                 if [[ $GURU_SPEAK ]]  ; then
-                    local module_output="$(${run_me[@]//  / })"
-                    gr.msg -v2 "guru replies: '$module_output'"
+                    local module_output="$(${run_me[@]//  / } | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g')"
+                    gr.msg -v2 "${module_output[@]}"
                     espeak -p $GURU_SPEAK_PITCH \
                            -s $GURU_SPEAK_SPEED \
                            -v $GURU_SPEAK_LANG \
-                           "$module_output"
+                           "${module_output[@]}" &
+
                     return $?
                 fi
 
@@ -222,7 +230,7 @@ core.run_module () {
         done
     done
 
-    gr.msg -v2 "guru recognize no module named '$module'"
+    gr.msg -v1 "guru recognize no module named '$module'"
     return $?
 
 
@@ -328,7 +336,6 @@ core.change_user () {
 }
 
 
-
 core.online () {
 
     source system.sh
@@ -402,23 +409,39 @@ core.process_opts () {
 
     while true ; do
         case "$1" in
-            -c) export GURU_COLOR=
-                shift ;;
-            -s) export GURU_SPEAK=true
+            -c)
                 export GURU_COLOR=
-                shift ;;
-            -f) export GURU_FORCE=true
-                shift ;;
-            -h) export GURU_HOSTNAME=$2
+                shift
+                ;;
+            -s)
+                export GURU_VERBOSE=1
+                export GURU_SPEAK=true
+                export GURU_COLOR=
+                shift
+                ;;
+            -f)
+                export GURU_FORCE=true
+                shift
+                ;;
+            -h)
+                export GURU_HOSTNAME=$2
                 shift 2 ;;
-            -l) export GURU_LOGGING=true
-                shift ;;
-            -q) export GURU_VERBOSE=
-                shift ;;
-            -u) core.change_user "$2"
-                shift 2 ;;
-            -v) export GURU_VERBOSE=$2
-                shift 2 ;;
+            -l)
+                export GURU_LOGGING=true
+                shift
+                ;;
+            -q)
+                export GURU_VERBOSE=
+                shift
+                ;;
+            -u)
+                core.change_user "$2"
+                shift 2
+                ;;
+            -v)
+                export GURU_VERBOSE=$2
+                shift 2
+                ;;
              *) break
         esac
     done
