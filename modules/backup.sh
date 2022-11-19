@@ -169,7 +169,7 @@ backup.config () {
                 fi
         done
 
-    # fill source lotaion variables
+    # fill source location variables
     if echo $from_string | grep -q ":" ; then
             # source is remote location
             declare -g from_user=$(echo $from_string | cut -d ":" -f1)
@@ -699,7 +699,7 @@ backup.plan () {
                     next_backup=$(( last_backup_time + add_seconds ))
                     # gr.msg "next_backup: $next_backup last_backup_time: $last_backup_time add_seconds: $add_seconds"
 
-                    if [[ $(date +%s) -lt $next_backup ]] ; then
+                    if [[ $(date +%s) -lt $next_backup ]] && ! [[ $GURU_FORCE ]]; then
                             gr.msg -c dark_grey "waiting $(date -d @$next_backup '+%d.%m.%Y %H:%M')"
                             continue
                         fi
