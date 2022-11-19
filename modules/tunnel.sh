@@ -120,6 +120,7 @@ tunnel.rm () {
     return 0
 }
 
+
 tunnel.check () {
 # check tunnel is active, if no input use first iten on list
 
@@ -337,6 +338,34 @@ tunnel.close () {
 
     return 0
 }
+
+
+
+ssh.end_remote_tunnel_sessions () {
+
+    local _server="$GURU_USER@$GURU_ACCESS_DOMAIN"
+    local _port="$GURU_ACCESS_PORT"
+
+    [[ $1 ]] && _server=$1
+    [[ $2 ]] && _port=$2
+
+    local _ifs=$IFS ; IFS=$'\n'
+    local _pid_list=($(\
+        ssh $_server -p $_port -- ps -xf  \
+            | grep -v grep \
+            | grep '?' \
+            | grep sshd \
+            | grep "$GURU_USER@notty"\
+            | sed -e's/  */ /g' \
+            | cut -d' ' -f 2
+            ))
+    IFS=$_ifs
+
+    #for item in ${_pid_list[@]} ; do
+            echo ssh $_server -p $_port -- kill ${_pid_list[@]}
+     #   done
+}
+
 
 
 tunnel.tmux () {
