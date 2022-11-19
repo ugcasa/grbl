@@ -53,7 +53,7 @@ audio.main () {
     shift
     case "$_command" in
 
-        play|ls|listen|radio|pause|mute|stop|tunnel|toggle|install|update|remove|help)
+        play|ls|listen|pause|mute|stop|tunnel|toggle|install|update|remove|help)
             audio.$_command $@
             return $?
             ;;
@@ -156,41 +156,34 @@ audio.toggle () {
 }
 
 
-audio.radio () {
-# listen radio stations listed in raio.list in config
+# audio.radio () {
+# # listen radio stations listed in radio.list in config
+#     ifs=$IFS ; IFS=$'\n'
+#     local _2="http"
+#     #stations=$(tr A-Z a-z < $GURU_CFG/radio.list)
+#     station=$(cat $GURU_CFG/radio.list | grep $1 | grep $_2 | head -n1 )
+#     url=$(echo $station |cut -d ' ' -f1 )
+#     name=$(echo $station |cut -d ' ' -f2- )
+#     [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
+#     IFS=$ifs
+#     gr.msg -v4 -c pink "got:$station > url:$url name:'$name'"
 
-    ifs=$IFS
-    case $1 in
-        ls) local _list=$(cat $GURU_CFG/radio.list | cut -d ' ' -f2- | tr '\n' ',')
-            gr.msg -c light_blue "$_list"
-            return 0
-            ;;
-        esac
+#     gr.msg -c white "📻 ${name^h} 🔊"
 
-    IFS=$'\n'
-    local _2="http"
-    [[ $2 ]] && _2=$2
-
-    #stations=$(tr A-Z a-z < $GURU_CFG/radio.list)
-    station=$(cat $GURU_CFG/radio.list | grep $1 | grep $_2 | head -n1 )
-    url=$(echo $station |cut -d ' ' -f1 )
-    name=$(echo $station |cut -d ' ' -f2- )
-    [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
-    IFS=$ifs
-    gr.msg -v4 -c pink "got:$station > url:$url name:'$name'"
-
-    gr.msg -c white "📻 ${name^h} 🔊"
-
-    gr.msg -v4 -c pink "mpv $options $url"
-    mpv $options $url
-}
+#     gr.msg -v4 -c pink "mpv $options $url"
+#     mpv $options $url
+# }
 
 
 audio.listen () {
-# audio.listen_yle () {
 # listen yle radio stations from icecast stream
     local options=
     [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
+
+    if ! net.check ; then
+            gr.msg "unable to play streams, network unplugged"
+            return 100
+        fi
 
     case $1 in
 
@@ -200,31 +193,49 @@ audio.listen () {
                             'yle hameenlinna' 'yle tampere' 'yle vega aboland' 'yle vega osterbotten' 'yle vega ostnyland' 'yle vega vastnyland' 'yle sami')
 
             for station in "${possible[@]}" ; do
-                    gr.msg -c light_blue $station
+                    gr.msg -n -c light_blue "$station, "
                 done
+
+            local _list=$(cat $GURU_CFG/radio.list | cut -d ' ' -f2- | tr '\n' ',' | sed -e 's/,/, /g')
+            gr.msg -c light_blue "$_list"
+
+            return 0
             ;;
+
         url)
+            shift
             gr.msg -v1 "playing from $@"
             gr.ind playing -k $audio_blink_key
-            shift
             mpv $options $@
             gr.end $audio_blink_key
             return 0
             ;;
-        esac
 
-    local channel=$@
-
-    if ! net.check ; then
-            gr.msg "please check your network connection and try again"
-            return 100
-        fi
-
-    if [[ ${1,,} == "yle" ]] ; then
-            channel=$(echo $channel | sed -r 's/(^| )([a-z])/\U\2/g' )
+        yle)
+            gr.ind playing -k $audio_blink_key
+            local channel=$(echo $@ | sed -r 's/(^| )([a-z])/\U\2/g' )
             local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
             mpv $options $url
-        fi
+            return $?
+            ;;
+        *)
+            # listen radio stations listed in radio.list in config
+            ifs=$IFS ; IFS=$'\n'
+            local _2="http"
+            # stations=$(tr A-Z a-z < $GURU_CFG/radio.list)
+            station=$(cat $GURU_CFG/radio.list | grep $1 | grep $_2 | head -n1 )
+            url=$(echo $station |cut -d ' ' -f1 )
+            name=$(echo $station |cut -d ' ' -f2- )
+            [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
+            IFS=$ifs
+            # debug
+            gr.msg -v4 -c pink "got:$station > url:$url name:'$name'"
+            gr.msg -v4 -c pink "mpv $options $url"
+            # play
+            gr.msg -v2 -c white "📻 ${name^h} 🔊"
+            mpv $options $url
+
+        esac
 }
 
 
@@ -334,8 +345,9 @@ audio.playlist_play () {
 
     case $user_reguest in
         list|ls)
-            audio.playlist_list $user_reguest
-            return 0
+            shift
+            audio.playlist_list $@
+            return $?
             ;;
         "")
             gr.msg -c yellow "please input list name or playlist file "
@@ -534,9 +546,13 @@ audio.tunnel_toggle () {
         fi
 }
 
+
 audio.update() {
-    sudo pip install -U youtube-dl
+    # sudo pip install -U youtube-dl
+    sudo -H pip install --upgrade youtube-dl
+
 }
+
 
 audio.tunnel_install () {
     # install function is required by core
