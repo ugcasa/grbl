@@ -21,6 +21,15 @@ ssh.key () {
     local command="$1"
     shift
     case "$command" in
+
+        remote)
+            [[ "$1" == "config" ]] || return 12
+            ssh.check_remote_config
+            ;;
+        check)
+            [[ "$1" == "config" ]] || return 12
+            ssh.check_remote_config
+            ;;
         ps|active)      ssh-add -l  ;;
         renerate|new)   ssh.generate_key $@ ; return $? ;;
         ls|files)       gr.msg -c light_blue $(ls "$HOME/.ssh" | grep "rsa" | grep -v "pub") ;;
@@ -298,6 +307,49 @@ ssh.add_key_bitbucket () {
 
 ssh.add_key_my_git () {
     gr.msg -v1 "TBD"
+}
+
+
+# ssh.check_connections () {
+# # print a list of connection an simple quest of connection type
+
+#     local _server="$GURU_USER@$GURU_ACCESS_DOMAIN"
+#     local _port="$GURU_ACCESS_PORT"
+
+#     [[ $1 ]] && _server=$1
+#     [[ $2 ]] && _port=$2
+
+#     local _ifs=$IFS ; IFS=$'\n'
+#     local _list=($(\
+#         ssh $_server -p $_port -- ps -xf  \
+#             | grep -v grep \
+#             | grep '?' \
+#             | grep sshd \
+#             | sed -e's/  */ /g' \
+#             | cut -d' ' -f 2,7-
+#             ))
+#     IFS=$_ifs
+
+#     for item in ${_list[@]} ; do
+#             gr.msg -n "$item: "
+#             case $item in
+#                 *'pts/'*) gr.msg -c aqua_marine "a terminal session" ;;
+#                 *'notty'*) gr.msg -c aqua "tunnel end or sshfs" ;;
+#                 *) gr.msg -c yellow "unknown connection type" ;;
+#                 esac
+#         done
+# }
+
+
+ssh.check_config () {
+    gr.msg -c yellow "${FUNCKNAME[0]}: TBD "
+    return 0
+}
+
+
+ssh.check_remote_config () {
+    gr.msg -c yellow "${FUNCKNAME[0]}: TBD "
+    return 0
 }
 
 
