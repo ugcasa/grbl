@@ -271,6 +271,14 @@ dokuwiki.backup () {
 }
 
 
+tovsdf.debug () {
+    gr.msg  "${FUNCNAME[0]^^}: tovsdf.sh" -c white
+    gr.msg "GURU_WIKI_CONTAINER_NAME:$GURU_WIKI_CONTAINER_NAME"
+    gr.msg "GURU_BACKUP_SERVER_BASE:$GURU_BACKUP_SERVER_BASE"
+}
+
+[[ $GURU_DEBUG ]] && tovsdf.debug
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     [[ -f $GURU_RC ]] && source $GURU_RC
     tovsdf.main $@
