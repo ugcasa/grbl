@@ -13,11 +13,15 @@ place.help () {
     gr.msg -v1 "fuzzy logic to place files to right locations."
     gr.msg -v2
     gr.msg -c white -n -v0 "usage:    "
-    gr.msg -v0 "$GURU_CALL place "
+    gr.msg -v0 "$GURU_CALL place ls|help|poll|memes|photos|videos|media"
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v2 " ls       list of places "
     gr.msg -v2 " help     printout this help "
+    gr.msg -v1 " memes    move memes to $GURU_MOUNT_PICTURES/memes"
+    gr.msg -v1 " photos   move photos to $GURU_MOUNT_PHOTOS "
+    gr.msg -v1 " videos   move videos to $GURU_MOUNT_VIDEO"
+    gr.msg -v1 " media    move media to somewhere"
     gr.msg -v2
     gr.msg -n -v1 -c white "example:  "
     gr.msg -v1 "$GURU_CALL place ls"
