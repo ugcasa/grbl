@@ -20,10 +20,16 @@ mount.main () {
 
     case "$command" in
 
-            defaults|system|all|help|ls|info|check|\
-            poll|status|start|stop|toggle|list|uninstall|available|online)
+            system|help|ls|info|check|\
+            poll|status|start|stop|list|uninstall|available|online)
                 mount.$command $@
                 _error=$?
+                ;;
+
+            defaults|all|toggle)
+                mount.$command $@
+                _error=$?
+                mount.status >/dev/null
                 ;;
 
             check-system)
@@ -31,9 +37,14 @@ mount.main () {
                 _error=$?
                 ;;
 
+            folder|mount)
+                mount.remote $command $@
+                ;;
+
             "")
                 mount.list default
                 _error=$?
+                mount.status >/dev/null
                 ;;
 
             *)
@@ -44,16 +55,17 @@ mount.main () {
                     elif echo ${all_list[@]} | grep -q -w "$command" ; then
                         gr.msg -v4 -c pink "found in all list"
                         mount.known_remote $command $@
-
                     else
-                        gr.msg -v4 -c pink "not in any list"
-                        mount.remote $command $@
+                        gr.msg -c yellow "unknown mountpoint, available:"
+                        mount.available
+
                     fi
-                _error=$?
+
+                mount.status >/dev/null
+                error=$?
                 ;;
         esac
-        # lazy way to set kb indications
-        mount.status >/dev/null
+
         return $_error
 }
 
@@ -117,9 +129,7 @@ mount.info () {
 
 mount.ls () {
 # simple list of mounted mountpoints
-
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
-
     return $?
 }
 
@@ -161,24 +171,28 @@ mount.check () {
     [[ "$1" ]] && _target_folder="$1"
 
     local color=grey
+    local _online
+
+    mount.online $_target_folder && _online=1 || _online=
 
     case $_target_folder in
-        *.data*)  mount.online $_target_folder \
-                        && color=cadet_blue \
+        *.data)  [[ $_online ]] \
+                        && color=sky_blue \
                         || color=dark_grey
                     ;;
-            *.*)  mount.online $_target_folder \
+            */.*)  [[ $_online ]] \
                         && color=hot_pink \
-                        || return 0
+                        || return 1
 
                     ;;
-                *)  mount.online $_target_folder \
+                *)  [[ $_online ]] \
                         && color=aqua \
                         || color=dark_cyan
                     ;;
                 esac
     gr.msg -n -v1 -c $color "${_target_folder##*/} "
-    return 0
+
+    [[ $_online ]] && return 0 || return 1
 }
 
 
@@ -300,7 +314,7 @@ mount.remote () {
 }
 
 mount.available () {
-# printout list of available mountpoitts
+# printout list of available mount points
     gr.msg -c light_blue "${all_list[@]}"
 
     # local lists=($(\
@@ -317,7 +331,7 @@ mount.available () {
 }
 
 mount.list () {
-    # mount all GURU_MOUNT_<list_name>_LIST defined in userrc
+# mount all GURU_MOUNT_<list_name>_LIST defined in userrc
 
     local _error=0
     local _IFS="$IFS"
@@ -353,7 +367,7 @@ mount.list () {
             gr.msg -v3 -c deep_pink "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
             mount.remote "$_target" "$_source_folder" "$_server" "$_port" "$_symlink"
         done
-    mount.status >/dev/null
+    # mount.status >/dev/null
     IFS="$_IFS"
 
     # gr.msg -v2 -n -c white "available: "
@@ -364,7 +378,7 @@ mount.list () {
 
 
 mount.all () {
-    # mount all GURU_CLOUD_* defined in userrc
+# mount all GURU_CLOUD_* defined in userrc
 
     local _error=0
     local _IFS="$IFS"
@@ -401,7 +415,7 @@ mount.all () {
 }
 
 mount.known_remote () {
-    # mount single GURU_CLOUD_* defined in userrc
+# mount single GURU_CLOUD_* defined in userrc
 
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
     local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
@@ -421,51 +435,50 @@ mount.known_remote () {
 
 
 mount.status () {
-    # daemon status function
+# daemon status function
 
     # printout header for status output
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
+    local _target
+    local _private=
 
     # check is enabled
-    if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
-            gr.msg -v1 -n -c green "available " -k $mount_indicator_key
-            gr.msg -v2
+    if [[ $GURU_MOUNT_ENABLED ]] ; then
+            gr.msg -v1 -n -c green "enabled " -k $mount_indicator_key
         else
-            #gr.msg -v1 -c reset "disabled" -k $mount_indicator_key
-            gr.msg -v1 -c red "unavailable" -k $mount_indicator_key
+            gr.msg -v1 -c reset "disabled" -k $mount_indicator_key
             return 100
         fi
 
-    # printout list of mount points
+    # check is system
+    if mount.check ; then
+            gr.msg -v1 -n -c green "available "
+        else
+            gr.msg -v1 -c red "unavailable" -k $mount_indicator_key
+            return 101
+        fi
 
-
-    local _target
+    # go trough mount points
     for _mount_point in ${all_list[@]} ; do
             _target=$(eval echo '${GURU_MOUNT_'"${_mount_point^^}[0]}")
-            mount.check $_target
+            mount.check $_target &&
+                case $_target in \
+                    *'/.'*)  _private=true
+                            ;;
+                    esac
         done
 
     # serve enter
-    gr.msg
+    [[ $_private ]] \
+        && gr.msg -c deep_pink -k $mount_indicator_key \
+        || gr.msg -c aqua -k $mount_indicator_key
 
-    # serve indication
-    if [[ ${#mount_list[@]} -gt 1 ]] ; then
-            gr.msg -v4 -c aqua -k $mount_indicator_key
-        fi
-
-    # indicate private mount locations
-    local sripped=("${mount_list[@]/$GURU_SYSTEM_MOUNT}")
-    for _mount_point in ${sripped[@]} ; do
-            case $_mount_point in
-                *'/.'*)  gr.msg -v4 -c deep_pink -k $mount_indicator_key
-                esac
-        done
     return 0
 }
 
 
 mount.toggle () {
-    # unmount all or mount defaults by pressing key
+# unmount all or mount defaults by pressing key
 
     local _list=($(mount.ls | grep -v '.data'))
 
@@ -480,7 +493,7 @@ mount.toggle () {
 
 
 mount.poll () {
-    # daemon poll api
+# daemon poll api
 
     local _cmd="$1" ; shift
 
@@ -501,7 +514,7 @@ mount.poll () {
 
 
 mount.install () {
-    # install and remove install applications. input "install" or "remove"
+# install and remove install applications. input "install" or "remove"
 
     if sudo apt update && eval sudo apt install "ssh rsync" ; then
             gr.msg -c green "guru is now ready to mount"
@@ -514,7 +527,7 @@ mount.install () {
 
 
 mount.uninstall () {
-    # install and remove install applications. input "install" or "remove"
+# install and remove install applications. input "install" or "remove"
 
     gr.msg "wont remove 'ssh' or 'rsync', do it manually if really needed"
     return 0
