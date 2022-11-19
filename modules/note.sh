@@ -97,7 +97,7 @@ note.config () {
         fi
     fi
 
-    # fulfill note variables with given date in user config formats
+    # fulfill note variables with given date in user config formats TBD bad naming ünd shit
     note_date=$(date -d $_datestamp +$GURU_FORMAT_DATE)
     note_dir=$GURU_MOUNT_NOTES/$GURU_USER_NAME/$_year/$_month
     note_file=$GURU_USER_NAME"_notes_"$_datestamp.md
@@ -310,6 +310,8 @@ note.rm () {
 note.add_change () {
 # add line to change log
 
+    [[ $GURU_NOTE_CHANGE_LOG ]] || return 0
+
     _line () {
         _len=$1
         for ((i=1;i<=_len;i++)); do
@@ -342,8 +344,13 @@ note.add_change () {
 note.open_editor () {
 # open note to preferred editor
 
-    case "$GURU_PREFERRED_EDITOR" in
-        subl)
+    case "$GURU_NOTE_EDITOR" in # if was $GURU_PREFERRED_EDITOR
+
+        obsidian|obs)
+            xdg-open "obsidian://open?vault=$GURU_NOTE_VAULT" &
+            return $?
+            ;;
+        subl|sublime|sublime3|sublime2)
             local project_folder=$GURU_SYSTEM_MOUNT/project/projects/notes
             local sublime_project_file="$project_folder/$GURU_USER_NAME-notes.sublime-project"
 
@@ -354,7 +361,7 @@ note.open_editor () {
             return $?
             ;;
         *)
-            $GURU_PREFERRED_EDITOR "$1"
+            joe "$note"
             return $?
     esac
 }
