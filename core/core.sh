@@ -128,6 +128,7 @@ core.debug () {
         gr.msg -n -c light_blue "$variable "
         #printf "${variable}="
 
+        # TBD now prints only first part of list variables
         if [[ ${!variable} ]] ; then
             gr.msg -c light_green "${!variable}"
             #printf "${!variable}\n"
