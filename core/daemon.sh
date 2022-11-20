@@ -268,6 +268,7 @@ daemon.poll () {
     # poller for modules
 
     source $GURU_RC
+    source net.sh
     [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
     #[[ -f "/tmp/guru-stop.flag" ]] && rm -f "/tmp/guru-stop.flag"
     echo "$(sh -c 'echo "$PPID"')" > "$daemon_pid_file"
@@ -285,12 +286,24 @@ daemon.poll () {
         # to update configurations is user changes them
         source $GURU_RC
 
-        # check is system suspended during run and perform needed actions
+        # check is system suspended and perform needed actions
         if system.flag suspend ; then
                 # restart ckb-next application to reconnect led pipe files
                 gr.msg -N -t -v1 "daemon recovering from suspend.. "
                 [[ $GURU_CORSAIR_ENABLED ]] && corsair.suspend_recovery
                 system.flag rm suspend
+
+                # some times after suspend daemon stops here, dunno why
+                gr.msg -c red -v4 "issue 20221120.1, daemon stalls here"
+
+                # often sleeping helps this kind of problems, like now it solves the problem.
+                sleep 15
+
+                # following while loop is for testing is it network issue, not causing it.
+                # while ! net.check_server ; do
+                #     sleep 5
+                # done
+                gr.msg -c green -v4 "issue 20221120.1, it did continue"
             fi
 
         # if paused
@@ -315,7 +328,6 @@ daemon.poll () {
                 daemon.stop
                 return $?
             fi
-
 
         # go trough poll list
         for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do

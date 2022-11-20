@@ -116,12 +116,12 @@ net.status () {
     # other tests with output, return errors
     if net.check ; then
             gr.msg -n -v1 \
-            -c aqua_marine "connected, " \
-            -k $net_indicator_key
+                -c aqua_marine "connected, " \
+                -k $net_indicator_key
         else
             gr.msg -v1 \
-            -c orange "offline" \
-            -k $net_indicator_key
+                -c orange "offline" \
+                -k $net_indicator_key
 
             if [[ $GURU_NET_LOG ]] ; then
 
@@ -130,7 +130,7 @@ net.status () {
                         touch "$net_log_folder/net.log"
                     fi
 
-                    gr.msg -t "network offline" >>"$net_log_folder/net.log"
+                    gr.msg "$(date "+%Y-%m-%d %H:%M:%S") network offline" >>"$net_log_folder/net.log"
 
                 fi
 
