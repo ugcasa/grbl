@@ -2,6 +2,45 @@
 # guru-client corsair led notification functions
 # casa@ujo.guru 2020-2021
 
+# TBD tests for update version 0.4.4 to v0.5.0 (2022-05-27)
+# Full Changelog
+
+# Support for new devices:
+#     K95 Platinum XT
+#     Katar Pro
+#     Katar Pro XT
+#     Glaive Pro
+#     M55
+#     K60 Pro RGB
+#     K60 Pro RGB Low Profile
+#     K60 Pro RGB SE
+# K68 patch still needed? TBD
+
+
+# Important bugfixes:
+#     Scroll wheels are now treated as axes (Responsiveness should be improved for specific mice)
+#     The lights on the K95 RGB Platinum top bar are now updated correctly
+#   ! An infinite loop is prevented if certain USB information can not be read
+#  !! GUI no longer crashes on exit under certain conditions
+#     Mouse scrolling works again when combined with specific libinput versions
+#  !! The daemon no longer hangs when quitting due to LED keyboard indicators
+#     The lighting programming key can now be rebound on K95 Legacy
+#   ! Animations won't break due to daylight savings / system time changes
+#  !! GUI doesn't crash when switching to a hardware mode on a fresh installation
+# !!! Daemon no longer causes a kernel Oops on resume under certain conditions (Devices now resume correctly from sleep)
+#     Window detection is more reliable and works correctly on system boot
+#     Settings tab now stretches correctly
+#     Profile switch button can now be bound correctly on mice
+#     ISO Enter key is now aligned correctly
+#     Bindings are now consistent between demo and new modes
+#     Firmware update dialog is no longer cut off and can be resized
+#     RGB data won't be sent to the daemon when brightness is set to 0%
+
+# New features:
+#     German translation
+#     66 service (not installed automatically)
+#     Device previews are now resizable
+
 source $GURU_BIN/common.sh
 source $GURU_BIN/system.sh
 
@@ -115,7 +154,7 @@ corsair.help () {
     gr.msg -v1 "  stop                              stop ckb-next-daemon"
     gr.msg -v1 "  init                              initialize keyboard mode" -V2
     gr.msg -v2 "  init <mode>                       initialize keyboard mode listed below:  "
-    gr.msg -v2 "    status, red, olive, dark, orange, eq, trippy, yes-no, rainbow"
+    gr.msg -v2 "                                    olive, blue, eq, trippy, rainbow"
     gr.msg -v1 "  set <key> <color>                 write key color <color> to keyboard key <key> "
     gr.msg -v1 "  reset <key>                       reset one key or if empty, all pipes "
     gr.msg -v1 "  blink set|stop|kill <key>         control blinking keys" -V2
@@ -554,12 +593,13 @@ corsair.indicate () {
         yes)            _blink="green black 0.75 10 " ;;
         no)             _blink="red black 0.75 10 " ;;
         cancel)         _blink="orange $GURU_CORSAIR_MODE 0.2 3 " ;;
-        init)           _blink="blue dark_blue 0.1 3 " ;;
+        init)           _blink="blue dark_blue 0.1 5 " ;;
         passed|pass)    _blink="slime $GURU_CORSAIR_MODE 1 300 green" ;;
         fail|failed)    _blink="red $GURU_CORSAIR_MODE 1 300 red" ;;
         done)           _blink="green slime 6 $GURU_DAEMON_INTERVAL green" ;;
         doing)          _blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL aqua" ;;
         working)        _blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL aqua" ;;
+        recovery)       _blink="blue black 5 $GURU_DAEMON_INTERVAL blue" ;;
         playing)        _blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
         active)         _blink="slime aqua 0.5 2" ;;
         pause)          _blink="black $GURU_CORSAIR_MODE 1 3600" ;;
@@ -569,8 +609,8 @@ corsair.indicate () {
         customer)       _blink="deep_pink white 0.75 30 deep_pink" ;;
         offline)        _blink="blue orange 1.25 $GURU_DAEMON_INTERVAL orange" ;;
         warning)        _blink="red orange 0.75 3600 orange" ;;
-        alert)          _blink="orange_red black 0.5 3600 orange_red" ;;
-        panic)          _blink="red white 0.2 3600 red" ;;
+        alert)          _blink="orange_red black 0.5 $GURU_DAEMON_INTERVAL orange_red" ;;
+        panic)          _blink="red white 0.2 $GURU_DAEMON_INTERVAL red" ;;
         breath|calm)    _blink="dark_cyan dark_turquoise 6 600" ;;
         cops|police)    _blink="medium_blue red 0.75 60" ;;
         hacker)         _blink="white black 0.2 3600 red" ;;
@@ -811,9 +851,9 @@ corsair.systemd_start_application () {
     corsair.init
     local _error=$?
 
-    # is non clean way to start daemon, but for now enought
-    source daemon.shift
-    daemon.start &
+    # # is non clean way to start daemon, but for now enought
+    # source daemon.sh
+    # daemon.start &
 
     return $_error
 }
@@ -1127,10 +1167,10 @@ corsair.poll () {
 
     case $_cmd in
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: corsair status polling started" -k $corsair_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $corsair_indicator_key
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: corsair status polling ended" -k $corsair_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $corsair_indicator_key
             ;;
         status )
             corsair.status $@
