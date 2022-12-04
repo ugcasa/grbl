@@ -264,6 +264,16 @@ daemon.kill () {
 }
 
 
+daemon.goodday () {
+# check is date changed and update pid file datestamp
+    [[ -f /tmp/guru.daemon-pid ]] || return 1
+    [[ $(date +%Y-%m-%d) -eq $(stat -c '%x' /tmp/guru.daemon-pid | cut -d' ' -f1) ]] && return 0
+    gr.msg -t -c white "${FUNCNAME[0]}: $(date +%-d.%-m.%Y)"
+    touch /tmp/guru.daemon-pid
+    return 0
+}
+
+
 daemon.poll () {
     # poller for modules
 
@@ -361,6 +371,7 @@ daemon.poll () {
                 system.flag pause && continue
                 system.flag fast && continue || sleep 1
                 gr.msg -v2 -n -c reset "."
+                daemon.goodday
             done
         gr.msg -v2 ""
     done
