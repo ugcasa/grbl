@@ -1,15 +1,14 @@
 #!/bin/bash
 # system tools for guru-client
-source $GURU_BIN/common.sh
+source common.sh
 
 system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
 system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh" # ubuntu 18.04 > like mint 20.0
-
 system_indicator_key="f$(gr.poll system)"
 
 system.help () {
-    # system help printout
+# system help printout
 
     gr.msg -v1 -c white "guru-client system help"
     gr.msg -v2
@@ -32,7 +31,7 @@ system.help () {
 
 
 system.suspend_help () {
-    # suspend help
+# suspend help
 
     gr.msg -v1 -c white "guru-client system suspend help"
     gr.msg -v2
@@ -51,7 +50,7 @@ system.suspend_help () {
 
 
 system.env_help () {
-    # system environment help printout
+# system environment help printout
 
     gr.msg -v1 -c white "guru-client system flag help"
     gr.msg -v2
@@ -68,7 +67,7 @@ system.env_help () {
 
 
 system.flag-help () {
-    # flag help
+# flag help
 
     gr.msg -v1 -c white "guru-client system suspend help"
     gr.msg -v2
@@ -87,7 +86,7 @@ system.flag-help () {
 
 
 system.main () {
-    # system command parser
+# system command parser
 
     local tool="$1" ; shift
     #system_indicator_key="f$(gr.poll system)"
@@ -140,7 +139,7 @@ system.main () {
 
 
 system.status () {
-    # system status
+# system status
 
     gr.msg -v 1 -t -n "${FUNCNAME[0]}: "
     if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
@@ -154,7 +153,7 @@ system.status () {
 
 
 system.flag () {
-    # set flags
+# set flags
 
     local cmd=$1 ; shift
     case $cmd in
@@ -172,7 +171,7 @@ system.flag () {
 
 
 system.check-flag () {
-    # returen true if flag is set
+# returen true if flag is set
 
     if [[ -f /tmp/guru-$1.flag ]] ; then
             return 0
@@ -183,7 +182,7 @@ system.check-flag () {
 
 
 system.ls-flag () {
-    # list of flags
+# list of flags
 
     gr.msg -v2 -c white "system flag status:"
     local flag_list=(fast pause suspend stop running)
@@ -198,12 +197,11 @@ system.ls-flag () {
                     gr.msg -c dark_grey "disabled"
                 fi
         done
-
 }
 
 
 system.set-flag () {
-    # set flag
+# set flag
 
     [[ $1 ]] || gr.msg -x 100 -c red "system.set_flag error: flag missing"
     local flag="$1"
@@ -215,12 +213,11 @@ system.set-flag () {
             gr.msg -t -v1 "$flag flag set"
             touch /tmp/guru-$flag.flag
         fi
-
 }
 
 
 system.rm-flag () {
-    # release flag
+# release flag
 
     [[ $1 ]] || gr.msg -x 100 -c red "system.rm_flag error: flag missing"
     local flag="$1"
@@ -237,7 +234,7 @@ system.rm-flag () {
 
 
 system.get_env () {
-    # get running process variable values by pid
+# get running process variable values by pid
 
     local _pid=$1
     [[ $_pid ]] || gr.msg -x 127 -c yellow "pid name required "
@@ -302,7 +299,7 @@ system.get_env () {
 
 
 system.get_pid_by_name () {
-    # get process pid by name
+# get process pid by name
 
     local _process="$1"
     [[ $_process ]] || read -p "process name: " _process
@@ -369,7 +366,7 @@ system.get_env_by_name () {
 
 
 system.get_window_id () {
-    # input process id, output window id to std
+# input process id, output window id to std
 
     local findpid=$1
     local known_windows=$(xwininfo -root -children | sed -e 's/^ *//' | grep -E "^0x" | awk '{ print $1 }')
@@ -389,7 +386,7 @@ system.get_window_id () {
 
 
 system.client_update () {
-    # update guru-client
+ # update guru-client
 
     local temp_dir="/tmp/guru"
     local source="https://github.com/ugcasa/guru-client.git"
@@ -412,7 +409,7 @@ system.client_update () {
 
 
 system.upgrade () {
-    # upgrade system
+# upgrade system
 
     sudo apt-get update \
         || gr.msg -c red -x 100 "update failed"
@@ -440,7 +437,7 @@ system.upgrade () {
 
 
 system.update () {
-    # upgrade system
+# upgrade system
 
     system.upgrade
     return $?
@@ -448,7 +445,7 @@ system.update () {
 
 
 system.rollback () {
-    # rollback to version
+# rollback to version
 
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"
@@ -469,8 +466,8 @@ system.rollback () {
 
 
 system.init_system_check () {
-    # check init system, return 0 if match with input sysv-init|systemd|upstart
-    # see issue #62
+# check init system, return 0 if match with input sysv-init|systemd|upstart
+# see issue #62
     local user_input=
 
     [[ "$1" ]] && user_input=$1
@@ -508,7 +505,7 @@ system.init_system_check () {
 
 
 system.suspend_script () {
-    # launch stuff on suspend
+# launch stuff on suspend
 
     temp="/tmp/suspend.temp"
     gr.msg -v1 "updating $system_suspend_script.. "
@@ -548,7 +545,7 @@ EOL
 
 
 system.suspend () {
-    # suspend control
+# suspend control
 
     case "$1" in
 
@@ -601,17 +598,22 @@ system.suspend () {
 
 
 system.poll () {
-    # daemon pull function api
+# daemon poller interface
 
     local _cmd="$1" ; shift
 
     case $_cmd in
+
+        # start|end) #
+        #     gr.msg -v1 -t -c $_cmd "${FUNCNAME[0]}: $_cmded" -k $system_indicator_key
+        #     ;;
+
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: system status polling started" -k $system_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $system_indicator_key
 
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: system status polling ended" -k $system_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $system_indicator_key
 
             ;;
         status )
@@ -621,12 +623,33 @@ system.poll () {
         *)  system.help
             ;;
         esac
+}
 
+
+system.check_fs_access_flag_enabled () {
+# check is system recording file access
+# often when SSD dirve is used the accessed timestamp function is disabled
+
+    echo "acccess flag is" >/tmp/test_access
+
+    local orig=$(stat -c '%X' /tmp/test_access)
+    sleep 1
+    gr.msg -n -v1 "$(cat /tmp/test_access) "
+    local edit=$(stat -c '%X' /tmp/test_access)
+    rm -f /tmp/test_access
+
+    if [[ "$orig" -eq "$edit" ]] ; then
+        gr.msg -v1 -c red "disabled"
+        return 1
+    else
+        gr.msg -v1 -c green "enabled"
+        return 0
+    fi
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    source "$GURU_RC"
+    # source "$GURU_RC"
     system.main "$@"
     exit $?
 fi
