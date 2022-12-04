@@ -34,9 +34,9 @@ vpn.help () {
     gr.msg -v2 "                  vpn tunnel to given server"
     gr.msg -v3 " ls               TBD list of available vpn out "
     gr.msg -v1 " close            close vpn connection"
+    gr.msg -v1 " kill             kill open vpn client"
     gr.msg -v1 " install          install requirements "
     gr.msg -v1 " uninstall        remove installed requirements "
-
     gr.msg -v2
     gr.msg -v1 -c white  "example:"
     gr.msg -v1 "    $GURU_CALL vpn open "
@@ -143,8 +143,10 @@ vpn.open () {
     local city=Helsinki
     [[ $GURU_VPN_DEFAULT ]] && city="$GURU_VPN_DEFAULT"
 
-    # check configureations done
+    # check configurations done
     if ! [[ -d /etc/openvpn/tcp ]] ; then
+            gr.msg -c yellow "no open vpn configuration found"
+            gr.msg -v2 "run '$GURU_CALL vpn install' first"
             return 101
         fi
 
@@ -152,7 +154,6 @@ vpn.open () {
     IFS=$'\n'
     local user_input=(${@,,})
     local got=
-
     local file_list=($(ls /etc/openvpn/tcp))
 
     if [[ $1 ]] ; then
@@ -169,7 +170,7 @@ vpn.open () {
             done
         fi
 
-    #return separator settings
+    # return separator settings
     IFS=$ifs
 
     if ! [[ $got ]] ; then
@@ -181,9 +182,13 @@ vpn.open () {
         fi
 
     if [[ -f /etc/openvpn/credentials ]] ; then
-        [[ $GURU_VPN_USERNAME ]] || GURU_VPN_USERNAME="$(sudo head -n1 /etc/openvpn/credentials)"
-        [[ $GURU_VPN_PASSWORD ]] || GURU_VPN_PASSWORD="$(sudo tail -n1 /etc/openvpn/credentials)"
-    fi
+            [[ $GURU_VPN_USERNAME ]] || GURU_VPN_USERNAME="$(sudo head -n1 /etc/openvpn/credentials)"
+            [[ $GURU_VPN_PASSWORD ]] || GURU_VPN_PASSWORD="$(sudo tail -n1 /etc/openvpn/credentials)"
+        # else
+        #     gr.msg -c yellow "no credentials found, make sure that you have vpn service provider"
+        #     gr.msg -v2 "add username as first and password to second line to file '/etc/openvpn/credentials'"
+        #     return 102
+        fi
 
     # us case
     city=$(sed -e 's/^./\U&/g; s/ ./\U&/g' <<<$city)
@@ -203,7 +208,7 @@ vpn.open () {
         fi
 
     gr.msg "original ip is: $current_ip"
-    gr.msg "connectign to $city"
+    gr.msg "connecting to $city"
     gr.msg -c white -v2 "vpn username and password copied to clipboard, paste it to 'Enter Auth Username:' field"
     printf "%s\n%s\n" "$GURU_VPN_USERNAME" "$GURU_VPN_PASSWORD" | xclip -i -selection clipboard
 
@@ -231,6 +236,34 @@ vpn.open () {
     return 0
 }
 
+
+
+
+vpn.close () {
+# close vpn connection (if exitst)
+    local current_ip="$(curl -s https://ipinfo.io/ip)"
+    gr.msg "our ip was: $current_ip"
+
+    if sudo pkill openvpn ; then
+            gr.msg -v2 "kill success"
+        else
+            gr.msg "no vpn client running"
+            vpn.rm_original_file
+            return 0
+        fi
+
+    local new_ip="$(curl -s https://ipinfo.io/ip)"
+
+    if [[ "$current_ip" == "$new_ip" ]] ; then
+            gr.msg -c red "kill failed"
+            return 100
+        fi
+    gr.msg "our ip is now: $new_ip"
+
+    vpn.rm_original_file
+
+    return 0
+}
 
 
 
