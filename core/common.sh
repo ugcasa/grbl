@@ -272,6 +272,7 @@ gr.ind () {
             say)            espeak -p 85 -s 130 -v en "$_message" ;;
             done)           espeak -p 100 -s 120 -v en "$_message done! " ;;
             available)      espeak -p 100 -s 130 -v en "$_message" ;;
+            recovery)       espeak -p 85 -s 130 -v en "recovering $_message" ;;
             working)        espeak -p 85 -s 130 -v en "working... $_message" ;;
             pause)          espeak -p 85 -s 130 -v en "$_message is paused" ;;
             cancel)         espeak -p 85 -s 130 -v en "$_messagasde is canceled. I repeat, $_message is canceled" ;;
@@ -279,7 +280,7 @@ gr.ind () {
             offline)        espeak -p 85 -s 130 -v en "$_message" ;;
             warning)        espeak -p 85 -s 130 -v en "Warning! $_message. I repeat, $_message" ;;
             alert)          espeak -p 85 -s 130 -v en "Alarm! $_message. I repeat, $_message" ;;
-            panic)          espeak -p 85 -s 130 -v en-sc "mayday.. Mayday? Mayday! $_message... ${_message^}? ${_message^^}" ;;
+            panic)          espeak -p 85 -s 130 -v en-sc "Critical alarm! $_message... ${_message^} Critical alarm! ${_message^^}" ;;
             passed|pass)    espeak -p 85 -s 130 -v en-us  "$_message... passed" ;;
             fail|failed)    espeak -p 85 -s 130 -v en-us "$_message... failed" ;;
             message)        espeak -p 85 -s 130 -v fi  "Message! $_message! new message $_message" ;;
