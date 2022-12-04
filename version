@@ -1,4 +1,5 @@
-0.6.8.7
-'slava ukraini'
-'for freedom of software.. and world too'
-'dropped one digit from version number +'
+0.6.8.8
+'bella configurazione'
+'start to move configurations to where it should be'
+'system wide configs to /etc/guru, user configs to ~.config/guru/<user>'
+
