@@ -152,10 +152,10 @@ net.poll () {
     local _cmd="$1" ; shift
     case $_cmd in
         start)
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: net status polling started" -k $net_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $net_indicator_key
             ;;
         end)
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: net status polling ended" -k $net_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $net_indicator_key
             ;;
         status)
             net.status $@

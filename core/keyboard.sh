@@ -24,10 +24,12 @@ keyboard.main() {
     esac
 }
 
+
 keyboard.status () {
     gr.msg "nothing to report"
     return 0
 }
+
 
 keyboard.help () {
     gr.msg -v1 -c white "guru-client keyboard help "
@@ -110,32 +112,31 @@ keyboard.set_guru_ubuntu(){       # set guru defaults
 
 keyboard.set_guru_linuxmint () {
 
+    local _new=$GURU_CFG/keyboard.binding-mint.cfg
+    local _backup=$GURU_CFG/keyboard.backup-mint.cfg
 
-local _new=$GURU_CFG/keyboard.binding-mint.cfg
-local _backup=$GURU_CFG/keyboard.backup-mint.cfg
+    if [[ ! -f "$_backup" ]] ; then
 
-if [[ ! -f "$_backup" ]] ; then
+            gr.msg -n -v2 -c gray "backup $_backup "
 
-        gr.msg -n -v2 -c gray "backup $_backup "
+            if dconf dump /org/cinnamon/desktop/keybindings/ > "$_backup" ; then
+                    gr.msg -v1 -c green "done"
+                else
+                    gr.msg -c yellow "error saving shortcut backup to $_backup"
+                fi
+        fi
 
-        if dconf dump /org/cinnamon/desktop/keybindings/ > "$_backup" ; then
-                gr.msg -v1 -c green "done"
-            else
-                gr.msg -c yellow "error saving shortcut backup to $_backup"
-            fi
-    fi
+    gr.msg -n -v2 -c gray "$_new "
 
-gr.msg -n -v2 -c gray "$_new "
+    if dconf load /org/cinnamon/desktop/keybindings/ < "$_new" ; then
+            gr.msg -v1 -c green "done"
+            return 0
+        else
+            gr.msg -c yellow "error setting keyboard shortcuts $_new"
+            return 1
+        fi
 
-if dconf load /org/cinnamon/desktop/keybindings/ < "$_new" ; then
-        gr.msg -v1 -c green "done"
-        return 0
-    else
-        gr.msg -c yellow "error setting keyboard shortcuts $_new"
-        return 1
-    fi
-
-return 0
+    return 0
 }
 
 

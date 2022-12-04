@@ -499,10 +499,10 @@ mount.poll () {
 
     case $_cmd in
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: mount status polling started" -k $mount_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $mount_indicator_key
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: mount status polling ended" -k $mount_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $mount_indicator_key
             ;;
         status )
             mount.status $@
