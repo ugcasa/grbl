@@ -25,7 +25,7 @@ gr.poll () {
 
     local _to_find="$1"
     local i=0
-    source "$HOME/.gururc"
+    #source "$HOME/.gururc"
 
     for val in ${GURU_DAEMON_POLL_ORDER[@]} ; do
         ((i++))

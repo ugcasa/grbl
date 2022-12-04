@@ -467,9 +467,9 @@ EOL
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-        source $GURU_RC
-        source $GURU_BIN/common.sh
-        source $GURU_BIN/corsair.sh
+        # source $GURU_RC
+        # source $GURU_BIN/common.sh
+        # source $GURU_BIN/corsair.sh
         daemon.process_opts $@
         daemon.main $ARGUMENTS
         exit $?

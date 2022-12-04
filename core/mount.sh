@@ -1,7 +1,7 @@
 #!/bin/bash
 # mount tools for guru-client
 
-source common.sh
+# source common.sh
 
 all_list=($(\
         grep "export GURU_MOUNT_" $GURU_RC | \
@@ -10,7 +10,8 @@ all_list=($(\
         cut -d '=' -f1))
 all_list=(${all_list[@],,})
 
-mount_indicator_key='f'"$(gr.poll mount)"
+# mount_indicator_key='f'"$(gr.poll mount)"
+mount_indicator_key=
 
 mount.main () {
 # mount command parser

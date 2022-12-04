@@ -1,6 +1,6 @@
 #!/bin/bash
 # system tools for guru-client
-source common.sh
+#source common.sh
 
 system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04

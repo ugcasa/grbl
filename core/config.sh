@@ -193,6 +193,7 @@ config.export () {
 
     config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
     # set path
+    echo "source $GURU_BIN/common.sh" >> $_target_rc
     echo "source $GURU_BIN/path.sh" >> $_target_rc
     echo "source $GURU_BIN/alias.sh" >> $_target_rc
 

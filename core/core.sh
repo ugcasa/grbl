@@ -2,9 +2,9 @@
 # guru-client core
 # casa@ujo.guru 2020 - 2022
 
-core.help () {
+#source $GURU_BIN/common.sh
 
-    source $GURU_BIN/common.sh
+core.help () {
 
     core.help_usage () {
         gr.msg -c white "guru-client core help "
@@ -492,8 +492,8 @@ case $1 in
 
 # check that config rc file exits
 if [[ -f $GURU_RC ]] ; then
-        gr.msg -v4 "sourcing config $GURU_RC.. "
         source $GURU_RC
+        gr.msg -v4 "sourcing config $GURU_RC.. "
     else
         # run user configuration if not exist
         source $HOME/bin/config.sh
