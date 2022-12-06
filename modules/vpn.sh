@@ -1,7 +1,11 @@
 #!/bin/bash
 # guru-client vpn functions
 
-source common.sh
+declare -A vpn
+
+source $GURU_CFG/vpn.cfg
+[[ -f $GURU_CFG/$GURU_USER/vpn.cfg ]] && source $GURU_CFG/$GURU_USER/vpn.cfg
+
 
 original_ip_file='/tmp/vpn-original-ip'
 
@@ -141,7 +145,7 @@ vpn.open () {
 
     local country=fi
     local city=Helsinki
-    [[ $GURU_VPN_DEFAULT ]] && city="$GURU_VPN_DEFAULT"
+    [[ ${vpn[default]} ]] && city="${vpn[default]}"
 
     # check configurations done
     if ! [[ -d /etc/openvpn/tcp ]] ; then
@@ -182,8 +186,8 @@ vpn.open () {
         fi
 
     if [[ -f /etc/openvpn/credentials ]] ; then
-            [[ $GURU_VPN_USERNAME ]] || GURU_VPN_USERNAME="$(sudo head -n1 /etc/openvpn/credentials)"
-            [[ $GURU_VPN_PASSWORD ]] || GURU_VPN_PASSWORD="$(sudo tail -n1 /etc/openvpn/credentials)"
+            [[ ${vpn[username]} ]] || vpn[username]="$(sudo head -n1 /etc/openvpn/credentials)"
+            [[ ${vpn[password]} ]] || vpn[password]="$(sudo tail -n1 /etc/openvpn/credentials)"
         # else
         #     gr.msg -c yellow "no credentials found, make sure that you have vpn service provider"
         #     gr.msg -v2 "add username as first and password to second line to file '/etc/openvpn/credentials'"
@@ -210,7 +214,7 @@ vpn.open () {
     gr.msg "original ip is: $current_ip"
     gr.msg "connecting to $city"
     gr.msg -c white -v2 "vpn username and password copied to clipboard, paste it to 'Enter Auth Username:' field"
-    printf "%s\n%s\n" "$GURU_VPN_USERNAME" "$GURU_VPN_PASSWORD" | xclip -i -selection clipboard
+    printf "%s\n%s\n" "${vpn[username]}" "${vpn[password]}" | xclip -i -selection clipboard
 
 
     if sudo openvpn \
@@ -314,13 +318,13 @@ vpn.install () {
     if [[ -f /etc/openvpn/credentials ]] ; then
             gr.msg "credentials found"
         else
-            [[ $GURU_VPN_USERNAME ]] \
-                || read -p "vpn auth username: " GURU_VPN_USERNAME
-            [[ $GURU_VPN_PASSWORD ]] \
-                || read -p "vpn auth password: " GURU_VPN_PASSWORD
+            [[ ${vpn[username]} ]] \
+                || read -p "vpn auth username: " vpn[username]
+            [[ ${vpn[password]} ]] \
+                || read -p "vpn auth password: " vpn[password]
 
-            echo "$GURU_VPN_USERNAME" | sudo tee /etc/openvpn/credentials
-            echo "$GURU_VPN_PASSWORD" | sudo tee -a /etc/openvpn/credentials
+            echo "${vpn[username]}" | sudo tee /etc/openvpn/credentials
+            echo "${vpn[password]}" | sudo tee -a /etc/openvpn/credentials
         fi
 }
 

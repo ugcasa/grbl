@@ -51,12 +51,13 @@ config.make_rc () {
     local _append_rc="$3"
     local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
 
-    gr.msg -v2 -c gray "$_source_cfg $_mode $_target_rc"
-
-    #_source_cfg=$HOME/.config/guru/$GURU_USER_NAME/user.cfg
-
+    gr.msg -n -v2 -c gray "$_source_cfg "
     if ! [[ -f $_source_cfg ]] ; then gr.msg -c yellow "$_source_cfg not found" ; return 100 ; fi
-    #if [[ -f $_target_rc ]] ; then rm -f $_target_rc ; fi
+
+    case $(head -n 1 $_source_cfg) in
+        "#!/bin/bash 4.0"*) gr.msg -v2 -c dark_grey "..skipping version 4.0 config files" ; return 0 ;;
+    esac
+    gr.msg -v2 -c gray "$_mode $_target_rc"
 
     # write system configs to rc file
     [[ $_append_rc ]] || printf "#!/bin/bash \n# guru-client runtime configurations auto generated at $(date)\nexport GURU_USER=$GURU_USER\n" > $_target_rc
@@ -194,7 +195,7 @@ config.export () {
     config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
     # set path
     echo "source $GURU_BIN/common.sh" >> $_target_rc
-    echo "source $GURU_BIN/path.sh" >> $_target_rc
+    echo "source $GURU_BIN/prompt.sh" >> $_target_rc
     echo "source $GURU_BIN/alias.sh" >> $_target_rc
 
     # check and load configuration
