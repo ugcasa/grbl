@@ -2,12 +2,10 @@
 # guru-client network module casa@ujo.guru 2022
 
 ## include needed libraries
-# source common.sh
 ## declare run wide global variables
 
 # declare -g net_indicator_key="f$(gr.poll net)"
 declare -g net_indicator_key="f1" # TBD .gururc -> .config/rc/net.rc
-
 declare -g net_log_folder="$HOME/.log"
 
 ## functions, keeping help at first position it might be even updated

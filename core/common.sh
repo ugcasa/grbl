@@ -456,4 +456,5 @@ gr.local () {
 # export -f gr.poll
 export -f gr.msg
 export -f gr.ask
-
+export -f gr.end
+export -f gr.ind
