@@ -173,17 +173,34 @@ config.export () {
         gr.msg -v4 -c deep_pink "Looking default configs: $_module_cfg"
 
         if [[ -f $_module_cfg ]] ; then
-            config.make_rc "$_module_cfg" "$_target_rc" append \
-                || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
+
+            case $(head -n 1 $_module_cfg) in
+                    "#!/bin/bash module"*)
+                        gr.msg -v2 -c dark_grey "$_module_cfg ..skipping module config files"
+                        ;;
+                    *)
+                        config.make_rc "$_module_cfg" "$_target_rc" append \
+                            || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
+                        ;;
+                esac
             fi
 
         ## add user config
         _module_cfg="$GURU_CFG/$GURU_USER/$module.cfg"
         gr.msg -v4 -c deep_pink "Looking user configs: $_module_cfg"
 
+
         if [[ -f $_module_cfg ]] ; then
-            config.make_rc "$_module_cfg" "$_target_rc" append \
-                || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
+
+            case $(head -n 1 $_module_cfg) in
+                    "#!/bin/bash module"*)
+                        gr.msg -v2 -c dark_grey "$_module_cfg ..skipping module config files"
+                        ;;
+                    *)
+                        config.make_rc "$_module_cfg" "$_target_rc" append \
+                            || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
+                        ;;
+                esac
             fi
     done
 

@@ -10,6 +10,12 @@ source common.sh
 backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
 ! [[ -d $backup_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
 
+# make rc out of foncig file and run it
+source config.sh
+config.make_rc "$GURU_CFG/$GURU_USER/backup.cfg" /tmp/backup.rc
+chmod +x /tmp/backup.rc
+source /tmp/backup.rc
+#rm /tmp/backup.rc
 
 backup.help () {
     # general help
@@ -86,38 +92,38 @@ backup.main () {
 
 backup.variables () {
 
-        gr.msg -N -v3 -c white "backup_name: $backup_name"
+        gr.msg -N -v3 -c white "backup_name: '$backup_name'"
 
-        gr.msg -v3 -c light_blue "from_config: ${from_config[@]}"
-        gr.msg -v3 -c light_green "store_device: $store_device"
-        gr.msg -v3 -c light_pink "from_location: $from_location"
-        gr.msg -v3 -c light_pink "from_user (o): $from_user"
-        gr.msg -v3 -c light_pink "from_domain (o): $from_domain"
-        gr.msg -v3 -c light_pink "from_port (o): $from_port"
+        gr.msg -v3 -c light_blue "from_config: '${from_config[@]}'"
+        gr.msg -v3 -c light_green "store_device: '$store_device'"
+        gr.msg -v3 -c light_pink "from_location: '$from_location'"
+        gr.msg -v3 -c light_pink "from_user (o): '$from_user'"
+        gr.msg -v3 -c light_pink "from_domain (o): '$from_domain'"
+        gr.msg -v3 -c light_pink "from_port (o): '$from_port'"
 
-        gr.msg -v3 -c light_blue "store_config: ${store_config[@]}"
-        gr.msg -v3 -c light_green "store_device_file: $store_device_file"
-        gr.msg -v3 -c light_green "store_mount_point: $store_mount_point"
-        gr.msg -v3 -c light_green "store_file_system: $store_file_system"
-        gr.msg -v3 -c light_green "store_folder: $store_folder"
-        gr.msg -v3 -c light_green "store_location (o): $store_location"
-        gr.msg -v3 -c light_green "store_user (o): $store_user"
-        gr.msg -v3 -c light_green "store_domain (o): $store_domain"
-        gr.msg -v3 -c light_green "store_port (o): $store_port"
+        gr.msg -v3 -c light_blue "store_config: '${store_config[@]}'"
+        gr.msg -v3 -c light_green "store_device_file: '$store_device_file'"
+        gr.msg -v3 -c light_green "store_mount_point: '$store_mount_point'"
+        gr.msg -v3 -c light_green "store_file_system: '$store_file_system'"
+        gr.msg -v3 -c light_green "store_folder: '$store_folder'"
+        gr.msg -v3 -c light_green "store_location (o): '$store_location'"
+        gr.msg -v3 -c light_green "store_user (o): '$store_user'"
+        gr.msg -v3 -c light_green "store_domain (o): '$store_domain'"
+        gr.msg -v3 -c light_green "store_port (o): '$store_port'"
 
-        gr.msg -v3 -c grey "backup_ignore: $backup_ignore"
-        gr.msg -v3 -c grey "backup_method: $backup_method"
-        gr.msg -v3 -c grey "honeypot_file: $honeypot_file"
-        gr.msg -v3 -c grey "backup_indicator_key: $backup_indicator_key"
+        gr.msg -v3 -c grey "backup_ignore: '$backup_ignore'"
+        gr.msg -v3 -c grey "backup_method: '$backup_method'"
+        gr.msg -v3 -c grey "honeypot_file: '$honeypot_file'"
+        gr.msg -v3 -c grey "backup_indicator_key: '$backup_indicator_key'"
 
-        gr.msg -v3 -c grey "backup_stat_file: $backup_stat_file"
+        gr.msg -v3 -c grey "backup_stat_file: '$backup_stat_file'"
         [[ -f $backup_stat_file ]] && source $backup_stat_file
-        gr.msg -v3 -c grey "last_backup_name: $last_backup_type"
-        gr.msg -v3 -c grey "last_backup_time: $last_backup_time"
-        gr.msg -v3 -c grey "last_backup_version: $last_backup_version"
-        gr.msg -v3 -c grey "last_backup_error: $last_backup_error"
+        gr.msg -v3 -c grey "last_backup_name: '$last_backup_type'"
+        gr.msg -v3 -c grey "last_backup_time: '$last_backup_time'"
+        gr.msg -v3 -c grey "last_backup_version: '$last_backup_version'"
+        gr.msg -v3 -c grey "last_backup_error: '$last_backup_error'"
 
-        gr.msg -v3 -c light_blue "active_list: ${active_list[@]}"
+        gr.msg -v3 -c light_blue "active_list: '${active_list[@]}'"
 }
 
 
