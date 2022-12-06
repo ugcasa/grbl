@@ -51,7 +51,7 @@ yle.main () {
             yle.radio_listen $@
             ;;
 
-        install|uninstall)
+        install|uninstall|upgrade)
             yle.$command $@
             ;;
 
@@ -72,8 +72,11 @@ yle.main () {
             ;;
 
         news|uutiset)
+
             news_core="https://areena.yle.fi/1-3235352"
-            yle-dl --pipe --latestepisode "$news_core" 2>/dev/null | mpv -
+            # yle-dl --pipe --latestepisode "$news_core" 2>/dev/null | mpv -
+            # issue 20221206.2 --latestepisode broken, fix below
+            yle-dl --pipe $(yle-dl --showepisodepage $news_core | tail -n1) 2>/dev/null | mpv -
             ;;
 
         episode|episodes)
@@ -412,6 +415,11 @@ yle.place_media () {
 
 yle.play_media () {
     mpv --play-and-exit "$1" &
+}
+
+
+yle.upgrade() {
+    pip3 install --user --upgrade yle-dl
 }
 
 
