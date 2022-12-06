@@ -4,6 +4,7 @@
 
 #source $GURU_BIN/common.sh
 
+
 core.help () {
 
     core.help_usage () {
@@ -491,6 +492,7 @@ case $1 in
     esac
 
 # check that config rc file exits
+
 if [[ -f $GURU_RC ]] ; then
         source $GURU_RC
         gr.msg -v4 "sourcing config $GURU_RC.. "

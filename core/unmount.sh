@@ -3,21 +3,36 @@
 
 source common.sh
 
+temp_rc="/tmp/mount.rc"
+source config.sh
+config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $temp_rc
+chmod +x $temp_rc
+source $temp_rc
+
+all_list=($(\
+        grep "export GURU_MOUNT_" $temp_rc | \
+        grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' | \
+        sed 's/^.*MOUNT_//' | \
+        cut -d '=' -f1))
+all_list=(${all_list[@],,})
+
+_default_list=($(\
+        cat $temp_rc | \
+        grep 'GURU_MOUNT_' | \
+        grep -v "PROXY1_" | \
+        grep -v "ENABLED" | \
+        grep -v "LIST" | \
+        grep -v '$GURU_MOUNT' | \
+        sed 's/^.*MOUNT_//' | \
+        cut -d '=' -f1))
+
+rm $temp_rc
+
+
 unmount.main () {
 # mount command parser
 
     mounted_list=($(unmount.ls))
-
-    all_list=($(\
-            cat $GURU_RC | \
-            grep 'GURU_MOUNT_' | \
-            grep -v "PROXY" | \
-            grep -v "ENABLED" | \
-            grep -v "LIST" | \
-            grep -v '$GURU_MOUNT' | \
-            sed 's/^.*MOUNT_//' | \
-            cut -d '=' -f1))
-    all_list=(${all_list[@],,})
 
     indicator_key='f'"$(gr.poll mount)"
     local argument="$1" ; shift
@@ -302,15 +317,6 @@ unmount.all () {
 # unmount all GURU_CLOUD_* defined in userrc
 # unmount all local/cloud pairs defined in userrc
     # TBD this is terrible method to parse configs, figure some other way
-    local _default_list=($(\
-            cat $GURU_RC | \
-            grep 'GURU_MOUNT_' | \
-            grep -v "PROXY1_" | \
-            grep -v "ENABLED" | \
-            grep -v "LIST" | \
-            grep -v '$GURU_MOUNT' | \
-            sed 's/^.*MOUNT_//' | \
-            cut -d '=' -f1))
 
     #[[ $1 ]] && _default_list=(${@})
     [[ "$1" ]] && _default_list=(${1[@]})

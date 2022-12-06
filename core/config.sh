@@ -1,6 +1,6 @@
 #!/bin/bash
 # guru-client config tools
-source common.sh
+# source common.sh
 
 config.main () {
 # main comman parser

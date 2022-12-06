@@ -1,17 +1,28 @@
 #!/bin/bash
 # mount tools for guru-client
 
-# source common.sh
+# mount_indicator_key='f'"$(gr.poll mount)"
+mount_indicator_key=f2
+
+# make rc out of foncig file and run it
+temp_rc="/tmp/mount.rc"
+source config.sh
+config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $temp_rc
+chmod +x $temp_rc
+source $temp_rc
 
 all_list=($(\
-        grep "export GURU_MOUNT_" $GURU_RC | \
+        grep "export GURU_MOUNT_" $temp_rc | \
         grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
 all_list=(${all_list[@],,})
 
-# mount_indicator_key='f'"$(gr.poll mount)"
-mount_indicator_key=
+rm $temp_rc
+
+echo "system_mount:${GURU_SYSTEM_MOUNT[0]}"
+echo "system_email:$GURU_USER_EMAIL"
+
 
 mount.main () {
 # mount command parser
@@ -194,6 +205,7 @@ mount.check () {
     gr.msg -n -v1 -c $color "${_target_folder##*/} "
 
     [[ $_online ]] && return 0 || return 1
+    # return $_online
 }
 
 
@@ -451,7 +463,7 @@ mount.status () {
             return 100
         fi
 
-    # check is system
+    # check is system available
     if mount.check ; then
             gr.msg -v1 -n -c green "available "
         else
@@ -537,23 +549,23 @@ mount.uninstall () {
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then
 
-        [[ "$1" == "test" ]] && is_test=true
+        # [[ "$1" == "test" ]] && is_test=true
 
         # try to source guru variable set
         [[ $GURU_SYSTEM_MOUNT ]] || source $GURU_RC
 
         # fulfill required variables when run as stand alone
-        [[ $GURU_BIN ]]     || declare -g GURU_BIN="$HOME/bin"  # 2>/dev/null?
-        [[ $GURU_RC ]]      || declare -g GURU_RC="$HOME/.gururc"
-        [[ $GURU_CALL ]]    || declare -g GURU_CALL='guru'
-        [[ $GURU_CFG ]]     || declare -g GURU_CFG="$HOME/.config/guru"
-        [[ $GURU_USER ]]    || declare -g GURU_USER=$USER
+        # [[ $GURU_BIN ]]     || declare -g GURU_BIN="$HOME/bin"  # 2>/dev/null?
+        # [[ $GURU_RC ]]      || declare -g GURU_RC="$HOME/.gururc"
+        # [[ $GURU_CALL ]]    || declare -g GURU_CALL='guru'
+        # [[ $GURU_CFG ]]     || declare -g GURU_CFG="$HOME/.config/guru"
+        # [[ $GURU_USER ]]    || declare -g GURU_USER=$USER
 
-        # if test of stand alone fulfill with guest information
-        [[ $is_test ]] || ! [[ $GURU_SYSTEM_MOUNT ]]    && declare -g GURU_SYSTEM_MOUNT=/tmp/guru-temp-data
-        [[ $is_test ]] || ! [[ $GURU_CLOUD_USERNAME ]]  && declare -g GURU_CLOUD_USERNAME=guest
-        [[ $is_test ]] || ! [[ $GURU_CLOUD_DOMAIN ]]    && declare -g GURU_CLOUD_DOMAIN=guest.ujo.guru
-        [[ $is_test ]] || ! [[ $GURU_CLOUD_PORT ]]      && declare -g GURU_CLOUD_PORT=2023
+        # # if test of stand alone fulfill with guest information
+        # [[ $is_test ]] || ! [[ $GURU_SYSTEM_MOUNT ]]    && declare -g GURU_SYSTEM_MOUNT=/tmp/guru-temp-data
+        # [[ $is_test ]] || ! [[ $GURU_CLOUD_USERNAME ]]  && declare -g GURU_CLOUD_USERNAME=guest
+        # [[ $is_test ]] || ! [[ $GURU_CLOUD_DOMAIN ]]    && declare -g GURU_CLOUD_DOMAIN=guest.ujo.guru
+        # [[ $is_test ]] || ! [[ $GURU_CLOUD_PORT ]]      && declare -g GURU_CLOUD_PORT=2023
 
         mount.main $@
         exit $?
