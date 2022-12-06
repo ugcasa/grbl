@@ -76,7 +76,7 @@ yle.main () {
             news_core="https://areena.yle.fi/1-3235352"
             # yle-dl --pipe --latestepisode "$news_core" 2>/dev/null | mpv -
             # issue 20221206.2 --latestepisode broken, fix below
-            yle-dl --pipe $(yle-dl --showepisodepage $news_core | tail -n1) 2>/dev/null | mpv -
+            yle-dl --pipe $(yle-dl --showepisodepage $news_core | tail -n2 | head -n1)  2>/dev/null | mpv -
             ;;
 
         episode|episodes)
