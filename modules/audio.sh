@@ -1,23 +1,5 @@
 #!/bin/bash
-# guru-client audio adapter casa@ujo.guru 2020 - 2022
-
-#source common.sh
-source net.sh
-source config.sh
-
-declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
-declare -g audio_playlist_folder="$audio_data_folder/playlists"
-declare -g audio_temp_file="/tmp/guru/audio.playlist"
-declare -g audio_rc_file="/tmp/audio.rc"
-
-[[ ! -d $audio_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $audio_playlist_folder
-
-# make rc out of foncig file and run it
-config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $audio_rc_file
-config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $audio_rc_file append
-chmod +x $audio_rc_file
-source $audio_rc_file
-
+# guru-cli audio module 2020 - 2022 casa@ujo.guru
 
 audio.help () {
 
@@ -75,6 +57,26 @@ audio.main () {
             ;;
     esac
    # rm $audio_rc_file
+}
+
+
+audio.config () {
+# configure audio module
+
+    source config.sh
+
+    declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
+    declare -g audio_playlist_folder="$audio_data_folder/playlists"
+    declare -g audio_temp_file="/tmp/guru/audio.playlist"
+    declare -g audio_rc_file="/tmp/audio.rc"
+
+    [[ ! -d $audio_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $audio_playlist_folder
+
+    # make rc out of foncig file and run it
+    config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $audio_rc_file
+    config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $audio_rc_file append
+    chmod +x $audio_rc_file
+    source $audio_rc_file
 }
 
 
@@ -185,9 +187,11 @@ audio.toggle () {
 
 audio.listen () {
 # listen yle radio stations from icecast stream
+
     local options=
     [[ $GURU_VERBOSE -lt 1 ]] && options="--really-quiet"
 
+    source net.sh
     if ! net.check ; then
             gr.msg "unable to play streams, network unplugged"
             return 100
@@ -582,8 +586,10 @@ audio.remove () {
 }
 
 
+audio.config
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source $audio_rc_file
+
     audio.main "$@"
     exit $?
 fi

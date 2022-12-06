@@ -1,30 +1,31 @@
 #!/bin/bash
-# mount tools for guru-client
+# guru-cli mount core module 2019 - 2022 casa@ujo.guru
 
+mount.help () {
 
-# make rc out of foncig file and run it
-temp_rc="/tmp/mount.rc"
-source config.sh
-config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $temp_rc
-chmod +x $temp_rc
-source $temp_rc
-
-all_list=($(\
-        grep "export GURU_MOUNT_" $temp_rc | \
-        grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' | \
-        sed 's/^.*MOUNT_//' | \
-        cut -d '=' -f1))
-all_list=(${all_list[@],,})
-
-# mount_indicator_key='f'"$(gr.poll mount)"
-# mount_indicator_key=f2
-mount_indicator_key=$GURU_MOUNT_INDICATION_KEY
-
-rm $temp_rc
+    gr.msg -v1 -c white "guru-client mount help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL mount|unount|check|check-system <source> <target>"
+    gr.msg -v2
+    gr.msg -v1 -c white "commands:"
+    gr.msg -v1 " ls                         list of mounted folders "
+    gr.msg -v1 " check mount_name           check that mount point is mounted "
+    gr.msg -v2 " check-system               check that guru system folder is mounted "
+    gr.msg -v1 " mount mount_name           mount folder in file server to local folder "
+    gr.msg -v1 " mount all                  mount all known folders in server "
+    gr.msg -v2 "                            edit $GURU_CFG/$USER/user.cfg or run "
+    gr.msg -v2 "                            '$GURU_CALL config user' to setup default mountpoints "
+    gr.msg -v3 " poll start|end             start or end module status polling "
+    gr.msg -v2
+    gr.msg -v1 -c white "example:"
+    gr.msg -v1 "      $GURU_CALL mount /home/$GURU_CLOUD_USERNAME/share /home/$USER/guru/projects"
+    gr.msg -v1 "      $GURU_CALL umount /home/$USER/guru/projects"
+}
 
 
 mount.main () {
 # mount command parser
+
     local _error=0
     local command="$1"
     shift
@@ -81,27 +82,27 @@ mount.main () {
 }
 
 
-mount.help () {
-    # general help
+mount.config () {
+# manage configurations
 
-    gr.msg -v1 -c white "guru-client mount help "
-    gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL mount|unount|check|check-system <source> <target>"
-    gr.msg -v2
-    gr.msg -v1 -c white "commands:"
-    gr.msg -v1 " ls                         list of mounted folders "
-    gr.msg -v1 " check mount_name           check that mount point is mounted "
-    gr.msg -v2 " check-system               check that guru system folder is mounted "
-    gr.msg -v1 " mount mount_name           mount folder in file server to local folder "
-    gr.msg -v1 " mount all                  mount all known folders in server "
-    #gr.msg -v1 " mount kill mount_name      kill mount process "
-    gr.msg -v2 "                            edit $GURU_CFG/$USER/user.cfg or run "
-    gr.msg -v2 "                            '$GURU_CALL config user' to setup default mountpoints "
-    gr.msg -v3 " poll start|end             start or end module status polling "
-    gr.msg -v2
-    gr.msg -v1 -c white "example:"
-    gr.msg -v1 "      $GURU_CALL mount /home/$GURU_CLOUD_USERNAME/share /home/$USER/guru/projects"
-    gr.msg -v1 "      $GURU_CALL umount /home/$USER/guru/projects"
+    declare -l temp_rc="/tmp/mount.rc"
+    source config.sh
+    config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $temp_rc
+    chmod +x $temp_rc
+    source $temp_rc
+
+    declare -g all_list=($(\
+            grep "export GURU_MOUNT_" $temp_rc | \
+            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATION_KEY' | \
+            sed 's/^.*MOUNT_//' | \
+            cut -d '=' -f1))
+            all_list=(${all_list[@],,})
+
+    # mount_indicator_key='f'"$(gr.poll mount)"
+    # mount_indicator_key=f2
+    declare -g mount_indicator_key=$GURU_MOUNT_INDICATION_KEY
+
+    rm $temp_rc
 }
 
 
@@ -140,6 +141,7 @@ mount.info () {
 
 mount.ls () {
 # simple list of mounted mountpoints
+
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
     return $?
 }
@@ -231,7 +233,6 @@ mount.remote () {
     [[ "$5" ]] && _symlink="$5"
 
     gr.msg -v1 -n "$_target_folder.. "
-
 
     # double check is in /etc/mtab  already mounted and .online file exists
     if [[ -f $_target_folder/.online ]] && grep -qw "$_target_folder" /etc/mtab ; then
@@ -325,22 +326,14 @@ mount.remote () {
         fi
 }
 
+
 mount.available () {
 # printout list of available mount points
+
     gr.msg -c light_blue "${all_list[@]}"
-
-    # local lists=($(\
-    #         grep "export GURU_MOUNT_" $GURU_RC | \
-    #         grep -e "_LIST" -ve "_ENABLED" | \
-    #         sed 's/^.*MOUNT_//' | \
-    #         cut -d '=' -f1))
-    # lists=(${lists[@],,})
-
-    # gr.msg "available lists: ${lists[@]}"
-
     return 0
-
 }
+
 
 mount.list () {
 # mount all GURU_MOUNT_<list_name>_LIST defined in userrc
@@ -425,6 +418,7 @@ mount.all () {
     #mount.status >/dev/null
     return $_error
 }
+
 
 mount.known_remote () {
 # mount single GURU_CLOUD_* defined in userrc
@@ -545,26 +539,12 @@ mount.uninstall () {
     return 0
 }
 
+mount.config
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then
 
-        # [[ "$1" == "test" ]] && is_test=true
-
-        # try to source guru variable set
+        # Issue 20221206.1: for unknown reason this variable is empty
         [[ $GURU_SYSTEM_MOUNT ]] || source $GURU_RC
-
-        # fulfill required variables when run as stand alone
-        # [[ $GURU_BIN ]]     || declare -g GURU_BIN="$HOME/bin"  # 2>/dev/null?
-        # [[ $GURU_RC ]]      || declare -g GURU_RC="$HOME/.gururc"
-        # [[ $GURU_CALL ]]    || declare -g GURU_CALL='guru'
-        # [[ $GURU_CFG ]]     || declare -g GURU_CFG="$HOME/.config/guru"
-        # [[ $GURU_USER ]]    || declare -g GURU_USER=$USER
-
-        # # if test of stand alone fulfill with guest information
-        # [[ $is_test ]] || ! [[ $GURU_SYSTEM_MOUNT ]]    && declare -g GURU_SYSTEM_MOUNT=/tmp/guru-temp-data
-        # [[ $is_test ]] || ! [[ $GURU_CLOUD_USERNAME ]]  && declare -g GURU_CLOUD_USERNAME=guest
-        # [[ $is_test ]] || ! [[ $GURU_CLOUD_DOMAIN ]]    && declare -g GURU_CLOUD_DOMAIN=guest.ujo.guru
-        # [[ $is_test ]] || ! [[ $GURU_CLOUD_PORT ]]      && declare -g GURU_CLOUD_PORT=2023
 
         mount.main $@
         exit $?
