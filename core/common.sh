@@ -184,7 +184,7 @@ gr.msg () {
         fi
 
     # -c) color printout
-    if [[ $GURU_COLOR ]] && [[ $GURU_VERBOSE -gt 0 ]]; then
+    if [[ $GURU_COLOR ]] && ! [[ $GURU_VERBOSE -eq 0 ]]; then
         printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m" "${_timestamp}" "${_message:0:$_column_width}"
         return 0
     fi
