@@ -15,7 +15,7 @@ source config.sh
 config.make_rc "$GURU_CFG/$GURU_USER/backup.cfg" /tmp/backup.rc
 chmod +x /tmp/backup.rc
 source /tmp/backup.rc
-#rm /tmp/backup.rc
+rm /tmp/backup.rc
 
 backup.help () {
     # general help
@@ -800,7 +800,6 @@ backup.poll () {
 }
 
 
-
 backup.stand-alone () {
     # this just a test is it even possible
 
@@ -824,6 +823,7 @@ backup.stand-alone () {
     declare -g GURU_DAEMON_INTERVAL=300
 
 }
+
 
 backup.install () {
     # install needed tools

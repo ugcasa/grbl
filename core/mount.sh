@@ -1,8 +1,6 @@
 #!/bin/bash
 # mount tools for guru-client
 
-# mount_indicator_key='f'"$(gr.poll mount)"
-mount_indicator_key=f2
 
 # make rc out of foncig file and run it
 temp_rc="/tmp/mount.rc"
@@ -18,10 +16,11 @@ all_list=($(\
         cut -d '=' -f1))
 all_list=(${all_list[@],,})
 
-rm $temp_rc
+# mount_indicator_key='f'"$(gr.poll mount)"
+# mount_indicator_key=f2
+mount_indicator_key=$GURU_MOUNT_INDICATION_KEY
 
-echo "system_mount:${GURU_SYSTEM_MOUNT[0]}"
-echo "system_email:$GURU_USER_EMAIL"
+rm $temp_rc
 
 
 mount.main () {
