@@ -46,16 +46,18 @@ config.help () {
 config.make_rc () {
 # make rc file out of configuration file
 
-    local _source_cfg="$1"
-    local _target_rc="$2"
-    local _append_rc="$3"
+    local _source_cfg="$1"  # source configuration file
+    local _target_rc="$2"   # target rc file
+    local _append_rc="$3"   # any input will set to append mode
+
     local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
 
     gr.msg -n -v2 -c gray "$_source_cfg "
+
     if ! [[ -f $_source_cfg ]] ; then gr.msg -c yellow "$_source_cfg not found" ; return 100 ; fi
 
     case $(head -n 1 $_source_cfg) in
-        "#!/bin/bash 4.0"*) gr.msg -v2 -c dark_grey "..skipping version 4.0 config files" ; return 0 ;;
+        *"source"*) gr.msg -v2 -c dark_grey "..no need to compile this type of configs" ; return 0 ;;
     esac
     gr.msg -v2 -c gray "$_mode $_target_rc"
 
@@ -82,14 +84,15 @@ config.make_rc () {
 }
 
 
-config.make_color_rc () {
+config.make_style_rc () {
 # export color configuration for shell scripts"
 
-    local _source_cfg="$1"
-    local _target_rc="$2"
-    local _append_rc="$3"
+    local _source_cfg="$1"  # source configuration file
+    local _target_rc="$2"   # target rc file
+    local _append_rc="$3"   # any input will set to append mode
+
     local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
-    # use same style file than corsair
+
     [[ -f "$_source_cfg" ]] && source $_source_cfg || gr.msg -x 100 -red "$_source_cfg missing"
 
     gr.msg -n -v1 "setting color codes " ; gr.msg -v2
@@ -122,7 +125,7 @@ config.make_color_rc () {
             #echo -e "$color $color_name $color_value"
             gr.msg -n -v1 -V2 -c $color_name "."
             gr.msg -n -v2 -c $color_name "$color_name "
-            # make stylerc
+            # make style rc
             printf "\texport C_%s='%s'\n" "${color_name^^}" "$color"  >> $_target_rc
         done
     printf 'fi\n\n' >> $_target_rc
@@ -131,10 +134,33 @@ config.make_color_rc () {
 
 
 config.export () {
-# export configuration to use
+# export global configuration in use
 
     local _target_rc=$HOME/.gururc
     local _target_user=$GURU_USER ; [[ "$1" ]] && _target_user="$1"
+
+    config.export_type_selector () {
+
+            local _module_cfg="$1"
+            gr.msg -v4 -c deep_pink "Looking default configs: $_module_cfg"
+
+            if [[ -f $_module_cfg ]] ; then
+                case $(head -n 1 $_module_cfg) in
+                        *"global"*)
+                            config.make_rc "$_module_cfg" "$_target_rc" append \
+                                || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
+                            ;;
+                        *"module"*)
+                            gr.msg -v2 -c dark_grey "$_module_cfg ..skipping module config files"
+                            ;;
+                        *"source"*)
+                            gr.msg -v2 -c dark_grey "$_module_cfg ..no need to compile this type of configs"
+                            ;;
+                        *)
+                            gr.msg -v2 -c yellow "$_module_cfg ..unknown config file type"
+                    esac
+                fi
+        }
 
     # make backup
     [[ -f "$_target_rc" ]] && mv -f "$_target_rc" "$_target_rc.old"
@@ -166,50 +192,25 @@ config.export () {
     local installed_modules=($(cat $GURU_CFG/installed.core))
     installed_modules=(${installed_modules[@]} $(cat $GURU_CFG/installed.modules))
 
+    local _module_cfg
+
     for module in ${installed_modules[@]} ; do
 
-        ## add modules default config
-        local _module_cfg="$GURU_CFG/$module.cfg"
-        gr.msg -v4 -c deep_pink "Looking default configs: $_module_cfg"
+            ## add modules default config
+            _module_cfg="$GURU_CFG/$module.cfg"
+            config.export_type_selector $_module_cfg
 
-        if [[ -f $_module_cfg ]] ; then
-
-            case $(head -n 1 $_module_cfg) in
-                    "#!/bin/bash module"*)
-                        gr.msg -v2 -c dark_grey "$_module_cfg ..skipping module config files"
-                        ;;
-                    *)
-                        config.make_rc "$_module_cfg" "$_target_rc" append \
-                            || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
-                        ;;
-                esac
-            fi
-
-        ## add user config
-        _module_cfg="$GURU_CFG/$GURU_USER/$module.cfg"
-        gr.msg -v4 -c deep_pink "Looking user configs: $_module_cfg"
-
-
-        if [[ -f $_module_cfg ]] ; then
-
-            case $(head -n 1 $_module_cfg) in
-                    "#!/bin/bash module"*)
-                        gr.msg -v2 -c dark_grey "$_module_cfg ..skipping module config files"
-                        ;;
-                    *)
-                        config.make_rc "$_module_cfg" "$_target_rc" append \
-                            || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
-                        ;;
-                esac
-            fi
-    done
+            ## add user config
+            _module_cfg="$GURU_CFG/$GURU_USER/$module.cfg"
+            config.export_type_selector $_module_cfg
+        done
 
 
     gr.msg -n -v1 "setting module configuration " ; gr.msg -v2
     config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gr.msg -v1 -V2 -c green "done"
 
 
-    config.make_color_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
+    config.make_style_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
     # set path
     echo "source $GURU_BIN/common.sh" >> $_target_rc
     echo "source $GURU_BIN/prompt.sh" >> $_target_rc
