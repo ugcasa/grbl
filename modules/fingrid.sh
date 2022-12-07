@@ -2,7 +2,7 @@
 # query results before 30.11.2022 is test date
 # source common.sh
 
-declare -A fingrid
+declare -gA fingrid
 
 source $GURU_CFG/fingrid.cfg
 [[ -f $GURU_CFG/$GURU_USER/fingrid.cfg ]] && source $GURU_CFG/$GURU_USER/fingrid.cfg
