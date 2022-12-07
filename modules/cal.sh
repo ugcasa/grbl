@@ -6,6 +6,11 @@ source $GURU_BIN/common.sh
 declare -g clipboard_flag=true
 declare -g temp_file="/tmp/cal.tmp"
 
+declare -gA google
+
+[[ -f $GURU_CFG/$GURU_USER/google.cfg ]] && source $GURU_CFG/$GURU_USER/google.cfg
+
+
 cal.help () {
     # general help
     gr.msg -v1 -c white "guru-client calendar help "
@@ -213,12 +218,9 @@ cal.setup_caldav () {
             read -p "gimmy your ID: " tha_id
             local user_conf="$GURU_CFG/$GURU_USER/user.cfg"
 
-            cat $user_conf | grep google] \
-                || printf "\n[google]\n" >>$user_conf
-
-            cat $user_conf | grep caldav_id= \
+            cat $user_conf | grep "google[caldav_id]=" \
                 && gr.msg -c yellow "already set, change manually from $user_conf" \
-                || printf "caldav_id=$tha_id\n" >>$user_conf
+                || printf "google[caldav_id]==$tha_id\n" >>$user_conf
 
             # take configuration in use
             source config.sh
@@ -233,7 +235,7 @@ cal.setup_caldav () {
     gr.msg -c white "6) ready to download stuff from server, all local data will be overwritten. press crtl+c if not sure"
     read -p "ready to go?" got
     sleep 3
-    calcurse-caldav --init keep-remote --authcode $GURU_GOOGLE_CALDAV_ID
+    calcurse-caldav --init keep-remote --authcode ${google[caldav_id]}
 }
 
 
@@ -248,6 +250,11 @@ cal.sync_remote () {
     local local_folder="/home/casa/.calcurse"
     local files=(apts todo)
     local did_mount=
+
+    if ! [[ ${google[caldav_id]} ]] ; then
+            gr.msg -c yellow "google[caldav_id] variuable is empty, fill it to '$GURU_CFG/$GURU_USER/google.cfg'"
+            return 111
+        fi
 
     # check that mount location exist
     if [[ -d ${GURU_BACKUP_FILES[2]} ]] ; then
@@ -278,7 +285,7 @@ cal.sync_remote () {
 
     # to only get stuff from härvel go:
 
-    calcurse-caldav --authcode $GURU_GOOGLE_CALDAV_ID
+    calcurse-caldav --authcode ${google[caldav_id]}
 
     if [[ $did_mount ]] ; then
             gio mount -u ${GURU_BACKUP_FILES[2]}
