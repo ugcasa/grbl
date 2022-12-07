@@ -1,11 +1,6 @@
 #!/bin/bash
 # guru-client tunneling functions 2021
 
-source common.sh
-#source system.sh
-
-declare -g tunnel_indicator_key='f'"$(gr.poll tunnel)"
-
 tunnel.help () {
     # genereal help
 
@@ -64,6 +59,23 @@ tunnel.main () {
 
         esac
 }
+
+
+tunnel.config () {
+# configure tunnel module
+
+    source config.sh
+
+    declare -g tunnel_indicator_key='f4'
+    declare -g tunnel_rc_file="/tmp/tunnel.rc"
+
+    # make rc out of config file and run it
+    config.make_rc "$GURU_CFG/$GURU_USER/tunnel.cfg" $tunnel_rc_file
+    chmod +x $tunnel_rc_file
+    source $tunnel_rc_file
+    rm $tunnel_rc_file
+}
+
 
 
 tunnel.status () {
@@ -426,7 +438,7 @@ tunnel.requirements () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $GURU_RC
+    tunnel.config
     tunnel.main "$@"
     exit 0
 fi
