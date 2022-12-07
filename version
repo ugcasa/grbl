@@ -1,5 +1,5 @@
 0.6.8.8
-'bella configurazione'
-'start to move configurations to where it should be'
+'bellaconf'
+'bella configuratione, start to move configurations to where it should be'
 'system wide configs to /etc/guru, user configs to ~.config/guru/<user>'
 
