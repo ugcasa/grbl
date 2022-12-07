@@ -71,7 +71,7 @@ timer.status () {
     if [[ $GURU_TIMER_ENABLED ]] ; then
             gr.msg -n -v1 -c green "enabled, " -k $timer_indicator_key
         else
-            gr.msg -v1 -c reset "disabled" -k $timer_indicator_key
+            gr.msg -v1 -c black "disabled" -k $timer_indicator_key
             return 1
         fi
 

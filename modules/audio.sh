@@ -1,6 +1,8 @@
 #!/bin/bash
 # guru-cli audio module 2020 - 2022 casa@ujo.guru
 
+declare -g audio_indicator_key='f8'
+
 audio.help () {
 
     gr.msg -v1 -c white "guru-cli audio help "
@@ -42,7 +44,7 @@ audio.main () {
     shift
     case "$_command" in
 
-        play|ls|listen|pause|mute|stop|tunnel|toggle|install|update|remove|help)
+        play|ls|listen|pause|mute|stop|tunnel|toggle|install|update|remove|help|poll|status)
             audio.$_command $@
             return $?
             ;;
@@ -584,6 +586,42 @@ audio.remove () {
     $GURU_BIN/audio/voipt.sh remove
     gmsg "remove manually: 'sudo apt-get remove espeak mpv vlc'"
 }
+
+
+audio.status () {
+# printout module status
+
+    gr.msg -t -v1 -n "${FUNCNAME[0]}: "
+
+    if [[ $GURU_AUDIO_ENABLED ]] ; then
+            gr.msg -v1 -c green "enabled " -k $audio_indicator_key
+        else
+            gr.msg -c black "disabled" -k $audio_indicator_key
+        fi
+}
+
+
+audio.poll () {
+# daemon poller will run this
+
+    local _cmd="$1" ; shift
+
+    case $_cmd in
+        start )
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: polling started" -k $audio_indicator_key
+            ;;
+        end )
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: polling ended" -k $audio_indicator_key
+            ;;
+        status )
+           audio.status $@
+            ;;
+        *) audio.help
+            ;;
+        esac
+
+}
+
 
 
 audio.config

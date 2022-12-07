@@ -1,21 +1,32 @@
 #!/bin/bash
 # guru-client vpn functions
 
+# load module configuration
+declare -g original_ip_file='/tmp/vpn-original-ip'
+declare -g vpn_indicator_key='f1'
 declare -A vpn
 
-source $GURU_CFG/vpn.cfg
-[[ -f $GURU_CFG/$GURU_USER/vpn.cfg ]] && source $GURU_CFG/$GURU_USER/vpn.cfg
+if [[ -f $GURU_CFG/vpn.cfg ]] ; then
+        source $GURU_CFG/vpn.cfg \
+        && gr.msg -v2 -c gray "sourcing $GURU_CFG/vpn.cfg" \
+        || gr.msg -c yellow "failed to source $GURU_CFG/vpn.cfg"
+    fi
 
+if [[ -f $GURU_CFG/$GURU_USER/vpn.cfg ]] ; then
+        source $GURU_CFG/$GURU_USER/vpn.cfg \
+        && gr.msg -v2 -c grey "sourcing $GURU_CFG/$GURU_USER/vpn.cfg" \
+        || gr.msg -c yellow "failed to source $GURU_CFG/$GURU_USER/vpn.cfg"
+    fi
 
-original_ip_file='/tmp/vpn-original-ip'
 
 vpn.main () {
+# main command parser
 
     local cmd=$1
     shift
 
     case $cmd in
-        status|open|close|install|uninstall|toggle|check|ip|help)
+        status|poll|open|close|install|uninstall|toggle|check|ip|help)
             vpn.$cmd "$@"
             ;;
     esac
@@ -23,7 +34,8 @@ vpn.main () {
 
 
 vpn.help () {
-    # genereal help
+# general help
+
     gr.msg -v1 -c white "guru-client vpn help "
     gr.msg -v2
     gr.msg -v0 "usage:    $GURU_CALL vpn status|open|close|install|uninstall] "
@@ -38,7 +50,7 @@ vpn.help () {
     gr.msg -v2 "                  vpn tunnel to given server"
     gr.msg -v3 " ls               TBD list of available vpn out "
     gr.msg -v1 " close            close vpn connection"
-    gr.msg -v1 " kill             kill open vpn client"
+    # gr.msg -v1 " kill             force kill open vpn client"
     gr.msg -v1 " install          install requirements "
     gr.msg -v1 " uninstall        remove installed requirements "
     gr.msg -v2
@@ -49,6 +61,7 @@ vpn.help () {
 
 
 vpn.ip () {
+# get current ip and report connection status
 
     local ip_now="$(curl -s https://ipinfo.io/ip)"
 
@@ -64,6 +77,7 @@ vpn.ip () {
 
 
 vpn.check () {
+# check is vpn active
 
     if ps auxf | grep openvpn | grep -v grep >/dev/null ; then
             return 0
@@ -74,6 +88,7 @@ vpn.check () {
 
 
 vpn.toggle () {
+# shortcut toggling
 
     if vpn.check ; then
             gr.msg -v2 "session found, closing.."
@@ -86,8 +101,9 @@ vpn.toggle () {
 
 
 vpn.status () {
+# printout status with timestamp
 
-    gr.msg -v1 -n "vpn status: "
+    gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
     if [[ -f /usr/sbin/openvpn ]] ; then
             gr.msg -n -v2 -c green "installed "
@@ -133,15 +149,18 @@ vpn.status () {
         fi
 }
 
+
 vpn.rm_original_file () {
+# remove ip file
+
     if [[ $original_ip_file ]] && [[ -f $original_ip_file ]] ; then
-        rm -f if $original_ip_file && gr.msg -v2 "$original_ip_file deleted"
+            rm -f if $original_ip_file && gr.msg -v2 "$original_ip_file deleted"
         fi
 }
 
 
 vpn.open () {
-# open vpn connection set in user.cfg
+# open vpn connection
 
     local country=fi
     local city=Helsinki
@@ -244,7 +263,8 @@ vpn.open () {
 
 
 vpn.close () {
-# close vpn connection (if exitst)
+# close vpn connection (if exist)
+
     local current_ip="$(curl -s https://ipinfo.io/ip)"
     gr.msg "our ip was: $current_ip"
 
@@ -268,11 +288,11 @@ vpn.close () {
 
     return 0
 }
-
 
 
 vpn.close () {
 # closes vpn connection if exitst
+
     local current_ip="$(curl -s https://ipinfo.io/ip)"
     gr.msg "our ip was: $current_ip"
 
@@ -297,8 +317,30 @@ vpn.close () {
     return 0
 }
 
+vpn.poll () {
+# daemon poller will run this
+
+    local _cmd="$1" ; shift
+
+    case $_cmd in
+        start )
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: polling started" -k $vpn_indicator_key
+            ;;
+        end )
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: polling ended" -k $vpn_indicator_key
+            ;;
+        status )
+           vpn.status $@
+            ;;
+        *) vpn.help
+            ;;
+        esac
+
+}
+
 
 vpn.install () {
+# uninstall and set configuration
 
     [[ -f /usr/sbin/openvpn ]] || apt-get install openvpn
 
@@ -313,7 +355,6 @@ vpn.install () {
             sudo mv udp /etc/openvpn
             rm -f groupedServerList.zip
         fi
-
 
     if [[ -f /etc/openvpn/credentials ]] ; then
             gr.msg "credentials found"
@@ -330,15 +371,14 @@ vpn.install () {
 
 
 vpn.uninstall () {
-
+# uninstall and remove configuration
     [[ -f /usr/sbin/openvpn ]] || apt-get install openvpn
-    # /etc/openvpn
-    # /etc/openvpn/credentials
+    # TBD clear /etc/openvpn
+    # TBD clear /etc/openvpn/credentials
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source $GURU_RC
     vpn.main "$@"
     exit $?
 fi

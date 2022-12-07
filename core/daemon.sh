@@ -12,7 +12,7 @@ daemon_indicator_key="esc"
 source $GURU_BIN/system.sh
 
 daemon.main () {
-    # daemon main command parser
+# daemon main command parser
 
     local argument="$1" ; shift
     case "$argument" in
@@ -32,7 +32,7 @@ daemon.main () {
 
 
 daemon.help () {
-    # general help
+# general help
 
     gr.msg -v 1 -c white "guru daemon help "
     gr.msg -v 2
@@ -52,7 +52,7 @@ daemon.help () {
 
 
 daemon.status () {
-    # printout status of daemon
+# printout status of daemon
 
     gr.msg -n -v1 "${FUNCNAME[0]}: "
 
@@ -108,7 +108,7 @@ daemon.status () {
 
 
 daemon.start () {
-    # start daemon
+# start daemon
 
     # if daemon.status && ! [[ $GURU_FORCE ]]; then
     #         gr.msg -v1 -c green "already running"
@@ -161,7 +161,7 @@ daemon.start () {
 
 
 daemon.stop () {
-    # stop daemon
+# stop daemon
 
     system.flag rm stop
     gr.msg -N -n -V1 -c white "stopping daemon.. "
@@ -227,7 +227,7 @@ daemon.stop () {
 
 
 daemon.kill () {
-    # force stop daemon
+# force stop daemon
 
     if ! daemon.status ; then
             return 0
@@ -266,8 +266,11 @@ daemon.kill () {
 
 daemon.goodday () {
 # check is date changed and update pid file datestamp
+
     [[ -f /tmp/guru.daemon-pid ]] || return 1
-    [[ $(date +%Y-%m-%d) -eq $(stat -c '%x' /tmp/guru.daemon-pid | cut -d' ' -f1) ]] && return 0
+    local now="d$(date +%Y-%m-%d)"
+    local was="d$(stat -c '%x' /tmp/guru.daemon-pid | cut -d' ' -f1)"
+    [[ "$now" == "$was" ]] && return 0
     gr.msg -t -c white "${FUNCNAME[0]}: $(date +%-d.%-m.%Y)"
     touch /tmp/guru.daemon-pid
     return 0
@@ -275,7 +278,7 @@ daemon.goodday () {
 
 
 daemon.poll () {
-    # poller for modules
+# poller for modules
 
     source $GURU_RC
     source net.sh
@@ -383,7 +386,7 @@ daemon.poll () {
 
 
 daemon.process_opts () {
-    # argument parser
+# argument parser
 
     TEMP=`getopt --long -o "vVflu:h:" "$@"`
     eval set -- "$TEMP"
@@ -405,7 +408,7 @@ daemon.process_opts () {
 
 
 daemon.systemd () {
-    # systemd method
+# systemd method
 
     local cmd=$1 ; shift
     case $cmd in
@@ -420,7 +423,7 @@ daemon.systemd () {
 
 
 daemon.systemd_install () {
-    # setup systemd service
+# setup systemd service
 
     temp="/tmp/starter.temp"
     gr.msg -v1 -V2 -n "setting starter script.. "
@@ -467,9 +470,6 @@ EOL
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-        # source $GURU_RC
-        # source $GURU_BIN/common.sh
-        # source $GURU_BIN/corsair.sh
         daemon.process_opts $@
         daemon.main $ARGUMENTS
         exit $?

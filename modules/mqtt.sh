@@ -2,8 +2,7 @@
 # guru client mqtt functions
 # casa@ujo.guru 2020 - 2021
 
-source $GURU_BIN/common.sh
-mqtt_indicator_key="f$(gr.poll mqtt)"
+declare -g mqtt_indicator_key="f3"
 
 mqtt.main () {
     # mqtt main command parser
@@ -12,12 +11,12 @@ mqtt.main () {
     mqtt_indicator_key="f$(gr.poll mqtt)"
 
     case "$_cmd" in
-               status|help|install|remove|enabled)
+               status|help|install|remove|enabled|poll)
                     mqtt.$_cmd "$@"
                     return $?
                     ;;
 
-               single|sub|pub|poll)
+               single|sub|pub)
                     mqtt.enabled || return 1
                     mqtt.$_cmd "$@"
                     ;;
@@ -218,15 +217,12 @@ mqtt.log () {
 mqtt.status () {
     # check mqtt broker is reachable.
 
-    mqtt_indicator_key="f$(gr.poll mqtt)"
-
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
     if [[ $GURU_MQTT_ENABLED ]] ; then
-            gr.msg -v1 -n -c green "enabled, "
+            gr.msg -v1 -n -c green "enabled, " -k $mqtt_indicator_key
         else
-            gr.msg -v1 -c black "disabled " \
-                 -k $mqtt_indicator_key
+            gr.msg -v1 -c black "disabled " -k $mqtt_indicator_key
             return 1
         fi
 

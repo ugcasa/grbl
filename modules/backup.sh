@@ -5,9 +5,9 @@
 # can be run individually but needs specific set of environment variables (~/.gururc).
 # more of bash shit github.com/ugcasa/guru-client casa@ujo.guru 2021
 
-source common.sh
 
-backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
+declare -g backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
+declare -g backup_indicator_key="f7"
 ! [[ -d $backup_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
 
 # make rc out of foncig file and run it
@@ -150,7 +150,6 @@ backup.config () {
     declare -ga backup_name=$1
     declare -ga active_list=(${GURU_BACKUP_ACTIVE[@]})
     declare -la header=(store method from ignore)
-    declare -g backup_indicator_key="f$(gr.poll backup)"
 
     # exit if not in active list
     if ! echo "${active_list[@]}" | grep -q $backup_name ; then
@@ -228,7 +227,6 @@ backup.config () {
 backup.status () {
     # check latest backup is reachable and returnable.
 
-    local backup_indicator_key="f$(gr.poll backup)"
     local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
 
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
@@ -657,7 +655,6 @@ backup.plan () {
     local _error=
     local entries=()
     local entry=
-    local backup_indicator_key="f$(gr.poll backup)"
 
     case $schedule in
             hourly|daily|weekly|monthly|yearly|all|panic)
@@ -780,7 +777,6 @@ backup.scheduled () {
 backup.poll () {
     # poll functions
 
-    local backup_indicator_key="f$(gr.poll backup)"
     local _cmd="$1" ; shift
 
     case $_cmd in

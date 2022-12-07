@@ -74,7 +74,7 @@ project.configure () {
 
     declare -g project_base="$GURU_SYSTEM_MOUNT/project"
     declare -g project_arhive="$GURU_SYSTEM_MOUNT/project/arhive"
-    declare -g project_indicator_key="f$(gr.poll project)"
+    declare -g project_indicator_key="f10"
     declare -g project_mount="$GURU_MOUNT_PROJECTS"
 
     if [[ $1 ]] ; then
@@ -374,7 +374,7 @@ project.ls () {
 
     # check active project
     [[ -f $project_base/active ]] && local _active_project=$(cat $project_base/active)
-    gr.msg -v2 -c aqua "active: $_active_project"
+    # gr.msg -v2 -c aqua "active: $_active_project"
 
     # list of projects
     for _project in ${_project_list[@]} ; do
@@ -568,19 +568,29 @@ project.status () {
 
     # check project file locaton is accessavle
     gr.msg -v1 -n -t "${FUNCNAME[0]}: "
+
+    # check project file locaton is accessavle
+    if [[ $GURU_PROJECT_ENABLED ]] ; then
+            gr.msg -v1 -n -c green "enabled, "  -k $project_indicator_key
+        else
+            gr.msg -v1  -c black "disabled " -k $project_indicator_key
+            return 1
+        fi
+
+
     if [[ -d "$project_base" ]] ; then
-            gr.msg -v1 -n -c green "installed, "
+            gr.msg -v1 -n -c green "installed, "  -k $project_indicator_key
         else
             gr.msg -v1 -n -c red "$project_base not installed, " -k $project_indicator_key
-            return 100
+            return 2
         fi
 
     # check are projects mounted
     if [[ -f "$project_mount/.online" ]] ; then
-            gr.msg -v1 -n -c green "mounted "
+            gr.msg -v1 -n -c green "mounted "  -k $project_indicator_key
         else
             gr.msg -v1 -c yellow "not mounted" -k $project_indicator_key
-            return 100
+            return 3
         fi
 
     # print

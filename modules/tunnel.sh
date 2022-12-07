@@ -1,8 +1,21 @@
 #!/bin/bash
 # guru-client tunneling functions 2021
 
+# configure tunnel module
+source config.sh
+
+declare -g tunnel_indicator_key='f4'
+declare -g tunnel_rc_file="/tmp/tunnel.rc"
+
+# make rc out of config file and run it
+config.make_rc "$GURU_CFG/$GURU_USER/tunnel.cfg" $tunnel_rc_file
+chmod +x $tunnel_rc_file
+source $tunnel_rc_file
+rm $tunnel_rc_file
+
+
 tunnel.help () {
-    # genereal help
+# genereal help
 
     gr.msg -v1 -c white "guru-client tunnel help "
     gr.msg -v2
@@ -61,21 +74,9 @@ tunnel.main () {
 }
 
 
-tunnel.config () {
-# configure tunnel module
+# tunnel.config () {
 
-    source config.sh
-
-    declare -g tunnel_indicator_key='f4'
-    declare -g tunnel_rc_file="/tmp/tunnel.rc"
-
-    # make rc out of config file and run it
-    config.make_rc "$GURU_CFG/$GURU_USER/tunnel.cfg" $tunnel_rc_file
-    chmod +x $tunnel_rc_file
-    source $tunnel_rc_file
-    rm $tunnel_rc_file
-}
-
+# }
 
 
 tunnel.status () {
@@ -83,6 +84,14 @@ tunnel.status () {
 
     # ptrintout timestamp and function name
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
+
+    # check system is able to service
+    if [[ $GURU_TUNNEL_ENABLED ]] ; then
+            gr.msg -v1 -n -c green "enabled, " -k $tunnel_indicator_key
+        else
+            gr.msg -v1 -c black "disabled" -k $tunnel_indicator_key
+            return 1
+        fi
 
     # check system is able to service
     if [[ -f /usr/bin/ssh ]] ; then
@@ -99,7 +108,7 @@ tunnel.status () {
     if ps -x | grep -v grep | grep "ssh -L " | grep localhost >/dev/null; then
             gr.msg -v3 -c aqua "active tunnels" -k $tunnel_indicator_key
         else
-            gr.msg -v3 -c reset "no active tunnels" -k $tunnel_indicator_key
+            gr.msg -v3 -c green "no active tunnels" -k $tunnel_indicator_key
         fi
 
     return 0
@@ -438,7 +447,7 @@ tunnel.requirements () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    tunnel.config
+    # tunnel.config
     tunnel.main "$@"
     exit 0
 fi
