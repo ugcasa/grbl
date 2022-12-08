@@ -92,21 +92,21 @@ audio.play () {
                 ;;
 
             "")
-                gr.ind playing $GURU_AUDIO_INDICATION_KEY
+                gr.ind playing $audio_indicator_key
 
                 audio.listen yle kajaani
 
-                gr.end $GURU_AUDIO_INDICATION_KEY
+                gr.end $audio_indicator_key
                 ;;
 
             *)
                 # if file, play it
                 if [[ -f $1 ]] ; then
-                        gr.ind playing $GURU_AUDIO_INDICATION_KEY
+                        gr.ind playing $audio_indicator_key
 
                         mpv $1
 
-                        gr.end $GURU_AUDIO_INDICATION_KEY
+                        gr.end $audio_indicator_key
                         return $?
                     fi
 
@@ -131,11 +131,11 @@ audio.play () {
 
                     if [[ $got ]] ; then
                         gr.msg -v1 -c white "${songs}" | sed 's/.*@//'
-                        gr.ind playing $GURU_AUDIO_INDICATION_KEY
+                        gr.ind playing $audio_indicator_key
 
                         mpv --no-video $(echo -e $got) 2>/dev/null
 
-                        gr.end $GURU_AUDIO_INDICATION_KEY
+                        gr.end $audio_indicator_key
                         return $?
                     fi
                 fi
@@ -152,14 +152,14 @@ audio.toggle () {
     [[ $GURU_RADIO_WAKEUP_STATION ]] && default_radio=$GURU_RADIO_WAKEUP_STATION
 
     if ps auxf | grep mpv | grep -v grep ; then
-            pkill mpv && gr.end $GURU_AUDIO_INDICATION_KEY
+            pkill mpv && gr.end $audio_indicator_key
             return 0
         fi
 
     if [[ -f $audio_temp_file ]] ; then
-            gr.ind playing -k $GURU_AUDIO_INDICATION_KEY
+            gr.ind playing -k $audio_indicator_key
             mpv --playlist=$audio_temp_file
-            gr.end $GURU_AUDIO_INDICATION_KEY
+            gr.end $audio_indicator_key
         else
             audio.main listen "$default_radio"
         fi
@@ -219,14 +219,14 @@ audio.listen () {
         url)
             shift
             gr.msg -v1 "playing from $@"
-            gr.ind playing -k $GURU_AUDIO_INDICATION_KEY
+            gr.ind playing -k $audio_indicator_key
             mpv $options $@
-            gr.end $GURU_AUDIO_INDICATION_KEY
+            gr.end $audio_indicator_key
             return 0
             ;;
 
         yle)
-            gr.ind playing -k $GURU_AUDIO_INDICATION_KEY
+            gr.ind playing -k $audio_indicator_key
             local channel=$(echo $@ | sed -r 's/(^| )([a-z])/\U\2/g' )
             local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
             mpv $options $url
@@ -380,11 +380,11 @@ audio.playlist_play () {
                     return 125
                 fi
 
-            gr.ind playing $GURU_AUDIO_INDICATION_KEY
+            gr.ind playing $audio_indicator_key
 
             mpv --playlist=$user_reguest
 
-            gr.end $GURU_AUDIO_INDICATION_KEY
+            gr.end $audio_indicator_key
             return $?
 
         else
@@ -512,11 +512,11 @@ audio.tunnel_open () {
     if [[ $1 ]] ; then _user=$1 ; shift ; fi
 
     gr.msg -v1 "tunneling mic to $_user@$_host:$_port"
-    gr.msg -k $GURU_AUDIO_INDICATION_KEY -c aqua
+    gr.msg -k $audio_indicator_key -c aqua
     if $GURU_BIN/audio/voipt.sh open -h $_host -p $_port -u $_user ; then
-            gr.msg -k $GURU_AUDIO_INDICATION_KEY -c green
+            gr.msg -k $audio_indicator_key -c green
         else
-            gr.msg -k $GURU_AUDIO_INDICATION_KEY -c red
+            gr.msg -k $audio_indicator_key -c red
             return 233
         fi
 }
@@ -525,14 +525,14 @@ audio.tunnel_open () {
 audio.tunnel_close () {
 # close audio tunnel
 
-    gr.msg -k $GURU_AUDIO_INDICATION_KEY -c aqua
+    gr.msg -k $audio_indicator_key -c aqua
 
     if ! $GURU_BIN/audio/voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME ; then
             gr.msg -c yellow "voip tunnel exited with code $?"
-            gr.msg -k $GURU_AUDIO_INDICATION_KEY -c red
+            gr.msg -k $audio_indicator_key -c red
         fi
 
-    gr.msg -k $GURU_AUDIO_INDICATION_KEY -c reset
+    gr.msg -k $audio_indicator_key -c reset
     return $?
 }
 
@@ -540,23 +540,23 @@ audio.tunnel_close () {
 audio.tunnel_toggle () {
     # audio toggle for keyboard shortcut usage
     # source $GURU_BIN/corsair.sh
-    gr.msg -k $GURU_AUDIO_INDICATION_KEY -c aqua
+    gr.msg -k $audio_indicator_key -c aqua
     if audio.status ; then
 
             if $GURU_BIN/audio/fast_voipt.sh close -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT ; then
-                    gr.msg -k $GURU_AUDIO_INDICATION_KEY -c reset
+                    gr.msg -k $audio_indicator_key -c reset
                     return 0
                 else
-                    gr.msg -k $GURU_AUDIO_INDICATION_KEY -c red
+                    gr.msg -k $audio_indicator_key -c red
                     return 1
             fi
     fi
 
     if $GURU_BIN/audio/fast_voipt.sh open -h $GURU_ACCESS_DOMAIN -p $GURU_ACCESS_PORT -u $GURU_ACCESS_USERNAME ; then
-            gr.msg -k $GURU_AUDIO_INDICATION_KEY -c green
+            gr.msg -k $audio_indicator_key -c green
             return 0
         else
-            gr.msg -k $GURU_AUDIO_INDICATION_KEY -c red
+            gr.msg -k $audio_indicator_key -c red
             return 1
         fi
 }
