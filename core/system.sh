@@ -5,7 +5,7 @@
 system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
 system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh" # ubuntu 18.04 > like mint 20.0
-system_indicator_key="f$(gr.poll system)"
+system_indicator_key="f5"
 
 system.help () {
 # system help printout
@@ -157,7 +157,7 @@ system.flag () {
 
     local cmd=$1 ; shift
     case $cmd in
-            set|rm|ls)
+            set|rm|ls|toggle)
                     system.$cmd-flag $@
                     return $? ;;
             help)   system.flag-help
@@ -203,15 +203,18 @@ system.ls-flag () {
 system.set-flag () {
 # set flag
 
-    [[ $1 ]] || gr.msg -x 100 -c red "system.set_flag error: flag missing"
     local flag="$1"
+
+    if ! [[ $flag ]] ; then
+            gr.msg -c yellow "unknown flag '$flag'"
+            return 0
+        fi
 
     if [[ -f /tmp/guru-$flag.flag ]] ; then
             gr.msg -t -v3 "$flag flag already set"
             return 0
         else
-            gr.msg -t -v1 "$flag flag set"
-            touch /tmp/guru-$flag.flag
+            touch /tmp/guru-$flag.flag && gr.msg -t -v1 "$flag flag set"
         fi
 }
 
@@ -219,18 +222,39 @@ system.set-flag () {
 system.rm-flag () {
 # release flag
 
-    [[ $1 ]] || gr.msg -x 100 -c red "system.rm_flag error: flag missing"
     local flag="$1"
 
+    if ! [[ $flag ]] ; then
+            gr.msg  -c yellow "unknown flag '$flag'"
+            return 0
+        fi
+
     if [[ -f /tmp/guru-$flag.flag ]] ; then
-            rm -f /tmp/guru-$flag.flag && \
-            gr.msg -t -v1 "$flag flag disabled"
+            rm -f /tmp/guru-$flag.flag && gr.msg -t -v1 "$flag flag disabled"
             return 0
         else
             gr.msg -t -v3 "$flag flag not set"
         fi
 }
 
+
+system.toggle-flag () {
+# toggle flag status
+
+    local flag="$1"
+
+    if ! [[ $flag ]] ; then
+            gr.msg -c yellow "unknown flag '$flag'"
+            return 0
+        fi
+
+    if [[ -f /tmp/guru-$flag.flag ]] ; then
+            rm -f /tmp/guru-$flag.flag && gr.msg -t -v1 "$flag flag disabled"
+            return 0
+        else
+            touch /tmp/guru-$flag.flag && gr.msg -t -v1 "$flag flag set"
+        fi
+}
 
 
 system.get_env () {
