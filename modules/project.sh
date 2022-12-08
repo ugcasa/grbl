@@ -1,10 +1,9 @@
 #!/bin/bash
-# guru-client project tools
-# casa@ujo.guru 2020
+# guru-cli project tools 2020 - 2022 casa@ujo.guru
 
-source $GURU_BIN/common.sh
-source $GURU_BIN/mount.sh
-source $GURU_BIN/timer.sh
+declare -gA project
+source $GURU_CFG/project.cfg
+[[ -f $GURU_CFG/$GURU_USER/project.cfg ]] && source $GURU_CFG/$GURU_USER/project.cfg
 
 project.main () {
     # main command parser
@@ -170,9 +169,6 @@ project.info () {
 }
 
 
-###################### opening and closing ###########################
-
-
 project.sublime () {
     # open sublime with project file
 
@@ -225,8 +221,8 @@ project.open () {
     # run project configs. Make sure that config.sh is pass trough.
     [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh pre $@
 
-    # set keyboard key to project color
-    declare -l key_color="aqua"
+    # set keyboard key to project color, what?! five different "color" variables, clean!
+    declare -l key_color="${project[color]}"
     [[ $GURU_PROJECT_COLOR ]] && key_color=$GURU_PROJECT_COLOR
 
     gr.msg -v1 -c $key_color "$project_name" -m "$GURU_USER/project" -k $project_indicator_key
@@ -301,7 +297,6 @@ project.term () {
 
     project.terminal $@
     return $?
-
 }
 
 
@@ -345,8 +340,6 @@ project.toggle () {
     return 0
 }
 
-
-############# Project list, add rm, exist check and chage functions ###################
 
 project.ls () {
     # list of projects
@@ -570,13 +563,12 @@ project.status () {
     gr.msg -v1 -n -t "${FUNCNAME[0]}: "
 
     # check project file locaton is accessavle
-    if [[ $GURU_PROJECT_ENABLED ]] ; then
+    if [[ ${project[enabled]} ]] ; then
             gr.msg -v1 -n -c green "enabled, "  -k $project_indicator_key
         else
-            gr.msg -v1  -c black "disabled " -k $project_indicator_key
+            gr.msg -v1 -c black "disabled " -k $project_indicator_key
             return 1
         fi
-
 
     if [[ -d "$project_base" ]] ; then
             gr.msg -v1 -n -c green "installed, "  -k $project_indicator_key
