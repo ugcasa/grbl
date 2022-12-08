@@ -3,7 +3,7 @@
 
 declare -A prompt
 
-source $GURU_CFG/prompt.cfg
+[[ -f $GURU_CFG/prompt.cfg ]] && source $GURU_CFG/prompt.cfg
 [[ -f $GURU_CFG/$GURU_USER/prompt.cfg ]] && source $GURU_CFG/$GURU_USER/prompt.cfg
 
 

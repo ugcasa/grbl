@@ -321,6 +321,7 @@ daemon.poll () {
                     sleep 2
                 done
                 system.flag rm pause
+                sleep 1
                 gr.end $daemon_indicator_key
                 gr.msg -v1 -t -c aqua "daemon continued" #-k $daemon_indicator_key
 

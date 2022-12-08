@@ -1,6 +1,5 @@
 #!/bin/bash
-# guru-client config tools
-# source common.sh
+# guru-client configuration manager 2020 casa@ujo.guru
 
 config.main () {
 # main comman parser
@@ -49,7 +48,7 @@ config.make_rc () {
     local _source_cfg="$1"  # source configuration file
     local _target_rc="$2"   # target rc file
     local _append_rc="$3"   # any input will set to append mode
-
+    local _chapter=
     local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
 
     gr.msg -n -v2 -c gray "$_source_cfg "
@@ -60,9 +59,6 @@ config.make_rc () {
         *"source"*) gr.msg -v2 -c dark_grey "..no need to compile this type of configs" ; return 0 ;;
     esac
     gr.msg -v2 -c gray "$_mode $_target_rc"
-
-    # write system configs to rc file
-    [[ $_append_rc ]] || printf "#!/bin/bash \n# guru-client runtime configurations auto generated at $(date)\nexport GURU_USER=$GURU_USER\n" > $_target_rc
 
     # read config file, use chapter name as second part of variable name
     while IFS='= ' read -r lhs rhs ;  do
@@ -142,11 +138,12 @@ config.export () {
     config.export_type_selector () {
 
             local _module_cfg="$1"
-            gr.msg -v4 -c deep_pink "Looking default configs: $_module_cfg"
+            gr.msg -v4 -c deep_pink "Looking configs: $_module_cfg"
 
             if [[ -f $_module_cfg ]] ; then
                 case $(head -n 1 $_module_cfg) in
                         *"global"*)
+                            echo "# from $_module_cfg" >>$_target_rc
                             config.make_rc "$_module_cfg" "$_target_rc" append \
                                 || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
                             ;;
@@ -165,13 +162,9 @@ config.export () {
     # make backup
     [[ -f "$_target_rc" ]] && mv -f "$_target_rc" "$_target_rc.old"
 
-    # include system configuration
-    gr.msg -n -v1 "setting system configuration " ; gr.msg -v2
-    if config.make_rc "$GURU_CFG/system.cfg" "$_target_rc" ; then
-            gr.msg -c green -V2 -v1 "done"
-        else
-            gr.msg -c red -V2 -v1 "failed"
-        fi
+    # make header
+        # write system configs to rc file
+    printf "#!/bin/bash \n# guru-client runtime configurations auto generated at $(date)\nexport GURU_USER=$GURU_USER\n" > $_target_rc
 
     # add module lists made by installer to environment
     GURU_MODULES=( $(cat $GURU_CFG/installed.core) $(cat $GURU_CFG/installed.modules) )
@@ -183,11 +176,6 @@ config.export () {
         else
             gr.msg -c red -V2 -v1 "failed"
         fi
-
-    # include system configuration
-    gr.msg -n -v1 "setting user configuration " ; gr.msg -v2
-    config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gr.msg -v1 -V2 -c green "done"
-
 
     local installed_modules=($(cat $GURU_CFG/installed.core))
     installed_modules=(${installed_modules[@]} $(cat $GURU_CFG/installed.modules))
@@ -202,13 +190,8 @@ config.export () {
 
             ## add user config
             _module_cfg="$GURU_CFG/$GURU_USER/$module.cfg"
-            config.export_type_selector $_module_cfg
+            config.export_type_selector "$_module_cfg"
         done
-
-
-    gr.msg -n -v1 "setting module configuration " ; gr.msg -v2
-    config.make_rc "$GURU_CFG/$_target_user/user.cfg" "$_target_rc" append && gr.msg -v1 -V2 -c green "done"
-
 
     config.make_style_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
     # set path
@@ -294,17 +277,16 @@ config.push () {
 config.edit () {
 # edit user config file with preferred editor
 
-    local _config_file=$GURU_CFG/$GURU_USER/user.cfg
+    local _config_folder="$GURU_CFG/$GURU_USER"
 
-    if ! [[ -f $_config_file ]] ; then
-        if gr.ask "user configuration fur user did not found, create local config for $GURU_USER" ; then
-                mkdir -p $_config_file
-                cp $GURU_CFG/user-default.cfg $_config_file
-            fi
-        fi
+    # if ! [[ -f $_config_file ]] ; then
+    #     if gr.ask "user configuration fur user did not found, create local config for $GURU_USER" ; then
+    #             mkdir -p $_config_file
+    #             cp $GURU_CFG/user-default.cfg $_config_file
+    #         fi
+    #     fi
 
-    $GURU_PREFERRED_EDITOR $_config_file  || gr.msg -v2 -c yello "error while editing $_config_file.."
-
+    $GURU_PREFERRED_EDITOR -n $_config_folder/*.cfg  || gr.msg -v2 -c yello "error while editing $_config_file.."
 }
 
 

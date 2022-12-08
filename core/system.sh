@@ -1,6 +1,5 @@
 #!/bin/bash
 # system tools for guru-client
-#source common.sh
 
 system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
@@ -93,7 +92,7 @@ system.main () {
 
     case "$tool" in
 
-            status|poll|suspend|core-dump|upgrade|flag|rollback)
+            status|poll|suspend|core-dump|upgrade|flag|rollback|help)
                 system.$tool $@
                 return $?
                 ;;
@@ -141,12 +140,12 @@ system.main () {
 system.status () {
 # system status
 
-    gr.msg -v 1 -t -n "${FUNCNAME[0]}: "
-    if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
-        gr.msg -v 1 -c green "guru on service" -k $system_indicator_key
+    gr.msg -v1 -t -n "${FUNCNAME[0]}: "
+    if [[ -f ${GURU_SYSTEM_MOUNT[0]}/.online ]] ; then
+        gr.msg -v1 -c green "guru on service" #-k $system_indicator_key
         return 0
     else
-        gr.msg -v 1 -c red ".data is unmounted" -k $system_indicator_key
+        gr.msg -v1 -c red ".data is unmounted" #-k $system_indicator_key
         return 101
     fi
 }
@@ -435,28 +434,34 @@ system.client_update () {
 system.upgrade () {
 # upgrade system
 
+    #gr.ind doing -k $system_indicator_key
+
     sudo apt-get update \
-        || gr.msg -c red -x 100 "update failed"
+        || gr.msg -c red -x 100 "update failed" -k $system_indicator_key
 
     gr.msg -v2 -c white "upgradable list: "
     gr.msg -v2 -c light_blue "$(sudo apt list --upgradable)"
 
     sudo apt-get upgrade -y \
-        || gr.msg -c red -x 101 "upgrade failed"
+        || gr.msg -c red -x 101 "upgrade failed" -k $system_indicator_key
 
     sudo apt-get autoremove --purge \
-        || gr.msg -c yellow "autoremove returned warning"
+        || gr.msg -c yellow "autoremove returned warning" -k $system_indicator_key
 
     sudo apt-get autoclean \
-        || gr.msg -c yellow "autoclean returned warning"
+        || gr.msg -c yellow "autoclean returned warning" -k $system_indicator_key
 
-    sudo apt-get check \
-        && gr.msg -c green "check ok" \
-        || gr.msg -c yellow "warning: $? check log above"
 
     /usr/bin/python3 -m pip install --upgrade pip \
         && gr.msg -c green "pip upgrade ok" \
-        || gr.msg -c yellow "pip upgrade warning: $? check log above"
+        || gr.msg -c yellow "pip upgrade warning: $? check log above" -k $system_indicator_key
+
+    #gr.end -k $system_indicator_key
+
+    sudo apt-get check \
+        && gr.msg -c green "check ok" -k $system_indicator_key \
+        || gr.msg -c yellow "warning: $? check log above" -k $system_indicator_key
+
 }
 
 
@@ -673,7 +678,7 @@ system.check_fs_access_flag_enabled () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    # source "$GURU_RC"
+    source $GURU_RC # issue with bash? all other variables EXEPT lists are filled when sourced by previous script (the who calls this one)
     system.main "$@"
     exit $?
 fi
