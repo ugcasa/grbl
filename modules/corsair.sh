@@ -596,7 +596,7 @@ corsair.indicate () {
         init)           _blink="blue dark_blue 0.1 5 " ;;
         passed|pass)    _blink="slime $GURU_CORSAIR_MODE 1 300 green" ;;
         fail|failed)    _blink="red $GURU_CORSAIR_MODE 1 300 red" ;;
-        done)           _blink="green slime 6 $GURU_DAEMON_INTERVAL green" ;;
+        done)           _blink="green slime 4 $GURU_DAEMON_INTERVAL green" ;;
         doing)          _blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL aqua" ;;
         working)        _blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL aqua" ;;
         recovery)       _blink="blue black 5 $GURU_DAEMON_INTERVAL blue" ;;

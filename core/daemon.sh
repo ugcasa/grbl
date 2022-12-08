@@ -264,7 +264,7 @@ daemon.kill () {
 }
 
 
-daemon.goodday () {
+daemon.day_change () {
 # check is date changed and update pid file datestamp
 
     [[ -f /tmp/guru.daemon-pid ]] || return 1
@@ -294,7 +294,6 @@ daemon.poll () {
     # DAEMON POLL LOOP
     while true ; do
         gr.msg -N -t -v3 -c aqua "daemon active" -k $daemon_indicator_key
-
         system.flag set running
         # to update configurations is user changes them
         source $GURU_RC
@@ -305,22 +304,14 @@ daemon.poll () {
                 gr.msg -N -t -v1 "daemon recovering from suspend.. "
                 [[ $GURU_CORSAIR_ENABLED ]] && corsair.suspend_recovery
                 system.flag rm suspend
-
-                # some times after suspend daemon stops here, dunno why
-                gr.msg -c red -v4 "issue 20221120.1, daemon stalls here"
-
-                # often sleeping helps this kind of problems, like now it solves the problem.
+                #gr.msg -c red -v4 "issue 20221120.1, daemon stalls here"
                 sleep 15
-
-                # following while loop is for testing is it network issue, not causing it.
-                # while ! net.check_server ; do
-                #     sleep 5
-                # done
-                gr.msg -c green -v4 "issue 20221120.1, it did continue"
+                #gr.msg -c green -v4 "issue 20221120.1, it did continue"
             fi
 
         # if paused
         if system.flag pause ; then
+                gr.end $daemon_indicator_key
                 gr.msg -N -t -v1 -c yellow "daemon paused "
                 gr.ind pause $daemon_indicator_key
                 for (( i = 0; i < 150; i++ )); do
@@ -331,20 +322,21 @@ daemon.poll () {
                 done
                 system.flag rm pause
                 gr.end $daemon_indicator_key
-                gr.msg -v1 -t -c aqua "daemon continued" -k $daemon_indicator_key
-                # gr.ind active -k $daemon_indicator_key
+                gr.msg -v1 -t -c aqua "daemon continued" #-k $daemon_indicator_key
+
             fi
 
         if system.flag stop ; then
+                gr.end $daemon_indicator_key
                 gr.msg -N -t -v1 "daemon got requested to stop "
                 gr.ind cancel $daemon_indicator_key
                 daemon.stop
                 return $?
             fi
 
+        gr.ind doing -k $daemon_indicator_key
         # go trough poll list
         for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
-
                 module=${GURU_DAEMON_POLL_ORDER[i-1]}
                 case $module in
                     null|empty|na|NA|'-')
@@ -364,7 +356,8 @@ daemon.poll () {
             done
 
 
-        gr.msg -c green -k $daemon_indicator_key
+        gr.end $daemon_indicator_key
+        gr.ind done $daemon_indicator_key
         gr.msg -n -v2 "sleep ${GURU_DAEMON_INTERVAL}s: "
 
         local _seconds=
@@ -374,12 +367,12 @@ daemon.poll () {
                 system.flag pause && continue
                 system.flag fast && continue || sleep 1
                 gr.msg -v2 -n -c reset "."
-                daemon.goodday
+                daemon.day_change
             done
         gr.msg -v2 ""
     done
 
-    gr.msg -N -t -v1 "daemon got tired and dropped out "
+    gr.msg -N -t -v1 "daemon got tired, dropped out and died"
     gr.ind cancel $daemon_indicator_key
     daemon.stop
 }
