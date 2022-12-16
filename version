@@ -1,5 +1,5 @@
-0.6.8.9
-'bellaconf'
-'configuration revisited and optimization'
-'some functions made 10x faster, some 2x'
+0.6.8.10
+'bellaconf long arguments'
+'long arguments are delivered to module'
+'try it: gr audio play villieläin --repeat'
 

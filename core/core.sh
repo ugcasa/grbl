@@ -390,11 +390,65 @@ core.mount_system_base () {
 }
 
 
-core.process_opts () {
-    # process core level options
+tester () {
+    echo "GURU_CORE_ARGUMENTS: '$GURU_CORE_ARGUMENTS' "
+    echo "GURU_MODULE_COMMAND: '$GURU_MODULE_COMMAND'"
+    echo "GURU_MODULE_ARGUMENTS: '$GURU_MODULE_ARGUMENTS'"
+}
 
-    local left_overs=
-    local commands=
+
+core.process_module_opts () {
+# bash < 4.2 conpatible method to pass long arguments to module
+
+    declare -l input_string_list=($@)
+    declare -l pass_to_module=
+    declare -l pass_to_core=
+
+   for (( i = 0; i < ${#input_string_list[@]}; i++ )); do
+            # echo "$i:${input_string_list[$i]}, (next ${input_string_list[$((i + 1))]})"
+
+            case ${input_string_list[$i]} in
+                '--'*)  # module arguments
+                         case ${input_string_list[$((i + 1))]} in
+                            '-'*|""|" ")
+                                # echo "module flag '${input_string_list[$i]}'"
+                                pass_to_module="$pass_to_module ${input_string_list[$i]}"
+                                ;;
+                             *)
+                                # echo "module option with arguments '${input_string_list[$i]}=${input_string_list[$((i + 1))]}'"
+                                pass_to_module="$pass_to_module ${input_string_list[$i]}"
+                                let i++
+                                pass_to_module="$pass_to_module ${input_string_list[$i]}"
+                                ;;
+                            esac
+                        ;;
+                '-'*)   # core arguments
+                        case ${input_string_list[$((i + 1))]} in
+                        '-'*|""|" ")
+                            # echo "core flag '${input_string_list[$i]}'"
+                            pass_to_core="${input_string_list[$i]} $pass_to_core"
+                            ;;
+                         *)
+                            # echo "core option with arguments '${input_string_list[$i]}=${input_string_list[$((i + 1))]}'"
+                            pass_to_core="$pass_to_core ${input_string_list[$i]}"
+                            let i++
+                            pass_to_core="$pass_to_core ${input_string_list[$i]}"
+                        esac
+                        ;;
+                    *)  # module name and command
+                        # echo "command '${input_string_list[$i]}'"
+                        pass_to_core="$pass_to_core ${input_string_list[$i]}"
+                esac
+        done
+
+    # clean up and export (tr is fastest mehthod stackoverflow 50259869)
+    declare -xg GURU_MODULE_ARGUMENTS=$(echo ${pass_to_module[@]} | tr -s ' ')
+    declare -xg GURU_CORE_ARGUMENTS=$(echo ${pass_to_core[@]} | tr -s ' ')
+}
+
+
+core.process_core_opts () {
+    # process core level options
 
     # default values for global control variables
     declare -gx GURU_FORCE=
@@ -404,8 +458,8 @@ core.process_opts () {
     declare -gx GURU_VERBOSE=$GURU_FLAG_VERBOSE
     declare -gx GURU_COLOR=$GURU_FLAG_COLOR
 
-    # go trough possible arguments if set or value is given, other vice use default
-    TEMP=`getopt --long -o "csflqh:u:v:" "$@"`
+    # go trough core arguments, long options should be on cause passing command trough this too
+    TEMP=`getopt --longoptions -o "csflqh:u:v:" $@`
     eval set -- "$TEMP"
 
     while true ; do
@@ -447,22 +501,94 @@ core.process_opts () {
         esac
     done
 
-    # place module name and commands to leftovers before cleaning it up
-    left_overs="$@"
+
+    declare -xg GURU_MODULE_COMMAND
 
     # clean rest of user input
+    declare -l left_overs="$@"
     if [[ "$left_overs" != "--" ]] ; then
-        module_commands="${left_overs#* }"
+        GURU_MODULE_COMMAND="${left_overs#* }"
     fi
-
-    # compose command
-    GURU_COMMAND=${module_commands[@]}
-
-    # check if colors possible, and overwrite user input and user.cfg
-    # if [[ $TERM != "xterm-256color" ]] || [[ $COLORTERM != "truecolor" ]]; then
-    #     declare -x GURU_COLOR=
-    # fi
 }
+
+# core.process_module_opts $@
+# core.process_core_opts $GURU_CORE_ARGUMENTS
+# tester
+
+
+# core.process_opts () {
+#     # process core level options
+
+#     local left_overs=
+#     local commands=
+
+#     # default values for global control variables
+#     declare -gx GURU_FORCE=
+#     declare -gx GURU_SPEAK=
+#     declare -gx GURU_LOGGING=
+#     declare -gx GURU_HOSTNAME=$(hostname)
+#     declare -gx GURU_VERBOSE=$GURU_FLAG_VERBOSE
+#     declare -gx GURU_COLOR=$GURU_FLAG_COLOR
+
+#     # go trough possible arguments if set or value is given, other vice use default
+#     TEMP=`getopt --long -o "csflqh:u:v:" "$@"`
+#     eval set -- "$TEMP"
+
+#     while true ; do
+#         case "$1" in
+#             -c)
+#                 export GURU_COLOR=
+#                 shift
+#                 ;;
+#             -s)
+#                 export GURU_VERBOSE=1
+#                 export GURU_SPEAK=true
+#                 export GURU_COLOR=
+#                 shift
+#                 ;;
+#             -f)
+#                 export GURU_FORCE=true
+#                 shift
+#                 ;;
+#             -h)
+#                 export GURU_HOSTNAME=$2
+#                 shift 2 ;;
+#             -l)
+#                 export GURU_LOGGING=true
+#                 shift
+#                 ;;
+#             -q)
+#                 export GURU_VERBOSE=
+#                 shift
+#                 ;;
+#             -u)
+#                 core.change_user "$2"
+#                 shift 2
+#                 ;;
+#             -v)
+#                 export GURU_VERBOSE=$2
+#                 shift 2
+#                 ;;
+#              *) break
+#         esac
+#     done
+
+#     # place module name and commands to leftovers before cleaning it up
+#     left_overs="$@"
+
+#     # clean rest of user input
+#     if [[ "$left_overs" != "--" ]] ; then
+#         module_commands="${left_overs#* }"
+#     fi
+
+#     # compose command
+#     GURU_COMMAND=${module_commands[@]}
+
+#     # check if colors possible, and overwrite user input and user.cfg
+#     # if [[ $TERM != "xterm-256color" ]] || [[ $COLORTERM != "truecolor" ]]; then
+#     #     declare -x GURU_COLOR=
+#     # fi
+# }
 
 
 ## MAIN
@@ -512,7 +638,9 @@ source $GURU_BIN/daemon.sh
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 
     # process arguments and return cleaned command
-    core.process_opts $@
+    # core.process_opts $@
+    core.process_module_opts $@
+    core.process_core_opts $GURU_CORE_ARGUMENTS
 
     # import needed modules
     source $GURU_BIN/common.sh
@@ -521,7 +649,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     core.mount_system_base
 
     # export global variables for sub processes
-    declare -xa GURU_COMMAND
+    declare -xa GURU_COMMAND=($GURU_MODULE_COMMAND $GURU_MODULE_ARGUMENTS)
 
     core.parser ${GURU_COMMAND[@]}
     _error_code=$?

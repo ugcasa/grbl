@@ -84,65 +84,102 @@ audio.config () {
 
 audio.play () {
 # play playlist and song/album/artis name given as parameter
+    local _error=
+
+    gr.ind playing $audio_indicator_key
 
     case $1 in
+            find)
+                shift
+                audio.find_and_play $1
+                _error=$?
+                ;;
             list)
                 shift
                 audio.playlist_play $@
+                _error=$?
                 ;;
-
             "")
-                gr.ind playing $audio_indicator_key
-
                 audio.listen yle kajaani
-
-                gr.end $audio_indicator_key
+                _error=$?
                 ;;
-
             *)
-                # if file, play it
-                if [[ -f $1 ]] ; then
-                        gr.ind playing $audio_indicator_key
-
-                        mpv $1
-
-                        gr.end $audio_indicator_key
-                        return $?
-                    fi
-
-                # if part of name, look from folders
-                if [[ $1 ]] ; then
-                    ifs=$IFS
-                    IFS=" "
-                    got=$(find $GURU_MOUNT_MUSIC -maxdepth 3 -iname *mp3)
-
-                    while [[ $1 ]] ; do
-                        got=$(echo -e $got | grep -i $1 | grep -v 'Trash-1000')
-                        shift
-                    done
-                    IFS=$ifs
-
-                    # printout artist and song name
-                    songs=${got//"$GURU_MOUNT_MUSIC/"/""}
-                    songs=${songs//'/'/'@'}                 # to remove word before '/' later
-                    songs=${songs//'_'/' '}
-                    songs=${songs//'-'/': '}
-                    songs=${songs//'.mp3'/''}
-
-                    if [[ $got ]] ; then
-                        gr.msg -v1 -c white "${songs}" | sed 's/.*@//'
-                        gr.ind playing $audio_indicator_key
-
-                        mpv --no-video $(echo -e $got) 2>/dev/null
-
-                        gr.end $audio_indicator_key
-                        return $?
-                    fi
-                fi
-
-                gr.msg "nothing to play"
+                audio.find_and_play $1
+                _error=$?
                 ;;
         esac
+
+    gr.end $audio_indicator_key
+    return $_error
+}
+
+
+audio.find_and_play () {
+# find from known audio locations and play
+
+        if [[ -f $1 ]] ; then
+                        gr.ind playing $audio_indicator_key
+                        mpv $1
+                        gr.end $audio_indicator_key
+                        return $?
+                    fi
+
+        # if part of name, look from folders
+        if [[ $1 ]] ; then
+            local to_find=$1
+            to_find=${to_find//'ä'/'a'}
+            to_find=${to_find//'å'/'a'}
+            to_find=${to_find//'ö'/'o'}
+            source mount.sh
+            mount.main audio music
+            mount.main music
+            ifs=$IFS
+            IFS=" "
+            got=$(find $GURU_MOUNT_MUSIC -maxdepth 3 -iname *mp3)
+            got="$got $(find $GURU_MOUNT_AUDIO -maxdepth 3 -iname *mp3)"
+            while [[ $1 ]] ; do
+                got=$(echo -e $got | grep -i $to_find | grep -v 'Trash-1000')
+                shift
+            done
+            #gr.msg -c light_blue "${got[@]}"
+
+            IFS=$ifs
+
+            # printout artist and song name
+            songs=${got//"$GURU_MOUNT_MUSIC/"/""}
+            songs=${songs//'/'/'@'}                 # to remove word before '/' later
+            songs=${songs//'_'/' '}
+            songs=${songs//'-'/': '}
+            songs=${songs//'.mp3'/''}
+
+            if [[ $got ]] ; then
+                gr.msg -v1 -c light_blue "${songs}" | sed 's/.*@//'
+                gr.ind playing $audio_indicator_key
+
+                case $GURU_MODULE_ARGUMENTS in
+
+                    --repeat)
+                        local key
+                        gr.msg -h "loop for ever, hit double 'q' to end"
+
+                        while true ; do
+                                mpv --no-video $(echo -e $got) 2>/dev/null
+                                read -t 1 -n 1 -p "hit 'q' again to end: " key
+                                case $key in q) echo ; break ; esac
+                            done
+                        ;;
+                    *)
+                        mpv --no-video $(echo -e $got) 2>/dev/null
+                        ;;
+                    esac
+
+                gr.end $audio_indicator_key
+                return $?
+            fi
+        fi
+
+        gr.msg -c yellow "nothing found"
+        return 1
 }
 
 
