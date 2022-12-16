@@ -160,7 +160,7 @@ audio.find_and_play () {
 
                     --repeat)
                         local key
-                        gr.msg -h "loop for ever, hit double 'q' to end"
+                        gr.msg -h "loop forever, hit double 'q' to end"
 
                         while true ; do
                                 mpv --no-video $(echo -e $got) 2>/dev/null
