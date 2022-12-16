@@ -457,12 +457,12 @@ mount.status () {
         fi
 
     # check is system available
-    if mount.check ; then
-            gr.msg -v1 -n -c green "available "
-        else
-            gr.msg -v1 -c red "unavailable" -k $mount_indicator_key
-            return 101
-        fi
+    # if mount.check ; then
+    #         gr.msg -v1 -n -c green "available "
+    #     else
+    #         gr.msg -v1 -c red "unavailable" -k $mount_indicator_key
+    #         return 101
+    #     fi
 
     # go trough mount points
     for _mount_point in ${all_list[@]} ; do
