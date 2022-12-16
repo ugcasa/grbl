@@ -164,7 +164,7 @@ audio.find_and_play () {
 
                         while true ; do
                                 mpv --no-video $(echo -e $got) 2>/dev/null
-                                read -t 1 -n 1 -p "hit 'q' again to end: " key
+                                read -t 1 -n 1 -p "hit 'q' to end loop: " key
                                 case $key in q) echo ; break ; esac
                             done
                         ;;
