@@ -756,7 +756,7 @@ backup.scheduled () {
 
         #epic_backup=$(( $epic_backup + 86400))
         #echo $epic_backup > $backup_data_folder/next
-        echo $(( $now + 86400 )) > $backup_data_folder/next
+        echo $(date ( $now + 86400 )) > $backup_data_folder/next
         #next_time=$(( now + till_next ))
 
         # $GURU_SYSTEM_MOUNT/<entry_name>.stat
