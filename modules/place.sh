@@ -1,11 +1,11 @@
 #!/bin/bash
 # guru-client single file place template casa@ujo.guru 2022
 
-source $GURU_BIN/common.sh
-
 declare -g temp_file="/tmp/guru-place.tmp"
-declare -g place_indicator_key="f$(gr.poll place)"
+declare -g place_indicator_key="f5"
 
+source mount.sh
+mount.rc
 
 place.help () {
     # user help
@@ -77,7 +77,7 @@ place.memes () {
 place.photos () {
     # analyze, tag and relocate photo files
 
-    source mount.sh
+    #source mount.sh
 
     local phone_temp_folder="/tmp/guru/android"
     local _photo_format="jpg"
@@ -229,7 +229,7 @@ place.ls () {
     # list something
     GURU_VERBOSE=2
     if [[ $GURU_MOUNT_ENABLED ]] ; then
-            source mount.sh
+            # source mount.sh
             [[ $GURU_VERBOSE -lt 2 ]] \
                 && mount.main ls \
                 || mount.main info
