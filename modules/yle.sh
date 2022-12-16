@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source common.sh
+#source common.sh
 
 declare -g yle_run_folder="$(pwd)"
 declare -g yle_temp="$HOME/tmp/yle"
