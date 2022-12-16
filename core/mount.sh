@@ -88,7 +88,7 @@ mount.rc () {
 
 
     if ! [[ -f $mount_rc ]] || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $mount_rc) )) -gt 0 ]] ; then
-            mount.config && \
+            mount.make_rc && \
             gr.msg -v1 -c dark_gray "$mount_rc updated"
         fi
 
@@ -105,7 +105,7 @@ mount.rc () {
 }
 
 
-mount.config () {
+mount.make_rc () {
 # make core module rc file out of configuration file
 
     if ! source config.sh ; then

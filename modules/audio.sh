@@ -69,7 +69,7 @@ audio.rc () {
         || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/audio.cfg) - $(stat -c %Y $audio_rc) )) -gt 0 ]] \
         || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $audio_rc) )) -gt 0 ]]
         then
-            audio.config && \
+            audio.make_rc && \
             gr.msg -v1 -c dark_gray "$audio_rc updated"
         fi
 
@@ -77,7 +77,7 @@ audio.rc () {
 }
 
 
-audio.config () {
+audio.make_rc () {
 # configure audio module
 
     source config.sh
@@ -679,7 +679,6 @@ audio.poll () {
 }
 
 audio.rc
-#audio.config
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 

@@ -7,15 +7,48 @@
 
 
 declare -g backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
+declare -g backup_rc="/tmp/guru-cli_backup.rc"
 declare -g backup_indicator_key="f7"
 ! [[ -d $backup_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
 
-# make rc out of foncig file and run it
-source config.sh
-config.make_rc "$GURU_CFG/$GURU_USER/backup.cfg" /tmp/backup.rc
-chmod +x /tmp/backup.rc
-source /tmp/backup.rc
-rm /tmp/backup.rc
+
+backup.rc () {
+# source configurations
+
+    if ! [[ -f $backup_rc ]] || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/backup.cfg) - $(stat -c %Y $backup_rc) )) -gt 0 ]] ; then
+            backup.make_rc && \
+            gr.msg -v1 -c dark_gray "$backup_rc updated"
+        fi
+
+    source $backup_rc
+}
+
+
+backup.make_rc () {
+# make core module rc file out of configuration file
+
+    if ! source config.sh ; then
+            gr.msg -c yellow "unable to load configuration module"
+            return 100
+        fi
+
+    if [[ -f $backup_rc ]] ; then
+            rm -f $backup_rc
+        fi
+
+    if ! config.make_rc "$GURU_CFG/$GURU_USER/backup.cfg" $backup_rc ; then
+            gr.msg -c yellow "configuration failed"
+            return 101
+        fi
+
+    chmod +x $backup_rc
+
+    if ! source $backup_rc ; then
+            gr.msg -c red "unable to source configuration"
+            return 202
+        fi
+}
+
 
 backup.help () {
     # general help
@@ -141,7 +174,7 @@ backup.config () {
 
     # check is enabled
     if ! [[ $GURU_BACKUP_ENABLED ]] ; then
-            gr.msg -c dark_grey "backup module disabled"
+            gr.msg -c black "backup module disabled"
             return 1
         fi
 
@@ -232,11 +265,9 @@ backup.status () {
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
     if [[ $GURU_BACKUP_ENABLED ]] ; then
-            gr.msg -n -v1 -c green -k $backup_indicator_key \
-                "enabled, "
+            gr.msg -n -v1 -c green -k $backup_indicator_key "enabled, "
         else
-            gr.msg -v1 -c reset -k $backup_indicator_key \
-                "disabled"
+            gr.msg -v1 -c black -k $backup_indicator_key "disabled"
             return 1
         fi
 
@@ -837,6 +868,7 @@ backup.remove () {
     return 0
 }
 
+backup.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
