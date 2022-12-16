@@ -84,61 +84,48 @@ net.check () {
     gr.msg -n -t -v3 "ping google.com.. "
     if timeout 3 ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
 
-        gr.msg -v3 "ok "
         gr.end $net_indicator_key
+        gr.msg -c green "online " -k $net_indicator_key
         return 0
     else
-        gr.msg -v3 "unreachable! "
+        gr.msg -c red "offline "
         gr.ind offline -m "network offline" -k $net_indicator_key
         return 127
     fi
 }
 
-
-## following function is used as daemon polling interface
 net.status () {
 # output net status
-
+    local _return=0
     gr.msg -n -t -v1 "${FUNCNAME[0]}: "
 
     # check net is enabled
     if [[ $GURU_NET_ENABLED ]] ; then
-            gr.msg -n -v1 \
-            -c green "enabled, " \
-            -k $net_indicator_key
+            gr.msg -n -v1 -c green "enabled, "
         else
-            gr.msg -v1 \
-            -c black "disabled"  \
-            -k $net_indicator_key
+            gr.msg -v1 -c black "disabled" -k $net_indicator_key
             return 1
         fi
 
     # other tests with output, return errors
-    if net.check ; then
-            gr.msg -n -v1 \
-                -c aqua_marine "connected, " \
-                -k $net_indicator_key
+
+    if net.check >/dev/null; then
+            gr.msg -n -v1 -c green "online, "
         else
-            gr.msg -v1 \
-                -c orange "offline" \
-                -k $net_indicator_key
-
             if [[ $GURU_NET_LOG ]] ; then
-
-                    if ! [[ -d $net_log_folder ]] ; then
-                        ehco mkdir -p "$net_log_folder"
-                        touch "$net_log_folder/net.log"
-                    fi
-
+                    [[ -d $net_log_folder ]] || mkdir -p "$net_log_folder"
                     gr.msg "$(date "+%Y-%m-%d %H:%M:%S") network offline" >>"$net_log_folder/net.log"
-
                 fi
-
-            return 2
+            _return=101
         fi
 
-    gr.msg -v1 -c green "available " -k $net_indicator_key
-    return 0
+    if net.check_server >/dev/null; then
+            gr.msg -v1 -c aqua "connected to $GURU_ACCESS_DOMAIN "
+        else
+            gr.msg -v1 -c orange "$GURU_ACCESS_DOMAIN unreachable"
+            _return=102
+        fi
+    return $_return
     }
 
 

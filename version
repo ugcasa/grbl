@@ -1,5 +1,5 @@
-0.6.8.10
+0.6.8.11
 'bellaconf long arguments'
 'long arguments are delivered to module'
-'try it: gr audio play villieläin --repeat'
+'active module rc functions done for mount, audio and backup'
 

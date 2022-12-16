@@ -135,6 +135,10 @@ config.export () {
     local _target_rc=$HOME/.gururc
     local _target_user=$GURU_USER ; [[ "$1" ]] && _target_user="$1"
 
+    source system.sh
+    system.set-flag pause
+    sleep 2
+
     config.export_type_selector () {
 
             local _module_cfg="$1"
@@ -211,8 +215,11 @@ config.export () {
                     source $GURU_BIN/corsair.sh
                     corsair.main init
                 fi
+
+        system.rm-flag pause
+
         else
-            gr.msg -c yellow "somethign went wrong, recovering old user configuration"
+            gr.msg -c yellow "something went wrong, recovering old user configuration"
             [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" \
                 || gr.msg -x 100 -c red "no old backup found, unable to recover"
             return 10

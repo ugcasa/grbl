@@ -7,6 +7,10 @@ declare -gA fingrid
 source $GURU_CFG/fingrid.cfg
 [[ -f $GURU_CFG/$GURU_USER/fingrid.cfg ]] && source $GURU_CFG/$GURU_USER/fingrid.cfg
 
+if [[ $(stat -c %Y $GURU_CFG/$GURU_USER/fingrid.cfg) -gt $(stat -c %Y /tmp/guru.daemon-pid) ]] ; then
+            gr.msg -v1 -c dark_gray "$GURU_CFG/$GURU_USER/fingrid.cfg updated"
+        fi
+
 
 fingrid.main () {
 # fingrid main command parser
@@ -64,6 +68,13 @@ fingrid.status () {
     fingrid.check || return $?
 
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
+
+    if [[ ${fingrid[enabled]} ]] ; then
+            gr.msg -v2 -n -c green "enabled, " -k ${fingrid[indication_key]}
+        else
+            gr.msg -v1 -c black "disabled" -k ${fingrid[indication_key]}
+            return 100
+        fi
 
     local grid_status=$(fingrid.get_value 209)
 

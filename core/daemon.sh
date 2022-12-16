@@ -280,6 +280,7 @@ daemon.day_change () {
 daemon.poll () {
 # poller for modules
 
+    local _seconds=
     source $GURU_RC
     source net.sh
     [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
@@ -295,8 +296,7 @@ daemon.poll () {
     while true ; do
         gr.msg -N -t -v3 -c aqua "daemon active" -k $daemon_indicator_key
         system.flag set running
-        # to update configurations is user changes them
-        source $GURU_RC
+
 
         # check is system suspended and perform needed actions
         if system.flag suspend ; then
@@ -324,7 +324,6 @@ daemon.poll () {
                 sleep 1
                 gr.end $daemon_indicator_key
                 gr.msg -v1 -t -c aqua "daemon continued" #-k $daemon_indicator_key
-
             fi
 
         if system.flag stop ; then
@@ -336,32 +335,35 @@ daemon.poll () {
             fi
 
         gr.ind doing -k $daemon_indicator_key
+        # to update configurations is user changes them
+        source $GURU_RC
+
         # go trough poll list
         for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
                 module=${GURU_DAEMON_POLL_ORDER[i-1]}
+                system.flag pause && break
                 case $module in
                     null|empty|na|NA|'-')
                         gr.msg -v3 -c dark_grey "$i:$module skipping "
                         ;;
                     *)
-                        gr.msg -v2 -c dark_golden_rod "$i:$module: "
+                        gr.msg -v2 -c dark_golden_rod "$i: ${module}.sh function ${module}.status "
 
                         if [[ -f "$GURU_BIN/$module.sh" ]]; then
                                 source "$GURU_BIN/$module.sh"
                                 $module.main poll status
                             else
-                                gr.msg -v1 -c yellow "${FUNCNAME[0]}: module '$module' not installed"
+                                gr.msg -v1 -c dark_gray "${FUNCNAME[0]}: module '$module' not installed"
                             fi
                         ;;
                     esac
             done
 
-
         gr.end $daemon_indicator_key
         gr.ind done $daemon_indicator_key
+        touch $daemon_pid_file
         gr.msg -n -v2 "sleep ${GURU_DAEMON_INTERVAL}s: "
 
-        local _seconds=
         for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )) ; do
                 system.flag stop && break
                 system.flag suspend && continue
