@@ -1,9 +1,11 @@
 #!/bin/bash
 # guru-cli mount core module 2019 - 2022 casa@ujo.guru
 
+declare -g mount_rc="/tmp/guru-cli_mount.rc"
+
 mount.help () {
 
-    gr.msg -v1 -c white "guru-client mount help "
+    gr.msg -v1 -c white "guru-cli mount help "
     gr.msg -v2
     gr.msg -v0 "usage:    $GURU_CALL mount|unount|check|check-system <source> <target>"
     gr.msg -v2
@@ -33,7 +35,7 @@ mount.main () {
     case "$command" in
 
             system|help|ls|info|check|\
-            poll|status|start|stop|list|uninstall|available|online)
+            poll|status|start|stop|list|uninstall|available|online|config)
                 mount.$command $@
                 _error=$?
                 ;;
@@ -70,7 +72,6 @@ mount.main () {
                     else
                         gr.msg -c yellow "unknown mountpoint, available:"
                         mount.available
-
                     fi
 
                 mount.status >/dev/null
@@ -82,27 +83,58 @@ mount.main () {
 }
 
 
-mount.config () {
-# manage configurations
+mount.rc () {
+# source configurations
 
-    declare -l temp_rc="/tmp/mount.rc"
-    source config.sh
-    config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $temp_rc
-    chmod +x $temp_rc
-    source $temp_rc
+
+    if ! [[ -f $mount_rc ]] || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $mount_rc) )) -gt 0 ]] ; then
+            mount.config && \
+            gr.msg -v1 -c dark_gray "$mount_rc updated"
+        fi
+
+    source $mount_rc
 
     declare -g all_list=($(\
-            grep "export GURU_MOUNT_" $temp_rc | \
+            grep "export GURU_MOUNT_" $mount_rc | \
             grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATION_KEY' | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
             all_list=(${all_list[@],,})
 
-    # mount_indicator_key='f'"$(gr.poll mount)"
-    # mount_indicator_key=f2
     declare -g mount_indicator_key=$GURU_MOUNT_INDICATION_KEY
+}
 
-    rm $temp_rc
+
+mount.config () {
+# make core module rc file out of configuration file
+
+    if ! source config.sh ; then
+            gr.msg -c yellow "unable to load configuration module"
+            return 100
+        fi
+
+    if [[ -f $mount_rc ]] ; then
+            rm -f $mount_rc
+        fi
+
+    if ! config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $mount_rc ; then
+            gr.msg -c yellow "configuration failed"
+            return 101
+        fi
+
+    chmod +x $mount_rc
+
+    if ! source $mount_rc ; then
+            gr.msg -c red "unable to source configuration"
+            return 202
+        fi
+
+    declare -g all_list=($(\
+            grep "export GURU_MOUNT_" $mount_rc | \
+            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATION_KEY' | \
+            sed 's/^.*MOUNT_//' | \
+            cut -d '=' -f1))
+            all_list=(${all_list[@],,})
 }
 
 
@@ -452,7 +484,7 @@ mount.status () {
     if [[ $GURU_MOUNT_ENABLED ]] ; then
             gr.msg -v1 -n -c green "enabled " -k $mount_indicator_key
         else
-            gr.msg -v1 -c reset "disabled" -k $mount_indicator_key
+            gr.msg -v1 -c black "disabled" -k $mount_indicator_key
             return 100
         fi
 
@@ -539,13 +571,10 @@ mount.uninstall () {
     return 0
 }
 
-mount.config
+mount.rc
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then
-
-        # Issue 20221206.1: for unknown reason this variable is empty
-        [[ $GURU_SYSTEM_MOUNT ]] || source $GURU_RC
-
+        source $GURU_RC
         mount.main $@
         exit $?
     fi

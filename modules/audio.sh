@@ -2,6 +2,7 @@
 # guru-cli audio module 2020 - 2022 casa@ujo.guru
 
 declare -g audio_indicator_key='f8'
+declare -g audio_rc="/tmp/guru-cli_audio.rc"
 
 audio.help () {
 
@@ -61,6 +62,20 @@ audio.main () {
    # rm $audio_rc_file
 }
 
+audio.rc () {
+# source configurations (to be faster)
+
+    if ! [[ -f $audio_rc ]] \
+        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/audio.cfg) - $(stat -c %Y $audio_rc) )) -gt 0 ]] \
+        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $audio_rc) )) -gt 0 ]]
+        then
+            audio.config && \
+            gr.msg -v1 -c dark_gray "$audio_rc updated"
+        fi
+
+    source $audio_rc
+}
+
 
 audio.config () {
 # configure audio module
@@ -70,15 +85,19 @@ audio.config () {
     declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
     declare -g audio_playlist_folder="$audio_data_folder/playlists"
     declare -g audio_temp_file="/tmp/guru/audio.playlist"
-    declare -g audio_rc_file="/tmp/audio.rc"
 
     [[ ! -d $audio_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $audio_playlist_folder
 
     # make rc out of foncig file and run it
-    config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $audio_rc_file
-    config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $audio_rc_file append
-    chmod +x $audio_rc_file
-    source $audio_rc_file
+
+    if [[ -f $audio_rc ]] ; then
+            rm -f $audio_rc
+        fi
+
+    config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $audio_rc
+    config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $audio_rc append
+    chmod +x $audio_rc
+    source $audio_rc
 }
 
 
@@ -659,9 +678,8 @@ audio.poll () {
 
 }
 
-
-
-audio.config
+audio.rc
+#audio.config
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
