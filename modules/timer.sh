@@ -3,7 +3,8 @@
 # casa@ujo.guru 2019-2020|
 # TODO timer module neewds to be write again.. this is useless, still partly working and in use. yes useless.. rotten
 # python might be better than bash for mathematics
-source common.sh
+
+declare -g timer_rc="/tmp/guru-cli_timer.rc"
 
 timer.main () {
     # main command parser
@@ -42,6 +43,48 @@ timer.help () {
 }
 
 
+
+timer.rc () {
+# source configurations
+
+    if  [[ ! -f $timer_rc ]] || \
+        [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/timer.cfg) - $(stat -c %Y $timer_rc) )) -gt 0 ]]
+        then
+            timer.make_rc && \
+                gr.msg -v1 -c dark_gray "$timer_rc updated"
+        fi
+
+    source $timer_rc
+}
+
+
+timer.make_rc () {
+# make core module rc file out of configuration file
+
+    if ! source config.sh ; then
+            gr.msg -c yellow "unable to load configuration module"
+            return 100
+        fi
+
+    if [[ -f $timer_rc ]] ; then
+            rm -f $timer_rc
+        fi
+
+    if ! config.make_rc "$GURU_CFG/$GURU_USER/timer.cfg" $timer_rc ; then
+            gr.msg -c yellow "configuration failed"
+            return 101
+        fi
+
+    chmod +x $timer_rc
+
+    if ! source $timer_rc ; then
+            gr.msg -c red "unable to source configuration"
+            return 202
+        fi
+}
+
+
+
 timer.toggle () {
     # key press action
 
@@ -64,20 +107,19 @@ timer.check () {
 timer.status () {
     # output timer status
 
-    timer_indicator_key="f$(gr.poll timer)"
     gr.msg -n -t -v1 "${FUNCNAME[0]}: "
 
     # enabled?
     if [[ $GURU_TIMER_ENABLED ]] ; then
-            gr.msg -n -v1 -c green "enabled, " -k $timer_indicator_key
+            gr.msg -n -v1 -c green "enabled, " -k $GURU_TIMER_INDICATOR_KEY
         else
-            gr.msg -v1 -c black "disabled" -k $timer_indicator_key
+            gr.msg -v1 -c black "disabled" -k $GURU_TIMER_INDICATOR_KEY
             return 1
         fi
 
     # check is timer set
     if [[ ! -f "$GURU_FILE_TRACKSTATUS" ]] ; then
-        gr.msg -v1 -c reset "no timer tasks" -k $timer_indicator_key
+        gr.msg -v1 -c reset "no timer tasks" -k $GURU_TIMER_INDICATOR_KEY
         return 2
     fi
 
@@ -121,7 +163,7 @@ timer.status () {
             ;;
 
         simple|*)
-            gr.msg -v1 -c aqua "$customer $project $task spend: $hours:$minutes" -k $timer_indicator_key
+            gr.msg -v1 -c aqua "$customer $project $task spend: $hours:$minutes" -k $GURU_TIMER_INDICATOR_KEY
             ;;
     esac
 
@@ -143,7 +185,7 @@ timer.last () {
 timer.start () {
     # Start timer TBD rewrite this thole module
 
-    timer_indicator_key="f$(gr.poll timer)"
+    GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
     [[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
 
     # check is timer alredy set
@@ -197,7 +239,7 @@ timer.start () {
     printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_FILE_TRACKSTATUS
 
     # signal user and others
-    gr.msg -v1 -c aqua -k $timer_indicator_key "$start_time $customer $project $task"
+    gr.msg -v1 -c aqua -k $GURU_TIMER_INDICATOR_KEY "$start_time $customer $project $task"
     gr.msg -v4 -m $GURU_USER/message $GURU_TIMER_START_MESSAGE
     gr.msg -v4 -m $GURU_USER/status $GURU_TIMER_START_STATUS
     return 0
@@ -214,7 +256,7 @@ timer.end () {
         return 13
     fi
 
-    timer_indicator_key="f$(gr.poll timer)"
+    GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
     local command=$1 ; shift
 
     case "$command" in
@@ -283,7 +325,7 @@ timer.end () {
     rm $GURU_FILE_TRACKSTATUS
 
     # inform
-    gr.msg -v1 -c reset -k $timer_indicator_key "$start_time - $end_time$option_end_date $customer $project $task spend $hours"
+    gr.msg -v1 -c reset -k $GURU_TIMER_INDICATOR_KEY "$start_time - $end_time$option_end_date $customer $project $task spend $hours"
     gr.msg -v4 -m $GURU_USER/message $GURU_TIMER_END_MESSAGE
     gr.msg -v4 -m $GURU_USER/status $GURU_TIMER_END_STATUS
     return 0
@@ -311,11 +353,11 @@ timer.change () {
 timer.cancel () {
     # cancel exits timer
 
-    timer_indicator_key="f$(gr.poll timer)"
+    GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
 
     if [ -f $GURU_FILE_TRACKSTATUS ]; then
             rm $GURU_FILE_TRACKSTATUS
-            gr.msg -v1 -t -c reset -k $timer_indicator_key "work canceled"
+            gr.msg -v1 -t -c reset -k $GURU_TIMER_INDICATOR_KEY "work canceled"
             gr.msg -v4 -m $GURU_USER/message "glitch in the matrix, something changed"
             gr.msg -v4 -m $GURU_USER/status "available"
         else
@@ -359,15 +401,15 @@ timer.report() {
 timer.poll () {
     # daemon interface
 
-    timer_indicator_key="f$(gr.poll timer)"
+    GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
 
     local _cmd="$1" ; shift
     case $_cmd in
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: timer status polling started" -k $timer_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: timer status polling started" -k $GURU_TIMER_INDICATOR_KEY
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: timer status polling ended" -k $timer_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: timer status polling ended" -k $GURU_TIMER_INDICATOR_KEY
             ;;
         status )
             timer.status $@
@@ -377,10 +419,11 @@ timer.poll () {
         esac
 }
 
+timer.rc
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
-    timer.main "$@"
+if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
+    source $GURU_RC
+    timer.main $@
     exit $?
 fi
 
