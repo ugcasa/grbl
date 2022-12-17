@@ -29,12 +29,52 @@ google () {
     return $?
 }
 
+
 backup () {
 	guru backup daily
 }
+
 
 radio () {
 	[[ -f /tmp/audio.playlist ]] && rm /tmp/audio.guru-client
 	guru audio toggle
 }
+
+
+play () {
+
+    case $1 in
+            perttu)
+                guru audio play list perttu
+            ;;
+            pasila)
+                guru audio play list pasila
+            ;;
+            "")
+                guru audio play list liimatta
+            ;;
+            *)
+                guru audio play list $@
+        esac
+
+}
+
+
+listen () {
+
+    case $1 in
+            rock)
+                guru audio listen rock
+            ;;
+            puhe)
+                guru audio listen yle puhe
+            ;;
+            "")
+                guru audio listen yle puhe
+            ;;
+            *)
+                guru audio listen $@
+        esac
+}
+
 

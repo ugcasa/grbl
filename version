@@ -1,5 +1,7 @@
-0.6.8.11
-'bellaconf long arguments'
-'long arguments are delivered to module'
-'active module rc functions done for mount, audio and backup'
-
+0.6.8.12
+bellaconf
+10 long arguments are delivered to module
+11 active module rc functions done for mount, audio and backup
+12 audio module can continue to play listed file position
+12 shortcut key for remove current playlist added
+12 alias for play and listen added to control audio module
