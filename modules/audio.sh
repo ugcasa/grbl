@@ -324,7 +324,7 @@ audio.listen () {
             gr.msg -v4 -c pink "got:$station > url:$url name:'$name'"
             gr.msg -v4 -c pink "mpv $options $url"
             # play
-            gr.msg -v2 -c white "📻 ${name^h} 🔊"
+            gr.msg -v2 -c white "📻 ${name^} 🔊"
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
             echo ${name^h} >$audio_now_playing
             mpv $url $audio_mpv_options --no-resume-playback
@@ -392,8 +392,7 @@ audio.playlist_list () {
                     audio.playlist_config $_list_item
                     gr.msg -n -c light_blue "$_list_item: "
                     gr.msg "$list_description"
-                 done
-
+                done
          fi
 
     return 0
@@ -434,7 +433,6 @@ audio.playlist_compose () {
 audio.playlist_play () {
 # play playlist file
 
-    # local _opts=$@
     local audio_last_played_pointer="/tmp/guru-cli_audio.last"
     local user_reguest=$1
     local _wanna_hear=
@@ -673,15 +671,14 @@ audio.mpv_stat() {
     }
 
     ps aufx | grep "mpv " | grep -v grep >/dev/null || return 1
+    [[ -S $audio_mpv_socket ]] || return 0
 
     position="$(mpv_communicate "percent-pos" | cut -d'.' -f1)%"
     file="$(mpv_communicate "filename")"
     playlist_pos="$(( $(mpv_communicate 'playlist-pos') + 1 ))"
     playlist_count="$(mpv_communicate "playlist-count")"
-    volume="$(mpv_communicate "volume")%"
 
-    printf "%s %s [%s/%s] %s" "$file" "$position" "$playlist_pos" "$playlist_count" "vol:$volume"
-    return 1
+    printf "%s %s [%s/%s]" "$file" "$position" "$playlist_pos" "$playlist_count"
 }
 
 
