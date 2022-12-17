@@ -234,7 +234,6 @@ core.run_module () {
     gr.msg -v1 "guru recognize no module named '$module'"
     return $?
 
-
     # if gr.ask "passing to request to operating system?" ; then
     #    $module $@
     #   fi
@@ -390,13 +389,6 @@ core.mount_system_base () {
 }
 
 
-tester () {
-    echo "GURU_CORE_ARGUMENTS: '$GURU_CORE_ARGUMENTS' "
-    echo "GURU_MODULE_COMMAND: '$GURU_MODULE_COMMAND'"
-    echo "GURU_MODULE_ARGUMENTS: '$GURU_MODULE_ARGUMENTS'"
-}
-
-
 core.process_module_opts () {
 # bash < 4.2 compatible method to pass long arguments to module
 
@@ -405,7 +397,7 @@ core.process_module_opts () {
     declare -l pass_to_core=
 
    for (( i = 0; i < ${#input_string_list[@]}; i++ )); do
-            # echo "$i:${input_string_list[$i]}, (next ${input_string_list[$((i + 1))]})"
+            [[ GURU_VERBOSE -gt 3 ]] && echo "$i:${input_string_list[$i]}, (next ${input_string_list[$((i + 1))]})"
 
             case ${input_string_list[$i]} in
                 '--'*)  # module arguments

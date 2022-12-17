@@ -1,7 +1,8 @@
-0.6.8.12
+0.6.8.13
 bellaconf
 10 long arguments are delivered to module
 11 active module rc functions done for mount, audio and backup
 12 audio module can continue to play listed file position
 12 shortcut key for remove current playlist added
 12 alias for play and listen added to control audio module
+13 audio status prints out "now playing" data, not really tested, might mess up status output in some occasions
