@@ -196,17 +196,21 @@ audio.find_and_play () {
                     --repeat)
                         local key
                         gr.msg -h "loop forever, hit double 'q' to end"
-
+                        gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
                         while true ; do
                                 [[ $audio_playing_pid ]] && kill $audio_playing_pid
                                 mpv $(echo -e $got) $audio_mpv_options --no-resume-playback --no-video 2>/dev/null
                                 read -t 1 -n 1 -p "hit 'q' to end loop: " key
                                 case $key in q) echo ; break ; esac
                             done
+                        gr.end $GURU_AUDIO_INDICATOR_KEY
                         ;;
                     *)
                         [[ $audio_playing_pid ]] && kill $audio_playing_pid
+
+                        gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
                         mpv $(echo -e $got) $audio_mpv_options --no-resume-playback --no-video 2>/dev/null
+                        gr.end $GURU_AUDIO_INDICATOR_KEY
                         ;;
                     esac
 
@@ -226,7 +230,7 @@ audio.toggle () {
     [[ $GURU_RADIO_WAKEUP_STATION ]] && default_radio=$GURU_RADIO_WAKEUP_STATION
 
     if ps auxf | grep "mpv " | grep -v grep ; then
-            pkill mpv&& gr.end $GURU_AUDIO_INDICATOR_KEY
+            pkill mpv && gr.end $GURU_AUDIO_INDICATOR_KEY
             return 0
         fi
 
