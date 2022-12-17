@@ -101,8 +101,6 @@ mount.rc () {
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
             all_list=(${all_list[@],,})
-
-    # declare -g GURU_MOUNT_INDICATOR_KEY=$GURU_MOUNT_INDICATOR_KEY
 }
 
 
