@@ -147,7 +147,8 @@ vpn.status () {
 
     gr.msg -n -v2 "currently: "
     if [[ $ip_now == $ip_last ]] ; then
-            gr.msg -c aqua "active" -k ${vpn[indicator_key]}
+            current_server=$(tail -n1 $original_ip_file)
+            gr.msg -c aqua "connected to $current_server" -k ${vpn[indicator_key]}
             return 0
         else
             gr.msg -c green "available" -k ${vpn[indicator_key]}
@@ -174,7 +175,7 @@ vpn.open () {
 
     # check configurations done
     if ! [[ -d /etc/openvpn/tcp ]] ; then
-            gr.msg -c yellow "no open vpn configuration found"
+            gr.msg -c yellow "no open vpn configuration found" -k ${vpn[indicator_key]}
             gr.msg -v2 "run '$GURU_CALL vpn install' first"
             return 101
         fi
@@ -228,7 +229,7 @@ vpn.open () {
     if [[ -f $original_ip_file ]] ; then
             original_ip=$(head -n1 $original_ip_file)
             current_server=$(tail -n1 $original_ip_file)
-            gr.msg -c aqua_marine "already connected to $current_server"
+            gr.msg -c aqua "already connected to $current_server"
             gr.msg -v2 "close connection first to change server by '$GURU_CALL vpn close'"
             return 12
         else
@@ -250,14 +251,15 @@ vpn.open () {
             local new_ip="$(curl -s https://ipinfo.io/ip)"
 
             if [[ "$current_ip" == "$new_ip" ]] ; then
-                    gr.msg -c red "connection failed"
-                    gr.msg "ip is still $new_ip"
+                    gr.msg -c red "connection failed" -k ${vpn[indicator_key]}
+                    gr.msg -v2 "ip is still $new_ip"
                     return 100
                 fi
-            gr.msg "our external ip is now: $new_ip"
+            gr.msg -v2 "our external ip is now: " -n
+            gr.msg -v1 -c aqua_marine "$new_ip" -k ${vpn[indicator_key]}
             echo "$new_ip" >/tmp/guru.vpn.ip
         else
-            gr.msg -c yellow "error during vpn connection"
+            gr.msg -c yellow "error during vpn connection" -k ${vpn[indicator_key]}
             vpn.rm_original_file
             return 101
         fi
@@ -275,7 +277,7 @@ vpn.close () {
     gr.msg "our ip was: $current_ip"
 
     if sudo pkill openvpn ; then
-            gr.msg -v2 "kill success"
+            gr.msg -c green -v2 "kill success" -k ${vpn[indicator_key]}
         else
             gr.msg "no vpn client running"
             vpn.rm_original_file
@@ -285,43 +287,43 @@ vpn.close () {
     local new_ip="$(curl -s https://ipinfo.io/ip)"
 
     if [[ "$current_ip" == "$new_ip" ]] ; then
-            gr.msg -c red "kill failed"
+            gr.msg -c red "kill failed" -k ${vpn[indicator_key]}
             return 100
-        fi
-    gr.msg "our ip is now: $new_ip"
-
-    vpn.rm_original_file
-
-    return 0
-}
-
-
-vpn.close () {
-# closes vpn connection if exitst
-
-    local current_ip="$(curl -s https://ipinfo.io/ip)"
-    gr.msg "our ip was: $current_ip"
-
-    if sudo pkill openvpn ; then
-            gr.msg -v2 "kill success"
         else
-            gr.msg "no vpn client running"
-            vpn.rm_original_file
-            return 0
+            gr.msg "our ip is now: $new_ip"
         fi
-
-    local new_ip="$(curl -s https://ipinfo.io/ip)"
-
-    if [[ "$current_ip" == "$new_ip" ]] ; then
-            gr.msg -c red "kill failed"
-            return 100
-        fi
-    gr.msg "our ip is now: $new_ip"
 
     vpn.rm_original_file
 
     return 0
 }
+
+# vpn.close () {
+# # closes vpn connection if exitst
+
+#     local current_ip="$(curl -s https://ipinfo.io/ip)"
+#     gr.msg "our ip was: $current_ip"
+
+#     if sudo pkill openvpn ; then
+#             gr.msg -v2 "kill success"
+#         else
+#             gr.msg "no vpn client running"
+#             vpn.rm_original_file
+#             return 0
+#         fi
+
+#     local new_ip="$(curl -s https://ipinfo.io/ip)"
+
+#     if [[ "$current_ip" == "$new_ip" ]] ; then
+#             gr.msg -c red "kill failed"
+#             return 100
+#         fi
+#     gr.msg "our ip is now: $new_ip"
+
+#     vpn.rm_original_file
+
+#     return 0
+# }
 
 vpn.poll () {
 # daemon poller will run this
