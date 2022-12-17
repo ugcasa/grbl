@@ -93,9 +93,6 @@ mqtt.make_rc () {
 }
 
 
-
-
-
 mqtt.enabled () {
 # check is function activated and output instructions to enable function on user configuration
 
@@ -329,6 +326,7 @@ mqtt.remove () {
     return 1
 }
 
+mqtt.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source $GURU_RC
