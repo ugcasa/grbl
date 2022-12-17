@@ -1,14 +1,8 @@
 #!/bin/bash
 # guru-client network module casa@ujo.guru 2022
 
-## include needed libraries
-## declare run wide global variables
+declare -g net_rc="/tmp/guru-cli_net.rc"
 
-# declare -g net_indicator_key="f$(gr.poll net)"
-declare -g net_indicator_key="f1" # TBD .gururc -> .config/rc/net.rc
-declare -g net_log_folder="$HOME/.log"
-
-## functions, keeping help at first position it might be even updated
 net.help () {
     # user help
     gr.msg -n -v2 -c white "guru-cli net help "
@@ -59,6 +53,46 @@ net.main () {
 }
 
 
+net.rc () {
+# source configurations
+
+    if  [[ ! -f $net_rc ]] || \
+        [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/net.cfg) - $(stat -c %Y $net_rc) )) -gt 0 ]]
+        then
+            net.make_rc && \
+                gr.msg -v1 -c dark_gray "$net_rc updated"
+        fi
+
+    source $net_rc
+}
+
+
+net.make_rc () {
+# make core module rc file out of configuration file
+
+    if ! source config.sh ; then
+            gr.msg -c yellow "unable to load configuration module"
+            return 100
+        fi
+
+    if [[ -f $net_rc ]] ; then
+            rm -f $net_rc
+        fi
+
+    if ! config.make_rc "$GURU_CFG/$GURU_USER/net.cfg" $net_rc ; then
+            gr.msg -c yellow "configuration failed"
+            return 101
+        fi
+
+    chmod +x $net_rc
+
+    if ! source $net_rc ; then
+            gr.msg -c red "unable to source configuration"
+            return 202
+        fi
+}
+
+
 net.check_server () {
 # quick check accesspoint connection, no analysis
 
@@ -68,11 +102,11 @@ net.check_server () {
     gr.msg -n -t -v3 "ping $_server.. "
     if timeout 2 ping $_server -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
         gr.msg -v3 "ok "
-        gr.end $net_indicator_key
+        gr.end $GURU_NET_INDICATOR_KEY
         return 0
     else
         gr.msg -v3 "$_server unreachable! "
-        gr.ind offline -m "$_server unreachable" -k $net_indicator_key
+        gr.ind offline -m "$_server unreachable" -k $GURU_NET_INDICATOR_KEY
         return 127
     fi
 }
@@ -84,12 +118,12 @@ net.check () {
     gr.msg -n -t -v3 "ping google.com.. "
     if timeout 3 ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
 
-        gr.end $net_indicator_key
-        gr.msg -c green "online " -k $net_indicator_key
+        gr.end $GURU_NET_INDICATOR_KEY
+        gr.msg -c green "online " -k $GURU_NET_INDICATOR_KEY
         return 0
     else
         gr.msg -c red "offline "
-        gr.ind offline -m "network offline" -k $net_indicator_key
+        gr.ind offline -m "network offline" -k $GURU_NET_INDICATOR_KEY
         return 127
     fi
 }
@@ -103,7 +137,7 @@ net.status () {
     if [[ $GURU_NET_ENABLED ]] ; then
             gr.msg -n -v1 -c green "enabled, "
         else
-            gr.msg -v1 -c black "disabled" -k $net_indicator_key
+            gr.msg -v1 -c black "disabled" -k $GURU_NET_INDICATOR_KEY
             return 1
         fi
 
@@ -113,8 +147,8 @@ net.status () {
             gr.msg -n -v1 -c green "online, "
         else
             if [[ $GURU_NET_LOG ]] ; then
-                    [[ -d $net_log_folder ]] || mkdir -p "$net_log_folder"
-                    gr.msg "$(date "+%Y-%m-%d %H:%M:%S") network offline" >>"$net_log_folder/net.log"
+                    [[ -d $GURU_NET_LOG_FOLDER ]] || mkdir -p "$GURU_NET_LOG_FOLDER"
+                    gr.msg "$(date "+%Y-%m-%d %H:%M:%S") network offline" >>"$GURU_NET_LOG_FOLDER/net.log"
                 fi
             _return=101
         fi
@@ -133,16 +167,16 @@ net.poll () {
 # daemon interface
 
     # check is indicator set (should be, but wanted to be sure)
-    [[ $net_indicator_key ]] || \
-        net_indicator_key="f$(gr.poll net)"
+    [[ $GURU_NET_INDICATOR_KEY ]] || \
+        GURU_NET_INDICATOR_KEY="f$(gr.poll net)"
 
     local _cmd="$1" ; shift
     case $_cmd in
         start)
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $net_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $GURU_NET_INDICATOR_KEY
             ;;
         end)
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $net_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $GURU_NET_INDICATOR_KEY
             ;;
         status)
             net.status $@
@@ -172,6 +206,8 @@ net.remove () {
     gr.msg "nothing to remove"
     return 0
 }
+
+net.rc
 
 # if called net.sh file configuration is sourced and main net.main called
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
