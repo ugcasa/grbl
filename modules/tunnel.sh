@@ -1,18 +1,7 @@
 #!/bin/bash
 # guru-client tunneling functions 2021
 
-# configure tunnel module
-source config.sh
-
-declare -g tunnel_indicator_key='f4'
-declare -g tunnel_rc_file="/tmp/tunnel.rc"
-
-# make rc out of config file and run it
-config.make_rc "$GURU_CFG/$GURU_USER/tunnel.cfg" $tunnel_rc_file
-chmod +x $tunnel_rc_file
-source $tunnel_rc_file
-rm $tunnel_rc_file
-
+declare -g tunnel_rc="/tmp/guru-cli_tunnel.rc"
 
 tunnel.help () {
 # genereal help
@@ -74,9 +63,45 @@ tunnel.main () {
 }
 
 
-# tunnel.config () {
 
-# }
+tunnel.rc () {
+# source configurations
+
+    if  [[ ! -f $tunnel_rc ]] || \
+        [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/tunnel.cfg) - $(stat -c %Y $tunnel_rc) )) -gt 0 ]]
+        then
+            tunnel.make_rc && \
+                gr.msg -v1 -c dark_gray "$tunnel_rc updated"
+        fi
+
+    source $tunnel_rc
+}
+
+
+tunnel.make_rc () {
+# make core module rc file out of configuration file
+
+    if ! source config.sh ; then
+            gr.msg -c yellow "unable to load configuration module"
+            return 100
+        fi
+
+    if [[ -f $tunnel_rc ]] ; then
+            rm -f $tunnel_rc
+        fi
+
+    if ! config.make_rc "$GURU_CFG/$GURU_USER/tunnel.cfg" $tunnel_rc ; then
+            gr.msg -c yellow "configuration failed"
+            return 101
+        fi
+
+    chmod +x $tunnel_rc
+
+    if ! source $tunnel_rc ; then
+            gr.msg -c red "unable to source configuration"
+            return 202
+        fi
+}
 
 
 tunnel.status () {
@@ -87,17 +112,17 @@ tunnel.status () {
 
     # check system is able to service
     if [[ $GURU_TUNNEL_ENABLED ]] ; then
-            gr.msg -v1 -n -c green "enabled, " -k $tunnel_indicator_key
+            gr.msg -v1 -n -c green "enabled, " -k $GURU_TUNNEL_INDICATOR_KEY
         else
-            gr.msg -v1 -c black "disabled" -k $tunnel_indicator_key
+            gr.msg -v1 -c black "disabled" -k $GURU_TUNNEL_INDICATOR_KEY
             return 1
         fi
 
     # check system is able to service
     if [[ -f /usr/bin/ssh ]] ; then
-            gr.msg -v1 -n -c green "available " -k $tunnel_indicator_key
+            gr.msg -v1 -n -c green "available " -k $GURU_TUNNEL_INDICATOR_KEY
         else
-            gr.msg -v1 -c red "not installed" -k $tunnel_indicator_key
+            gr.msg -v1 -c red "not installed" -k $GURU_TUNNEL_INDICATOR_KEY
             return 2
         fi
 
@@ -106,9 +131,9 @@ tunnel.status () {
 
     # indicate user if active tunnels
     if ps -x | grep -v grep | grep "ssh -L " | grep localhost >/dev/null; then
-            gr.msg -v3 -c aqua "active tunnels" -k $tunnel_indicator_key
+            gr.msg -v3 -c aqua "active tunnels" -k $GURU_TUNNEL_INDICATOR_KEY
         else
-            gr.msg -v3 -c green "no active tunnels" -k $tunnel_indicator_key
+            gr.msg -v3 -c green "no active tunnels" -k $GURU_TUNNEL_INDICATOR_KEY
         fi
 
     return 0
@@ -261,7 +286,7 @@ tunnel.open () {
     for _service in ${service_name[@]} ; do
 
             if ! tunnel.get_config $_service ; then
-                gr.ind error $tunnel_indicator_key
+                gr.ind error $GURU_TUNNEL_INDICATOR_KEY
                 continue
             fi
 
@@ -286,11 +311,11 @@ tunnel.open () {
                 else
                     # console environment
                     gr.msg -v0 -c dark_cyan "ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port"
-                    #gr.ind fail $tunnel_indicator_key
+                    #gr.ind fail $GURU_TUNNEL_INDICATOR_KEY
 
                 fi
 
-            gr.msg -v1 -c aqua "$_service: $url" -k $tunnel_indicator_key
+            gr.msg -v1 -c aqua "$_service: $url" -k $GURU_TUNNEL_INDICATOR_KEY
 
         done
     return 0
@@ -346,7 +371,7 @@ tunnel.close () {
 
             if kill -15 $pid ; then
                     gr.msg -v1 -c green "$pid killed"
-                    gr.ind ok $tunnel_indicator_key
+                    gr.ind ok $GURU_TUNNEL_INDICATOR_KEY
                 else
                     kill -9 $pid || gr.msg -c yellow "$pid kill failed"
                 fi
@@ -354,7 +379,7 @@ tunnel.close () {
 
     if tunnel.check >/dev/null; then
             gr.msg -v2 -c yellow "active tunnels detected"
-            gr.ind error $tunnel_indicator_key
+            gr.ind error $GURU_TUNNEL_INDICATOR_KEY
         fi
 
     return 0
@@ -420,10 +445,10 @@ tunnel.poll () {
 
     case $_cmd in
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: tunnel status polling started" -k $tunnel_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: tunnel status polling started" -k $GURU_TUNNEL_INDICATOR_KEY
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: tunnel status polling ended" -k $tunnel_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: tunnel status polling ended" -k $GURU_TUNNEL_INDICATOR_KEY
             ;;
         status )
             tunnel.status $@
@@ -445,9 +470,10 @@ tunnel.requirements () {
     sudo apt update && eval sudo apt "$action" "$require" && gr.msg -c white "guru is now ready to tunnel"
 }
 
+tunnel.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # tunnel.config
+    source $GURU_RC
     tunnel.main "$@"
     exit 0
 fi
