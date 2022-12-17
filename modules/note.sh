@@ -57,17 +57,35 @@ note.main () {
 }
 
 
-audio.load_config () {
+note.rc () {
 # configure module
 
-    declare -gx note_file
-    declare -gx note_date
-    declare -gx note_folder
-    declare -gx note_file_name
+    declare -g note_file
+    declare -g note_date
+    declare -g note_folder
+    declare -g note_file_name
 
+    # load mount configuration
+    declare -l mount_rc="/tmp/guru-cli_mount.rc"
+
+    if  [[ ! -f $mount_rc ]] ; then
+            source mount.sh
+            mount.make_rc && gr.msg -v1 -c dark_gray "$mount_rc updated (by note.sh)"
+        fi
+
+    source $mount_rc
+
+    # load note configuration
     declare -gA note
 
-    source "$GURU_CFG/note.cfg"
+    # default config
+    [[ -f "$GURU_CFG/note.cfg" ]] && source "$GURU_CFG/note.cfg"
+
+    # user config
+    if [[ $(stat -c %Y $GURU_CFG/$GURU_USER/note.cfg) -gt $(stat -c %Y /tmp/guru.daemon-pid) ]] ; then
+            gr.msg -v1 -c dark_gray "$GURU_CFG/$GURU_USER/note.cfg updated"
+        fi
+
     [[ -f "$GURU_CFG/$GURU_USER/note.cfg" ]] && source "$GURU_CFG/$GURU_USER/note.cfg"
 
 }
@@ -124,15 +142,12 @@ note.check () {
 
     if ! note.online ; then note.remount ; fi
     note.config "$1"
-    gr.msg -n -v1 -V3 "checking note $note_date.. "
+    gr.msg -n -v2 "checking note $note_date.. "
     if [[ -f "$note_file" ]] ; then
-            gr.msg -v1 -c green "$note_file found"
+            gr.msg -v1 -c green "ok"
             return 0
         else
-            gr.msg -v0 -V1 "$note_file"
-            gr.msg -v1 -V2 -c white "not found"
-            gr.msg -v2 -V4 -c yellow "$note_file_name not found"
-            gr.msg -v4 -c yellow "$note_file not exist"
+            gr.msg -c dark_gray "$note_file_name not found"
             return 41
         fi
 }
@@ -422,17 +437,23 @@ note.web () {
 
 note.status () {
     # make status for daemon
-
-    note.online && note.ls
-    return 0
+    gr.msg -t -n "${FUNCNAME[0]}: "
+    # check note is enabled
+    if [[ ${note[enabled]} ]] ; then
+            gr.msg -n -v1 -c green "enabled, "
+        else
+            gr.msg -v1 -c black "disabled" -k ${note[indicator_key]}
+            return 1
+        fi
+    note.check
+    return $?
 }
 
+note.rc
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-        #source "$GURU_RC"
-        audio.load_config
-        note.main "$@"
-        #gr.msg -v4 -N -c green "$(declare -p | grep -e 'GURU_NOTE' -e 'GURU_FORMAT'   | cut -d ' ' -f3)"
+if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
+        source $GURU_RC
+        note.main $@
         exit $?
     fi
 
