@@ -3,7 +3,6 @@
 
 # load module configuration
 declare -g original_ip_file='/tmp/vpn-original-ip'
-declare -g vpn_indicator_key='f1'
 declare -A vpn
 
 if [[ -f $GURU_CFG/vpn.cfg ]] ; then
@@ -105,6 +104,13 @@ vpn.status () {
 
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
+    if [[ ${vpn[enabled]} ]] ; then
+            gr.msg -n -v2 -c green "ok "
+        else
+            gr.msg -c black "not found" -k ${vpn[indicator_key]}
+            return 0
+        fi
+
     if [[ -f /usr/sbin/openvpn ]] ; then
             gr.msg -n -v2 -c green "installed "
         else
@@ -117,7 +123,7 @@ vpn.status () {
     if [[ -d /etc/openvpn/tcp ]] ; then
             gr.msg -n -v2 -c green "ok "
         else
-            gr.msg -c red "not found"
+            gr.msg -c red "not found" -k ${vpn[indicator_key]}
             return 101
         fi
 
@@ -125,7 +131,7 @@ vpn.status () {
     if [[ -f /etc/openvpn/credentials ]] ; then
             gr.msg -n -v2 -c green "ok "
         else
-            gr.msg -c red "not found"
+            gr.msg -c red "not found" -k ${vpn[indicator_key]}
             return 102
         fi
 
@@ -141,10 +147,10 @@ vpn.status () {
 
     gr.msg -n -v2 "currently: "
     if [[ $ip_now == $ip_last ]] ; then
-            gr.msg -c aqua_marine "active"
+            gr.msg -c aqua "active" -k ${vpn[indicator_key]}
             return 0
         else
-            gr.msg -c green "available"
+            gr.msg -c green "available" -k ${vpn[indicator_key]}
             return 0
         fi
 }
@@ -324,10 +330,10 @@ vpn.poll () {
 
     case $_cmd in
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: polling started" -k $vpn_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: polling started" -k ${vpn[indicator_key]}
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: polling ended" -k $vpn_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: polling ended" -k ${vpn[indicator_key]}
             ;;
         status )
            vpn.status $@
