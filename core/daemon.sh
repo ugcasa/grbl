@@ -1,13 +1,9 @@
 #!/bin/bash
-# guru client background servicer
-# casa@ujo.guru 2020
+# guru client background servicer casa@ujo.guru 2020
 
 declare -xg daemon_service_script="$HOME/.config/systemd/user/guru.service"
 declare -xg daemon_pid_file="/tmp/guru.daemon-pid"
 declare -axg GURU_DAEMON_PID=
-
-# use same key than system.sh
-daemon_indicator_key="esc"
 
 source $GURU_BIN/system.sh
 
@@ -34,20 +30,20 @@ daemon.main () {
 daemon.help () {
 # general help
 
-    gr.msg -v 1 -c white "guru daemon help "
-    gr.msg -v 2
-    gr.msg -v 0 "usage:    $GURU_CALL daemon [start|stop|status|kill|poll]"
-    gr.msg -v 2
-    gr.msg -v 1 -c white "commands:"
-    gr.msg -v 1 " start        start daemon (same as $GURU_CALL start)"
-    gr.msg -v 1 " stop         stop daemon (same as $GURU_CALL stSop)"
-    gr.msg -v 1 " status       printout status"
-    gr.msg -v 1 " kill         kill jammed daemon"
-    gr.msg -v 2 " poll         start polling process"
-    gr.msg -v 2
-    gr.msg -v 1 -c white "example:"
-    gr.msg -v 1 "      $GURU_CALL daemon status"
-    gr.msg -v 2
+    gr.msg -v1 -c white "guru daemon help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL daemon [start|stop|status|kill|poll]"
+    gr.msg -v2
+    gr.msg -v1 -c white "commands:"
+    gr.msg -v1 " start        start daemon (same as $GURU_CALL start)"
+    gr.msg -v1 " stop         stop daemon (same as $GURU_CALL stSop)"
+    gr.msg -v1 " status       printout status"
+    gr.msg -v1 " kill         kill jammed daemon"
+    gr.msg -v2 " poll         start polling process"
+    gr.msg -v2
+    gr.msg -v1 -c white "example:"
+    gr.msg -v1 "      $GURU_CALL daemon status"
+    gr.msg -v2
 }
 
 
@@ -77,32 +73,32 @@ daemon.status () {
     #${GURU_DAEMON_PID[1]}
 
     if ! [[ $GURU_DAEMON_PID ]]; then
-            gr.msg -v1 -c red "not running" -k $daemon_indicator_key
+            gr.msg -v1 -c red "not running" -k $GURU_DAEMON_INDICATOR_KEY
             [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file && gr.msg -n -v2 "previous PID removed "
             return 127
         fi
 
     if [[ ${#GURU_DAEMON_PID[@]} -gt 1 ]]; then
-            gr.msg -v1 -c yellow "multiple daemons detected, get a shotgun.." -k $daemon_indicator_key
+            gr.msg -v1 -c yellow "multiple daemons detected, get a shotgun.." -k $GURU_DAEMON_INDICATOR_KEY
             gr.msg -v2 "kill daemons by '$GURU_CALL daemon kill' command and then start new one by '$GURU_CALL start'"
             # gr.msg -c -v2 light_blue "${GURU_DAEMON_PID[@]} "
             return 0
         fi
 
     if ! [[ $GURU_DAEMON_PID -eq $last_pid ]]; then
-            gr.msg -n -v2 -c yellow "previous PID mismatch " -k $daemon_indicator_key
+            gr.msg -n -v2 -c yellow "previous PID mismatch " -k $GURU_DAEMON_INDICATOR_KEY
             echo $GURU_DAEMON_PID >$daemon_pid_file
             # retest
             last_pid="$(cat $daemon_pid_file)"
             [[ $GURU_DAEMON_PID -eq $last_pid ]] \
                 && gr.msg -n -v2 -c white "fixed "\
-                || gr.msg -n -v2 -c red "failed to update previous PID " -k $daemon_indicator_key
+                || gr.msg -n -v2 -c red "failed to update previous PID " -k $GURU_DAEMON_INDICATOR_KEY
         fi
 
     #export $GURU_DAEMON_PID
     gr.msg -v0 -V1 "$GURU_DAEMON_PID"
     gr.msg -v1 -c green "running"
-    gr.ind done $daemon_indicator_key
+    gr.ind done $GURU_DAEMON_INDICATOR_KEY
     return 0
 }
 
@@ -131,7 +127,7 @@ daemon.start () {
             corsair.systemd_restart
         fi
 
-    gr.ind doing $daemon_indicator_key
+    gr.ind doing $GURU_DAEMON_INDICATOR_KEY
 
     #for module in ${GURU_DAEMON_POLL_ORDER[@]} ; do
     for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
@@ -154,8 +150,8 @@ daemon.start () {
             esac
         done
 
-    gr.end $daemon_indicator_key
-    gr.msg "start polling" -c reset -k $daemon_indicator_key
+    gr.end $GURU_DAEMON_INDICATOR_KEY
+    gr.msg "start polling" -c reset -k $GURU_DAEMON_INDICATOR_KEY
     daemon.poll &
 }
 
@@ -207,19 +203,19 @@ daemon.stop () {
     system.flag rm running
 
     if ! kill -15 "$_pid" ; then
-        gr.msg -V1 -c yellow "error $?, retry" -k $daemon_indicator_key
+        gr.msg -V1 -c yellow "error $?, retry" -k $GURU_DAEMON_INDICATOR_KEY
 
         if kill -9 "$_pid" ; then
-             gr.end $daemon_indicator_key
-             gr.msg -V1 -c green "ok" -k $daemon_indicator_key
+             gr.end $GURU_DAEMON_INDICATOR_KEY
+             gr.msg -V1 -c green "ok" -k $GURU_DAEMON_INDICATOR_KEY
         else
              gr.msg -V1 -c red "failed to kill daemon pid: $_pid"
-             gr.ind failed $daemon_indicator_key
+             gr.ind failed $GURU_DAEMON_INDICATOR_KEY
             return 124
         fi
     else
-        gr.end $daemon_indicator_key
-        gr.msg -V1 -c green "ok" -k $daemon_indicator_key
+        gr.end $GURU_DAEMON_INDICATOR_KEY
+        gr.msg -V1 -c green "ok" -k $GURU_DAEMON_INDICATOR_KEY
     fi
 
 
@@ -236,14 +232,14 @@ daemon.kill () {
     for (( i = 0; i < ${#GURU_DAEMON_PID[@]}; i++ )); do
             gr.msg -v1 -n "killing ${GURU_DAEMON_PID[$i]}.. "
             kill -9 ${GURU_DAEMON_PID[$i]} \
-                && gr.msg -v1 -c green "ok" -k $daemon_indicator_key \
-                || gr.msg -v1 -c red "failed" -k $daemon_indicator_key
+                && gr.msg -v1 -c green "ok" -k $GURU_DAEMON_INDICATOR_KEY \
+                || gr.msg -v1 -c red "failed" -k $GURU_DAEMON_INDICATOR_KEY
         done
 
     if daemon.status ; then
-            gr.msg -c red "failed to kill daemons" -k $daemon_indicator_key
+            gr.msg -c red "failed to kill daemons" -k $GURU_DAEMON_INDICATOR_KEY
         else
-            gr.msg -v1 -c green "done" -k $daemon_indicator_key
+            gr.msg -v1 -c green "done" -k $GURU_DAEMON_INDICATOR_KEY
         fi
 
 
@@ -251,12 +247,12 @@ daemon.kill () {
 
     # if ps auxf | grep "$GURU_BIN/guru" | grep "start" | grep -v "grep" >/dev/null ; then
     #         gr.msg -v1 -c yellow "daemon still running, try to 'sudo guru kill' again"
-    #         gr.ind failed $daemon_indicator_key
+    #         gr.ind failed $GURU_DAEMON_INDICATOR_KEY
     #         return 100
     #     else
     #         gr.msg -v3 -c white "kill verified"
     #         [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
-    #         gr.end $daemon_indicator_key
+    #         gr.end $GURU_DAEMON_INDICATOR_KEY
     #         return 0
     #     fi
 
@@ -290,11 +286,11 @@ daemon.poll () {
     system.flag rm stop
     GURU_FORCE=
 
-    gr.end $daemon_indicator_key
+    gr.end $GURU_DAEMON_INDICATOR_KEY
 
     # DAEMON POLL LOOP
     while true ; do
-        gr.msg -N -t -v3 -c aqua "daemon active" -k $daemon_indicator_key
+        gr.msg -N -t -v3 -c aqua "daemon active" -k $GURU_DAEMON_INDICATOR_KEY
         system.flag set running
 
 
@@ -311,9 +307,9 @@ daemon.poll () {
 
         # if paused
         if system.flag pause ; then
-                gr.end $daemon_indicator_key
+                gr.end $GURU_DAEMON_INDICATOR_KEY
                 gr.msg -N -t -v1 -c yellow "daemon paused "
-                gr.ind pause $daemon_indicator_key
+                gr.ind pause $GURU_DAEMON_INDICATOR_KEY
                 for (( i = 0; i < 150; i++ )); do
                     system.flag pause || break
                     system.flag stop && break
@@ -322,19 +318,19 @@ daemon.poll () {
                 done
                 system.flag rm pause
                 sleep 1
-                gr.end $daemon_indicator_key
-                gr.msg -v1 -t -c aqua "daemon continued" #-k $daemon_indicator_key
+                gr.end $GURU_DAEMON_INDICATOR_KEY
+                gr.msg -v1 -t -c aqua "daemon continued" #-k $GURU_DAEMON_INDICATOR_KEY
             fi
 
         if system.flag stop ; then
-                gr.end $daemon_indicator_key
+                gr.end $GURU_DAEMON_INDICATOR_KEY
                 gr.msg -N -t -v1 "daemon got requested to stop "
-                gr.ind cancel $daemon_indicator_key
+                gr.ind cancel $GURU_DAEMON_INDICATOR_KEY
                 daemon.stop
                 return $?
             fi
 
-        gr.ind doing -k $daemon_indicator_key
+        gr.ind doing -k $GURU_DAEMON_INDICATOR_KEY
         # to update configurations is user changes them
         source $GURU_RC
 
@@ -359,8 +355,8 @@ daemon.poll () {
                     esac
             done
 
-        gr.end $daemon_indicator_key
-        gr.ind done $daemon_indicator_key
+        gr.end $GURU_DAEMON_INDICATOR_KEY
+        gr.ind done $GURU_DAEMON_INDICATOR_KEY
         touch $daemon_pid_file
         gr.msg -n -v2 "sleep ${GURU_DAEMON_INTERVAL}s: "
 
@@ -376,7 +372,7 @@ daemon.poll () {
     done
 
     gr.msg -N -t -v1 "daemon got tired, dropped out and died"
-    gr.ind cancel $daemon_indicator_key
+    gr.ind cancel $GURU_DAEMON_INDICATOR_KEY
     daemon.stop
 }
 
