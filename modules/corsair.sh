@@ -41,8 +41,8 @@
 #     66 service (not installed automatically)
 #     Device previews are now resizable
 
-source $GURU_BIN/common.sh
-source $GURU_BIN/system.sh
+source common.sh
+source system.sh
 
 # active key list
 key_pipe_list=$(file /tmp/ckbpipe0* | grep fifo | cut -f1 -d ":")
@@ -55,7 +55,7 @@ corsair_daemon_service="/usr/lib/systemd/system/ckb-next-daemon.service"
 # jsut know what to delete shen disable option/lib/systemd/system-sleep/guru-client-suspend.sh
 suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh"
 # poll order is read from  environment list ${GURU_DAEMON_POLL_ORDER[@]} set in user.cfg
-corsair_indicator_key="f$(gr.poll corsair)"
+GURU_CORSAIR_INDICATOR_KEY="f$(gr.poll corsair)"
 pipelist_file="$GURU_CFG/corsair-pipelist.cfg"
 
 # import colors f
@@ -139,7 +139,6 @@ corsair.get_pipefile () {
 }
 
 
-
 corsair.help () {
 # general help
     gr.msg -v1 "guru-client corsair keyboard indicator help" -c white
@@ -199,9 +198,6 @@ corsair.help () {
     gr.msg -v2 "  $GURU_CALL corsair blink set f1 red blue 1 10 green"
     gr.msg -v2 "                                         set f1 to blink red and blue second interval "
     gr.msg -v2 "                                         for 10 seconds and leave green when exit"
-
-
-
 }
 
 
@@ -243,7 +239,6 @@ corsair.key-id () {
 
     gr.msg -c yellow "no '$1' found in key table"
     return 1
-
 }
 
 
@@ -294,18 +289,19 @@ corsair.main () {
             corsair_mode=$GURU_CORSAIR_MODE
         fi
 
-    local cmd="$1" ; shift
+    local cmd="$1"
+    shift
 
     case "$cmd" in
             # indicator functions
             status|init|set|reset|clear|end|indicate|keytable|key-id|type)
-                    [[ $GURU_CORSAIR_ENABLED ]] || return 1
+                    [[ $GURU_CORSAIR_ENABLED ]] || return 0
                     corsair.$cmd $@
                     return $?
                     ;;
             # blink functions
             blink)
-                    [[ $GURU_CORSAIR_ENABLED ]] || return 1
+                    [[ $GURU_CORSAIR_ENABLED ]] || return 0
                     local tool=$1 ; shift
                     case $tool in
                         set|stop|kill|test)
@@ -341,9 +337,9 @@ corsair.main () {
                     ;;
             # hmm..
             '--')
-                    return 123
+                    return 0
                     ;;
-            #
+
             help)   case $1 in  profile) corsair.help-profile ;;
                                       *) corsair.help
                         esac
@@ -436,10 +432,13 @@ corsair.check () {
         fi
 
     gr.msg -n -v2 "checking pipes.. "
-    if ps auxf | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null ; then
-            gr.msg -v2 -c green "ok"
+    ps x | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/tmp/result
+    amount=$(wc -l < /tmp/result)
+    if [[ $amount -gt 112 ]] ; then
+            gr.msg -v2 -c green "found $amount pipes, ok"
+            rm /tmp/result
         else
-            gr.msg -c red "pipe failed"
+            gr.msg -c red "failed, only $amount pipes found"
             corsair.help-profile
             return 6
         fi
@@ -729,7 +728,6 @@ corsair.blink_kill () {
 }
 
 
-
 corsair.blink_test () {
 # quick test that lights up esc and function keys
 
@@ -771,6 +769,7 @@ corsair.blink_test () {
     system.main flag rm pause
     return 0
 }
+
 
 corsair.type () {
 # blink string characters by key lights
@@ -826,8 +825,6 @@ corsair.type () {
 
     gr.msg -v3
 }
-
-
 
 
 ############################ systemd methods ###############################
@@ -1083,6 +1080,7 @@ corsair.suspend_recovery () {
 
 ################# get, patching, compile, install and setup functions ######################
 
+
 corsair.clone () {
 # get ckb-next source
 
@@ -1160,6 +1158,7 @@ corsair.requirements () {
 
 ######################### guru.client required functions ###########################
 
+
 corsair.poll () {
 # guru daemon api functions
 
@@ -1167,10 +1166,10 @@ corsair.poll () {
 
     case $_cmd in
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $corsair_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $GURU_CORSAIR_INDICATOR_KEY
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $corsair_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $GURU_CORSAIR_INDICATOR_KEY
             ;;
         status )
             corsair.status $@
@@ -1187,11 +1186,11 @@ corsair.status () {
 
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
     if corsair.check ; then
-            gr.msg -v1 -c green "corsair on service" -k $corsair_indicator_key
+            gr.msg -v1 -c green "corsair on service" #-k $GURU_CORSAIR_INDICATOR_KEY
             return 0
         else
             local status=$?
-            gr.msg -v1 -c red "corsair is not in service" # -k $corsair_indicator_key
+            gr.msg -v1 -c red "corsair is not in service" #-k $GURU_CORSAIR_INDICATOR_KEY
             return $status
         fi
 }
