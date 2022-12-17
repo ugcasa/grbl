@@ -8,7 +8,6 @@
 
 declare -g backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
 declare -g backup_rc="/tmp/guru-cli_backup.rc"
-declare -g backup_indicator_key="f7"
 ! [[ -d $backup_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
 
 
@@ -147,7 +146,7 @@ backup.variables () {
         gr.msg -v3 -c grey "backup_ignore: '$backup_ignore'"
         gr.msg -v3 -c grey "backup_method: '$backup_method'"
         gr.msg -v3 -c grey "honeypot_file: '$honeypot_file'"
-        gr.msg -v3 -c grey "backup_indicator_key: '$backup_indicator_key'"
+        gr.msg -v3 -c grey "GURU_BACKUP_INDICATOR_KEY: '$GURU_BACKUP_INDICATOR_KEY'"
 
         gr.msg -v3 -c grey "backup_stat_file: '$backup_stat_file'"
         [[ -f $backup_stat_file ]] && source $backup_stat_file
@@ -265,14 +264,14 @@ backup.status () {
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
     if [[ $GURU_BACKUP_ENABLED ]] ; then
-            gr.msg -n -v1 -c green -k $backup_indicator_key "enabled, "
+            gr.msg -n -v1 -c green -k $GURU_BACKUP_INDICATOR_KEY "enabled, "
         else
-            gr.msg -v1 -c black -k $backup_indicator_key "disabled"
+            gr.msg -v1 -c black -k $GURU_BACKUP_INDICATOR_KEY "disabled"
             return 1
         fi
 
     if ! [[ -f $backup_data_folder/next ]] ; then
-            gr.msg -v1 -c green -k $backup_indicator_key \
+            gr.msg -v1 -c green -k $GURU_BACKUP_INDICATOR_KEY \
                 "no scheduled backups"
             return 0
         fi
@@ -283,15 +282,15 @@ backup.status () {
     # indicate backup time
     if [[ $diff -lt 7200 ]] ; then
         # indicate that backup will be done soon
-        gr.msg -n -v1 -c aqua_marine -k $backup_indicator_key \
+        gr.msg -n -v1 -c aqua_marine -k $GURU_BACKUP_INDICATOR_KEY \
             "scheduled backup at $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
         # indicate that that backup is very soon, ~minutes
-        [[ $diff -lt $GURU_DAEMON_INTERVAL ]] && gr.msg -n -v1 -c deep_pink -k $backup_indicator_key \ "($diff seconds)"
+        [[ $diff -lt $GURU_DAEMON_INTERVAL ]] && gr.msg -n -v1 -c deep_pink -k $GURU_BACKUP_INDICATOR_KEY \ "($diff seconds)"
         echo
         return 0
     else
         # all fine, no scheduled backup in few hours
-        gr.msg -n -v1 -c green -k $backup_indicator_key "on service "
+        gr.msg -n -v1 -c green -k $GURU_BACKUP_INDICATOR_KEY "on service "
         gr.msg -v1 "next backup $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
         return 0
     fi
@@ -467,7 +466,7 @@ backup.now () {
                         gr.msg -v3 -N -c deep_pink "gio mount -d $store_device_file"
                         gio mount -d $store_device_file \
                             && gr.msg -v1 -c green "ok" \
-                            || gr.msg -v1 -c yellow "error: $?" -k $backup_indicator_key
+                            || gr.msg -v1 -c yellow "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
                     else
                         gr.msg -c white "to mount -t $store_file_system $store_device_file $store_mount_point sudo needed"
                         [[ -d $store_mount_point ]] || sudo mkdir -p $store_mount_point
@@ -475,7 +474,7 @@ backup.now () {
                         if sudo mount -t $store_file_system $store_device_file $store_mount_point ; then
                                 gr.msg -v1 -c green "ok"
                             else
-                                gr.msg -v1 -c yellow "error: $?" -k $backup_indicator_key
+                                gr.msg -v1 -c yellow "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
                                 # echo "last_backup_error=32" >>$backup_stat_file
                                 return 32
                             fi
@@ -510,7 +509,7 @@ backup.now () {
                         gr.msg -v3 -N -c deep_pink "gio mount -d $store_device_file"
                         gio mount -d $store_device_file \
                             && gr.msg -v1 -c green "ok" \
-                            || gr.msg -v1 -c yellow "error: $?" -k $backup_indicator_key
+                            || gr.msg -v1 -c yellow "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
                     fi
             fi
         command_param="-a --progress --update"
@@ -555,7 +554,7 @@ backup.now () {
     local from_param="$from_location"
     local store_param="$store_location"
     local command_param="-a --progress --update"
-    gr.msg -v3 "backup active" -c aqua_marine -k $backup_indicator_key
+    gr.msg -v3 "backup active" -c aqua_marine -k $GURU_BACKUP_INDICATOR_KEY
 
 ### 2) check and plase variables for rsynck based on user.cfg
 
@@ -599,7 +598,7 @@ backup.now () {
             for file in ${list_of_files[@]} ; do
                     case $file in
                             *.WNCRY*)
-                                    gr.msg -c red -k $backup_indicator_key \
+                                    gr.msg -c red -k $GURU_BACKUP_INDICATOR_KEY \
                                         "POTENTIAL VIRUS: wannacry tracks detected!"
                                     gr.msg -c light_blue "$file"
                                     gr.msg -c yellow "backup of $from_location canceled"
@@ -643,7 +642,7 @@ backup.now () {
                     gr.msg -c yellow \
                          "honeypot file changed! got '${contain[3]}' when 'honeypot' expected."
                     gr.msg -c light_blue "${contain[@]}"
-                    gr.msg -c red -k $backup_indicator_key \
+                    gr.msg -c red -k $GURU_BACKUP_INDICATOR_KEY \
                          "backup canceled cause of potential crypto virus action detected!"
                     export GURU_BACKUP_ENABLED=
 
@@ -662,7 +661,7 @@ backup.now () {
 
     if [[ $_error -gt 0 ]] ; then
             gr.msg "$from_location error: $backup_method $_error" \
-                 -c red -k $backup_indicator_key
+                 -c red -k $GURU_BACKUP_INDICATOR_KEY
                  echo "last_backup_error=120" >>$backup_stat_file
             return 120
         else
@@ -671,7 +670,7 @@ backup.now () {
             echo "last_backup_name=$backup_name" >>$backup_stat_file
             echo "last_backup_time=$(date +%s)" >>$backup_stat_file
             echo "last_backup_error=$_error" >>$backup_stat_file
-            gr.msg -v3 "$from_location ok" -c green -k $backup_indicator_key
+            gr.msg -v3 "$from_location ok" -c green -k $GURU_BACKUP_INDICATOR_KEY
             return 0
         fi
 }
@@ -743,12 +742,12 @@ backup.plan () {
         done
 
     if [[ $_error -gt 0 ]] ; then
-            gr.msg "$_error warnings, check log above" -c yellow -k $backup_indicator_key
+            gr.msg "$_error warnings, check log above" -c yellow -k $GURU_BACKUP_INDICATOR_KEY
             gr.ind say -m "$_error warnings during $schedule backup"
             return 12
         else
             #gr.msg -v3 -c green "$schedule done"
-            gr.ind done -m "$schedule backup" -k $backup_indicator_key
+            gr.ind done -m "$schedule backup" -k $GURU_BACKUP_INDICATOR_KEY
             return 0
         fi
     }
@@ -812,10 +811,10 @@ backup.poll () {
 
     case $_cmd in
             start )
-                gr.msg -v1 -t -c black "${FUNCNAME[0]}: backup status polling started" -k $backup_indicator_key
+                gr.msg -v1 -t -c black "${FUNCNAME[0]}: backup status polling started" -k $GURU_BACKUP_INDICATOR_KEY
                 ;;
             end )
-                gr.msg -v1 -t -c reset "${FUNCNAME[0]}: backup status polling ended" -k $backup_indicator_key
+                gr.msg -v1 -t -c reset "${FUNCNAME[0]}: backup status polling ended" -k $GURU_BACKUP_INDICATOR_KEY
                 ;;
             status )
                 backup.status
@@ -824,31 +823,6 @@ backup.poll () {
             *)  gr.msg -c dark_grey "function not written"
                 return 0
         esac
-}
-
-
-backup.stand-alone () {
-    # this just a test is it even possible
-
-    # to get this running
-    declare -g GURU_VERBOSE=1
-    declare -g GURU_COLOR=true
-    declare -g GURU_CALL=guru
-    declare -g PATH="$PATH;$(pwd)/modules;$(pwd)/core"
-    declare -g GURU_SYSTEM_MOUNT=/tmp/guru
-
-    declare -g GURU_BACKUP_ENABLED=true
-    #declare -g GURU_BACKUP_COLOR=aqua
-    declare -g GURU_BACKUP_ACTIVE=(git Pictures)
-    declare -g GURU_BACKUP_SCHEDULE_DAILY=(git)
-    declare -g GURU_BACKUP_SCHEDULE_WEEKLY=(Pictures)
-    declare -g GURU_BACKUP_SCHEDULE_MONTHLY=()
-
-    # example
-    declare -g GURU_BACKUP_REPOSITORY=(/dev/sda1 ext4 $USER/backup/$(date +%Y)/git)
-    declare -g GURU_BACKUP_GIT=(repository rsync $HOME/git/)
-    declare -g GURU_DAEMON_INTERVAL=300
-
 }
 
 
@@ -874,8 +848,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
     # backup.debug
 
-    [[ -f ~/.gururc ]] && source ~/.gururc \
-                       || backup.stand-alone
+    [[ -f ~/.gururc ]] && source ~/.gururc
+
 
     backup.main "$@"
     exit "$?"
