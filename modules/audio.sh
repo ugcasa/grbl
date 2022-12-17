@@ -297,7 +297,6 @@ audio.listen () {
             mpv $@ $audio_mpv_options --no-resume-playback
             rm $audio_now_playing
             gr.end $GURU_AUDIO_INDICATOR_KEY
-            return 0
             ;;
 
         yle)
@@ -306,9 +305,10 @@ audio.listen () {
             local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
             echo $channel >$audio_now_playing
+            gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
             mpv $url $audio_mpv_options --no-resume-playback
             rm $audio_now_playing
-            return 0
+            gr.end $GURU_AUDIO_INDICATOR_KEY
             ;;
         *)
             # listen radio stations listed in radio.list in config
@@ -326,10 +326,13 @@ audio.listen () {
             # play
             gr.msg -v2 -c white "📻 ${name^} 🔊"
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
-            echo ${name^h} >$audio_now_playing
+            echo ${name^} >$audio_now_playing
+            gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
             mpv $url $audio_mpv_options --no-resume-playback
             rm $audio_now_playing
+            gr.end $GURU_AUDIO_INDICATOR_KEY
         esac
+    return 0
 }
 
 
