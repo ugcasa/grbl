@@ -70,34 +70,34 @@ fingrid.status () {
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
     if [[ ${fingrid[enabled]} ]] ; then
-            gr.msg -v2 -n -c green "enabled, " -k ${fingrid[indication_key]}
+            gr.msg -v2 -n -c green "enabled, " -k ${fingrid[indicator_key]}
         else
-            gr.msg -v1 -c black "disabled" -k ${fingrid[indication_key]}
+            gr.msg -v1 -c black "disabled" -k ${fingrid[indicator_key]}
             return 100
         fi
 
     local grid_status=$(fingrid.get_value 209)
 
     case $grid_status in
-            *1) gr.end ${fingrid[indication_key]}
-                gr.msg -n -c green "normal " -k ${fingrid[indication_key]}
+            *1) gr.end ${fingrid[indicator_key]}
+                gr.msg -n -c green "normal " -k ${fingrid[indicator_key]}
                 gr.msg -v2 "The operating status of the electrical system is normal."
                 ;;
             *2) gr.msg -n -c yellow "under threat "
                 gr.msg -v2 "The operating situation of the electrical system has deteriorated. The sufficiency of electricity in Finland is under threat (the risk of power shortages is high) or the power system does not meet the security criteria"
-                gr.ind warning -m "electric grid is in under threat" -k ${fingrid[indication_key]}
+                gr.ind warning -m "electric grid is in under threat" -k ${fingrid[indicator_key]}
                 ;;
             *3) gr.msg -n -c orange "in danger! "
                 gr.msg -v2 "The operational reliability of the electrical system is at risk. Electricity consumption has been disconnected to ensure the operational reliability of the power system (power shortage) or the risk of a large-scale power outage is considerable."
-                gr.ind alert -m "electric grid is in danger!" -k ${fingrid[indication_key]}
+                gr.ind alert -m "electric grid is in danger!" -k ${fingrid[indicator_key]}
                 ;;
             *4) gr.msg -n -c red "nationwide disruptions! "
                 gr.msg -v2 "A serious disturbance covering a large part of country or the whole of Finland."
-                gr.ind panic -m "electric grid is about to collapse!" -k ${fingrid[indication_key]}
+                gr.ind panic -m "electric grid is about to collapse!" -k ${fingrid[indicator_key]}
                 ;;
             *5) gr.msg -n -c sky_blue "in recovery "
                 gr.msg -v2 "The restoration of the use of a serious glitch is going. For more information https://www.fingrid.fi/sahkomarkkinat/sahkojarjestelman-tila/"
-                gr.ind recovery -m "electrical grid" -k ${fingrid[indication_key]}
+                gr.ind recovery -m "electrical grid" -k ${fingrid[indicator_key]}
                 ;;
             *)  gr.msg -c yellow "something went wrong.."
                 return 112
@@ -120,7 +120,7 @@ fingrid.info () {
     gr.msg -v1 -n "Finnish electric grid status is: "
 
     case $grid_status in
-            *1) gr.msg -c green "normal " -k ${fingrid[indication_key]}
+            *1) gr.msg -c green "normal " -k ${fingrid[indicator_key]}
                 gr.msg "The operating status of the electrical system is normal."
                 ;;
             *2) gr.msg -c yellow "under threat "
@@ -186,10 +186,10 @@ fingrid.poll () {
 
     case $_cmd in
             start )
-                gr.msg -v1 -t -c black "${FUNCNAME[0]}: fingrid status polling started" -k ${fingrid[indication_key]}
+                gr.msg -v1 -t -c black "${FUNCNAME[0]}: fingrid status polling started" -k ${fingrid[indicator_key]}
                 ;;
             end )
-                gr.msg -v1 -t -c reset "${FUNCNAME[0]}: fingrid status polling ended" -k ${fingrid[indication_key]}
+                gr.msg -v1 -t -c reset "${FUNCNAME[0]}: fingrid status polling ended" -k ${fingrid[indicator_key]}
                 ;;
             status )
                 fingrid.status
