@@ -97,12 +97,12 @@ mount.rc () {
 
     declare -g all_list=($(\
             grep "export GURU_MOUNT_" $mount_rc | \
-            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATION_KEY' | \
+            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
             all_list=(${all_list[@],,})
 
-    declare -g mount_indicator_key=$GURU_MOUNT_INDICATION_KEY
+    # declare -g GURU_MOUNT_INDICATOR_KEY=$GURU_MOUNT_INDICATOR_KEY
 }
 
 
@@ -132,7 +132,7 @@ mount.make_rc () {
 
     declare -g all_list=($(\
             grep "export GURU_MOUNT_" $mount_rc | \
-            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATION_KEY' | \
+            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
             all_list=(${all_list[@],,})
@@ -483,9 +483,9 @@ mount.status () {
 
     # check is enabled
     if [[ $GURU_MOUNT_ENABLED ]] ; then
-            gr.msg -v1 -n -c green "enabled " -k $mount_indicator_key
+            gr.msg -v1 -n -c green "enabled " -k $GURU_MOUNT_INDICATOR_KEY
         else
-            gr.msg -v1 -c black "disabled" -k $mount_indicator_key
+            gr.msg -v1 -c black "disabled" -k $GURU_MOUNT_INDICATOR_KEY
             return 100
         fi
 
@@ -493,7 +493,7 @@ mount.status () {
     # if mount.check ; then
     #         gr.msg -v1 -n -c green "available "
     #     else
-    #         gr.msg -v1 -c red "unavailable" -k $mount_indicator_key
+    #         gr.msg -v1 -c red "unavailable" -k $GURU_MOUNT_INDICATOR_KEY
     #         return 101
     #     fi
 
@@ -509,8 +509,8 @@ mount.status () {
 
     # serve enter
     [[ $_private ]] \
-        && gr.msg -c deep_pink -k $mount_indicator_key \
-        || gr.msg -c aqua -k $mount_indicator_key
+        && gr.msg -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY \
+        || gr.msg -c aqua -k $GURU_MOUNT_INDICATOR_KEY
 
     return 0
 }
@@ -538,10 +538,10 @@ mount.poll () {
 
     case $_cmd in
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $mount_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $GURU_MOUNT_INDICATOR_KEY
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $mount_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $GURU_MOUNT_INDICATOR_KEY
             ;;
         status )
             mount.status $@
