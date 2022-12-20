@@ -117,7 +117,7 @@ test.tool () {
 test.all () {
     # run all module tests and all cases
 
-    declare -la _error=()
+    local _error=()
 
     gr.msg -c white "INTEGRATION TEST $_test_id: guru-client v.$GURU_VERSION $(date)"
 

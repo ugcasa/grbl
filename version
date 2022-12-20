@@ -7,3 +7,4 @@ bellaconf
 12 alias for play and listen added to control audio module
 13 audio status prints out "now playing" data, not really tested, might mess up status output in some occasions
 14 indicator key naming harmonized + other minor improvements
+15 declare -l misunderstand issue fixed

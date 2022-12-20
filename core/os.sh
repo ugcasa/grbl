@@ -35,9 +35,9 @@ os.check_distro() {
 os.check_space () {
     # check free space of server disk
 
-    declare -l mount_point=$GURU_SYSTEM_MOUNT
+    local mount_point=$GURU_SYSTEM_MOUNT
     [[ $1 ]] && mount_point=$1
-    declare -l column=4
+    local column=4
     if [[ $2 ]] ; then
         case $2 in
             u|used)

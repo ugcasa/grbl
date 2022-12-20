@@ -66,7 +66,7 @@ note.rc () {
     declare -g note_file_name
 
     # load mount configuration
-    declare -l mount_rc="/tmp/guru-cli_mount.rc"
+    local mount_rc="/tmp/guru-cli_mount.rc"
 
     if  [[ ! -f $mount_rc ]] ; then
             source mount.sh

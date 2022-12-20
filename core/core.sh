@@ -392,11 +392,11 @@ core.mount_system_base () {
 core.process_module_opts () {
 # bash < 4.2 compatible method to pass long arguments to module
 
-    declare -l input_string_list=($@)
-    declare -l pass_to_module=
-    declare -l pass_to_core=
+    local input_string_list=($@)
+    local pass_to_module=()
+    local pass_to_core=()
 
-   for (( i = 0; i < ${#input_string_list[@]}; i++ )); do
+    for (( i = 0; i < ${#input_string_list[@]}; i++ )); do
             [[ GURU_VERBOSE -gt 3 ]] && echo "$i:${input_string_list[$i]}, (next ${input_string_list[$((i + 1))]})"
 
             case ${input_string_list[$i]} in
@@ -434,8 +434,10 @@ core.process_module_opts () {
         done
 
     # clean up and export (tr is fastest method stackoverflow 50259869)
-    declare -xg GURU_MODULE_ARGUMENTS=$(echo ${pass_to_module[@]} | tr -s ' ')
-    declare -xg GURU_CORE_ARGUMENTS=$(echo ${pass_to_core[@]} | tr -s ' ')
+
+    export GURU_MODULE_ARGUMENTS=$(echo ${pass_to_module[@]} | tr -s ' ')
+    export GURU_CORE_ARGUMENTS=$(echo ${pass_to_core[@]} | tr -s ' ')
+
 }
 
 
@@ -494,10 +496,10 @@ core.process_core_opts () {
     done
 
 
-    declare -xg GURU_MODULE_COMMAND
+    export GURU_MODULE_COMMAND
 
     # clean rest of user input
-    declare -l left_overs="$@"
+    local left_overs="$@"
     if [[ "$left_overs" != "--" ]] ; then
         GURU_MODULE_COMMAND="${left_overs#* }"
     fi
@@ -561,7 +563,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     core.mount_system_base
 
     # export global variables for sub processes
-    declare -xa GURU_COMMAND=($GURU_MODULE_COMMAND $GURU_MODULE_ARGUMENTS)
+    export GURU_COMMAND=($GURU_MODULE_COMMAND $GURU_MODULE_ARGUMENTS)
 
     core.parser ${GURU_COMMAND[@]}
     _error_code=$?

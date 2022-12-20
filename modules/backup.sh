@@ -178,10 +178,10 @@ backup.config () {
         fi
 
     # declare of global variables
-    declare -l store_is_local=
+    local store_is_local=
     declare -ga backup_name=$1
     declare -ga active_list=(${GURU_BACKUP_ACTIVE[@]})
-    declare -la header=(store method from ignore)
+    locala header=(store method from ignore)
 
     # exit if not in active list
     if ! echo "${active_list[@]}" | grep -q $backup_name ; then
@@ -196,9 +196,9 @@ backup.config () {
 
                     from_config=(${!from_config})
                     declare -g store_device=${from_config[0]}
-                    declare -l method=${from_config[1]}
-                    declare -l from_string=${from_config[2]}
-                    declare -l ignore="${from_config[3]//:/' '}"
+                    local method=${from_config[1]}
+                    local from_string=${from_config[2]}
+                    local ignore="${from_config[3]//:/' '}"
 
                     declare -g store_config="GURU_BACKUP_${store_device^^}[@]"
                     store_config=(${!store_config})

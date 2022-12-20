@@ -4,7 +4,7 @@
 # declare -g youtube_temp="$HOME/tmp/youtube"
 # declare -g youtube_media_title="no media"
 # declare -g youtube_episodes=()
-declare -g youtube_media_address=
+youtube_media_address=
 # declare -g youtube_media_filename=
 
 
@@ -289,8 +289,10 @@ youtube.get_media () {
 
 youtube.audio () {
 # get media from tube
-    id=$1
-    url_base="https://www.youtube.com/watch?v"
+    echo $1
+    local id=$1
+    echo $id
+    local url_base="https://www.youtube.com/watch?v"
     source mount.sh
     mount.main audio
 

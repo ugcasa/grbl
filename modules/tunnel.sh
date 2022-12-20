@@ -186,7 +186,7 @@ tunnel.check () {
 tunnel.toggle () {
 # open default tunnel list and closes
 
-    declare -l state="/tmp/tunnel.toggle"
+    local state="/tmp/tunnel.toggle"
 
     if [[ -f $state ]] && tunnel.check >/dev/null; then
             tunnel.close && rm $state
