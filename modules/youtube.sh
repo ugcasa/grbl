@@ -12,7 +12,7 @@ youtube.help () {
 
     gr.msg -v1 "guru-cli youtube help " -c white
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL youtube get|play|radio|radio|news|episodes|sub|metadata|install|uninstall|help"
+    gr.msg -v0  "usage:    $GURU_CALL youtube get|play|audio|install|uninstall|help"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v2
@@ -289,9 +289,7 @@ youtube.get_media () {
 
 youtube.audio () {
 # get media from tube
-    echo $1
     local id=$1
-    echo $id
     local url_base="https://www.youtube.com/watch?v"
     source mount.sh
     mount.main audio
