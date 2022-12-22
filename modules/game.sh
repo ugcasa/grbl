@@ -22,7 +22,7 @@ game.main () {
     local _game="$1" ; shift
 
     case $_cmd in
-               install|remove|set|start)
+               install|remove|set|start|set)
                     game.${_game}_${_cmd} $@
                     return $?
                     ;;
@@ -47,7 +47,7 @@ game.help () {
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " install <game>           install game and requirements "
-    gr.msg -v1 " set <game>               set game environment "
+    gr.msg -v1 " set <game> pre/post      set game environment before or after game lauch"
     gr.msg -v1 " <game>                   start game "
     gr.msg -v1 " start <game>             start game "
     gr.msg -v1 " remove <game>            remove game "
@@ -56,6 +56,7 @@ game.help () {
     gr.msg -v2
     gr.msg -v1 -c white "examples: "
     gr.msg -v1 "         $GURU_CALL game start minecraft"
+    gr.msg -v1 "         $GURU_CALL game set minecraft pre"
     gr.msg -v2
     return 0
 }
@@ -166,40 +167,18 @@ game.bedrock_start () {
 # set environment and start minecraft bedrock
 
     game.minecraft_set pre
+
+    cd $GURU_GAME_FOLDER/bedrock
     ./Minecraft_Bedrock_Launcher.AppImage
-    sleep 3
+
     game.minecraft_set post
 }
 
 
-# game.bedrock_set () {
-# # setup minecraft bedrock
-
-#     source corsair.sh
-
-#     case $1 in
-
-#         pre|"")
-#             for keys in e s d f ; do
-#                 corsair.main set $keys blue
-#             done
-
-#             for keys in w r ; do
-#                 corsair.main set $keys green
-#             done
-
-#             for keys in 'shiftl' 'space' 'tab' ; do
-#                 corsair.main set $keys white
-#             done
-#             ;;
-
-#         post)
-#             for keys in e s d f w r 'shiftl' 'space' 'tab' ; do
-#                 corsair.main reset $keys
-#             done
-#             ;;
-#     esac
-# }
+game.bedrock_set () {
+# setup minecraft bedrock
+    game.minecraft_set $@
+}
 
 
 game.bedrock_status () {
