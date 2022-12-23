@@ -43,9 +43,7 @@ youtube.main () {
         get|dl|download)
             for item in "$@"
                 do
-                   #youtube.get_metadata "$item" || return 127
                    youtube.get_media $item
-                   #youtube.place_media
                 done
             ;;
 
@@ -80,7 +78,7 @@ youtube.main () {
 
 
 youtube.search_n_play () {
-# seatch input and play it from youtube
+# search input and play it from youtube
     local base_url="https://www.youtube.com"
     export ARGS=$@
     query=`python3 - << EOF
@@ -136,53 +134,6 @@ youtube.audio () {
 }
 
 
-youtube.place_media () {
-# NON TESTED: placer copied from yle.sh
-    #location="$@"
-    gr.msg -c blue "${FUNCNAME[0]}: TBD"
-
-    # media_file_format="${youtube_media_filename: -5}"
-    # media_file_format="${media_file_format#*.}"
-    # #media_file_format="${media_file_format^^}"
-    # gr.msg -c deep_pink "media_file_format: $media_file_format, youtube_media_filename $youtube_media_filename"
-
-    # if ! [[ -f $youtube_media_filename ]] ; then
-    #         gr.msg -c yellow "file $youtube_media_filename not found"
-    #         return 124
-    #     fi
-
-    # #$GURU_CALL tag "$youtube_media_filename" "youtube $(date +$GURU_FILE_DATE_FORMAT) $youtube_media_title $media_url"
-
-    # source mount.sh
-    # case "$media_file_format" in
-
-    #     mp3|wav)
-    #         mount.main audio
-    #         location="$GURU_MOUNT_AUDIO" ;;
-
-
-    #     mkv|mp4|src|sub|avi)
-    #         mount.main video
-    #         location="$GURU_MOUNT_TV" ;;
-    #     *)
-    #         mount.main downloads
-    #         location="$GURU_MOUNT_DOWNLOADS" ;;
-    # esac
-
-    # # input overwrites basic shit
-    # if [[ "$1" ]] ; then
-    #         location="$1"
-    #         shift
-    #     fi
-
-    # [[ -d $location ]] || mkdir -p $location
-
-    # # moving to default location
-    # gr.msg -c white "saving to: $location/$youtube_media_filename"
-    # mv -f $youtube_media_filename $location
-}
-
-
 youtube.play () {
 # play input file
     echo "$1" | grep "https://" && base_url="" || base_url="https://www.youtube.com/watch?v"
@@ -199,23 +150,20 @@ youtube.upgrade() {
 
 
 youtube.install() {
-# install shit
+# install requirements
     sudo apt install detox mpv youtube-dl ffmpeg
     pip3 install --upgrade pip
     pip3 install youtube-search
-    #[[ -f /home/casa/.local/bin/youtube-dl ]] || pip3 install --user --upgrade youtube-dl
-    #ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
     jq --version >/dev/null || sudo apt install jq -y
-    echo "Successfully installed"
+    gr.msg -c green "Successfully installed"
 }
 
 
 youtube.uninstall(){
-# remove shit
-    gr.msg -c blue "${FUNCNAME[0]}: TBD"
-    # sudo -H pip3 unisntall --user youtube-dl
-    # sudo apt remove ffmpeg jq  -y
-    # echo "uninstalled"
+# remove requirements
+    sudo -H pip3 unisntall --user youtube-dl youtube-search
+    sudo apt remove youtube-dl -y
+    gr.msg -c green "uninstalled"
 }
 
 
@@ -224,8 +172,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     youtube.main "$@"
 fi
 
-# some tests and nice to have functions (from yle.sh)
-
+# some tests
 # query=$(python3 - << EOF
 # print("$@")
 # from youtube_search import YoutubeSearch
@@ -256,6 +203,55 @@ fi
 # )
 
 # query=$(python3 -c "$code")
+
+
+## nice to have functions (from yle.sh)
+
+# youtube.place_media () {
+# # NON TESTED: placer copied from yle.sh
+#     location="$@"
+
+#     media_file_format="${youtube_media_filename: -5}"
+#     media_file_format="${media_file_format#*.}"
+#     #media_file_format="${media_file_format^^}"
+#     gr.msg -c deep_pink "media_file_format: $media_file_format, youtube_media_filename $youtube_media_filename"
+
+#     if ! [[ -f $youtube_media_filename ]] ; then
+#             gr.msg -c yellow "file $youtube_media_filename not found"
+#             return 124
+#         fi
+
+#     #$GURU_CALL tag "$youtube_media_filename" "youtube $(date +$GURU_FILE_DATE_FORMAT) $youtube_media_title $media_url"
+
+#     source mount.sh
+#     case "$media_file_format" in
+
+#         mp3|wav)
+#             mount.main audio
+#             location="$GURU_MOUNT_AUDIO" ;;
+
+
+#         mkv|mp4|src|sub|avi)
+#             mount.main video
+#             location="$GURU_MOUNT_TV" ;;
+#         *)
+#             mount.main downloads
+#             location="$GURU_MOUNT_DOWNLOADS" ;;
+#     esac
+
+#     # input overwrites basic shit
+#     if [[ "$1" ]] ; then
+#             location="$1"
+#             shift
+#         fi
+
+#     [[ -d $location ]] || mkdir -p $location
+
+#     # moving to default location
+#     gr.msg -c white "saving to: $location/$youtube_media_filename"
+#     mv -f $youtube_media_filename $location
+# }
+
 
 # youtube.get_subtitles () {
 
