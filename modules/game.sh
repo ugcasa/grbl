@@ -133,29 +133,53 @@ game.minecraft_start () {
 
 game.minecraft_set () {
 # setup minecraft bedrock
-
     source corsair.sh
+    pkill mpv
+    guru stop
 
     case $1 in
-
         pre|"")
-            for keys in e s d f ; do
+            gr.msg -c sky_blue "  A          Strafe Left"
+            gr.msg -c sky_blue "  D          Strafe Right"
+            gr.msg -c sky_blue "  S          Walk Backward"
+            gr.msg -c sky_blue "  W          Walk Forward"
+            gr.msg -c sky_blue "  Space      Jump"
+            gr.msg -c sky_blue "  Left Shift Sneak"
+            gr.msg -c sky_blue "  Left Ctrl  Sprint"
+
+            for keys in 'shiftl' 'lctrl' a d s w 'space' ; do
                 corsair.main set $keys blue
             done
 
-            for keys in w r ; do
+            gr.msg -c green "  E          Open Inventory"
+            gr.msg -c green "  1-9        Selecthotbarslotof the number youpressed"
+            gr.msg -c green "  Q          Drop item"
+            gr.msg -c green "  F          Swapheld item(s) to off hand"
+
+            for keys in q f e 1 2 3 4 5 6 7 8 9 ; do
                 corsair.main set $keys green
             done
 
-            for keys in 'shiftl' 'space' 'tab' ; do
-                corsair.main set $keys white
+            gr.msg -c orange "  L          Advancements"
+            gr.msg -c orange "  F3         Toggles the debug menu"
+            gr.msg -c orange "  F2         Takes screenshots and stores them in your .minecraft folder"
+            gr.msg -c orange "  Scroll     Scrolls through your quick bar and the chat when opened."
+
+            for keys in 'f2' 'f3' l 'scroll' ; do
+                corsair.main set $keys orange
+            done
+
+            # unused
+            for keys in 'half' 0 'plus' 'query' 'backscape' 'tab' 'f1' 'f4' 'f5' 'f6' 'f7' 'f8' 'f9' 'f10' 'f11' 'f12' r t y u i o p å c 'tilde' 'enter' 'caps' g h j k ö ä 'asterix' 'less' z x v b n m 'comma' 'perioid' 'minus' 'shiftr' 'func' 'alt' 'altgr' 'fn' 'set' 'rctrl'  ; do
+                corsair.main set $keys black
             done
             ;;
 
         post)
-            for keys in e s d f w r 'shiftl' 'space' 'tab' ; do
+            for keys in 'shiftl' 'lctrl' 'f2' 'f3' a d s w space q f e 1 2 3 4 5 6 7 8 9 l c 'scroll' 'half' 0 'plus' 'query' 'backscape' 'tab' r t y u i o p å 'tilde' 'enter' 'caps' f g h j k ö ä 'asterix' 'shiftl' 'less' z x v b n m 'comma' 'perioid' 'minus' 'shiftr' 'func' 'alt' 'altgr' 'fn' 'set' 'rctrl'  ; do
                 corsair.main reset $keys
             done
+            guru start
             ;;
     esac
 }
