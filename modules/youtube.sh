@@ -111,7 +111,11 @@ from youtube_search import YoutubeSearch
 results = YoutubeSearch(os.environ['ARGS'], max_results=20).to_json()
 print(results)
 EOF`
-    declare -a id_list=($(echo $query | jq | grep url_suffix | sed 's/"url_suffix"://g' | sed 's/ //g' | sed 's/"\/watch?v=//g'| sed 's/"//g' ))
+    declare -a id_list=($(echo $query | jq | grep url_suffix \
+        | sed 's/"url_suffix"://g' \
+        | sed 's/ //g' \
+        | sed 's/"\/watch?v=//g'\
+        | sed 's/"//g' ))
     #declare -a title_list="$(echo $query | jq | grep title | sed 's/"title": "//g' | sed 's/"//g')"
     for (( i = 0; i < ${#id_list[@]}; i++ )); do
         _url="$base_url$(echo ${id_list[$i]} | cut -d':' -f2 | xargs | sed 's/"//g' | cut -d' ' -f 1)"
@@ -124,7 +128,6 @@ EOF`
 }
 
 
-
 youtube.get_media () {
 # get media from tube
     id=$1
@@ -133,8 +136,6 @@ youtube.get_media () {
     mount.main video
 
     [[ -d $data_location ]] || mkdir -p $GURU_MOUNT_VIDEO
-
-    youtube-dl --version || video.install
 
     gr.msg -c white "downloading $url_base=$id to $GURU_MOUNT_VIDEO.. "
     youtube-dl --ignore-errors --continue --no-overwrites \
@@ -166,7 +167,6 @@ youtube.play () {
     echo "$1" | grep "https://" && base_url="" || base_url="https://www.youtube.com/watch?v"
     gr.msg "getting from url $base_url=$1"
     youtube-dl "$base_url=$1" #2>/dev/null #| mpv -
-
 }
 
 
