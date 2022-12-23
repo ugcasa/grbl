@@ -67,6 +67,9 @@ youtube.main () {
         help)
             youtube.help $@
             ;;
+        list)
+            youtube.search_list $@
+            ;;
         *)
             youtube.search_n_play $@
             ;;
@@ -96,6 +99,30 @@ EOF`
     youtube-dl $media_address -o - 2>/dev/null | mpv $audio_mpv_options - >/dev/null
     rm $audio_now_playing
 }
+
+
+youtube.search_list () {
+# search input and play it from youtube
+    local base_url=https://www.youtube.com/watch?v=
+    export ARGS=$@
+    query=`python3 - << EOF
+import os
+from youtube_search import YoutubeSearch
+results = YoutubeSearch(os.environ['ARGS'], max_results=20).to_json()
+print(results)
+EOF`
+    declare -a id_list=($(echo $query | jq | grep url_suffix | sed 's/"url_suffix"://g' | sed 's/ //g' | sed 's/"\/watch?v=//g'| sed 's/"//g' ))
+    #declare -a title_list="$(echo $query | jq | grep title | sed 's/"title": "//g' | sed 's/"//g')"
+    for (( i = 0; i < ${#id_list[@]}; i++ )); do
+        _url="$base_url$(echo ${id_list[$i]} | cut -d':' -f2 | xargs | sed 's/"//g' | cut -d' ' -f 1)"
+        #_title="$(echo ${title_list[$i]} | cut -d':' -f2 | xargs | sed 's/,//g')"
+        gr.msg -v1 -h "${id_list[$i]} [$(($i+1))/${#id_list[@]}]"
+        #gr.msg -v2 $_url
+        echo $_url >$audio_now_playing
+        youtube-dl "$_url" -o - 2>/dev/null| mpv $audio_mpv_options --no-video - >/dev/null
+    done
+}
+
 
 
 youtube.get_media () {
