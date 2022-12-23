@@ -711,7 +711,7 @@ audio.status () {
         fi
 
     if [[ $now_playing ]] ; then
-            gr.msg -v1 -c aqua "now playing: $now_playing"
+            gr.msg -v1 -c aqua "playing: $now_playing"
         else
             gr.msg -v1 -c dark_grey "stopped"
         fi

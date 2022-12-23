@@ -78,3 +78,8 @@ listen () {
 }
 
 
+tube() {
+    gr.ind playing f8 >/dev/null 2>/dev/null
+    guru youtube search $@
+    gr.end f8 >/dev/null 2>/dev/null
+}
