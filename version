@@ -1,4 +1,4 @@
-0.6.8.15
+0.6.8.16
 bellaconf
 10 long arguments are delivered to module
 11 active module rc functions done for mount, audio and backup
@@ -8,3 +8,4 @@ bellaconf
 13 audio status prints out "now playing" data, not really tested, might mess up status output in some occasions
 14 indicator key naming harmonized + other minor improvements
 15 declare -l misunderstand issue fixed
+16 search and play function and some clean up
