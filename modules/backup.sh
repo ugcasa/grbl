@@ -181,7 +181,7 @@ backup.config () {
     local store_is_local=
     declare -ga backup_name=$1
     declare -ga active_list=(${GURU_BACKUP_ACTIVE[@]})
-    locala header=(store method from ignore)
+    local header=(store method from ignore)
 
     # exit if not in active list
     if ! echo "${active_list[@]}" | grep -q $backup_name ; then
