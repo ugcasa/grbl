@@ -2,7 +2,7 @@
 # play and get from youtube casa@ujo.guru 2022
 
 declare -g audio_mpv_socket="/tmp/mpvsocket"
-declare -g audio_mpv_options="--input-ipc-server=$audio_mpv_socket"
+declare -g audio_mpv_options="--input-ipc-server=$audio_mpv_socket --stream-record=/tmp/cache "
 declare -g audio_now_playing="/tmp/guru-cli_audio.playing"
 
 youtube.help () {
@@ -75,14 +75,25 @@ youtube.main () {
             ;;
 
         esac
-
     return 0
 }
 
 
 youtube.search_n_play () {
-# search input and play it from youtube
+# search input and play it from youtube, optimized for video and audio
     local base_url="https://www.youtube.com"
+    case $1 in
+        video)
+            mpv_options="-f best"
+            ;;
+        audio)
+            mpv_options="-f bestaudio --no-resize-buffer --ignore-errors"
+            ;;
+        *)
+            mpv_options="-f worst"
+            ;;
+    esac
+
     export ARGS=$@
     query=`python3 - << EOF
 import os
@@ -96,14 +107,17 @@ EOF`
     gr.msg -v1 -h "$title ($duration) "
     gr.msg -v2 $media_address
     echo $title >$audio_now_playing
-    youtube-dl $media_address -o - 2>/dev/null | mpv $audio_mpv_options - >/dev/null
+    youtube-dl $mpv_options $media_address -o - 2>/dev/null | mpv $audio_mpv_options - >/dev/null
     rm $audio_now_playing
+    return 0
 }
 
 
 youtube.search_list () {
-# search input and play it from youtube
+# search input and play it from youtube, optimized for audio, no video at all
     local base_url=https://www.youtube.com/watch?v=
+    local mpv_options="-f bestaudio --no-resize-buffer --ignore-errors"
+
     export ARGS=$@
     query=`python3 - << EOF
 import os
@@ -123,8 +137,10 @@ EOF`
         gr.msg -v1 -h "${id_list[$i]} [$(($i+1))/${#id_list[@]}]"
         #gr.msg -v2 $_url
         echo $_url >$audio_now_playing
-        youtube-dl "$_url" -o - 2>/dev/null| mpv $audio_mpv_options --no-video - >/dev/null
+        youtube-dl $mpv_options "$_url" -o - 2>/dev/null| mpv $audio_mpv_options --no-video - >/dev/null
+        rm $audio_now_playing
     done
+    return 0
 }
 
 
@@ -141,6 +157,7 @@ youtube.get_media () {
     youtube-dl --ignore-errors --continue --no-overwrites \
            --output "$GURU_MOUNT_VIDEO/%(title)s.%(ext)s" \
            "$url_base=$id"
+    return 0
 }
 
 
@@ -159,6 +176,7 @@ youtube.audio () {
     youtube-dl -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
            --output "$GURU_MOUNT_AUDIO/%(title)s.%(ext)s" \
            "$url_base=$id"
+    return 0
 }
 
 
@@ -167,12 +185,14 @@ youtube.play () {
     echo "$1" | grep "https://" && base_url="" || base_url="https://www.youtube.com/watch?v"
     gr.msg "getting from url $base_url=$1"
     youtube-dl "$base_url=$1" #2>/dev/null #| mpv -
+    return 0
 }
 
 
 youtube.upgrade() {
 # pip3 install --user --upgrade youtube-dl
     gr.msg -c blue "${FUNCNAME[0]}: TBD"
+    return 0
 }
 
 
@@ -183,6 +203,7 @@ youtube.install() {
     pip3 install youtube-search
     jq --version >/dev/null || sudo apt install jq -y
     gr.msg -c green "Successfully installed"
+    return 0
 }
 
 
@@ -191,12 +212,13 @@ youtube.uninstall(){
     sudo -H pip3 unisntall --user youtube-dl youtube-search
     sudo apt remove youtube-dl -y
     gr.msg -c green "uninstalled"
+    return 0
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
-    youtube.main "$@"
+if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
+    source $GURU_RC
+    youtube.main $@
 fi
 
 # some tests
