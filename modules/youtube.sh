@@ -1,24 +1,31 @@
 #!/bin/bash
 # play and get from youtube casa@ujo.guru 2022
 
-declare -g audio_mpv_socket="/tmp/mpvsocket"
-declare -g audio_mpv_options="--input-ipc-server=$audio_mpv_socket --stream-record=/tmp/cache "
-declare -g audio_now_playing="/tmp/guru-cli_audio.playing"
+declare -g mpv_socket="/tmp/mpvsocket"
+declare -g mpv_options="--input-ipc-server=$mpv_socket --stream-record=/tmp/cache"
+declare -g now_playing="/tmp/guru-cli_audio.playing"
+declare -g youtube_options="-f worst"
 
 youtube.help () {
 
     gr.msg -v1 "guru-cli youtube help " -c white
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL youtube get|play|audio|install|uninstall|help"
+    gr.msg -v0  "usage:    $GURU_CALL youtube play|get|list|install|uninstall|help"
+    gr.msg -v2
+    gr.msg -v1 "  <search string>           search and play (more info -v2)" -V1
+    gr.msg -v2 "  <search string>           search and play "
+    gr.msg -v2 "  <search string> --video   optimized for video quality"
+    gr.msg -v2 "  <search string> --audio   optimized for audio quality, may not contain video"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v2
-    gr.msg -v1 "  <search string>     search and play "
-    gr.msg -v1 "  get|dl <id|url>     download media to media folder "
-    gr.msg -v1 "  play <id|url>       play episode from stream"
-    gr.msg -v1 "  install             install requirements"
-    gr.msg -v1 "  uninstall           remove requirements "
-    gr.msg -v1 "  help                this help window"
+    gr.msg -v1 "  play <id|url>           play media from stream"
+    gr.msg -v1 "  list <search string>    play list of search results, no video playback"
+    gr.msg -v1 "  get <ids|urls>          download list of media to media folder "
+    gr.msg -v3 "  song <id|url>           download audio to audio folder "
+    gr.msg -v1 "  install                 install requirements"
+    gr.msg -v1 "  uninstall               remove requirements "
+    gr.msg -v1 "  help                    this help window"
     gr.msg -v2
     gr.msg -v1 "examples: " -c white
     gr.msg -v2
@@ -26,6 +33,7 @@ youtube.help () {
     gr.msg -v1 "  $GURU_CALL youtube play eF1D-W27Wzg"
     gr.msg -v1 "  $GURU_CALL youtube get https://www.youtube.com/watch?v=eF1D-W27Wzg"
     gr.msg -v2
+    gr.msg -v2 "alias 'tube' to replace '$GURU_CALL youtube' is available"
 }
 
 
@@ -51,15 +59,15 @@ youtube.main () {
             youtube.search_n_play $@
             ;;
 
-        audio|song|music)
-            youtube.audio $@
+        song|music)
+            youtube.get_audio $@
             ;;
 
         play)
             gr.msg -v2 -c white "getting shit from $2"
-            echo $2 >$audio_now_playing
+            echo $2 >$now_playing
             youtube-dl --pipe "$2" 2>/dev/null | mpv -
-            rm $audio_now_playing
+            rm $now_playing
             ;;
 
         status) gr.msg -c dark_grey "no status data" ;;
@@ -71,7 +79,7 @@ youtube.main () {
             youtube.search_list $@
             ;;
         *)
-            youtube.search_n_play $@
+            youtube.search_n_play $command $@
             ;;
 
         esac
@@ -79,66 +87,117 @@ youtube.main () {
 }
 
 
-youtube.search_n_play () {
-# search input and play it from youtube, optimized for video and audio
-    local base_url="https://www.youtube.com"
-    case $1 in
-        video)
-            mpv_options="-f best"
-            ;;
-        audio)
-            mpv_options="-f bestaudio --no-resize-buffer --ignore-errors"
-            ;;
-        *)
-            mpv_options="-f worst"
-            ;;
-    esac
-
-    export ARGS=$@
-    query=`python3 - << EOF
+youtube.search () {
+# search from youtube and return json of $1 amount of results
+    export result_count=$1
+    shift
+    export search_string="$@"
+python3 - << EOF
 import os
 from youtube_search import YoutubeSearch
-results = YoutubeSearch(os.environ['ARGS'], max_results=1).to_json()
+results = YoutubeSearch(os.environ['search_string'], max_results=int(os.environ['result_count'])).to_json()
 print(results)
-EOF`
+EOF
+}
+
+
+youtube.search_n_play () {
+# search input and play it from youtube. use long arguments --video or --audio to select optimization
+    local base_url="https://www.youtube.com"
+    local arguments=($@)
+    local pass=()
+    # TBD local position=
+
+    for (( i = 0; i < ${#arguments[@]}; i++ )); do
+        gr.msg -v4 "${FUNCNAME[0]}: argument: $i:${arguments[$i]}"
+
+        case ${arguments[$i]} in
+
+            --video|--v)
+                youtube_options="-f best"
+                ;;
+            --audio|--a)
+                youtube_options="-f bestaudio --no-resize-buffer --ignore-errors"
+                mpv_options="$mpv_options --no-video"
+                ;;
+            # --start|--s)          ## TBD mpv does not support this ffmpg can, but not too important
+            #     i=$((i+1))
+            #     gr.msg -v4 "got position: ${arguments[$i]} "
+            #     position=${arguments[$i]}
+            #     ;;
+            # --end|--e)
+            #     i=$((i+1))
+            #     gr.msg -v4 "got position: ${arguments[$i]} "
+            #     position=${arguments[$i]}
+            #     ;;
+            *)
+                pass+=("${arguments[$i]}")
+                ;;
+            esac
+        done
+
+    # debug stuff (TBD remove later)
+    gr.msg -v4 "${FUNCNAME[0]}: passing: ${pass[@]}"
+    gr.msg -v4 "${FUNCNAME[0]}: youtube_options: $youtube_options"
+    gr.msg -v4 "${FUNCNAME[0]}: mpv_options: $mpv_options"
+
+    # make search and get media data and address
+    local query=$(youtube.search 1 ${pass[@]})
+
+    # format information of found media
     local title=$(echo $query | jq | grep title | cut -d':' -f 2 | xargs | sed 's/,//g')
     local duration=$(echo $query | jq | grep duration | cut -d':' -f 2 | xargs | sed 's/,//g')
     local media_address=$base_url$(echo $query | jq | grep url_suffix | cut -d':' -f 2 | xargs)
+
     gr.msg -v1 -h "$title ($duration) "
     gr.msg -v2 $media_address
-    echo $title >$audio_now_playing
-    youtube-dl $mpv_options $media_address -o - 2>/dev/null | mpv $audio_mpv_options - >/dev/null
-    rm $audio_now_playing
+
+    # make now playing info available for audio module
+    echo $title >$now_playing
+
+    # start stream and play
+    youtube-dl $youtube_options $media_address -o - 2>/dev/null | mpv $mpv_options - >/dev/null
+
+    #remove now playing data
+    rm $now_playing
     return 0
 }
 
 
 youtube.search_list () {
 # search input and play it from youtube, optimized for audio, no video at all
-    local base_url=https://www.youtube.com/watch?v=
-    local mpv_options="-f bestaudio --no-resize-buffer --ignore-errors"
 
-    export ARGS=$@
-    query=`python3 - << EOF
-import os
-from youtube_search import YoutubeSearch
-results = YoutubeSearch(os.environ['ARGS'], max_results=20).to_json()
-print(results)
-EOF`
+    local base_url=https://www.youtube.com/watch?v=
+
+    # overwrite global variables, optimize for audio
+    youtube_options="-f bestaudio --no-resize-buffer --ignore-errors"
+
+    # make search and get media data and address
+    local query=$(youtube.search 20 ${pass[@]})
+
+    # format information of found media
     declare -a id_list=($(echo $query | jq | grep url_suffix \
         | sed 's/"url_suffix"://g' \
         | sed 's/ //g' \
         | sed 's/"\/watch?v=//g'\
         | sed 's/"//g' ))
-    #declare -a title_list="$(echo $query | jq | grep title | sed 's/"title": "//g' | sed 's/"//g')"
+    # TBD declare -a title_list="$(echo $query | jq | grep title | sed 's/"title": "//g' | sed 's/"//g')"
+
+    # go trough list of search results
     for (( i = 0; i < ${#id_list[@]}; i++ )); do
         _url="$base_url$(echo ${id_list[$i]} | cut -d':' -f2 | xargs | sed 's/"//g' | cut -d' ' -f 1)"
-        #_title="$(echo ${title_list[$i]} | cut -d':' -f2 | xargs | sed 's/,//g')"
+
+        # TBD _title="$(echo ${title_list[$i]} | cut -d':' -f2 | xargs | sed 's/,//g')"
         gr.msg -v1 -h "${id_list[$i]} [$(($i+1))/${#id_list[@]}]"
-        #gr.msg -v2 $_url
-        echo $_url >$audio_now_playing
-        youtube-dl $mpv_options "$_url" -o - 2>/dev/null| mpv $audio_mpv_options --no-video - >/dev/null
-        rm $audio_now_playing
+
+        # make now playing info available for audio module
+        echo $_url >$now_playing
+
+        # start stream and play
+        youtube-dl $youtube_options "$_url" -o - 2>/dev/null| mpv $mpv_options --no-video - >/dev/null
+
+        #remove now playing data
+        rm $now_playing
     done
     return 0
 }
@@ -161,7 +220,7 @@ youtube.get_media () {
 }
 
 
-youtube.audio () {
+youtube.get_audio () {
 # get media from tube
     local id=$1
     local url_base="https://www.youtube.com/watch?v"
