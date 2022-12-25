@@ -8,7 +8,7 @@
 # alias lunch='guru timer end'
 
 alias $GURU_SYSTEM_ALIAS="$GURU_CALL"
-
+alias tube="$GURU_CALL youtube"
 ## place for simple functions used as aliases
 # freedom from 'guru' or 'gr.' prefixes
 
@@ -77,9 +77,3 @@ listen () {
         esac
 }
 
-
-tube() {
-    gr.ind playing f8 >/dev/null 2>/dev/null
-    guru youtube search $@
-    gr.end f8 >/dev/null 2>/dev/null
-}

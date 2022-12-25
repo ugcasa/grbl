@@ -1,10 +1,13 @@
 #!/bin/bash
 # play and get from youtube casa@ujo.guru 2022
 
+declare -g youtube_rc="/tmp/guru-cli_youtube.rc"
+declare -g ARGUMENTS=()
 declare -g mpv_socket="/tmp/mpvsocket"
 declare -g mpv_options="--input-ipc-server=$mpv_socket --stream-record=/tmp/cache"
-declare -g now_playing="/tmp/guru-cli_audio.playing"
 declare -g youtube_options="-f worst"
+declare -g save_to_file=
+
 
 youtube.help () {
 
@@ -12,10 +15,12 @@ youtube.help () {
     gr.msg -v2
     gr.msg -v0  "usage:    $GURU_CALL youtube play|get|list|install|uninstall|help"
     gr.msg -v2
-    gr.msg -v1 "  <search string>           search and play (more info -v2)" -V1
-    gr.msg -v2 "  <search string>           search and play "
-    gr.msg -v2 "  <search string> --video   optimized for video quality"
-    gr.msg -v2 "  <search string> --audio   optimized for audio quality, may not contain video"
+    gr.msg -v1 "  <search string> --<args>  search and play (more info -v2)" -V1
+    gr.msg -v2 "  <search string>   search and play, arguments below "
+    gr.msg -v2 "   --video          optimized for video quality"
+    gr.msg -v2 "   --audio          optimized for audio quality, may not contain video"
+    gr.msg -v2 "   --loop           play it forever"
+    gr.msg -v2 "   --get            get video or audio, if not specified save to downloads"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v2
@@ -56,18 +61,12 @@ youtube.main () {
             ;;
 
         search)
-            youtube.search_n_play $@
+            local query=$(youtube.search 10 json $@)
+            echo $query | jq
             ;;
 
         song|music)
             youtube.get_audio $@
-            ;;
-
-        play)
-            gr.msg -v2 -c white "getting shit from $2"
-            echo $2 >$now_playing
-            youtube-dl --pipe "$2" 2>/dev/null | mpv -
-            rm $now_playing
             ;;
 
         status) gr.msg -c dark_grey "no status data" ;;
@@ -87,15 +86,117 @@ youtube.main () {
 }
 
 
+youtube.parse_arguments () {
+
+    local got_args=($@)
+
+    for (( i = 0; i < ${#got_args[@]}; i++ )); do
+        gr.msg -v4 "${FUNCNAME[0]}: argument: $i:${got_args[$i]}"
+
+        case ${got_args[$i]} in
+
+            --get|--download|--save)
+                youtube_options="-x --audio-format mp3 "
+                save_to_file=true
+                ;;
+
+            --repeat|--l|--loop)
+                mpv_options="$mpv_options --loop"
+                ;;
+
+            --video|--v)
+                youtube_options="-f best"
+                save_location=$GURU_MOUNT_VIDEO
+                ;;
+
+            --audio|--a)
+                youtube_options="-f bestaudio --no-resize-buffer --ignore-errors"
+                mpv_options="$mpv_options --no-video"
+                save_location=$GURU_MOUNT_AUDIO
+                ;;
+
+            # --playlist|--pl)        ## TBD search for playlists
+            #     i=$((i+1))
+            #     gr.msg -v4 "got position: ${got_args[$i]} "
+            #     position=${got_args[$i]}
+            #     ;;
+
+            # --list|--l)            ## TBD play search result list
+            #     i=$((i+1))
+            #     gr.msg -v4 "got position: ${got_args[$i]} "
+            #     position=${got_args[$i]}
+            #     ;;
+
+
+            # --start|--s)          ## TBD mpv does not support this ffmpg can, but not too important
+            #     i=$((i+1))
+            #     gr.msg -v4 "got position: ${got_args[$i]} "
+            #     position=${got_args[$i]}
+            #     ;;
+            # --end|--e)
+            #     i=$((i+1))
+            #     gr.msg -v4 "got position: ${got_args[$i]} "
+            #     position=${got_args[$i]}
+            #     ;;
+            *)
+                ARGUMENTS+=("${got_args[$i]}")
+                ;;
+            esac
+        done
+
+    # debug stuff (TBD remove later)
+    gr.msg -v4 "${FUNCNAME[0]}: passing args: ${ARGUMENTS[@]}"
+    gr.msg -v4 "${FUNCNAME[0]}: youtube_options: $youtube_options"
+    gr.msg -v4 "${FUNCNAME[0]}: mpv_options: $mpv_options"
+}
+
+
+youtube.rc () {
+# source configurations (to be faster)
+
+    if [[ ! -f $youtube_rc ]] \
+        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/google.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]] \
+        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/audio.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]] \
+        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]]
+        then
+            youtube.make_rc && \
+                gr.msg -v1 -c dark_gray "$youtube_rc updated"
+        fi
+    source $youtube_rc
+}
+
+youtube.make_rc () {
+# # make rc out of config file and run it
+
+    source config.sh
+
+    if [[ -f $youtube_rc ]] ; then
+            rm -f $youtube_rc
+        fi
+
+    config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $youtube_rc
+    config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $youtube_rc append
+    config.make_rc "$GURU_CFG/$GURU_USER/google.cfg" $youtube_rc append
+    chmod +x $youtube_rc
+}
+
+
 youtube.search () {
 # search from youtube and return json of $1 amount of results
     export result_count=$1
+
+    case $2 in
+            json) return_format=json ; shift ;;
+            dict) return_format=dict ; shift ;;
+            *) return_format=json
+        esac
+
     shift
     export search_string="$@"
 python3 - << EOF
 import os
 from youtube_search import YoutubeSearch
-results = YoutubeSearch(os.environ['search_string'], max_results=int(os.environ['result_count'])).to_json()
+results = YoutubeSearch(os.environ['search_string'], max_results=int(os.environ['result_count'])).to_$return_format()
 print(results)
 EOF
 }
@@ -104,62 +205,73 @@ EOF
 youtube.search_n_play () {
 # search input and play it from youtube. use long arguments --video or --audio to select optimization
     local base_url="https://www.youtube.com"
-    local arguments=($@)
-    local pass=()
-    # TBD local position=
+    local _error=
 
-    for (( i = 0; i < ${#arguments[@]}; i++ )); do
-        gr.msg -v4 "${FUNCNAME[0]}: argument: $i:${arguments[$i]}"
-
-        case ${arguments[$i]} in
-
-            --video|--v)
-                youtube_options="-f best"
-                ;;
-            --audio|--a)
-                youtube_options="-f bestaudio --no-resize-buffer --ignore-errors"
-                mpv_options="$mpv_options --no-video"
-                ;;
-            # --start|--s)          ## TBD mpv does not support this ffmpg can, but not too important
-            #     i=$((i+1))
-            #     gr.msg -v4 "got position: ${arguments[$i]} "
-            #     position=${arguments[$i]}
-            #     ;;
-            # --end|--e)
-            #     i=$((i+1))
-            #     gr.msg -v4 "got position: ${arguments[$i]} "
-            #     position=${arguments[$i]}
-            #     ;;
-            *)
-                pass+=("${arguments[$i]}")
-                ;;
-            esac
-        done
-
-    # debug stuff (TBD remove later)
-    gr.msg -v4 "${FUNCNAME[0]}: passing: ${pass[@]}"
-    gr.msg -v4 "${FUNCNAME[0]}: youtube_options: $youtube_options"
-    gr.msg -v4 "${FUNCNAME[0]}: mpv_options: $mpv_options"
+    # to fulfill global variables: save_to_file save_location mpv_options youtube_options
+    youtube.parse_arguments $@
 
     # make search and get media data and address
-    local query=$(youtube.search 1 ${pass[@]})
+    local query=$(youtube.search 1 json ${ARGUMENTS[@]})
 
     # format information of found media
-    local title=$(echo $query | jq | grep title | cut -d':' -f 2 | xargs | sed 's/,//g')
-    local duration=$(echo $query | jq | grep duration | cut -d':' -f 2 | xargs | sed 's/,//g')
+    # TBD make able to parse multiple search results ans for them trough to replace search_list function"
+    local title=$(echo $query | jq | grep title | cut -d':' -f2 | sed 's/"//g' | sed 's/,//g' | xargs -0 )
+    local duration=$(echo $query | jq | grep duration | cut -d':' -f2 | xargs | sed 's/,//g')
     local media_address=$base_url$(echo $query | jq | grep url_suffix | cut -d':' -f 2 | xargs)
 
     gr.msg -v1 -h "$title ($duration) "
     gr.msg -v2 $media_address
 
+    # if just saving the file
+    if [[ $save_to_file ]]; then
+            #save the file to media folder
+            youtube_options="$youtube_options --continue --output $save_location/%(title)s.%(ext)s"
+            gr.msg -v1 "downloading to $save_location.. "
+            # save file
+            yt-dlp $youtube_options $media_address
+            # a bit dangero if some of location variables are empty
+            detox -v *mp3 2>/dev/null $save_location
+            return $?
+        fi
+
     # make now playing info available for audio module
-    echo $title >$now_playing
+    echo $title >$GURU_AUDIO_NOW_PLAYING
 
     # start stream and play
-    youtube-dl $youtube_options $media_address -o - 2>/dev/null | mpv $mpv_options - >/dev/null
+    yt-dlp $youtube_options $media_address -o - 2>/tmp/youtube.error \
+        | mpv $mpv_options - >/dev/null
 
-    #remove now playing data
-    rm $now_playing
+    # in some cases there is word fuck or exposed tits in video, therefore:
+    if grep 'Sign in to' /tmp/youtube.error; then
+        rm /tmp/mpv.error /tmp/youtube.error
+
+        # if user willing to save password in configs (who would?) serve him/her anyway
+        [[ $GURU_YOUTUBE_PASSWORD ]] \
+            && sing_in="-u $GURU_YOUTUBE_USER -p $GURU_YOUTUBE_PASSWORD" \
+            || sing_in="-u $GURU_YOUTUBE_USER"
+
+            gr.msg -v2 "signing in as $GURU_YOUTUBE_USER"
+
+            # then perform re-try
+            yt-dlp -v $youtube_options $sing_in $media_address -o - 2>/tmp/youtube.error \
+                | mpv $mpv_options - >/dev/null
+    fi
+
+    # lacy error printout
+    if [[ -f /tmp/mpv.error ]]; then
+            _error=$(grep 'ERROR:' /tmp/youtube.error)
+            [[ $_error ]] && gr.msg -v2 -c red $_error
+            rm /tmp/mpv.error
+        fi
+
+    if [[ -f /tmp/youtube.error ]]; then
+            _error=$(grep 'Failed' /tmp/mpv.error)
+            [[ $_error ]] && gr.msg -v2 -c yellow $_error
+            rm /tmp/youtube.error
+        fi
+    # remove now playing and error data
+    [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+
     return 0
 }
 
@@ -173,7 +285,7 @@ youtube.search_list () {
     youtube_options="-f bestaudio --no-resize-buffer --ignore-errors"
 
     # make search and get media data and address
-    local query=$(youtube.search 20 ${pass[@]})
+    local query=$(youtube.search 20 json $@)
 
     # format information of found media
     declare -a id_list=($(echo $query | jq | grep url_suffix \
@@ -188,16 +300,17 @@ youtube.search_list () {
         _url="$base_url$(echo ${id_list[$i]} | cut -d':' -f2 | xargs | sed 's/"//g' | cut -d' ' -f 1)"
 
         # TBD _title="$(echo ${title_list[$i]} | cut -d':' -f2 | xargs | sed 's/,//g')"
-        gr.msg -v1 -h "${id_list[$i]} [$(($i+1))/${#id_list[@]}]"
+        # gr.msg -v1 -h "${id_list[$i]} [$(($i+1))/${#id_list[@]}]" # might contain '-' and its read as an option =/
+        echo "${id_list[$i]} [$(($i+1))/${#id_list[@]}]"
 
         # make now playing info available for audio module
-        echo $_url >$now_playing
+        echo $_url >$GURU_AUDIO_NOW_PLAYING
 
         # start stream and play
-        youtube-dl $youtube_options "$_url" -o - 2>/dev/null| mpv $mpv_options --no-video - >/dev/null
+        yt-dlp $youtube_options "$_url" -o - 2>/dev/null| mpv $mpv_options --no-video -
 
         #remove now playing data
-        rm $now_playing
+        rm $GURU_AUDIO_NOW_PLAYING
     done
     return 0
 }
@@ -213,7 +326,7 @@ youtube.get_media () {
     [[ -d $data_location ]] || mkdir -p $GURU_MOUNT_VIDEO
 
     gr.msg -c white "downloading $url_base=$id to $GURU_MOUNT_VIDEO.. "
-    youtube-dl --ignore-errors --continue --no-overwrites \
+    yt-dlp --ignore-errors --continue --no-overwrites \
            --output "$GURU_MOUNT_VIDEO/%(title)s.%(ext)s" \
            "$url_base=$id"
     return 0
@@ -229,10 +342,10 @@ youtube.get_audio () {
 
     [[ -d $GURU_MOUNT_AUDIO/new ]] || mkdir -p $GURU_MOUNT_AUDIO/new
 
-    youtube-dl --version || video.install
+    yt-dlp --version || video.install
 
     gr.msg -c white "downloading $url_base=$id to $GURU_MOUNT_AUDIO.. "
-    youtube-dl -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
+    yt-dlp -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
            --output "$GURU_MOUNT_AUDIO/%(title)s.%(ext)s" \
            "$url_base=$id"
     return 0
@@ -241,15 +354,20 @@ youtube.get_audio () {
 
 youtube.play () {
 # play input file
-    echo "$1" | grep "https://" && base_url="" || base_url="https://www.youtube.com/watch?v"
-    gr.msg "getting from url $base_url=$1"
-    youtube-dl "$base_url=$1" #2>/dev/null #| mpv -
-    return 0
+    echo "$@" | grep "https://" && base_url="" || base_url="https://www.youtube.com/watch?v="
+    youtube.parse_arguments $@
+    local media_address="$base_url${ARGUMENTS[0]}"
+    gr.msg -c aqua "$media_address" -k $GURU_AUDIO_INDICATOR_KEY
+    echo $media_address >$GURU_AUDIO_NOW_PLAYING
+    yt-dlp -v $youtube_options $media_address -o - 2>/tmp/youtube.error \
+                | mpv $mpv_options - >/dev/null
+    gr.msg -c reset -k $GURU_AUDIO_INDICATOR_KEY
+    rm $GURU_AUDIO_NOW_PLAYING
 }
 
 
 youtube.upgrade() {
-# pip3 install --user --upgrade youtube-dl
+# pip3 install --user --upgrade yt-dlp
     gr.msg -c blue "${FUNCNAME[0]}: TBD"
     return 0
 }
@@ -257,9 +375,14 @@ youtube.upgrade() {
 
 youtube.install() {
 # install requirements
-    sudo apt install detox mpv youtube-dl ffmpeg
+    sudo apt install detox mpv yt-dlp ffmpeg
     pip3 install --upgrade pip
-    pip3 install youtube-search
+    # pip3 install youtube-search
+
+    sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
+    sudo chmod a+rx /usr/local/bin/yt-dlp
+    sudo ln -s /usr/local/bin/yt-dlp /usr/bin/yt-dlp
+
     jq --version >/dev/null || sudo apt install jq -y
     gr.msg -c green "Successfully installed"
     return 0
@@ -268,12 +391,15 @@ youtube.install() {
 
 youtube.uninstall(){
 # remove requirements
-    sudo -H pip3 unisntall --user youtube-dl youtube-search
-    sudo apt remove youtube-dl -y
+    sudo -H pip3 unisntall --user yt-dlp youtube-search
+    rm -y /usr/bin/yt-dlp /usr/local/bin/yt-dlp
+    sudo apt remove yt-dlp -y
     gr.msg -c green "uninstalled"
     return 0
 }
 
+youtube.rc
+declare -g save_location=$GURU_MOUNT_DOWNLOADS
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
     source $GURU_RC
@@ -313,64 +439,16 @@ fi
 # query=$(python3 -c "$code")
 
 
-## nice to have functions (from yle.sh)
-
-# youtube.place_media () {
-# # NON TESTED: placer copied from yle.sh
-#     location="$@"
-
-#     media_file_format="${youtube_media_filename: -5}"
-#     media_file_format="${media_file_format#*.}"
-#     #media_file_format="${media_file_format^^}"
-#     gr.msg -c deep_pink "media_file_format: $media_file_format, youtube_media_filename $youtube_media_filename"
-
-#     if ! [[ -f $youtube_media_filename ]] ; then
-#             gr.msg -c yellow "file $youtube_media_filename not found"
-#             return 124
-#         fi
-
-#     #$GURU_CALL tag "$youtube_media_filename" "youtube $(date +$GURU_FILE_DATE_FORMAT) $youtube_media_title $media_url"
-
-#     source mount.sh
-#     case "$media_file_format" in
-
-#         mp3|wav)
-#             mount.main audio
-#             location="$GURU_MOUNT_AUDIO" ;;
-
-
-#         mkv|mp4|src|sub|avi)
-#             mount.main video
-#             location="$GURU_MOUNT_TV" ;;
-#         *)
-#             mount.main downloads
-#             location="$GURU_MOUNT_DOWNLOADS" ;;
-#     esac
-
-#     # input overwrites basic shit
-#     if [[ "$1" ]] ; then
-#             location="$1"
-#             shift
-#         fi
-
-#     [[ -d $location ]] || mkdir -p $location
-
-#     # moving to default location
-#     gr.msg -c white "saving to: $location/$youtube_media_filename"
-#     mv -f $youtube_media_filename $location
-# }
-
 
 # youtube.get_subtitles () {
 
 #     [ -d "$youtube_temp" ] && rm -rf "$youtube_temp"
 #     mkdir -p "$youtube_temp"
 #     cd "$youtube_temp"
-#     youtube-dl "$media_url" --subtitlesonly #2>/dev/null
+#     yt-dlp "$media_url" --subtitlesonly #2>/dev/null
 #     #youtube_media_filename=$(detox -v * | grep -v "Scanning")
 #     #youtube_media_filename=${youtube_media_filename#*"-> "}
 # }
-
 
 # block_rev () {
 #     # trick to reverse array without reversing strings
@@ -499,15 +577,15 @@ fi
 #     gr.msg -v3 -c deep_pink "media_url: $media_url"
 
 #     # Check if id contain youtube_episodes, then select first one (newest)
-#     youtube_episodes=($(youtube-dl --showepisodepage $media_url | grep -v $media_url))
-#     # episode_ids=($(youtube-dl $media_url --showmetadata | jq '.[].program_id'))
+#     youtube_episodes=($(yt-dlp --showepisodepage $media_url | grep -v $media_url))
+#     # episode_ids=($(yt-dlp $media_url --showmetadata | jq '.[].program_id'))
 #     gr.msg -v3 -c light_blue "youtube_episodes: ${youtube_episodes[@]}"
 
 #     # change media address poin to first episode
 #     [[ ${youtube_episodes[0]} ]] && media_url=${youtube_episodes[0]}
 
 #     # Get metadata
-#     youtube-dl $media_url --showmetadata > $meta_data
+#     yt-dlp $media_url --showmetadata > $meta_data
 
 #     grep "error" $meta_data && error=$(cat $meta_data | jq '.[].flavors[].error')
 

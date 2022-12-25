@@ -9,7 +9,7 @@ declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
 declare -g audio_playlist_folder="$audio_data_folder/playlists"
 declare -g audio_temp_file="/tmp/guru-cli_audio.playlist"
 declare -g audio_playing_pid=$(ps x | grep mpv| grep -v grep | cut -f1 -d" ")
-declare -g audio_now_playing="/tmp/guru-cli_audio.playing"
+# declare -g GURU_AUDIO_NOW_PLAYING="/tmp/guru-cli_audio.playing"
 declare -g audio_mpv_socket="/tmp/mpvsocket"
 declare -g audio_mpv_options="--input-ipc-server=$audio_mpv_socket"
 [[ $GURU_VERBOSE -lt 1 ]] && audio_mpv_options="$audio_mpv_options --really-quiet"
@@ -297,9 +297,9 @@ audio.listen () {
             gr.msg -v1 "playing from $@"
             gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
-            echo $@ >$audio_now_playing
+            echo $@ >$GURU_AUDIO_NOW_PLAYING
             mpv $@ $audio_mpv_options --no-resume-playback
-            rm $audio_now_playing
+            rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY
             ;;
 
@@ -308,10 +308,10 @@ audio.listen () {
             local channel=$(echo $@ | sed -r 's/(^| )([a-z])/\U\2/g' )
             local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
-            echo $channel >$audio_now_playing
+            echo $channel >$GURU_AUDIO_NOW_PLAYING
             gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
             mpv $url $audio_mpv_options --no-resume-playback
-            rm $audio_now_playing
+            rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY
             ;;
         *)
@@ -330,10 +330,10 @@ audio.listen () {
             # play
             gr.msg -v2 -c white "📻 ${name^} 🔊"
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
-            echo ${name^} >$audio_now_playing
+            echo ${name^} >$GURU_AUDIO_NOW_PLAYING
             gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
             mpv $url $audio_mpv_options --no-resume-playback
-            rm $audio_now_playing
+            rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY
         esac
     return 0
@@ -698,8 +698,8 @@ audio.status () {
     local now_playing=$(audio.mpv_stat)
 
     # for playing radios
-    if [[ -f $audio_now_playing ]] ; then
-            local station=$(cat $audio_now_playing)
+    if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
+            local station=$(cat $GURU_AUDIO_NOW_PLAYING)
             now_playing="$station $now_playing"
         fi
 
