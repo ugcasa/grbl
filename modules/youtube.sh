@@ -96,7 +96,7 @@ youtube.parse_arguments () {
         case ${got_args[$i]} in
 
             --get|--download|--save)
-                youtube_options="-x --audio-format mp3 "
+                youtube_options="-f b"
                 save_to_file=true
                 ;;
 
@@ -105,7 +105,7 @@ youtube.parse_arguments () {
                 ;;
 
             --video|--v)
-                youtube_options="-f best"
+                youtube_options=
                 save_location=$GURU_MOUNT_VIDEO
                 ;;
 
@@ -143,6 +143,12 @@ youtube.parse_arguments () {
                 ;;
             esac
         done
+
+        # save format
+        if [[ $save_to_file ]] ; then
+            [[ "$save_location" == "$GURU_MOUNT_AUDIO" ]] && youtube_options="$youtube_options -x --audio-format mp3"
+            [[ "$save_location" == "$GURU_MOUNT_VIDEO" ]] && youtube_options="$youtube_options --recode-video mp4"
+        fi
 
     # debug stuff (TBD remove later)
     gr.msg -v4 "${FUNCNAME[0]}: passing args: ${ARGUMENTS[@]}"
@@ -230,7 +236,7 @@ youtube.search_n_play () {
             # save file
             yt-dlp $youtube_options $media_address
             # a bit dangero if some of location variables are empty
-            detox -v *mp3 2>/dev/null $save_location
+            detox -v *mp3 *mp4 $save_location 2>/dev/null
             return $?
         fi
 
