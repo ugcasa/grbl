@@ -1,4 +1,4 @@
-0.6.8.17
+0.6.8.18
 bellaconf
 10 long arguments are delivered to module
 11 active module rc functions done for mount, audio and backup
@@ -11,3 +11,4 @@ bellaconf
 16 search and play function and some clean up
 17 gaming module added, minecraft keybindings
 17 messy list player, youtube.sh review needed
+18 youtube optimized, just fun for xmass

@@ -2,12 +2,7 @@
 # play and get from youtube casa@ujo.guru 2022
 
 declare -g youtube_rc="/tmp/guru-cli_youtube.rc"
-declare -g youtube_arguments=()
-declare -g mpv_socket="/tmp/mpvsocket"
-declare -g mpv_options="--input-ipc-server=$mpv_socket --stream-record=/tmp/cache"
-declare -g youtube_options="-f worst"
-declare -g save_to_file=
-
+# more global variables downstairs (after sourcing rc file)
 
 youtube.help () {
 
@@ -16,7 +11,7 @@ youtube.help () {
     gr.msg -v0  "usage:    $GURU_CALL youtube play|get|list|install|uninstall|help"
     gr.msg -v2
     gr.msg -v1 "  <search string> --<args>  search and play (more info -v2)" -V1
-    gr.msg -v2 "  <search string>   search and play, arguments below "
+    gr.msg -v2 "  <search string>   search and play, options below "
     gr.msg -v2 "   --video          optimized for video quality"
     gr.msg -v2 "   --audio          optimized for audio quality, may not contain video"
     gr.msg -v2 "   --loop           play it forever"
@@ -406,6 +401,10 @@ youtube.uninstall(){
 
 youtube.rc
 declare -g save_location=$GURU_MOUNT_DOWNLOADS
+declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_SOCKET --stream-record=/tmp/mpv_audio.cache"
+declare -g youtube_arguments=()
+declare -g youtube_options="-f worst"
+declare -g save_to_file=
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
     source $GURU_RC

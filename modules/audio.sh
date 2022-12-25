@@ -5,14 +5,10 @@
 # ~/.config/mpv/scripts/now_playing.lua
 
 declare -g audio_rc="/tmp/guru-cli_audio.rc"
-declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
 declare -g audio_playlist_folder="$audio_data_folder/playlists"
 declare -g audio_temp_file="/tmp/guru-cli_audio.playlist"
 declare -g audio_playing_pid=$(ps x | grep mpv| grep -v grep | cut -f1 -d" ")
-# declare -g GURU_AUDIO_NOW_PLAYING="/tmp/guru-cli_audio.playing"
-declare -g audio_mpv_socket="/tmp/mpvsocket"
-declare -g audio_mpv_options="--input-ipc-server=$audio_mpv_socket"
-[[ $GURU_VERBOSE -lt 1 ]] && audio_mpv_options="$audio_mpv_options --really-quiet"
+# more global variables downstairs (after sourcing rc file)
 
 audio.help () {
 
@@ -20,7 +16,6 @@ audio.help () {
     gr.msg -v2
     gr.msg -v0 "usage:    $GURU_CALL audio play|ls|list|listen|radio|pause|resume|mute|stop|tunnel|toggle|install|remove|help"
     gr.msg -v2
-    gr.msg -v2 "playing files and stream " -c white
     gr.msg -v1 "  play <song|album|artist>    play files in $GURU_MOUNT_AUDIO"
     gr.msg -v1 "  play list <playlist_name>   play a playlist set in user.cfg"
     gr.msg -v1 "  play list ls                list of available playlists "
@@ -39,6 +34,10 @@ audio.help () {
     gr.msg -v1 "  tunnel                      secure audio tunnel tools (rise verbose for more)" -V2
     gr.msg -v1 "  help                        printout this help "
     gr.msg -v2
+    gr.msg -v1  "options:"
+    gr.msg -v1   " --loop                     loop forever (not fully implemented)"
+    gr.msg -v2
+    gr.msg -v2 "playing files and stream " -c white
     gr.msg -v2 "tunneling commands " -c white
     gr.msg -v2 "  tunnel open <host>            open audio tunnel (ssh) to host audio device "
     gr.msg -v2 "  tunnel close                  close current audio tunnel "
@@ -47,6 +46,24 @@ audio.help () {
     gr.msg -v2 "  tunnel fast [command] <host>  fast (and brutal) way to open tunnel"
     gr.msg -v2
 }
+
+
+# audio.parse_options () {
+
+#     local got_args=($@)
+#     for (( i = 0; i < ${#got_args[@]}; i++ )); do
+#         case ${got_args[$i]} in
+
+#             --repeat|--l|--loop)
+#                 mpv_options="$mpv_options --loop"
+#                 ;;
+#             *)
+#                 pass_forward+=("${got_args[$i]}")
+#                 ;;
+#             esac
+#         done
+#     echo ${pass_forward[@]}
+# }
 
 
 audio.main () {
@@ -59,7 +76,7 @@ audio.main () {
         continue)
             if [[ -f $audio_temp_file ]] ; then
                 [[ $audio_playing_pid ]] && kill $audio_playing_pid
-                mpv $audio_mpv_options --playlist=$audio_temp_file --save-position-on-quit
+                mpv $mpv_options --playlist=$audio_temp_file --save-position-on-quit
             else
                 gr.msg -c yellow "no saved position"
                 return 0
@@ -138,7 +155,7 @@ audio.play () {
                 _error=$?
                 ;;
             *)
-                audio.find_and_play $1
+                audio.find_and_play $@
                 _error=$?
                 ;;
         esac
@@ -150,11 +167,13 @@ audio.play () {
 
 audio.find_and_play () {
 # find from known audio locations and play
+# jeesus mitä paskaa.. TBD review! a) tää ei toimi b) metodi todella anaalista c) ei saa mitään selvää!
+# miten sienissä tämä on kirjoitettu?
 
         if [[ -f $1 ]] ; then
                         gr.ind playing $GURU_AUDIO_INDICATOR_KEY
                         [[ $audio_playing_pid ]] && kill $audio_playing_pid
-                        mpv $1 $audio_mpv_options --save-position-on-quit
+                        mpv $1 $mpv_options --save-position-on-quit
                         gr.end $GURU_AUDIO_INDICATOR_KEY
                         return $?
                     fi
@@ -170,10 +189,11 @@ audio.find_and_play () {
             mount.main music
             ifs=$IFS
             IFS=" "
-            got=$(find $GURU_MOUNT_MUSIC -maxdepth 3 -iname *mp3)
-            got="$got $(find $GURU_MOUNT_AUDIO -maxdepth 3 -iname *mp3)"
+            # luoja mitä paskaa.. TBD review!
+            _got=$(find $GURU_MOUNT_MUSIC -maxdepth 3 -iname *mp3)
+            _got="$_got $(find $GURU_MOUNT_AUDIO -maxdepth 3 -iname *mp3)"
             while [[ $1 ]] ; do
-                got=$(echo -e $got | grep -i $to_find | grep -v 'Trash-1000')
+                got=$(echo -e $_got | grep -i $to_find | grep -v 'Trash-1000')
                 shift
             done
             #gr.msg -c light_blue "${got[@]}"
@@ -191,15 +211,17 @@ audio.find_and_play () {
                 gr.msg -v1 -c light_blue "${songs}" | sed 's/.*@//'
                 gr.ind playing $GURU_AUDIO_INDICATOR_KEY
 
+                # TBD why here?? remove from here and add move to audio.parse_options
                 case $GURU_MODULE_ARGUMENTS in
 
-                    --repeat)
+                    --repeat|--loop)
                         local key
                         gr.msg -h "loop forever, hit double 'q' to end"
                         gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
                         while true ; do
                                 [[ $audio_playing_pid ]] && kill $audio_playing_pid
-                                mpv $(echo -e $got) $audio_mpv_options --no-resume-playback --no-video 2>/dev/null
+                                gr.msg -h "$got"
+                                mpv $(echo -e $got) $mpv_options --no-resume-playback --no-video #>/dev/null
                                 read -t 1 -n 1 -p "hit 'q' to end loop: " key
                                 case $key in q) echo ; break ; esac
                             done
@@ -209,7 +231,8 @@ audio.find_and_play () {
                         [[ $audio_playing_pid ]] && kill $audio_playing_pid
 
                         gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
-                        mpv $(echo -e $got) $audio_mpv_options --no-resume-playback --no-video 2>/dev/null
+                        gr.msg -h "$got"
+                        mpv $(echo -e $got) $mpv_options --no-resume-playback --no-video #>/dev/null
                         gr.end $GURU_AUDIO_INDICATOR_KEY
                         ;;
                     esac
@@ -237,7 +260,7 @@ audio.toggle () {
     if [[ -f $audio_temp_file ]] ; then
             gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
-            mpv --playlist=$audio_temp_file $audio_mpv_options --save-position-on-quit
+            mpv --playlist=$audio_temp_file $mpv_options --save-position-on-quit
             gr.end $GURU_AUDIO_INDICATOR_KEY
         else
             audio.main listen "$default_radio"
@@ -298,7 +321,7 @@ audio.listen () {
             gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
             echo $@ >$GURU_AUDIO_NOW_PLAYING
-            mpv $@ $audio_mpv_options --no-resume-playback
+            mpv $@ $mpv_options --no-resume-playback
             rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY
             ;;
@@ -310,7 +333,7 @@ audio.listen () {
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
             echo $channel >$GURU_AUDIO_NOW_PLAYING
             gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
-            mpv $url $audio_mpv_options --no-resume-playback
+            mpv $url $mpv_options --no-resume-playback
             rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY
             ;;
@@ -332,7 +355,7 @@ audio.listen () {
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
             echo ${name^} >$GURU_AUDIO_NOW_PLAYING
             gr.ind playing -k $GURU_AUDIO_INDICATOR_KEY
-            mpv $url $audio_mpv_options --no-resume-playback
+            mpv $url $mpv_options --no-resume-playback
             rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY
         esac
@@ -468,7 +491,7 @@ audio.playlist_play () {
 
             gr.ind playing $GURU_AUDIO_INDICATOR_KEY
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
-            mpv --playlist=$user_reguest  $audio_mpv_options --save-position-on-quit
+            mpv --playlist=$user_reguest  $mpv_options --save-position-on-quit
             gr.end $GURU_AUDIO_INDICATOR_KEY
             return 0
 
@@ -479,7 +502,7 @@ audio.playlist_play () {
     # check is there saved playlists on that name
     if [[ -f "$audio_playlist_folder/$user_reguest.list" ]] && file $user_reguest | grep -q "text" ; then
             [[ $audio_playing_pid ]] && kill $audio_playing_pid
-            mpv --playlist="$audio_playlist_folder/$user_reguest.list" $audio_mpv_options --save-position-on-quit
+            mpv --playlist="$audio_playlist_folder/$user_reguest.list" $mpv_options --save-position-on-quit
             return 0
         fi
 
@@ -493,7 +516,7 @@ audio.playlist_play () {
 
             for _list_item in ${_list[@]} ; do
                 # gr.msg -v3 "$_list_item:$_wanna_hear"
-                grep -i $_wanna_hear <<< $_list_item && mpv $_list_item $audio_mpv_options
+                grep -i $_wanna_hear <<< $_list_item && mpv $_list_item $mpv_options
             done
 
             return 0
@@ -501,7 +524,7 @@ audio.playlist_play () {
 
     # play whole list
     [[ $audio_playing_pid ]] && kill $audio_playing_pid
-    mpv --playlist="$audio_temp_file" $audio_mpv_options --no-resume-playback --save-position-on-quit
+    mpv --playlist="$audio_temp_file" $mpv_options --no-resume-playback --save-position-on-quit
     return 0
 }
 
@@ -674,11 +697,11 @@ audio.mpv_stat() {
 
     mpv_communicate() {
     # pass the property as the first argument
-      printf '{ "command": ["get_property", "%s"] }\n' "$1" | socat - "$audio_mpv_socket" | jq -r ".data"
+      printf '{ "command": ["get_property", "%s"] }\n' "$1" | socat - "$GURU_AUDIO_SOCKET" | jq -r ".data"
     }
 
     ps aufx | grep "mpv " | grep -v grep >/dev/null || return 1
-    [[ -S $audio_mpv_socket ]] || return 0
+    [[ -S $GURU_AUDIO_SOCKET ]] || return 0
 
     position="$(mpv_communicate "percent-pos" | cut -d'.' -f1)%"
     file="$(mpv_communicate "filename")"
@@ -740,10 +763,13 @@ audio.poll () {
 }
 
 audio.rc
+declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
+declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_SOCKET"
+[[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-
-    audio.main "$@"
+    source $GURU_RC
+    audio.main $@ # $(audio.parse_options $@)
     exit $?
 fi
 
