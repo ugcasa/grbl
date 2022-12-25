@@ -2,7 +2,7 @@
 # play and get from youtube casa@ujo.guru 2022
 
 declare -g youtube_rc="/tmp/guru-cli_youtube.rc"
-declare -g ARGUMENTS=()
+declare -g youtube_arguments=()
 declare -g mpv_socket="/tmp/mpvsocket"
 declare -g mpv_options="--input-ipc-server=$mpv_socket --stream-record=/tmp/cache"
 declare -g youtube_options="-f worst"
@@ -139,7 +139,7 @@ youtube.parse_arguments () {
             #     position=${got_args[$i]}
             #     ;;
             *)
-                ARGUMENTS+=("${got_args[$i]}")
+                youtube_arguments+=("${got_args[$i]}")
                 ;;
             esac
         done
@@ -151,7 +151,7 @@ youtube.parse_arguments () {
         fi
 
     # debug stuff (TBD remove later)
-    gr.msg -v4 "${FUNCNAME[0]}: passing args: ${ARGUMENTS[@]}"
+    gr.msg -v4 "${FUNCNAME[0]}: passing args: ${youtube_arguments[@]}"
     gr.msg -v4 "${FUNCNAME[0]}: youtube_options: $youtube_options"
     gr.msg -v4 "${FUNCNAME[0]}: mpv_options: $mpv_options"
 }
@@ -217,7 +217,7 @@ youtube.search_n_play () {
     youtube.parse_arguments $@
 
     # make search and get media data and address
-    local query=$(youtube.search 1 json ${ARGUMENTS[@]})
+    local query=$(youtube.search 1 json ${youtube_arguments[@]})
 
     # format information of found media
     # TBD make able to parse multiple search results ans for them trough to replace search_list function"
@@ -362,7 +362,7 @@ youtube.play () {
 # play input file
     echo "$@" | grep "https://" && base_url="" || base_url="https://www.youtube.com/watch?v="
     youtube.parse_arguments $@
-    local media_address="$base_url${ARGUMENTS[0]}"
+    local media_address="$base_url${youtube_arguments[0]}"
     gr.msg -c aqua "$media_address" -k $GURU_AUDIO_INDICATOR_KEY
     echo $media_address >$GURU_AUDIO_NOW_PLAYING
     yt-dlp -v $youtube_options $media_address -o - 2>/tmp/youtube.error \
