@@ -240,11 +240,12 @@ youtube.search_n_play () {
 
     # start stream and play
     yt-dlp $youtube_options $media_address -o - 2>/tmp/youtube.error \
-        | mpv $mpv_options - >/dev/null
+        | mpv $mpv_options - >/tmp/mpv.error
 
     # in some cases there is word fuck or exposed tits in video, therefore:
     if grep 'Sign in to' /tmp/youtube.error; then
-        rm /tmp/mpv.error /tmp/youtube.error
+        [[ -f /tmp/mpv.error ]] && rm /tmp/mpv.error
+        [[ -f /tmp/youtube.error ]] && rm /tmp/youtube.error
 
         # if user willing to save password in configs (who would?) serve him/her anyway
         [[ $GURU_YOUTUBE_PASSWORD ]] \
@@ -255,20 +256,20 @@ youtube.search_n_play () {
 
             # then perform re-try
             yt-dlp -v $youtube_options $sing_in $media_address -o - 2>/tmp/youtube.error \
-                | mpv $mpv_options - >/dev/null
+                | mpv $mpv_options - >/tmp/mpv.error
     fi
 
     # lacy error printout
     if [[ -f /tmp/mpv.error ]]; then
             _error=$(grep 'ERROR:' /tmp/youtube.error)
             [[ $_error ]] && gr.msg -v2 -c red $_error
-            rm /tmp/mpv.error
+            [[ -f /tmp/mpv.error ]] && rm /tmp/mpv.error
         fi
 
     if [[ -f /tmp/youtube.error ]]; then
             _error=$(grep 'Failed' /tmp/mpv.error)
             [[ $_error ]] && gr.msg -v2 -c yellow $_error
-            rm /tmp/youtube.error
+            [[ -f /tmp/youtube.error ]] && rm /tmp/youtube.error
         fi
     # remove now playing and error data
     [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
@@ -308,7 +309,7 @@ youtube.search_list () {
         echo $_url >$GURU_AUDIO_NOW_PLAYING
 
         # start stream and play
-        yt-dlp $youtube_options "$_url" -o - 2>/dev/null| mpv $mpv_options --no-video -
+        yt-dlp $youtube_options "$_url" -o - 2>/dev/null| mpv $mpv_options --no-video - >/tmp/mpv.error
 
         #remove now playing data
         rm $GURU_AUDIO_NOW_PLAYING
