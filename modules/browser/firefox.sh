@@ -4,16 +4,16 @@ profile_location="$HOME/.config/guru/mozilla"
 firefox.add_profile () {
 	local profile_name=$GURU_USER ; [[ $1 ]] && profile_name="$1"
 	local profile="$profile_location/$profile_name"	
-	gmsg -v3 "$profile"
+	gr.msg -v3 "$profile"
 
 	if ! [[ -d "$profile" ]] ; then 
 			[[ -d "$profile" ]] || mkdir -p "$profile"
 			firefox -CreateProfile "$profile"
-			gmsg -c white "profile added now set your settings, like resize window etc and then exit"
+			gr.msg -c white "profile added now set your settings, like resize window etc and then exit"
 			firefox --new-instance --profile $profile 
 			# --window-size width=100,height=20   # does not work, informed user to set windows size here
 		else
-			gmsg "profile exist"
+			gr.msg "profile exist"
 		fi
 }
 
@@ -22,14 +22,14 @@ firefox.set_config () {
 	# set firefox config values (about:config) values from command line
 
 	if [[ $2 ]]	then
-			gmsg -c yellow "key value pair needed"
+			gr.msg -c yellow "key value pair needed"
 			return 100
 		fi
 
 	local key=$1
 	local value=$2
-	gmsg "change key $key to value $value"
-	gask "quite sure?"
+	gr.msg "change key $key to value $value"
+	gr.ask "quite sure?"
 
 	cd
 	sed -i 's/user_pref("'$key'",.*);/user_pref("'$key'",'$value');/' user.js
@@ -41,7 +41,7 @@ firefox.set_config () {
 firefox.play_stream () {
 	local profile_name="player"
 	local profile="$profile_location/$profile_name"
-	gmsg -v3 "$profile"
+	gr.msg -v3 "$profile"
 	firefox --profile $profile --new-window stream.rollfm.fi &
 	# --window-size width=100,height=20   # does not work, but kept in profile
 	
@@ -51,7 +51,7 @@ firefox.play_stream () {
 firefox.launch () {
 	local profile_name="$GURU_USER"
 	local profile="$profile_location/$profile_name"
-	gmsg -v3 "$profile"
+	gr.msg -v3 "$profile"
 	firefox --profile $profile  &
 	# --window-size width=100,height=20   # does not work, but kept in profile
 	

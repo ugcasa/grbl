@@ -47,23 +47,23 @@ voipt.arguments () {
 
 voipt.open () {
     voipt.start_listener || return 100
-    voipt.start_sender || return 100
+    voipt.start_sender || return 101
 }
 
 
 voipt.close () {
-    voipt.close_sender || return 100
-    voipt.close_listener || return 100
+    voipt.close_sender || return 102
+    voipt.close_listener || return 103
 }
 
 
 voipt.close_listener () {
 
-    gmsg -n -v1 "closing remote rx and socat.. "
+    gr.msg -n -v1 "closing remote rx and socat.. "
     if ssh -p "$remote_ssh_port" "$remote_user@$remote_address" "pkill rx; pkill socat" ; then
-            gmsg -v2 -c green -v1 "ok"
+            gr.msg -v2 -c green -v1 "ok"
         else
-            gmsg -c red "remote pkill rx/socat failed"
+            gr.msg -c red "remote pkill rx/socat failed"
         fi
 
 }
@@ -72,14 +72,14 @@ voipt.close_listener () {
 voipt.close_sender () {
 
     #gnome-terminal -t --geometry=40x4 --hide-menubar  --
-    gmsg -n -v1 "closing local rc and socat sender.. "
+    gr.msg -n -v1 "closing local rc and socat sender.. "
     pkill tx
     pkill socat
     local pid=$(ps aux | grep ssh | grep "$sender_tcp_port" | tr -s " " | cut -f2 -d " ")
     if [[ $pid ]] ; then
-            kill $pid && gmsg -c green -v1 "ok"
+            kill $pid && gr.msg -c green -v1 "ok"
         else
-            gmsg -c green -v1 "not running"
+            gr.msg -c green -v1 "not running"
         fi
     return 0
 }
@@ -88,30 +88,30 @@ voipt.close_sender () {
 voipt.start_listener () {
     # assuming listener is remote and sender is local
 
-    gmsg -n -v1 "starting remote audio device.. "
+    gr.msg -n -v1 "starting remote audio device.. "
     # check listener, lauch if not running
     if ! ssh -p $remote_ssh_port $remote_user@$remote_address ps auxf | grep "rx -h 127.0.0.1" | grep -v grep >/dev/null ; then
             gnome-terminal -t "listener rx" \
                 --geometry=40x4 --hide-menubar \
                 -- ssh -p $remote_ssh_port $remote_user@$remote_address \
                 $HOME/git/trx/rx -h $sender_address -p $app_udb_port
-            gmsg -v1 -c green "started"
+            gr.msg -v1 -c green "started"
 
             # test listener
             sleep 1
             if ! ssh -p $remote_ssh_port $remote_user@$remote_address ps auxf | grep "rx -h 127.0.0.1" | grep -v grep >/dev/null ; then
-                    gmsg -c yellow "$FUNCNAME: listener rx error occured "
+                    gr.msg -c yellow "$FUNCNAME: listener rx error occured "
                     return 100
                 fi
         else
-            gmsg -v1 -c green "ok"
+            gr.msg -v1 -c green "ok"
         fi
 
-    gmsg -n -v1 "start to pull udp from tcp.. "
+    gr.msg -n -v1 "start to pull udp from tcp.. "
     # check socat running
     if ! ssh -p $remote_ssh_port $remote_user@$remote_address ps auxf | grep "socat tcp4-listen:10001" | grep -v grep >/dev/null ; then
             # launch socat
-            gmsg -v2 "remote_addres:$remote_tcp_port.. "
+            gr.msg -v2 "remote_addres:$remote_tcp_port.. "
             gnome-terminal -t "listener tcp>udp $remote_addres:$remote_tcp_port" \
                     --geometry=40x4 --hide-menubar \
                     -- ssh -p $remote_ssh_port $remote_user@$remote_address \
@@ -120,13 +120,13 @@ voipt.start_listener () {
             # test socat
             sleep 1
             if ssh -p $remote_ssh_port $remote_user@$remote_address ps auxf | grep "socat tcp4-listen:10001" | grep -v grep >/dev/null ; then
-                    gmsg -v1 -c green "started"
+                    gr.msg -v1 -c green "started"
                 else
-                    gmsg -c red "$FUNCNAME: listener tcp>udp error occured "
+                    gr.msg -c red "$FUNCNAME: listener tcp>udp error occured "
                     return 100
                 fi
         else
-            gmsg -v1 -c green "ok"
+            gr.msg -v1 -c green "ok"
         fi
 
     return 0
@@ -135,7 +135,7 @@ voipt.start_listener () {
 
 voipt.start_sender () {
     #run listener first**
-    gmsg -n -v1 "tunnel to $remote_address.. "
+    gr.msg -n -v1 "tunnel to $remote_address.. "
     # check is tunnel active, start and test if not
     if ! ps auxf | grep "ssh -L 10000:127.0.0.1:10001" | grep -v grep >/dev/null ; then
 
@@ -146,17 +146,17 @@ voipt.start_sender () {
             sleep 2
 
             if ps auxf | grep "ssh -L 10000:127.0.0.1:10001" >/dev/null  ; then
-                    gmsg -v1 -c green "created"
+                    gr.msg -v1 -c green "created"
                 else
-                    gmsg -c red "$FUNCNAME: sender tx error occured "
+                    gr.msg -c red "$FUNCNAME: sender tx error occured "
                     return 100
                 fi
         else
-           gmsg -v1 -c green "ok"
+           gr.msg -v1 -c green "ok"
         fi
 
 
-    gmsg -n -v1 "voip audio sender.. "
+    gr.msg -n -v1 "voip audio sender.. "
     # check transmitter
     if ! ps auxf | grep trx/tx | grep -v grep  >/dev/null ; then
             # sterting is not running
@@ -166,16 +166,16 @@ voipt.start_sender () {
 
             # test
             if ps auxf | grep trx/tx >/dev/null ; then
-                    gmsg -v1 -c green "started"
+                    gr.msg -v1 -c green "started"
                 else
-                    gmsg -c red "$FUNCNAME: sender tx error occured "
+                    gr.msg -c red "$FUNCNAME: sender tx error occured "
                     return 100
                 fi
         else
-            gmsg -v1 -c green "ok"
+            gr.msg -v1 -c green "ok"
         fi
 
-    gmsg -n -v1 "start to push udp to tcp.. "
+    gr.msg -n -v1 "start to push udp to tcp.. "
     # test sender sice udb to tcp
     if ! ps auxf | grep "socat udp4-listen:1350" | grep -v grep >/dev/null ; then
 
@@ -184,13 +184,13 @@ voipt.start_sender () {
                 socat udp4-listen:$app_udb_port,reuseaddr,fork tcp:$sender_address:$sender_tcp_port
 
             if ps auxf | grep "socat udp4-listen:1350" | grep -v grep >/dev/null ; then
-                    gmsg -v1 -c green "started"
+                    gr.msg -v1 -c green "started"
                 else
-                    gmsg -c red "$FUNCNAME: udp>tcp error occured "
+                    gr.msg -c red "$FUNCNAME: udp>tcp error occured "
                     return 100
                 fi
         else
-            gmsg -v1 -c green "ok"
+            gr.msg -v1 -c green "ok"
         fi
     return 0
 }
@@ -226,7 +226,7 @@ voipt.install () {
 
 voipt.remove () {
     # assume debian
-    gmsg -v1 "removing libasound2-dev libopus-dev libopus0 libortp-dev libopus-dev libortp-dev wireguard socat.."
+    gr.msg -v1 "removing libasound2-dev libopus-dev libopus0 libortp-dev libopus-dev libortp-dev wireguard socat.."
     sudo apt-get remove -y libasound2-dev libopus-dev libopus0 libortp-dev libopus-dev libortp-dev wireguard socat || return $?
     #make uninstall && [[ $verbose ]] && echo "success" || return $? ??
     return 0
@@ -237,4 +237,5 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         voipt.main $@
         exit $?
     fi
+
 

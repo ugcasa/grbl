@@ -7,21 +7,25 @@
 ##  - no rush, good enough for now
 ##  - ISSUE function naming should be fixed dough
 
-system.core-dump () {
-    # dump environmental status to file
+# TBD re think function naming
+# gr.contain <- contains
+# gr.import <- import
+# gr.google <- google -> alias google='gr.google'
 
+gr.dump () {
+    # dump environmental status to file
+    # TBD revisit this
     echo "core dumped to $GURU_CORE_DUMP"
     set > "$GURU_CORE_DUMP"
 }
 
 
-daemon.poll_order () {
+gr.poll () {
     # set get polling order
 
     local _to_find="$1"
     local i=0
-
-    source "$HOME/.gururc"
+    #source "$HOME/.gururc"
 
     for val in ${GURU_DAEMON_POLL_ORDER[@]} ; do
         ((i++))
@@ -39,23 +43,7 @@ daemon.poll_order () {
 }
 
 
-daemon.poll_order_old () {
-    # old way to get polling order
-
-    local i=0
-    local _to_find=$1
-    # while [[ "$i" -lt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] && [[ "${GURU_DAEMON_POLL_ORDER[$i]}" != "$_to_find" ]] ; do
-    while [[ "$i" -lt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] ; do
-             if [[ "${GURU_DAEMON_POLL_ORDER[$i]}" == "$_to_find" ]] ; then break; fi
-            ((i++))
-        done
-    ((i=i+1))
-    echo $i
-    #return $i
-}
-
-
-gsource () {
+gr.source () {
     # source only wanted functions. slow ~0,03 sec, but saves environment space
 
     local file=$1 ; shift
@@ -81,16 +69,17 @@ gsource () {
 }
 
 
-gmsg () {
+gr.msg () {
     # function for output messages and make log notifications
 
-    local verbose_trigger=0                         # prinout if verbose trigger is not set in options
+    local verbose_trigger=0
     local verbose_limiter=5                         # maximum + 1 verbose level
     local _newline="\n"                             # newline is on by default
     local _pre_newline=                             # newline before text disable by default
     local _timestamp=                               # timestamp is disabled by default
     local _message=                                 # message container
     local _logging=                                 # logging is disabled by default
+    local _say=                                     # speak
     local _color=
     local _color_code=                              # default color if none
     local _exit=                                    # exit with code (exit not return!)
@@ -101,13 +90,14 @@ gmsg () {
     local _column_width
 
     # parse flags
-    TEMP=`getopt --long -o "tlnhNx:w:V:v:c:C:q:k:m:" "$@"`
+    TEMP=`getopt --long -o "tlsnhNx:w:V:v:c:C:q:k:m:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
             case "$1" in
                 -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
                 -l ) _logging=true                              ; shift ;;
+                -s ) _say=true                                  ; shift ;;
                 -h ) _color_code="$C_HEADER"                    ; shift ;;
                 -n ) _newline=                                  ; shift ;;
                 -N ) _pre_newline="\n"                          ; shift ;;
@@ -138,17 +128,24 @@ gmsg () {
     # -x) add exit code to message
     [[ $_exit -gt 0 ]] && _message="$_exit: $_message"
 
+    if [[ $_say ]] ; then
+            #_color_code=
+            _message=$(echo ${_message[@]} | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' )
+            [[ $GURU_VERBOSE -gt 0 ]] && printf "%s\n" "$_message"
+            espeak -p $GURU_SPEAK_PITCH -s $GURU_SPEAK_SPEED -v $GURU_SPEAK_LANG "$_message"
+            return 0
+        fi
 
     # -k) set corsair key is '-k <key>' used
     if [[ $_indicator_key ]] && [[ $GURU_CORSAIR_ENABLED ]] ; then
-        # TBD: check corsair (or other kb led) module installed
-        #      now in corsair is part of core what it should not to be
-        source corsair.sh
-        if [[ "$_color" == "reset" ]] ; then
-                corsair.main reset "$_indicator_key"
-            else
-                corsair.main set "$_indicator_key" "$_color"
-            fi
+            # TBD: check corsair (or other kb led) module installed
+            #      now in corsair is part of core what it should not to be
+            source corsair.sh
+            if [[ "$_color" == "reset" ]] ; then
+                    corsair.main reset "$_indicator_key"
+                else
+                    corsair.main set "$_indicator_key" "$_color"
+                fi
        fi
 
     # -m) publish to mqtt if '-q|-m <topic>' used
@@ -178,33 +175,23 @@ gmsg () {
 
     # On verbose level 3+ timestamp is always on
     if [[ $verbose_trigger -gt 3 ]] && [[ ${#_message} -gt 1 ]]; then
-        _timestamp="$(date +$GURU_FORMAT_TIME.%3N) "
+            _timestamp="$(date +$GURU_FORMAT_TIME.%3N) DEBUG: "
+        fi
+
+    # -w) fill message length to column limiter
+    if ! [[ $_column_width ]] ; then
+            _column_width=${#_message}
+        fi
+
+    # -c) color printout
+    if [[ $GURU_COLOR ]] && ! [[ $GURU_VERBOSE -eq 0 ]]; then
+        printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m" "${_timestamp}" "${_message:0:$_column_width}"
+        return 0
     fi
 
-    # print to shell
-    if [[ $_color_code ]] && [[ $GURU_COLOR ]] && [[ $GURU_VERBOSE -gt 0 ]] ; then
-
-            # -w) fill message length to column limiter
-            if ! [[ $_column_width ]] ; then
-                    _column_width=${#_message}
-                fi
-            # -c) color printout
-            printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline${C_NORMAL}" "${_timestamp}" "${_message:0:$_column_width}"
-
-        else
-            # *) normal printout without formatting
-            printf "$_pre_newline%s%s$_newline" "$_timestamp" "$_message"
-            return 0
-    fi
-
-
-    # echo "saata $GURU_VERBOSE:$verbose_trigger<$verbose_limiter"
-    # echo "$_pre_newline:pre_newline"
-    # echo "$_color_code:color_code"
-    # echo "$_column_width:column_width"
-    # echo "$_newline:newline"
-    # echo "$_timestamp:timestamp"
-    # echo "$_message:message"
+    # *) normal printout without formatting
+    printf "$_pre_newline%s%-${_column_width}s$_newline" "${_timestamp}" "${_message:0:$_column_width}"
+    return 0
 
     # -x) printout and exit for development use
     [[ $_exit ]] && exit $_exit
@@ -213,7 +200,7 @@ gmsg () {
 }
 
 
-gend_blink () {
+gr.end () {
     # stop blinking in next cycle
 
     local key="esc"
@@ -224,7 +211,7 @@ gend_blink () {
 }
 
 
-gindicate () {
+gr.ind () {
     # indicate status by message, voice  and keyboard indicators
 
     local _timestamp=
@@ -263,9 +250,9 @@ gindicate () {
     if [[ $_message ]] ; then
 
             if [[ $_color ]] ; then
-                    gmsg -c $_color "$timestamp$_status: $_message"
+                    gr.msg -v3 -c $_color "$timestamp$_status: $_message"
                 else
-                    gmsg "$timestamp$_status: $_message"
+                    gr.msg -v3 "$timestamp$_status: $_message"
                 fi
 
             if [[ $GURU_MQTT_ENABLED ]] && [[ $_mqtt_topic ]] ; then
@@ -284,13 +271,16 @@ gindicate () {
         case $_status in
             say)            espeak -p 85 -s 130 -v en "$_message" ;;
             done)           espeak -p 100 -s 120 -v en "$_message done! " ;;
+            available)      espeak -p 100 -s 130 -v en "$_message" ;;
+            recovery)       espeak -p 85 -s 130 -v en "recovering $_message" ;;
             working)        espeak -p 85 -s 130 -v en "working... $_message" ;;
             pause)          espeak -p 85 -s 130 -v en "$_message is paused" ;;
             cancel)         espeak -p 85 -s 130 -v en "$_messagasde is canceled. I repeat, $_message is canceled" ;;
             error)          espeak -p 85 -s 130 -v en "Error! $_message. I repeat, $_message" ;;
+            offline)        espeak -p 85 -s 130 -v en "$_message" ;;
             warning)        espeak -p 85 -s 130 -v en "Warning! $_message. I repeat, $_message" ;;
             alert)          espeak -p 85 -s 130 -v en "Alarm! $_message. I repeat, $_message" ;;
-            panic)          espeak -p 85 -s 130 -v en-sc "mayday.. Mayday? Mayday! $_message... ${_message^}? ${_message^^}" ;;
+            panic)          espeak -p 85 -s 130 -v en-sc "Critical alarm! $_message... ${_message^} Critical alarm! ${_message^^}" ;;
             passed|pass)    espeak -p 85 -s 130 -v en-us  "$_message... passed" ;;
             fail|failed)    espeak -p 85 -s 130 -v en-us "$_message... failed" ;;
             message)        espeak -p 85 -s 130 -v fi  "Message! $_message! new message $_message" ;;
@@ -317,82 +307,87 @@ gindicate () {
 }
 
 
-gask () {
-    # yes or no shortcut
+gr.ask () {
+    # yes or no with blinky bling. if first is number 1-99 it is set as timeout
 
-    local _message="$1"
-    local _ans=
-     #TBD --kill-after
+    local _answer=
+    local _def_answer='n'
+    local _ano_answer='y'
+    local _options=
+    local _timeout=
+    local _message=
+    local _box=
 
-   # parse flags
-    TEMP=`getopt --long -o "k:" "$@"`
+    # parse arguments
+    TEMP=`getopt --long -o "t:d:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
             case "$1" in
-                -k ) local kill_time=$1
+                -t )
+                    _timeout=$2
+                    _options="-t $_timeout "
+                    shift 2
                     ;;
-                 * ) break
+                -d )
+                    _def_answer=$2
+
+                        case $_def_answer in
+                            y) _ano_answer='n' ;;
+                            n) _ano_answer='y' ;;
+                            *) gr.msg "just 'y' or 'n' please" ;;
+                        esac
+                    _answer=$2
+                    shift 2
+                    ;;
+                 * )
+                  break
             esac
         done
 
-    # --) check message for long parameters (don't remember why like this)
     local _arg="$@"
     [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
-    # just for showup ;)=
+    # format timeout box
+    if [[ $_timeout ]] ; then
+            _message="$_message ($_timeout sec timeout)"
+         fi
+
+    # make y and n blinky on keyboard
     if [[ GURU_CORSAIR_ENABLED ]] ; then
-            source $GURU_BIN/corsair.sh
-            # corsair.init yes-no
+            source corsair.sh
+            corsair.indicate yes y 2>/dev/null >/dev/null
+            sleep 0.75
+            corsair.indicate no n 2>/dev/null >/dev/null
         fi
 
-    if [[ $kill_time ]] ; then
-            # NOT TESTED, not even run. ever
-            timeout 10 read -n 1 -p "$_message [y/n]: " _ans
-        else
-            read -n 1 -p "$_message [y/n]: " _ans
+    # format [Y/n]: box
+    case $_def_answer in
+        y) _box="[${_def_answer^^}/${_ano_answer,,}]: " ;;
+        n) _box="[${_ano_answer,,}/${_def_answer^^}]: " ;;
+    esac
+
+    # ask from user
+    read $_options-n 1 -p "$_message $_box" _answer
+
+    if [[ GURU_CORSAIR_ENABLED ]] ; then
+            corsair.blink_stop y
+            corsair.blink_stop n
         fi
 
+    # sense timeout
+    (( $? > 128 )) && _answer=$_def_answer
     echo
 
-    [[ $GURU_CORSAIR_ENABLED ]] && corsair.init # $GURU_CORSAIR_MODE
-
-    case ${_ans^^} in Y|YES|YEP)
+    # return for callers if statment
+    case ${_answer^^} in Y)
             return 0
         esac
     return 1
 }
 
 
-contains() {
-    [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && return 0 || return 1
-}
-
-
-import () {
-    # source all bash function in module. input: import <module_name> <py|sh|php..>
-
-    local _module=$1 ; shift
-    local _type=sh ; [[ $1 ]] && _type=$1
-
-    if ! [[ -d $_module ]] ; then
-            gmsg -c yellow "no module $_module exist"
-            return 100
-        fi
-
-    for lib in $_module/*$_type ; do
-            gmsg -v2 "library $lib"
-
-            if [[ -f $lib ]] ; then
-                    source $lib
-                else
-                    gmsg -c yellow "no $_type files in $_module/ folder"
-                    return 101
-                fi
-        done
-}
-
-module.installed () {
+gr.installed () {
     # check is module installed
 
     local i=0
@@ -408,38 +403,58 @@ module.installed () {
 }
 
 
+gr.local () {
 
-google () {
-    # open google search in browser, query as argument
+    case $1 in
+        stop|end)
+                touch /tmp/hello.killer
+                return 0
+                ;;
+            esac
 
-    local url=https://www.google.com/search?q="$(sed 's/ /%20/g' <<< ${@})"
+    [[ -f /tmp/hello.killer ]] && rm /tmp/hello.killer
 
+    source android.sh
+    local _interv=5
 
-    case $GURU_PREFERRED_BROWSER in
+    gr.msg "checking $GURU_ANDROID_NAME wifi every $_interv seconds.."
 
-        firefox|chromium)
-            $GURU_PREFERRED_BROWSER --new-window $url
-            ;;
+    while true ; do
 
-        lynx|curl|wget)
-            $GURU_PREFERRED_BROWSER $url
-            ;;
-        *)
-            gmsg -c -v2 -c yellow "non supported browser, here's link: "
-            gmsg -c $url
-        esac
+            if [[ -f /tmp/hello.killer ]] ; then
+                    rm /tmp/hello.killer
+                    gr.msg "stopping.."
+                    return 0
+                fi
 
-    return $?
+            if android.connected ; then
+
+                if [[ -f /tmp/hello.indicator ]] ; then
+                        guru start
+                        gr.ind available -m "$GURU_USER seems to be activated"
+                        guru mount
+                        # guru note
+                        rm /tmp/hello.indicator
+                    fi
+
+                else
+                    # me leaving
+                    if ! [[ -f /tmp/hello.indicator ]] ; then
+                            touch /tmp/hello.indicator
+                            gr.ind available -m "$GURU_USER has left the building"
+                            guru unmount all
+                            guru daemon stop
+                            cinnamon-screensaver-command --lock
+                            # sleep 10
+                            # guru system suspend now
+                        fi
+                fi
+            sleep $_interv
+        done
 }
 
-
-
-#`TBD`declare -xf ? rather than export? - no
-export -f system.core-dump
-export -f daemon.poll_order
-export -f gmsg
-export -f gask
-export -f import
-
-
-
+# export -f gr.poll
+export -f gr.msg
+export -f gr.ask
+export -f gr.end
+export -f gr.ind

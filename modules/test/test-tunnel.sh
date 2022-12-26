@@ -31,11 +31,11 @@ tunnel.test() {
               #echo ; tunnel.test_tmux || _err=("${_err[@]}" "110")
               echo ; tunnel.test_poll start|| _err=("${_err[@]}" "111")
               #echo ; tunnel.test_requirements || _err=("${_err[@]}" "112")
-              gmsg "cleaning.."
+              gr.msg "cleaning.."
               tunnel.main close all
 
               if [[ ${_err[1]} -gt 0 ]]; then echo "error: ${_err[@]}"; return ${_err[1]}; else return 0; fi ;;
-         *) gmsg "test case $test_case not written"
+         *) gr.msg "test case $test_case not written"
             return 1
     esac
 }
@@ -45,7 +45,7 @@ tunnel.test() {
 tunnel.test_help () {
     # function to test tunnel module function tunnel.help
     local _error=0
-    gmsg -v0 -c white 'testing tunnel.help'
+    gr.msg -v0 -c white 'testing tunnel.help'
 
       ## TODO: add pre-conditions here 
 
@@ -54,10 +54,10 @@ tunnel.test_help () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'tunnel.help passed' 
+       gr.msg -v0 -c green 'tunnel.help passed'
        return 0
     else
-       gmsg -v0 -c red 'tunnel.help failed' 
+       gr.msg -v0 -c red 'tunnel.help failed'
        return $_error
   fi
 }
@@ -66,7 +66,7 @@ tunnel.test_help () {
 tunnel.test_main () {
     # function to test tunnel module function tunnel.main
     local _error=0
-    gmsg -v0 -c white 'testing tunnel.main'
+    gr.msg -v0 -c white 'testing tunnel.main'
 
       ## TODO: add pre-conditions here 
 
@@ -75,10 +75,10 @@ tunnel.test_main () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'tunnel.main passed' 
+       gr.msg -v0 -c green 'tunnel.main passed'
        return 0
     else
-       gmsg -v0 -c red 'tunnel.main failed' 
+       gr.msg -v0 -c red 'tunnel.main failed'
        return $_error
   fi
 }
@@ -87,7 +87,7 @@ tunnel.test_main () {
 tunnel.test_status () {
     # function to test tunnel module function tunnel.status
     local _error=0
-    gmsg -v0 -c white 'testing tunnel.status'
+    gr.msg -v0 -c white 'testing tunnel.status'
 
       ## TODO: add pre-conditions here 
 
@@ -96,10 +96,10 @@ tunnel.test_status () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'tunnel.status passed' 
+       gr.msg -v0 -c green 'tunnel.status passed'
        return 0
     else
-       gmsg -v0 -c red 'tunnel.status failed' 
+       gr.msg -v0 -c red 'tunnel.status failed'
        return $_error
   fi
 }
@@ -108,7 +108,7 @@ tunnel.test_status () {
 tunnel.test_add () {
     # function to test tunnel module function tunnel.add
     local _error=0
-    gmsg -v0 -c white 'testing tunnel.add'
+    gr.msg -v0 -c white 'testing tunnel.add'
 
       ## TODO: add pre-conditions here 
 
@@ -117,10 +117,10 @@ tunnel.test_add () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'tunnel.add passed' 
+       gr.msg -v0 -c green 'tunnel.add passed'
        return 0
     else
-       gmsg -v0 -c red 'tunnel.add failed' 
+       gr.msg -v0 -c red 'tunnel.add failed'
        return $_error
   fi
 }
@@ -129,7 +129,7 @@ tunnel.test_add () {
 tunnel.test_rm () {
     # function to test tunnel module function tunnel.rm
     local _error=0
-    gmsg -v0 -c white 'testing tunnel.rm'
+    gr.msg -v0 -c white 'testing tunnel.rm'
 
       ## TODO: add pre-conditions here 
 
@@ -138,10 +138,10 @@ tunnel.test_rm () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'tunnel.rm passed' 
+       gr.msg -v0 -c green 'tunnel.rm passed'
        return 0
     else
-       gmsg -v0 -c red 'tunnel.rm failed' 
+       gr.msg -v0 -c red 'tunnel.rm failed'
        return $_error
   fi
 }
@@ -150,7 +150,7 @@ tunnel.test_rm () {
 tunnel.test_ls () {
     # function to test tunnel module function tunnel.ls
     local _error=0
-    gmsg -v0 -c white 'testing tunnel.ls'
+    gr.msg -v0 -c white 'testing tunnel.ls'
 
       ## TODO: add pre-conditios here
 
@@ -160,10 +160,10 @@ tunnel.test_ls () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'tunnel.ls passed' 
+       gr.msg -v0 -c green 'tunnel.ls passed'
        return 0
     else
-       gmsg -v0 -c red 'tunnel.ls failed' 
+       gr.msg -v0 -c red 'tunnel.ls failed'
        return $_error
   fi
 }
@@ -172,7 +172,7 @@ tunnel.test_ls () {
 # tunnel.test_parameters () {
 #     # function to test tunnel module function tunnel.parameters
 #     local _error=0
-#     gmsg -v0 -c white 'testing tunnel.parameters'
+#     gr.msg -v0 -c white 'testing tunnel.parameters'
 
 #       ## TODO: add pre-conditions here
 
@@ -181,10 +181,10 @@ tunnel.test_ls () {
 #       ## TODO: add analysis here and manipulate $_error
 
 #     if  ((_error<1)) ; then
-#        gmsg -v0 -c green 'tunnel.parameters passed'
+#        gr.msg -v0 -c green 'tunnel.parameters passed'
 #        return 0
 #     else
-#        gmsg -v0 -c red 'tunnel.parameters failed'
+#        gr.msg -v0 -c red 'tunnel.parameters failed'
 #        return $_error
 #   fi
 # }
@@ -193,7 +193,7 @@ tunnel.test_ls () {
 tunnel.test_open () {
     # function to test tunnel module function tunnel.open
     local _error=0
-    gmsg -v0 -c white 'testing tunnel.open'
+    gr.msg -v0 -c white 'testing tunnel.open'
 
       ## TODO: add pre-conditions here 
 
@@ -202,10 +202,10 @@ tunnel.test_open () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'tunnel.open passed' 
+       gr.msg -v0 -c green 'tunnel.open passed'
        return 0
     else
-       gmsg -v0 -c red 'tunnel.open failed' 
+       gr.msg -v0 -c red 'tunnel.open failed'
        return $_error
   fi
 }
@@ -214,7 +214,7 @@ tunnel.test_open () {
 tunnel.test_close () {
     # function to test tunnel module function tunnel.close
     local _error=0
-    gmsg -v0 -c white 'testing tunnel.close'
+    gr.msg -v0 -c white 'testing tunnel.close'
 
       ## TODO: add pre-conditions here 
 
@@ -223,10 +223,10 @@ tunnel.test_close () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'tunnel.close passed' 
+       gr.msg -v0 -c green 'tunnel.close passed'
        return 0
     else
-       gmsg -v0 -c red 'tunnel.close failed' 
+       gr.msg -v0 -c red 'tunnel.close failed'
        return $_error
   fi
 }
@@ -235,7 +235,7 @@ tunnel.test_close () {
 # tunnel.test_tmux () {
 #     # function to test tunnel module function tunnel.tmux
 #     local _error=0
-#     gmsg -v0 -c white 'testing tunnel.tmux'
+#     gr.msg -v0 -c white 'testing tunnel.tmux'
 
 #       ## TODO: add pre-conditions here
 
@@ -244,10 +244,10 @@ tunnel.test_close () {
 #       ## TODO: add analysis here and manipulate $_error
 
 #     if  ((_error<1)) ; then
-#        gmsg -v0 -c green 'tunnel.tmux passed'
+#        gr.msg -v0 -c green 'tunnel.tmux passed'
 #        return 0
 #     else
-#        gmsg -v0 -c red 'tunnel.tmux failed'
+#        gr.msg -v0 -c red 'tunnel.tmux failed'
 #        return $_error
 #   fi
 # }
@@ -256,7 +256,7 @@ tunnel.test_close () {
 tunnel.test_poll () {
     # function to test tunnel module function tunnel.poll
     local _error=0
-    gmsg -v0 -c white 'testing tunnel.poll'
+    gr.msg -v0 -c white 'testing tunnel.poll'
 
       ## TODO: add pre-conditions here 
 
@@ -267,10 +267,10 @@ tunnel.test_poll () {
       ## TODO: add analysis here and manipulate $_error 
 
     if  ((_error<1)) ; then 
-       gmsg -v0 -c green 'tunnel.poll passed' 
+       gr.msg -v0 -c green 'tunnel.poll passed'
        return 0
     else
-       gmsg -v0 -c red 'tunnel.poll failed' 
+       gr.msg -v0 -c red 'tunnel.poll failed'
        return $_error
   fi
 }
@@ -279,7 +279,7 @@ tunnel.test_poll () {
 # tunnel.test_requirements () {
 #     # function to test tunnel module function tunnel.requirements
 #     local _error=0
-#     gmsg -v0 -c white 'testing tunnel.requirements'
+#     gr.msg -v0 -c white 'testing tunnel.requirements'
 
 #       ## TODO: add pre-conditions here
 
@@ -288,10 +288,10 @@ tunnel.test_poll () {
 #       ## TODO: add analysis here and manipulate $_error
 
 #     if  ((_error<1)) ; then
-#        gmsg -v0 -c green 'tunnel.requirements passed'
+#        gr.msg -v0 -c green 'tunnel.requirements passed'
 #        return 0
 #     else
-#        gmsg -v0 -c red 'tunnel.requirements failed'
+#        gr.msg -v0 -c red 'tunnel.requirements failed'
 #        return $_error
 #   fi
 # }

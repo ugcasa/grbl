@@ -5,18 +5,18 @@
 source $GURU_BIN/common.sh
 
 program.help () {
-    gmsg -v1 -c white "guru-client program help "
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL program start|end|status|help|install|remove|single|sub|pub "
-    gmsg -v2
-    gmsg -v1 -c white "commands: "
-    gmsg -v1 " remove                   remove installed requirements "
-    gmsg -v1 " remove                   remove installed requirements "
-    gmsg -v2 " help                     printout this help "
-    gmsg -v2
-    gmsg -v1 -c white "example: "
-    gmsg -v1 "         $GURU_CALL program status "
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client program help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL program start|end|status|help|install|remove|single|sub|pub "
+    gr.msg -v2
+    gr.msg -v1 -c white "commands: "
+    gr.msg -v1 " remove                   remove installed requirements "
+    gr.msg -v1 " remove                   remove installed requirements "
+    gr.msg -v2 " help                     printout this help "
+    gr.msg -v2
+    gr.msg -v1 -c white "example: "
+    gr.msg -v1 "         $GURU_CALL program status "
+    gr.msg -v2
 }
 
 # program.debug () {
@@ -28,9 +28,9 @@ program.help () {
 
 program.main () {
     # command parser
-    program_indicator_key="f$(daemon.poll_order program)"
+    program_indicator_key="f$(gr.poll program)"
     last_programmer_file="$GURU_SYSTEM_MOUNT/program/program.last"
-    #gmsg -c pink $last_programmer_file
+    #gr.msg -c pink $last_programmer_file
 
     if ! [[ -d $GURU_SYSTEM_MOUNT/program ]] ; then
         source mount.sh
@@ -72,22 +72,22 @@ program.main () {
     # check selection
 
     local _runnable="$GURU_BIN/program/$programmer.sh"
-    # gmsg -c pink $_runnable
+    # gr.msg -c pink $_runnable
 
     if [[ -f "$_runnable" ]] ; then
             source "$_runnable"
         else
-            gmsg -x 100 -c yellow "non valid programmer selected" -k $program_indicator_key
+            gr.msg -x 100 -c yellow "non valid programmer selected" -k $program_indicator_key
         fi
 
-    gmsg -v2 "$programmer programmer selected"
+    gr.msg -v2 "$programmer programmer selected"
 
     case "$_cmd" in
 
             status|help|install|remove|poll)
                 $programmer.$_cmd "$@" ; return $? ;;
             *)
-                gmsg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
+                gr.msg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
         esac
 
     return 0
@@ -97,16 +97,16 @@ program.main () {
 program.status () {
     # check program broker is reachable.
     # printout and signal by corsair keyboard indicator led - if available
-    gmsg -n -v1 -t "${FUNCNAME[0]}: "
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
     if program.online ; then
-            gmsg -v1 -c green "broker available " -k $program_indicator_key
+            gr.msg -v1 -c green "broker available " -k $program_indicator_key
             return 0
         else
-            gmsg -v1 -c red "broker unreachable " -k $program_indicator_key
+            gr.msg -v1 -c red "broker unreachable " -k $program_indicator_key
             return 1
         fi
 
-    gmsg "current programmer is $(cat $last_programmer_file)"
+    gr.msg "current programmer is $(cat $last_programmer_file)"
 
 
 }
@@ -118,10 +118,10 @@ program.poll () {
 
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: program status polling started" -k $program_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: program status polling started" -k $program_indicator_key
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: program status polling ended" -k $program_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: program status polling ended" -k $program_indicator_key
             ;;
         status )
             $programmer.status

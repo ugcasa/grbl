@@ -21,9 +21,18 @@ ssh.key () {
     local command="$1"
     shift
     case "$command" in
+
+        remote)
+            [[ "$1" == "config" ]] || return 12
+            ssh.check_remote_config
+            ;;
+        check)
+            [[ "$1" == "config" ]] || return 12
+            ssh.check_remote_config
+            ;;
         ps|active)      ssh-add -l  ;;
         renerate|new)   ssh.generate_key $@ ; return $? ;;
-        ls|files)       gmsg -c light_blue $(ls "$HOME/.ssh" | grep "rsa" | grep -v "pub") ;;
+        ls|files)       gr.msg -c light_blue $(ls "$HOME/.ssh" | grep "rsa" | grep -v "pub") ;;
         add)            ssh.add_key "$@" ;;
         rm)             ssh.rm_key "$@" ;;
         send)           ssh.copy-id "$@" ;;
@@ -34,44 +43,44 @@ ssh.key () {
 
 
 ssh.status () {
-    gmsg -v1 "current keys"
-    gmsg -v1 -c light_blue "$(ls $HOME/.ssh/ | grep _id_rsa| grep -v pub)"
+    gr.msg -v1 "current keys"
+    gr.msg -v1 -c light_blue "$(ls $HOME/.ssh/ | grep _id_rsa| grep -v pub)"
 }
 
 
 ssh.help () {
-    gmsg -v1 -c white "guru-client ssh help "
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help] <key_file> <host> <port> <user>"
-    gmsg -v2
-    gmsg -v1 -c white "Commands:"
-    gmsg -v1 " key|keys                 key management tools, try '$GURU_CALL ssh key help' for more info."
-    gmsg -v1 "   key ps                 list of activekeys "
-    gmsg -v1 "   key send               send keys to server"
-    gmsg -v1 "    "
-    gmsg -v1 "   key rm                 remove from remote server server [user_name@service_host] "
-    gmsg -v1 "   key add <...>          add keys to server <domain> <port> <user_name> or"
-    gmsg -v1 "   key add <server>       add keys to known server: ujo.guru, git.ujo.guru, github, bitbucket"
-    gmsg -v2
-    gmsg -v1 -c white "Example: "
-    gmsg -v1 "      $GURU_CALL ssh key add $GURU_ACCESS_DOMAIN"
-    gmsg -v1
-    gmsg -v1 "Any on known ssh command is passed trough to open-ssh client"
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client ssh help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help] <key_file> <host> <port> <user>"
+    gr.msg -v2
+    gr.msg -v1 -c white "Commands:"
+    gr.msg -v1 " key|keys                 key management tools, try '$GURU_CALL ssh key help' for more info."
+    gr.msg -v1 "   key ps                 list of activekeys "
+    gr.msg -v1 "   key send               send keys to server"
+    gr.msg -v1 "    "
+    gr.msg -v1 "   key rm                 remove from remote server server [user_name@service_host] "
+    gr.msg -v1 "   key add <...>          add keys to server <domain> <port> <user_name> or"
+    gr.msg -v1 "   key add <server>       add keys to known server: ujo.guru, git.ujo.guru, github, bitbucket"
+    gr.msg -v2
+    gr.msg -v1 -c white "Example: "
+    gr.msg -v1 "      $GURU_CALL ssh key add $GURU_ACCESS_DOMAIN"
+    gr.msg -v1
+    gr.msg -v1 "Any on known ssh command is passed trough to open-ssh client"
+    gr.msg -v2
 }
 
 
 ssh.rm_key () {
     # remove local keyfiles (not from server known hosts) TODO
-    [[ -f "$HOME/.ssh/$input""_id_rsa" ]] && [[ -f "$HOME/.ssh/$input""_id_rsa.pub" ]] || gmsg -x 127 -c red "key file not found"
+    [[ -f "$HOME/.ssh/$input""_id_rsa" ]] && [[ -f "$HOME/.ssh/$input""_id_rsa.pub" ]] || gr.msg -x 127 -c red "key file not found"
 
     [[ "$1" ]] && local input="$1" || read -r -p "key title (no '_id_rsa') : " input
 
     read -r -p "Are you sure to delete files '$input""_id_rsa' and '$input""_id_rsa.pub'? " answer
 
     if [[ "${answer^^}" == "Y" ]]; then
-            rm -f "$HOME/.ssh/$input""_id_rsa" || gmsg -c yellow "error while removing $HOME/.ssh/$input_id_rsa"
-            rm -f "$HOME/.ssh/$input""_id_rsa.pub" || gmsg -c yellow "error while removing $HOME/.ssh/$input_id_rsa.pub"
+            rm -f "$HOME/.ssh/$input""_id_rsa" || gr.msg -c yellow "error while removing $HOME/.ssh/$input_id_rsa"
+            rm -f "$HOME/.ssh/$input""_id_rsa.pub" || gr.msg -c yellow "error while removing $HOME/.ssh/$input_id_rsa.pub"
         fi
     return 0
 }
@@ -92,21 +101,21 @@ ssh.add_key () {
         4|bitbucket)    ssh.add_key_bitbucket "$@"      ; error="$?" ;;
         5|other)        ssh.add_key_other "$@"          ; error="$?" ;;
         help|*)
-           gmsg -v1 "Add key to server and rule to '~/.ssh/config'"
-           gmsg -v2
-           gmsg -v0 "Usage:    $GURU_CALL ssh key add [ujo.guru|git.ujo.guru|github|bitbucket] or [domain] [port] [user_name]"
-           gmsg -v2
-           gmsg -v1 "providers:"
-           gmsg -v1 " 1|ujo.guru        add key to access $GURU_ACCESS_DOMAIN "
-           gmsg -v1 " 2|git.ujo.guru    add key to own git server "
-           gmsg -v1 " 3|github          add key to github.com [user_email] "
-           gmsg -v1 " 4|bitbucket       add key to bitbucket.org [user_email] "
-           gmsg -v1 " 5|other           add key to any server [domain] [port] [user_name] "
-           gmsg -v1
-           gmsg -v1 "Without variables script asks input during process"
-           gmsg -v1
-           gmsg -v1 "Example: "
-           gmsg -v1 "       $GURU_CALL ssh key add github "
+           gr.msg -v1 "Add key to server and rule to '~/.ssh/config'"
+           gr.msg -v2
+           gr.msg -v0 "Usage:    $GURU_CALL ssh key add [ujo.guru|git.ujo.guru|github|bitbucket] or [domain] [port] [user_name]"
+           gr.msg -v2
+           gr.msg -v1 "providers:"
+           gr.msg -v1 " 1|ujo.guru        add key to access $GURU_ACCESS_DOMAIN "
+           gr.msg -v1 " 2|git.ujo.guru    add key to own git server "
+           gr.msg -v1 " 3|github          add key to github.com [user_email] "
+           gr.msg -v1 " 4|bitbucket       add key to bitbucket.org [user_email] "
+           gr.msg -v1 " 5|other           add key to any server [domain] [port] [user_name] "
+           gr.msg -v1
+           gr.msg -v1 "Without variables script asks input during process"
+           gr.msg -v1
+           gr.msg -v1 "Example: "
+           gr.msg -v1 "       $GURU_CALL ssh key add github "
         esac
     return "$error"
 }
@@ -119,18 +128,18 @@ ssh.generate_key () {
     local key_file="$HOME/.ssh/$user-$server"'_id_rsa'
     ssh.keygen "$key_file"
     ssh.add_rule "$key_file" "$server"
-    gmsg -c light_green "new puplic key: $key_file.pub"
+    gr.msg -c light_green "new puplic key: $key_file.pub"
 }
 
 
 ssh.keygen () {
     local key_file=$1 ; shift
     local user=$GURU_USER ; [[ $1 ]] && user=$1
-    gmsg -c white "generating keys "
+    gr.msg -c white "generating keys "
     if ssh-keygen -t rsa -b 4096 -C "$user" -f "$key_file" ; then
-            gmsg -c green "ok"
+            gr.msg -c green "ok"
         else
-            gmsg -x 22 -c red "ssh-keygen error or user interupt"
+            gr.msg -x 22 -c red "ssh-keygen error or user interupt"
         fi
     chmod 600 "$key_file"
     return 0
@@ -139,11 +148,11 @@ ssh.keygen () {
 
 ssh.agent_start () {
     ## start agent
-    gmsg -c white "checking/starting agent "
+    gr.msg -c white "checking/starting agent "
     if eval "$(ssh-agent -s)" ; then
-            gmsg -c green "ok"
+            gr.msg -c green "ok"
         else
-            gmsg -x 23 -c red "ssh-agent start failed"
+            gr.msg -x 23 -c red "ssh-agent start failed"
         fi
     return 0
 }
@@ -152,11 +161,11 @@ ssh.agent_start () {
 ssh.agent_add () {
     # add private key to agent
     local key_file=$1
-    gmsg -c white "adding key to agent "
+    gr.msg -c white "adding key to agent "
     if ssh-add "$key_file" ; then
-            gmsg -c green "ok"
+            gr.msg -c green "ok"
         else
-            gmsg -x 24 -c red "ssh-add error"
+            gr.msg -x 24 -c red "ssh-add error"
         fi
     return 0
 }
@@ -168,11 +177,11 @@ ssh.copy-id () {
     local server="$GURU_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
     local port="$GURU_ACCESS_PORT" ; [[ $3 ]] && port=$3
     local user="$GURU_USER" ; [[ $4 ]] && name=$4
-    gmsg -c white "sending public keys to server "
+    gr.msg -c white "sending public keys to server "
     if ssh-copy-id -f -p "$port" -i "$key_file" "$user@$server" ; then
-            gmsg -c green "ok"
+            gr.msg -c green "ok"
         else
-            gmsg -x 25 -c red "ssh-copy-id error"
+            gr.msg -x 25 -c red "ssh-copy-id error"
         fi
     return 0
 }
@@ -184,12 +193,12 @@ ssh.add_rule () {
     #local port="$GURU_ACCESS_PORT" ; [[ $3 ]] && port=$3
     local user="$GURU_USER" ; [[ $3 ]] && user=$3
     if cat $HOME/.ssh/config | grep "$user-$server" >/dev/null ; then
-        gmsg -c green "rule already exist, ok"
+        gr.msg -c green "rule already exist, ok"
     else
         if printf "\nHost *$server \n\tIdentityFile %s\n" $key_file >> "$HOME/.ssh/config" ; then
-                gmsg -c green "ok"
+                gr.msg -c green "ok"
             else
-                gmsg -c red "rule add error"
+                gr.msg -c red "rule add error"
                 return 26
             fi
     fi
@@ -229,19 +238,19 @@ ssh.add_key_github () {
     ssh.agent_add "$key_file"
     ssh.add_rule "$key_file" "$server"
 
-    gmsg -c white "adding key to github "
+    gr.msg -c white "adding key to github "
     case $key_output in
             xclip)
                 xclip -sel clip < "$key_file.pub"
-                gmsg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
+                gr.msg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
                 ;;
             stdin)
-                gmsg -c orange ".....copy between lines....."
+                gr.msg -c orange ".....copy between lines....."
                 cat "$key_file.pub"
-                gmsg -c orange "............................"
-                gmsg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
+                gr.msg -c orange "............................"
+                gr.msg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
                 ;;
-            *)  gmsg "key saved to $key_file.pub and $key_file"
+            *)  gr.msg "key saved to $key_file.pub and $key_file"
         esac
 
     if [[ "$GURU_INSTALL_TYPE" == "desktop" ]] ; then
@@ -267,28 +276,28 @@ ssh.add_key_bitbucket () {
     ssh.agent_add "$key_file"
     ssh.add_rule "$key_file" "$server"
 
-    gmsg -c white "adding key to github "
+    gr.msg -c white "adding key to github "
     case $key_output in
             xclip)
                 xclip -sel clip < "$key_file.pub"
                 ;;
             stdin)
-                gmsg -c orange ".....copy between lines....."
+                gr.msg -c orange ".....copy between lines....."
                 cat "$key_file.pub"
-                gmsg -c orange "............................"
+                gr.msg -c orange "............................"
                 ;;
-            *)  gmsg "key saved to $key_file.pub and $key_file"
+            *)  gr.msg "key saved to $key_file.pub and $key_file"
         esac
 
     # open remote profile settings
-    gmsg -c orange "step 1) login to bitbucket then go to 'Profile' -> 'Personal settings' -> 'SSH keys' -> 'Add key'"
-    gmsg -c orange "step 2) paste the key into the text box and add 'Title' $USER@$HOSTNAME and click 'Add key'"
+    gr.msg -c orange "step 1) login to bitbucket then go to 'Profile' -> 'Personal settings' -> 'SSH keys' -> 'Add key'"
+    gr.msg -c orange "step 2) paste the key into the text box and add 'Title' $USER@$HOSTNAME and click 'Add key'"
     if [[ "$GURU_INSTALL_TYPE" == "desktop" ]] ; then
-            gmsg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
+            gr.msg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
             firefox "$ssh_key_add_url" &
         else
             echo "open browser ans go to url: $ssh_key_add_url"
-            gmsg -c white "copy and paste public key to text box and use $USER@$HOSTNAME as a 'Title'"
+            gr.msg -c white "copy and paste public key to text box and use $USER@$HOSTNAME as a 'Title'"
         fi
 
 
@@ -297,7 +306,50 @@ ssh.add_key_bitbucket () {
 
 
 ssh.add_key_my_git () {
-    gmsg -v1 "TBD"
+    gr.msg -v1 "TBD"
+}
+
+
+# ssh.check_connections () {
+# # print a list of connection an simple quest of connection type
+
+#     local _server="$GURU_USER@$GURU_ACCESS_DOMAIN"
+#     local _port="$GURU_ACCESS_PORT"
+
+#     [[ $1 ]] && _server=$1
+#     [[ $2 ]] && _port=$2
+
+#     local _ifs=$IFS ; IFS=$'\n'
+#     local _list=($(\
+#         ssh $_server -p $_port -- ps -xf  \
+#             | grep -v grep \
+#             | grep '?' \
+#             | grep sshd \
+#             | sed -e's/  */ /g' \
+#             | cut -d' ' -f 2,7-
+#             ))
+#     IFS=$_ifs
+
+#     for item in ${_list[@]} ; do
+#             gr.msg -n "$item: "
+#             case $item in
+#                 *'pts/'*) gr.msg -c aqua_marine "a terminal session" ;;
+#                 *'notty'*) gr.msg -c aqua "tunnel end or sshfs" ;;
+#                 *) gr.msg -c yellow "unknown connection type" ;;
+#                 esac
+#         done
+# }
+
+
+ssh.check_config () {
+    gr.msg -c yellow "${FUNCKNAME[0]}: TBD "
+    return 0
+}
+
+
+ssh.check_remote_config () {
+    gr.msg -c yellow "${FUNCKNAME[0]}: TBD "
+    return 0
 }
 
 

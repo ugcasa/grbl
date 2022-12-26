@@ -29,27 +29,27 @@ stamp.main () {    # main command parser
             help|*) stamp.help ; return 0 ;;
         esac
 
-    gmsg "$stamp"
+    gr.msg "$stamp"
     printf "$stamp" | xclip -i -selection clipboard
 
 }
 
 stamp.help () {
-    gmsg -v1 -c white "guru-client stamp help "
-    gmsg -v2
-    gmsg -v0  "usage:    $GURU_CALL stamp [date|time|start|end|round|transaction|signature|picture-md] "
-    gmsg -v2
-    gmsg -v1 -c white  "commands: "
-    gmsg -v1  "date              datestamp "
-    gmsg -v1  "time              timestamp "
-    gmsg -v1  "start             start time stamp in format HH:MM "
-    gmsg -v1  "end               end time stamp in format HH:MM "
-    gmsg -v1  "round             rounded up time stamp "
-    gmsg -v1  "signature         user signature "
-    gmsg -v1  "transaction       stansaction stamp for notes "
-    gmsg -v1  "weekplan          generates week plan (<from> <to> numeral week day) "
-    gmsg -v1  "all stamps is copied to the clipboard"
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client stamp help "
+    gr.msg -v2
+    gr.msg -v0  "usage:    $GURU_CALL stamp [date|time|start|end|round|transaction|signature|picture-md] "
+    gr.msg -v2
+    gr.msg -v1 -c white  "commands: "
+    gr.msg -v1  "date              datestamp "
+    gr.msg -v1  "time              timestamp "
+    gr.msg -v1  "start             start time stamp in format HH:MM "
+    gr.msg -v1  "end               end time stamp in format HH:MM "
+    gr.msg -v1  "round             rounded up time stamp "
+    gr.msg -v1  "signature         user signature "
+    gr.msg -v1  "transaction       stansaction stamp for notes "
+    gr.msg -v1  "weekplan          generates week plan (<from> <to> numeral week day) "
+    gr.msg -v1  "all stamps is copied to the clipboard"
+    gr.msg -v2
 }
 
 

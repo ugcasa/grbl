@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source common.sh
+#source common.sh
 
 declare -g yle_run_folder="$(pwd)"
 declare -g yle_temp="$HOME/tmp/yle"
@@ -12,31 +12,31 @@ declare -g yle_media_filename=
 
 yle.help () {
 
-    gmsg -v1 "guru-cli yle help " -c white
-    gmsg -v2
-    gmsg -v0  "usage:    $GURU_CALL yle get|play|radio|radio|news|episodes|sub|metadata|install|uninstall|help"
-    gmsg -v2
-    gmsg -v1 "commands: " -c white
-    gmsg -v2
-    gmsg -v1 "  get|dl <id|url>     download media to media folder "
-    gmsg -v1 "  play <id|url>       play episode from stream"
-    gmsg -v1 "  radio <station>     listen radio <station>"
-    gmsg -v1 "  radio ls            list of known yle radio stations"
-    gmsg -v1 "  news                play latest yle tv news "
-    gmsg -v1 "  episodes <url>      get episodes of collection page"
-    gmsg -v1 "  sub <id|url>        get subtitles for video"
-    gmsg -v1 "  metadata            get media metadata"
-    gmsg -v1 "  install             install requirements"
-    gmsg -v1 "  uninstall           remove requirements "
-    gmsg -v1 "  help                this help window"
-    gmsg -v2
-    gmsg -v1 "examples: " -c white
-    gmsg -v2
-    gmsg -v1 "  $GURU_CALL yle get 1-4454526    # download media id (or url)"
-    gmsg -v1 "  $GURU_CALL yle play 1-2707315   # play media id (or url)"
-    gmsg -v1 "  $GURU_CALL yle radio puhe       # to play yle puhe stream"
-    gmsg -v1 "  $GURU_CALL yle episodes https://areena.yle.fi/audio/1-1792200   "
-    gmsg -v2
+    gr.msg -v1 "guru-cli yle help " -c white
+    gr.msg -v2
+    gr.msg -v0  "usage:    $GURU_CALL yle get|play|radio|radio|news|episodes|sub|metadata|install|uninstall|help"
+    gr.msg -v2
+    gr.msg -v1 "commands: " -c white
+    gr.msg -v2
+    gr.msg -v1 "  get|dl <id|url>     download media to media folder "
+    gr.msg -v1 "  play <id|url>       play episode from stream"
+    gr.msg -v1 "  radio <station>     listen radio <station>"
+    gr.msg -v1 "  radio ls            list of known yle radio stations"
+    gr.msg -v1 "  news                play latest yle tv news "
+    gr.msg -v1 "  episodes <url>      get episodes of collection page"
+    gr.msg -v1 "  sub <id|url>        get subtitles for video"
+    gr.msg -v1 "  metadata            get media metadata"
+    gr.msg -v1 "  install             install requirements"
+    gr.msg -v1 "  uninstall           remove requirements "
+    gr.msg -v1 "  help                this help window"
+    gr.msg -v2
+    gr.msg -v1 "examples: " -c white
+    gr.msg -v2
+    gr.msg -v1 "  $GURU_CALL yle get 1-4454526    # download media id (or url)"
+    gr.msg -v1 "  $GURU_CALL yle play 1-2707315   # play media id (or url)"
+    gr.msg -v1 "  $GURU_CALL yle radio puhe       # to play yle puhe stream"
+    gr.msg -v1 "  $GURU_CALL yle episodes https://areena.yle.fi/audio/1-1792200   "
+    gr.msg -v2
 }
 
 
@@ -51,13 +51,13 @@ yle.main () {
             yle.radio_listen $@
             ;;
 
-        install|uninstall)
+        install|uninstall|upgrade)
             yle.$command $@
             ;;
 
         play)
             echo "$1" | grep "https://" && base_url="" || base_url="https://areena.yle.fi/"
-            gmsg "getting from url $base_url$1"
+            gr.msg "getting from url $base_url$1"
             yle-dl --pipe "$base_url$1" 2>/dev/null | mpv -
             return $?
             ;;
@@ -72,8 +72,11 @@ yle.main () {
             ;;
 
         news|uutiset)
+
             news_core="https://areena.yle.fi/1-3235352"
-            yle-dl --pipe --latestepisode "$news_core" 2>/dev/null | mpv -
+            # yle-dl --pipe --latestepisode "$news_core" 2>/dev/null | mpv -
+            # issue 20221206.2 --latestepisode broken, fix below
+            yle-dl --pipe $(yle-dl --showepisodepage $news_core | tail -n2 | head -n1)  2>/dev/null | mpv -
             ;;
 
         episode|episodes)
@@ -81,14 +84,14 @@ yle.main () {
             yle.get_metadata $@ || return 127
 
             if ! [[ $yle_episodes ]] ; then
-                gmsg -c white "single episode"
+                gr.msg -c white "single episode"
                 return 0
             fi
 
-            gmsg -c light_blue "${yle_episodes[@]}"
+            gr.msg -c light_blue "${yle_episodes[@]}"
 
-            # if [[ $2 == "dl" ]] || gask "download all ${#yle_episodes[@]} episodes?" ; then
-            if gask "download all ${#yle_episodes[@]} episodes?" ; then
+            # if [[ $2 == "dl" ]] || gr.ask "download all ${#yle_episodes[@]} episodes?" ; then
+            if gr.ask "download all ${#yle_episodes[@]} episodes?" ; then
 
                     for episode in ${yle_episodes[@]} ; do
                         yle.get_metadata $episode && \
@@ -211,17 +214,17 @@ yle.main () {
 #                         esac
 #                 done
 
-#         gmsg "name: $name"
-#         gmsg "episode: $episode"
-#         gmsg "ending: $ending"
-#         gmsg "day: $day"
-#         gmsg "month: $month"
-#         gmsg "time: $time"
+#         gr.msg "name: $name"
+#         gr.msg "episode: $episode"
+#         gr.msg "ending: $ending"
+#         gr.msg "day: $day"
+#         gr.msg "month: $month"
+#         gr.msg "time: $time"
 
 #         }
 
 #     files=($(find_files '*mp4 *mkv'))
-#     gmsg -v3 -c light_blue "files: ${files[@]}"
+#     gr.msg -v3 -c light_blue "files: ${files[@]}"
 
 #     sepa='-'
 #     left=(name name name name name episode episode episode episode episode episode episode)
@@ -230,8 +233,8 @@ yle.main () {
 #     #right_rev=(ending time day month year code)
 #     right=(code year month day time ending)
 
-#     # gmsg "order: ${left[@]} $(block_rev ${right_rev[@]})"
-#     gmsg "order: ${left[@]} ${right[@]}"
+#     # gr.msg "order: ${left[@]} $(block_rev ${right_rev[@]})"
+#     gr.msg "order: ${left[@]} ${right[@]}"
 
 #     for file in ${files[@]} ; do
 #         split_filename $file
@@ -258,12 +261,12 @@ yle.get_metadata () {
 
     media_url="$base_url$1"
 
-    gmsg -v3 -c deep_pink "media_url: $media_url"
+    gr.msg -v3 -c deep_pink "media_url: $media_url"
 
     # Check if id contain yle_episodes, then select first one (newest)
     yle_episodes=($(yle-dl --showepisodepage $media_url | grep -v $media_url))
     # episode_ids=($(yle-dl $media_url --showmetadata | jq '.[].program_id'))
-    gmsg -v3 -c light_blue "yle_episodes: ${yle_episodes[@]}"
+    gr.msg -v3 -c light_blue "yle_episodes: ${yle_episodes[@]}"
 
     # change media address poin to first episode
     [[ ${yle_episodes[0]} ]] && media_url=${yle_episodes[0]}
@@ -280,7 +283,7 @@ yle.get_metadata () {
 
     # set variables (like they be local anyway)
     yle_media_title="$(cat "$meta_data" | jq '.[].title')"
-    gmsg -v2 "${yle_media_title//'"'/""}"
+    gr.msg -v2 "${yle_media_title//'"'/""}"
 
     yle_media_address="$media_url "
     #$(cat "$meta_data" | jq '.[].webpage')
@@ -302,11 +305,11 @@ yle.get_media () {
     output_filename=${output_filename//'"'/}
     output_filename=${output_filename,,}
 
-    gmsg -v3 -c deep_pink "output filename: $output_filename"
+    gr.msg -v3 -c deep_pink "output filename: $output_filename"
 
     # check is tmp file alredy there
     if [[ -f $output_filename ]] ; then
-            gmsg -c yellow "file exist, overwriting "
+            gr.msg -c yellow "file exist, overwriting "
             rm $output_filename
         fi
 
@@ -349,7 +352,7 @@ yle.radio_listen () {
             local possible=('puhe' 'radio1' 'kajaani' 'klassinen' 'x' 'x3 m' 'vega' 'kemi' 'turku' \
                             'pohjanmaa' 'kokkola' 'pori' 'kuopio' 'mikkeli' 'oulu' 'lahti' 'kotka' 'rovaniemi' \
                             'hameenlinna' 'tampere' 'vega aboland' 'vega osterbotten' 'vega ostnyland' 'vega vastnyland' 'sami')
-            gmsg -c light_blue ${possible[@]}
+            gr.msg -c light_blue ${possible[@]}
             return 0
             ;;
         esac
@@ -370,10 +373,10 @@ yle.place_media () {
     media_file_format="${yle_media_filename: -5}"
     media_file_format="${media_file_format#*.}"
     #media_file_format="${media_file_format^^}"
-    gmsg -c deep_pink "media_file_format: $media_file_format, yle_media_filename $yle_media_filename"
+    gr.msg -c deep_pink "media_file_format: $media_file_format, yle_media_filename $yle_media_filename"
 
     if ! [[ -f $yle_media_filename ]] ; then
-            gmsg -c yellow "file $yle_media_filename not found"
+            gr.msg -c yellow "file $yle_media_filename not found"
             return 124
         fi
 
@@ -404,7 +407,7 @@ yle.place_media () {
     [[ -d $location ]] || mkdir -p $location
 
     # moving to default location
-    gmsg -c white "saving to: $location/$yle_media_filename"
+    gr.msg -c white "saving to: $location/$yle_media_filename"
     mv -f $yle_media_filename $location
 
 }
@@ -412,6 +415,11 @@ yle.place_media () {
 
 yle.play_media () {
     mpv --play-and-exit "$1" &
+}
+
+
+yle.upgrade() {
+    pip3 install --user --upgrade yle-dl
 }
 
 
@@ -448,7 +456,7 @@ fi
 #     url_base="https://www.youtube.com/watch?v"
 
 #     [[ -d $data_location ]] || mkdir -p $data_location
-#     [[ -f $data_file ]] || gmsg -x 100 -c yellow "data tiedosto $data_file puuttuu"
+#     [[ -f $data_file ]] || gr.msg -x 100 -c yellow "data tiedosto $data_file puuttuu"
 
 #     ids=$(cut -d " " -f 1 $data_file)
 #     headers=$(cut -d " " -f 2- $data_file)
@@ -457,7 +465,7 @@ fi
 #     youtube-dl --version || video.install
 
 #     for id in ${ids[@]} ; do
-#         gmsg -c white "downloading $url_base=$id to $data_location.. "
+#         gr.msg -c white "downloading $url_base=$id to $data_location.. "
 #         youtube-dl --ignore-errors --continue --no-overwrites \
 #                --output "$data_location/%(title)s.%(ext)s" \
 #                "$url_base=$id"
@@ -468,7 +476,7 @@ fi
 
 
 # video.install () {
-#     sudo apt update || gmsg -x 101 -c yellow "apt update failed"
+#     sudo apt update || gr.msg -x 101 -c yellow "apt update failed"
 #     sudo apt install youtube-dl ffmpeg
 # }
 

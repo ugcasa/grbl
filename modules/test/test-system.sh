@@ -30,7 +30,7 @@ system.test() {
 }
 
 system.get_version () {
-  $GURU_CALL version && gmsg -c green "${FUNCNAME[0]} passed" || gmsg -c red "${FUNCNAME[0]} failed"
+  $GURU_CALL version && gr.msg -c green "${FUNCNAME[0]} passed" || gr.msg -c red "${FUNCNAME[0]} failed"
   return $?
 }
 
@@ -41,10 +41,10 @@ system.upgrade_test () {
     system.upgrade ; _error=$?
 
     if ((_error<1)) ; then
-        gmsg -c green "${FUNCNAME[0]} passed"
+        gr.msg -c green "${FUNCNAME[0]} passed"
         return 0
     else
-        gmsg -c red "${FUNCNAME[0]} failed"
+        gr.msg -c red "${FUNCNAME[0]} failed"
         return $_error
     fi
 }
@@ -59,19 +59,19 @@ system.rollback_test () {
     grep "$_target_version" <<< "$(bash $GURU_BIN/$GURU_CALL version)"; _error=$?
 
     if ((_error<1)) ; then
-        gmsg -c green "passed"
+        gr.msg -c green "passed"
         else
-        gmsg -c red "failed"
+        gr.msg -c red "failed"
         _error=$((_error+10))
       fi
 
     system.upgrade >/dev/null || return $?
 
     if ((_error<1)) ; then
-        gmsg -c green "${FUNCNAME[0]} passed"
+        gr.msg -c green "${FUNCNAME[0]} passed"
         return 0
     else
-        gmsg -c red "${FUNCNAME[0]} failed"
+        gr.msg -c red "${FUNCNAME[0]} failed"
         return $_error
     fi
 }

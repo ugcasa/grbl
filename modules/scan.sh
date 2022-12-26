@@ -8,22 +8,22 @@ scan.main () {
     case $_cmd in
             check|receipt|invoice|install|remove|help)
                     scan.$_cmd $@                   ; return $? ;;
-            *)      gmsg "scan: unknown command"    ; return 1  ;;
+            *)      gr.msg "scan: unknown command"    ; return 1  ;;
         esac
 }
 
 
 scan.help () {
-    gmsg -v1 -c white "guru-client scan help "
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL scan [receipt|invoice|install] "
-    gmsg -v2
-    gmsg -v1 "receipt   scan receipt size grayscale                 "
-    gmsg -v1 "invoice   scan receipt A4 size optimized grayscale    "
-    gmsg -v1 "install   install Epson DS30 driver and applications  "
-    gmsg -v1 "fix       to to fix access limitation problem         "
-    gmsg -v1
-    gmsg -v1 "example:  $GURU_CALL scan receipt motonet-tools "
+    gr.msg -v1 -c white "guru-client scan help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL scan [receipt|invoice|install] "
+    gr.msg -v2
+    gr.msg -v1 "receipt   scan receipt size grayscale                 "
+    gr.msg -v1 "invoice   scan receipt A4 size optimized grayscale    "
+    gr.msg -v1 "install   install Epson DS30 driver and applications  "
+    gr.msg -v1 "fix       to to fix access limitation problem         "
+    gr.msg -v1
+    gr.msg -v1 "example:  $GURU_CALL scan receipt motonet-tools "
 }
 
 
@@ -33,13 +33,13 @@ scan.install () {
     # TBD did not run thif function, donn't see why?
 
     if [[ -f /usr/bin/iscan ]] ; then
-            gmsg "installed, use force to reinstall"
+            gr.msg "installed, use force to reinstall"
             return 0
         fi
 
     # check os type
     if [[ `uname -o` != "GNU/Linux" ]] ; then
-            gmsg -c red "non comptible plaform $(uname -o)"
+            gr.msg -c red "non comptible plaform $(uname -o)"
             return 100
         fi
 
@@ -49,51 +49,51 @@ scan.install () {
     source="https://download2.ebz.epson.net/imagescanv3/linuxmint/lts1/deb/x64"
     dep_file="imagescan-bundle-${ID}-${VERSION_ID}-${ver}.${arch}.deb"
     gz_file="${dep_file}.tar.gz"
-    gmsg -v3 -c pink "${gz_file}"
-    gmsg -v3 -c deep_pink "${source}/${gz_file}"
+    gr.msg -v3 -c pink "${gz_file}"
+    gr.msg -v3 -c deep_pink "${source}/${gz_file}"
 
     case $ID in
             linuxmint|ubuntu|debian)
 
-                gmsg -v1 -c white "downloading.."
+                gr.msg -v1 -c white "downloading.."
                 cd /tmp
-                wget "${source}/${gz_file}" || gmsg -c red -x 101 "source location not found $source/${gz_file}"
+                wget "${source}/${gz_file}" || gr.msg -c red -x 101 "source location not found $source/${gz_file}"
 
-                gmsg -v1 -c white "decompressing.."
-                [[ -f $gz_file ]] || gmsg -c red -x 102 "source ${gz_file} not found"
-                tar -xvf $gz_file || gmsg -c red -x 103 "unable to extract ${gz_file}"
-                cd $dep_file || gmsg -c red -x 104 "cannot enter folder ${dep_file}"
+                gr.msg -v1 -c white "decompressing.."
+                [[ -f $gz_file ]] || gr.msg -c red -x 102 "source ${gz_file} not found"
+                tar -xvf $gz_file || gr.msg -c red -x 103 "unable to extract ${gz_file}"
+                cd $dep_file || gr.msg -c red -x 104 "cannot enter folder ${dep_file}"
 
-                gmsg -v1 -c white "running installer.."
+                gr.msg -v1 -c white "running installer.."
                 ./install.sh
-                gmsg -v3 -c deep_pink "$?"
+                gr.msg -v3 -c deep_pink "$?"
 
-                gmsg -v1 -c green "install success"
-                gmsg -v2 -c dark_grey "cleaning up.."
+                gr.msg -v1 -c green "install success"
+                gr.msg -v2 -c dark_grey "cleaning up.."
                 cd ..
                 rm -rf imagescan-bundle-linuxmint*
 
-                gmsg -v1 -c white "installing requirements.. "
+                gr.msg -v1 -c white "installing requirements.. "
 
                 #[[ $ID != "debian" ]] && sudo add-apt-repository ppa:rolfbensch/sane-git
                 sudo apt update
-                sudo apt install -y xsane imagemagick gocr || gmsg -c red -x 105 "apt install error"
+                sudo apt install -y xsane imagemagick gocr || gr.msg -c red -x 105 "apt install error"
 
-                gmsg -c green "done"
+                gr.msg -c green "done"
                 ;;
 
             *)
-                gmsg -c yellow "unknown distro '$$ID'. pls refer $GURU_BIN/install.sh function scan.install :~50"
+                gr.msg -c yellow "unknown distro '$$ID'. pls refer $GURU_BIN/install.sh function scan.install :~50"
                 return 106
                 ;;
         esac
 
         # setup installation
-        gmsg -v1 -c white "modifying config files.. "
+        gr.msg -v1 -c white "modifying config files.. "
 
         # case: scanner not found
         local rule_file="/etc/udev/rules.d/79-udev-epson.rules"
-        gmsg -v2 -c pink "$rule_file"
+        gr.msg -v2 -c pink "$rule_file"
         [[ -f "$rule_file" ]] && sudo rm $rule_file
 
         #echo 'ATTR{idVendor}="0x04b8", ATTR{idProduct}="0x012f", SYMLINK+="scan-epson", MODE="0666", OWNER="$USER", GROUP="scanner"' \| sudo tee --append $rule_file
@@ -108,14 +108,14 @@ scan.install () {
 
         # case: scanimage: no SANE devices found fix
         # local rule_file="/etc/udev/rules.d/40-libsane.rules"
-        # gmsg -v2 -c pink "$rule_file"
+        # gr.msg -v2 -c pink "$rule_file"
         # [[ -f "$rule_file" ]] && sudo rm $rule_file
         # echo 'ATTRS{idVendor}=="0x04b8", ATTRS{idProduct}=="0x0147", ENV{libsane_matched}="yes"' | sudo tee --append $rule_file
 
         sudo udevadm control --reload-rules && udevadm trigger
 
         # test
-        gmsg -c white "testing.. "
+        gr.msg -c white "testing.. "
         scan.check
         return $?
 }
@@ -129,27 +129,27 @@ scan.check_connector () {
 
 
 scan.check () {
-    gmsg -n -v1 "checking device.. "
+    gr.msg -n -v1 "checking device.. "
     local scanner_type="EPSON DS-30"
 
     if ! sudo sane-find-scanner | grep "$scanner_type" >/dev/null ; then
-            gmsg -c red "sane cannot find $scanner_type"
+            gr.msg -c red "sane cannot find $scanner_type"
             return 100
         fi
 
     if sudo sudo scanimage -L | grep "No scanners" >/dev/null ; then
-            gmsg -c red -x 106 "no sane support for $scanner_type"
+            gr.msg -c red -x 106 "no sane support for $scanner_type"
             return 101
         fi
 
-    gmsg -v1 -c green "$scanner_type found"
+    gr.msg -v1 -c green "$scanner_type found"
     return 0
 
 }
 
 scan.remove () {
 
-    sudo apt install -y xsane imagemagick gocr || gmsg -c red -x 110 "apt error"
+    sudo apt install -y xsane imagemagick gocr || gr.msg -c red -x 110 "apt error"
     sudo rm /etc/udev/rules.d/40-libsane.rules
     sudo rm $/etc/udev/rules.d/79-udev-epson.rules
 }
@@ -172,7 +172,7 @@ scan.receipt() {
     local _target_file=$_name-$(date -d now +$GURU_FORMAT_FILE_DATE).pdf
 
     # scan file
-    gmsg "place the receipt to scanner feeder and press push-button when green LED lights up"
+    gr.msg "place the receipt to scanner feeder and press push-button when green LED lights up"
     scanimage -x 75 -y 300 --mode Gray --format=pgm -v >"$_temp/scan_$_stamp.pgm" || return 101
     while [ ! -f "$_temp/scan_$_stamp.pgm" ] ; do  printf "." ; sleep 2 ; done ; echo
 
@@ -183,7 +183,7 @@ scan.receipt() {
     # move to location
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
     cp "$_temp/scan_$_stamp.pdf" "$_target_folder/$_target_file" || return 104
-    gmsg "scanned to $_target_folder/$_target_file"
+    gr.msg "scanned to $_target_folder/$_target_file"
     echo "$_target_folder/$_target_file" | xclip
 
     # clean up
@@ -193,7 +193,7 @@ scan.receipt() {
 
 
 scan.invoice () {
-    gmsg -v2 -c black "${FUNCTION[0]} TBD"
+    gr.msg -v2 -c black "${FUNCTION[0]} TBD"
     # scanimage -x 205 -y 292 --mode Gray --format=pgm -v >image$stamp.pgm
     # convert image$stamp.pgm -crop 2416x4338+55+120 scan_$stamp-$page.pgm
     # #gocr -i scan_$stamp-$page.pgm -f UTF8 -v >>archive$stamp.txt
