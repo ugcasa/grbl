@@ -231,7 +231,11 @@ youtube.search_n_play () {
             # save file
             yt-dlp $youtube_options $media_address
             # a bit dangero if some of location variables are empty
+            #new_name=$(detox -v *mp4 -n | grep ">" | cut -d '>' -f 2 |xargs)
             detox -v *mp3 *mp4 $save_location 2>/dev/null
+
+            #source tag.sh
+            #tag.main add $new_name "guru-cli youtube.sh $title"
             return $?
         fi
 

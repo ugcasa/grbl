@@ -409,6 +409,74 @@ convert.to_dokuwiki () {
             rm ${files_done[@]}
 }
 
+# covert_bash_2_json () {
+# # bash variable content to json bopy
+
+#     jq --arg keyvar "$bash_var" '.[$keyvar]' json
+
+# }
+
+
+# convert.json_2_bash () {
+
+
+#     path="test_data"
+
+#     convert.make_test_json () {
+
+#         cat > "/tmp/test.json" <<EOL
+# {
+#   "$path": {
+#     "url": "example.com",
+#     "name": "John Doe",
+#     "date": "10/22/2017"
+#   }
+# }
+# EOL
+
+
+#     #cat /tmp/test.json
+
+#     }
+
+#     convert.json_bashvar () {
+#     # input json file path
+#     #  there is security implication to this approach, that is if the user could manipulate the json to wreak havoc.
+
+#       declare -A test_data="$(jq -r '
+#       def replace_dot:
+#         . | gsub("\\."; "_");
+#       def trim_spaces:
+#         . | gsub("^[ \t]+|[ \t]+$"; "");
+#       to_entries|map(
+#         "export \(.key|trim_spaces|replace_dot)="
+#         + "\(.value|tostring|trim_spaces|@sh)"
+#         )|.[]' $@)"
+
+#         # values=$(cat $1)
+#         # while read -rd $'' line
+#         # do
+#         #     export "$line"
+#         # done < <(jq -r <<<"$values" \
+#         #          'to_entries|map("\(.key)=\(.value)\u0000")[]')
+
+#         # constants="$(cat ${1} | jq ".$path" | jq -r "to_entries|map(\(.key)=\(.value|tostring))|.[]")"
+#         # echo -e $constants
+
+#         # for keyval in $(grep -E '": [^\{]' /tmp/test.json | sed -e 's/: /=/' -e "s/\(\,\)$//"); do
+#         #     echo "export $keyval"
+#         #     eval export $keyval
+#         # done
+
+#         echo ${test_data[url]}
+
+#     }
+
+#     convert.make_test_json
+#     convert.json_bashvar /tmp/test.json
+
+# }
+
 
 convert.install_avif () {
     # avif support

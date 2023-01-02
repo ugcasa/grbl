@@ -1,14 +1,19 @@
 #!/bin/bash
 # Mick Tagger - ujo.guru 2019
 
-source common.sh
+
+declare -g tag_file_name=
 
 tag.main () {
-    # get arguments                             # debug
+    # get arguments
     if [[ "$1" == "help" ]] ; then tag.help ; return 0 ; fi
 
+    if [[ $2 ]]; then
+        tag_action="$1" ; shift
+    fi
+
     tag_file_name="$1" ; shift
-    tag_action="$1" ; shift
+
 
     # parse file format
     tag_file_format="${tag_file_name: -5}"      #read last characters of filename
@@ -22,10 +27,11 @@ tag.main () {
                     INDD|INDT|JP2|JPF|JPM|JPX|JPEG|JPG|JPE|LRV|M4A|M4B|M4P|M4V|\
                      MEF|MIE|MOS|MOV|QT|MPO|MQV|MRW|NEF|NRW|ORF|PDF|PEF|PNG|\
                                     PGM|PSD|PSB|PSDT|QTIF|QTI|QIF|RAF|RAW|RW2|\
-                                    TIFF|TIF|VRD|X3F|XMP) tag.picture "$@"    ;;
-                                                     MP3) tag.audio "$@"      ;;
-                                                     MP4) tag.mp4 "$@"        ;;
-                                              MD|TXT|MDD) tag.text "$@"       ;;
+                                    TIFF|TIF|VRD|X3F|XMP) tag.picture $tag_action $@   ;;
+                                                     MP3) tag.audio $tag_action $@     ;;
+                                                     MP4) tag.mp4 $tag_action $@        ;;
+                                              MD|TXT|MDD) tag.text $tag_action $@       ;;
+
                                                        *) echo "unknown format"
                                                             return 123          #####
     esac                                                           ###################
@@ -85,13 +91,13 @@ tag.text () {
             [[ "$current_tags" ]] && echo $current_tags
             ;;
         add)
-            [[ "$@" ]] && _add_tags "$@"
+            [[ $@ ]] && _add_tags $@
             ;;
         rm)
             _rm_tags
             ;;
         *)
-            [[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
+            [[ $@ ]] && string="$tag_action $@" || string="$tag_action"
             [[ "$tag_action" ]] && _add_tags "$string"
             ;;
         esac
@@ -142,43 +148,33 @@ tag.audio () {
 
 tag.mp4 () {
     # Video tagging tools
-    tag_container="--comment"
+    local tag_action=$1
+    shift
+    local tag_container="--comment"
+    local current_tags=
 
-    _get_tags () {
-        current_tags=$(AtomicParsley $tag_file_name -t |grep cmt)
-        current_tags=${current_tags##*": "}
+    get () {
+        current_tags=$(AtomicParsley $tag_file_name -t | grep cmt)
+        [[ $current_tags ]] && echo "${current_tags##*": "}"
         return 0
     }
 
-    _add_tags () {                                                                                      #; echo "current_tags:$current_tags|"; echo "new tags:$@|"
-        _get_tags
-        [[ $current_tags == "" ]] && current_tags="video ${tag_file_format,,} $GURU_USER $GURU_TEAM"
-        AtomicParsley "$tag_file_name" "$tag_container" "$current_tags $@" --overWrite  >/dev/null
+    add () {
+        new_tags=$@
+        current_tags=$(get)
+        [[ $current_tags ]] || current_tags="video ${tag_file_format,,} $GURU_USER"
+        AtomicParsley "$tag_file_name" "$tag_container" "$current_tags $new_tags" --overWrite  >/dev/null
     }
 
-    _rm_tags () {
+    rm () {
         AtomicParsley "$tag_file_name" "$tag_container" "" --overWrite  >/dev/null
     }
 
     case "$tag_action" in
-
-        ls|"")
-            _get_tags
-            [ "$current_tags" ] && echo "$current_tags"
-            ;;
-        add)
-            [[ "$@" ]] && _add_tags "$@"
-            ;;
-        rm)
-            _rm_tags
-            ;;
-        *)
-            [[ "$@" ]] && string="$tag_action $@" || string="$tag_action"
-            [[ "$tag_action" ]] && _add_tags "$string"
-            ;;
+            get|add|rm) $tag_action $@  ;;
+            *) get $@
         esac
-
-        return 0            # Otherwice returns 1
+        return 0
 }
 
 
@@ -225,6 +221,12 @@ tag.status () {
     gr.msg -c gray "status unknown"
     return 0
 }
+
+tag.install () {
+
+    sudo apt-get install atomicparsley python3-mutagen
+}
+
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then                # run if called or act like lib is included
