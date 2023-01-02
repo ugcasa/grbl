@@ -20,6 +20,7 @@ class window():
 
     target_file=""
     home_folder=""
+    version="0.0.1"
 
     def __init__(self, title, geometry="1500x700"):
 
@@ -50,6 +51,11 @@ class window():
         self.menu.add_cascade(label='File', menu=new_item)
         self.window.config(menu=self.menu)
 
+
+    def bye(self):
+        quit()
+        #how to exit mainloop?
+
     def welcome(self):
 
         self.menu()
@@ -64,11 +70,13 @@ class window():
         #update_bnt.grid(column=1, row=13)
         update_bnt.place(relx=.3, rely=.6, anchor="center")
 
-        bye_btn = Button(self.window, text="exit", command=quit)
+        bye_btn = Button(self.window, text="exit", command=self.bye)
         #bye_btn.place(relx=.5, rely=.5, anchor="s")
         bye_btn.place(relx=.7, rely=.6, anchor="center")
 
         self.window.mainloop()
+        print("post")
+
 
 # def update(self):
 #     res = "" + txt.get()
