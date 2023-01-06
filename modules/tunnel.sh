@@ -301,7 +301,7 @@ tunnel.open () {
 
             if [[ $DISPLAY ]] ; then
 
-                    gnome-terminal  --hide-menubar --geometry 47x10 --zoom 0.5 \
+                    gnome-terminal  --hide-menubar --geometry 45x12 --zoom 0.5 \
                                     --title "$_service"  -- \
                                     ssh -L $to_port:localhost:$from_port \
                                     $user@$domain -p $ssh_port \
