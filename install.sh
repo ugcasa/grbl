@@ -39,7 +39,7 @@ backup_rc="$HOME/.bashrc.backup-by-guru"
 # modules where user have direct access
 core_module_access=(net counter install uninstall config mount unmount daemon keyboard prompt system user)
 # modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(game youtube mqtt fingrid note android print project scan audio display vpn ssh stamp tag timer tor trans vol yle news program tmux tunnel corsair backup convert telegram cal place)
+modules_to_install=(game youtube mqtt conda fingrid note android print project scan audio display vpn ssh stamp tag timer tor trans vol yle news program tmux tunnel corsair backup convert telegram cal place)
 
 # TBD
 # client_modules=
