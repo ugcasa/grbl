@@ -12,7 +12,7 @@ display.main () {
     shift
 
     case $cmd in
-         reset|set|ls|help)
+         reset|set|ls|help|card)
             display.$cmd $@
             return $?
             ;;
@@ -45,8 +45,20 @@ display.help () {
 }
 
 
+display.card () {
+# printout gpu information
+    case $1 in
+        driver)
+            lspci -k | grep  -e VGA -A 3
+            ;;
+            *)
+            lspci $_options | grep VGA | cut -d':' -f 3 | xargs
+        esac
+}
+
+
 display.check () {
-    #
+# check mow many displays availabe
     local ifs=$IFS
     declare -g monitors=0
 
@@ -75,7 +87,7 @@ display.check () {
         # check it display primary
         stuff="monitor_$i[primary]"
         if grep -q 'primary' <<<${connected[$i]} ; then
-                gr.msg -n -v3 "(primary) "
+                gr.msg -n -v2 "(primary) "
                 printf -v "$stuff" '%s' "true"
             else
                 printf -v "$stuff" '%s' "false"
