@@ -219,7 +219,7 @@ project.open () {
     # local project_folder="$project_base/projects/$project_name"
 
     # run project configs. Make sure that config.sh is pass trough.
-    [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh pre $@
+    [[ -f $project_folder/config.sh ]] && $project_folder/config.sh pre $@
 
     # set keyboard key to project color, what?! five different "color" variables, clean!
     declare -l key_color="${project[color]}"
