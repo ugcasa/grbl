@@ -304,7 +304,7 @@ mount.remote () {
 
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
 
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks \
           -p "$_source_port" \
           "$GURU_CLOUD_USERNAME@$_source_server:$_source_folder" \
           "$_target_folder"

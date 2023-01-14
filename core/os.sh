@@ -19,8 +19,33 @@ os.compatible_with(){
 }
 
 
+os.status() {
+    # returns least linux distribution name
+    if [ -f /etc/os-release ]; then
+        source /etc/os-release
+        gr.msg -v1 -V2 "$NAME $VERSION_ID '$VERSION_CODENAME' Kernel $(uname -r)"
+        gr.msg -v2 "$NAME $VERSION_ID '$VERSION_CODENAME'/$ID_LIKE '$UBUNTU_CODENAME' $(uname -v)/Linux kernel $(uname -r)"
+    fi
+}
+
+
+os.info() {
+    # returns least linux distribution name
+    if [ -f /etc/os-release ]; then
+        source /etc/os-release
+        gr.msg "$NAME $VERSION_ID '$VERSION_CODENAME' based on $ID_LIKE '$UBUNTU_CODENAME'"
+        return 0
+    else
+        echo "cannot stat"
+        return 100
+    fi
+}
+
+
+
+
 os.check_distro() {
-    # returns least some standasrt type linux distributuin name
+    # returns least linux distribution name
     if [ -f /etc/os-release ]; then
         source /etc/os-release
         echo "$ID"
@@ -30,6 +55,30 @@ os.check_distro() {
         return 100
     fi
 }
+
+
+# os.check_branch() {
+#     # returns debian, mandriva..
+#     echo TBD
+# }
+
+
+# os.check_kernel() {
+#     # returns kernel version
+#     echo TBD
+# }
+
+
+# os.check_shell() {
+#     # returns bash, sh, zsh..
+#     echo TBD
+# }
+
+
+# os.check_x() {
+#     # returns cinnamon..
+#     echo TBD
+# }
 
 
 os.check_space () {
@@ -61,6 +110,44 @@ os.check_space () {
 
     # printout
     echo "$server_free_space"
+}
+
+
+os.capslock() {
+
+    capslock_state() {
+    # return true is capslock is set
+        case $(xset -q | sed -n 's/^.*Caps Lock:\s*\(\S*\).*$/\1/p') in
+            off) return 1 ;;
+            on) return 0 ;;
+            *) gr.msg -c yellow "got non valid capslock state"
+               return 1
+           esac
+    }
+
+
+    case $1 in
+            check|state)
+
+                if capslock_state ; then
+                    gr.msg "on"
+                    return 0
+                else
+                    gr.msg "off"
+                    return 1
+                fi
+                ;;
+            on)
+                capslock_state || xdotool key Caps_Lock
+                ;;
+            off)
+                capslock_state && xdotool key Caps_Lock
+                ;;
+            toggle)
+                xdotool key Caps_Lock
+                ;;
+        esac
+
 }
 
 

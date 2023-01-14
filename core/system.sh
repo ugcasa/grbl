@@ -1,5 +1,6 @@
 #!/bin/bash
 # system tools for guru-client
+source os.sh
 
 system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
@@ -142,12 +143,14 @@ system.status () {
 
     gr.msg -v1 -t -n "${FUNCNAME[0]}: "
     if [[ -f ${GURU_SYSTEM_MOUNT[0]}/.online ]] ; then
-        gr.msg -v1 -c green "guru on service" #-k $system_indicator_key
-        return 0
-    else
-        gr.msg -v1 -c red ".data is unmounted" #-k $system_indicator_key
-        return 101
-    fi
+            gr.msg -n -v1 -c green "all fine with " #-k $system_indicator_key
+        else
+            gr.msg -n -v1 -c yellow ".data is unmounted " #-k $system_indicator_key
+        fi
+
+    gr.msg -v1 -n "$(os.status)"
+    gr.msg -v2 -n "caps lock $(os.capslock state)"
+
 }
 
 

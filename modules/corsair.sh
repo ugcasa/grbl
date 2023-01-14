@@ -599,9 +599,9 @@ corsair.indicate () {
         doing)          _blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL aqua" ;;
         working)        _blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL aqua" ;;
         recovery)       _blink="blue black 5 $GURU_DAEMON_INTERVAL blue" ;;
-        playing)        _blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
+        playing)        _blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL " ;;
         active)         _blink="slime aqua 0.5 2" ;;
-        pause)          _blink="black $GURU_CORSAIR_MODE 1 3600" ;;
+        pause)          _blink="black $GURU_CORSAIR_MODE 1 3600";;
         error)          _blink="orange yellow 1 5 yellow" ;;
         message)        _blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
         call)           _blink="deep_pink black 0.75 30 deep_pink" ;;
@@ -773,8 +773,11 @@ corsair.blink_test () {
 
 corsair.type () {
 # blink string characters by key lights
-    string="${@,,}"
-    color="white"
+# input color of keys and then string
+
+    color=$1
+    shift
+    string=${@,,}
 
     for (( i=0 ; i < ${#string} ; i++ )) ; do
 
@@ -817,10 +820,16 @@ corsair.type () {
                 ;;
             esac
 
-            corsair.main set $key $color
+            corsair.main set $key ${color,,}
+
+            # if color given in upcase, leave letters to shine
+
+            sleep 0.1
+            [[ ${color:0:1} == [A-Z] ]] && continue
             sleep 0.4
             corsair.main reset $key
-            sleep 0.1
+
+
         done & 2>/dev/null
 
     gr.msg -v3

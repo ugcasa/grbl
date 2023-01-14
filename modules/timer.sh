@@ -149,7 +149,7 @@ timer.status () {
 
         -t|table)
             gr.msg " Start date      | Start time  | Hours  | Minutes  | Seconds  | Customer  | Project  | Task "
-            gr.msg " --------------- | ----------- | ------ | -------- | -------- | --------- | -------- | ------------ "
+            gr.msg " =============== | =========== | ====== | ======== | ======== | ========= | ======== | ============ "
             gr.msg " $nice_start_date | $start_time | $hours | $minutes | $seconds | $customer | $project | $task"
             ;;
 
@@ -186,7 +186,7 @@ timer.start () {
     # Start timer TBD rewrite this thole module
 
     GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
-    [[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
+    #[[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
 
     # check is timer alredy set
     if [[ -f "$GURU_FILE_TRACKSTATUS" ]] ; then
@@ -355,7 +355,7 @@ timer.cancel () {
 
     GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
 
-    if [ -f $GURU_FILE_TRACKSTATUS ]; then
+    if [[ -f $GURU_FILE_TRACKSTATUS ]]; then
             rm $GURU_FILE_TRACKSTATUS
             gr.msg -v1 -t -c reset -k $GURU_TIMER_INDICATOR_KEY "work canceled"
             gr.msg -v4 -m $GURU_USER/message "glitch in the matrix, something changed"
@@ -386,11 +386,11 @@ timer.edit () {
 timer.report() {
     # make a report
 
-    [ "$1" ] && team="$1" || team="$GURU_TEAM"
+    [[ "$1" ]] && team="$1" || team="$GURU_TEAM"
     report_file="work-track-report-$(date +%Y%m%d)-$team.csv"
     output_folder=$HOME/Documents
-    [ "$team" == "all" ] && team=""
-    [ -f $GURU_FILE_TRACKDATA ] || return 13
+    [[ "$team" == "all" ]] && team=""
+    [[ -f $GURU_FILE_TRACKDATA ]] || return 13
 
     cat $GURU_FILE_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
     $GURU_PREFERRED_OFFICE_DOC $output_folder/$report_file &

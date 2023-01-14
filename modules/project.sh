@@ -2,8 +2,8 @@
 # guru-cli project tools 2020 - 2022 casa@ujo.guru
 
 declare -gA project
-source $GURU_CFG/project.cfg
-[[ -f $GURU_CFG/$GURU_USER/project.cfg ]] && source $GURU_CFG/$GURU_USER/project.cfg
+source "$GURU_CFG/project.cfg"
+[[ -f "$GURU_CFG/$GURU_USER/project.cfg" ]] && source "$GURU_CFG/$GURU_USER/project.cfg"
 
 project.main () {
     # main command parser
@@ -14,7 +14,7 @@ project.main () {
             # list of commands
             check|exist|ls|info|\
             add|status|open|change|\
-            close|toggle|rm|sublime|archive|\
+            close|toggle|rm|archive|\
             subl|poll|help|terminal|term)
 
             project.$_cmd "$@"
@@ -73,7 +73,7 @@ project.configure () {
 
     declare -g project_base="$GURU_SYSTEM_MOUNT/project"
     declare -g project_arhive="$GURU_SYSTEM_MOUNT/project/arhive"
-    declare -g project_indicator_key="f10"
+    #declare -g {project[indicator_key]}="f10"
     declare -g project_mount="$GURU_MOUNT_PROJECTS"
 
     if [[ $1 ]] ; then
@@ -90,10 +90,14 @@ project.configure () {
         return 100
     fi
 
-    gr.msg -v3 "$GURU_USER working on $project_name"
 
     declare -g project_folder="$project_base/projects/$project_name"
     declare -g project_cfg="$project_folder/config.sh"
+    declare -g project_git="${project[git_base]}/$project_name"
+    # need configutration value from project-cfg
+    # declare -g project_git="$project_folder/config.sh"
+
+    gr.msg -v3 "$GURU_USER working on $project_name home folder:$project_git"
     declare -g sublime_project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
 
     # check that project is in projects list
@@ -152,7 +156,7 @@ project.info () {
             gr.msg -c light_blue -w17 -n "folder:" ; gr.msg -c light_blue "$GURU_PROJECT_FOLDER"
             gr.msg -c light_blue -w17 -n "git folder:" ; gr.msg -c light_blue "$GURU_PROJECT_GIT"
             gr.msg -c light_blue -w17 -n "project color:" ; gr.msg -c light_blue "$GURU_PROJECT_COLOR"
-            gr.msg -c light_blue -w17 -n "indicator key:" ; gr.msg -c light_blue "$project_indicator_key"
+            gr.msg -c light_blue -w17 -n "indicator key:" ; gr.msg -c light_blue "${project[indicator_key]}"
             gr.msg -c light_blue -w17 -n "base folder:" ; gr.msg -c light_blue "$project_base"
             gr.msg -c light_blue -w17 -n "mount point:" ; gr.msg -c light_blue "$project_mount"
             gr.msg -c light_blue -w17 -n "project folder:" ; gr.msg -c light_blue "$project_folder"
@@ -204,6 +208,8 @@ project.open () {
     if ! project.configure $1 ; then return 0 ; fi
     shift
 
+    # if [[ -f $]]
+
     # check is given project alredy active
     if [[ -f $project_base/active ]] \
             && [[ "$project_name" == "$(cat $project_base/active)" ]] \
@@ -219,15 +225,20 @@ project.open () {
     # local project_folder="$project_base/projects/$project_name"
 
     # run project configs. Make sure that config.sh is pass trough.
-    [[ -f $project_folder/config.sh ]] && $project_folder/config.sh pre $@
+    if [[ -f $project_folder/config.sh ]] ; then
+            source $project_folder/config.sh
+            $project_folder/config.sh pre $@
+        fi
 
     # set keyboard key to project color, what?! five different "color" variables, clean!
-    declare -l key_color="${project[color]}"
+    declare key_color="${project[color]}"
     [[ $GURU_PROJECT_COLOR ]] && key_color=$GURU_PROJECT_COLOR
 
-    gr.msg -v1 -c $key_color "$project_name" -m "$GURU_USER/project" -k $project_indicator_key
+    gr.msg -v1 -c $key_color "$project_name" -m "$GURU_USER/project" -k ${project[indicator_key]}
 
     # open editor
+    [[ $GURU_PROJECT_EDITOR ]] && GURU_PREFERRED_EDITOR=$GURU_PROJECT_EDITOR
+    gr.msg -v3 "editor: $GURU_PREFERRED_EDITOR"
     case $GURU_PREFERRED_EDITOR in
 
             sublime|subl|sub3|sub4)
@@ -235,7 +246,14 @@ project.open () {
                     ;;
 
             code|vcode|v-code|visual-code|vs)
-                    gr.msg "TBD add support for vcode project files" ;;
+                    gr.msg "project '$project_name' mount point '$project_git' "
+                    [[ $GURU_FORCE ]] \
+                        && code $project_git \
+                        || gr.msg -v2 "let user launch editor $project_git"
+
+                    code $GURU_PROJECT_GIT
+                    ;;
+
             vi|vim) gr.msg "TBD add support for vim project files" ;;
             joe)    gr.msg "TBD add support for joe project files" ;;
         esac
@@ -319,14 +337,15 @@ project.close () {
             return 3
         fi
 
-    [[ -f "$project_base/projects/$project_name/config.sh" ]] && source "$project_base/projects/$project_name/config.sh" post $@
-
     # check active project
     if [[ -f $project_base/active ]] ; then
             mv -f $project_base/active $project_base/last
-            gr.msg -v1 -c reset "$active_project closed" -k $project_indicator_key
+            gr.msg -v1 -c reset "$active_project closed" -k ${project[indicator_key]}
         fi
-    GURU_VERBOSE=0
+
+    user_config="$project_base/projects/$project_name/config.sh post"
+    [[ -f $user_config ]] && .$user_config post
+
     project.status
 }
 
@@ -564,24 +583,24 @@ project.status () {
 
     # check project file locaton is accessavle
     if [[ ${project[enabled]} ]] ; then
-            gr.msg -v1 -n -c green "enabled, "  -k $project_indicator_key
+            gr.msg -v1 -n -c green "enabled, "  -k ${project[indicator_key]}
         else
-            gr.msg -v1 -c black "disabled " -k $project_indicator_key
+            gr.msg -v1 -c black "disabled " -k ${project[indicator_key]}
             return 1
         fi
 
     if [[ -d "$project_base" ]] ; then
-            gr.msg -v1 -n -c green "installed, "  -k $project_indicator_key
+            gr.msg -v1 -n -c green "installed, "  -k ${project[indicator_key]}
         else
-            gr.msg -v1 -n -c red "$project_base not installed, " -k $project_indicator_key
+            gr.msg -v1 -n -c red "$project_base not installed, " -k ${project[indicator_key]}
             return 2
         fi
 
     # check are projects mounted
     if [[ -f "$project_mount/.online" ]] ; then
-            gr.msg -v1 -n -c green "mounted "  -k $project_indicator_key
+            gr.msg -v1 -n -c green "mounted "  -k ${project[indicator_key]}
         else
-            gr.msg -v1 -c yellow "not mounted" -k $project_indicator_key
+            gr.msg -v1 -c yellow "not mounted" -k ${project[indicator_key]}
             return 3
         fi
 
@@ -591,9 +610,9 @@ project.status () {
     if [[ -f $project_base/active ]]; then
             local active=$(cat $project_base/active)
             #gr.msg -v2 -n "active: "
-            gr.msg -v4 -n -c $project_key_color -k $project_indicator_key
+            gr.msg -v4 -n -c ${project[color]} -k ${project[indicator_key]}
         else
-            gr.msg -v3 -c reset "no active projects "  -k $project_indicator_key
+            gr.msg -v3 -c reset "no active projects "  -k ${project[indicator_key]}
         fi
 
     return 0
@@ -605,16 +624,15 @@ project.poll () {
 
     local _cmd="$1" ; shift
 
-    local project_indicator_key="f$(gr.poll project)"
     case $_cmd in
         start )
             gr.msg -v1 -t -c black \
-                -k $project_indicator_key \
+                -k ${project[indicator_key]} \
                 "${FUNCNAME[0]}: project status polling started"
             ;;
         end )
             gr.msg -v1 -t -c reset \
-                -k $project_indicator_key \
+                -k ${project[indicator_key]} \
                 "${FUNCNAME[0]}: project status polling ended"
             ;;
         status )

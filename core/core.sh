@@ -214,8 +214,9 @@ core.run_module () {
 
                 # speak out what ever module returns
                 if [[ $GURU_SPEAK ]]  ; then
-                    local module_output="$(${run_me[@]//  / } | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g')"
-                    gr.msg -v2 "${module_output[@]}"
+                    local module_output="$(${run_me[@]//  / })"
+                    module_output="$(echo $module_output | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g'))"
+                    gr.msg -v2 "$module_output"
                     espeak -p $GURU_SPEAK_PITCH \
                            -s $GURU_SPEAK_SPEED \
                            -v $GURU_SPEAK_LANG \
@@ -401,18 +402,18 @@ core.process_module_opts () {
 
             case ${input_string_list[$i]} in
                 '--'*)  # module arguments
-                         case ${input_string_list[$((i + 1))]} in
-                            '-'*|""|" ")
-                                # echo "module flag '${input_string_list[$i]}'"
-                                pass_to_module="$pass_to_module ${input_string_list[$i]}"
-                                ;;
-                             *)
-                                # echo "module option with arguments '${input_string_list[$i]}=${input_string_list[$((i + 1))]}'"
-                                pass_to_module="$pass_to_module ${input_string_list[$i]}"
-                                let i++
-                                pass_to_module="$pass_to_module ${input_string_list[$i]}"
-                                ;;
-                            esac
+                        case ${input_string_list[$((i + 1))]} in
+                        '-'*|""|" ")
+                            # echo "module flag '${input_string_list[$i]}'"
+                            pass_to_module="$pass_to_module ${input_string_list[$i]}"
+                            ;;
+                         *)
+                            # echo "module option with arguments '${input_string_list[$i]}=${input_string_list[$((i + 1))]}'"
+                            pass_to_module="$pass_to_module ${input_string_list[$i]}"
+                            let i++
+                            pass_to_module="$pass_to_module ${input_string_list[$i]}"
+                            ;;
+                        esac
                         ;;
                 '-'*)   # core arguments
                         case ${input_string_list[$((i + 1))]} in
@@ -522,6 +523,11 @@ case $1 in
         ;;
     description|--description)
         echo "$GURU_VERSION $GURU_VERSION_NAME $(tail $GURU_BIN/version -n +3 | head -n 1 )"
+        exit 0
+        ;;
+    say)
+        shift
+        $GURU_BIN/say.sh "${1} ${2} ${3} ${4} ${5} ${6} ${7} ${8} ${9} ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17}"
         exit 0
         ;;
     help|--help)

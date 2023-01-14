@@ -444,9 +444,9 @@ gr.local () {
                             gr.ind available -m "$GURU_USER has left the building"
                             guru unmount all
                             guru daemon stop
-                            cinnamon-screensaver-command --lock
-                            # sleep 10
-                            # guru system suspend now
+                            #cinnamon-screensaver-command --lock
+                            sleep 10
+                            guru system suspend now
                         fi
                 fi
             sleep $_interv

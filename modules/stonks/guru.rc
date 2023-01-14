@@ -1,7 +1,0 @@
-#!/bin/bash
-# source this to fulfill needed variables when there is no guru-cli installation available
-
-export GURU_CALL=guru
-export GURU_USER=$USER
-export GURU_BIN=$pwd
-## and so on..

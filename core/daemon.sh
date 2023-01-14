@@ -78,7 +78,7 @@ daemon.status () {
             return 127
         fi
 
-    if [[ ${#GURU_DAEMON_PID[@]} -gt 1 ]]; then
+    if [[ ${#GURU_DAEMON_PID[@]} -gt 2 ]]; then
             gr.msg -v1 -c yellow "multiple daemons detected, get a shotgun.." -k $GURU_DAEMON_INDICATOR_KEY
             gr.msg -v2 "kill daemons by '$GURU_CALL daemon kill' command and then start new one by '$GURU_CALL start'"
             # gr.msg -c -v2 light_blue "${GURU_DAEMON_PID[@]} "
@@ -279,12 +279,16 @@ daemon.poll () {
     local _seconds=
     source $GURU_RC
     source net.sh
+    source os.sh
     [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
     #[[ -f "/tmp/guru-stop.flag" ]] && rm -f "/tmp/guru-stop.flag"
     echo "$(sh -c 'echo "$PPID"')" > "$daemon_pid_file"
     system.flag rm fast
     system.flag rm stop
     GURU_FORCE=
+    deamon_sum=$(sum $GURU_BIN/daemon.sh | cut -d" " -f1)
+
+    #source_timestamp=$(stat -c %Y $GURU_BIN/daemon.sh)
 
     gr.end $GURU_DAEMON_INDICATOR_KEY
 
@@ -322,6 +326,9 @@ daemon.poll () {
                 gr.msg -v1 -t -c aqua "daemon continued" #-k $GURU_DAEMON_INDICATOR_KEY
             fi
 
+
+
+
         if system.flag stop ; then
                 gr.end $GURU_DAEMON_INDICATOR_KEY
                 gr.msg -N -t -v1 "daemon got requested to stop "
@@ -333,6 +340,14 @@ daemon.poll () {
         gr.ind doing -k $GURU_DAEMON_INDICATOR_KEY
         # to update configurations is user changes them
         source $GURU_RC
+        # unset caps lock.
+        # some way caps lock seems to active even the button is set to do other shit =bubblecum
+        os.capslock state >/dev/null && os.capslock off
+
+        if [[ $deamon_sum != $(sum $GURU_BIN/daemon.sh | cut -d" " -f1) ]]; then
+                gr.msg -c deep_pink -t "daemon restart requested"
+            fi
+
 
         # go trough poll list
         for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
