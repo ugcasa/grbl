@@ -6,7 +6,6 @@
 # - [ ] change this file to act as an adapter
 # - [ ] audio tunneling, move to audio folder (most interesting)
 # - [ ] fix file search and play
-# - [ ]
 
 source corsair.sh
 
@@ -350,7 +349,6 @@ audio.radio_list (){
                     yle_hameenlinna yle_tampere yle_vega_aboland yle_vega_osterbotten yle_vega_ostnyland yle_vega_vastnyland yle_sami)
 
     local favorite_channels=(${GURU_RADIO_FAVORITE_STATIONS[@]})
-
     local station
 
     # add favorite channels (0-9)
@@ -382,7 +380,7 @@ audio.radio_next (){
 
     local next=
     local value="$1"
-    local current=0
+    local current=
     [[ -f /tmp/guru_cli-radio.nr ]] && current=$(cat /tmp/guru_cli-radio.nr)
 
     case $1 in
@@ -393,6 +391,7 @@ audio.radio_next (){
 
     audio.stop
     local station_list=($(audio.radio_list))
+    echo $next >/tmp/guru_cli-radio.nr
     radio_name=${station_list[$next]}
     audio.listen ${radio_name//_/ }
 }
@@ -415,18 +414,19 @@ audio.radio() {
                 audio.radio_next $key1
                 ;;
 
-        [0-9])
+        [0-9]|[1-9][0-9])
                 audio.stop
                 radio_number="$key1$key2"
                 radio_name=${station_list[$radio_number]}
                 audio.listen ${radio_name//_/ }
-                echo "$radio_number" >/tmp/guru_cli-radio.nr
+                echo "$radio_number" >"/tmp/guru_cli-radio.nr"
                 return 0
                 ;;
         *)
                 audio.stop
-                audio.listen $GURU_RADIO_WAKEUP_STATION
-                echo "0" >/tmp/guru_cli-radio.nr
+                audio.listen $@
+                [[ -f /tmp/guru_cli-radio.nr ]] && rm /tmp/guru_cli-radio.nr
+
         esac
 }
 
@@ -435,6 +435,8 @@ audio.listen () {
 # listen radio stations
 
     source net.sh
+    local current=
+    [[ -f "/tmp/guru_cli-radio.nr" ]] && current=$(cat "/tmp/guru_cli-radio.nr")
 
     if ! net.check >/dev/null; then
             gr.msg "unable to play streams, network unplugged"
@@ -454,16 +456,26 @@ audio.listen () {
 
             for (( i = 0; i < 10; i++ )); do
                     gr.msg -n "$i "
-                    item=${list[$i]}
-                    gr.msg -c aqua_marine "${item//_/ }"
+                    item=${list[$i]//_/ }
+
+                     if [[ $current -eq $i ]] ; then
+                            gr.msg -h -c slime "$item"
+                        else
+                            gr.msg -c aqua_marine "$item"
+                        fi
+
                 done
 
             for (( i = 10; i < ${#list[@]}; i++ )); do
                     gr.msg -n "$i "
-                    item=${list[$i]}
-                    gr.msg -c turquoise "${item//_/ }"
-                done
+                    item=${list[$i]//_/ }
 
+                    if [[ $current -eq $i ]] ; then
+                            gr.msg -h -c slime "$item"
+                        else
+                            gr.msg -c turquoise "$item"
+                        fi
+                done
             ;;
 
         url)
@@ -485,7 +497,7 @@ audio.listen () {
             local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
             [[ $audio_playing_pid ]] && kill $audio_playing_pid 2>/dev/null
 
-            echo "radio ${1^} ${2^}" >$GURU_AUDIO_NOW_PLAYING
+            echo "radio #$current ${1^} ${2^}" >$GURU_AUDIO_NOW_PLAYING
             gr.msg -v1 -h "radio ${1^} ${2^}"
 
             corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
@@ -512,9 +524,10 @@ audio.listen () {
             gr.msg -v4 -c pink "got:$station > url:$url name:'$name'"
             gr.msg -v4 -c pink "mpv $options $url"
             # play
-            gr.msg -v1 -h "radio ${name^}"
+
+            gr.msg -v1 -h "radio #$current ${name^}"
             [[ $audio_playing_pid ]] && kill $audio_playing_pid 2>/dev/null
-            echo "radio ${name^}" >$GURU_AUDIO_NOW_PLAYING
+            echo "radio #$current ${name^}" >$GURU_AUDIO_NOW_PLAYING
             corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
 
             mpv $url $mpv_options --no-resume-playback >/dev/null
