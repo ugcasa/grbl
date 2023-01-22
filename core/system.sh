@@ -77,6 +77,7 @@ system.flag-help () {
     gr.msg -v1 -c white "commands:"
     gr.msg -v2
     gr.msg -v1 " <flag>         return flag status"
+    gr.msg -v1 " check <flag>   return flag status"
     gr.msg -v1 " ls             list of flags with status"
     gr.msg -v1 " set <flag>     set flag"
     gr.msg -v1 " rm <flag>      remove flag"
@@ -129,7 +130,7 @@ system.main () {
 
             "--") return 0 ;;
 
-            *)  gr.msg -c yellow "unknown command $tool"
+            *)  gr.msg -c yellow "${FUNCNAME[0]}: unknown command '$tool'"
                 system.help
                 return 0
         esac
@@ -153,32 +154,50 @@ system.status () {
 
 }
 
-
+# ISSUE #7 broken
 system.flag () {
 # set flags
 
     local cmd=$1 ; shift
     case $cmd in
-            set|rm|ls|toggle)
+            set|rm|unset|reset|ls|toggle|check)
                     system.$cmd-flag $@
-                    return $? ;;
+                    return $?
+                    ;;
+            status)
+                    system.flag-status $1
+                    ;;
             help)   system.flag-help
-                    return 0 ;;
+                    return 0
+                    ;;
             "")     system.ls-flag
-                    return $? ;;
+                    return $?
+                    ;;
             *)      system.check-flag $cmd
-                    return $? ;;
+                    return $?
+                    ;;
         esac
 }
 
 
 system.check-flag () {
-# returen true if flag is set
+# returen true if flag is set, no printout
 
     if [[ -f /tmp/guru-$1.flag ]] ; then
             return 0
         else
             return 1
+        fi
+}
+
+
+system.flag-status () {
+# returen true if flag is set, no printout
+
+    if system.check-flag ; then
+            gr.msg -v1 -c aqua "set"
+        else
+            gr.msg -v1 -c dark_gray "not set"
         fi
 }
 
@@ -208,7 +227,7 @@ system.set-flag () {
     local flag="$1"
 
     if ! [[ $flag ]] ; then
-            gr.msg -c yellow "unknown flag '$flag'"
+            gr.msg -c yellow "${FUNCNAME[0]}: unknown flag '$flag'"
             return 0
         fi
 
@@ -227,7 +246,7 @@ system.rm-flag () {
     local flag="$1"
 
     if ! [[ $flag ]] ; then
-            gr.msg  -c yellow "unknown flag '$flag'"
+            gr.msg  -c yellow "${FUNCNAME[0]}: unknown flag '$flag'"
             return 0
         fi
 
@@ -240,13 +259,25 @@ system.rm-flag () {
 }
 
 
+system.reset-flag() {
+    system.rm-flag $@
+    return $?
+}
+
+
+system.unset-flag() {
+    system.rm-flag $@
+    return $?
+}
+
+
 system.toggle-flag () {
 # toggle flag status
 
     local flag="$1"
 
     if ! [[ $flag ]] ; then
-            gr.msg -c yellow "unknown flag '$flag'"
+            gr.msg -c yellow "${FUNCNAME[0]}: unknown flag '$flag'"
             return 0
         fi
 
@@ -621,7 +652,7 @@ system.suspend () {
                 system.suspend_help
                 ;;
             *)
-                gr.msg -c yellow "unknown suspend command: $1"
+                gr.msg -c yellow "${FUNCNAME[0]}: unknown suspend command: $1"
                 system.suspend_help
                 ;;
 
