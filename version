@@ -1,4 +1,4 @@
-0.6.8.20
+0.6.8.21
 bellaconf
 10 long arguments are delivered to module
 11 active module rc functions done for mount, audio and backup
@@ -13,5 +13,5 @@ bellaconf
 17 messy list player, youtube.sh review needed
 18 youtube optimized, just fun for xmass
 19 caps lock integration, a lot of minor changes, mainly in audio.sh
-20 getting ready to fratalize audio.sh
-
+20 getting ready to chatter audio.sh
+21 macro support for list of command, no conditions yet
