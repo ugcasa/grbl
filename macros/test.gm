@@ -1,0 +1,15 @@
+#!/usr/bin/env guru
+
+## step 2 without prefix run guru commands
+## runs only lists of guru commands, no conditions etc
+	set system flag connected
+	rm system flag connected
+	mount ls
+	# note today
+	# youtube nyan cat
+	# audio listen yle puhe # note yesterday
+
+## if else condition for macro
+
+	# mount system && set system flag connected || rm system flag connected
+	# system flag connected

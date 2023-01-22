@@ -1,8 +1,7 @@
 #!/bin/bash
 # guru-client core
-# casa@ujo.guru 2020 - 2022
+# casa@ujo.guru 2020 - 2023
 
-#source $GURU_BIN/common.sh
 
 
 core.help () {
@@ -13,6 +12,7 @@ core.help () {
         gr.msg "usage:            $GURU_CALL -options module command arguments"
         gr.msg "                  options are not place oriented"
     }
+
 
     core.help_flags () {
         gr.msg -c white "options:"
@@ -31,6 +31,7 @@ core.help () {
         # gr.msg " --o argument   module options TBD"
     }
 
+
     core.help_system () {
         gr.msg -c white  "system tools:"
         gr.msg "  install         install tools "
@@ -42,6 +43,7 @@ core.help () {
         gr.msg "  --help          printout help "
     }
 
+
     core.help_examples () {
         gr.msg -c white  "examples:"
         gr.msg "  $GURU_CALL note yesterday           open yesterdays notes"
@@ -50,6 +52,7 @@ core.help () {
         gr.msg "  $GURU_CALL timer start at 12:00     start work time timer"
         gr.msg
     }
+
 
     core.help_newbie () {
         if [[ -f $HOME/guru/.data/.newbie ]] ; then
@@ -72,7 +75,6 @@ core.help () {
     core.help_examples
     core.help_newbie
     gr.msg "version: $GURU_VERSION_NAME v$GURU_VERSION (2022) casa@ujo.guru"
-
 }
 
 
@@ -99,6 +101,7 @@ core.parser () {
                     daemon.$module
                     return $?
                     ;;
+
             silent)
                     pkill espeak
                     ;;
@@ -113,10 +116,12 @@ core.parser () {
                     core.$module $@
                     return $?
                     ;;
+
             *)
                     core.run_module "$module" "$@"
                     return $?
                     ;;
+
             "")     gr.msg "$GURU_CALL need more instructions"
                     ;;
         esac
@@ -124,6 +129,7 @@ core.parser () {
 
 
 core.debug () {
+# some debug stuff, not used too often
 
     local wanted=$1
     # local available=($(cat "$GURU_CFG/variable.list"))
@@ -156,7 +162,7 @@ core.debug () {
 
 
 core.stop () {
-    # ask daemon to stop. daemon should get the message after next tick (about a second)
+# ask daemon to stop. daemon should get the message after next tick (about a second)
 
     source $GURU_BIN/system.sh
     system.main flag set stop
@@ -165,7 +171,7 @@ core.stop () {
 
 
 core.pause () {
-    # ask daemon to pause
+# ask daemon to pause
 
     source $GURU_BIN/system.sh
     # toggle
@@ -179,7 +185,7 @@ core.pause () {
 
 
 core.run_module () {
-    # check is input in module list and if so, call module main
+# check is input in module list and if so, call module main
 
     local type_list=(".sh" ".py" "")
     local run_me=
@@ -242,7 +248,7 @@ core.run_module () {
 
 
 core.run_module_function () {
-    # run methods (functions) in module
+# run methods (functions) in module
 
     # guru add ssh key @ -> guru ssh key add @
     if ! grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
@@ -289,7 +295,7 @@ core.run_module_function () {
 
 
 core.multi_module_function () {
-    # run function name of all installed modules
+# run function name of all installed modules
 
     local function_to_run=$1 ; shift
 
@@ -317,7 +323,7 @@ core.multi_module_function () {
 
 
 core.change_user () {
-    # change guru user temporarily
+# change guru user temporarily
 
     local _input_user=$1
     if [[ "$_input_user" == "$GURU_USER" ]] ; then
@@ -338,6 +344,7 @@ core.change_user () {
 
 
 core.online () {
+# check is online, set pause for daemon if not
 
     source system.sh
     source net.sh
@@ -362,7 +369,7 @@ core.online () {
 
 
 core.mount_system_base () {
-    # check is access point enabled and mount is not
+# check is access point enabled and mount is not
 
     # is access functionality enabled?
     if ! [[ $GURU_ACCESS_ENABLED ]] ; then
@@ -375,8 +382,8 @@ core.mount_system_base () {
         fi
 
     # is nets online
-    if ! core.online ; then
-            return 3
+    if core.online ; then
+            return 0
         fi
 
     source mount.sh
@@ -385,7 +392,7 @@ core.mount_system_base () {
         # get tools for mounting
         source $GURU_BIN/mount.sh
         # check and mount system folder mounted
-        mount.main system
+        mount.main system && return 0
     fi
 }
 
@@ -434,11 +441,72 @@ core.process_module_opts () {
                 esac
         done
 
-    # clean up and export (tr is fastest method stackoverflow 50259869)
+    # clean up and export (tr is fastest method stack overflow 50259869)
 
     export GURU_MODULE_ARGUMENTS=$(echo ${pass_to_module[@]} | tr -s ' ')
     export GURU_CORE_ARGUMENTS=$(echo ${pass_to_core[@]} | tr -s ' ')
 
+}
+
+
+core.run_macro () {
+# run macro
+
+    #export GURU_VERBOSE=1
+    local file_name="${1}"
+    gr.msg -c dark_grey -v2  "running macro '$file_name'"
+    local words_list=()
+    local line_nr=0
+    while IFS= read -r line; do
+            line_nr=$(( line_nr + 1 ))
+            # rest_words_list=$(echo ${line} | cut -d' ' -f3-)
+            IFS=" " ; words_list=(${line[@]}) ; IFS=
+            # remove leading spaces from command
+            words_list[0]=$(sed 's/^[[:space:]]*//' <<< "${words_list[0]}")
+
+            case ${words_list[0]} in *'#'*|"") continue ; esac
+
+            # re place commands if found in reserved words_list list
+            if [[ " ${GURU_SYSTEM_RESERVED_CMD[@]} " =~ " ${words_list[0]} " ]]; then
+                core.run_module_function "${words_list[1]}"\
+                                         "${words_list[2]}"\
+                                         "${words_list[0]}"\
+                                         "${words_list[@]:3}"
+                continue
+            # check is there module named as given command
+            elif [[ " ${GURU_MODULES[@]} " =~ " ${words_list[0]} " ]]; then
+                core.run_module_function "${words_list[@]}"
+                continue
+            else
+                gr.msg -n -v2 -c white "in '$file_name' line $line_nr: '${words_list[@]}' "
+                gr.msg -c yellow "unknown command '${words_list[0]}'"
+                continue
+            fi
+
+        done < $file_name
+}
+
+# gr.msg -c deep_pink \
+#      "0=${words_list[0]}"\
+#      "1=${words_list[1]}"\
+#      "2=${words_list[2]}"\
+#      "3=${words_list[3]}"\
+#      "4=${words_list[4]}"\
+#      "5=${words_list[5]}"
+
+
+core.is_macro () {
+# check is core called by macro and if so, remove macro name from input string
+
+    case ${1} in
+            *.gm)
+                core.run_macro $@
+                return 0
+                #exit 0
+                ;;
+            *)
+                return 1
+        esac
 }
 
 
@@ -506,7 +574,7 @@ core.process_core_opts () {
     fi
 }
 
-## MAIN
+case $USER in root|admin|sudo) echo "too dangerous to run guru-cli as root!" ; return 100; esac
 
 # global variables
 declare -x GURU_RC="$HOME/.gururc"
@@ -527,6 +595,7 @@ case $1 in
         ;;
     say)
         shift
+        # did not got whole string, quick fix, i was tired, TBD remove
         $GURU_BIN/say.sh "${1} ${2} ${3} ${4} ${5} ${6} ${7} ${8} ${9} ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17}"
         exit 0
         ;;
@@ -538,7 +607,6 @@ case $1 in
     esac
 
 # check that config rc file exits
-
 if [[ -f $GURU_RC ]] ; then
         source $GURU_RC
         gr.msg -v4 "sourcing config $GURU_RC.. "
@@ -555,21 +623,24 @@ if [[ -f $GURU_RC ]] ; then
 # everybody have daemons
 source $GURU_BIN/daemon.sh
 
+# check is core run or sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
+    #\\ process arguments and return cleaned command
+    # import needed modules
+    source $GURU_BIN/common.sh
 
-    # process arguments and return cleaned command
+    # check is core called as interrupter by macro
+    core.is_macro $@ && exit $?
+
     # core.process_opts $@
     core.process_module_opts $@
     core.process_core_opts $GURU_CORE_ARGUMENTS
 
-    # import needed modules
-    source $GURU_BIN/common.sh
-
-    # set up platform
-    core.mount_system_base
-
     # export global variables for sub processes
     export GURU_COMMAND=($GURU_MODULE_COMMAND $GURU_MODULE_ARGUMENTS)
+
+    # set up platform
+    # core.mount_system_base || gr.msg -c yellow "running local mode"
 
     core.parser ${GURU_COMMAND[@]}
     _error_code=$?
