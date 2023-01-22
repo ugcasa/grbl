@@ -338,7 +338,7 @@ check.rcfiles () {
 
 
 install.folders () {
-    # create forlders
+    # create folders
     gr.msg -n -v1 "setting up folder structure " ; gr.msg -v2
 
     # make bin folder for scripts, configs and and apps
