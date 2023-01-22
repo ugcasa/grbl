@@ -599,7 +599,7 @@ corsair.indicate () {
         doing)          _blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL aqua" ;;
         working)        _blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL aqua" ;;
         recovery)       _blink="blue black 5 $GURU_DAEMON_INTERVAL blue" ;;
-        playing)        _blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL " ;;
+        playing)        _blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
         active)         _blink="slime aqua 0.5 2" ;;
         pause)          _blink="black $GURU_CORSAIR_MODE 1 3600";;
         error)          _blink="orange yellow 1 5 yellow" ;;
@@ -616,7 +616,7 @@ corsair.indicate () {
         russia|china)   _blink="red yellow 0.75 3600 red" ;;
     esac
 
-    corsair.blink_set $key $_blink >/dev/null
+    corsair.blink_set $key $_blink >/dev/null 2>/dev/null
 
     return 0
 }
