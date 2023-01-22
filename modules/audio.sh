@@ -515,16 +515,13 @@ audio.listen () {
             local _2="http"
             # stations=$(tr A-Z a-z < $GURU_CFG/radio.list)
             station=$(cat $GURU_CFG/radio.list | grep "$1" | grep $_2 | head -n1 )
-            url=$(echo $station |cut -d ' ' -f1 )
+            url=$(echo $station | cut -d ' ' -f1 )
             # name=$(echo $station |cut -d ' ' -f2- )
             name="$@"
 
             IFS=$ifs
-            # debug
-            gr.msg -v4 -c pink "got:$station > url:$url name:'$name'"
-            gr.msg -v4 -c pink "mpv $options $url"
-            # play
 
+            # play
             gr.msg -v1 -h "radio #$current ${name^}"
             [[ $audio_playing_pid ]] && kill $audio_playing_pid 2>/dev/null
             echo "radio #$current ${name^}" >$GURU_AUDIO_NOW_PLAYING
