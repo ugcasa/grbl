@@ -510,7 +510,7 @@ project.rm () {
             local project_folder="$project_base/projects/$project_name"
             local archive_folder="$project_base/archived/$project_name"
 
-            # check project forlder and arhive
+            # check project folder and arhive
             if [[ -d $project_folder ]] ; then
                     gr.msg -v0 -c white "project needs to be archived before removeing"
                     gr.msg -v0 "to arvhive type: '$GURU_CALL project archive $project_name'"
