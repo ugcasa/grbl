@@ -120,7 +120,7 @@ unmount.system () {
             gr.msg -v2 -n "unmounting.. "
             gr.msg -v3 -c deep_pink "${GURU_SYSTEM_MOUNT[1]} -> $GURU_SYSTEM_MOUNT"
             unmount.remote "$GURU_SYSTEM_MOUNT" \
-                && gr.msg -v2 -c red ".data forlder unmounted, guru is unstable" -k $system_indicator_key \
+                && gr.msg -v2 -c red ".data folder unmounted, guru is unstable" -k $system_indicator_key \
                 || gr.msg -c yellow "error $?" -k $system_indicator_key
           fi
 }
