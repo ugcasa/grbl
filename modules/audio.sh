@@ -1,18 +1,23 @@
 #!/bin/bash
-# guru-cli audio module 2020 - 2022 casa@ujo.guru
+# guru-cli audio module 2020 - 2023 casa@ujo.guru
 
 # todo:
 # - [ ] move functionalities to own files and place them to ./audio folder
 # - [ ] change this file to act as an adapter
 # - [ ] audio tunneling, move to audio folder (most interesting)
 # - [ ] fix file search and play
+# - [x] fix playlist functions
 
+source $GURU_RC
 source corsair.sh
+source mount.sh
 
 declare -g audio_rc="/tmp/guru-cli_audio.rc"
-declare -g audio_playlist_folder="$GURU_SYSTEM_MOUNT/audio/playlists"
+declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
+declare -g audio_playlist_folder="$audio_data_folder/playlists"
 declare -g audio_temp_file="/tmp/guru-cli_audio.playlist"
 declare -g audio_playing_pid=$(ps x | grep mpv| grep -v grep | cut -f1 -d" ")
+declare -g radio_number=
 # more global variables downstairs (after sourcing rc file)
 
 audio.help () {
@@ -92,9 +97,8 @@ audio.main () {
             audio.$_command $@
             return $?
             ;;
-        list)
-            shift
-            audio.playlist_play $@
+        playlist)
+            audio.playlist_main $@
             return $?
             ;;
         *)
@@ -116,11 +120,6 @@ audio.play () {
             find)
                 shift
                 audio.find_and_play $1
-                _error=$?
-                ;;
-            list)
-                shift
-                audio.playlist_play $@
                 _error=$?
                 ;;
             "")
@@ -176,9 +175,7 @@ audio.mute () {
     return $?
 }
 
-
 ## status checks ----------------------------------------------------------------------------------
-
 
 audio.ls () {
 # list audio devices TBD rename audio.device_list()
@@ -252,15 +249,11 @@ audio.mpv_stat() {
     printf "%s %s [%s/%s]" "$file" "$position" "$playlist_pos" "$playlist_count"
 }
 
-
 ## special playing functions ----------------------------------------------------------------------------
-
 
 audio.find_and_play () {
 # find from known audio locations and play
-# jeesus mitä paskaa.. TBD review! a) tää ei toimi b) metodi todella anaalista c) ei saa mitään selvää!
-# miten sienissä tämä on kirjoitettu?
-
+    # TBD review needed
         if [[ -f $1 ]] ; then
                         corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
                         [[ $audio_playing_pid ]] && kill $audio_playing_pid
@@ -346,8 +339,8 @@ audio.radio_list (){
 
     local yle_channels=(yle_puhe yle_radio1 yle_kajaani yle_klassinen yle_x yle_x3_m yle_vega yle_kemi yle_turku \
                     yle_pohjanmaa yle_kokkola yle_pori yle_kuopio yle_mikkeli yle_oulu yle_lahti yle_kotka yle_rovaniemi \
-                    yle_hameenlinna yle_tampere yle_vega_aboland yle_vega_osterbotten yle_vega_ostnyland yle_vega_vastnyland yle_sami)
-
+                    yle_hameenlinna yle_tampere yle_vega_ostnyland yle_sami)
+                    # yle_vega_aboland yle_vega_osterbotten yle_vega_vastnyland
     local favorite_channels=(${GURU_RADIO_FAVORITE_STATIONS[@]})
     local station
 
@@ -387,12 +380,21 @@ audio.radio_next (){
         next|n) next=$(( $current + 1 )) ;;
         prev|p) next=$(( $current - 1 )) ;;
     esac
-    echo "$next" >/tmp/guru_cli-radio.nr
 
+    if (( $next >= ${#station_list[@]} )) ; then
+        next=0
+    elif (( $next < 0 )) ; then
+        next=$(( ${#station_list[@]} -1 ))
+    fi
+    #echo "$next" >/tmp/guru_cli-radio.nr
+
+    corsair.type_end
     audio.stop
     local station_list=($(audio.radio_list))
     echo $next >/tmp/guru_cli-radio.nr
+    radio_number=$next
     radio_name=${station_list[$next]}
+    corsair.type white "$radio_number"
     audio.listen ${radio_name//_/ }
 }
 
@@ -402,11 +404,11 @@ audio.radio() {
     local key1=$1
     local key2=$2
     local station_list=($(audio.radio_list))
-    #gr.msg -v4 "${station_list[0]} $GURU_RADIO_WAKEUP_STATION"
+    gr.debug "${station_list[0]} $GURU_RADIO_WAKEUP_STATION"
 
     case $key1 in
         l|list)
-                local _command='guru audio listen list ; read -n 1'
+                local _command='while true ; do guru audio listen list ; read -n 1 ; clear ; done'
                 gnome-terminal --hide-menubar --geometry 30x$((${#station_list[@]} + 2)) --zoom 0.7 --title "radio list" -- bash -c "$_command"
                 ;;
 
@@ -416,16 +418,32 @@ audio.radio() {
 
         [0-9]|[1-9][0-9])
                 audio.stop
-                radio_number="$key1$key2"
-                radio_name=${station_list[$radio_number]}
+                radio_nr="$key1$key2"
+                radio_name=${station_list[$radio_nr]}
+                echo "$radio_nr" >"/tmp/guru_cli-radio.nr"
+                radio_number=$radio_nr
                 audio.listen ${radio_name//_/ }
-                echo "$radio_number" >"/tmp/guru_cli-radio.nr"
                 return 0
+                ;;
+
+        "")
+                audio.stop
+                if [[ -f "/tmp/guru_cli-radio.nr" ]]; then
+                        radio_nr=$(cat "/tmp/guru_cli-radio.nr")
+                        radio_number=$radio_nr
+                        radio_name=${station_list[$radio_nr]}
+                        audio.listen ${radio_name//_/ }
+                        radio_number=
+                    else
+                        radio_number=0
+                        radio_name=${station_list[$radio_number]}
+                        audio.listen ${radio_name//_/ }
+                        radio_number=
+                    fi
                 ;;
         *)
                 audio.stop
                 audio.listen $@
-                [[ -f /tmp/guru_cli-radio.nr ]] && rm /tmp/guru_cli-radio.nr
 
         esac
 }
@@ -435,8 +453,8 @@ audio.listen () {
 # listen radio stations
 
     source net.sh
-    local current=
-    [[ -f "/tmp/guru_cli-radio.nr" ]] && current=$(cat "/tmp/guru_cli-radio.nr")
+    local radio_nr=
+    [[ -f "/tmp/guru_cli-radio.nr" ]] && radio_nr=$(cat "/tmp/guru_cli-radio.nr")
 
     if ! net.check >/dev/null; then
             gr.msg "unable to play streams, network unplugged"
@@ -458,7 +476,7 @@ audio.listen () {
                     gr.msg -n "$i "
                     item=${list[$i]//_/ }
 
-                     if [[ $current -eq $i ]] ; then
+                     if [[ $radio_nr -eq $i ]] ; then
                             gr.msg -h -c slime "$item"
                         else
                             gr.msg -c aqua_marine "$item"
@@ -470,7 +488,7 @@ audio.listen () {
                     gr.msg -n "$i "
                     item=${list[$i]//_/ }
 
-                    if [[ $current -eq $i ]] ; then
+                    if [[ $radio_nr -eq $i ]] ; then
                             gr.msg -h -c slime "$item"
                         else
                             gr.msg -c turquoise "$item"
@@ -478,57 +496,80 @@ audio.listen () {
                 done
             ;;
 
-        url)
+        url) # play url streams
+
             shift
+            # stop currently playing audio
+            [[ $audio_playing_pid ]] && kill $audio_playing_pid 2>/dev/null
+            # how about audio.stop?
+
+            # inform uses and now playing
             gr.msg -v1 -h "playing from $1"
-            corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-            [[ $audio_playing_pid ]] && kill $audio_playing_pid 2>/dev/null
-            echo "stream $1" >$GURU_AUDIO_NOW_PLAYING
-
-            mpv $1 $mpv_options --no-resume-playback >/dev/null
-
-            rm $GURU_AUDIO_NOW_PLAYING
-            gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
-            ;;
-
-        yle)
-            corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-            local channel=$(echo $@ | sed -r 's/(^| )([a-z])/\U\2/g' )
-            local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
-            [[ $audio_playing_pid ]] && kill $audio_playing_pid 2>/dev/null
-
-            echo "radio #$current ${1^} ${2^}" >$GURU_AUDIO_NOW_PLAYING
-            gr.msg -v1 -h "radio ${1^} ${2^}"
-
-            corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+            echo "$1" >$GURU_AUDIO_NOW_PLAYING
 
             # play media
-            mpv $url $mpv_options --no-resume-playback >/dev/null
+            corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+            mpv $1 $mpv_options --no-resume-playback >/dev/null
 
-            # remove indications and
+            # remove now playing and indications
             rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
             ;;
-        *)
-            # listen radio stations listed in radio.list in config
+
+        yle) # listen yleisradio channels
+
+            # make icecast url compatible channel name
+            local channel=$(echo $@ | sed -r 's/(^| )([a-z])/\U\2/g' )
+            local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
+
+            # stop currently playing audio
+            [[ $audio_playing_pid ]] && kill $audio_playing_pid 2>/dev/null
+            # how about audio.stop?
+
+            # make nice name for station
+            local station_name="${1^} ${2^}"
+            [[ $radio_number ]] && station_name="#$radio_number $station_name"
+            echo "$station_name" >$GURU_AUDIO_NOW_PLAYING
+            gr.msg -v1 -h "$station_name"
+
+            # play media
+            corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+            mpv $url $mpv_options --no-resume-playback >/dev/null
+            #gnome-terminal --hide-menubar --geometry 30x5 --zoom 0.7 --title "guru radio $station_name" -- bash -c "mpv $url $mpv_options --no-resume-playback"
+
+
+            # remove now playing and indications
+            rm $GURU_AUDIO_NOW_PLAYING
+            gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
+            ;;
+
+        *)  # listen radio stations listed in radio.list in config
+
             ifs=$IFS ; IFS=$'\n'
             local _2="http"
+
             # stations=$(tr A-Z a-z < $GURU_CFG/radio.list)
             station=$(cat $GURU_CFG/radio.list | grep "$1" | grep $_2 | head -n1 )
             url=$(echo $station | cut -d ' ' -f1 )
-            # name=$(echo $station |cut -d ' ' -f2- )
-            name="$@"
-
             IFS=$ifs
 
+            # name=$(echo $station |cut -d ' ' -f2- )
+            local station_name="${@^}"
+            [[ $radio_number ]] && station_name="#$radio_number $station_name"
+
             # play
-            gr.msg -v1 -h "radio #$current ${name^}"
+            gr.msg -v1 -h "${station_name}"
+            echo "${station_name}" >$GURU_AUDIO_NOW_PLAYING
+
             [[ $audio_playing_pid ]] && kill $audio_playing_pid 2>/dev/null
-            echo "radio #$current ${name^}" >$GURU_AUDIO_NOW_PLAYING
+            # how about audio.stop?
+
+
             corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-
             mpv $url $mpv_options --no-resume-playback >/dev/null
+            #gnome-terminal --hide-menubar --geometry 30x5 --zoom 0.7 --title "guru radio $radio_nr ${station_name^}" -- bash -c "mpv $url $mpv_options --no-resume-playback"
 
+            # remove now playing and indications
             rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
         esac
@@ -536,71 +577,109 @@ audio.listen () {
 }
 
 
-audio.playlist_play () {
+audio.playlist_main () {
 # play playlist file
 
-    local audio_last_played_pointer="/tmp/guru-cli_audio.last"
-    local user_reguest=$1
-    local _wanna_hear=
-    [[ $2 ]] && _wanna_hear=$2
+    local user_input=$1
+    #local audio_last_played_pointer="/tmp/guru-cli_audio.last"
+    #local item_search_string=
+    #[[ $2 ]] && item_search_string=$2
 
-    case $user_reguest in
+    case $user_input in
+
+        continue|last)
+            audio.playlist_play /tmp/guru-cli_audio.playlist
+            ;;
+
         list|ls)
             shift
-            audio.playlist_list $@
-            return 0
+            gr.msg -c pink "in-the-list"
+            if [[ $1 ]] ; then
+                # if playlist name is given, list all found files
+                    audio.playlist_compose $1
+                    cat $audio_temp_file
+                else
+                # print list of playlists set in audio.cfg
+                    audio.playlist_list
+                fi
             ;;
-        "")
+
+        "") # printout list of playlists
+            gr.msg "please give playlist name from following list"
             audio.playlist_list
-            return 0
+            ;;
+
+        *)
+            audio.playlist_play $@
+
         esac
 
+    return 0
+}
+
+
+audio.playlist_play () {
+# play playlist or search pattern in the list
+    local user_input=$1
+    local item_search_string=
+    local list_to_play=
+    local audio_last_played_pointer="/tmp/guru-cli_audio.last"
+    [[ $2 ]] && item_search_string=$2
+
+    gr.msg -c pink "$audio_playlist_folder/$user_input.list"
+
     # check is input a filename and is file ascii
-    if [[ -f $user_reguest ]] && file $user_reguest | grep -q "text" ; then
+    if [[ -f $user_input ]] && file $user_input | grep -q "text" ; then
 
-            # check that first item exists
-            local first_item=$(head -n 1 $user_reguest)
-            if ! [[ -f $first_item ]] ; then
-                    gr.msg -c yellow "playlist item '$first_item' does not exist"
-                    return 125
-                fi
+        # check that first item exists
+        local first_item=$(head -n 1 $user_input)
+        if ! [[ -f $first_item ]] ; then
+                gr.msg -c yellow "playlist item '$first_item' does not exist"
+                return 125
+            fi
 
-            corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-            [[ $audio_playing_pid ]] && kill $audio_playing_pid
-            mpv --playlist=$user_reguest  $mpv_options --save-position-on-quit
-            gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
-            return 0
-
-        else
-            gr.msg -v3 "file '$user_reguest' not found or format mismatch"
-        fi
+        list_to_play="--playlist=$user_input"
 
     # check is there saved playlists on that name
-    if [[ -f "$audio_playlist_folder/$user_reguest.list" ]] && file $user_reguest | grep -q "text" ; then
-            [[ $audio_playing_pid ]] && kill $audio_playing_pid
-            mpv --playlist="$audio_playlist_folder/$user_reguest.list" $mpv_options --save-position-on-quit
-            return 0
-        fi
+    elif [[ -f "$audio_playlist_folder/$user_input.list" ]] && file "$audio_playlist_folder/$user_input.list" | grep -q "text" ; then
 
-    # if not file check is it configured in user.cfg
-    audio.playlist_compose $user_reguest || return 123
+        list_to_play="--playlist=$audio_playlist_folder/$user_input.list"
 
-    # play requests from list
-    if [[ $_wanna_hear ]] ; then
-            # gr.msg -v3 "wanted hear $_wanna_hear"
-            local _list=($(cat $audio_temp_file))
+    # assume that audio.cfg contains list named by user input
+    else
+        audio.playlist_compose $user_input || return 123
 
-            for _list_item in ${_list[@]} ; do
-                # gr.msg -v3 "$_list_item:$_wanna_hear"
-                grep -i $_wanna_hear <<< $_list_item && mpv $_list_item $mpv_options
-            done
+        list_to_play="--playlist=$audio_temp_file"
 
-            return 0
-        fi
+        # play requested item in the list
+        if [[ $item_search_string ]] ; then
+                gr.debug "wanted hear item '$item_search_string'"
+                local _list=($(cat $audio_temp_file))
 
-    # play whole list
+                for _list_item in ${_list[@]} ; do
+                        if grep -i $item_search_string <<< $_list_item ; then
+                                list_to_play="$_list_item"
+                                break
+                            fi
+                    done
+            fi
+
+    fi
+
+    # indicate playing on keyboard
+    corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+
+    # stop current audio
     [[ $audio_playing_pid ]] && kill $audio_playing_pid
-    mpv --playlist="$audio_temp_file" $mpv_options --no-resume-playback --save-position-on-quit
+
+    # play the playlist
+    mpv $list_to_play $mpv_options --save-position-on-quit
+
+    # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
+    gr.end $GURU_AUDIO_INDICATOR_KEY
+    return 0
+
+
     return 0
 }
 
@@ -610,43 +689,43 @@ audio.playlist_play () {
 
 
 audio.playlist_config () {
-# configure playlist
+# compare user input to configuration and set up
 
-    local user_reguest=$1
-    local found_line=$(grep "GURU_AUDIO_PLAYLIST_${user_reguest^^}=" $audio_rc)
+    local user_input=$1
+    # check does configuration contain line named by user request
+    local found_line=$(grep "GURU_AUDIO_PLAYLIST_${user_input^^}=" $audio_rc)
 
     found_line="${found_line//'export '/''}"
 
     if ! [[ $found_line ]] ; then
-            gr.msg -c yellow "list '$user_reguest' not found"
+            gr.msg -c yellow "list '$user_input' not found"
             return 126
         fi
 
-    # gr.msg -v3 "found_line: $found_line"
 
     declare -g playlist_found_name=$(echo $found_line | cut -f4 -d '_' | cut -f1 -d '=')
-    gr.msg -v3 "playlist_found_name: $playlist_found_name"
 
-    local variable="GURU_AUDIO_PLAYLIST_${playlist_found_name}[@]"
+    local variable="GURU_AUDIO_PLAYLIST_${playlist_found_name}"
     local found_settings=($(eval echo ${!variable}))
-    gr.msg -v3 "found_settings: ${found_settings[@]}"
-
     declare -g playlist_location=${found_settings[0]}
-    gr.msg -v3 "playlist_location: $playlist_location"
-
     declare -g playlist_phase=${found_settings[1]}
-    gr.msg -v3 "playlist_phase: $playlist_phase"
-
     declare -g playlist_option=${found_settings[2]}
-    gr.msg -v3 "playlist_option: $playlist_option"
 
     declare -g list_description="${playlist_location##*/}"
     list_description="${list_description//_/' '}"
     list_description="${list_description//'-'/' - '}"
-    # gr.msg -v3 "description: $list_description"
+
+    # just for debug
+    gr.debug "found_line: $found_line"
+    gr.debug "playlist_found_name: $playlist_found_name"
+    gr.debug "found_settings: ${found_settings[@]}"
+    gr.debug "playlist_location: $playlist_location"
+    gr.debug "playlist_phase: $playlist_phase"
+    gr.debug "playlist_option: $playlist_option"
+    gr.debug "description: $list_description"
 
     if ! [[ $playlist_found_name ]] ; then
-            gr.msg -c yellow "'$user_reguest' not found"
+            gr.msg -c yellow "playlist '$user_input' not found"
             return 127
         fi
 
@@ -655,19 +734,21 @@ audio.playlist_config () {
 
 
 audio.playlist_compose () {
-# check is list named as request exist
+# compose template playlist from given information
 
-    local user_reguest=$1
-    audio.playlist_config $user_reguest
+    local user_input=$1
+    audio.playlist_config $user_input
 
     local sort_option=
     [[ $playlist_option ]] && sort_option="-$playlist_option"
 
-    if [[ "$playlist_found_name" == "${user_reguest^^}" ]] ; then
-            ls $playlist_location/$playlist_phase \
+    if [[ "$playlist_found_name" == "${user_input^^}" ]] ; then
+
+            # fixed issue where audio_temp_file medialist did not include media folder
+            find $playlist_location/$playlist_phase -type f \
                 | grep -e wav -e mp3 -e m4a -e mkv -e mp4 -e avi \
                 | sort $sort_option > $audio_temp_file
-                #\ | head -n 5
+
             local test=$(cat $audio_temp_file)
 
             if [[ $test ]] ; then
@@ -679,7 +760,7 @@ audio.playlist_compose () {
                     return 123
                 fi
         else
-            gr.msg -c yellow "list name '$user_reguest' not found"
+            gr.msg -c yellow "list name '$user_input' not found"
             return 124
         fi
 }
@@ -856,7 +937,7 @@ audio.status () {
     # for playing files
     local now_playing=$(audio.mpv_stat)
 
-    # for playing radios
+    # add string from now playing file (adds station number)
     if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
             local station=$(cat $GURU_AUDIO_NOW_PLAYING)
             now_playing="$station $now_playing"
@@ -867,19 +948,17 @@ audio.status () {
 
         else
             gr.end $GURU_AUDIO_INDICATOR_KEY
-            # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
             gr.msg -c black "disabled" -k $GURU_AUDIO_INDICATOR_KEY
             return 0
         fi
 
     if [[ $now_playing ]] ; then
-            corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
             gr.msg -v1 -n -c aqua "playing: $now_playing"
+            corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
             audio.is_paused && gr.msg -v1 -h "[paused]" \
                             || gr.msg -v1
         else
             gr.end $GURU_AUDIO_INDICATOR_KEY
-            # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
             gr.msg -v1 -c dark_grey "stopped"
 
         fi
@@ -921,6 +1000,7 @@ audio.rc () {
 
     [[ ! -d $audio_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $audio_playlist_folder
     source $audio_rc
+    #source $mount_rc
 }
 
 audio.make_rc () {
@@ -928,7 +1008,7 @@ audio.make_rc () {
 
     source config.sh
 
-    # make rc out of foncig file and run it
+    # make rc out of config file and run it
 
     if [[ -f $audio_rc ]] ; then
             rm -f $audio_rc
@@ -944,13 +1024,12 @@ audio.make_rc () {
 audio.rc
 
 # variables that needs values that audio.rc provides
-declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
 declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_SOCKET"
 [[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $GURU_RC
-    source common.sh
+
+    #source common.sh
     audio.main $@ # $(audio.parse_options $@)
     exit $?
 fi
