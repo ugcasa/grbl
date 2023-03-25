@@ -97,6 +97,10 @@ audio.main () {
             audio.$_command $@
             return $?
             ;;
+        mpvstat)
+            audio.mpv_stat
+            return $?
+            ;;
         playlist)
             audio.playlist_main $@
             return $?
@@ -234,12 +238,12 @@ audio.mpv_stat() {
     mpv_communicate() {
     # pass the property as the first argument
         printf '{ "command": ["get_property", "%s"] }\n' "$1" |\
-            socat - "$GURU_AUDIO_SOCKET" |\
+            socat - "$GURU_AUDIO_MPV_SOCKET" |\
             jq -r ".data"
     }
 
     ps aufx | grep "mpv " | grep -v grep >/dev/null || return 1
-    [[ -S $GURU_AUDIO_SOCKET ]] || return 0
+    [[ -S $GURU_AUDIO_MPV_SOCKET ]] || return 0
 
     position="$(mpv_communicate "percent-pos" | cut -d'.' -f1)%"
     file="$(mpv_communicate "filename")"
@@ -626,7 +630,7 @@ audio.playlist_play () {
     local audio_last_played_pointer="/tmp/guru-cli_audio.last"
     [[ $2 ]] && item_search_string=$2
 
-    gr.msg -c pink "$audio_playlist_folder/$user_input.list"
+    gr.debug "$audio_playlist_folder/$user_input.list"
 
     # check is input a filename and is file ascii
     if [[ -f $user_input ]] && file $user_input | grep -q "text" ; then
@@ -659,6 +663,7 @@ audio.playlist_play () {
                 for _list_item in ${_list[@]} ; do
                         if grep -i $item_search_string <<< $_list_item ; then
                                 list_to_play="$_list_item"
+                                item_name=$_list_item
                                 break
                             fi
                     done
@@ -666,7 +671,7 @@ audio.playlist_play () {
 
     fi
 
-    # indicate playing on keyboard
+    # indicate user (now playing data is from mpv stat server)
     corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
 
     # stop current audio
@@ -675,10 +680,8 @@ audio.playlist_play () {
     # play the playlist
     mpv $list_to_play $mpv_options --save-position-on-quit
 
-    # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
+    # stop play indication
     gr.end $GURU_AUDIO_INDICATOR_KEY
-    return 0
-
 
     return 0
 }
@@ -702,11 +705,11 @@ audio.playlist_config () {
             return 126
         fi
 
-
     declare -g playlist_found_name=$(echo $found_line | cut -f4 -d '_' | cut -f1 -d '=')
 
     local variable="GURU_AUDIO_PLAYLIST_${playlist_found_name}"
     local found_settings=($(eval echo ${!variable}))
+
     declare -g playlist_location=${found_settings[0]}
     declare -g playlist_phase=${found_settings[1]}
     declare -g playlist_option=${found_settings[2]}
@@ -715,9 +718,8 @@ audio.playlist_config () {
     list_description="${list_description//_/' '}"
     list_description="${list_description//'-'/' - '}"
 
-    # just for debug
-    gr.debug "found_line: $found_line"
     gr.debug "playlist_found_name: $playlist_found_name"
+    gr.debug "found_line: $found_line"
     gr.debug "found_settings: ${found_settings[@]}"
     gr.debug "playlist_location: $playlist_location"
     gr.debug "playlist_phase: $playlist_phase"
@@ -955,7 +957,7 @@ audio.status () {
     if [[ $now_playing ]] ; then
             gr.msg -v1 -n -c aqua "playing: $now_playing"
             corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-            audio.is_paused && gr.msg -v1 -h "[paused]" \
+            audio.is_paused && gr.msg -v1 -h " [paused]" \
                             || gr.msg -v1
         else
             gr.end $GURU_AUDIO_INDICATOR_KEY
@@ -1024,7 +1026,7 @@ audio.make_rc () {
 audio.rc
 
 # variables that needs values that audio.rc provides
-declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_SOCKET"
+declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET"
 [[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
