@@ -1,5 +1,5 @@
-0.6.8.21
-bellaconf
+0.6.8.22
+'folder module proto'
 10 long arguments are delivered to module
 11 active module rc functions done for mount, audio and backup
 12 audio module can continue to play listed file position
@@ -15,3 +15,4 @@ bellaconf
 19 caps lock integration, a lot of minor changes, mainly in audio.sh
 20 getting ready to chatter audio.sh
 21 macro support for list of command, no conditions yet
+22 audio.sh fixes: now playing mpv server socket pointer and playlist almost ready to go audio/playlist.sh
