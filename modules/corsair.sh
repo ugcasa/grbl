@@ -770,16 +770,30 @@ corsair.blink_test () {
     return 0
 }
 
+corsair.type_end () {
+# end current type process
+
+    if [[ -f /tmp/guru-cli_corsair-typing ]] ; then
+            rm /tmp/guru-cli_corsair-typing
+            #kill /tmp/guru-cli_corsair.pid
+            #rm /tmp/guru-cli_corsair.pid
+        fi
+}
+
 
 corsair.type () {
 # blink string characters by key lights
 # input color of keys and then string
-
     color=$1
     shift
     string=${@,,}
 
+    touch /tmp/guru-cli_corsair-typing
+
     for (( i=0 ; i < ${#string} ; i++ )) ; do
+
+            # TBD following does not work when called from script, dunno why
+            [[ -f /tmp/guru-cli_corsair-typing ]] || break
 
             key="${string:$i:1}"
 
@@ -820,18 +834,15 @@ corsair.type () {
                 ;;
             esac
 
+
             corsair.main set $key ${color,,}
-
             # if color given in upcase, leave letters to shine
-
-            sleep 0.1
             [[ ${color:0:1} == [A-Z] ]] && continue
-            sleep 0.4
+            sleep 0.5
             corsair.main reset $key
 
-
         done & 2>/dev/null
-
+        #echo $! >/tmp/guru-cli_corsair.pid
     gr.msg -v3
 }
 
