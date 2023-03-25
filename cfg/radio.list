@@ -1,10 +1,10 @@
-https://hakkeriradio.fi:8443/stream hakkeriradio
+http://radio2.6net.fi:8000/jarviradio2 järviradio
 https://supla.digitacdn.net/live/_definst_/supla/radiorock/chunklist.m3u8 rock
 https://supla.digitacdn.net/live/_definst_/supla/aitoiskelma/chunklist.m3u8 aito_iskelmä
 https://supla.digitacdn.net/live/_definst_/supla/groove/chunklist.m3u8 groove_fm
 https://supla.digitacdn.net/live/_definst_/supla/radiohelmi/chunklist.m3u8 helmiradio
 https://supla.digitacdn.net/live/_definst_/supla/hitmix/chunklist.m3u8 hitmix
-http://radio2.6net.fi:8000/jarviradio2 järviradio
+https://hakkeriradio.fi:8443/stream hakkeriradio
 https://supla.digitacdn.net/live/_definst_/supla/loop/chunklist.m3u8 loop
 https://supla.digitacdn.net/live/_definst_/supla/radioaalto/chunklist.m3u8 me_naiset
 http://isojako.radiodei.fi:8000/yleisohjelma dei
