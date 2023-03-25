@@ -2,7 +2,6 @@
 # note tools for guru-client casa@ujo.guru 2017-2022
 
 note.help () {
-    # general help
 
     gr.msg -v1 -c white "guru-client note help "
     gr.msg -v2
@@ -22,13 +21,21 @@ note.help () {
 
 
 note.main () {
-    # main command parser
+# main command parser
 
     local command="$1" ; shift
 
     case "$command" in
+
             status|ls|add|open|rm|check|locate|config)
                     note.$command "$@"
+                    return $?
+                    ;;
+
+            # these note types are opened with obsidian
+            memo*|idea|write*)
+
+                    note.open_obsidian_vault "$command"
                     return $?
                     ;;
 
@@ -291,6 +298,15 @@ note.add () {
 }
 
 
+note.open_obsidian_vault () {
+# open idea gathering environment aka. obsidian vault memos in guru/notes
+    # gr.msg "${FUNCNAME[0]} TBD"
+    # xdg-open obsidian://open?vault=${1}
+    local command="xdg-open obsidian://open?vault=${1}" #; while true ; do read -n1 ans ; case $ans in q) break ; esac ; done" # 2>/dev/null
+    gnome-terminal --hide-menubar --geometry 130x6 --zoom 0.1 --title "obsidian launcher" -- bash -c "$command ; read "
+}
+
+
 note.open () {
 # select note to open and call editor input date in format YYYYMMDD
 
@@ -302,20 +318,19 @@ note.open () {
 
     for _note_date in ${_date_list[@]} ; do
 
-        note.config "$_note_date"
-        gr.msg -v3 -c pink "$_note_date"
+            note.config "$_note_date"
+            gr.msg -v3 -c pink "$_note_date"
 
-        if [[ -f "$note_file" ]]; then
-                note.add_change "opened"
-            else
-                note.add "$_note_date"
-            fi
+            if [[ -f "$note_file" ]]; then
+                    note.add_change "opened"
+                else
+                    note.add "$_note_date"
+                fi
 
-        gr.msg -v3 -c pink "opening $_note_date"
-        note.open_editor "$note_file"
+            gr.msg -v3 -c pink "opening $_note_date"
+            note.open_editor "$note_file"
 
-    done
-
+        done
 }
 
 
@@ -375,8 +390,8 @@ note.open_editor () {
     case "${note[editor]}" in # if was $GURU_PREFERRED_EDITOR
 
         obsidian|obs)
-            xdg-open "obsidian://open?vault=${note[vault]}" &
-            return $?
+            xdg-open "obsidian://open?vault=${note[vault]}"
+            #return $?
             ;;
         subl|sublime|sublime3|sublime2)
             local project_folder=$GURU_SYSTEM_MOUNT/project/projects/notes
