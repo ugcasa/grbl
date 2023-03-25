@@ -12,16 +12,20 @@
 ## 8) contribute by pull requests at github.com/ugcasa/guru-client =)
 
 ## include needed libraries
-source $GURU_BIN/common.sh
 
-## declare run wide global variables
-declare -g temp_file="/tmp/guru-module.tmp"
-declare -g module_indicator_key="f$(gr.poll module)"
+source common.sh
 
+## declare, module.sh global variables. remove/comment out not needed ones
+
+declare -g module_temp_file="$GURU_TEMP/module.tmp"
+declare -g module_indicator_key=""
+declare -g module_rc="/tmp/guru-cli_module.rc"
+declare -g module_data_folder=$GURU_SYSTEM_MOUNT/module
 
 ## functions, keeping help at first position it might be even updated
+
 module.help () {
-    # user help
+# user help
     gr.msg -n -v2 -c white "guru-cli module help "
     gr.msg -v1 "few clause description what module exists"
     gr.msg -v2
@@ -42,8 +46,9 @@ module.help () {
 ## source module.sh and then call
 ## core temp to call functions by 'module.main poll variables'
 ## rather than 'module.poll variables' both work dough
+
 module.main () {
-    # main command parser
+# main command parser
 
     local function="$1" ; shift
     ## declare one shot variables here only if really needed
@@ -64,8 +69,9 @@ module.main () {
 
 
 ## example function
+
 module.ls () {
-    # list something
+# list something
     gr.msg "nothing to list"
     # test and return result
     return 0
@@ -73,8 +79,9 @@ module.ls () {
 
 
 ## following function should be able to call without passing trough module.main
+
 module.status () {
-    # output module status
+# output module status
 
     gr.msg -n -t -v1 "${FUNCNAME[0]}: "
 
@@ -100,8 +107,9 @@ module.status () {
 ## to include 'module' to poll list in user.cfg in
 ## section '[daemon]''
 ## variable 'poll_order'
+
 module.poll () {
-    # daemon interface
+# daemon interface
 
     # check is indicator set (should be, but wanted to be sure)
     [[ $module_indicator_key ]] || \
@@ -124,7 +132,8 @@ module.poll () {
 }
 
 
-## if module requires tools or libraries to work installation is done here
+## if mudule requires tools or libraries to work installation is done here
+
 module.install () {
 
     # sudo apt update || gr.msg -c red "not able to update"
@@ -136,6 +145,7 @@ module.install () {
 
 ## instructions to remove installed tools.
 ## DO NOT remove any tools that might be considered as basic hacker tools even module did those install those install
+
 module.remove () {
 
     # sudo apt remove -y ...
@@ -144,10 +154,59 @@ module.remove () {
     return 0
 }
 
-# if called module.sh file configuration is sourced and main module.main called
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
-    module.main "$@"
-    exit "$?"
+
+module.rc () {
+# source configurations
+
+    ## check is mudule configuration changed lately, update rc if so
+    if [[ ! -f $module_rc ]] \
+        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/module.cfg) - $(stat -c %Y $module_rc) )) -gt 0 ]] ## \
+        # || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/module.cfg) - $(stat -c %Y $module_rc) )) -gt 0 ]]
+        then
+            module.make_rc && \
+                gr.msg -v1 -c dark_gray "$module_rc updated"
+        fi
+
+    [[ ! -d $module_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $module_data_folder
+    source $module_rc
+
+    ## check is any mudule or linked mudule configuration changed lately, update rc if so
+    # if [[ ! -f $module_rc ]] \
+    #     || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/module.cfg) - $(stat -c %Y $0000000module_rc) )) -gt 0 ]] \
+    #     || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/module2.cfg) - $(stat -c %Y $module_rc) )) -gt 0 ]]
+    #     then ...
+
+
+
+}
+
+
+module.make_rc () {
+# construct module configuration rc
+
+    source config.sh
+
+    # make rc out of foncig file and run it
+
+    if [[ -f $module_rc ]] ; then
+            rm -f $module_rc
+        fi
+
+    config.make_rc "$GURU_CFG/$GURU_USER/module.cfg" $module_rc
+    # config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $module_rc append
+    chmod +x $module_rc
+    # source $module_rc
+}
+
+# located here cause rc needs to see some of functions above
+module.rc
+
+
+## if called module.sh file general guru configuration is sourced, then main module.main called
+
+if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
+    source $GURU_RC
+    module.main $@
+    exit $?
 fi
 
