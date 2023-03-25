@@ -42,7 +42,10 @@ case $all in
     # kill all audio and lights
     as)     guru audio stop ;;
     # reserved for notes module
-    no*)    guru note ;;
+    n)      guru note ;;
+    ni)     guru note idea ;;
+    nm)     guru note memo ;;
+    nw)     guru note write ;;
     ny*)    guru note yesterday;;
     nt*)    guru note tomorrow;;
 
@@ -50,10 +53,10 @@ case $all in
     mm)     guru game start minecraft ;;
 
     # project module
-    cl)     guru project close ;;
+    clo)     guru project close ;;
 
     # reserved for  module
-    st)     guru project stonks ;;
+    sto)     guru project stonks ;;
      *)     guru say "no hit"
     esac
 
