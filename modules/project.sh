@@ -418,6 +418,32 @@ project.ls () {
 }
 
 
+project.list () {
+# print out raw project list
+
+    local _project_list=($(file "$project_base/projects/"* \
+        | grep directory \
+        | cut -d ':' -f1 \
+        | rev  \
+        | cut -d "/" -f1 \
+        | rev))
+
+
+    # list of projects
+    for _project in ${_project_list[@]} ; do
+        printf "$_project "
+        done
+
+     # for _project in ${archived_project_list[@]} ; do
+     #         gr.msg -n -c dark_grey "$_project "
+     #     done
+
+    echo
+
+    return 0
+}
+
+
 project.add () {
     # add project to projects
 
@@ -651,7 +677,7 @@ gr.msg -v0 -n -c dark_cyan "${FUNCNAME[0]}:"; gr.msg -n -c deep_pink "$@" ; gr.m
 }
 
 
-project.rewmove () {
+project.remove () {
 
 gr.msg -v0 -n -c dark_cyan "${FUNCNAME[0]}:"; gr.msg -n -c deep_pink "$@" ; gr.msg -n -c white ">"
     gr.msg "no special software installed"
