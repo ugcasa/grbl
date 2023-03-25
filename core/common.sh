@@ -453,6 +453,12 @@ gr.local () {
         done
 }
 
+
+gr.debug () {
+# printout debug messages
+    [[ $GURU_DEBUG ]] && gr.msg -h -c deep_pink "${FUNCNAME[0]^^}: $@"
+}
+
 # export -f gr.poll
 export -f gr.msg
 export -f gr.ask
