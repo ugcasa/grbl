@@ -13,9 +13,9 @@ youtube.help () {
     gr.msg -v1 "  <search string> --<args>  search and play (more info -v2)" -V1
     gr.msg -v2 "  <search string>   search and play, options below "
     gr.msg -v2 "   --video          optimized for video quality"
-    gr.msg -v2 "   --audio          optimized for audio quality, may not contain video"
+    gr.msg -v2 "   --audio          optimized for audio quality"
     gr.msg -v2 "   --loop           play it forever"
-    gr.msg -v2 "   --get            get video or audio, if not specified save to downloads"
+    gr.msg -v2 "   --save           save media, audio is converted to mp3"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v2
@@ -38,13 +38,14 @@ youtube.help () {
 
 
 youtube.main () {
+# module command parser
 
     local command=$1
     shift
 
     case "$command" in
 
-        install|uninstall|upgrade|play)
+        install|uninstall|upgrade|play|help)
             youtube.$command $@
             ;;
 
@@ -64,14 +65,14 @@ youtube.main () {
             youtube.get_audio $@
             ;;
 
-        status) gr.msg -c dark_grey "no status data" ;;
-
-        help)
-            youtube.help $@
+        status)
+            gr.msg -c dark_grey "no status data"
             ;;
+
         list)
             youtube.search_list $@
             ;;
+
         *)
             youtube.search_n_play $command $@
             ;;
@@ -81,7 +82,8 @@ youtube.main () {
 }
 
 
-youtube.parse_arguments () {
+youtube.arguments () {
+# module argument parser
 
     local got_args=($@)
 
@@ -134,7 +136,7 @@ youtube.parse_arguments () {
             #     position=${got_args[$i]}
             #     ;;
             *)
-                youtube_arguments+=("${got_args[$i]}")
+                module_options+=("${got_args[$i]}")
                 ;;
             esac
         done
@@ -146,7 +148,7 @@ youtube.parse_arguments () {
         fi
 
     # debug stuff (TBD remove later)
-    gr.msg -v4 "${FUNCNAME[0]}: passing args: ${youtube_arguments[@]}"
+    gr.msg -v4 "${FUNCNAME[0]}: passing args: ${module_options[@]}"
     gr.msg -v4 "${FUNCNAME[0]}: youtube_options: $youtube_options"
     gr.msg -v4 "${FUNCNAME[0]}: mpv_options: $mpv_options"
 }
@@ -166,6 +168,7 @@ youtube.rc () {
     source $youtube_rc
 }
 
+
 youtube.make_rc () {
 # # make rc out of config file and run it
 
@@ -184,17 +187,23 @@ youtube.make_rc () {
 
 youtube.search () {
 # search from youtube and return json of $1 amount of results
+
+    # deliver decimal value for inline python
     export result_count=$1
 
+    # if output format is specified, set it and remove it from input string
     case $2 in
-            json) return_format=json ; shift ;;
             dict) return_format=dict ; shift ;;
+            json) return_format=json ; shift ;;
             *) return_format=json
         esac
 
+    # remove result count
     shift
     export search_string="$@"
-python3 - << EOF
+
+    # with python, indentation is critical, therefore following lines needs to be like this
+    python3 - << EOF
 import os
 from youtube_search import YoutubeSearch
 results = YoutubeSearch(os.environ['search_string'], max_results=int(os.environ['result_count'])).to_$return_format()
@@ -205,14 +214,15 @@ EOF
 
 youtube.search_n_play () {
 # search input and play it from youtube. use long arguments --video or --audio to select optimization
+
     local base_url="https://www.youtube.com"
     local _error=
 
     # to fulfill global variables: save_to_file save_location mpv_options youtube_options
-    youtube.parse_arguments $@
+    youtube.arguments $@
 
     # make search and get media data and address
-    local query=$(youtube.search 1 json ${youtube_arguments[@]})
+    local query=$(youtube.search 1 json ${module_options[@]})
 
     # format information of found media
     # TBD make able to parse multiple search results ans for them trough to replace search_list function"
@@ -323,9 +333,12 @@ youtube.search_list () {
 
 
 youtube.get_media () {
-# get media from tube
+# download videos from tube by youtube id
+
     id=$1
     url_base="https://www.youtube.com/watch?v"
+
+    # source mount module and mount video file folder in cloud
     source mount.sh
     mount.main video
 
@@ -340,17 +353,24 @@ youtube.get_media () {
 
 
 youtube.get_audio () {
-# get media from tube
+# download audio from tube by youtube id
+
     local id=$1
     local url_base="https://www.youtube.com/watch?v"
+
+    # source mount module and mount audio file forlder in cloud
     source mount.sh
     mount.main audio
 
     [[ -d $GURU_MOUNT_AUDIO/new ]] || mkdir -p $GURU_MOUNT_AUDIO/new
 
+    # check is installed
     yt-dlp --version || video.install
 
+    # inform user
     gr.msg -c white "downloading $url_base=$id to $GURU_MOUNT_AUDIO.. "
+
+    # download and convert to mp3 format, then save to audio base location named by title
     yt-dlp -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
            --output "$GURU_MOUNT_AUDIO/%(title)s.%(ext)s" \
            "$url_base=$id"
@@ -360,257 +380,85 @@ youtube.get_audio () {
 
 youtube.play () {
 # play input file
+
+    # check is user input url or id
     echo "$@" | grep "https://" && base_url="" || base_url="https://www.youtube.com/watch?v="
-    youtube.parse_arguments $@
-    local media_address="$base_url${youtube_arguments[0]}"
+
+    # set playing and saving options and generate url
+    youtube.arguments $@
+    local media_address="$base_url${module_options[0]}"
+
+    # indicate playing
     gr.msg -c aqua "$media_address" -k $GURU_AUDIO_INDICATOR_KEY
     echo $media_address >$GURU_AUDIO_NOW_PLAYING
+
+    # get staream and play
     yt-dlp -v $youtube_options $media_address -o - 2>/tmp/youtube.error \
                 | mpv $mpv_options - >/dev/null
+
+    # remove playing indications
     gr.msg -c reset -k $GURU_AUDIO_INDICATOR_KEY
     rm $GURU_AUDIO_NOW_PLAYING
 }
 
 
 youtube.upgrade() {
-# pip3 install --user --upgrade yt-dlp
-    gr.msg -c blue "${FUNCNAME[0]}: TBD"
+# upgrade needed tools, ofter youtube changes shit causing weird errors
+
+    # get new version of
+    sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
+    sudo chmod a+rx /usr/local/bin/yt-dlp
+    pip3 install --upgrade pip
+    pip3 install --user --upgrade yt-dlp
     return 0
 }
 
 
 youtube.install() {
 # install requirements
-    sudo apt install detox mpv yt-dlp ffmpeg
-    pip3 install --upgrade pip
-    # pip3 install youtube-search
 
+    # install players, alternative youtube-dl, filename fixer and youtube seacher
+    sudo apt-get update
+    sudo apt-get install mpv ffmpeg yt-dlp detox
+    pip3 install --upgrade pip
+    pip3 install youtube-search
+
+    # install patched yt-dlp
     sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
     sudo chmod a+rx /usr/local/bin/yt-dlp
     sudo ln -s /usr/local/bin/yt-dlp /usr/bin/yt-dlp
 
+    # install json tools
     jq --version >/dev/null || sudo apt install jq -y
-    gr.msg -c green "Successfully installed"
+
+    gr.msg -c green "mpv, ffmpeg, yt-dlp, detox and youtube-search installed"
     return 0
 }
 
 
 youtube.uninstall(){
 # remove requirements
-    sudo -H pip3 unisntall --user yt-dlp youtube-search
+
+    # remove only youtube special requiderements, leave players etc.
     rm -y /usr/bin/yt-dlp /usr/local/bin/yt-dlp
-    sudo apt remove yt-dlp -y
+    sudo apt-get remove yt-dlp -y
+    pip3 uninstall youtube-search
     gr.msg -c green "uninstalled"
+
     return 0
 }
 
+
+# get configs and set variables
 youtube.rc
+declare -g module_options=()
 declare -g save_location=$GURU_MOUNT_DOWNLOADS
 declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_SOCKET --stream-record=/tmp/mpv_audio.cache"
-declare -g youtube_arguments=()
 declare -g youtube_options="-f worst"
 declare -g save_to_file=
 
+# run main only if run, not sourced
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
-    source $GURU_RC
-    youtube.main $@
-fi
-
-# some tests
-# query=$(python3 - << EOF
-# print("$@")
-# from youtube_search import YoutubeSearch
-# results = YoutubeSearch('$@', max_results=1).to_json()
-# print(results)
-# EOF
-# )
-
-# code=$(cat <<EOF
-# print($1)
-# from youtube_search import YoutubeSearch
-# results = YoutubeSearch('$1', max_results=1).to_json()
-# print(results)
-# EOF
-# )
-# query=$(python3 -c "$code")
-
-# printf $@ >/tmp/to.find
-
-# code=$(cat <<EOF
-# f = open("/tmp/to.find","r")
-# lines = str(f.readlines())
-
-# from youtube_search import YoutubeSearch
-# results = YoutubeSearch(lines, max_results=1).to_json()
-# print(results)
-# EOF
-# )
-
-# query=$(python3 -c "$code")
-
-
-
-# youtube.get_subtitles () {
-
-#     [ -d "$youtube_temp" ] && rm -rf "$youtube_temp"
-#     mkdir -p "$youtube_temp"
-#     cd "$youtube_temp"
-#     yt-dlp "$media_url" --subtitlesonly #2>/dev/null
-#     #youtube_media_filename=$(detox -v * | grep -v "Scanning")
-#     #youtube_media_filename=${youtube_media_filename#*"-> "}
-# }
-
-# block_rev () {
-#     # trick to reverse array without reversing strings
-#     array=($@)
-
-#     f() { array=("${BASH_ARGV[@]}"); }
-
-#     shopt -s extdebug
-#     f "${array[@]}"
-#     shopt -u extdebug
-
-#     echo "${array[@]}"
-# }
-
-
-# youtube.place () {
-
-#     find_files () {
-#         for entry in $@ ; do
-#               [[ -f $entry ]] && echo $entry
-#             done
-#     }
-
-#     split_filename () {
-#         local filename=$1
-#         local pos=0
-#         local episode=
-#         local name=
-
-#         sepa='-'
-
-#         for type in ${left[@]} ; do
-
-#             (( pos++ ))
-
-#             case $type in
-#                 name)
-#                         name="$name$(echo $filename | cut -f $pos -d $sepa) "
-#                         ;;
-#                 episode)
-#                         word="$(echo $filename | cut -f $pos -d $sepa) "
-
-#                         if grep -ve 's0' -ve 'e0' <<<$word ; then
-#                             episode="$episode$word"
-#                         else
-#                             code=$word
-#                             break
-#                         fi
-
-#                         ;;
-#                     esac
-#             done
-
-#         pos=0
-#         for type in ${right[@]} ; do
-
-#                 (( pos++ ))
-
-#                 case $type in
-#                     ending)
-#                             sepa='.'
-#                             ending="$(echo $filename | cut -f 1 -d $sepa)"
-#                             ;;
-#                     time)
-#                             sepa='t'
-#                             time="$(echo $filename | cut -f $pos -d $sepa)"
-#                             ;;
-#                     day)
-#                             day="$(echo $filename | cut -f $pos -d $sepa)"
-#                             ;;
-#                     month)  month="$(echo $filename | cut -f $pos -d $sepa)"
-#                             ;;
-#                     year)   year="$(echo $filename | cut -f $pos -d $sepa)"
-#                             ;;
-#                         esac
-#                 done
-
-#         gr.msg "name: $name"
-#         gr.msg "episode: $episode"
-#         gr.msg "ending: $ending"
-#         gr.msg "day: $day"
-#         gr.msg "month: $month"
-#         gr.msg "time: $time"
-
-#         }
-
-#     files=($(find_files '*mp4 *mkv'))
-#     gr.msg -v3 -c light_blue "files: ${files[@]}"
-
-#     sepa='-'
-#     left=(name name name name name episode episode episode episode episode episode episode)
-
-
-#     #right_rev=(ending time day month year code)
-#     right=(code year month day time ending)
-
-#     # gr.msg "order: ${left[@]} $(block_rev ${right_rev[@]})"
-#     gr.msg "order: ${left[@]} ${right[@]}"
-
-#     for file in ${files[@]} ; do
-#         split_filename $file
-
-#         done
-
-# }
-
-
-# youtube.get_metadata () {
-# # CANNOT WORK copy from yle.sh
-
-#     local error=
-#     local meta_data="$youtube_temp/meta.json"
-
-#     # make temp if not exist already
-#     [[ -d "$youtube_temp" ]] || mkdir -p "$youtube_temp"
-#     cd "$youtube_temp"
-
-#     local base_url="https://areena.youtube.fi/"
-#     # do not add base url if it already given
-#     if echo $1 | grep "http" ; then
-#             base_url=
-#         fi
-
-#     media_url="$base_url$1"
-
-#     gr.msg -v3 -c deep_pink "media_url: $media_url"
-
-#     # Check if id contain youtube_episodes, then select first one (newest)
-#     youtube_episodes=($(yt-dlp --showepisodepage $media_url | grep -v $media_url))
-#     # episode_ids=($(yt-dlp $media_url --showmetadata | jq '.[].program_id'))
-#     gr.msg -v3 -c light_blue "youtube_episodes: ${youtube_episodes[@]}"
-
-#     # change media address poin to first episode
-#     [[ ${youtube_episodes[0]} ]] && media_url=${youtube_episodes[0]}
-
-#     # Get metadata
-#     yt-dlp $media_url --showmetadata > $meta_data
-
-#     grep "error" $meta_data && error=$(cat $meta_data | jq '.[].flavors[].error')
-
-#     if [[ $error ]] ; then
-#             echo "$error"
-#             return 100
-#         fi
-
-#     # set variables (like they be local anyway)
-#     youtube_media_title="$(cat "$meta_data" | jq '.[].title')"
-#     gr.msg -v2 "${youtube_media_title//'"'/""}"
-
-#     youtube_media_address="$media_url "
-#     #$(cat "$meta_data" | jq '.[].webpage')
-#     #youtube_media_address=${youtube_media_address//'"'/""}
-#     youtube_media_filename=$(cat "$meta_data" | jq '.[].filename')
-# }
-
+        # source $GURU_RC
+        youtube.main $@
+    fi
