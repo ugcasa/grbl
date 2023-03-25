@@ -93,6 +93,66 @@ net.make_rc () {
 }
 
 
+net.listening () {
+# printout list of used outpund ports
+    netstat -nputwc
+}
+
+
+net.listen () {
+
+# usage: tcpflow [-aBcCDhIpsvVZ] [-b max_bytes] [-d debug_level]
+#      [-[eE] scanner] [-f max_fds] [-F[ctTXMkmg]] [-h|--help] [-i iface]
+#      [-l files...] [-L semlock] [-m min_bytes] [-o outdir] [-r file] [-R file]
+#      [-S name=value] [-T template] [-U|--relinquish-privileges user] [-v|--verbose]
+#      [-w file] [-x scanner] [-X xmlfile] [-z|--chroot dir] [expression]
+#    -a: do ALL post-processing.
+#    -b max_bytes: max number of bytes per flow to save
+#    -d debug_level: debug level; default is 1
+#    -f: maximum number of file descriptors to use
+#    -H: print detailed information about each scanner
+#    -i: network interface on which to listen
+#    -I: write for each flow another file *.findx to provide byte-indexed timestamps
+#    -g: output each flow in alternating colors (note change!)
+#    -l: treat non-flag arguments as input files rather than a pcap expression
+#    -L  semlock - specifies that writes are locked using a named semaphore
+#    -p: don't use promiscuous mode
+#    -q: quiet mode - do not print warnings
+#    -r file      : read packets from tcpdump pcap file (may be repeated)
+#    -R file      : read packets from tcpdump pcap file TO FINISH CONNECTIONS
+#    -v           : verbose operation equivalent to -d 10
+#    -V           : print version number and exit
+#    -w  file     : write packets not processed to file
+#    -o  outdir   : specify output directory (default '.')
+#    -X  filename : DFXML output to filename
+#    -m  bytes    : specifies skip that starts a new stream (default 16777216).
+#    -F{p} : filename prefix/suffix (-hh for options)
+#    -T{t} : filename template (-hh for options; default %A.%a-%B.%b%V%v%C%c)
+#    -Z       do not decompress gzip-compressed HTTP transactions
+
+# Security:
+#    -U user  relinquish privleges and become user (if running as root)
+#    -z dir   chroot to dir (requires that -U be used).
+
+# Control of Scanners:
+#    -E scanner   - turn off all scanners except scanner
+#    -S name=value  Set a configuration parameter (-hh for info)
+    return 0
+}
+
+net.portmap () {
+# check open ports of domain $1
+    return 0
+}
+
+
+net.proxy (){
+# listen localhost port $1 and proxy to destnation domain $2 and port $3
+# optional log_file_location $4
+    return 0
+}
+
+
 net.check_server () {
 # quick check accesspoint connection, no analysis
 
@@ -110,7 +170,6 @@ net.check_server () {
         return 127
     fi
 }
-
 
 
 net.check () {
@@ -191,9 +250,8 @@ net.poll () {
 net.install () {
 
     # sudo apt update || gr.msg -c red "not able to update"
-    # sudo apt install -y ...
+    sudo apt-get install -y portmap tcpflow
     # pip3 install --user ...
-    gr.msg "nothing to install"
     return 0
 }
 
