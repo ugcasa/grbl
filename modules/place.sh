@@ -35,7 +35,7 @@ place.main () {
     local function="$1" ; shift
 
     case "$function" in
-            ls|help|poll|memes|photos|videos|media)
+            ls|help|poll|memes|photos|videos|media|project)
                 place.$function $@
                 return $?
                 ;;
@@ -47,9 +47,32 @@ place.main () {
 }
 
 
-place.memes () {
+place.project () {
+# place filenames starting with project name to project folder
+# just prototyping
 
-    # 9gag patterns
+    source project.sh
+    local _project_list=($(project.list))
+    local _project_name=$1
+    local _temp_location=
+    local _date=
+
+    project.info $_project_name
+
+    for _project in ${_project_list[@]} ; do
+        printf "$_project "
+    done
+
+    # tag file
+    # local _tag_string=
+    # [[ $_tag_string ]] && _tag_string="$_project_name $_date ${FUNCNAME[0]}"
+    # tag.main "$_temp_location/$_file" add "$_tag_string" # >/dev/null 2>&1
+
+}
+
+
+place.memes () {
+# place pictures and videos with 9gag patterns to meme folder
     local picture_pattern='*bwp.* *swp* *w_0.* *wp_0.*'
     local video_pattern='*_460s* *_700w*'
     local meme_folder="$GURU_MOUNT_PICTURES/memes"
@@ -72,10 +95,8 @@ place.memes () {
 }
 
 
-
-
 place.photos () {
-    # analyze, tag and relocate photo files
+# analyze, tag and relocate photo files
 
     #source mount.sh
 
@@ -116,7 +137,7 @@ place.photos () {
             _month=$(date -d $_date +'%m' || date +'%m')
             gr.msg -v2 "month: $_month"
 
-            # tag file   # $_recognized
+            # tag file
             tag.main "$phone_temp_folder/photos/$_file" add "phone photo $_date" >/dev/null 2>&1
 
             # move file to target location
