@@ -1,5 +1,5 @@
-0.6.8.22
-'folder module proto'
+0.6.8.24
+'folder model'
 10 long arguments are delivered to module
 11 active module rc functions done for mount, audio and backup
 12 audio module can continue to play listed file position
@@ -10,9 +10,10 @@
 15 declare -l misunderstand issue fixed
 16 search and play function and some clean up
 17 gaming module added, minecraft keybindings
-17 messy list player, youtube.sh review needed
 18 youtube optimized, just fun for xmass
 19 caps lock integration, a lot of minor changes, mainly in audio.sh
 20 getting ready to chatter audio.sh
 21 macro support for list of command, no conditions yet
 22 audio.sh fixes: now playing mpv server socket pointer and playlist almost ready to go audio/playlist.sh
+23 various improvements or audio module and some core minor changes
+24 audio control improvements
