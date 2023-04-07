@@ -147,8 +147,11 @@ audio.stop () {
 
     pkill mpv
     pkill mpv
+    [[ -f $GURU_AUDIO_PAUSE_FLAG ]] && audio.pause
+
     gr.end $GURU_AUDIO_INDICATOR_KEY
     # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
+
 }
 
 
@@ -212,21 +215,41 @@ audio.toggle () {
     local default_radio='yle puhe'
     [[ $GURU_RADIO_WAKEUP_STATION ]] && default_radio=$GURU_RADIO_WAKEUP_STATION
 
-    if ps auxf | grep "mpv " | grep -v grep ; then
-            gr.end $GURU_AUDIO_INDICATOR_KEY
-            # pkill mpv && corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
+    if [[ -f $GURU_AUDIO_PAUSE_FLAG ]] ; then
+            gr.debug "paused, calling pause: $@"
+            audio.pause
             return 0
         fi
 
-    if [[ -f $audio_temp_file ]] ; then
-            corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-            [[ $audio_playing_pid ]] && kill $audio_playing_pid
-            mpv --playlist=$audio_temp_file $mpv_options --save-position-on-quit
-            gr.end $GURU_AUDIO_INDICATOR_KEY
-            # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
-        else
-            audio.main listen "$default_radio"
+    if ps auxf | grep "mpv " | grep -v grep ; then
+    # if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
+            gr.debug "running, calling pause: $@"
+            audio.pause
+            return 0
         fi
+
+    # check is there something
+    if [[ -f $audio_temp_file ]] ; then
+        to_play="--playlist=$audio_temp_file"
+
+        # continue from last played if not playing
+        elif [[ -f $GURU_AUDIO_LAST_PLAYED ]] ; then
+            to_play=$(< $GURU_AUDIO_LAST_PLAYED)
+
+        # play default if no last played file
+        else
+            # why audio.main listen "$default_radio"
+            audio.listen "$default_radio"
+            return $?
+        fi
+
+    [[ $audio_playing_pid ]] && kill $audio_playing_pid
+
+    corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+    mpv $to_play $mpv_options
+
+    echo "$to_play" > $GURU_AUDIO_LAST_PLAYED
+    gr.end $GURU_AUDIO_INDICATOR_KEY
 
     return 0
 }
@@ -278,7 +301,7 @@ audio.find_and_play () {
             mount.main music
             ifs=$IFS
             IFS=" "
-            # luoja mitä paskaa.. TBD review!
+            # luoja mitä kuraa.. TBD review!
             _got="$(find $GURU_MOUNT_MUSIC -maxdepth 5 -iname *mp3)"
             _got="$_got $(find $GURU_MOUNT_AUDIO -maxdepth 5 -iname *mp3)"
             while [[ $1 ]] ; do
@@ -380,6 +403,8 @@ audio.radio_next (){
     local current=
     [[ -f /tmp/guru_cli-radio.nr ]] && current=$(cat /tmp/guru_cli-radio.nr)
 
+    [[ -f $GURU_AUDIO_PAUSE_FLAG ]] && return 0
+
     case $1 in
         next|n) next=$(( $current + 1 )) ;;
         prev|p) next=$(( $current - 1 )) ;;
@@ -398,6 +423,7 @@ audio.radio_next (){
     echo $next >/tmp/guru_cli-radio.nr
     radio_number=$next
     radio_name=${station_list[$next]}
+
     corsair.type white "$radio_number"
     audio.listen ${radio_name//_/ }
 }
@@ -465,6 +491,12 @@ audio.listen () {
             return 100
         fi
 
+    # while [[ -f $GURU_AUDIO_PAUSE_FLAG ]] ; do
+    #     gr.msg -n "."
+    #     sleep 1
+    #     done
+
+
     case $1 in
 
         ls) # for other functions TBD trying to get list return work.. pain in the ass.
@@ -516,6 +548,8 @@ audio.listen () {
             mpv $1 $mpv_options --no-resume-playback >/dev/null
 
             # remove now playing and indications
+            # mv -f $GURU_AUDIO_NOW_PLAYING $GURU_AUDIO_LAST_PLAYED
+            echo $1 > $GURU_AUDIO_LAST_PLAYED
             rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
             ;;
@@ -543,6 +577,7 @@ audio.listen () {
 
 
             # remove now playing and indications
+            echo $url > $GURU_AUDIO_LAST_PLAYED
             rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
             ;;
@@ -571,9 +606,12 @@ audio.listen () {
 
             corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
             mpv $url $mpv_options --no-resume-playback >/dev/null
+
             #gnome-terminal --hide-menubar --geometry 30x5 --zoom 0.7 --title "guru radio $radio_nr ${station_name^}" -- bash -c "mpv $url $mpv_options --no-resume-playback"
 
             # remove now playing and indications
+            # mv -f $GURU_AUDIO_NOW_PLAYING $GURU_AUDIO_LAST_PLAYED
+            echo $url > $GURU_AUDIO_LAST_PLAYED
             rm $GURU_AUDIO_NOW_PLAYING
             gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
         esac
@@ -955,10 +993,16 @@ audio.status () {
         fi
 
     if [[ $now_playing ]] ; then
+
             gr.msg -v1 -n -c aqua "playing: $now_playing"
-            corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-            audio.is_paused && gr.msg -v1 -h " [paused]" \
-                            || gr.msg -v1
+
+            if audio.is_paused ; then
+                gr.msg -v1 -h " [paused]"
+                corsair.indicate pause $GURU_AUDIO_INDICATOR_KEY
+            else
+                gr.msg -v1
+                corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+            fi
         else
             gr.end $GURU_AUDIO_INDICATOR_KEY
             gr.msg -v1 -c dark_grey "stopped"
