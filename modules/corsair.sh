@@ -601,7 +601,7 @@ corsair.indicate () {
         recovery)       _blink="blue black 5 $GURU_DAEMON_INTERVAL blue" ;;
         playing)        _blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
         active)         _blink="slime aqua 0.5 2" ;;
-        pause)          _blink="black $GURU_CORSAIR_MODE 1 3600";;
+        pause)          _blink="red $GURU_CORSAIR_MODE 1 3600";;
         error)          _blink="orange yellow 1 5 yellow" ;;
         message)        _blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
         call)           _blink="deep_pink black 0.75 30 deep_pink" ;;
