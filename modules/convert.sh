@@ -6,9 +6,9 @@
 #  all video  -> mp4
 #  all photos -> jpg
 
-# TODO: paljon toistoa, saisi tehtyä yhden installeri funktion. tuntuu olevan tarpeeksi samankaltaisia nuo asennustavat
-
-source common.sh
+#source common.sh
+convert_indicator_key=esc
+[[ $GURU_CONVERT_INDICATOR ]] && convert_indicator_key=$GURU_CONVERT_INDICATOR
 
 convert.main () {
     # convert format parser
@@ -28,16 +28,14 @@ convert.main () {
             convert.$format
             return $?
             ;;
-        # list of supported input formats
-        webp|webm|mkv|a)
-            ##convert.install
-            convert.install
+
+        webp|webm|mkv|a|avif)
+            convert.check_format $format || return 100
             convert.from_$format $@
             return $?
             ;;
-        # list of supported output formats
+
         dokuwiki|png)
-            ##convert.install
             convert.to_$format $@
             return $?
             ;;
@@ -47,21 +45,7 @@ convert.main () {
             return $?
             ;;
         *)  gr.msg -c yellow "unknown format $format"
-            # # check what format user is targeting, lazy
-            # if grep "webp" <<< $format >/dev/null ; then
-            #       convert.webp $format $@
-            #       return $?
-            #   fi
-            # if grep "webm" <<< $format >/dev/null ; then
-            #       convert.webm $format $@
-            #       return $?
-            #   fi
-            # if grep "mkv" <<< $format >/dev/null ; then
-            #       convert.mkv $format $@
-            #       return $?
-            #   fi
-            # ;;
-        # "")  gr.msg -c yellow "unknown format $format"
+
     esac
     return 0
 }
@@ -195,7 +179,7 @@ convert.from_webm () {
     fi
 
     if ! [[ $find_files ]] ; then
-        gr.msg -c yellow "no files found"
+        gr.msg -c white "no files found"
     fi
 
     local rand=""
@@ -249,7 +233,7 @@ convert.from_mkv () {
     fi
 
     if ! [[ $find_files ]] ; then
-        gr.msg -c yellow "no files found"
+        gr.msg -c white "no files found"
     fi
 
     local rand=""
@@ -318,7 +302,7 @@ convert.to_dokuwiki () {
     fi
 
     if ! [[ $find_files ]] ; then
-        gr.msg -c yellow "no files found"
+        gr.msg -c white "no files found"
     fi
 
     # local rand=""
@@ -476,19 +460,39 @@ convert.to_dokuwiki () {
 
 # }
 
+convert.check_format() {
+
+    if convert.check_imagemagick $1 ; then
+        gr.msg -v2 "format $1 is supported"
+        return 0
+    else
+
+        if dwebp -version >/tmp/dweb_version ; then
+            gr.msg -v2 -c green "using dwebp v.$(< /tmp/dweb_version) for webp support"
+            return 0
+        else
+            gr.msg -v2 -c yellow "format $1 is not supported"
+            return 1
+        fi
+
+    fi
+}
+
 
 convert.check_imagemagick () {
-# check if critical file format are supported and version is above 7
+# check if critical file format are supported and version is above 7.1
+
     local _return=0
 
-    gr.msg "checking format support: "
+    gr.msg -v2 -n "checking format support: "
     local formats=(jpg png gif tiff webp avif)
+    [[ $1 ]] && formats=(jpg png gif tiff $1)
 
     for format in ${formats[@]} ; do
         if convert -list format | grep ${format^^} >/dev/null; then
-            gr.msg -n -c green "$format "
+            gr.msg -v2 -n -c green "$format "
         else
-            gr.msg -n -c red "$format "
+            gr.msg -v2 -n -c red "$format "
             _return=1
         fi
     done
@@ -496,14 +500,13 @@ convert.check_imagemagick () {
     local im_version=$(convert -version | head -n1 | cut -d" " -f3)
 
     case $im_version in
-        "6."*|"5."*|"4."*)
-            gr.msg -c yellow "installed version '$im_version' is way too old"
+        "6."*|"5."*|"4."*|"7.0"*)
+            gr.msg -v1 -c yellow "imagemagic v.$im_version is way too old "
             _return=1
         ;;
 
         "7."*)
-            gr.msg -n "$im_version "
-            gr.msg -c green "ok"
+            gr.msg -v2 "imagemagic v.$im_version "
         ;;
     esac
     return $_return
@@ -513,14 +516,15 @@ convert.check_imagemagick () {
 convert.install_imagemagick () {
 # get and compile imagemagick with webp and avif support
 
-    sudo apt-get update
 
     # uninstall if installed by apt
     if apt list --installed | grep imagemagick; then
         gr.msg "installed system version of imagemagick"
+
         if convert.check_imagemagick ; then
             gr.msg "seems that distributor added valid version to repository"
             return 0
+
         else
             if sudo apt remove --purge imagemagick; then
                 gr.msg -c green "current installation removed"
@@ -531,6 +535,7 @@ convert.install_imagemagick () {
         fi
     fi
 
+    sudo apt-get update
 
     #Install Build-Essential in order to configure and make the final Install
     sudo apt-get install build-essential
@@ -540,8 +545,6 @@ convert.install_imagemagick () {
     sudo apt-get install -y libtiff-dev
     #libpng-dev required in order to work with basic PNG files
     sudo apt-get install -y libpng-dev
-
-
 
     # uninstalling compiled version
     sudo make uninstall && gr.msg -c green "uninstalled" || gr.msg -c red "uninstallation failed"
