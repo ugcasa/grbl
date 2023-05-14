@@ -145,7 +145,7 @@ config.export () {
     config.export_type_selector () {
 
             local _module_cfg="$1"
-            gr.msg -v4 -c deep_pink "Looking configs: $_module_cfg"
+            gr.debug "looking configs for $_module_cfg"
 
             # configure file type is set in first line of config file after #!/bin/bash
             if [[ -f $_module_cfg ]] ; then
@@ -157,12 +157,10 @@ config.export () {
                     ;;
 
                     *"module"*)
-                        gr.msg -v1 -V2 -c dark_grey "skipping.."
                         gr.msg -v2 -c dark_grey "$_module_cfg ..skipping module config files"
                     ;;
 
                     *"source"*)
-                        gr.msg -v1 -V2 -c dark_grey "skipping.."
                         gr.msg -v2 -c dark_grey "$_module_cfg ..no need to compile this type of configs"
                     ;;
 
