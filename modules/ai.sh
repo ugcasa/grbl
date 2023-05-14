@@ -168,10 +168,6 @@ ai.status () {
 ai.poll () {
 # daemon interface
 
-    # check is indicator set (should be, but wanted to be sure)
-    [[ $ai_indicator_key ]] || \
-        ai_indicator_key="f$(gr.poll ai)"
-
     local _cmd="$1" ; shift
     case $_cmd in
         start)
