@@ -327,7 +327,7 @@ gr.ask () {
             case "$1" in
                 -t )
                     _timeout=$2
-                    _options="-t $_timeout "
+                    _options="-t $_timeout"
                     shift 2
                     ;;
                 -d )
@@ -369,7 +369,7 @@ gr.ask () {
     esac
 
     # ask from user
-    read $_options-n 1 -p "$_message $_box" _answer
+    read $_options -n 1 -p "$_message $_box" _answer
 
     if [[ GURU_CORSAIR_ENABLED ]] ; then
             corsair.blink_stop y
