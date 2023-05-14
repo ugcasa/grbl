@@ -1,5 +1,5 @@
-0.6.8.27
-'folder model'
+0.6.8.28
+'guru-ai'
 10 long arguments are delivered to module
 11 active module rc functions done for mount, audio and backup
 12 audio module can continue to play listed file position
@@ -20,5 +20,5 @@
 25 audio module is to spread to audio/radio.sh, audio/playlist.sh, audio/tunnel.sh and audio.sh acts like guru-cli adapter for audio/main.sh
 26 system.sh: flagging functions moved to core/flag.sh, as library type
 26 mint keyboard install+config warning message, found missing quotation mark
-27 new flag system implemented, intend changes
-28 intend changes continued and a lot of non documented changes :|
+27 new flag system implemented, intend changes. a lot of non documented changes :|
+28 simple ai tools implemented

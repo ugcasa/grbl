@@ -91,7 +91,7 @@ ai.image () {
     gr.msg "$out_file"
 
     # show result if graphical session
-    [[ "$DISPLAY" ]] || [[ "$WAYLAND_DISPLAY" ]] || [[ "$MIR_SOCKET" ]] && xviewer $out_file
+    [[ "$DISPLAY" ]] || [[ "$WAYLAND_DISPLAY" ]] || [[ "$MIR_SOCKET" ]] && xviewer $out_file &
 }
 
 
