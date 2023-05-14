@@ -1,6 +1,6 @@
 #!/bin/bash
 # tmux controller
-# casa@ujo.guru 2020 - 2021
+# casa@ujo.guru 2020
 # thanks samoshkin! https://github.com/samoshkin/tmux-config
 # [vim + tmux - OMG!Code](https://www.youtube.com/watch?v=5r6yzFEXajQ)
 # [Complete tmux Tutorial](https://www.youtube.com/watch?v=Yl7NFenTgIo)
@@ -46,6 +46,7 @@ tmux.main () {
 
     case "$_cmd" in
                help|ls|attach|install|remove|poll|status|config)
+                # TBD rm/deattach session
                     tmux.$_cmd "$@"
                     return $?
                     ;;
@@ -163,11 +164,10 @@ tmux.open () {
 }
 
 
-
 tmux.status () {
     # check tmux broker is reachable. printout and signal by corsair keyboard indicator led - if available
 
-    tmux_indicator_key="f$(gr.poll tmux)"
+    #tmux_indicator_key="f$(gr.poll tmux)"
 
     gr.msg -n -t "${FUNCNAME[0]}: "
 
@@ -213,7 +213,7 @@ tmux.attach () {
         fi
 
     if [[ $DISPLAY ]] ; then
-            gnome-terminal  --geometry 180x50 -- /usr/bin/tmux attach -t $session
+            gnome-terminal --geometry 180x50 -- /usr/bin/tmux attach -t $session
         else
             /usr/bin/tmux attach -t $session
         fi

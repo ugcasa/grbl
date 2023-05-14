@@ -242,6 +242,7 @@ vpn.open () {
     gr.msg -c white -v2 "vpn username and password copied to clipboard, paste it to 'Enter Auth Username:' field"
     printf "%s\n%s\n" "${vpn[username]}" "${vpn[password]}" | xclip -i -selection clipboard
 
+    gr.debug "sudo openvpn -config /etc/openvpn/tcp/NCVPN-${country^^}-"$city"-TCP.ovpn --daemon"
 
     if sudo openvpn \
         --config /etc/openvpn/tcp/NCVPN-${country^^}-"$city"-TCP.ovpn \
@@ -268,30 +269,33 @@ vpn.open () {
 }
 
 
-
-
 vpn.close () {
 # close vpn connection (if exist)
 
     local current_ip="$(curl -s https://ipinfo.io/ip)"
-    gr.msg "our ip was: $current_ip"
+    gr.msg -V2 -n "$current_ip "
+
+    if ! ps auxf | grep openvpn | grep -v grep ; then
+        gr.msg -v1 "no vpn client running"
+        return 0
+    fi
 
     if sudo pkill openvpn ; then
-            gr.msg -c green -v2 "kill success" -k ${vpn[indicator_key]}
-        else
-            gr.msg "no vpn client running"
-            vpn.rm_original_file
-            return 0
-        fi
+        gr.msg -c green -v2 "kill success" -k ${vpn[indicator_key]}
+    else
+        gr.msg -v1 -c red "kill failed" -k ${vpn[indicator_key]}
+        vpn.rm_original_file
+        return 0
+    fi
 
     local new_ip="$(curl -s https://ipinfo.io/ip)"
 
     if [[ "$current_ip" == "$new_ip" ]] ; then
-            gr.msg -c red "kill failed" -k ${vpn[indicator_key]}
-            return 100
-        else
-            gr.msg "our ip is now: $new_ip"
-        fi
+        gr.msg -c yellow "ip did not change" -k ${vpn[indicator_key]}
+        return 100
+    else
+        gr.msg -V2 "$current_ip "
+    fi
 
     vpn.rm_original_file
 

@@ -24,51 +24,51 @@ convert.main () {
 
     case $format in
 
-            install|remove)
-                convert.$format
-                return $?
-                ;;
-            # list of supported input formats
-            webp|webm|mkv|a)
-                ##convert.install
-                convert.install
-                convert.from_$format $@
-                return $?
-                ;;
-            # list of supported output formats
-            dokuwiki|png)
-                ##convert.install
-                convert.to_$format $@
-                return $?
-                ;;
+        install|remove)
+            convert.$format
+            return $?
+            ;;
+        # list of supported input formats
+        webp|webm|mkv|a)
+            ##convert.install
+            convert.install
+            convert.from_$format $@
+            return $?
+            ;;
+        # list of supported output formats
+        dokuwiki|png)
+            ##convert.install
+            convert.to_$format $@
+            return $?
+            ;;
 
-            help|poll|status)
-                convert.$format $@
-                return $?
-                ;;
-            *)  gr.msg -c yellow "unknown format $format"
-                # # check what format user is targeting, lazy
-                # if grep "webp" <<< $format >/dev/null ; then
-                #       convert.webp $format $@
-                #       return $?
-                #   fi
-                # if grep "webm" <<< $format >/dev/null ; then
-                #       convert.webm $format $@
-                #       return $?
-                #   fi
-                # if grep "mkv" <<< $format >/dev/null ; then
-                #       convert.mkv $format $@
-                #       return $?
-                #   fi
-                # ;;
-            # "")  gr.msg -c yellow "unknown format $format"
-        esac
+        help|poll|status)
+            convert.$format $@
+            return $?
+            ;;
+        *)  gr.msg -c yellow "unknown format $format"
+            # # check what format user is targeting, lazy
+            # if grep "webp" <<< $format >/dev/null ; then
+            #       convert.webp $format $@
+            #       return $?
+            #   fi
+            # if grep "webm" <<< $format >/dev/null ; then
+            #       convert.webm $format $@
+            #       return $?
+            #   fi
+            # if grep "mkv" <<< $format >/dev/null ; then
+            #       convert.mkv $format $@
+            #       return $?
+            #   fi
+            # ;;
+        # "")  gr.msg -c yellow "unknown format $format"
+    esac
     return 0
 }
 
 
 convert.help () {
-    # genral help
+    # general help
 
     gr.msg -v1 -c white "guru convert help "
     gr.msg -v2
@@ -93,16 +93,16 @@ convert.from_webp () {
     # convert all webp in folder of given file
 
     if [[ $1 ]] ; then
-            find_files=($@)
-        else
-            detox *webp 2>/dev/null
-            find_files=$(echo *webp | grep -v '*')
-        fi
+        find_files=($@)
+    else
+        detox *webp 2>/dev/null
+        find_files=$(echo *webp | grep -v '*')
+    fi
 
     if ! [[ $find_files ]] ; then
-            gr.msg -v1 -c white "no files found"
-            return 1
-        fi
+        gr.msg -v1 -c white "no files found"
+        return 1
+    fi
 
     local rand=""
     local dest_format=$GURU_FORMAT_PICTURE
@@ -110,75 +110,75 @@ convert.from_webp () {
 
     for file in ${find_files[@]} ; do
 
-            local rand=
+        local rand=
 
-            # remove file ending
-            local file_base_name=$(sed 's/\.[^.]*$//' <<< "$file")
-            gr.msg -v3 -c pink "file_base_name: $file_base_name"
+        # remove file ending
+        local file_base_name=$(sed 's/\.[^.]*$//' <<< "$file")
+        gr.msg -v3 -c pink "file_base_name: $file_base_name"
 
-            # check do original exist
-            if ! [[ -f "$file_base_name.webp" ]] ; then
-                    gr.msg -v1 -c yellow "file $file_base_name.webp not found"
-                    continue
-                fi
+        # check do original exist
+        if ! [[ -f "$file_base_name.webp" ]] ; then
+            gr.msg -v1 -c yellow "file $file_base_name.webp not found"
+            continue
+        fi
 
-            # there is a file with same name
-            if [[ -f "$file_base_name.${dest_format}" ]] ; then
-                gr.msg -v1 -n "$file_base_name.${dest_format} exists, "
+        # there is a file with same name
+        if [[ -f "$file_base_name.${dest_format}" ]] ; then
+            gr.msg -v1 -n "$file_base_name.${dest_format} exists, "
 
-                # convert webp to temp
-                dwebp -quiet "$file_base_name.webp" -o "/tmp/$file_base_name.${dest_format}"
+            # convert webp to temp
+            dwebp -quiet "$file_base_name.webp" -o "/tmp/$file_base_name.${dest_format}"
 
-                # check file size
-                local orig_size=$(wc -c "$file_base_name.${dest_format}" | awk '{print $1}')
-                local new_size=$(wc -c "/tmp/$file_base_name.${dest_format}" | awk '{print $1}')
+            # check file size
+            local orig_size=$(wc -c "$file_base_name.${dest_format}" | awk '{print $1}')
+            local new_size=$(wc -c "/tmp/$file_base_name.${dest_format}" | awk '{print $1}')
 
-                if [[ $orig_size -eq $new_size ]] ; then
+            if [[ $orig_size -eq $new_size ]] ; then
 
-                    # check does pictures have same content
-                    local orig=$(identify -quiet -format "%#" "$file_base_name.${dest_format}" )
-                    local new=$(identify -quiet -format "%#" "/tmp/$file_base_name.${dest_format}")
+                # check does pictures have same content
+                local orig=$(identify -quiet -format "%#" "$file_base_name.${dest_format}" )
+                local new=$(identify -quiet -format "%#" "/tmp/$file_base_name.${dest_format}")
 
-                    # check file contains same data, rename if not
-                    if [[ "$orig" == "$new" ]] ; then
-                            gr.msg -v2 -n "identical content "
-                        # skip
-                            if ! [[ $GURU_FORCE ]] ; then
-                                    gr.msg -v1 -c dark_grey "skipping "
-                                    continue
-                                fi
-                        # overwrite
-                            gr.msg -n -v2 -c yellow "overwriting "
-                            rm -f "$file_base_name.${dest_format}"
-                        else
-                        # append
-                            gr.msg -n -v1 -c light_blue "appending "
-                            rand="-$(shuf -i 1000-9999 -n 1)"
-                        fi
+                # check file contains same data, rename if not
+                if [[ "$orig" == "$new" ]] ; then
+                    gr.msg -v2 -n "identical content "
+                # skip
+                    if ! [[ $GURU_FORCE ]] ; then
+                        gr.msg -v1 -c dark_grey "skipping "
+                        continue
                     fi
+                # overwrite
+                    gr.msg -n -v2 -c yellow "overwriting "
+                    rm -f "$file_base_name.${dest_format}"
+                else
+                # append
+                    gr.msg -n -v1 -c light_blue "appending "
+                    rand="-$(shuf -i 1000-9999 -n 1)"
                 fi
+            fi
+        fi
 
 
-            # convert
-            gr.msg -v1 -n "$file_base_name$rand.${dest_format}.. "
+        # convert
+        gr.msg -v1 -n "$file_base_name$rand.${dest_format}.. "
 
-            if [[ -f "/tmp/$file_base_name.${dest_format}" ]] ; then
-                mv "/tmp/$file_base_name.${dest_format}" "$file_base_name$rand.${dest_format}" \
-                    && gr.msg -v1 -c green "ok" \
-                    || gr.msg -c yellow "move failed $?"
-                 else
-                    dwebp -quiet "$file_base_name.webp" -o "$file_base_name$rand.${dest_format}"\
-                    && gr.msg -v1 -c green "ok" \
-                    || gr.msg -c yellow "convert failed $?"
-                fi
+        if [[ -f "/tmp/$file_base_name.${dest_format}" ]] ; then
+            mv "/tmp/$file_base_name.${dest_format}" "$file_base_name$rand.${dest_format}" \
+                && gr.msg -v1 -c green "ok" \
+                || gr.msg -c yellow "move failed $?"
+        else
+            dwebp -quiet "$file_base_name.webp" -o "$file_base_name$rand.${dest_format}"\
+                && gr.msg -v1 -c green "ok" \
+                || gr.msg -c yellow "convert failed $?"
+        fi
 
-            # force remove original if convert success
-            [[ $GURU_FORCE ]] && [[ -f "$file_base_name$rand.${dest_format}" ]] && rm "$file_base_name.webp"
+        # force remove original if convert success
+        [[ $GURU_FORCE ]] && [[ -f "$file_base_name$rand.${dest_format}" ]] && rm "$file_base_name.webp"
 
-            # clean up
-            [[ -f "/tmp/$file_base_name.${dest_format}" ]] && rm "/tmp/$file_base_name.${dest_format}"
+        # clean up
+        [[ -f "/tmp/$file_base_name.${dest_format}" ]] && rm "/tmp/$file_base_name.${dest_format}"
 
-        done
+    done
     return 0
 }
 
@@ -188,52 +188,52 @@ convert.from_webm () {
     local convert_indicator_key="f$(gr.poll convert)"
 
     if [[ $1 ]] ; then
-                find_files=($@)
-            else
-                detox *webm 2>/dev/null
-                find_files=$(echo *webm | grep -v '*')
-            fi
+        find_files=($@)
+    else
+        detox *webm 2>/dev/null
+        find_files=$(echo *webm | grep -v '*')
+    fi
 
-        if ! [[ $find_files ]] ; then
-                gr.msg -c yellow "no files found"
-            fi
+    if ! [[ $find_files ]] ; then
+        gr.msg -c yellow "no files found"
+    fi
 
-        local rand=""
-        local dest_format=$GURU_FORMAT_VIDEO
-        #[[ $2 ]] && dest_format=$2
+    local rand=""
+    local dest_format=$GURU_FORMAT_VIDEO
+    #[[ $2 ]] && dest_format=$2
 
-        for file in ${find_files[@]} ; do
+    for file in ${find_files[@]} ; do
 
-                rand=""
-                file_base_name=${file%%.*}
+        rand=""
+        file_base_name=${file%%.*}
 
-                gr.msg -v3 -c aqua "$file_base_name" -k $convert_indicator_key
+        gr.msg -v3 -c aqua "$file_base_name" -k $convert_indicator_key
 
-                # check do original exist
-                if ! [[ -f "$file" ]] ; then
-                        gr.msg -c yellow "file $file not found"
-                        continue
-                    fi
+        # check do original exist
+        if ! [[ -f "$file" ]] ; then
+            gr.msg -c yellow "file $file not found"
+            continue
+        fi
 
-                # convert
-                gr.msg -n -c light_blue "$file_base_name$rand.${dest_format}.. "
+        # convert
+        gr.msg -n -c light_blue "$file_base_name$rand.${dest_format}.. "
 
-                # there is a file with same name
-                if [[ -f "$file_base_name.${dest_format}" ]] ; then
-                    gr.msg -n "overwriting.. "
-                            fi
+        # there is a file with same name
+        if [[ -f "$file_base_name.${dest_format}" ]] ; then
+            gr.msg -n "overwriting.. "
+        fi
 
-                if ffmpeg -y -hide_banner -loglevel error -i "$file" "$file_base_name$rand.${dest_format}" ; then
-                        gr.msg -c green "ok" -k $convert_indicator_key
-                    else
-                        gr.msg -c red "failed: $?" -k $convert_indicator_key
-                    fi
+        if ffmpeg -y -hide_banner -loglevel error -i "$file" "$file_base_name$rand.${dest_format}" ; then
+            gr.msg -c green "ok" -k $convert_indicator_key
+        else
+            gr.msg -c red "failed: $?" -k $convert_indicator_key
+        fi
 
-                # force remove original if convert success
-                [[ $GURU_FORCE ]] && [[ -f $file_base_name$rand.${dest_format} ]] && rm $file_base_name.webm
+        # force remove original if convert success
+        [[ $GURU_FORCE ]] && [[ -f $file_base_name$rand.${dest_format} ]] && rm $file_base_name.webm
 
-            done
-        return 0
+    done
+    return 0
 }
 
 
@@ -242,52 +242,52 @@ convert.from_mkv () {
     local convert_indicator_key="f$(gr.poll convert)"
 
     if [[ $1 ]] ; then
-                find_files=($@)
-            else
-                eval 'detox *mkv'
-                find_files=$(eval 'ls *mkv')
-            fi
+        find_files=($@)
+    else
+        eval 'detox *mkv'
+        find_files=$(eval 'ls *mkv')
+    fi
 
-        if ! [[ $find_files ]] ; then
-                gr.msg -c yellow "no files found"
-            fi
+    if ! [[ $find_files ]] ; then
+        gr.msg -c yellow "no files found"
+    fi
 
-        local rand=""
-        local dest_format=$GURU_FORMAT_VIDEO
-        #[[ $2 ]] && dest_format=$2
+    local rand=""
+    local dest_format=$GURU_FORMAT_VIDEO
+    #[[ $2 ]] && dest_format=$2
 
-        for file in ${find_files[@]} ; do
+    for file in ${find_files[@]} ; do
 
-                rand=""
-                file_base_name=${file%%.*}
+        rand=""
+        file_base_name=${file%%.*}
 
-                gr.msg -v3 -c aqua "$file_base_name" -k $convert_indicator_key
+        gr.msg -v3 -c aqua "$file_base_name" -k $convert_indicator_key
 
-                # check do original exist
-                if ! [[ -f "$file" ]] ; then
-                        gr.msg -c yellow "file $file not found"
-                        continue
-                    fi
+        # check do original exist
+        if ! [[ -f "$file" ]] ; then
+            gr.msg -c yellow "file $file not found"
+            continue
+        fi
 
-                # convert
-                gr.msg -n -c light_blue "$file_base_name$rand.${dest_format}.. "
+        # convert
+        gr.msg -n -c light_blue "$file_base_name$rand.${dest_format}.. "
 
-                # there is a file with same name
-                if [[ -f "$file_base_name.${dest_format}" ]] ; then
-                        gr.msg -n "file exists "
-                    fi
+        # there is a file with same name
+        if [[ -f "$file_base_name.${dest_format}" ]] ; then
+            gr.msg -n "file exists "
+        fi
 
-                if ffmpeg -y -hide_banner -loglevel error -i "$file" "$file_base_name$rand.${dest_format}" ; then
-                        gr.msg -c green "ok" -k $convert_indicator_key
-                    else
-                        gr.msg -c red "failed: $?" -k $convert_indicator_key
-                    fi
+        if ffmpeg -y -hide_banner -loglevel error -i "$file" "$file_base_name$rand.${dest_format}" ; then
+            gr.msg -c green "ok" -k $convert_indicator_key
+        else
+            gr.msg -c red "failed: $?" -k $convert_indicator_key
+        fi
 
-                # force remove original if convert success
-                [[ $GURU_FORCE ]] && [[ -f $file_base_name$rand.${dest_format} ]] && rm $file_base_name.mkv
+        # force remove original if convert success
+        [[ $GURU_FORCE ]] && [[ -f $file_base_name$rand.${dest_format} ]] && rm $file_base_name.mkv
 
-            done
-        return 0
+    done
+    return 0
 }
 
 
@@ -299,114 +299,113 @@ convert.to_dokuwiki () {
     # input list of files to export, expects that input is "note ans pushes it to wiki/notes tbd fix next
 
     if ! md2doku -h >/dev/null; then
-            sudo apt update
-            [[ $GURU_GIT_TRIALS ]] || GURU_GIT_TRIALS="$HOME/git"
-            cd $GURU_GIT_TRIALS
-            git clone https://github.com/mostekcm/markdown-to-dokuwiki.git
-            cd markdown-to-dokuwiki
-            npm --version || sudo apt install npm -y
-            npm install -g
-        fi
+        sudo apt update
+        [[ $GURU_GIT_TRIALS ]] || GURU_GIT_TRIALS="$HOME/git"
+        cd $GURU_GIT_TRIALS
+        git clone https://github.com/mostekcm/markdown-to-dokuwiki.git
+        cd markdown-to-dokuwiki
+        npm --version || sudo apt install npm -y
+        npm install -g
+    fi
 
     if [[ $1 ]] ; then
-                find_files=($@)
-            else
-                # eval 'detox *md'
-                # lähdetään siitä että note moduli tuottaa filunimet oikein.
-                find_files=($(eval 'ls *md'))
-                # vähän jykevä metodi, miksei filelistan nyt saisi helpommallakin?
+        find_files=($@)
+    else
+        # eval 'detox *md'
+        # lähdetään siitä että note moduli tuottaa filunimet oikein.
+        find_files=($(eval 'ls *md'))
+        # vähän jykevä metodi, miksei filelistan nyt saisi helpommallakin?
+    fi
+
+    if ! [[ $find_files ]] ; then
+        gr.msg -c yellow "no files found"
+    fi
+
+    # local rand=""
+    local dest_format="txt"
+    local files_done=()
+
+    for file in ${find_files[@]} ; do
+
+        # rand=""
+        file_base_name=${file%%.*}
+
+        gr.msg -v3 -c aqua "$file_base_name" -k $convert_indicator_key
+
+        # check do original exist
+        if ! [[ -f "$file" ]] ; then
+            gr.msg -c yellow "file $file not found"
+            continue
+        fi
+
+        gr.msg -n -v2 -c light_blue "$file "
+
+        ## Fun block to write, magic room
+        # TBD flag or ghost to check is content modified in web interface
+        # TBD version file if upper situation, yes, shit way it is but easy and better then data loses
+
+        # check there is a file with same name and rand four digits blog to new file name
+        # if [[ -f "$file_base_name.${dest_format}" ]] ; then
+        #         rand="$(date +%s%N | cut -b10-13)"
+        #         gr.msg -v2 -n "to $file_base_name.${dest_format} "
+        #     fi
+
+        # TBD create a temp file to ram that han cen modified (see new features)
+        # TBD remove all headers content with dot as first letter
+        # TBD remove all lines that start with dot
+
+        if pandoc -s -r markdown -t dokuwiki $file > $file_base_name.${dest_format} ; then
+            gr.msg -v2 -c green "converted" -k $convert_indicator_key
+
+            if grep "tag: " $file -q ; then
+                tag="{{tag>$(grep 'tag: ' $file | cut -d ' ' -f2-)}}"
+                echo -e "\n$tag\n" >>$file_base_name.${dest_format}
             fi
 
-        if ! [[ $find_files ]] ; then
-                gr.msg -c yellow "no files found"
-            fi
+            files_done=(${files_done[@]} "$file_base_name.${dest_format}")
 
-        # local rand=""
-        local dest_format="txt"
-        local files_done=()
+        else
+            gr.msg -c red "failed: $?" -k $convert_indicator_key
+        fi
 
-        for file in ${find_files[@]} ; do
+    done
 
-                # rand=""
-                file_base_name=${file%%.*}
+        ## publish prototype hardcoded for notes tbd create publish.sh module
 
-                gr.msg -v3 -c aqua "$file_base_name" -k $convert_indicator_key
+    if ! [[ ${files_done[0]} ]] ; then
+        gr.msg -c reset "nothing to do" -k $convert_indicator_key
+        return 0
+    fi
 
-                # check do original exist
-                if ! [[ -f "$file" ]] ; then
-                        gr.msg -c yellow "file $file not found"
-                        continue
-                    fi
+    # force remove original if convert success
+    # [[ $GURU_FORCE ]] && [[ $file_base_name$rand.${dest_format} ]] && rm $file_base_name.mkv
+    if ! [[ -d $GURU_MOUNT_WIKIPAGES ]] ; then
+        source mount.sh
+        cd $GURU_BIN
+        if ! timeout -k 10 10 ./mount.sh wikipages ; then
+            gr.msg -c red "mount failed: $?" -k $convert_indicator_key
+            return 122
+        fi
+    fi
 
-                gr.msg -n -v2 -c light_blue "$file "
+    local option="-a --ignore-existing "
+    local message="up tp date "
 
-                ## Fun block to write, magic room
-                # TBD flag or ghost to check is content modified in web interface
-                # TBD version file if upper situation, yes, shit way it is but easy and better then data loses
+    if [[ $GURU_FORCE ]] ; then
+        option="--recursive --delete "
+        message="updated (force)"
+    fi
 
-                # check there is a file with same name and rand four digits blog to new file name
-                # if [[ -f "$file_base_name.${dest_format}" ]] ; then
-                #         rand="$(date +%s%N | cut -b10-13)"
-                #         gr.msg -v2 -n "to $file_base_name.${dest_format} "
-                #     fi
+    (( $GURU_VERBOSE >= 1)) && option="--progress $option "
 
-                # TBD create a temp file to ram that han cen modified (see new features)
-                # TBD remove all headers content with dot as first letter
-                # TBD remove all lines that start with dot
+    gr.msg -n -v1 "${#files_done[@]} file(s) "
+    gr.msg -n -v2 -c light_blue "${files_done[@]} "
+    gr.msg -n -v2 "to $GURU_MOUNT_WIKIPAGES/notes.. "
 
-                if pandoc -s -r markdown -t dokuwiki $file > $file_base_name.${dest_format} ; then
-                        gr.msg -v2 -c green "converted" -k $convert_indicator_key
+    rsync $option ${files_done[@]} $GURU_MOUNT_WIKIPAGES/notes
 
-                        if grep "tag: " $file -q ; then
-                                tag="{{tag>$(grep 'tag: ' $file | cut -d ' ' -f2-)}}"
-                                echo -e "\n$tag\n" >>$file_base_name.${dest_format}
-                            fi
-
-                        files_done=(${files_done[@]} "$file_base_name.${dest_format}")
-
-                    else
-                        gr.msg -c red "failed: $?" -k $convert_indicator_key
-                    fi
-
-
-            done
-
-            ## publish prototype hardcoded for notes tbd create publish.sh module
-
-            if ! [[ ${files_done[0]} ]] ; then
-                    gr.msg -c reset "nothing to do" -k $convert_indicator_key
-                    return 0
-                fi
-
-            # force remove original if convert success
-            # [[ $GURU_FORCE ]] && [[ $file_base_name$rand.${dest_format} ]] && rm $file_base_name.mkv
-            if ! [[ -d $GURU_MOUNT_WIKIPAGES ]] ; then
-                    source mount.sh
-                    cd $GURU_BIN
-                    if ! timeout -k 10 10 ./mount.sh wikipages ; then
-                            gr.msg -c red "mount failed: $?" -k $convert_indicator_key
-                            return 122
-                        fi
-                fi
-
-            local option="-a --ignore-existing "
-            local message="up tp date "
-
-            if [[ $GURU_FORCE ]] ; then
-                    option="--recursive --delete "
-                    message="updated (force)"
-                fi
-
-            (( $GURU_VERBOSE >= 1)) && option="--progress $option "
-
-            gr.msg -n -v1 "${#files_done[@]} file(s) "
-            gr.msg -n -v2 -c light_blue "${files_done[@]} "
-            gr.msg -n -v2 "to $GURU_MOUNT_WIKIPAGES/notes.. "
-
-            rsync $option ${files_done[@]} $GURU_MOUNT_WIKIPAGES/notes
-
-            gr.msg -v2 -c green "$message" -k $convert_indicator_key
-            rm ${files_done[@]}
+    gr.msg -v2 -c green "$message" -k $convert_indicator_key
+    rm ${files_done[@]}
 }
 
 # covert_bash_2_json () {
@@ -478,34 +477,148 @@ convert.to_dokuwiki () {
 # }
 
 
-convert.install_avif () {
-    # avif support
+convert.check_imagemagick () {
+# check if critical file format are supported and version is above 7
+    local _return=0
+
+    gr.msg "checking format support: "
+    local formats=(jpg png gif tiff webp avif)
+
+    for format in ${formats[@]} ; do
+        if convert -list format | grep ${format^^} >/dev/null; then
+            gr.msg -n -c green "$format "
+        else
+            gr.msg -n -c red "$format "
+            _return=1
+        fi
+    done
+
+    local im_version=$(convert -version | head -n1 | cut -d" " -f3)
+
+    case $im_version in
+        "6."*|"5."*|"4."*)
+            gr.msg -c yellow "installed version '$im_version' is way too old"
+            _return=1
+        ;;
+
+        "7."*)
+            gr.msg -n "$im_version "
+            gr.msg -c green "ok"
+        ;;
+    esac
+    return $_return
+}
+
+
+convert.install_imagemagick () {
+# get and compile imagemagick with webp and avif support
 
     sudo apt-get update
-    sudo apt-get install libheif-dev libaom-dev libjpeg-dev libpng-dev
-    sudo apt build-dep imagemagick
-    wget https://imagemagick.org/download/ImageMagick.tar.gz
-    tar xvzf ImageMagick.tar.gz
-    cd into the dir
-    ./configure --with-heic=yes --with-webp=yes
-    # PS: If you also want webp, also use this flag: --with-webp=yes
-    # PPS: If you also want vips, also turn on the --with-modules flag
-    #      (see https://github.com/libvips/libvips/issues/343 and https://github.com/libvips/libvips/issues/418)
-    sudo make
-    sudo make install
-    sudo ldconfig /usr/local/lib
-    sudo identify -version   # to check if installed ok
-    make check  # optional run in-depth check
-    identify -list format | grep AVIF  # It should print a line
 
+    # uninstall if installed by apt
+    if apt list --installed | grep imagemagick; then
+        gr.msg "installed system version of imagemagick"
+        if convert.check_imagemagick ; then
+            gr.msg "seems that distributor added valid version to repository"
+            return 0
+        else
+            if sudo apt remove --purge imagemagick; then
+                gr.msg -c green "current installation removed"
+            else
+                gr.msg -c red "purging failed, do manually"
+                return 2
+            fi
+        fi
+    fi
+
+
+    #Install Build-Essential in order to configure and make the final Install
+    sudo apt-get install build-essential
+    #libjpg62-dev required in order to work with basic JPG files
+    sudo apt-get install -y libjpeg62-dev
+    #libtiff-dev is required in order to work with TIFF file format
+    sudo apt-get install -y libtiff-dev
+    #libpng-dev required in order to work with basic PNG files
+    sudo apt-get install -y libpng-dev
+
+
+
+    # uninstalling compiled version
+    sudo make uninstall && gr.msg -c green "uninstalled" || gr.msg -c red "uninstallation failed"
+
+    gr.msg "cloning ImageMagick source from github.com.."
+    cd /tmp
+    git clone https://github.com/ImageMagick/ImageMagick.git ImageMagick-7.1.0
+    cd ImageMagick-7.1.0
+
+    gr.msg "cloning ImageMagick source from github.com.."
+    if ./configure --with-webp=yes --with-heic=yes --with-modules; then
+        gr.msg -c green "configure ok"
+    else
+        gr.msg -c red "configure failed"
+        return 3
+    fi
+
+    # compile and check
+    if make; then
+        gr.msg -c green "successfully compiled"
+    else
+        gr.msg -c red "compile failed, error: $?"
+        return 4
+    fi
+
+    # install and to check
+    if sudo make install; then  # sudo identify -version
+        gr.msg -c green "successfully installed"
+    else
+       gr.msg -c red "installation failed, error: $?"
+       # run in-depth check_imagemagick
+       make check
+       return 5
+    fi
+
+    sudo ldconfig /usr/local/lib
+
+    # finally, check version and format support
+    if convert.check_imagemagick; then
+        gr.msg -c green "installation seems to work"
+    else
+       gr.msg -c red "installation failed"
+       return 6
+    fi
 }
+
+
+# convert.install_imagemagick () {
+#     # compile avif support to imagemagic
+
+#     sudo apt-get update
+#     sudo apt-get install libheif-dev libaom-dev libjpeg-dev libpng-dev
+#     sudo apt build-dep imagemagick
+
+#     wget https://imagemagick.org/download/ImageMagick.tar.gz
+#     tar xvzf ImageMagick.tar.gz
+#     cd into the dir
+#     ./configure --with-heic=yes --with-webp=yes
+#     # PS: If you also want webp, also use this flag: --with-webp=yes
+#     # PPS: If you also want vips, also turn on the --with-modules flag
+#     #      (see https://github.com/libvips/libvips/issues/343 and https://github.com/libvips/libvips/issues/418)
+#     sudo make
+#     sudo make install
+#     sudo ldconfig /usr/local/lib
+#     sudo identify -version   # to check if installed ok
+#     make check  # optional run in-depth check
+#     identify -list format | grep AVIF  # It should print a line
+
+# }
 
 
 convert.install () {
     # install needed
 
-    # webp format support
-    convert -version >/dev/null && \
+    # webp and atif format support
+    convert.check_imagemagick || convert.install_imagemagick
+
     ffmpeg -version >/dev/null && \
     dwebp -version -quiet >/dev/null && \
     detox --help >/dev/null && \
@@ -534,13 +647,13 @@ convert.status () {
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
     if [[ $GURU_CONVERT_ENABLED ]] ; then
-            gr.msg -v1 -c green -k $convert_indicator_key \
-                "enabled"
-        else
-            gr.msg -v1 -c reset -k $convert_indicator_key \
-                "disabled"
-            return 1
-        fi
+        gr.msg -v1 -c green -k $convert_indicator_key \
+            "enabled"
+    else
+        gr.msg -v1 -c reset -k $convert_indicator_key \
+            "disabled"
+        return 1
+    fi
 
     return 0
 }
@@ -564,7 +677,7 @@ convert.poll () {
             ;;
         *)  gr.msg -c dark_grey "function not written"
             return 0
-        esac
+    esac
 }
 
 

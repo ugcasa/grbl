@@ -10,7 +10,6 @@ read -n1 -t1 key2
 read -n1 -t1 key3
 echo
 
-
 [[ $key1 == $key2 ]] && [[ $key2 == $key3 ]] && all_same=true
 all="$key1$key2$key3"
 clear
@@ -37,7 +36,7 @@ case $all in
     ccc)    os.capslock enable ;;
 
     # audio controls kill all audio and lights
-    r*)     guru audio radio $key2 $key3 ;;
+    r*)     guru radio $key2 $key3 ;;
 
     # kill all audio and lights
     as)     guru audio stop ;;

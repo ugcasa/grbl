@@ -77,7 +77,7 @@ youtube.main () {
             youtube.search_n_play $command $@
             ;;
 
-        esac
+    esac
     return 0
 }
 
@@ -88,7 +88,7 @@ youtube.arguments () {
     local got_args=($@)
 
     for (( i = 0; i < ${#got_args[@]}; i++ )); do
-        gr.msg -v4 "${FUNCNAME[0]}: argument: $i:${got_args[$i]}"
+        gr.debug "${FUNCNAME[0]}: argument: $i:${got_args[$i]}"
 
         case ${got_args[$i]} in
 
@@ -114,43 +114,47 @@ youtube.arguments () {
 
             # --playlist|--pl)        ## TBD search for playlists
             #     i=$((i+1))
-            #     gr.msg -v4 "got position: ${got_args[$i]} "
+            #     gr.debug "got position: ${got_args[$i]} "
             #     position=${got_args[$i]}
             #     ;;
 
             # --list|--l)            ## TBD play search result list
             #     i=$((i+1))
-            #     gr.msg -v4 "got position: ${got_args[$i]} "
+            #     gr.debug "got position: ${got_args[$i]} "
             #     position=${got_args[$i]}
             #     ;;
 
 
             # --start|--s)          ## TBD mpv does not support this ffmpg can, but not too important
             #     i=$((i+1))
-            #     gr.msg -v4 "got position: ${got_args[$i]} "
+            #     gr.debug "got position: ${got_args[$i]} "
             #     position=${got_args[$i]}
             #     ;;
             # --end|--e)
             #     i=$((i+1))
-            #     gr.msg -v4 "got position: ${got_args[$i]} "
+            #     gr.debug "got position: ${got_args[$i]} "
             #     position=${got_args[$i]}
             #     ;;
             *)
                 module_options+=("${got_args[$i]}")
                 ;;
-            esac
-        done
+        esac
+    done
 
-        # save format
+        # media format options given based on media saving location, yes not the best i konw
         if [[ $save_to_file ]] ; then
-            [[ "$save_location" == "$GURU_MOUNT_AUDIO" ]] && youtube_options="$youtube_options -x --audio-format mp3"
-            [[ "$save_location" == "$GURU_MOUNT_VIDEO" ]] && youtube_options="$youtube_options --recode-video mp4"
+
+            [[ "$save_location" == "$GURU_MOUNT_AUDIO" ]] \
+                && youtube_options="$youtube_options -x --audio-format mp3"
+
+            [[ "$save_location" == "$GURU_MOUNT_VIDEO" ]] \
+                && youtube_options="$youtube_options --recode-video mp4"
         fi
 
     # debug stuff (TBD remove later)
-    gr.msg -v4 "${FUNCNAME[0]}: passing args: ${module_options[@]}"
-    gr.msg -v4 "${FUNCNAME[0]}: youtube_options: $youtube_options"
-    gr.msg -v4 "${FUNCNAME[0]}: mpv_options: $mpv_options"
+    gr.debug "${FUNCNAME[0]}: passing args: ${module_options[@]}"
+    gr.debug "${FUNCNAME[0]}: youtube_options: $youtube_options"
+    gr.debug "${FUNCNAME[0]}: mpv_options: $mpv_options"
 }
 
 
@@ -162,9 +166,9 @@ youtube.rc () {
         || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/audio.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]] \
         || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]]
         then
-            youtube.make_rc && \
-                gr.msg -v1 -c dark_gray "$youtube_rc updated"
-        fi
+        youtube.make_rc && \
+            gr.msg -v1 -c dark_gray "$youtube_rc updated"
+    fi
     source $youtube_rc
 }
 
@@ -175,8 +179,8 @@ youtube.make_rc () {
     source config.sh
 
     if [[ -f $youtube_rc ]] ; then
-            rm -f $youtube_rc
-        fi
+        rm -f $youtube_rc
+    fi
 
     config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $youtube_rc
     config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $youtube_rc append
@@ -193,10 +197,10 @@ youtube.search () {
 
     # if output format is specified, set it and remove it from input string
     case $2 in
-            dict) return_format=dict ; shift ;;
-            json) return_format=json ; shift ;;
-            *) return_format=json
-        esac
+        dict) return_format=dict ; shift ;;
+        json) return_format=json ; shift ;;
+        *) return_format=json
+    esac
 
     # remove result count
     shift
@@ -224,7 +228,7 @@ youtube.search_n_play () {
     # make search and get media data and address
     local query=$(youtube.search 1 json ${module_options[@]})
 
-    # format information of found media
+    # get information of found media
     # TBD make able to parse multiple search results ans for them trough to replace search_list function"
     local title=$(echo $query | jq | grep title | cut -d':' -f2 | sed 's/"//g' | sed 's/,//g' | xargs -0 )
     local duration=$(echo $query | jq | grep duration | cut -d':' -f2 | xargs | sed 's/,//g')
@@ -235,19 +239,19 @@ youtube.search_n_play () {
 
     # if just saving the file
     if [[ $save_to_file ]]; then
-            #save the file to media folder
-            youtube_options="$youtube_options --continue --output $save_location/%(title)s.%(ext)s"
-            gr.msg -v1 "downloading to $save_location.. "
-            # save file
-            yt-dlp $youtube_options $media_address
-            # a bit dangero if some of location variables are empty
-            #new_name=$(detox -v *mp4 -n | grep ">" | cut -d '>' -f 2 |xargs)
-            detox -v *mp3 *mp4 $save_location 2>/dev/null
+        #save the file to media folder
+        youtube_options="$youtube_options --continue --output $save_location/%(title)s.%(ext)s"
+        gr.msg -v1 "downloading to $save_location.. "
+        # save file
+        yt-dlp $youtube_options $media_address
+        # a bit dangero if some of location variables are empty
+        #new_name=$(detox -v *mp4 -n | grep ">" | cut -d '>' -f 2 |xargs)
+        detox -v *mp3 *mp4 $save_location 2>/dev/null
 
-            #source tag.sh
-            #tag.main add $new_name "guru-cli youtube.sh $title"
-            return $?
-        fi
+        #source tag.sh
+        #tag.main add $new_name "guru-cli youtube.sh $title"
+        return $?
+    fi
 
     # make now playing info available for audio module
     echo $title >$GURU_AUDIO_NOW_PLAYING
@@ -275,16 +279,16 @@ youtube.search_n_play () {
 
     # lacy error printout
     if [[ -f /tmp/mpv.error ]]; then
-            _error=$(grep 'ERROR:' /tmp/youtube.error)
-            [[ $_error ]] && gr.msg -v2 -c red $_error
-            [[ -f /tmp/mpv.error ]] && rm /tmp/mpv.error
-        fi
+        _error=$(grep 'ERROR:' /tmp/youtube.error)
+        [[ $_error ]] && gr.msg -v2 -c red $_error
+        [[ -f /tmp/mpv.error ]] && rm /tmp/mpv.error
+    fi
 
     if [[ -f /tmp/youtube.error ]]; then
-            _error=$(grep 'Failed' /tmp/mpv.error)
-            [[ $_error ]] && gr.msg -v2 -c yellow $_error
-            [[ -f /tmp/youtube.error ]] && rm /tmp/youtube.error
-        fi
+        _error=$(grep 'Failed' /tmp/mpv.error)
+        [[ $_error ]] && gr.msg -v2 -c yellow $_error
+        [[ -f /tmp/youtube.error ]] && rm /tmp/youtube.error
+    fi
     # remove now playing and error data
     [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
 
@@ -296,6 +300,9 @@ youtube.search_list () {
 # search input and play it from youtube, optimized for audio, no video at all
 
     local base_url=https://www.youtube.com/watch?v=
+
+    # check is installed
+    yt-dlp --version || youtube.install
 
     # overwrite global variables, optimize for audio
     youtube_options="-f bestaudio --no-resize-buffer --ignore-errors"
@@ -338,6 +345,9 @@ youtube.get_media () {
     id=$1
     url_base="https://www.youtube.com/watch?v"
 
+    # check is installed
+    yt-dlp --version || youtube.install
+
     # source mount module and mount video file folder in cloud
     source mount.sh
     mount.main video
@@ -348,7 +358,7 @@ youtube.get_media () {
     yt-dlp --ignore-errors --continue --no-overwrites \
            --output "$GURU_MOUNT_VIDEO/%(title)s.%(ext)s" \
            "$url_base=$id"
-    return 0
+    return $?
 }
 
 
@@ -365,7 +375,7 @@ youtube.get_audio () {
     [[ -d $GURU_MOUNT_AUDIO/new ]] || mkdir -p $GURU_MOUNT_AUDIO/new
 
     # check is installed
-    yt-dlp --version || video.install
+    yt-dlp --version || youtube.install
 
     # inform user
     gr.msg -c white "downloading $url_base=$id to $GURU_MOUNT_AUDIO.. "
@@ -374,7 +384,7 @@ youtube.get_audio () {
     yt-dlp -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
            --output "$GURU_MOUNT_AUDIO/%(title)s.%(ext)s" \
            "$url_base=$id"
-    return 0
+    return $?
 }
 
 
@@ -394,11 +404,15 @@ youtube.play () {
 
     # get staream and play
     yt-dlp -v $youtube_options $media_address -o - 2>/tmp/youtube.error \
-                | mpv $mpv_options - >/dev/null
+        | mpv $mpv_options - >/dev/null
+    local _error=$?
 
     # remove playing indications
     gr.msg -c reset -k $GURU_AUDIO_INDICATOR_KEY
     rm $GURU_AUDIO_NOW_PLAYING
+
+    # (( $_error > 0 )) && gr.msg -c yellow "${FUNCNAME[0]} returned $_error"
+    return $_error
 }
 
 
@@ -431,7 +445,7 @@ youtube.install() {
     # install json tools
     jq --version >/dev/null || sudo apt install jq -y
 
-    gr.msg -c green "mpv, ffmpeg, yt-dlp, detox and youtube-search installed"
+    #gr.msg -c green "mpv, ffmpeg, yt-dlp, detox and youtube-search installed"
     return 0
 }
 
@@ -444,7 +458,6 @@ youtube.uninstall(){
     sudo apt-get remove yt-dlp -y
     pip3 uninstall youtube-search
     gr.msg -c green "uninstalled"
-
     return 0
 }
 
@@ -459,6 +472,5 @@ declare -g save_to_file=
 
 # run main only if run, not sourced
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
-        # source $GURU_RC
-        youtube.main $@
-    fi
+    youtube.main $@
+fi

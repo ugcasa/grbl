@@ -95,6 +95,7 @@ gr.msg () {
 
     while true ; do
             case "$1" in
+                #-r ) _repeat="$2 "                              ; shift ;;
                 -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
                 -l ) _logging=true                              ; shift ;;
                 -s ) _say=true                                  ; shift ;;
@@ -129,59 +130,59 @@ gr.msg () {
     [[ $_exit -gt 0 ]] && _message="$_exit: $_message"
 
     if [[ $_say ]] ; then
-            #_color_code=
-            _message=$(echo ${_message[@]} | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' )
-            [[ $GURU_VERBOSE -gt 0 ]] && printf "%s\n" "$_message"
-            espeak -p $GURU_SPEAK_PITCH -s $GURU_SPEAK_SPEED -v $GURU_SPEAK_LANG "$_message"
-            return 0
-        fi
+        #_color_code=
+        _message=$(echo ${_message[@]} | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' )
+        [[ $GURU_VERBOSE -gt 0 ]] && printf "%s\n" "$_message"
+        espeak -p $GURU_SPEAK_PITCH -s $GURU_SPEAK_SPEED -v $GURU_SPEAK_LANG "$_message"
+        return 0
+    fi
 
     # -k) set corsair key is '-k <key>' used
     if [[ $_indicator_key ]] && [[ $GURU_CORSAIR_ENABLED ]] ; then
-            # TBD: check corsair (or other kb led) module installed
-            #      now in corsair is part of core what it should not to be
-            source corsair.sh
-            if [[ "$_color" == "reset" ]] ; then
-                    corsair.main reset "$_indicator_key"
-                else
-                    corsair.main set "$_indicator_key" "$_color"
-                fi
-       fi
+        # TBD: check corsair (or other kb led) module installed
+        #      now in corsair is part of core what it should not to be
+        source corsair.sh
+        if [[ "$_color" == "reset" ]] ; then
+            corsair.main reset "$_indicator_key"
+        else
+            corsair.main set "$_indicator_key" "$_color"
+        fi
+   fi
 
     # -m) publish to mqtt if '-q|-m <topic>' used
     if [[ $_mqtt_topic ]] && [[ $GURU_MQTT_ENABLED ]]; then
-            source mqtt.sh
-            # mqtt.enabled || return 0
-            mqtt.pub "$_mqtt_topic" "$_message"
-        fi
+        source mqtt.sh
+        # mqtt.enabled || return 0
+        mqtt.pub "$_mqtt_topic" "$_message"
+    fi
 
     # -C) print only color code
     if [[ $_color_only ]] ; then
-            echo -n "$_color_code"
-            return 0
-        fi
+        echo -n "$_color_code"
+        return 0
+    fi
 
     # -v) given verbose level is lower than trigger level, do not print
     # "print only if higher verbose level than this"
     if [[ $verbose_trigger -gt $GURU_VERBOSE ]] ; then
-            return 0
-        fi
+        return 0
+    fi
 
     # -V) given verbose level is higher than high limiter, do not print
     # "do not print after this verbose level"
     if [[ $verbose_limiter -le $GURU_VERBOSE ]] ; then
-            return 0
-        fi
+        return 0
+    fi
 
     # On verbose level 3+ timestamp is always on
     if [[ $verbose_trigger -gt 3 ]] && [[ ${#_message} -gt 1 ]]; then
-            _timestamp="$(date +$GURU_FORMAT_TIME.%3N) DEBUG: "
-        fi
+        _timestamp="$(date +$GURU_FORMAT_TIME.%3N) DEBUG: "
+    fi
 
     # -w) fill message length to column limiter
     if ! [[ $_column_width ]] ; then
-            _column_width=${#_message}
-        fi
+        _column_width=${#_message}
+    fi
 
     # -c) color printout
     if [[ $GURU_COLOR ]] && ! [[ $GURU_VERBOSE -eq 0 ]]; then
@@ -456,7 +457,8 @@ gr.local () {
 
 gr.debug () {
 # printout debug messages
-    [[ $GURU_DEBUG ]] && gr.msg -h -c deep_pink "${FUNCNAME[0]^^}: $@"
+    [[ $GURU_DEBUG ]] && gr.msg -c deep_pink "${FUNCNAME[0]^^}: $@"
+    return 0
 }
 
 # export -f gr.poll
@@ -464,3 +466,4 @@ export -f gr.msg
 export -f gr.ask
 export -f gr.end
 export -f gr.ind
+export -f gr.debug

@@ -2,7 +2,6 @@
 
 # guru-cli uninstaller
 
-
 [[ -f $GURU_BIN/keyboard.sh ]] \
     && source $GURU_BIN/keyboard.sh \
     || gr.msg -c white "keboard module not found, unable to return keyboard shortcuts"
@@ -178,10 +177,10 @@ uninstall.help () {
 
 uninstall.remove () {
 
-    source system.sh
+    source flag.sh
 
-    if system.flag running ; then
-            system.flag set pause
+    if flag.check running ; then
+            flag.set pause
             sleep 3
         fi
 

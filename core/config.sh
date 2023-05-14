@@ -23,9 +23,9 @@ config.main () {
 
 config.help () {
 # general help
-    gr.msg -v1 "guru-client config help " -c white
+    gr.msg -v1 "guru-client config help " -h
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help"
+    gr.msg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help" -c white
     gr.msg -v2
     gr.msg -v1 "actions:"
     gr.msg -v1 " export        export configuration to environment"
@@ -35,10 +35,12 @@ config.help () {
     gr.msg -v1 " edit          edit user config file with preferred editor "
     gr.msg -v1 " get           get single value from user config"
     gr.msg -v1 " set           set value to user config and current environment "
-    gr.msg -v1 " help          try 'help -V' full help" -V2
+    gr.msg -v1 " help          try '$GURU_CALL help -v2' full help" -V2
+    gr.msg -v2
     gr.msg -v1 "examples:" -c white
     gr.msg -v1 "     '$GURU_CALL config user'                            get current host and user settings"
     gr.msg -v1 "     '$GURU_CALL pull -h <host_name> -u <user_name>'     get user and host specific setting from server  "
+    gr.msg -v2
 }
 
 
@@ -132,11 +134,12 @@ config.make_style_rc () {
 config.export () {
 # export global configuration in use
 
+    source flag.sh
+
     local _target_rc=$HOME/.gururc
     local _target_user=$GURU_USER ; [[ "$1" ]] && _target_user="$1"
 
-    source system.sh
-    system.set-flag pause
+    flag.set pause
     sleep 2
 
     config.export_type_selector () {
@@ -144,22 +147,28 @@ config.export () {
             local _module_cfg="$1"
             gr.msg -v4 -c deep_pink "Looking configs: $_module_cfg"
 
+            # configure file type is set in first line of config file after #!/bin/bash
             if [[ -f $_module_cfg ]] ; then
                 case $(head -n 1 $_module_cfg) in
-                        *"global"*)
-                            echo "# from $_module_cfg" >>$_target_rc
-                            config.make_rc "$_module_cfg" "$_target_rc" append \
-                                || gr.msg -v1 -V2 -c red "error processing $_module_cfg"
-                            ;;
-                        *"module"*)
-                            gr.msg -v2 -c dark_grey "$_module_cfg ..skipping module config files"
-                            ;;
-                        *"source"*)
-                            gr.msg -v2 -c dark_grey "$_module_cfg ..no need to compile this type of configs"
-                            ;;
-                        *)
-                            gr.msg -v2 -c yellow "$_module_cfg ..unknown config file type"
-                    esac
+                    *"global"*)
+                        echo "# from $_module_cfg" >>$_target_rc
+                        config.make_rc "$_module_cfg" "$_target_rc" append \
+                            || gr.msg -c red "error processing $_module_cfg" # TBD removed "-v1 -V2", test
+                    ;;
+
+                    *"module"*)
+                        gr.msg -v1 -V2 -c dark_grey "skipping.."
+                        gr.msg -v2 -c dark_grey "$_module_cfg ..skipping module config files"
+                    ;;
+
+                    *"source"*)
+                        gr.msg -v1 -V2 -c dark_grey "skipping.."
+                        gr.msg -v2 -c dark_grey "$_module_cfg ..no need to compile this type of configs"
+                    ;;
+
+                    *)
+                        gr.msg -v2 -c yellow "$_module_cfg ..unknown config file type"
+                esac
                 fi
         }
 
@@ -176,10 +185,10 @@ config.export () {
     gr.msg -N -v2 -c dark_grey "installed modules: '${GURU_MODULES[@]}'"
     echo "export GURU_MODULES=(${GURU_MODULES[@]})" >>$_target_rc
     if grep "export GURU_MODULES" "$_target_rc" >/dev/null ; then
-            gr.msg -c green -V2 -v1 "done"
-        else
-            gr.msg -c red -V2 -v1 "failed"
-        fi
+        gr.msg -c green -V2 -v1 "done"
+    else
+        gr.msg -c red -V2 -v1 "failed"
+    fi
 
     local installed_modules=($(cat $GURU_CFG/installed.core))
     installed_modules=(${installed_modules[@]} $(cat $GURU_CFG/installed.modules))
@@ -188,14 +197,14 @@ config.export () {
 
     for module in ${installed_modules[@]} ; do
 
-            ## add modules default config
-            _module_cfg="$GURU_CFG/$module.cfg"
-            config.export_type_selector $_module_cfg
+        ## add module default config
+        _module_cfg="$GURU_CFG/$module.cfg"
+        [[ -f $_module_cfg ]] && config.export_type_selector $_module_cfg
 
-            ## add user config
-            _module_cfg="$GURU_CFG/$GURU_USER/$module.cfg"
-            config.export_type_selector "$_module_cfg"
-        done
+        ## add user config
+        _module_cfg="$GURU_CFG/$GURU_USER/$module.cfg"
+        [[ -f $_module_cfg ]] && config.export_type_selector $_module_cfg
+    done
 
     config.make_style_rc "$GURU_CFG/rgb-color.cfg" "$_target_rc" append
     # set path
@@ -205,25 +214,23 @@ config.export () {
 
     # check and load configuration
     if [[ "$_target_rc" ]] ; then
-            # export configure
-            chmod +x "$_target_rc"
-            source "$_target_rc"
+        # export configure
+        chmod +x "$_target_rc"
+        source "$_target_rc"
 
-            ## TBD indicator.keyboard init > corsair.main init
-            # init corsair profile
-            if [[ $GURU_CORSAIR_ENABLED ]] ; then
-                    source $GURU_BIN/corsair.sh
-                    corsair.main init
-                fi
-
-        system.rm-flag pause
-
-        else
-            gr.msg -c yellow "something went wrong, recovering old user configuration"
-            [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" \
-                || gr.msg -x 100 -c red "no old backup found, unable to recover"
-            return 10
+        ## TBD indicator.keyboard init > corsair.main init
+        # init corsair profile
+        if [[ $GURU_CORSAIR_ENABLED ]] ; then
+            source $GURU_BIN/corsair.sh
+            corsair.main init
         fi
+        flag.rm pause
+    else
+        gr.msg -c yellow "something went wrong, recovering old user configuration"
+        [[ -f "$_target_rc.old" ]] && mv -f "$_target_rc.old" "$_target_rc" \
+            || gr.msg -x 100 -c red "no old backup found, unable to recover"
+        return 10
+    fi
 }
 
 

@@ -47,15 +47,14 @@ source system.sh
 # active key list
 key_pipe_list=$(file /tmp/ckbpipe0* | grep fifo | cut -f1 -d ":")
 # modes with status bar function set. if add on this list, add name=<rgb color> to rgb-color.cfg
-status_modes=(status, test, red, olive, dark, orange, eq)
+status_modes=(fullpipe, halfpipe, blue, eq)
 corsair_last_mode="/tmp/corsair.mode"
 # service configurations for ckb-next application
 corsair_service="$HOME/.config/systemd/user/corsair.service"
 corsair_daemon_service="/usr/lib/systemd/system/ckb-next-daemon.service"
-# jsut know what to delete shen disable option/lib/systemd/system-sleep/guru-client-suspend.sh
+# just know what to delete then disable option/lib/systemd/system-sleep/guru-client-suspend.sh
 suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh"
 # poll order is read from  environment list ${GURU_DAEMON_POLL_ORDER[@]} set in user.cfg
-GURU_CORSAIR_INDICATOR_KEY="f$(gr.poll corsair)"
 pipelist_file="$GURU_CFG/corsair-pipelist.cfg"
 
 # import colors f
@@ -266,10 +265,10 @@ corsair.keytable () {
     gr.msg -v0 -c white "lctrl func alt space altgr fn set rctrl           left   down  right        np0   decimal "
     gr.msg -v2 -c dark  "  96   97   98   99  100  101 102  103            104    105    106         107     108"
     gr.msg -v1
-    gr.msg -v2 "mouse indicator pipe file id's "
-    gr.msg -v2
-    gr.msg -v2 -c white "thumb  wheel logo mouse"
-    gr.msg -v2 -c dark  " 109    110   111   112"
+    # gr.msg -v2 "mouse indicator pipe file id's "
+    # gr.msg -v2
+    # gr.msg -v2 -c white "thumb  wheel logo mouse"
+    # gr.msg -v2 -c dark  " 109    110   111   112"
     gr.msg -v1
     gr.msg -v2 " use thee digits to indicate id in file name example: 'F12' pipe is '/tmp/ckbpipe012'"
     gr.msg -v3
@@ -390,12 +389,20 @@ corsair.check () {
             return 1
         fi
 
-    gr.msg -n -v2 "checking device is connected.. "
-    if lsusb | grep "Corsair" >/dev/null ; then
+    gr.msg -n -v2 "checking ${GURU_CORSAIR_KEYBOARD}.. "
+    if lsusb | grep "CORSAIR ${GURU_CORSAIR_KEYBOARD^^}" >/dev/null ; then
             gr.msg -v2 -c green "connected"
         else
             gr.msg -c dark_grey "disconnected"
             return 2
+        fi
+
+    gr.msg -n -v2 "checking ${GURU_CORSAIR_MOUSE}.. "
+    if lsusb | grep "CORSAIR ${GURU_CORSAIR_MOUSE^^}" >/dev/null ; then
+            gr.msg -v2 -c green "connected"
+        else
+            gr.msg -c dark_grey "disconnected"
+            # not show stopper
         fi
 
     gr.msg -n -v2 "checking ckb-next-daemon.. "
@@ -419,29 +426,43 @@ corsair.check () {
 
     if system.suspend flag ; then
             gr.msg -v2 -c yellow "computer suspended, ckb-next restart requested"
-            #gr.msg -v2 -c white "command: $GURU_CALL corsair start"
+            gr.msg -v3 -c white "command: $GURU_CALL corsair start -f"
             return 4
         fi
 
-    gr.msg -n -v2 "checking mode supports piping.. "
-    if [[ "${status_modes[@]}" =~ "$corsair_mode" ]] ; then
-            gr.msg -v2 -c green "ok"
-        else
-            gr.msg -c white "writing not available in '$corsair_mode' mode"
-            return 5
-        fi
-
     gr.msg -n -v2 "checking pipes.. "
-    ps x | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/tmp/result
-    amount=$(wc -l < /tmp/result)
-    if [[ $amount -gt 112 ]] ; then
-            gr.msg -v2 -c green "found $amount pipes, ok"
-            rm /tmp/result
-        else
-            gr.msg -c red "failed, only $amount pipes found"
-            corsair.help-profile
-            return 6
-        fi
+    # gr.msg -n -v2 "checking mode supports piping.. "
+    #if [[ "${status_modes[@]}" =~ "$corsair_mode" ]] ; then
+    corsair_mode=$(< $corsair_last_mode)
+
+    gr.debug "corsair mode: $corsair_mode"
+    gr.debug "status modes: ${status_modes[@]}"
+    case ${status_modes[@]} in
+
+        *"$corsair_mode"*)
+
+            # check pipes exists
+            ps x | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/tmp/result
+            amount=$(wc -l < /tmp/result)
+
+            if [[ $amount -gt 0 ]] ; then
+                    gr.msg -v2 -c green "found $amount pipe(s)"
+                    rm /tmp/result
+                else
+                    gr.msg -c red "no pipes found"
+                    corsair.help-profile
+                    return 6
+                fi
+            ;;
+
+        *)
+            gr.msg -c yellow "not available in '$corsair_mode' mode"
+            gr.msg -c white "select one of following modes to plumber: " -v3 -n
+            gr.msg -c list "${status_modes[@]}" -v3
+            return 0
+            ;;
+        esac
+
 
     # all fine
     return 0
@@ -458,7 +479,7 @@ corsair.init () {
             echo $_mode > $corsair_last_mode
         else
             local _error=$?
-            gr.msg -c yellow "corsair init failure"
+            gr.msg -c yellow "corsair initialize failure"
             return $_error
         fi
 
@@ -471,12 +492,11 @@ corsair.set () {
 
     #corsair.check is too slow to go trough here
     if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
-            # gr.msg -c dark_grey "corsair disabled"
+            gr.debug "corsair disabled"
             return 1
         fi
 
     local _key=$1
-    # corsairlize RGB code
     local _color='rgb_'"$2"
     local _bright="FF" ; [[ $3 ]] && _bright="$3"
 
@@ -490,7 +510,7 @@ corsair.set () {
             return 102
         fi
 
-    # add brightness code to color code
+    # corsairlize RGB code
     _color="$_color""$_bright"
 
     # write color code to button pipe file and let device to receive and process command (surprisingly slow)
@@ -596,12 +616,12 @@ corsair.indicate () {
         passed|pass)    _blink="slime $GURU_CORSAIR_MODE 1 300 green" ;;
         fail|failed)    _blink="red $GURU_CORSAIR_MODE 1 300 red" ;;
         done)           _blink="green slime 4 $GURU_DAEMON_INTERVAL green" ;;
-        doing)          _blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL aqua" ;;
-        working)        _blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL aqua" ;;
+        doing)          _blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL" ;;
+        working)        _blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL" ;;
         recovery)       _blink="blue black 5 $GURU_DAEMON_INTERVAL blue" ;;
         playing)        _blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
         active)         _blink="slime aqua 0.5 2" ;;
-        pause)          _blink="red $GURU_CORSAIR_MODE 1 3600";;
+        pause)          _blink="black $GURU_CORSAIR_MODE 1 3600";;
         error)          _blink="orange yellow 1 5 yellow" ;;
         message)        _blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
         call)           _blink="deep_pink black 0.75 30 deep_pink" ;;
@@ -626,7 +646,7 @@ corsair.blink_set () {
 # start to blink input: key_name base_color high_color delay_sec timeout_sec leave_color
 # leave color is color what shall be left on key shen stoppend or killed.
 
-    # all options are optional but position is criticalcause read from left to right default setting below:
+    # all options are optional but position is critical cause read from left to right default setting below:
     local key="esc"
     local base_c="red"
     local high_c="orange"
@@ -730,10 +750,11 @@ corsair.blink_kill () {
 
 corsair.blink_test () {
 # quick test that lights up esc and function keys
+    source flag.sh
 
     list=(working pause cancel error warning alert panic passed failed message call customer)
 
-    system.main flag set pause
+    flag.set pause
 
     gr.msg -c white -n "testing set, stop and kill with arguments.. "
     corsair.blink_set esc white black 0 3 red
@@ -764,9 +785,11 @@ corsair.blink_test () {
 
     gr.msg -c white -n "testing corsair.blink_kill.. "
     corsair.blink_kill 2>/dev/null
-    file /tmp/blink_pid | grep "empty" >/dev/null && gr.msg -c green "passed" || gr.msg -c red "failed $?"
+    file /tmp/blink_pid | grep "empty" >/dev/null \
+        && gr.msg -c green "passed" \
+        || gr.msg -c red "failed $?"
     #gr corsair end
-    system.main flag rm pause
+    flag.rm pause
     return 0
 }
 
@@ -884,7 +907,7 @@ corsair.systemd_start () {
         else
             corsair.check
             local _status="$?"
-            gr.msg -v3 -c deep_pink "corsair.check: $_status"
+            gr.debug "corsair.check: $_status"
         fi
 
     [[ $GURU_FORCE ]] && _status="7"
@@ -1186,10 +1209,10 @@ corsair.poll () {
 
     case $_cmd in
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $GURU_CORSAIR_INDICATOR_KEY
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started"
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $GURU_CORSAIR_INDICATOR_KEY
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended"
             ;;
         status )
             corsair.status $@
@@ -1206,12 +1229,11 @@ corsair.status () {
 
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
     if corsair.check ; then
-            gr.msg -v1 -c green "corsair on service" #-k $GURU_CORSAIR_INDICATOR_KEY
+            gr.msg -v1 -c green "corsair on service"
             return 0
         else
-            local status=$?
-            gr.msg -v1 -c red "corsair is not in service" #-k $GURU_CORSAIR_INDICATOR_KEY
-            return $status
+            gr.msg -v1 -c red "corsair is not in service"
+            return 100
         fi
 }
 
@@ -1219,7 +1241,7 @@ corsair.status () {
 corsair.install () {
 # install essentials, driver and application
 
-    if ! [[ $GURU_FORCE ]] && corsair.check ; then
+    if corsair.check && ! [[ $GURU_FORCE ]] ; then
             gr.msg -v1 "corsair seems to be working. use force flag '-f' to re-install"
             return 0
         fi

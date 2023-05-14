@@ -5,7 +5,8 @@ declare -xg daemon_service_script="$HOME/.config/systemd/user/guru.service"
 declare -xg daemon_pid_file="/tmp/guru.daemon-pid"
 declare -axg GURU_DAEMON_PID=
 
-source $GURU_BIN/system.sh
+# source $GURU_BIN/system.sh
+source $GURU_BIN/flag.sh
 
 daemon.main () {
 # daemon main command parser
@@ -121,9 +122,9 @@ daemon.start () {
             sleep 2
         fi
 
-    if system.suspend flag ; then
+    if flag.check suspend ; then
             [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
-            system.suspend rm_flag
+            flag.rm suspend
             corsair.systemd_restart
         fi
 
@@ -159,7 +160,7 @@ daemon.start () {
 daemon.stop () {
 # stop daemon
 
-    system.flag rm stop
+    flag.rm stop
     gr.msg -N -n -V1 -c white "stopping daemon.. "
     # if pid file is not exist
     if ! [[ -f "$daemon_pid_file" ]]; then
@@ -200,7 +201,7 @@ daemon.stop () {
 
     [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
 
-    system.flag rm running
+    flag.rm running
 
     if ! kill -15 "$_pid" ; then
         gr.msg -V1 -c yellow "error $?, retry" -k $GURU_DAEMON_INDICATOR_KEY
@@ -283,8 +284,8 @@ daemon.poll () {
     [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
     #[[ -f "/tmp/guru-stop.flag" ]] && rm -f "/tmp/guru-stop.flag"
     echo "$(sh -c 'echo "$PPID"')" > "$daemon_pid_file"
-    system.flag rm fast
-    system.flag rm stop
+    flag.rm fast
+    flag.rm stop
     GURU_FORCE=
     deamon_sum=$(sum $GURU_BIN/daemon.sh | cut -d" " -f1)
 
@@ -295,32 +296,32 @@ daemon.poll () {
     # DAEMON POLL LOOP
     while true ; do
         gr.msg -N -t -v3 -c aqua "daemon active" -k $GURU_DAEMON_INDICATOR_KEY
-        system.flag set running
+        flag.set running
 
 
         # check is system suspended and perform needed actions
-        if system.flag suspend ; then
+        if flag.check suspend ; then
                 # restart ckb-next application to reconnect led pipe files
                 gr.msg -N -t -v1 "daemon recovering from suspend.. "
                 [[ $GURU_CORSAIR_ENABLED ]] && corsair.suspend_recovery
-                system.flag rm suspend
+                flag.rm suspend
                 #gr.msg -c red -v4 "issue 20221120.1, daemon stalls here"
                 sleep 15
                 #gr.msg -c green -v4 "issue 20221120.1, it did continue"
             fi
 
         # if paused
-        if system.flag pause ; then
+        if flag.check pause ; then
                 gr.end $GURU_DAEMON_INDICATOR_KEY
                 gr.msg -N -t -v1 -c yellow "daemon paused "
                 gr.ind pause $GURU_DAEMON_INDICATOR_KEY
                 for (( i = 0; i < 150; i++ )); do
-                    system.flag pause || break
-                    system.flag stop && break
-                    system.flag suspend && break
+                    flag.check pause || break
+                    flag.check stop && break
+                    flag.check suspend && break
                     sleep 2
                 done
-                system.flag rm pause
+                flag.rm pause
                 sleep 1
                 gr.end $GURU_DAEMON_INDICATOR_KEY
                 gr.msg -v1 -t -c aqua "daemon continued" #-k $GURU_DAEMON_INDICATOR_KEY
@@ -329,7 +330,7 @@ daemon.poll () {
 
 
 
-        if system.flag stop ; then
+        if flag.check stop ; then
                 gr.end $GURU_DAEMON_INDICATOR_KEY
                 gr.msg -N -t -v1 "daemon got requested to stop "
                 gr.ind cancel $GURU_DAEMON_INDICATOR_KEY
@@ -352,7 +353,7 @@ daemon.poll () {
         # go trough poll list
         for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
                 module=${GURU_DAEMON_POLL_ORDER[i-1]}
-                system.flag pause && break
+                flag.check pause && break
                 case $module in
                     null|empty|na|NA|'-')
                         gr.msg -v3 -c dark_grey "$i:$module skipping "
@@ -376,10 +377,10 @@ daemon.poll () {
         gr.msg -n -v2 "sleep ${GURU_DAEMON_INTERVAL}s: "
 
         for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )) ; do
-                system.flag stop && break
-                system.flag suspend && continue
-                system.flag pause && continue
-                system.flag fast && continue || sleep 1
+                flag.check stop && break
+                flag.check suspend && continue
+                flag.check pause && continue
+                flag.check fast && continue || sleep 1
                 gr.msg -v2 -n -c reset "."
                 daemon.day_change
             done

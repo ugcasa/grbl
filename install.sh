@@ -23,23 +23,29 @@ if echo "$TERM" | grep "256" >/dev/null ; then
     fi
 
 
-# use new modules durin installation
+# use new modules during installation
 export GURU_BIN="core"
-#source core/common.sh
+
+# source core/common.sh
 source $GURU_BIN/config.sh
 source $GURU_BIN/keyboard.sh
 source $GURU_BIN/system.sh
+source $GURU_BIN/flag.sh
+
 # set target locations for uninstaller
 export GURU_CFG="$HOME/.config/guru"
 export GURU_BIN="$HOME/bin"
+
 # to where add gururc call
 bash_rc="$HOME/.bashrc"
 core_rc="$HOME/.gururc"    # TODO change name to '.gururc' when cleanup next time
 backup_rc="$HOME/.bashrc.backup-by-guru"
+
 # modules where user have direct access
-core_module_access=(net counter install uninstall config mount unmount daemon keyboard prompt system user)
-# modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(say game youtube mqtt conda fingrid note android print project scan audio display vpn ssh stamp tag timer tor trans vol yle news program tmux tunnel corsair backup convert telegram cal place)
+# modify this when module is ready to publish.
+# argument -d will overwrite this list and install all present modules
+core_module_access=(net counter install uninstall config mount unmount daemon keyboard prompt system user flag)
+modules_to_install=(radio say game youtube mqtt conda fingrid note android print project scan audio display vpn ssh stamp tag timer tor trans vol yle news program tmux tunnel corsair backup convert telegram cal place)
 
 # TBD
 # client_modules=
@@ -127,10 +133,10 @@ install.main () {
     gr.msg -v1 -c light_blue "copied ${#installed_files[@]} files"
     gr.msg -v2 -c dark_grey "${installed_files[@]}"
 
-    if system.flag running ; then
-            system.flag rm pause
-            sleep 1
-        fi
+    if flag.main running ; then
+        flag.rm pause
+        sleep 1
+    fi
     # pass
     return 0
 }
@@ -155,14 +161,14 @@ check.server () {
     local _server_files=($(ls modules/server/*))
 
     for _file in "${_server_files[@]//'modules/'/$TARGET_BIN}" ; do
-            gr.msg -n -v2 -c grey  "$_file.. "
-            if [[ $_file ]]; then
-                    gr.msg -v2 -c green "ok"
-                else
-                    gr.msg -c yellow "warning: server file $_file missing"
-                    # continue anuweay
-            fi
-        done
+        gr.msg -n -v2 -c grey  "$_file.. "
+        if [[ $_file ]]; then
+                gr.msg -v2 -c green "ok"
+            else
+                gr.msg -c yellow "warning: server file $_file missing"
+                # continue anuweay
+        fi
+    done
     # pass
     return 0
 }
@@ -508,6 +514,11 @@ install.modules () {
                             gr.msg -c yellow "module $_module folder copying error"
                         fi
                 done
+
+                # create adapter if not included
+                if ! [[ -f $TARGET_BIN/$_module.sh ]] ; then
+                        ln -s $TARGET_BIN/$_module/$_module.sh $TARGET_BIN/$_module.sh
+                     fi
             fi
         done
     # pass

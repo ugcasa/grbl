@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-cli project tools 2020 - 2022 casa@ujo.guru
+# guru-cli project tools 2020 casa@ujo.guru
 
 declare -gA project
 source "$GURU_CFG/project.cfg"
@@ -69,27 +69,30 @@ project.help () {
 
 
 project.configure () {
-    # set global project variables
+# set global project variables
+# TBD move this to project.rc
 
     declare -g project_base="$GURU_SYSTEM_MOUNT/project"
     declare -g project_arhive="$GURU_SYSTEM_MOUNT/project/arhive"
-    #declare -g {project[indicator_key]}="f10"
     declare -g project_mount="$GURU_MOUNT_PROJECTS"
 
     if [[ $1 ]] ; then
+        # configure project given by user
         project_name=$1
 
     elif [[ -f $project_base/active ]] ; then
+        # configure current project
         project_name=$(cat $project_base/active)
 
     elif [[ -f $project_base/last ]] ; then
+        # configure project that was open last time
         project_name=$(cat $project_base/last)
 
     else
+        # no project found
         gr.msg -c yellow "project name '$project_name' does not exist"
-        return 100
+        return 2
     fi
-
 
     declare -g project_folder="$project_base/projects/$project_name"
     declare -g project_cfg="$project_folder/config.sh"
@@ -106,11 +109,13 @@ project.configure () {
             return 3
         fi
 
+    # run project macro written by user
     [[ -f $project_folder/config.sh ]] && source $project_folder/config.sh source $@
 
+    # TBD i think this is not in use anymore
     [[ $GURU_PROJECT_COLOR ]] && declare -g project_key_color=$GURU_PROJECT_COLOR || declare -g project_key_color="aqua"
 
-    # gr.msg -c deep_pink "$GURU_PROJECT_GIT:$GURU_PREFERRED_TERMINAL:$project_folder/config.sh"
+    gr.debug "$GURU_PROJECT_GIT:$GURU_PREFERRED_TERMINAL:$project_folder/config.sh"
 
 }
 
@@ -238,26 +243,36 @@ project.open () {
 
     # open editor
     [[ $GURU_PROJECT_EDITOR ]] && GURU_PREFERRED_EDITOR=$GURU_PROJECT_EDITOR
-    gr.msg -v3 "editor: $GURU_PREFERRED_EDITOR"
+    gr.debug "editor: $GURU_PREFERRED_EDITOR"
+
     case $GURU_PREFERRED_EDITOR in
 
-            sublime|subl|sub3|sub4)
-                    project.sublime $project_name
-                    ;;
+        sublime|subl|sub3|sub4)
+            project.sublime $project_name
+        ;;
 
-            code|vcode|v-code|visual-code|vs)
-                    gr.msg "project '$project_name' mount point '$project_git' "
-                    [[ $GURU_FORCE ]] \
-                        && code $project_git \
-                        || gr.msg -v2 "let user launch editor $project_git"
+        code|vcode|v-code|visual-code|vs)
+            gr.msg "project '$project_name' mount point '$project_git' "
+            [[ $GURU_FORCE ]] \
+                && code $project_git \
+                || gr.msg -v2 "let user launch editor $project_git"
 
-                    code $GURU_PROJECT_GIT
-                    ;;
+            code $GURU_PROJECT_GIT
+        ;;
 
-            vi|vim) gr.msg "TBD add support for vim project files" ;;
-            joe)    gr.msg "TBD add support for joe project files" ;;
-        esac
+        vi|vim)
+            gr.msg "no support for vim project files"  # TBD
+        ;;
 
+        joe)
+            gr.msg "no support for joe project files" # TBD
+        ;;
+        *)
+            gr.msg -c red "unknown editor '$GURU_PREFERRED_EDITOR' project files"
+
+    esac
+
+    # continue to open terminal shit # TBD why here?
     project.terminal $project_name
 
     return $?
@@ -273,37 +288,41 @@ project.terminal () {
 
     case $GURU_PREFERRED_TERMINAL in
 
-            tmux)   if gr.installed tmux ; then
-                            source tmux.sh
-                            tmux.attach $project_name
-                            return $?
-                        else
-                            /usr/bin/tmux attach -t $project_name
-                            return $?
-                        fi
-                    ;;
+                tmux)
+                    if gr.installed tmux ; then
+                        source tmux.sh
+                        tmux.attach $project_name
+                        return $?
+                    else
+                        /usr/bin/tmux attach -t $project_name
+                        return $?
+                    fi
+                ;;
 
-            nemo)   if [[ $DISPLAY ]] ; then
-                            nemo "$project_folder"
-                        fi
-                    ;;
+                nemo)
+                    if [[ $DISPLAY ]] ; then
+                        nemo "$project_folder"
+                    fi
+                ;;
 
-            gnome-terminal)
+                gnome-terminal)
 
                     if [[ $DISPLAY ]] ; then
 
-                            if [[ $GURU_PROJECT_GIT ]] ; then
-                                gnome-terminal --tab --title="project" \
-                                               --working-directory="$project_folder" \
-                                               --tab --title="git" \
-                                               --working-directory="$GURU_PROJECT_GIT"
-                            else
-                                gnome-terminal --working-directory="$project_folder"
-                            fi
+                        if [[ $GURU_PROJECT_GIT ]] ; then
+                            gnome-terminal --tab --title="project" \
+                                           --working-directory="$project_folder" \
+                                           --tab --title="git" \
+                                           --working-directory="$GURU_PROJECT_GIT"
+                        else
+                            gnome-terminal --working-directory="$project_folder"
                         fi
-                    ;;
-            *)      gr.msg "non supported terminal"
-                    ;;
+                    fi
+                ;;
+
+                *)
+                    gr.msg "non supported terminal"
+                ;;
         esac
 
     return $?
@@ -333,15 +352,15 @@ project.close () {
 
     # check that project is in projects list
     if ! project.exist $project_name ; then
-            gr.msg -c yellow "$project_name does not exist ${FUNCNAME[0]}"
-            return 3
-        fi
+        gr.msg -c yellow "$project_name does not exist ${FUNCNAME[0]}"
+        return 3
+    fi
 
     # check active project
     if [[ -f $project_base/active ]] ; then
-            mv -f $project_base/active $project_base/last
-            gr.msg -v1 -c reset "$active_project closed" -k ${project[indicator_key]}
-        fi
+        mv -f $project_base/active $project_base/last
+        gr.msg -v1 -c reset "$active_project closed" -k ${project[indicator_key]}
+    fi
 
     user_config="$project_base/projects/$project_name/config.sh post"
     [[ -f $user_config ]] && .$user_config post
@@ -375,12 +394,11 @@ project.ls () {
         | rev))
 
 
-    # is there projects
-
+    # exit if there is no projects
     if (( ${#_project_list[$@]} < 1 )) ; then
-            gr.msg -c dark_grey "no projects"
-            return 1
-        fi
+        gr.msg -c dark_grey "no projects"
+        return 1
+    fi
 
     gr.msg -v2 -c white "project count: ${#_project_list[@]}"
 
@@ -391,11 +409,11 @@ project.ls () {
     # list of projects
     for _project in ${_project_list[@]} ; do
         if [[ "$_project" == "$_active_project" ]] ; then
-                gr.msg -n -c aqua "$_project "
-            else
-                gr.msg -n -c dark_cyan "$_project "
-            fi
-        done
+            gr.msg -n -c aqua "$_project "
+        else
+            gr.msg -n -c dark_cyan "$_project "
+        fi
+    done
 
 #echo "$project_base/archived/:${archived_project_list[@]}"
     # list arvhived projects
@@ -407,9 +425,9 @@ project.ls () {
     #     | cut -d "/" -f1 \
     #     | rev))
 
-     for _project in ${archived_project_list[@]} ; do
-             gr.msg -n -c dark_grey "$_project "
-         done
+    for _project in ${archived_project_list[@]} ; do
+         gr.msg -n -c dark_grey "$_project "
+    done
 
     echo
 
