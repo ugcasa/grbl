@@ -1,8 +1,7 @@
 #!/bin/bash
-
 # This script copies module/template/template.sh and modifies 'module' and 'MODULE' to given module name.
-# Run in module/template folder
-# This file not meant to run after install and shall not include to installation
+# Run in module/template folder. This file will not be copied to bon during installed.
+
 set -e
 source common.sh
 
@@ -11,9 +10,15 @@ existing_modules=$(< $GURU_CFG/installed.modules)
 
 # input module name is not given as parameter
 if [[ -z $1 ]] ; then
-	gr.msg -n "new module name: "
+	gr.msg "Note that guru-cli modules are set to path therefore you should name module way that is not conflict in run environment."
+	gr.msg "Module name should not contain dots or spaces. Give only name, file extension is not needed."
+	gr.msg
+	gr.msg -n "module name: "
 	read module_name
 fi
+
+# remove file extension if given
+module_name=${module_name%.*}
 
 # check is it in module list
 case $existing_modules in

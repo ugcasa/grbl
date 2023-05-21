@@ -1,11 +1,15 @@
 #!/bin/bash
 # guru-client single file mudule template casa@ujo.guru 2022
-### instructions for using this template
+
+### Instructions to use template if created by make_single_module.sh
+### 1) skim and then remove lines with triple hashtags
+###
+### Instructions to use template manually
+###
 ### 1) copy shell-template.sh to ../<your_module_name>.sh remember to chmod +x
 ### 2) find all 'module' words in this file and replace with your module name
 ### 3) do the same to 'MODULE' by replacing with your module name written in UPCASE
 ### 4) rename "mudule" words to module
-### 4) rename swedish o  words to percent character
 ### 4) try it './module.sh help'
 ### 5) read lines with double hashtags
 ### 6) cleanup by removing all double hashtags
@@ -13,10 +17,13 @@
 ### 8) contribute by setting pull requests at github.com/ugcasa/guru-client =)
 ### 9) remove triple comments
 
-## include needed libraries
+
+# include other modules/libraries that are needed
+### guru-cli modules are set to path, name is enough therefore you should  name
+### module way that is not conflict in run environment
 # source nnnn.sh
 
-## first place to declare global variables
+# declare global variables for module
 declare -g module_temp_file="$GURU_TEMP/module.tmp"
 declare -g module_rc="/tmp/guru-cli_module.rc"
 declare -g module_data_folder=$GURU_SYSTEM_MOUNT/module
@@ -26,19 +33,27 @@ declare -g module_data_folder=$GURU_SYSTEM_MOUNT/module
 module.help () {
 # user help
     gr.msg -v1 "guru-cli module help " -c white
+### few clause description what module is doing
     gr.msg -v2
-    gr.msg -v2 "few clause description what module is doing"
+    gr.msg -v2 ""
     gr.msg -v2
+### explain how to use
     gr.msg -v0 "usage: " -c white
     gr.msg -v0 "          $GURU_CALL module command variables"
-    gr.msg -v0 "          $GURU_CALL module command variables"
+    gr.msg -v0 "          $GURU_CALL --option --optin_with_value <value>"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
+### add callable commands below
     gr.msg -v1 " ls         list something "
     gr.msg -v1 " install    install requirements "
     gr.msg -v1 " remove     remove installed requirements "
     gr.msg -v1 " help       printout this help "
     gr.msg -v2
+### module options are separated from core variables by double lines
+    gr.msg -v1 "options: " -c white
+    gr.msg -v1 " --option   option "
+    gr.msg -v1 " --value    option with value "
+### add few examples callable commands below
     gr.msg -v1 "example: " -c white
     gr.msg -v1 "          $GURU_CALL module <command>"
     gr.msg -v2
@@ -219,16 +234,27 @@ module.make_rc () {
     chmod +x $module_rc
 }
 
-# located here cause rc needs to see some of functions above
+# run these functions every time module is called
 module.rc
 
+# global variables that need values from module configuration
 # declare global that need configuration values from rc
 declare -g module_indicator_key="esc"
 [[ $GURU_MODULE_INDICATOR_KEY ]] && module_indicator_key=$GURU_MODULE_INDICATOR_KEY
 
-### if called module.sh file general guru configuration is sourced, then main module.main called
-
+# check is module.sh run alone, if sourced by core.sh this
+### general guru configuration is sourced, then main module.main called
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
+
+    # run without guru-cli installation
+    if [[ -z $GURU_RC ]] ; then
+        ### Add environmental variables below your module need to run without installation
+        export GURU_CALL="guru"
+        export GURU_RC="$HOME/.gururc"
+        export GURU_BIN="$HOME/bin"
+        export GURU_CFG="$HOME/.config/guru"
+        export GURU_TEMP="/tmp/guru"
+    fi
     source $GURU_RC
     module.main $@
     exit $?
