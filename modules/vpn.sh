@@ -3,19 +3,48 @@
 
 # load module configuration
 declare -g original_ip_file='/tmp/vpn-original-ip'
+declare -g tunneled_ip_file='/tmp/vpn-tunneled-ip'
 declare -A vpn
 
 if [[ -f $GURU_CFG/vpn.cfg ]] ; then
         source $GURU_CFG/vpn.cfg \
-        && gr.msg -v2 -c gray "sourcing $GURU_CFG/vpn.cfg" \
+        && gr.debug "sourcing $GURU_CFG/vpn.cfg" \
         || gr.msg -c yellow "failed to source $GURU_CFG/vpn.cfg"
     fi
 
 if [[ -f $GURU_CFG/$GURU_USER/vpn.cfg ]] ; then
         source $GURU_CFG/$GURU_USER/vpn.cfg \
-        && gr.msg -v2 -c grey "sourcing $GURU_CFG/$GURU_USER/vpn.cfg" \
+        && gr.debug "sourcing $GURU_CFG/$GURU_USER/vpn.cfg" \
         || gr.msg -c yellow "failed to source $GURU_CFG/$GURU_USER/vpn.cfg"
     fi
+
+
+vpn.help () {
+# general help
+
+    gr.msg -v1 "guru-cli vpn help " -h
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL vpn status|poll|close|install|uninstall|toggle|check|ip|help|kill|update "
+    gr.msg -v1 "          $GURU_CALL vpn open <city>|<country_code> "
+    gr.msg -v2
+    gr.msg -v1 "commands:" -c white
+    gr.msg -v1 "  status               vpn status "
+    gr.msg -v2 "  ls                   list of cities where vpn servers available"
+    gr.msg -v1 "  open <city|country>  vpn tunnel to default location"
+    gr.msg -v1 "  close                close vpn connection"
+    gr.msg -v1 "  kill                 force kill open vpn client"
+    gr.msg -v2 "  toggle               toggle vpn connection"
+    gr.msg -v2 "  check                return zero if vpn connection is active"
+    gr.msg -v2 "  ip                   display ip if vpn is active"
+    gr.msg -v1 "  install              install requirements "
+    gr.msg -v1 "  update               update server list "
+    gr.msg -v1 "  uninstall            remove installed requirements "
+    gr.msg -v2
+    gr.msg -v1 "example:" -c white
+    gr.msg -v1 "  $GURU_CALL vpn open new orleans     # open connection to Louisiana"
+    gr.msg -v1 "  $GURU_CALL vpn open -f              # kill previous session and open new to default location"
+    gr.msg -v2
+}
 
 
 vpn.main () {
@@ -25,37 +54,39 @@ vpn.main () {
     shift
 
     case $cmd in
-        status|poll|open|close|install|uninstall|toggle|check|ip|help)
+        status|poll|close|install|uninstall|toggle|check|ip|help|kill|update)
             vpn.$cmd "$@"
+            return $?
             ;;
+        open)
+            if [[ $1 ]] ; then
+                connect_to="$@"
+            else
+                [[ ${vpn[default]} ]] && connect_to=${vpn[default]}
+            fi
+            vpn.open $connect_to
+            return $?
+            ;;
+        "")
+            vpn.toggle
+            return $?
+            ;;
+        *)
+            gr.msg "unknown vpn command '$cmd' "
+            return 1
     esac
 }
 
 
-vpn.help () {
-# general help
-
-    gr.msg -v1 -c white "guru-client vpn help "
-    gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL vpn status|open|close|install|uninstall] "
-    gr.msg -v2
-    gr.msg -v1 -c white  "commands:"
-    gr.msg -v1 " status           vpn status "
-    gr.msg -v1 " ip               display ip if vpn is active"
-    gr.msg -v2 " check            return zero if vpn connection is active"
-    gr.msg -v1 " toggle           toggle vpn connection"
-    gr.msg -v1 " open             vpn tunnel to default location" -V2
-    gr.msg -v2 " open <country> <city> <protocol>"
-    gr.msg -v2 "                  vpn tunnel to given server"
-    gr.msg -v3 " ls               TBD list of available vpn out "
-    gr.msg -v1 " close            close vpn connection"
-    # gr.msg -v1 " kill             force kill open vpn client"
-    gr.msg -v1 " install          install requirements "
-    gr.msg -v1 " uninstall        remove installed requirements "
-    gr.msg -v2
-    gr.msg -v1 -c white  "example:"
-    gr.msg -v1 "    $GURU_CALL vpn open "
-    gr.msg -v2
+vpn.kill () {
+# kill vpn connection
+    while ps auxf | grep openvpn | grep -q -v grep ; do
+        sudo pkill openvpn \
+            && gr.msg -c green "connection killed" \
+            || gr.msg -c red "kill failed"
+        sleep 0.5
+    done
+    return 0
 }
 
 
@@ -78,9 +109,11 @@ vpn.ip () {
 vpn.check () {
 # check is vpn active
 
-    if ps auxf | grep openvpn | grep -v grep >/dev/null ; then
+    if ps auxf | grep openvpn | grep -q -v grep ; then
             return 0
         else
+            # TBD orignal ip is Original IP, not last ip
+            # curl -s https://ipinfo.io/ip >$original_ip_file
             return 1
         fi
 }
@@ -94,7 +127,7 @@ vpn.toggle () {
             vpn.close
         else
             gr.msg -v2 "session not found, opening.."
-            vpn.open
+            vpn.open ${vpn[default]}
         fi
 }
 
@@ -102,78 +135,78 @@ vpn.toggle () {
 vpn.status () {
 # printout status with timestamp
 
+    source net.sh
+    net.status || return 99
+
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
-    if [[ ${vpn[enabled]} ]] ; then
-            gr.msg -n -v2 -c green "ok "
-        else
-            gr.msg -c black "not found" -k ${vpn[indicator_key]}
-            return 0
-        fi
-
     if [[ -f /usr/sbin/openvpn ]] ; then
-            gr.msg -n -v2 -c green "installed "
-        else
-            gr.msg -c red "application not installed"
-            gr.msg -v2 -c white "try to '$GURU_CALL vpn install'"
-            return 100
-        fi
+        gr.msg -n -v1 -c green "installed, "
+    else
+        gr.msg -c red "application not installed"
+        gr.msg -v2 -c white "try to '$GURU_CALL vpn install'"
+        return 100
+    fi
 
-    gr.msg -n -v2 "server list: "
+    if [[ ${vpn[enabled]} ]] ; then
+        gr.msg -n -v1 -c green "enabled, "
+    else
+        gr.msg -c black "not found" -k ${vpn[indicator_key]}
+        return 0
+    fi
+
     if [[ -d /etc/openvpn/tcp ]] ; then
-            gr.msg -n -v2 -c green "ok "
-        else
-            gr.msg -c red "not found" -k ${vpn[indicator_key]}
-            return 101
-        fi
+        gr.msg -n -v2 -c green "server list, "
+    else
+        gr.msg -c red "server list not found" -k ${vpn[indicator_key]}
+        return 101
+    fi
 
-    gr.msg -n -v2 "credentials: "
+    #gr.msg -n -v1 "credentials: "
     if [[ -f /etc/openvpn/credentials ]] ; then
-            gr.msg -n -v2 -c green "ok "
-        else
-            gr.msg -c red "not found" -k ${vpn[indicator_key]}
-            return 102
-        fi
+        gr.msg -n -v1 -c green "and credentials ok, "
+    else
+        gr.msg -c red "credentials not found" -k ${vpn[indicator_key]}
+        return 102
+    fi
 
-    local ip_now="$(curl -s https://ipinfo.io/ip)"
+    # if there is tunneled ip file, connection may be active
+    [[ -f $tunneled_ip_file ]] && tunneled_ip=$(head -n1 $tunneled_ip_file)
+    if ! ping google.com -q -c1 -W 1 >/dev/null ; then
+        gr.msg -n -v1 "vpn session is "
+        gr.msg -c yellow "stalled "
+        gr.msg -v2 "..or damn too slow "
+        return 103
+    fi
 
-    gr.msg -n -v2 "ip: "
-    gr.msg -n -v2 -c green "$ip_now "
+    if [[ -f $tunneled_ip_file ]] ; then
+        local tunneled_ip="$(cat $tunneled_ip_file)"
+        gr.msg -n -v2 "open session found, "
+    fi
 
-    if [[ -f /tmp/guru.vpn.ip ]] ; then
-            local ip_last="$(cat /tmp/guru.vpn.ip)"
-            gr.msg -n -v3 -c dark_crey "$ip_last "
-        fi
+    local current_ip=$(curl -s https://ipinfo.io/ip)
+    local current_city=$(curl -s https://ipinfo.io/city)
+    local current_country=$(curl -s https://ipinfo.io/country)
 
-    gr.msg -n -v2 "currently: "
-    if [[ $ip_now == $ip_last ]] ; then
-            current_server=$(tail -n1 $original_ip_file)
-            gr.msg -c aqua "connected to $current_server" -k ${vpn[indicator_key]}
-            return 0
-        else
-            gr.msg -c green "available" -k ${vpn[indicator_key]}
-            return 0
-        fi
-}
-
-
-vpn.rm_original_file () {
-# remove ip file
-
-    if [[ $original_ip_file ]] && [[ -f $original_ip_file ]] ; then
-            rm -f if $original_ip_file && gr.msg -v2 "$original_ip_file deleted"
-        fi
+    if vpn.check && [[ $current_ip == $tunneled_ip ]] ; then
+        gr.msg -v1 "connected to "
+        gr.msg -c aqua "$current_ip, $current_city, $current_country " -k ${vpn[indicator_key]}
+        return 0
+    else
+        gr.msg -c green "not connected " -k ${vpn[indicator_key]}
+        return 1
+    fi
 }
 
 
 vpn.open () {
 # open vpn connection
 
-    local country=fi
-    local city=Helsinki
-    [[ ${vpn[default]} ]] && city="${vpn[default]}"
+    local user_input="${@,,}"
+    local connect_to_country=
+    local connect_to_city=
 
-    # check configurations done
+    # check software is installed and contains config folder
     if ! [[ -d /etc/openvpn/tcp ]] ; then
             gr.msg -c yellow "no open vpn configuration found" -k ${vpn[indicator_key]}
             gr.msg -v2 "run '$GURU_CALL vpn install' first"
@@ -182,88 +215,106 @@ vpn.open () {
 
     local ifs=$IFS
     IFS=$'\n'
-    local user_input=(${@,,})
-    local got=
     local file_list=($(ls /etc/openvpn/tcp))
+    local server_found_in_list=
 
-    if [[ $1 ]] ; then
+    if [[ $user_input ]] ; then
         for (( i = 0; i < ${#file_list[@]}; i++ )); do
-                # gr.msg "${file_list[$i],,}"
-                country="$(echo ${file_list[$i],,} | cut -f 2 -d '-' )"
-                city="$(echo ${file_list[$i],,} | cut -f 3 -d '-' )"
+            # gr.debug "${file_list[$i],,}"
+            connect_to_country="$(echo ${file_list[$i],,} | cut -f 2 -d '-' )"
+            connect_to_city="$(echo ${file_list[$i],,} | cut -f 3 -d '-' )"
 
-                if [[ $country == $user_input ]] || [[ $city == $user_input ]] ; then
-                        # gr.msg -c deep_pink "got '$city' at '$country'"
-                        got=true
-                        break
-                    fi
-            done
-        fi
+            if [[ "$connect_to_country" == "$user_input" ]] || [[ "$connect_to_city" == "$user_input" ]] ; then
+                    gr.debug "server_found_in_list '$connect_to_city' at '$connect_to_country'"
+                    server_found_in_list=true
+                    break
+                fi
+        done
+        gr.debug "connect_to_city: $connect_to_city"
+        gr.debug "connect_to_country: $connect_to_country"
 
-    # return separator settings
-    IFS=$ifs
+        # return separator settings
+        IFS=$ifs
+    fi
 
-    if ! [[ $got ]] ; then
-            gr.msg -c yellow "no server in '$user_input' "
-            gr.msg -c white "city list: "
-            local server_list=$(ls /etc/openvpn/tcp | cut  -f 3 -d '-')
-            gr.msg -c light_blue "$(sed -z 's/\n/, /g' <<<$server_list)"
-            return 101
-        fi
+    if [[ -z $server_found_in_list ]] ; then
+        gr.msg -c yellow "no server in '$user_input' "
+        local server_list=$(ls /etc/openvpn/tcp | cut  -f 3 -d '-' | sort)
+        gr.msg -c light_blue "$(sed -z 's/\n/, /g' <<<$server_list)"
+        return 102
+    fi
 
+    # check is user service provider credentials saved to openvpn configuration
     if [[ -f /etc/openvpn/credentials ]] ; then
-            [[ ${vpn[username]} ]] || vpn[username]="$(sudo head -n1 /etc/openvpn/credentials)"
-            [[ ${vpn[password]} ]] || vpn[password]="$(sudo tail -n1 /etc/openvpn/credentials)"
+        [[ ${vpn[username]} ]] || vpn[username]="$(sudo head -n1 /etc/openvpn/credentials)"
+        [[ ${vpn[password]} ]] || vpn[password]="$(sudo tail -n1 /etc/openvpn/credentials)"
         # else
         #     gr.msg -c yellow "no credentials found, make sure that you have vpn service provider"
         #     gr.msg -v2 "add username as first and password to second line to file '/etc/openvpn/credentials'"
         #     return 102
+    fi
+
+    # change words to upcase (yes there is bash 4.1+ native method)
+    connect_to_city=$(sed -e 's/^./\U&/g; s/ ./\U&/g' <<<$connect_to_city)
+
+    local original_ip=$(head -n1 $original_ip_file)
+    local tunneled_ip=
+
+    # if there is tunneled ip file, connection may be active
+    [[ -f $tunneled_ip_file ]] && tunneled_ip=$(head -n1 $tunneled_ip_file)
+    if ! ping google.com -q -c1 -W 1 >/dev/null ; then
+        gr.msg -n "killing stalled vpn session.. "
+        if ! vpn.kill ; then
+            return 103
         fi
+    fi
 
-    # us case
-    city=$(sed -e 's/^./\U&/g; s/ ./\U&/g' <<<$city)
+    [[ $GURU_FORCE ]] && vpn.kill
 
+    # get current connection details
     local current_ip=$(curl -s https://ipinfo.io/ip)
+    local current_city=$(curl -s https://ipinfo.io/city)
+    local current_country=$(curl -s https://ipinfo.io/country)
 
-    # check is original ip saved meaning that connection is already active
-    if [[ -f $original_ip_file ]] ; then
-            original_ip=$(head -n1 $original_ip_file)
-            current_server=$(tail -n1 $original_ip_file)
-            gr.msg -c aqua "already connected to $current_server"
-            gr.msg -v2 "close connection first to change server by '$GURU_CALL vpn close'"
-            return 12
-        else
-            echo $current_ip >$original_ip_file
-            echo $city, ${country^^} >>$original_ip_file
-        fi
+    gr.debug "original_ip: $original_ip, current_ip: $current_ip"
 
-    gr.msg "original ip is: $current_ip"
-    gr.msg "connecting to $city"
+    # check is vpn connection already open
+    if vpn.check && [[ "$original_ip" != "$current_ip" ]] ; then
+        gr.msg -v1 -n "already connected to "
+        gr.msg -c aqua "$current_ip, $current_city, $current_country " -k ${vpn[indicator_key]}
+        gr.msg -v2 "close connection first to change server by '$GURU_CALL vpn close' or 'kill"
+        return 0
+    fi
+
+    # place credentials to clipboard (yes, but guru trust local)
     gr.msg -c white -v2 "vpn username and password copied to clipboard, paste it to 'Enter Auth Username:' field"
     printf "%s\n%s\n" "${vpn[username]}" "${vpn[password]}" | xclip -i -selection clipboard
 
-    gr.debug "sudo openvpn -config /etc/openvpn/tcp/NCVPN-${country^^}-"$city"-TCP.ovpn --daemon"
+    if sudo openvpn --config /etc/openvpn/tcp/NCVPN-${connect_to_country^^}-"$connect_to_city"-TCP.ovpn --daemon ; then
 
-    if sudo openvpn \
-        --config /etc/openvpn/tcp/NCVPN-${country^^}-"$city"-TCP.ovpn \
-        --daemon
-        then
-            sleep 4
-            local new_ip="$(curl -s https://ipinfo.io/ip)"
+        for (( i = 0; i < 10; i++ )); do
+            current_ip="$(curl -s https://ipinfo.io/ip)"
+            gr.debug "original_ip: '$original_ip', current_ip: '$current_ip'"
+            [[ "$current_ip" == "$original_ip" ]] || break
+            sleep 1
+        done
 
-            if [[ "$current_ip" == "$new_ip" ]] ; then
-                    gr.msg -c red "connection failed" -k ${vpn[indicator_key]}
-                    gr.msg -v2 "ip is still $new_ip"
-                    return 100
-                fi
-            gr.msg -v2 "our external ip is now: " -n
-            gr.msg -v1 -c aqua_marine "$new_ip" -k ${vpn[indicator_key]}
-            echo "$new_ip" >/tmp/guru.vpn.ip
-        else
-            gr.msg -c yellow "error during vpn connection" -k ${vpn[indicator_key]}
-            vpn.rm_original_file
-            return 101
+        if [[ "$current_ip" == "$original_ip" ]] ; then
+            gr.msg -c red "connection failed" -k ${vpn[indicator_key]}
+            gr.msg -v2 "ip is still $new_ip, $current_city, $current_country"
+            return 103
         fi
+
+        local current_city=$(curl -s https://ipinfo.io/city)
+        local current_country=$(curl -s https://ipinfo.io/country)
+        gr.msg -n -v2 "connected to "
+        gr.msg -c aqua "$current_ip, $current_city, $current_country " -k ${vpn[indicator_key]}
+        echo "$current_ip" >$tunneled_ip_file
+    else
+        gr.msg -c yellow "error during vpn connection" -k ${vpn[indicator_key]}
+        # vpn.rm_original_file
+        return 104
+    fi
 
     return 0
 }
@@ -272,34 +323,38 @@ vpn.open () {
 vpn.close () {
 # close vpn connection (if exist)
 
-    local current_ip="$(curl -s https://ipinfo.io/ip)"
-    gr.msg -V2 -n "$current_ip "
+    local tunneled_ip=$(head -n1 $tunneled_ip_file)
+    local original_ip=$(head -n1 $original_ip_file)
+    # gr.msg -V2 -n "$tunneled_ip "
 
-    if ! ps auxf | grep openvpn | grep -v grep ; then
+    if ! ps auxf | grep openvpn | grep -q -v grep ; then
         gr.msg -v1 "no vpn client running"
         return 0
     fi
 
-    if sudo pkill openvpn ; then
+    if vpn.kill ; then
         gr.msg -c green -v2 "kill success" -k ${vpn[indicator_key]}
     else
         gr.msg -v1 -c red "kill failed" -k ${vpn[indicator_key]}
-        vpn.rm_original_file
         return 0
     fi
 
-    local new_ip="$(curl -s https://ipinfo.io/ip)"
+    sleep 2
 
-    if [[ "$current_ip" == "$new_ip" ]] ; then
-        gr.msg -c yellow "ip did not change" -k ${vpn[indicator_key]}
+    local current_ip="$(timeout 5 curl -s https://ipinfo.io/ip)"
+
+    if [[ "$current_ip" == "$original_ip" ]] ; then
+        gr.msg -c green "returned ip: $tunneled_ip "
+        rm $tunneled_ip_file
+        return 0
+    elif [[ "$current_ip" == "$tunneled_ip" ]] ; then
+        gr.msg -c red "failed, still $tunneled_ip" -k ${vpn[indicator_key]}
         return 100
     else
-        gr.msg -V2 "$current_ip "
+        gr.msg -c yellow "hmm.. weird ip but it changed: $tunneled_ip" -k ${vpn[indicator_key]}
+        return 1
     fi
 
-    vpn.rm_original_file
-
-    return 0
 }
 
 # vpn.close () {
@@ -359,13 +414,7 @@ vpn.install () {
     if [[ -d /etc/openvpn/tcp ]] ; then
             gr.msg "server list found"
         else
-            cd /tmp
-            wget https://vpn.ncapi.io/groupedServerList.zip
-            unzip groupedServerList.zip
-            [[ -d /etc/openvpn ]] || sudo mkdir -p /etc/openvpn
-            sudo mv tcp /etc/openvpn
-            sudo mv udp /etc/openvpn
-            rm -f groupedServerList.zip
+            vpn.update
         fi
 
     if [[ -f /etc/openvpn/credentials ]] ; then
@@ -379,6 +428,22 @@ vpn.install () {
             echo "${vpn[username]}" | sudo tee /etc/openvpn/credentials
             echo "${vpn[password]}" | sudo tee -a /etc/openvpn/credentials
         fi
+}
+
+
+vpn.update () {
+# update server list
+    [[ -d /tmp/vpn ]] && rm -r /tmp/vpn
+    mkdir -p /tmp/vpn
+    cd /tmp/vpn
+    wget https://vpn.ncapi.io/groupedServerList.zip
+    unzip groupedServerList.zip
+    [[ -d /etc/openvpn ]] || sudo mkdir -p /etc/openvpn
+    [[ -d /etc/openvpn/tcp ]] && sudo rm -r /etc/openvpn/tcp
+    [[ -d /etc/openvpn/udp ]] && sudo rm -r /etc/openvpn/udp
+    sudo mv tcp /etc/openvpn
+    sudo mv udp /etc/openvpn
+    rm -f groupedServerList.zip
 }
 
 
