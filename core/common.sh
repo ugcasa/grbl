@@ -131,10 +131,10 @@ gr.msg () {
 
     if [[ $_say ]] ; then
         #_color_code=
-        _message=$(echo ${_message[@]} | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' )
-        [[ $GURU_VERBOSE -gt 0 ]] && printf "%s\n" "$_message"
-        espeak -p $GURU_SPEAK_PITCH -s $GURU_SPEAK_SPEED -v $GURU_SPEAK_LANG "$_message"
-        return 0
+        local say_message=$(echo ${_message[@]} | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' )
+        #[[ $GURU_VERBOSE -gt 0 ]] && printf "%s\n" "$_message"
+        espeak "$say_message" #-p $GURU_SPEAK_PITCH -s $GURU_SPEAK_SPEED -v $GURU_SPEAK_LANG "$_message"
+        #return 0
     fi
 
     # -k) set corsair key is '-k <key>' used
@@ -316,15 +316,20 @@ gr.ask () {
     local _ano_answer='y'
     local _options=
     local _timeout=
+    local _read_it=
     local _message=
     local _box=
 
     # parse arguments
-    TEMP=`getopt --long -o "t:d:" "$@"`
+    TEMP=`getopt --long -o "st:d:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
             case "$1" in
+                -s )
+                    _read_it=true
+                    shift
+                    ;;
                 -t )
                     _timeout=$2
                     _options="-t $_timeout"
@@ -369,6 +374,8 @@ gr.ask () {
     esac
 
     # ask from user
+    [[ $_read_it ]] && espeak "$_message" #& >/dev/null
+
     read $_options -n 1 -p "$_message $_box" _answer
 
     if [[ GURU_CORSAIR_ENABLED ]] ; then
@@ -382,8 +389,10 @@ gr.ask () {
 
     # return for callers if statment
     case ${_answer^^} in Y)
+            [[ $_read_it ]] && espeak "yes" #& >/dev/null
             return 0
         esac
+    [[ $_read_it ]] && espeak "no" #& >/dev/null
     return 1
 }
 
