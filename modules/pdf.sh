@@ -72,3 +72,13 @@ pdf.to_png() {
 
     pdftoppm -png $pdf_file $output_file
 }
+
+
+# pdf.colors () {
+# # change text color of pdf for printing wihout of some color
+
+#     gs -o output.pdf     \
+#    -sDEVICE=pdfwrite \
+#    -c "{1 exch sub}{1 exch sub}{1 exch sub}{1 exch sub} setcolortransfer" \
+#    -f $1
+# }
