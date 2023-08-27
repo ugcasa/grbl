@@ -60,16 +60,20 @@ pipelist_file="$GURU_CFG/corsair-pipelist.cfg"
 # import colors f
 [[ -f "$GURU_CFG/rgb-color.cfg" ]] && source "$GURU_CFG/rgb-color.cfg"
 
-# for now only esc,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12, y, n and caps are piped in ckb_next 20220222
+# fullpipe profile all keys are piped
+# halfpipe profile only keys are available: esc,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12, y, n and caps
+# nopipe profile none of keys piped
 declare -ga corsair_keytable=(\
+
     esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12          print scroll pause      stop prev play next\
     half 1 2 3 4 5 6 7 8 9 0 plus query backscape       insert home pageup      numlc div mul sub\
     tab q w e r t y u i o p å tilde enter               del end pagedown        np7 np8 np9 add\
     caps a s d f g h j k l ö ä asterix                                          np4 np5 np6\
     shiftl less z x c v b n m comma perioid minus shiftr      up                np1 np2 np3 count\
     lctrl func alt space altgr fn set rctrl             left down right         np0 decimal\
-    thumb wheel logo mouse
+    brightness sleep\
     )
+    #thumb wheel logo mouse
 
 
 corsair.blink_all () {
@@ -247,6 +251,8 @@ corsair.keytable () {
     gr.msg -v1
     gr.msg -v1 "keyboard indicator pipe file id's"
     gr.msg -v1
+    gr.msg -v0 -c white "                                                  brtightness  sleep"
+    gr.msg -v2 -c dark  "                                                     109        110 "
     gr.msg -v0 -c white "esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12        print  scroll  pause      stop prev play next"
     gr.msg -v2 -c dark  " 0   1  2  3  4  5  6  7  8  9  10  11  12         13      14      15        16   17   18   19"
     gr.msg -v3
@@ -265,10 +271,10 @@ corsair.keytable () {
     gr.msg -v0 -c white "lctrl func alt space altgr fn set rctrl           left   down  right        np0   decimal "
     gr.msg -v2 -c dark  "  96   97   98   99  100  101 102  103            104    105    106         107     108"
     gr.msg -v1
-    # gr.msg -v2 "mouse indicator pipe file id's "
-    # gr.msg -v2
-    # gr.msg -v2 -c white "thumb  wheel logo mouse"
-    # gr.msg -v2 -c dark  " 109    110   111   112"
+    gr.msg -v2 "mouse indicator pipe file id's TBD Not implemented!"
+    gr.msg -v3
+    gr.msg -v3 -c white "thumb  wheel logo "
+    gr.msg -v3 -c dark  " 201    202   200 "
     gr.msg -v1
     gr.msg -v2 " use thee digits to indicate id in file name example: 'F12' pipe is '/tmp/ckbpipe012'"
     gr.msg -v3
