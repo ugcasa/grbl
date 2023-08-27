@@ -1,4 +1,4 @@
-0.6.9.29
+0.6.9.30
 'stonks proto'
 10 long arguments are delivered to module
 11 active module rc functions done for mount, audio and backup
@@ -23,3 +23,4 @@
 27 new flag system implemented, intend changes. a lot of non documented changes :|
 28 simple ai tools implemented
 29 project.sh review ended, bugs fixed, almost functional =P. vpn review still open. some other changes
+30 stonks module started
