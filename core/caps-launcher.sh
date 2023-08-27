@@ -15,11 +15,8 @@ all="$key1$key2$key3"
 clear
 case $all in
 
-    # for testing this function
-    kkk)    guru say 'yippee kai yay mother fuckerr' ;;
-
     # timer module controls
-    t)      guru say "timer start"
+    ts)     guru say "timer start"
             guru timer start
             ;;
     tt)     guru say "timer stop"
