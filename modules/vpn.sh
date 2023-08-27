@@ -112,8 +112,7 @@ vpn.check () {
     if ps auxf | grep openvpn | grep -q -v grep ; then
             return 0
         else
-            # TBD orignal ip is Original IP, not last ip
-            # curl -s https://ipinfo.io/ip >$original_ip_file
+            curl -s https://ipinfo.io/ip >$original_ip_file
             return 1
         fi
 }
@@ -156,7 +155,7 @@ vpn.status () {
     fi
 
     if [[ -d /etc/openvpn/tcp ]] ; then
-        gr.msg -n -v2 -c green "server list, "
+        gr.msg -n -v2 -c green "server list ok, "
     else
         gr.msg -c red "server list not found" -k ${vpn[indicator_key]}
         return 101
@@ -170,8 +169,6 @@ vpn.status () {
         return 102
     fi
 
-    # if there is tunneled ip file, connection may be active
-    [[ -f $tunneled_ip_file ]] && tunneled_ip=$(head -n1 $tunneled_ip_file)
     if ! ping google.com -q -c1 -W 1 >/dev/null ; then
         gr.msg -n -v1 "vpn session is "
         gr.msg -c yellow "stalled "
@@ -181,19 +178,23 @@ vpn.status () {
 
     if [[ -f $tunneled_ip_file ]] ; then
         local tunneled_ip="$(cat $tunneled_ip_file)"
-        gr.msg -n -v2 "open session found, "
+    fi
+
+    if [[ -f $original_ip_file ]] ; then
+        local original_ip="$(cat $original_ip_file)"
     fi
 
     local current_ip=$(curl -s https://ipinfo.io/ip)
     local current_city=$(curl -s https://ipinfo.io/city)
     local current_country=$(curl -s https://ipinfo.io/country)
 
-    if vpn.check && [[ $current_ip == $tunneled_ip ]] ; then
-        gr.msg -v1 "connected to "
+    if vpn.check && [[ $current_ip != $original_ip ]] ; then
+        gr.msg -n -v2 "connected to "
         gr.msg -c aqua "$current_ip, $current_city, $current_country " -k ${vpn[indicator_key]}
         return 0
     else
-        gr.msg -c green "not connected " -k ${vpn[indicator_key]}
+        gr.msg -n -v2 "native ip "
+        gr.msg -c green "$current_ip $current_city, $current_country " -k ${vpn[indicator_key]}
         return 1
     fi
 }
@@ -290,31 +291,28 @@ vpn.open () {
     gr.msg -c white -v2 "vpn username and password copied to clipboard, paste it to 'Enter Auth Username:' field"
     printf "%s\n%s\n" "${vpn[username]}" "${vpn[password]}" | xclip -i -selection clipboard
 
-    if sudo openvpn --config /etc/openvpn/tcp/NCVPN-${connect_to_country^^}-"$connect_to_city"-TCP.ovpn --daemon ; then
+    sudo openvpn --config /etc/openvpn/tcp/NCVPN-${connect_to_country^^}-"$connect_to_city"-TCP.ovpn --daemon
 
-        for (( i = 0; i < 10; i++ )); do
-            current_ip="$(curl -s https://ipinfo.io/ip)"
-            gr.debug "original_ip: '$original_ip', current_ip: '$current_ip'"
-            [[ "$current_ip" == "$original_ip" ]] || break
-            sleep 1
-        done
+    for (( i = 0; i < 10; i++ )); do
+        current_ip="$(curl -s https://ipinfo.io/ip)"
+        gr.debug "original_ip: '$original_ip', current_ip: '$current_ip'"
+        [[ "$current_ip" == "$original_ip" ]] || break
+        sleep 1
+    done
 
-        if [[ "$current_ip" == "$original_ip" ]] ; then
-            gr.msg -c red "connection failed" -k ${vpn[indicator_key]}
-            gr.msg -v2 "ip is still $new_ip, $current_city, $current_country"
-            return 103
-        fi
+    if [[ "$current_ip" == "$original_ip" ]] ; then
+        gr.msg -c yellow "error during vpn connection " -k ${vpn[indicator_key]}
 
-        local current_city=$(curl -s https://ipinfo.io/city)
-        local current_country=$(curl -s https://ipinfo.io/country)
-        gr.msg -n -v2 "connected to "
-        gr.msg -c aqua "$current_ip, $current_city, $current_country " -k ${vpn[indicator_key]}
-        echo "$current_ip" >$tunneled_ip_file
-    else
-        gr.msg -c yellow "error during vpn connection" -k ${vpn[indicator_key]}
-        # vpn.rm_original_file
-        return 104
+        gr.msg -c red "connection failed" -k ${vpn[indicator_key]}
+        gr.msg -v2 "ip is still $current_ip, $current_city, $current_country"
+        return 103
     fi
+
+    local current_city=$(curl -s https://ipinfo.io/city)
+    local current_country=$(curl -s https://ipinfo.io/country)
+    gr.msg -n -v2 "connected to "
+    gr.msg -c aqua "$current_ip, $current_city, $current_country " -k ${vpn[indicator_key]}
+    echo "$current_ip" >$tunneled_ip_file
 
     return 0
 }
