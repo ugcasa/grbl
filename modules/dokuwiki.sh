@@ -4,6 +4,7 @@
 
 # needed modules
 source common.sh
+source $GURU_CFG/$USER/dokuwiki.cfg
 # global variables for module space
 declare -g dokuwiki_functions="tick" # just for testing
 # enable configuration
@@ -20,7 +21,7 @@ dokuwiki.main () {
     if [[ $1 ]] ; then _cmd=$1 ; shift ; fi
 
     case $_cmd in
-        install|upgrade|uninstall|help)
+        install|backup|uninstall|help)
             dokuwiki.$_cmd $@
             gr.msg "${FUNCNAME[0]}/dokuwiki_functions='$dokuwiki_functions'"
             return $?
@@ -33,6 +34,27 @@ dokuwiki.main () {
             dokuwiki.help $1
             ;;
     esac
+}
+
+
+dokuwiki.backup () {
+# make a backup of .. does not access all the dokuwiki files, all tactical dough
+    local _timestamp="$(date -d now +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_FILE_TIME)"
+    tar zcpfv "$dokuwiki_backup_location/dokuwiki-backup-$_timestamp.tar.gz" "$dokuwiki_wiki_mount_location"
+    return $?
+}
+
+
+dokuwiki.upgrade() {
+# upgrade dokuwiki in container
+    gr.msg "Better use dokuwiki upgrade plugin, works every time. "
+    return 100
+
+    cd /tmp
+    # no real root forlder mount inside container, needs changes to guru-svr
+    wget https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz
+    tar zxvf "dokuwiki-stable.tgz $dokuwiki_wiki_mount_location"
+
 }
 
 
