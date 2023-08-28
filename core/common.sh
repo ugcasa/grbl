@@ -20,6 +20,20 @@ gr.dump () {
 }
 
 
+gr.ts () {
+# returns current timestamp in different formats
+    local _timestamp
+    case $1 in
+        epoch|-e) _timestamp="$(date -d now +"%s")" ;;
+         file|-f) _timestamp="$(date -d now +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_FILE_TIME)" ;;
+        human|-h) _timestamp=$(date -d now +"$GURU_FORMAT_DATE $GURU_FORMAT_TIME") ;;
+         nice|-n) _timestamp=$(date -d now +"$GURU_FORMAT_NICE") ;;
+               *) _timestamp="$(date -d now +$GURU_FORMAT_TIMESTAMP)" ;;
+    esac
+    printf "$_timestamp"
+}
+
+
 gr.poll () {
     # set get polling order
 
