@@ -70,7 +70,8 @@ say.stdin () {
 
     espeak --stdin \
            -p ${say_cfg[pitch]} \
-           -s ${say_cfg[speed]}
+           -s ${say_cfg[speed]} \
+           -v ${say_cfg[lang]}
     return $?
 }
 
