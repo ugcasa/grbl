@@ -23,4 +23,4 @@
 27 new flag system implemented, intend changes. a lot of non documented changes :|
 28 simple ai tools implemented
 29 project.sh review ended, bugs fixed, almost functional =P. vpn review still open. some other changes
-30 stonks module for low level finance control, say module fixes
+30 stonks module for low level finance control, say module fixes, gr.ask starts to speak with option -s
