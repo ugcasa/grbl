@@ -276,6 +276,8 @@ mount.remote () {
             mkdir -p "$_target_folder"
         fi
 
+    echo $_target_folder | xclip -i -selection clipboard
+
     # check is target populated and append if is
     if ! [[ -z "$(ls -A $_target_folder)" ]] ; then
             # Check that target directory is empty
