@@ -7,7 +7,7 @@
 #  all photos -> jpg
 
 #source common.sh
-convert_indicator_key=esc
+convert_indicator_key=f7
 [[ $GURU_CONVERT_INDICATOR ]] && convert_indicator_key=$GURU_CONVERT_INDICATOR
 
 convert.main () {
@@ -644,8 +644,6 @@ convert.remove () {
 
 convert.status () {
     # check latest convert is reachable and returnable.
-
-    local convert_indicator_key="f$(gr.poll convert)"
 
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 

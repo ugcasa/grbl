@@ -46,7 +46,7 @@ youtube.main () {
 
     case ${module_command[@]:0:1} in
 
-        install|uninstall|upgrade|play|search|help)
+        install|uninstall|upgrade|play|search|help|status)
             youtube.${module_command[@]:0:1} ${module_command[@]:1}
             ;;
 
@@ -58,10 +58,6 @@ youtube.main () {
 
         song|music)
             youtube.get_audio ${module_command[@]:1}
-            ;;
-
-        status)
-            gr.msg -c dark_grey "no status data"
             ;;
 
         list)
@@ -76,6 +72,18 @@ youtube.main () {
     return 0
 }
 
+
+youtube.status () {
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
+    if [[ -f /usr/local/bin/yt-dlp ]] || [[ -f /usr/bin/yt-dlp ]] ; then
+        gr.msg -c green "installed"
+        return 0
+    else
+        gr.msg -c dark_grey "not installed"
+        return 1
+    fi
+
+}
 
 youtube.arguments () {
 # module argument parser
@@ -537,7 +545,8 @@ youtube.uninstall(){
 # remove requirements
 
     # remove only youtube special requiderements, leave players etc.
-    rm -y /usr/bin/yt-dlp /usr/local/bin/yt-dlp
+    [[ -f /usr/bin/yt-dlp ]] && rm -y /usr/bin/yt-dlp
+    [[ -f /usr/local/bin/yt-dlp ]] && rm -y /usr/local/bin/yt-dlp
     sudo apt-get remove yt-dlp -y
     pip3 uninstall youtube-search
     gr.msg -c green "uninstalled"

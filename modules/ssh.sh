@@ -43,8 +43,9 @@ ssh.key () {
 
 
 ssh.status () {
-    gr.msg -v1 "current keys"
-    gr.msg -v1 -c light_blue "$(ls $HOME/.ssh/ | grep _id_rsa| grep -v pub)"
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
+    gr.msg -v2 "current keys:"
+    gr.msg -v1 -c light_blue "$(ls $HOME/.ssh/ | grep _id_rsa | grep -v pub)"
 }
 
 

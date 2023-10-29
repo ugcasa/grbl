@@ -4,7 +4,7 @@
 declare -xg daemon_service_script="$HOME/.config/systemd/user/guru.service"
 declare -xg daemon_pid_file="/tmp/guru.daemon-pid"
 declare -axg GURU_DAEMON_PID=
-declare -xg daemon_arguments
+declare -xg daemon_arguments=
 
 # source $GURU_BIN/system.sh
 source $GURU_BIN/flag.sh
@@ -12,8 +12,8 @@ source $GURU_BIN/flag.sh
 daemon.main () {
 # daemon main command parser
 
-    daemon.process_opts
-
+    daemon.process_opts $@
+    gr.debug "$FUNCNAME: $daemon_arguments"
     case ${daemon_arguments[0]} in
             start|stop|status|help|kill|poll)
                 daemon.${daemon_arguments[0]}
@@ -414,6 +414,7 @@ daemon.process_opts () {
     done;
     _arg="$@"
     [[ "$_arg" != "--" ]] && export daemon_arguments="${_arg#* }"
+    gr.debug "$FUNCNAME: $daemon_arguments"
 }
 
 

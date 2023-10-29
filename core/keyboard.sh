@@ -26,6 +26,7 @@ keyboard.main() {
 
 
 keyboard.status () {
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
     gr.msg "nothing to report"
     return 0
 }

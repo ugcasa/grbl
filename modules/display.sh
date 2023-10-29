@@ -40,7 +40,7 @@ display.main () {
     shift
 
     case $cmd in
-        reset|set|ls|help|card)
+        reset|set|ls|help|card|status)
             display.$cmd $@
             return $?
         ;;
@@ -147,6 +147,12 @@ display.check () {
     done
 
     monitors=$i
+}
+
+
+display.status () {
+    gr.msg -t -n "${FUNCNAME[0]}: "
+    display.check $@ && gr.msg -c green "least one display connected" || gr.msg -c dark_grey "no displays detected"
 }
 
 

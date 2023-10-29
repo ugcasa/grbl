@@ -37,7 +37,7 @@ radio.main() {
 
     case $key1 in
 
-        ls|listen|help)
+        ls|listen|help|status)
                 shift
                 radio.$key1 $@
                 ;;
@@ -267,6 +267,10 @@ radio.listen () {
         gr.end $GURU_AUDIO_INDICATOR_KEY
 
     return 0
+}
+
+radio.status() {
+    audio.status
 }
 
 

@@ -25,7 +25,7 @@ stamp.main () {    # main command parser
                 stamp="![]($file){ width=500px }"
                 ;;
 
-            status)  echo "no status data" ; return 0 ;;
+            status)  gr.msg -v1 -t "${FUNCNAME[0]}: no status information" ; return 0 ;;
             help|*) stamp.help ; return 0 ;;
         esac
 

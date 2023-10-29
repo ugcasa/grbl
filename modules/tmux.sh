@@ -11,7 +11,7 @@
 
 source $GURU_BIN/common.sh
 tmux_indicator_key="f$(gr.poll tmux)"
-GURU_VERBOSE=1
+
 
 tmux.help () {
     # general help
@@ -149,7 +149,7 @@ tmux.config_undo () {
             mv -f "$config_file.tmp" "$config_file.old"
             gr.msg -v1 -c white "previous configure returned"
         else
-            gr.msg -v1 -c dark_golden_rod "nothing changed"
+            gr.msg -v1 -c error "nothing changed"
         fi
 }
 

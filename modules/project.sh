@@ -690,7 +690,6 @@ project.status () {
         gr.msg -v1 -n -c green "mounted "  -k $GURU_PROJECT_INDICATOR
     else
         gr.msg -v1 -c yellow "not mounted" -k $GURU_PROJECT_INDICATOR
-        return 3
     fi
 
     # print
@@ -698,7 +697,7 @@ project.status () {
 
     if [[ -f $module_data_folder/active ]]; then
         local active=$(cat $module_data_folder/active)
-        gr.msg -v4 -n -c ${project[color]} -k $GURU_PROJECT_INDICATOR
+        gr.msg -v4 -n -c aqua_marine -k $GURU_PROJECT_INDICATOR
     else
         gr.msg -v3 -c reset "no active projects " -k $GURU_PROJECT_INDICATOR
     fi

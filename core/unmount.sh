@@ -3,6 +3,7 @@
 
 source common.sh
 
+# TBD fix this
 temp_rc="/tmp/mount.rc"
 source config.sh
 config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $temp_rc
@@ -28,7 +29,6 @@ _default_list=($(\
 
 rm $temp_rc
 
-
 unmount.main () {
 # mount command parser
 
@@ -43,7 +43,7 @@ unmount.main () {
             unmount.all
             ;;
 
-        ls|defaults|status|help|system)
+        ls|defaults|status|help|system|status)
             unmount.$argument $@
             return $?
             ;;
@@ -78,6 +78,41 @@ unmount.main () {
                 source mount.sh
                 mount.status >/dev/null
     esac
+}
+
+
+unmount.status () {
+# daemon status function
+
+    # printout header for status output
+    gr.msg -t -v1 -n "${FUNCNAME[0]}: "
+    local _target
+    local _private=
+
+    # check is enabled
+    if [[ $GURU_MOUNT_ENABLED ]] ; then
+            gr.msg -v1 -n -c green "enabled " -k $GURU_MOUNT_INDICATOR_KEY
+        else
+            gr.msg -v1 -c black "disabled" -k $GURU_MOUNT_INDICATOR_KEY
+            return 100
+        fi
+
+    # go trough mount points
+    for _mount_point in ${all_list[@]} ; do
+            _target=$(eval echo '${GURU_MOUNT_'"${_mount_point^^}[0]}")
+            mount.check $_target &&
+                case $_target in \
+                    *'/.'*)  _private=true
+                            ;;
+                    esac
+        done
+
+    # serve enter
+    [[ $_private ]] \
+        && gr.msg -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY \
+        || gr.msg -c aqua -k $GURU_MOUNT_INDICATOR_KEY
+
+    return 0
 }
 
 

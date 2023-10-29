@@ -34,7 +34,7 @@ say.main () {
 
     case "$_command" in
 
-        file|string|stdin|help|test)
+        file|string|stdin|help|test|status)
             say.$_command "$_message"
             return $?
             ;;
@@ -109,6 +109,11 @@ say.test () {
         gr.msg -c fail "failed" -s
         return 1
     fi
+}
+
+say.status() {
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
+    say.string "status check" && gr.msg -c green "functional" || gr.msg -c dark_grey "non functional"
 }
 
 # located here cause rc needs to see some of functions above

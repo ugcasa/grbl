@@ -3,9 +3,9 @@
 # get files from android phone by connecting sshd running on phone
 # install this to android phone: https://play.google.com/store/apps/details?id=com.theolivetree.sshserver
 
-source $GURU_BIN/common.sh
-source $GURU_BIN/mount.sh
-source $GURU_BIN/tag.sh
+source mount.sh
+source tag.sh
+
 android_verb="-q"
 if ((GURU_VERBOSE>2)) ; then android_verb="-v" ; fi
     # TBD other way around
@@ -45,10 +45,11 @@ android.main () {
                      return $?
                      ;;
 
-                 *)  echo "unknown action $_cmd"
+                 *)  gr.msg -c error "unknown action $_cmd"
         esac
 
 }
+
 
 android.help () {
 
@@ -269,7 +270,7 @@ android.status () {
     if  android.ssh_active ; then
             gr.msg -c green "and online "
         else
-            gr.msg -c yellow "but server is offline"
+            gr.msg -c error "but server is offline"
             return 13
         fi
     return 0

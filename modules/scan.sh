@@ -6,7 +6,7 @@
 scan.main () {
     local _cmd=$1 ; shift
     case $_cmd in
-            check|receipt|invoice|install|remove|help)
+            check|receipt|invoice|install|remove|status|help)
                     scan.$_cmd $@                   ; return $? ;;
             *)      gr.msg "scan: unknown command"    ; return 1  ;;
         esac
@@ -146,6 +146,13 @@ scan.check () {
     return 0
 
 }
+
+
+scan.status () {
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
+    gr.msg -c dark_grey "no status information, try 'check' (sudo password needed)"
+}
+
 
 scan.remove () {
 

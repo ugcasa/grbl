@@ -52,7 +52,7 @@ cal.main () {
 
     case "$command" in
 
-        upgrade|uniballs|install)
+        upgrade|uniballs|install|status)
             cal.$command $@
             ;;
 
@@ -211,6 +211,12 @@ cal.print_month () {
     return 0
 }
 
+
+cal.status () {
+    gr.msg -t -n "${FUNCNAME[0]}: "
+    gr.msg -v1 -c dark_gray "no status information"
+    return 0
+}
 
 cal.setup_google () {
 # install requirements and guide trough google account, api and credential setup

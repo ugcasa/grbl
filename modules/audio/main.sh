@@ -3,6 +3,8 @@
 
 source corsair.sh
 source mount.sh
+source $GURU_BIN/audio/mpv.sh
+
 
 declare -g audio_rc="/tmp/guru-cli_audio.rc"
 declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
@@ -441,7 +443,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 # to avoid sourcing loops caused by sub module sourcing
     source $GURU_BIN/audio/tunnel.sh
     source $GURU_BIN/audio/radio.sh
-    source $GURU_BIN/audio/mpv.sh
 
     gr.debug "$(pwd) remember that module folder is not set to path and installed version of module is used"
     audio.main $@ # $(audio.parse_options $@)

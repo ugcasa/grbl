@@ -28,6 +28,7 @@ user.main () {
             echo "usage:    $GURU_CALL user [add|rm|change|help]"
             ;;
         status)
+            gr.msg -n -v1 -t "${FUNCNAME[0]}: "
             [[ "$GURU_USER" == "$GURU_USER_NAME" ]] \
                 && gr.msg -c green "username OK" \
                 || gr.msg -c red "username mismatch! $GURU_USER:$GURU_USER_NAME"

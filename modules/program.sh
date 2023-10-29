@@ -3,6 +3,7 @@
 # casa@ujo.guru 2020-2021
 
 source $GURU_BIN/common.sh
+program_indicator_key="f8"
 
 program.help () {
     gr.msg -v1 -c white "guru-client program help "
@@ -28,7 +29,7 @@ program.help () {
 
 program.main () {
     # command parser
-    program_indicator_key="f$(gr.poll program)"
+
     last_programmer_file="$GURU_SYSTEM_MOUNT/program/program.last"
     #gr.msg -c pink $last_programmer_file
 

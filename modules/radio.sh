@@ -1,7 +1,9 @@
 #!/bin/bash
 # guru-cli adpater
 module="audio"
-sub_module="${GURU_COMMAND[0]}.sh"
-target="$GURU_BIN/$module/$sub_module"
-gr.debug "${0##*/} adapting $sub_module to $target"
-source $target
+script="radio.sh"
+target="$GURU_BIN/$module/$script"
+
+gr.debug "${0##*/} adapting $script to $target"
+
+source "$target"

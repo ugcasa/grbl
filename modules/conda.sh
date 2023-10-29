@@ -26,12 +26,12 @@ conda.main () {     # anaconda main (do I really need this.. i doupt)
         help)
             echo "usage:    conda [project|update|install|run|help]"
             ;;
-        update|install|remove)
+        update|install|remove|status)
             conda.$_cmd
             return $?
             ;;
         *)
-            printf "uknown command"
+            gr.msg -c error "uknown command '$_cmd'"
         esac
 }
 
@@ -60,6 +60,19 @@ conda.install () {  # install anaconda
     source ~/.bashrc
     printf "conda install done, next run by typing: '%s conda launch'\n" "$GURU_CALL"
     return 0
+}
+
+
+conda.status () {
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: conda "
+
+    if [[ -d $HOME/anaconda3 ]] ; then
+        gr.msg -c green "installed"
+        return 0
+    else
+        gr.msg -c dark_grey "installation not found"
+        return 1
+    fi
 }
 
 

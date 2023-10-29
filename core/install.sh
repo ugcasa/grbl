@@ -19,10 +19,14 @@ install.main () {
     esac
 
     case "$argument" in
-        earth|help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams|fail2ban)
+        status|earth|help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams|fail2ban)
                     install.$argument "$@" ;;
         *)          gr.msg -v dark_grey "no installer for '$argument'"; install.help
     esac
+}
+
+install.status () {
+    gr.msg -t "${FUNCNAME[0]}: available "
 }
 
 

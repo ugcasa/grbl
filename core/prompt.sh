@@ -38,3 +38,12 @@ if [[ ${prompt[enabled]} ]] && [[ $GURU_FLAG_COLOR ]]; then
 else
 	export PS1='${debian_chroot:+($debian_chroot)}\u@\h#$GURU_PROJECT_NAME:\w$ '
 fi
+
+prompt.main () {
+	prompt.status
+}
+
+prompt.status () {
+	gr.msg -t -n "${FUNCNAME[0]}: "
+	gr.msg "nothing to report"
+}

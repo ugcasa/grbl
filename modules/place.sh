@@ -35,7 +35,7 @@ place.main () {
     local function="$1" ; shift
 
     case "$function" in
-            ls|help|poll|memes|photos|videos|media|project)
+            ls|help|poll|memes|photos|videos|media|project|status)
                 place.$function $@
                 return $?
                 ;;
@@ -44,6 +44,13 @@ place.main () {
                 return 0
                 ;;
         esac
+}
+
+
+place.status () {
+    gr.msg -t -n "${FUNCNAME[0]}: "
+    gr.msg -v1 -c dark_gray "no status information"
+    return 0
 }
 
 
@@ -260,15 +267,6 @@ place.ls () {
     return 0
 }
 
-
-place.status () {
-    # output place status
-
-    gr.msg -n -t -v1 "${FUNCNAME[0]}: nothing to report"
-
-    # other tests with output, return errors
-
-    }
 
 
 place.poll () {

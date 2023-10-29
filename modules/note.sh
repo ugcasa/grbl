@@ -102,7 +102,7 @@ note.rc () {
 
 note.config () {
 # populates global note variables based on given date in format YYYMMDD or literal date like "next month"
-    set -e
+
     local _input="${@}"
     local _year _month _day _datestamp
 

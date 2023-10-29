@@ -6,7 +6,13 @@ declare -g tag_file_name=
 
 tag.main () {
     # get arguments
-    if [[ "$1" == "help" ]] ; then tag.help ; return 0 ; fi
+
+    case "$1" in
+        help|status|install)
+           tag.$1
+           return 0
+           ;;
+    esac
 
     if [[ $2 ]]; then
         tag_action="$1" ; shift
@@ -218,7 +224,8 @@ tag.picture () {
 }
 
 tag.status () {
-    gr.msg -c gray "status unknown"
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
+    gr.msg -c gray "no status information"
     return 0
 }
 

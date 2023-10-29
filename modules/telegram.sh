@@ -12,7 +12,7 @@ telegram.main () {
 
     case "$command" in
 
-            enabled|connect|sub|msg|poll|install)
+            enabled|connect|sub|msg|poll|install|status)
                     telegram.$command "$@"
                     return $?
                     ;;
@@ -95,6 +95,19 @@ telegram.poll () {
         *)  telegram.help
             ;;
         esac
+}
+
+
+telegram.status () {
+    gr.msg -t -n "${FUNCNAME[0]}: "
+
+    telegram-cli --help >/dev/null
+
+    if [[ $? -lt 100 ]] ; then
+        gr.msg -c green "installed"
+    else
+        gr.msg -c dark_grey "not installed"
+    fi
 }
 
 

@@ -32,6 +32,12 @@ core.help () {
         gr.msg -v2 "system tools:" -c white
         gr.msg -v2 "  install         install tools "
         gr.msg -v2 "  uninstall       remove guru toolkit "
+        gr.msg -v1 "  list            list of stuff "
+        gr.msg -v1 "    core          core modules "
+        gr.msg -v1 "    modules       installed modules "
+        gr.msg -v1 "    available     all modules "
+        gr.msg -v1 "    commands      list of available commands "
+        gr.msg -v2 " all <command>    run command with all avalable modules"
         gr.msg -v2 "  upgrade         upgrade guru toolkit "
         # gr.msg -v3 "  status          status of stuff (TBD return this function) "
         # gr.msg -v3 "  shell           start guru shell (TBD return this function )"
@@ -76,8 +82,8 @@ core.help () {
 core.parser () {
 # parsing first word of user input, rest words are passed to next level parser
 
-    local _input="$1" ; shift
     gr.debug "$FUNCNAME $@"
+    local _input="$1" ; shift
 
     case "$_input" in
 
@@ -94,7 +100,7 @@ core.parser () {
             return $?
             ;;
 
-        debug|pause|help|version|online)
+        debug|pause|help|version|online|list)
         # core control functions
             core.$_input $@
             return $?
@@ -118,6 +124,36 @@ core.parser () {
             gr.msg "$GURU_CALL need more instructions"
             ;;
     esac
+}
+
+
+core.list () {
+# printout lists of stuff
+
+    local list=
+
+    case $1 in
+
+        core)
+            gr.msg -v2 -h "list of core modules:"
+            list=($(cat $GURU_CFG/installed.core ))
+            ;;
+        installed|modules)
+            gr.msg -v2 -h "list of installed modules:"
+            list=($(cat $GURU_CFG/installed.modules))
+            ;;
+        commands)
+            gr.msg -v2 -h "list of commands:"
+            list=(debug pause help version online list all)
+            list=(${list[@]} start poll kill stop)
+            ;;
+        available|*|"")
+            gr.msg -v2 -h "list of available modules:"
+            list=(${GURU_MODULES[@]})
+            ;;
+        esac
+
+        gr.msg -c list "${list[@]}"
 }
 
 
@@ -294,30 +330,30 @@ core.multi_module_function () {
 
     local function_to_run=$1 ; shift
 
-    for _module in ${GURU_MODULES[@]} ; do
-        gr.msg -c dark_golden_rod "$_module $function_to_run"
+    for (( mod_count = 0; mod_count < ${#GURU_MODULES[@]}; mod_count++ )); do
+    # for _module in ${GURU_MODULES[@]} ; do
+        _module=${GURU_MODULES[$mod_count]}
+
+        gr.msg -v2 -c olive "$mod_count: $_module $function_to_run"
 
         # fun shell script module functions
         if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
             source $GURU_BIN/$_module.sh
             $_module.main "$function_to_run" "$@"
-            return $?
         fi
 
         # run python module functions
         if [[ -f "$GURU_BIN/$_module.py" ]] ; then
             $_module.py "$function_to_run" "$@"
-            return $?
         fi
 
         # run binary module functions
         if [[ -f "$GURU_BIN/$_module" ]] ; then
             $_module "$function_to_run" "$@"
-            return $?
         fi
     done
 
-    gr.msg -v2 -c yellow "$FUNCNAME: something went wrong when tried to run "$function_to_run" in '$_module'"
+    # gr.msg -v2 -c error "$FUNCNAME: something went wrong when tried to run '$function_to_run' in '$_module'"
     return 13
 }
 

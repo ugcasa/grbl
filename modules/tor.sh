@@ -34,6 +34,7 @@ tor.check () {
 
 tor.status () {
     # return 0 if installed (what is same as true) with printout
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
     gr.msg -n "tor browser is "
     if tor.check ; then
         gr.msg -c green "installed"
