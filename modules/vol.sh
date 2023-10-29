@@ -71,6 +71,7 @@ volume_down() {
 get_volume() {
     volume=$(awk -F"[][]" '/%/ { print $2 }' <(amixer -D pulse sget Master|grep "Front Left"))
     volume=${volume//%}
+    echo $volume
 }
 
 
@@ -84,7 +85,7 @@ fadedown () {
     volume=$((volume/5))
     for (( i=0; i<=$volume; i++ )); do
         volume_down
-        sleep 0.02
+        sleep 0.05
     done
 }
 
@@ -96,7 +97,7 @@ fadeup () {
     volume=$((volume/5))
     for (( i=0; i<=$volume; i++ )); do
         volume_up
-        sleep 0.02
+        sleep 0.05
     done
     return 0
 }

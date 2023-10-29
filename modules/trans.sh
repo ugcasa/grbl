@@ -65,7 +65,7 @@ trans.get () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then    # stand alone vs. include. main wont be called if included
-        source "$GURU_RC"
+        # source "$GURU_RC"
         trans.main "$@"
         return $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
     fi

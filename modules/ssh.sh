@@ -371,7 +371,7 @@ ssh.add_key_other () {
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    # source "$GURU_RC"
     ssh.main "$@"
     exit "$?"
 fi

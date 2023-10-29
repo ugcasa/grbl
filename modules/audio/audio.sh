@@ -1,24 +1,14 @@
 #!/bin/bash
 # guru-cli audio module 2020 - 2023 casa@ujo.guru
 
-# todo:
-# - [x] move functionalities to own files and place them to ./audio folder
-# - [x] change this file to act as an adapter
-# - [x] audio tunneling, move to audio folder (most interesting)
-# - [x] fix playlist functions
-# - [ ] fix file search and play
-
-source $GURU_RC
 source corsair.sh
 source mount.sh
-source $GURU_BIN/audio/mpv.sh
-#source mpv.sh
 
 declare -g audio_rc="/tmp/guru-cli_audio.rc"
 declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
 declare -g audio_playlist_folder="$audio_data_folder/playlists"
 declare -g audio_temp_file="/tmp/guru-cli_audio.playlist"
-declare -g audio_playing_pid=$(ps x | grep mpv| grep -v grep | cut -f1 -d" ")
+declare -g audio_playing_pid=$(ps x | grep mpv | grep -v grep | cut -f1 -d" ")
 # more global variables downstairs (after sourcing rc file)
 
 audio.help () {
@@ -67,7 +57,6 @@ audio.help () {
 #     echo ${pass_forward[@]}
 # }
 
-
 audio.main () {
 # main command parser
     local _command=$1
@@ -80,14 +69,14 @@ audio.main () {
                 [[ $audio_playing_pid ]] && kill $audio_playing_pid
                 mpv $mpv_options --playlist=$audio_temp_file --save-position-on-quit
             else
-                gr.msg -c yellow "no saved position"
+                gr.msg -c error "no saved position"
                 return 0
             fi
             ;;
 
         tunnel)
-            source $GURU_BIN/audio/audiotunnel.sh
-            audiotunnel.main $@
+            source $GURU_BIN/audio/tunnel.sh
+            tunnel.main $@
             ;;
 
         radio|playlist)
@@ -111,7 +100,7 @@ audio.main () {
             ;;
 
         *)
-            gr.msg -c white "audio module: unknown command '$_command'"
+            gr.msg -c error "audio module: unknown command '$_command'"
             return 1
             ;;
     esac
@@ -186,7 +175,6 @@ audio.mute () {
     return $?
 }
 
-## status checks ----------------------------------------------------------------------------------
 
 audio.ls () {
 # list audio devices TBD rename audio.device_list()
@@ -258,8 +246,6 @@ audio.toggle () {
 }
 
 
-## special playing functions ----------------------------------------------------------------------------
-
 audio.find_and_play () {
 gr.msg "$FUNCNAME BROKEN, exiting.."
 return 128
@@ -319,12 +305,9 @@ return 128
             gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
         fi
 
-        gr.msg -c yellow "nothing found"
+        gr.msg -c error "nothing found"
         return 1
 }
-
-
-## install and remove stuff -----------------------------------------------------------------
 
 
 audio.update() {
@@ -349,8 +332,6 @@ audio.remove () {
     gr.msg "remove manually: 'sudo apt-get remove espeak mpv vlc'"
 }
 
-
-## module shit --------------------------------------------------------------------
 
 audio.status () {
 # printout module status
@@ -432,6 +413,7 @@ audio.rc () {
     source $audio_rc
 }
 
+
 audio.make_rc () {
 # configure audio module
 
@@ -451,16 +433,17 @@ audio.make_rc () {
 
 # located here cause rc needs to see some of functions above
 audio.rc
-
 # variables that needs values that audio.rc provides
 declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET"
 [[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source common.sh
-    gr.debug "$(pwd) remember that: module folder is not set to path and installed version of module is used"
-    source $GURU_BIN/audio/audiotunnel.sh
+# to avoid sourcing loops caused by sub module sourcing
+    source $GURU_BIN/audio/tunnel.sh
     source $GURU_BIN/audio/radio.sh
+    source $GURU_BIN/audio/mpv.sh
+
+    gr.debug "$(pwd) remember that module folder is not set to path and installed version of module is used"
     audio.main $@ # $(audio.parse_options $@)
     exit $?
 fi

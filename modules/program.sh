@@ -144,7 +144,7 @@ program.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    # source "$GURU_RC"
     #source common.sh
     program.main "$@"
     exit "$?"

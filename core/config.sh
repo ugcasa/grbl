@@ -23,11 +23,19 @@ config.main () {
 
 config.help () {
 # general help
+
+    case $1 in
+        format|cfg|files)
+            config.help_format
+            return 0
+    esac
+
     gr.msg -v1 "guru-client config help " -h
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help" -c white
+    gr.msg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help" -h
     gr.msg -v2
-    gr.msg -v1 "actions:"
+    gr.msg -v1 "actions:" -h
+    gr.msg -v2
     gr.msg -v1 " export        export configuration to environment"
     gr.msg -v1 " pull          poll user configuration from server "
     gr.msg -v1 " push          push user configuration to server "
@@ -36,10 +44,14 @@ config.help () {
     gr.msg -v1 " get           get single value from user config"
     gr.msg -v1 " set           set value to user config and current environment "
     gr.msg -v1 " help          try '$GURU_CALL help -v2' full help" -V2
+    gr.msg -v1 " help format   config file format information"
     gr.msg -v2
-    gr.msg -v1 "examples:" -c white
-    gr.msg -v1 "     '$GURU_CALL config user'                            get current host and user settings"
-    gr.msg -v1 "     '$GURU_CALL pull -h <host_name> -u <user_name>'     get user and host specific setting from server  "
+    gr.msg -v1 "examples:" -h
+    gr.msg -v2
+    gr.msg -v1 "set user settings:"
+    gr.msg -v1 "  '$GURU_CALL config user'"
+    gr.msg -v1 "get user and host specific settings from server:"
+    gr.msg -v1 "  '$GURU_CALL pull -h <host_name> -u <user_name>'"
     gr.msg -v2
 }
 
@@ -101,11 +113,12 @@ config.make_style_rc () {
     printf "\texport C_HEADER=%s\n" "'\033[1;37m'" >> $_target_rc
     # parse trough color strings
     color_name_list=$(set | grep rgb_ | grep -v grep | grep -v "   " )            # ; echo "$color_name_list"
-
+    color_list=()
     for color_srt in ${color_name_list[@]} ; do
             # color name
             color_name=$(echo $color_srt | cut -f1 -d "=") # ; echo "$color_srt"
             color_name=${color_name//"rgb_"/""} # ; echo "$color_name"
+            color_list+=("$color_name")
             # color value
             color_value=$(echo $color_srt | cut -f2 -d "=") # ; echo "$color_value"
             # slice hex code to 8 bit pieces
@@ -126,6 +139,8 @@ config.make_style_rc () {
             # make style rc
             printf "\texport C_%s='%s'\n" "${color_name^^}" "$color"  >> $_target_rc
         done
+    local srt_list=${color_list[@]}
+    printf "\texport GURU_COLOR_LIST=(%s)\n" "${srt_list}" >> $_target_rc
     printf 'fi\n\n' >> $_target_rc
     gr.msg -v1 -c green " done"
 }
@@ -379,8 +394,50 @@ config.set () {
     return 0
 }
 
+config.help_format() {
+    gr.msg -v1 "guru-client config file format information " -h
+    cat << EOL
+
+    Two different configuration file types are supported.
+
+    "Sourced" configs are declared in module script.
+    .cfg file is sourced to fulfill variables.
+
+    # sourced configs: add declaration to module script header
+    declare -A access
+
+    # and fill variables in cfg file
+    access[domain_name]=
+    access[domain_port]=
+
+    # sourced configs usage in script  (sorry for '')
+    echo '$'{access[domain_name]}
+
+    "Module" configs are translated to rc file in temp
+    that is updated in every run if config file is changed.
+
+    # module configs are xxx type config files
+    # config.make_rc will convert configs to rc
+    [ai]
+    enabled=true
+    indicator_key=f6
+
+    # usage in module script
+    # following variables are exported to environment during module start
+    echo '$'{GURU_AI_ENABLED}  # "true"
+    echo '$'{GURU_AI_INDICATOR_KEY}  # "f6"
+
+    Configuration file should contain configuration type
+    information in second column of first line.
+
+    Example '#!/bin/bash source' or '#!/bin/bash module'
+    (where '#!/bin/bash' is just for syntax higlighting in editors.)
+EOL
+}
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        source $GURU_RC
+        #source $GURU_RC
         config.main "$@"
     fi
+
+

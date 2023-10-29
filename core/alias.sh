@@ -9,6 +9,13 @@
 
 alias $GURU_SYSTEM_ALIAS="$GURU_CALL"
 alias tube="$GURU_CALL youtube"
+alias stopwatch="$GURU_CALL timer stopwatch"
+alias countdown="$GURU_CALL timer countdown"
+alias vartti="$GURU_CALL timer countdown 15 m"
+alias puolituntia="$GURU_CALL timer countdown 30 m"
+alias tunti="$GURU_CALL timer countdown 60 m"
+alias perseitä="$GURU_CALL project perse"
+
 ## place for simple functions used as aliases
 # freedom from 'guru' or 'gr.' prefixes
 

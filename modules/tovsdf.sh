@@ -280,7 +280,7 @@ tovsdf.debug () {
 [[ $GURU_DEBUG ]] && tovsdf.debug
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    [[ -f $GURU_RC ]] && source $GURU_RC
+    # [[ -f $GURU_RC ]] && source $GURU_RC
     tovsdf.main $@
     exit $?
 fi

@@ -1,16 +1,19 @@
 #!/bin/bash
-# guru-cli caps-launcher.sh is not an module, not a plugin, it may be a macro?
+# guru-cli caps-launcher
 
 source common.sh
+source corsair.sh
 source os.sh
-guru corsair set caps white
+
+# guru corsair set caps white
+corsair.indicate active caps
 
 read -n1 -t1 key1
 read -n1 -t1 key2
 read -n1 -t1 key3
 echo
 
-[[ $key1 == $key2 ]] && [[ $key2 == $key3 ]] && all_same=true
+#[[ $key1 == $key2 ]] && [[ $key2 == $key3 ]] && all_same=true
 all="$key1$key2$key3"
 clear
 case $all in
@@ -41,7 +44,7 @@ case $all in
     clo)    guru project close ;;
     # reserved for  module
     sto)    guru project stonks ;;
-      *)    guru say "no hit"
+      #*)    guru say "no hit"
 esac
 
 #guru say  "$key1 $key2 $key3"

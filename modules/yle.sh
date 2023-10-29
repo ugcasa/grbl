@@ -8,23 +8,30 @@ declare -g yle_media_title="no media"
 declare -g yle_episodes=()
 declare -g yle_media_address=
 declare -g yle_media_filename=
-
+declare -g yle_playlist_folder=$GURU_DATA/yle/playlists
 
 yle.help () {
 
     gr.msg -v1 "guru-cli yle help " -c white
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL yle get|play|radio|radio|news|episodes|sub|metadata|install|uninstall|help"
+    gr.msg -v0  "usage:    $GURU_CALL yle get|play|radio|playlist|news|episodes|sub|metadata|install|uninstall|help"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v2
     gr.msg -v1 "  get|dl <id|url>     download media to media folder "
     gr.msg -v1 "  play <id|url>       play episode from stream"
-    gr.msg -v1 "  radio <station>     listen radio <station>"
     gr.msg -v1 "  radio ls            list of known yle radio stations"
+    gr.msg -v1 "  radio <station>     listen radio <station>"
     gr.msg -v1 "  news                play latest yle tv news "
     gr.msg -v1 "  episodes <url>      get episodes of collection page"
     gr.msg -v1 "  sub <id|url>        get subtitles for video"
+    gr.msg -v1 "  playlist <name>     play playlist"
+    gr.msg -v2 "    list              list of playlists"
+    gr.msg -v2 "    add               add new playlist"
+    gr.msg -v2 "    edit              open playlist in $GURU_PREFERRED_EDITOR"
+    gr.msg -v2 "    mv                rename playlist"
+    gr.msg -v2 "    rm                remove playlist"
+    gr.msg -v2 "    <name> nro        play list item nro"
     gr.msg -v1 "  metadata            get media metadata"
     gr.msg -v1 "  install             install requirements"
     gr.msg -v1 "  uninstall           remove requirements "
@@ -32,9 +39,10 @@ yle.help () {
     gr.msg -v2
     gr.msg -v1 "examples: " -c white
     gr.msg -v2
-    gr.msg -v1 "  $GURU_CALL yle get 1-4454526    # download media id (or url)"
-    gr.msg -v1 "  $GURU_CALL yle play 1-2707315   # play media id (or url)"
-    gr.msg -v1 "  $GURU_CALL yle radio puhe       # to play yle puhe stream"
+    gr.msg -v1 "  $GURU_CALL yle get 1-4454526        # download media id (or url)"
+    gr.msg -v1 "  $GURU_CALL yle play 1-2707315       # play media id (or url)"
+    gr.msg -v1 "  $GURU_CALL yle playlist default 4   # play default playlist item 4"
+    gr.msg -v1 "  $GURU_CALL yle radio puhe           # to play yle puhe stream"
     gr.msg -v1 "  $GURU_CALL yle episodes https://areena.yle.fi/audio/1-1792200   "
     gr.msg -v2
 }
@@ -51,13 +59,17 @@ yle.main () {
             yle.radio_listen $@
             ;;
 
+        list|playlist)
+            yle.playlist $@
+            ;;
+
         install|uninstall|upgrade)
             yle.$command $@
             ;;
 
         play)
-            echo "$1" | grep "https://" && base_url="" || base_url="https://areena.yle.fi/"
-            gr.msg "getting from url $base_url$1"
+            # echo "$1" | grep "https://" && base_url="" || base_url="https://areena.yle.fi/" >/dev/null
+            # gr.msg "getting from url $base_url$1"
             yle-dl --pipe "$base_url$1" 2>/dev/null | mpv -
             return $?
             ;;
@@ -126,6 +138,7 @@ yle.main () {
         help)
             yle.help $@
             ;;
+
         *)
             for item in "$@"
                 do
@@ -137,6 +150,91 @@ yle.main () {
 
     return 0
 }
+
+
+yle.playlist () {
+# play playlists
+
+    local url=
+    local name="default"
+    local line=0
+    local lines=
+    local ans1= ; local ans2= ; local ans3=
+    if [[ $1 ]] ; then name=$1 ; shift ; fi
+
+    local playlist="$yle_playlist_folder/$name"
+
+    case $name in
+        list) ls ${playlist%/*} ; return 0 ;;
+        rm) rm "${playlist%/*}/$1" ; return 0  ;;
+        add|edit) $GURU_PREFERRED_EDITOR "${playlist%/*}/$1" ; return 0 ;;
+        mv|rename) mv ${playlist%/*}/$1 ${playlist%/*}/$2 ; return 0;;
+        show|view) cat ${playlist%/*}/$1 ; return 0;;
+    esac
+
+    [[ $1 ]] && line=$(($1 - 1 ))
+
+    # create folder and files
+    [[ -d ${playlist%/*} ]] || mkdir -p ${playlist%/*}
+    [[ $playlist ]] || touch $playlist
+
+    while true ; do
+
+        # check condition of playlist file
+        if ! [[ $(head -n1 $playlist) ]] ; then
+            $GURU_PREFERRED_EDITOR $playlist
+            gr.msg -c yellow "playlist file empty, please add link to https://areena.yle.fi content"
+            gr.ask "ready to continue" || break
+            line=0
+        fi
+
+        # check is file emty
+        [[ $(head -n1 $playlist) ]] || break
+
+        # add enpty line to playlist file
+        [[ -s "$playlist" && -z "$(tail -c 1 "$playlist")" ]] || echo >>$playlist
+
+        # clean up
+        sed -i '/^[ \t]*$/d' $playlist
+
+        # set variables
+        lines=$(wc -l $playlist | cut -d' ' -f1)
+        line=$(( line + 1 ))
+
+        # limits
+        [[ $line -gt $lines ]] && line=1
+        [[ $line -lt 1 ]] && line=$lines
+
+        # playing
+        gr.msg -h -v1 "playing playlist item $line/$lines"
+        gr.msg -c white -v2 "press 'qq' to quit, 'q' for next, 'qp' for previous, 'q + <number>' to play item or 'qe' to edit playlist"
+        item=$(sed "${line}q;d" $playlist)
+
+        if grep "https://areena.yle.fi" <<<$item ; then
+            yle.main play $item
+        else
+            gr.msg -v2 -c yellow "'$item' is not an yle.fi link, skipping"
+            continue
+        fi
+
+        # user control
+        read -n1 -t1 ans1
+        read -n1 -t1 ans2
+        read -n1 -t1 ans3
+        echo
+
+        case $ans1 in
+            q|Q) break ;;
+            e|E) $GURU_PREFERRED_EDITOR $playlist & ;;
+            p|P) line=$(( line - 2 )) ; [[ $ans2 == "p" ]] && line=$(( line - 1 )) ; continue ;;
+            [0-9]*) line="$ans1$ans2$ans3" ; line=$(( line - 1 )) ;;
+        esac
+
+    done
+
+    gr.msg -v2 "guru say bye bye"
+}
+
 
 # block_rev () {
 #     # trick to reverse array without reversing strings
@@ -442,7 +540,7 @@ yle.uninstall(){
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    # source "$GURU_RC"
     yle.main "$@"
 fi
 

@@ -355,7 +355,7 @@ unmount.known_remote () { # unmount single GURU_CLOUD_* defined in userrc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     # if sourced only import functions
-        source "$GURU_RC"
+        #source "$GURU_RC"
         unmount.main "$@"
         exit "$?"
     fi

@@ -239,7 +239,7 @@ game.bedrock_remove () {
 game.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $GURU_RC
+    # source $GURU_RC
     game.main "$@"
     exit "$?"
 fi

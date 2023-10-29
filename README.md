@@ -1,31 +1,41 @@
-# guru-client terminal environment
+# guru-client easy to use platform for ubuntu based os.
 
-An easy to use command wrap for daily usage for now disabled ex. admins.
 
-- admin/daily usage wrap on debian linux terminal
-- file sharing based on sshfs mounts - no any local data on shutdown computer
-- daemon module to keep thing up to date an schedule stuff
-- lan services can be used when tunneled to local computer
-- secure-ish, only way to communicate is ssh with known key
-- keep daily notes, convert them to to wiki, open office, pdf or html..
-- managing backups between hosts and servers
-- runs without gui, minimal system like raspberrypi or phones
-- system level keyboard shortcuts
-- server module contain instructions to set services based on docker/kubernates clusters
-- deep corsair keyboard indicator support
-- mount and backup remote filesystems
-- feature creep: read news, save video, convert formats etc
-- needs an server what can be set by guru-server script collection (will not to be public ever)
+guru-client contains:
 
+- simplify and rationalize terminal commands (core.sh)
+- module based structure, all modules should run alone, but may lean on guru-cli environmental variables
+- user level flag controlled daemon for timed operations to avoid need of root privileges (daemon.sh)
+- sshfs based file sharing in local network (mount.sh)
+- ssh based keys only access to local server (ssh.sh)
+- ssl tunnel management tools (tunnel.sh)
+- keeps critical personal keys, tokens and configurations available for future projects, locally and server
+- takes backup from files and configurations from server to local encrypted hd.
+- takes backups of containerd services  (backup.sh)
+- vpn account and client usage simplification (vpn.sh)
+- local message network clinet tools (mqtt.sh)
+- simple speaking capabilities (say.sh)
+- simple project, timing and invoicing tools (project.sh, timer.sh, counter.sh)
+- system upgrading, installing and removing tools (system.sh, os.sh)
+- many fun tools for Corsair keyboard and mice based on ckb-next driver (corsair.sh, corsair_raw.sh)
+- finance tools for budgeting and follow up (stonks.sh) prototype
+- few cloud api's (fingrid.sh, google.sh, stonks/op.sh)
+- audio, video and picture placing converting and tagging tools (place.sh, convert.sh, tag.sh)
+- youtube and yleisradio file download and stream viewing tools (youtube.sh yle.sh)
+- audio control and tunneling tools
+- web radio and fm radio listening tools with three key control (radio.sh )
+- tor tools (tor.sh)
+- microchip, st and at-mega chip programmer environment installer (program.sh)
+- messaging tool installer and terminal based integration (telegram.sh)
+- some simple ai tool integrations (ai.sh ailib.sh)
+- note taking, coding and idea cloud tools edi integration subl, vscode, obsidian (note.sh, configs)
+- some automatic template generating tools for new modules and semi automated test templates
+
+guru.server will be:
+
+- local server scripts guru-server (under development)
 
 ## disclaimer
-
-It was an cv project what comes to dev-op, linux and bash skills but it grown to be a part of my daily computing use cause of spine and brain damage I got by falling from balcony. So fuck the cv, no more work for me. ever.
-
-WARNING: Do not try to install this to anywhere! It will fuck up the base system and pee in to your morning serials! Installation is just for me and i see no point to even get it working for anybody else.
-Motto is "fuck the people, animals, computer, internetz and nature". Me not here to help you motherfuckers.
-
-You be warned: use at our own risk, me shall not be liable for any damage to you, or your comfucker that the use of these scripts may cause. I do reserve rights to log your kb data, capture private browsing history and send it to me.
 
 casa@ujo.guru 2018-2021
 
@@ -44,7 +54,7 @@ cd guru-client
 
 logout and login to run /etc/profiles to set path
 
-Pull current configureations for Hesus
+Pull current configurations for Hesus
 ```bash
 guru config pull
 ```
@@ -54,7 +64,7 @@ Setting can be changed with dialog by
 guru config user
 ```
 
-..Or with vim
+..Or with editor
 ```bash
 guru config edit
 ```
@@ -101,9 +111,6 @@ $HOME/bin/uninstall.sh
 - read news in text terminal, including picture: 'gr news'. (add/remove feeds edit .config/guru/<user>/rss-feed.list)
 
 
-
-
-
 ## getting account to ujo.guru server
 
 Cause of global cyber security state after year 2018.
@@ -111,6 +118,22 @@ Cause of global cyber security state after year 2018.
 Not available.
 Ever.
 
+## Examples - Basic functions
+
+### UI print function 'gr.msg' and read function 'gr.ask'
+
+gr.msg supports verbose leveling, text color, speak out, control line width, blink indication keys on keyboard, timestamps etc.
+gr.ask is simple yes no selector. it is ´read´ wrap with almost same properties than gr.msg.
+With both, message string cannot stat with a line '-'
+
+
+
+
+```bash
+gr.ask -s "did it explode?" && gr.msg "it did" -s || gr.msg -s "it didn't"
+```
+
+speaks out the question and answer, blinks 'y' key green and 'n' key red on corsair rgb gaming keyboard.
 
 
 

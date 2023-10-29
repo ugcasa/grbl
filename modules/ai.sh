@@ -275,7 +275,7 @@ export OPENAI_KEY=$GURU_CHATGPT_TOKEN
 ## if called ai.sh file general guru configuration is sourced, then main ai.main called
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
-    source $GURU_RC
+    #source $GURU_RC
     ai.main $@
     exit $?
 fi

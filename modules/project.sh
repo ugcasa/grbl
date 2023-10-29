@@ -11,7 +11,7 @@ project.main () {
     case "$_cmd" in
 
         # list of commands
-        exist|ls|info|\
+        run|exist|ls|info|\
         add|status|open|change|\
         close|toggle|rm|archive|\
         subl|poll|help|terminal|term|active|last)
@@ -132,7 +132,7 @@ project.configure () {
     fi
 
     # run project user script
-    [[ -f "$project_cfg" ]] && source "$project_cfg" #source $@
+    #[[ -f "$project_cfg" ]] && source "$project_cfg" #source $@
 
     # # export configs for other modules
     export GURU_PROJECT_NAME=$project_name
@@ -143,7 +143,7 @@ project.configure () {
     export GURU_PROJECT_GIT=$project_git
     [[ $project_color ]] && export GURU_PROJECT_COLOR=$project_color
 
-    [[ -f $project_script ]] && source $project_script
+    [[ -f $project_script ]] && source $project_script source
 }
 
 
@@ -181,34 +181,41 @@ project.info () {
     fi
 
     gr.msg -N -h "module variables"
-    gr.msg -c light_blue -w19 -n "module enabled "; gr.msg -c aqua_marine "$GURU_PROJECT_ENABLED"
-    gr.msg -c light_blue -w19 -n "module config:" ; gr.msg -c aqua_marine "$project_cfg"
-    gr.msg -c light_blue -w19 -n "module data:" ; gr.msg -c aqua_marine "$module_data_folder"
-    gr.msg -c light_blue -w19 -n "module git base "; gr.msg -c aqua_marine "$GURU_PROJECT_GIT_BASE"
-    gr.msg -c light_blue -w19 -n "mount base folder: " ; gr.msg -c aqua_marine "$GURU_MOUNT_PROJECTS"
-    gr.msg -c light_blue -w19 -n "project archive:" ; gr.msg -c aqua_marine "$project_archive"
-    gr.msg -c light_blue -w19 -n "indicator key:" ; gr.msg -c aqua_marine "$GURU_PROJECT_INDICATOR"
+
+    gr.kvt "enabled" "$GURU_PROJECT_ENABLED" \
+           "indicator_key" "$GURU_PROJECT_INDICATOR" \
+           "configs" "$project_cfg" \
+           "data_folder" "$module_data_folder" \
+           "git_base" "$GURU_PROJECT_GIT_BASE" \
+           "mount_base" "$GURU_MOUNT_PROJECTS" \
+           "project_archive" "$project_archive"
 
     # active project information
-    if [[ -f $GURU_PROJECT_CFG ]] ; then
+    if [[ -f $GURU_PROJECT_CFG ]]
+    then
         gr.msg -N -h "project '$active' variables"
-        gr.msg -c light_blue -w19 -n "name:" ; gr.msg -c aqua_marine "$GURU_PROJECT_NAME"
-        gr.msg -c light_blue -w19 -n "desription:" ; gr.msg -c aqua_marine "$GURU_PROJECT_DESCRIPTION"
-        gr.msg -c light_blue -w19 -n "project data:" ; gr.msg -c aqua_marine "$project_folder"
-        gr.msg -c light_blue -w19 -n "config script:" ; gr.msg -c aqua_marine "$GURU_PROJECT_SCRIPT"
-        gr.msg -c light_blue -w19 -n "project files:" ; gr.msg -c aqua_marine "$GURU_PROJECT_FOLDER"
-        gr.msg -c light_blue -w19 -n "git folder:" ; gr.msg -c aqua_marine "$GURU_PROJECT_GIT"
-        gr.msg -c light_blue -w19 -n "sublime project:" ; gr.msg -c aqua_marine "$sublime_project_file"
-        gr.msg -c light_blue -w19 -n "project color:" ; gr.msg -c $GURU_PROJECT_COLOR "$GURU_PROJECT_COLOR"
-        gr.msg -c light_blue -w19 -n "environment: " ; gr.msg -c aqua_marine "$GURU_PROJECT_ENV"
-        gr.msg -c light_blue -w19 -n "issues: " ; gr.msg -c aqua_marine "$GURU_PROJECT_ISSUES"
-        gr.msg -c light_blue -w19 -n "project manager " ; gr.msg -c aqua_marine "$GURU_PROJECT_TICKET"
-        gr.msg -c light_blue -w19 -n "documentation: " ; gr.msg -c aqua_marine "$GURU_PROJECT_WIKI"
-
+        gr.kvt "project_name" "$GURU_PROJECT_NAME" \
+               "desription" "$GURU_PROJECT_DESCRIPTION" \
+               "project_color" "$GURU_PROJECT_COLOR" \
+               "project_manager" "$GURU_PROJECT_TICKET" \
+               "documentation" "$GURU_PROJECT_WIKI" \
+               "project_data" "$project_folder" \
+               "config_script" "$GURU_PROJECT_SCRIPT" \
+               "project_files" "$GURU_PROJECT_FOLDER" \
+               "git_folder" "$GURU_PROJECT_GIT" \
+               "sublime_project" "$sublime_project_file" \
+               "environment" "$GURU_PROJECT_ENV" \
+               "issues" "$GURU_PROJECT_ISSUES"
     else
         gr.msg "no $active project data available"
     fi
 }
+
+ project.run () {
+# open project terminal and run given command in it
+    gnome-terminal -- "$@"
+    return $?
+ }
 
 
 project.sublime () {
@@ -288,7 +295,7 @@ project.open () {
         ;;
 
         code|vcode|v-code|visual-code|vs)
-            gr.msg "project '$project_name' mount point '$project_git' "
+            gr.msg "project '$project_name' code folder '$project_git' "
             [[ $GURU_FORCE ]] \
                 && code $project_git \
                 || gr.msg -v2 "let user launch editor $project_git"
@@ -770,7 +777,7 @@ project.make_rc () {
 
 
 # fulfill basic variables from guru-client core configs
-source "$GURU_RC"
+# source "$GURU_RC"
 
 # fulfill module variables based on configuration file $GURU_CFG/project.cfg with auto update
 project.rc

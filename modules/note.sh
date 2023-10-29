@@ -55,7 +55,7 @@ note.main () {
                 return $?
                 ;;
          "")
-                note.open $(date +"$GURU_FORMAT_FILE_DATE")
+                note.open $(gr.datestamp)
                 return $?
                 ;;
           *)
@@ -271,14 +271,14 @@ note.add () {
         printf "$note_file\n" >$note_file
 
         # tag
-        printf "tag: note $GURU_USER $(date -d now +$GURU_FORMAT_FILE_DATE)\n" >>$note_file
+
+        printf "tag: note $GURU_USER $(gr.datestamp)\n" >>$note_file
 
         # place template line 1 to third line
         [[ -f "$template" ]] && cat "$template" | head -n1 "$template" >>$note_file
 
         # add calendar blog
-        if [[ -f cal.sh ]] ; then
-                source cal.sh
+        if source cal.sh ; then
                 printf "\n"'```calendar'"\n" >>$note_file
                 cal.main notes >>$note_file # | grep -v $(date -d now +%Y)
                 printf '```'"\n" >>$note_file
@@ -366,7 +366,7 @@ note.rm () {
     note.online || note.remount
 
     note.config "$1"
-    [[ -f $note_file ]] || gr.msg -x 1 -c white "no note for date $(date -d $1 +$GURU_FORMAT_DATE)"
+    [[ -f $note_file ]] || gr.msg -x 1 -c white "no note for date $(gr.datestamp $1)"
 
     if gr.ask "remove $note_file" ; then
         rm -rf "$note_file" || gr.msg -c yellow "note remove failed"
@@ -492,7 +492,7 @@ note.status () {
 note.rc
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
-    source $GURU_RC
+    # source $GURU_RC
     note.main $@
     exit $?
 fi

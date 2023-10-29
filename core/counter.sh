@@ -89,7 +89,7 @@ counter.main () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    source common.sh
+    #source common.sh
     counter.main "$@"
 fi
 

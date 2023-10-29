@@ -19,7 +19,7 @@ install.main () {
     esac
 
     case "$argument" in
-        help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams|fail2ban)
+        earth|help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams|fail2ban)
                     install.$argument "$@" ;;
         *)          gr.msg -v dark_grey "no installer for '$argument'"; install.help
     esac
@@ -54,6 +54,19 @@ install.help () {
 
     gr.msg -v2
 }
+
+
+install.earth () {
+    clear
+    gr.msg -h "Installing Google Earth.. "
+
+    sudo apt install google-earth-pro-stable || return 12
+
+    gr.msg -c green "ok"
+
+    gr.ask "open it?" && google-earth-pro
+}
+
 
 install.minecraft () {
 

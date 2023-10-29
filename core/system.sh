@@ -580,7 +580,7 @@ system.check_fs_access_flag_enabled () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    source $GURU_RC # issue with bash? all other variables EXEPT lists are filled when sourced by previous script (the who calls this one)
+    #source $GURU_RC # issue with bash? all other variables EXEPT lists are filled when sourced by previous script (the who calls this one)
     system.main "$@"
     exit $?
 fi

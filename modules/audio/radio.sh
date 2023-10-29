@@ -1,7 +1,6 @@
 #!/bin/bash
 # guru-cli radio functionalities for guru-cli audio module 2023 casa@ujo.guru
 
-source common.sh
 source corsair.sh
 
 declare -g radio_number=
@@ -15,20 +14,21 @@ radio.help () {
     gr.msg -v1 "          $GURU_CALL radio url|listen|prev|next|list|ls|help"
     gr.msg -v2
     gr.msg -v1 "commands:" -c white
-    gr.msg -v1 " player                simple radio channel selector"
+    gr.msg -v2 " player                simple radio channel selector"
     gr.msg -v1 " url <url>             listen web stream"
     gr.msg -v1 " listen <station>      listen radio station"
     gr.msg -v1 " listen <number>       listen station list number"
     gr.msg -v1 " next (or n)           tune in next radio station"
     gr.msg -v1 " prev (or p)           tune in to previous station "
+    gr.msg -v1 " list                  numbered list of stations "
     gr.msg -v2 " ls                    list of stations"
-    gr.msg -v1 " list                  station list with player"
     gr.msg -v2
 }
 
 
 radio.main() {
 # simple radio player, number or station name
+    gr.debug "$FUNCNAME: $@"
     local key1=$1
     local key2=$2
     local radio_nr=
@@ -302,16 +302,18 @@ radio.make_rc () {
     source $radio_rc
 }
 
+#source ./audio.sh
 
 # located here cause rc needs to see some of functions above
 radio.rc
+source audio.sh
+
 # variables that needs values that radio.rc provides
 declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET"
 [[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # if sourced it probably done by audio.sh, otherwise source here
-    source ./audio.sh
     radio.main $@     # TBD radio.main $(radio.parse_options $@)
     exit $?
 fi

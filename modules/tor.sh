@@ -113,7 +113,7 @@ tor.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    # source "$GURU_RC"
     tor.main "$@"
     exit 0
 fi

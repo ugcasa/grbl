@@ -2,15 +2,22 @@
 # guru-cli OP bank csv importer (and later bank api client)
 # casa@ujo.guru 2023
 
+export GURU_OP_DATA=$GURU_DATA/stonks/op/
+
 op.main () {
 # main command parser
 
-    local _cmd="$1" ; shift
+    local _cmd="$1"
+    shift
 
     case "$_cmd" in
 
         import)
-            op.$_cmd "$@"
+            # TBD just for proto fix
+            source $HOME/guru/env/hr/bin/activate
+            python3 op-csv2str.py $@
+
+            #op.$_cmd "$@"
             return $?
         ;;
 

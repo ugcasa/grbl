@@ -852,7 +852,7 @@ backup.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # backup.debug
-    [[ -f ~/.gururc ]] && source ~/.gururc
+    # [[ -f ~/.gururc ]] && source ~/.gururc
     backup.main "$@"
     exit "$?"
 fi

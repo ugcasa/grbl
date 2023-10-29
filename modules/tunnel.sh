@@ -473,7 +473,7 @@ tunnel.requirements () {
 tunnel.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $GURU_RC
+    # source $GURU_RC
     tunnel.main "$@"
     exit 0
 fi

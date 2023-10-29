@@ -314,7 +314,7 @@ place.remove () {
 
 # if called place.sh file configuration is sourced and main place.main called
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    # source "$GURU_RC"
     place.main "$@"
     exit "$?"
 fi

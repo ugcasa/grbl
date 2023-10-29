@@ -1,4 +1,4 @@
-0.6.9.30
+0.6.9.33
 'stonks proto'
 10 long arguments are delivered to module
 11 active module rc functions done for mount, audio and backup
@@ -24,3 +24,6 @@
 28 simple ai tools implemented
 29 project.sh review ended, bugs fixed, almost functional =P. vpn review still open. some other changes
 30 stonks module for low level finance control, say module fixes, gr.ask starts to speak with option -s
+31 common.sh gr.help function added to server common tool user
+32 documentation and some ideas for speech recognition
+33 changes made without committing past month

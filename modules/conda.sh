@@ -114,7 +114,7 @@ conda.update () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then    # if sourced only import functions
         if [[ "$1" == "test" ]] ; then shift ; bash /test/test.sh conda $1 ; fi
-        source "$GURU_RC"
+        #source "$GURU_RC"
         conda.main "$@"
         exit "$?"
     fi

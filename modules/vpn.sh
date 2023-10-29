@@ -317,6 +317,18 @@ vpn.open () {
     return 0
 }
 
+vpn.allow-ssh () {
+
+    gr.debug "${FUNCNAME[0]}: $@ TBD"
+    # https://www.cyberciti.biz/faq/ufw-allow-incoming-ssh-connections-from-a-specific-ip-address-subnet-on-ubuntu-debian/
+    # export VPN_IP="139.1.2.3"  # VPN server/client address
+    # export SERVER_PUB_IP="198.74.55.33"  # server IPv4 address
+    # export SSH_PUB_PORT="22"   # server ssh port number
+    # sudo ufw allow from "$VPN_IP" to "$SERVER_PUB_IP" port "$SSH_PUB_PORT" proto tcp comment 'Only allow VPN IP to access SSH port'
+
+V
+}
+
 
 vpn.close () {
 # close vpn connection (if exist)
