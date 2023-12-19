@@ -178,7 +178,7 @@ net.check () {
     if timeout 3 ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
 
         gr.end $GURU_NET_INDICATOR_KEY
-        gr.msg -c green "online " -k $GURU_NET_INDICATOR_KEY
+        gr.msg -v1 -c green "online " -k $GURU_NET_INDICATOR_KEY
         return 0
     else
         gr.msg -c red "offline "

@@ -135,7 +135,7 @@ vpn.status () {
 # printout status with timestamp
 
     source net.sh
-    net.status || return 99
+    net.status >/dev/null || return 99
 
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
@@ -150,7 +150,7 @@ vpn.status () {
     if [[ ${vpn[enabled]} ]] ; then
         gr.msg -n -v1 -c green "enabled, "
     else
-        gr.msg -c black "not found" -k ${vpn[indicator_key]}
+        gr.msg -v1 -c black "disabled" -k ${vpn[indicator_key]}
         return 0
     fi
 

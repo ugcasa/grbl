@@ -446,7 +446,7 @@ timer.cook () {
     local minutes="$1"
     shift
     local message="$@"
-    [[ $1 ]] || message="bakery or cooking ready"
+    [[ $1 ]] || message="uuni valmis"
 
     local start="$(date '+%s')"
     local end="$(date -d "$minutes mins" '+%s')"
@@ -462,7 +462,7 @@ timer.cook () {
     source corsair.sh
 
     corsair.indicate call o
-    say.string "$message"
+    say.main "$message" --fin
     return 0
 }
 

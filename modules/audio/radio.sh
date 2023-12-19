@@ -306,17 +306,15 @@ radio.make_rc () {
     source $radio_rc
 }
 
-#source ./audio.sh
-
 # located here cause rc needs to see some of functions above
 radio.rc
-source audio.sh
 
 # variables that needs values that radio.rc provides
 declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET"
 [[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    source $GURU_BIN/audio/audio.sh
     # if sourced it probably done by audio.sh, otherwise source here
     radio.main $@     # TBD radio.main $(radio.parse_options $@)
     exit $?

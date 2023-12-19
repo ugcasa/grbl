@@ -5,20 +5,24 @@ source common.sh
 source corsair.sh
 source os.sh
 
-# guru corsair set caps white
 corsair.indicate active caps
 
-read -n1 -t1 key1
-read -n1 -t1 key2
-read -n1 -t1 key3
-echo
+read -n1 -t 1 key1
+read -n1 -t 0.5 key2
+read -n1 -t 0.5 key3
 
 #[[ $key1 == $key2 ]] && [[ $key2 == $key3 ]] && all_same=true
 all="$key1$key2$key3"
-clear
+
 case $all in
 
     # timer module controls
+    sdd)    guru stamp datetime | timeout 0.5 xclip ;;
+    sd)     guru stamp time | timeout 0.5 xclip ;;
+    ds)     guru stamp date | timeout 0.5 xclip ;;
+    ws)     guru stamp weekplan | timeout 0.5 xclip ;;
+    ss)     guru stamp signature | timeout 0.5 xclip ;;
+    ca)     os.capslock toggle ;;
     tt)     guru say "timer start"
             guru timer start ;;
     to)     guru say "timer stop"

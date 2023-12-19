@@ -24,7 +24,7 @@ convert.main () {
 
     case $format in
 
-        install|remove)
+        install|remove|compile|check)
             convert.$format
             return $?
             ;;
@@ -52,21 +52,28 @@ convert.main () {
 
 
 convert.help () {
-    # general help
+# general help
 
     gr.msg -v1 -c white "guru convert help "
     gr.msg -v2
     gr.msg -v0 "usage:    $GURU_CALL convert <dest_format> file list"
     gr.msg -v2
-    gr.msg -v1 "all pictures are converted to $GURU_FORMAT_PICTURE"
-    gr.msg -v1 "all videos are converted to $GURU_FORMAT_VIDEO"
+    gr.msg -v1 " install       install imagemagic and other needed tools from api ropository "
+    gr.msg -v1 " remove        remove os distributor version of imagemagic (may be very old) "
+    gr.msg -v1 " compile       remove current imagemagic installation, then download and compile from github "
+    gr.msg -v1 " <format>      specify from format and all pictures are converted to $GURU_FORMAT_PICTURE"
+    gr.msg -v1 "               specify from format and all videos are converted to $GURU_FORMAT_VIDEO"
+    gr.msg -v1 "               supported formats: webp webm mkv avif"
+    gr.msg -v1 " <target>      specify target format to convert to it (experimental)"
+    gr.msg -v1 "               supported formats: dokuwiki png"
     gr.msg -v2
     gr.msg -v1 -c white "example:"
     gr.msg -v1 "      $GURU_CALL convert webp         # converts all webp in folder to $GURU_FORMAT_PICTURE "
+    gr.msg -v1 "      $GURU_CALL convert dokuwiki     # converts specified markdown files to dokuwiki format "
     gr.msg -v2
+    gr.msg -v1 "avif support is still issue 2018 to 2023 >:/ https://github.com/ImageMagick/ImageMagick/issues/1432"
     return 0
 }
-
 
 
 ## convert from methods. Always convert to png
@@ -74,7 +81,7 @@ convert.help () {
 # TBD issue #59 make one convert.format <format> all there three are almost identical
 
 convert.from_webp () {
-    # convert all webp in folder of given file
+# convert all webp in folder to png format
 
     if [[ $1 ]] ; then
         find_files=($@)
@@ -460,9 +467,20 @@ convert.to_dokuwiki () {
 
 # }
 
+convert.from_avif () {
+
+    if ! convert.check avif ; then
+        return 100
+    fi
+
+    gr.msg -v2 -c green "avif supported"
+    # this might help https://github.com/SoftCreatR/imei/blob/main/imei.sh
+}
+
+
 convert.check_format() {
 
-    if convert.check_imagemagick $1 ; then
+    if convert.check $1 ; then
         gr.msg -v2 "format $1 is supported"
         return 0
     else
@@ -479,7 +497,7 @@ convert.check_format() {
 }
 
 
-convert.check_imagemagick () {
+convert.check () {
 # check if critical file format are supported and version is above 7.1
 
     local _return=0
@@ -513,15 +531,18 @@ convert.check_imagemagick () {
 }
 
 
-convert.install_imagemagick () {
+convert.compile () {
 # get and compile imagemagick with webp and avif support
 
+    local im_version="7.1.1"
+
+    [[ $1 ]] && im_version=$1
 
     # uninstall if installed by apt
     if apt list --installed | grep imagemagick; then
         gr.msg "installed system version of imagemagick"
 
-        if convert.check_imagemagick ; then
+        if convert.check ; then
             gr.msg "seems that distributor added valid version to repository"
             return 0
 
@@ -549,20 +570,60 @@ convert.install_imagemagick () {
     # uninstalling compiled version
     sudo make uninstall && gr.msg -c green "uninstalled" || gr.msg -c red "uninstallation failed"
 
-    gr.msg "cloning ImageMagick source from github.com.."
+    gr.msg -h "cloning ImageMagick source from github.com.."
     cd /tmp
-    git clone https://github.com/ImageMagick/ImageMagick.git ImageMagick-7.1.0
-    cd ImageMagick-7.1.0
+    git clone https://github.com/ImageMagick/ImageMagick.git ImageMagick-$im_version
+    cd ImageMagick-$im_version
 
-    gr.msg "cloning ImageMagick source from github.com.."
-    if ./configure --with-webp=yes --with-heic=yes --with-modules; then
+    gr.msg -h "configuring.."
+
+    if ./configure \
+            --with-bzlib=yes \
+            --with-djvu=yes \
+            --with-dps=yes \
+            --with-fftw=yes \
+            --with-flif=yes \
+            --with-fontconfig=yes \
+            --with-fpx=yes \
+            --with-freetype=yes \
+            --with-gslib=yes \
+            --with-gvc=yes \
+            --with-heic=yes \
+            --with-jbig=yes \
+            --with-jemalloc=yes \
+            --with-jpeg=yes \
+            --with-jxl=yes \
+            --with-lcms=yes \
+            --with-lqr=yes \
+            --with-lzma=yes \
+            --with-magick-plus-plus=yes \
+            --with-openexr=yes \
+            --with-openjp2=yes \
+            --with-pango=yes \
+            --with-perl=yes \
+            --with-png=yes \
+            --with-raqm=yes \
+            --with-raw=yes \
+            --with-rsvg=yes \
+            --with-tcmalloc=yes \
+            --with-tiff=yes \
+            --with-webp=yes \
+            --with-wmf=yes \
+            --with-x=yes \
+            --with-xml=yes \
+            --with-zip=yes \
+            --with-zlib=yes \
+            --with-zstd=yes \
+            --with-gcc-arch=native
+            then
         gr.msg -c green "configure ok"
     else
         gr.msg -c red "configure failed"
         return 3
     fi
 
-    # compile and check
+
+    gr.msg -h "compiling.."
     if make; then
         gr.msg -c green "successfully compiled"
     else
@@ -570,7 +631,7 @@ convert.install_imagemagick () {
         return 4
     fi
 
-    # install and to check
+    gr.msg -h "installing.."
     if sudo make install; then  # sudo identify -version
         gr.msg -c green "successfully installed"
     else
@@ -582,11 +643,11 @@ convert.install_imagemagick () {
 
     sudo ldconfig /usr/local/lib
 
-    # finally, check version and format support
-    if convert.check_imagemagick; then
+    gr.msg -h "checking format support.."
+    if convert.check; then
         gr.msg -c green "installation seems to work"
     else
-       gr.msg -c red "installation failed"
+       gr.msg -c yellow "compiling new version did not bring support for wanted formats"
        return 6
     fi
 }
@@ -620,7 +681,7 @@ convert.install () {
     # install needed
 
     # webp and atif format support
-    convert.check_imagemagick || convert.install_imagemagick
+    convert.check || convert.install_imagemagick
 
     ffmpeg -version >/dev/null && \
     dwebp -version -quiet >/dev/null && \
@@ -655,6 +716,8 @@ convert.status () {
             "disabled"
         return 1
     fi
+
+
 
     return 0
 }

@@ -15,7 +15,7 @@ daemon.main () {
     daemon.process_opts $@
     gr.debug "$FUNCNAME: $daemon_arguments"
     case ${daemon_arguments[0]} in
-            start|stop|status|help|kill|poll)
+            start|stop|status|help|kill|poll|pid)
                 daemon.${daemon_arguments[0]}
                 return $?
                 ;;
@@ -41,12 +41,28 @@ daemon.help () {
     gr.msg -v1 " start        start daemon (same as $GURU_CALL start)"
     gr.msg -v1 " stop         stop daemon (same as $GURU_CALL stSop)"
     gr.msg -v1 " status       printout status"
+    gr.msg -v1 " pid          get daemon pid(s)"
     gr.msg -v1 " kill         kill jammed daemon"
     gr.msg -v2 " poll         start polling process"
     gr.msg -v2
     gr.msg -v1 -c white "example:"
     gr.msg -v1 "      $GURU_CALL daemon status"
     gr.msg -v2
+}
+
+
+daemon.pid () {
+    local _ifs=$IFS; IFS=$'\n'
+    process_list=($(ps auxf | grep -v grep | grep -e "$GURU_BIN/guru start" -e "daemon.sh start" | grep -e "$USER"))
+    IFS=$_ifs
+
+    GURU_DAEMON_PID=()
+    descriptions=("guru-cli daemon" "corsair animation" "sub process" "sub process")
+    for (( i = 0; i < ${#process_list[@]}; i++ )); do
+            GURU_DAEMON_PID=(${GURU_DAEMON_PID[@]} $(echo ${process_list[$i]} | xargs | cut -f2 -d' '))
+            gr.msg -n -c light_blue "${GURU_DAEMON_PID[$i]} "
+            gr.msg "${descriptions[$i]}"
+    done
 }
 
 
@@ -140,7 +156,7 @@ daemon.start () {
             null|empty )
                 ;;
             *)
-                gr.msg -v2 -c dark_golden_rod "$i:$module: "
+                gr.debug "$i:$module: "
                 if [[ -f "$GURU_BIN/$module.sh" ]]; then
                         source "$GURU_BIN/$module.sh"
                         # gr.msg -v3 ": $GURU_BIN/$GURU_BIN/$module.sh"
@@ -154,7 +170,7 @@ daemon.start () {
         done
 
     gr.end $GURU_DAEMON_INDICATOR_KEY
-    gr.msg "start polling" -c reset -k $GURU_DAEMON_INDICATOR_KEY
+    gr.msg -v1 "start polling" -c reset -k $GURU_DAEMON_INDICATOR_KEY
     daemon.poll &
 }
 
@@ -185,7 +201,7 @@ daemon.stop () {
                 #gr.msg -v3 -c dark_grey "skipping $module"
                 ;;
             * )
-                gr.msg -v2 -c dark_golden_rod "$i:$module: "
+                gr.debug "$i:$module: "
                 if [[ -f "$GURU_BIN/$module.sh" ]]; then
                         source "$GURU_BIN/$module.sh"
                         $module.main poll end
@@ -300,7 +316,6 @@ daemon.poll () {
         gr.msg -N -t -v3 -c aqua "daemon active" -k $GURU_DAEMON_INDICATOR_KEY
         flag.set running
 
-
         # check is system suspended and perform needed actions
         if flag.check suspend ; then
                 # restart ckb-next application to reconnect led pipe files
@@ -329,9 +344,6 @@ daemon.poll () {
                 gr.msg -v1 -t -c aqua "daemon continued" #-k $GURU_DAEMON_INDICATOR_KEY
             fi
 
-
-
-
         if flag.check stop ; then
                 gr.end $GURU_DAEMON_INDICATOR_KEY
                 gr.msg -N -t -v1 "daemon got requested to stop "
@@ -351,17 +363,16 @@ daemon.poll () {
                 gr.msg -c deep_pink -t "daemon restart requested"
             fi
 
-
         # go trough poll list
-        for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
-                module=${GURU_DAEMON_POLL_ORDER[i-1]}
+        for ((daemon_i=1 ; daemon_i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; daemon_i++)) ; do
+                module=${GURU_DAEMON_POLL_ORDER[daemon_i-1]}
                 flag.check pause && break
                 case $module in
                     null|empty|na|NA|'-')
-                        gr.msg -v3 -c dark_grey "$i:$module skipping "
+                        gr.msg -v3 -c dark_grey "$daemon_i:$module skipping "
                         ;;
                     *)
-                        gr.msg -v2 -c dark_golden_rod "$i: ${module}.sh function ${module}.status "
+                        gr.debug "$daemon_i: ${module}.sh function ${module}.status "
 
                         if [[ -f "$GURU_BIN/$module.sh" ]]; then
                                 source "$GURU_BIN/$module.sh"
@@ -376,7 +387,7 @@ daemon.poll () {
         gr.end $GURU_DAEMON_INDICATOR_KEY
         gr.ind done $GURU_DAEMON_INDICATOR_KEY
         touch $daemon_pid_file
-        gr.msg -n -v2 "sleep ${GURU_DAEMON_INTERVAL}s: "
+        gr.msg -n -v2 "sleep : "
 
         for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )) ; do
                 flag.check stop && break
@@ -384,6 +395,7 @@ daemon.poll () {
                 flag.check pause && continue
                 flag.check fast && continue || sleep 1
                 gr.msg -v2 -n -c reset "."
+                printf '%s %s %s\r' "sleep for" "$(( $GURU_DAEMON_INTERVAL - $_seconds ))" "seconds"
                 daemon.day_change
             done
         gr.msg -v2 ""

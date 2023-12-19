@@ -32,7 +32,7 @@ config.help () {
 
     gr.msg -v1 "guru-client config help " -h
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL config pull|push|export|user|get|set|help" -h
+    gr.msg -v0 "usage:    $GURU_CALL config pull|push|edit|export|user|get|set|help" -h
     gr.msg -v2
     gr.msg -v1 "actions:" -h
     gr.msg -v2
@@ -172,15 +172,15 @@ config.export () {
                     ;;
 
                     *"module"*)
-                        gr.msg -v2 -c dark_grey "$_module_cfg ..skipping module config files"
+                        gr.msg -v3 -c dark_grey "$_module_cfg ..skipping module config files"
                     ;;
 
                     *"source"*)
-                        gr.msg -v2 -c dark_grey "$_module_cfg ..no need to compile this type of configs"
+                        gr.msg -v3 -c dark_grey "$_module_cfg ..no need to compile this type of configs"
                     ;;
 
                     *)
-                        gr.msg -v2 -c yellow "$_module_cfg ..unknown config file type"
+                        gr.msg -v1 -c yellow "$_module_cfg ..unknown config file type"
                 esac
                 fi
         }
@@ -304,16 +304,23 @@ config.push () {
 config.edit () {
 # edit user config file with preferred editor
 
-    local _config_folder="$GURU_CFG/$GURU_USER"
+    local default_configs=($(find $GURU_CFG/*cfg $GURU_CFG/*list -maxdepth 1 -type f -path '*/\.*'))
 
-    # if ! [[ -f $_config_file ]] ; then
-    #     if gr.ask "user configuration fur user did not found, create local config for $GURU_USER" ; then
-    #             mkdir -p $_config_file
-    #             cp $GURU_CFG/user-default.cfg $_config_file
-    #         fi
-    #     fi
+    if [[ -d $GURU_CFG/$GURU_USER ]] ; then
+        local user_configs=($(find $GURU_CFG/$GURU_USER/*cfg $GURU_CFG/$GURU_USER/*list -maxdepth 1 -type f -path '*/\.*'))
+    else
+        gr.msg -c yellow "user configuration not found"
+    fi
 
-    $GURU_PREFERRED_EDITOR -n $_config_folder/*.cfg  || gr.msg -v2 -c yello "error while editing $_config_file.."
+    local list_of_files=(${user_configs[@]} ${default_configs[@]})
+
+    readarray -t sortedfilearr < <(printf '%s\n' "${list_of_files[@]}" | awk -F'/' '
+       BEGIN{PROCINFO["sorted_in"]="@val_num_asc"}
+       { a[$0]=$NF }
+       END{ for(i in a) print i}')
+
+    gr.debug "${sortedfilearr[*]} Thanks RomanPerekhrest https://unix.stackexchange.com/questions/393987"
+    $GURU_PREFERRED_EDITOR -n ${sortedfilearr[*]}
 }
 
 

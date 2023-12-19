@@ -1,6 +1,6 @@
 
 
-audio.playlist_main () {
+playlist.main () {
 # play playlist file
 
     local user_input=$1
@@ -11,7 +11,7 @@ audio.playlist_main () {
     case $user_input in
 
         continue|last)
-            audio.playlist_play /tmp/guru-cli_audio.playlist
+            playlist.play /tmp/guru-cli_audio.playlist
             ;;
 
         list|ls)
@@ -19,21 +19,21 @@ audio.playlist_main () {
             gr.msg -c pink "in-the-list"
             if [[ $1 ]] ; then
                 # if playlist name is given, list all found files
-                    audio.playlist_compose $1
+                    playlist.compose $1
                     cat $audio_temp_file
                 else
                 # print list of playlists set in audio.cfg
-                    audio.playlist_list
+                    playlist.list
                 fi
             ;;
 
         "") # printout list of playlists
             gr.msg "please give playlist name from following list"
-            audio.playlist_list
+            playlist.list
             ;;
 
         *)
-            audio.playlist_play $@
+            playlist.play $@
 
         esac
 
@@ -41,7 +41,7 @@ audio.playlist_main () {
 }
 
 
-audio.playlist_play () {
+playlist.play () {
 # play playlist or search pattern in the list
     local user_input=$1
     local item_search_string=
@@ -70,7 +70,7 @@ audio.playlist_play () {
 
     # assume that audio.cfg contains list named by user input
     else
-        audio.playlist_compose $user_input || return 123
+        playlist.compose $user_input || return 123
 
         list_to_play="--playlist=$audio_temp_file"
 
@@ -110,12 +110,12 @@ audio.playlist_play () {
 ### playlist stuff TBD >audio/playlist.sh ------------------------------------------------------------------------
 
 
-audio.playlist_config () {
+playlist.config () {
 # compare user input to configuration and set up
 
     local user_input=$1
     # check does configuration contain line named by user request
-    local found_line=$(grep "GURU_AUDIO_PLAYLIST_${user_input^^}=" $audio_rc)
+    local found_line=$(grep "GURU_PLAYLIST_${user_input^^}=" $audio_rc)
 
     found_line="${found_line//'export '/''}"
 
@@ -124,9 +124,9 @@ audio.playlist_config () {
             return 126
         fi
 
-    declare -g playlist_found_name=$(echo $found_line | cut -f4 -d '_' | cut -f1 -d '=')
+    declare -g playlist_found_name=$(echo $found_line | cut -f3 -d '_' | cut -f1 -d '=')
 
-    local variable="GURU_AUDIO_PLAYLIST_${playlist_found_name}"
+    local variable="GURU_PLAYLIST_${playlist_found_name}"
     local found_settings=($(eval echo ${!variable}))
 
     declare -g playlist_location=${found_settings[0]}
@@ -154,11 +154,11 @@ audio.playlist_config () {
 }
 
 
-audio.playlist_compose () {
+playlist.compose () {
 # compose template playlist from given information
 
     local user_input=$1
-    audio.playlist_config $user_input
+    playlist.config $user_input
 
     local sort_option=
     [[ $playlist_option ]] && sort_option="-$playlist_option"
@@ -187,10 +187,10 @@ audio.playlist_compose () {
 }
 
 
-audio.playlist_list () {
+playlist.list () {
 # list of playlists
 
-    local _list=($(cat $audio_rc | grep "GURU_AUDIO_PLAYLIST_" | grep -v "local" | cut -f4 -d '_' | cut -f1 -d '='))
+    local _list=($(cat $audio_rc | grep "GURU_PLAYLIST_" | grep -v "local" | cut -f3 -d '_' | cut -f1 -d '='))
     _list=(${_list[@],,})
 
     # if verbose is lover than 1
@@ -200,7 +200,7 @@ audio.playlist_list () {
     if [[ $GURU_VERBOSE -gt 1 ]] ; then
 
             for _list_item in ${_list[@]} ; do
-                    audio.playlist_config $_list_item
+                    playlist.config $_list_item
                     gr.msg -n -c light_blue "$_list_item: "
                     gr.msg "$list_description"
                 done

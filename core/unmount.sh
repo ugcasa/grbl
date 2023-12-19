@@ -72,8 +72,8 @@ unmount.main () {
                     done
 
                 else
-                    gr.msg -v3 -c yellow "not in any list"
-                    unmount.remote $argument $@
+                    gr.debug "trying to mount location defined in other module configuration"
+                    unmount.known_remote $argument $@
                 fi
                 source mount.sh
                 mount.status >/dev/null

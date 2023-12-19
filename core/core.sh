@@ -76,13 +76,14 @@ core.help () {
     core.help_arguments
     core.help_examples
     core.help_newbie
+    gr.msg -v2 -c white "documentation: $GURU_DOCUMENTATION:start" -N
 }
 
 
 core.parser () {
 # parsing first word of user input, rest words are passed to next level parser
 
-    gr.debug "$FUNCNAME $@"
+    gr.debug "$FUNCNAME: '$@'"
     local _input="$1" ; shift
 
     case "$_input" in
@@ -100,7 +101,7 @@ core.parser () {
             return $?
             ;;
 
-        debug|pause|help|version|online|list)
+        debug|pause|help|version|online|list|active)
         # core control functions
             core.$_input $@
             return $?
@@ -151,9 +152,9 @@ core.list () {
             gr.msg -v2 -h "list of available modules:"
             list=(${GURU_MODULES[@]})
             ;;
-        esac
+    esac
 
-        gr.msg -c list "${list[@]}"
+    gr.msg -c list "${list[@]}"
 }
 
 
@@ -188,6 +189,35 @@ core.debug () {
         done
     gr.msg -N "$i variables where $empty empty one"
 }
+
+
+core.active () {
+
+    # ask key for server,
+    # if key is no open, popup passphase input dialog appears
+
+    # # set colors on terminal
+    # export GURU_COLOR=true
+    export GURU_VERBOSE=1
+
+    source mount.sh
+
+    # mount guru-cli data and cache
+    if ! mount.main system ; then
+        gr.msg -c failed "unable to active, system data mount failed"
+        return 127
+    fi
+
+    # mound defaults
+    mount.main
+
+    # start daemon
+    source daemon.sh
+    daemon.main start
+    return 0
+    gr.msg -c gold "bye!"
+}
+
 
 
 core.stop () {
@@ -255,7 +285,6 @@ core.run_module () {
                            -s $GURU_SPEAK_SPEED \
                            -v $GURU_SPEAK_LANG \
                            "${module_output[@]}" &
-
                     return $?
                 fi
 
@@ -277,7 +306,7 @@ core.run_module () {
 
 core.run_module_function () {
 # run methods (functions) in module
-    gr.debug "$FUNCNAME $@"
+    gr.debug "$FUNCNAME: '$@'"
     # guru add ssh key @ -> guru ssh key add @
     if ! grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
         local module=$1 ; shift # note: there was reason to use shift over $2, $3, may just be cleaner
@@ -292,6 +321,8 @@ core.run_module_function () {
     for _module in ${GURU_MODULES[@]} ; do
 
         if [[ "$_module" == "$module" ]] ; then
+
+            gr.msg -v3 -c white "DUCUMENT: $_module.sh: $GURU_DOCUMENTATION:module:$_module"
 
             # include all module functions and run called
             if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
@@ -315,9 +346,7 @@ core.run_module_function () {
     done
 
     # if here something went wrong, raise warning
-    # gr.msg -v1 -V2 -c error "there is no light in your request '$module'"
-    # gr.msg -v1 -V2 -c error "$GURU_CALL see no sense in your request '$module'"
-    gr.msg -v1 -V2 -c error "$GURU_CALL see no enlightenment in your question '$module'"
+    gr.msg -v1 -V2 -c error "$GURU_CALL see no sense in your request '$module'"
     gr.msg -v2 -c error "$FUNCNAME: function '$function' in module '$module' not found"
     return 12
 }
@@ -326,7 +355,7 @@ core.run_module_function () {
 core.multi_module_function () {
 # run function name of all installed modules
 
-    gr.debug "$FUNCNAME $@"
+    gr.debug "$FUNCNAME: '$@'"
 
     local function_to_run=$1 ; shift
 
@@ -387,9 +416,9 @@ core.online () {
 
     if net.check_server ; then
         if [[ -f $offline_flag ]] ; then
-                gr.end esc
-                flag.rm pause
-                rm $offline_flag
+            gr.end esc
+            flag.rm pause
+            rm $offline_flag
         fi
         return 0
     else
@@ -573,6 +602,7 @@ core.process_core_opts () {
 
             -d)
                 export GURU_DEBUG=true
+                export GURU_VERBOSE=4
                 shift
                 ;;
             -c)
@@ -612,14 +642,14 @@ core.process_core_opts () {
         esac
     done
 
-    gr.debug "GURU_DEBUG: $GURU_DEBUG"
-    gr.debug "GURU_COLOR: $GURU_COLOR"
-    gr.debug "GURU_VERBOSE: $GURU_VERBOSE"
-    gr.debug "GURU_SPEAK: $GURU_SPEAK"
-    gr.debug "GURU_COLOR: $GURU_COLOR"
-    gr.debug "GURU_FORCE: $GURU_FORCE"
-    gr.debug "GURU_HOSTNAME: $GURU_HOSTNAME"
-    gr.debug "GURU_LOGGING: $GURU_LOGGING"
+    gr.debug "$FUNCNAME: GURU_DEBUG: $GURU_DEBUG"
+    gr.debug "$FUNCNAME: GURU_COLOR: $GURU_COLOR"
+    gr.debug "$FUNCNAME: GURU_VERBOSE: $GURU_VERBOSE"
+    gr.debug "$FUNCNAME: GURU_SPEAK: $GURU_SPEAK"
+    gr.debug "$FUNCNAME: GURU_COLOR: $GURU_COLOR"
+    gr.debug "$FUNCNAME: GURU_FORCE: $GURU_FORCE"
+    gr.debug "$FUNCNAME: GURU_HOSTNAME: $GURU_HOSTNAME"
+    gr.debug "$FUNCNAME: GURU_LOGGING: $GURU_LOGGING"
 
 
     # clean rest of user input
@@ -685,10 +715,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 
     # export global variables for sub processes
     export GURU_COMMAND=($GURU_MODULE_COMMAND $GURU_MODULE_ARGUMENTS)
-
-    # set up platform
-    #core.mount_system_base || gr.msg -c yellow "running local mode"
-    gr.debug "GURU_COMMAND: ${GURU_COMMAND[@]}"
 
     core.parser ${GURU_COMMAND[@]}
     _error_code=$?

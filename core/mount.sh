@@ -34,8 +34,7 @@ mount.main () {
 
     case "$command" in
 
-            system|help|ls|info|check|\
-            poll|status|start|stop|uninstall|available|mounted|online|config)
+            system|help|ls|info|check|mounted|poll|status|start|stop|uninstall|available|mounted|online|config)
                 mount.$command $@
                 _error=$?
                 ;;
@@ -60,22 +59,22 @@ mount.main () {
                 ;;
 
             "")
-                mount.mounted default
+                mount.listed default
                 _error=$?
                 mount.status
                 ;;
 
             *)
                 if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$command" ; then
-                    gr.msg -v4 -c pink "found in defauls list"
+                    gr.debug "found in defauls list"
                     mount.known_remote $command $@
 
                 elif echo ${all_list[@]} | grep -q -w "$command" ; then
-                    gr.msg -v4 -c pink "found in all list"
+                    gr.debug "found in all list"
                     mount.known_remote $command $@
                 else
-                    gr.msg -c yellow "unknown mountpoint, available:"
-                    mount.available
+                    gr.debug "trying to mount location defined in other module configuration"
+                    mount.known_remote $command $@
                 fi
 
                 mount.status >/dev/null
@@ -212,6 +211,36 @@ mount.online () {
 }
 
 
+
+mount.mounted () {
+# check is givven list name already mounted
+
+    local _mount_list_name=$1
+
+    if ! [[ "$_mount_list_name" ]]; then
+        gr.msg -c error -v2 "please give mount point name"
+        return
+    fi
+
+    local _target_folder=$(eval echo '${GURU_MOUNT_'"${_mount_list_name^^}[0]}")
+    gr.debug "$FUNCNAME: target folder '$_target_folder'"
+
+    if ! [[ $_target_folder ]] ; then
+        gr.msg -c error "unable to solve target folder, check mount list name '$_mount_list_name'"
+        return 2
+    fi
+
+    if [[ -f "$_target_folder/.online" ]] ; then
+        gr.debug "'$_mount_list_name' mounted to '$_target_folder'"
+        return 0
+    else
+        gr.debug "'$_mount_list_name' not mounted '$_target_folder'"
+        return 1
+    fi
+}
+
+
+
 mount.check () {
 # check is mount point mounted, output status
 
@@ -302,7 +331,7 @@ mount.remote () {
         case $_reply in
             y)
                 [[ -d $_temp_folder ]] && rm -rf "$_temp_folder"
-                gr.msg -c pink -v3 "mv $_target_folder -> $_temp_folder"
+                gr.debug "mv $_target_folder -> $_temp_folder"
                 mkdir -p "$_temp_folder"
                 mv "$_target_folder" "$_temp_folder"
                 ;;
@@ -375,7 +404,7 @@ mount.available () {
 }
 
 
-mount.mounted () {
+mount.listed () {
 # mount all GURU_MOUNT_<list_name>_LIST defined in user configuration
 
     local _error=0
@@ -509,7 +538,7 @@ mount.status () {
                     esac
         done
 
-    # serve enter
+    # serve enter and key color
     [[ $_private ]] \
         && gr.msg -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY \
         || gr.msg -c aqua -k $GURU_MOUNT_INDICATOR_KEY
@@ -527,7 +556,7 @@ mount.toggle () {
             source unmount.sh
             unmount.main all
         else
-            mount.mounted default
+            mount.listed default
         fi
     return 0
 }

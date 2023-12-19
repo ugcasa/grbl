@@ -5,6 +5,8 @@
 declare -A say_cfg=()
 declare -g say_cfg_file="$GURU_CFG/say.cfg"
 declare -g say_cfg_usr_file="$GURU_CFG/$GURU_USER/say.cfg"
+declare -g module_command=()
+
 
 say.help () {
 
@@ -27,19 +29,18 @@ say.check_lang () {
 
 say.main () {
 # main command parser
-    local _input=$@
-    local _command="$1"
-    shift
-    local _message=$@
+    say.arguments $@
+    local _input=(${module_command[@]})
 
-    case "$_command" in
+    case "${_input[1]}" in
 
         file|string|stdin|help|test|status)
-            say.$_command "$_message"
+
+            say.${_input[1]} "${_input[2:]}"
             return $?
             ;;
         *)
-            say.string "$_input"
+            say.string "${_input[@]}"
             return $?
             ;;
     esac
@@ -58,10 +59,13 @@ say.file () {
 
 say.string () {
 
+    local input="${@}"
+    gr.debug "$FUNCNAME: $input: pitch:${say_cfg[pitch]} speed:${say_cfg[speed]} lang:${say_cfg[lang]}"
+
     espeak -p ${say_cfg[pitch]} \
            -s ${say_cfg[speed]} \
            -v ${say_cfg[lang]} \
-           "$@"
+           "$input"
     return $?
 }
 
@@ -115,6 +119,33 @@ say.status() {
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
     say.string "status check" && gr.msg -c green "functional" || gr.msg -c dark_grey "non functional"
 }
+
+say.arguments () {
+# module argument parser
+
+    local got_args=($@)
+
+    for (( i = 0; i < ${#got_args[@]}; i++ )); do
+        # gr.debug "${FUNCNAME[0]}: argument: $i:${got_args[$i]}"
+
+        # gr.debug "$FUNCNAME: ${got_args[$i]}"
+        case ${got_args[$i]} in
+
+            --fi*)
+                say_cfg[lang]="fi"
+                ;;
+
+            --lady|--girl)
+                say_cfg[pitch]='200'
+                say_cfg[speed]='150'
+                ;;
+            *)
+                module_command+=("${got_args[$i]}")
+                ;;
+        esac
+    done
+}
+
 
 # located here cause rc needs to see some of functions above
 say.rc

@@ -2,6 +2,7 @@
 # system tools for guru-client
 source os.sh
 source flag.sh
+source corsair.sh
 
 system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
@@ -22,10 +23,15 @@ system.help () {
     gr.msg -v1 " client-update        upgrade and reinstall guru-client"
     gr.msg -v1 " client-rollback      rollback to last known working version "
     gr.msg -v1 " status               system status output "
+    gr.msg -v1 " top <cpu|mem>        memory and cpu usage view "
+    gr.msg -v1 " usage <cpu|mem>      memory and cpu usage view "
+    gr.msg -v2 "   --lines <number>   "
+    gr.msg -v2 "   --return <usage|pid|user|pmem|pcpu|command|args|top> "
+    gr.msg -v2 "   --return pmem,pid,args,user "
     gr.msg -v1 " poll start|end       start or end module status polling "
     gr.msg -v1 " suspend now          suspend computer "
     gr.msg -v1 " suspend help         detailed help for page suspend functions "
-    gr.msg -v1 " flag help            detailed help for page status flag system "
+    # gr.msg -v1 " flag help            detailed help for page status flag system "
 }
 
 
@@ -73,9 +79,24 @@ system.main () {
 
     case "$tool" in
 
-        status|poll|suspend|core-dump|upgrade|flag|rollback|help)
+        status|poll|suspend|core-dump|upgrade|flag|rollback|help|update)
             system.$tool $@
             return $?
+            ;;
+
+        top)
+            local target=cpu
+            [[ $1 ]] && target=$1
+            while true ; do
+                clear
+                system.get_usage $target --ret top --lines 20
+                read -n1 -t3 ans
+                [[ $ans ]] && return 0
+            done
+            ;;
+
+        usage)
+            system.get_usage $@
             ;;
 
         # package tools, just list for now
@@ -93,11 +114,6 @@ system.main () {
                     ;;
                 *)
             esac
-            ;;
-
-        update)
-            system.client_update
-            return $?
             ;;
 
         env)
@@ -140,20 +156,29 @@ system.status () {
 
     gr.msg -v1 -t -n "${FUNCNAME[0]}: "
     if [[ -f ${GURU_SYSTEM_MOUNT[0]}/.online ]] ; then
-        gr.msg -n -v1 -c green "all fine with " #-k $system_indicator_key
+        gr.msg -n -c green "ok "
     else
         gr.msg -n -v1 -c yellow ".data is unmounted " #-k $system_indicator_key
     fi
 
-    gr.msg -v1 -n "$(os.status)"
-    gr.msg -v2 -n "caps lock $(os.capslock state)"
+    system.cpu_usage_check
 
 }
+
+
+system.upgrade () {
+# upgrade system
+    os.upgrade
+    return $?
+}
+
+
+
 
 # TBD move flag system to flag.sh THEN remove this and need for it
 system.flag () {
 # set flags
-    gr.debug "someone calling system.flag, pls use flag.sh instead!"
+    gr.debug "some routine seems to call system.flag, pls use flag.sh instead!"
     source flag.sh
     flag.main $@
 }
@@ -313,7 +338,7 @@ system.get_window_id () {
 }
 
 
-system.client_update () {
+system.update () {
  # update guru-client
 
     local temp_dir="/tmp/guru"
@@ -336,45 +361,133 @@ system.client_update () {
 }
 
 
-system.upgrade () {
-# upgrade system
+system.cpu_usage_check () {
 
-    #gr.ind doing -k $system_indicator_key
+    local high_cpu_flag="/tmp/high.cpu.flag"
 
-    sudo apt-get update \
-        || gr.msg -c red -x 100 "update failed" -k $system_indicator_key
+    # get highest usage of cpu
+    high_usage=$(system.get_usage cpu --ret usage)
 
-    gr.msg -v2 -c white "upgradable list: "
-    gr.msg -v2 -c light_blue "$(sudo apt-get list --upgradable)"
+    # make integer
+    case $high_usage in *.*) high_usage=$(echo $high_usage | cut -d "." -f 1) ;; esac
+    [[ $high_usage ]] || gr.debug "$FUNCNAME: usage get failed '$high_usage'"
+    gr.debug "$FUNCNAME: cpu usage: $high_usage: trigger: $GURU_SYSTEM_CPU_USAGE_TRIGGER"
 
-    sudo apt-get upgrade -y \
-        || gr.msg -c red -x 101 "upgrade failed" -k $system_indicator_key
+    if [[ $high_usage -ge $GURU_SYSTEM_CPU_USAGE_TRIGGER ]] ; then
 
-    sudo apt-get autoremove --purge \
-        || gr.msg -c yellow "autoremove returned warning" -k $system_indicator_key
+        # get highest pid of process of usage of cpu
+        local new_pid=$(system.get_usage cpu --ret pid)
 
-    sudo apt-get autoclean \
-        || gr.msg -c yellow "autoclean returned warning" -k $system_indicator_key
+        if ! [[ $new_pid ]] ; then
+            gr.debug "$FUNCNAME: pid get failed '$new_pid'"
+            return 1
+        fi
 
+        local program=$(ps -p $new_pid -o comm=)
 
-    /usr/bin/python3 -m pip install --upgrade pip \
-        && gr.msg -c green "pip upgrade ok" \
-        || gr.msg -c yellow "pip upgrade warning: $? check log above" -k $system_indicator_key
+        if ! [[ -f $high_cpu_flag ]] ; then
+            gr.debug "$FUNCNAME: flagged $new_pid $high_cpu_flag"
+            gr.msg -n -c white "started to follow program ($high_usage) '$program' ($new_pid) "
+            echo $new_pid >$high_cpu_flag
+            echo
+            return 0
+        fi
 
-    #gr.end -k $system_indicator_key
+        local old_pid=$(cat $high_cpu_flag)
+        gr.debug "$FUNCNAME: old: $old_pid new: $new_pid"
 
-    sudo apt-get check \
-        && gr.msg -c green "check ok" -k $system_indicator_key \
-        || gr.msg -c yellow "warning: $? check log above" -k $system_indicator_key
+        if [[ $old_pid -eq $new_pid ]] ; then
+
+            gr.msg -n -c red "high cpu usage ($high_usage) '$program' ($new_pid) "
+
+            key=$(( ($high_usage - $GURU_SYSTEM_CPU_USAGE_TRIGGER) + 1 ))
+            [[ $key -gt 9 ]] && key=0
+            gr.debug "$FUNCNAME: key is: $key"
+            corsair.indicate alert "$key"
+
+            source say.sh
+            say.main "high cpu usage detected"
+        else
+            gr.debug "$FUNCNAME: $high_cpu_flag removed"
+            [[ -f $high_cpu_flag ]] && rm $high_cpu_flag
+        fi
+    else
+        [[ -f $high_cpu_flag ]] && rm $high_cpu_flag
+    fi
+    echo
 
 }
 
 
-system.update () {
-# upgrade system
+system.get_usage() {
+# get process that uses most resources of 'cpu' or 'mem'
+# return first process usage, pid and command
+# list of three most memory hungry pids: system_most_usage mem --lines 3 --return pid
 
-    system.upgrade
-    return $?
+    local lines=1
+    local order="pid,user,args"
+    local got_args=($@)
+    local target="cpu"
+    local print_single=
+
+    for (( usage_i = 0; usage_i < ${#got_args[@]}; usage_i++ )); do
+
+        case ${got_args[$usage_i]} in
+
+            cpu|mem)
+                target=${got_args[$usage_i]}
+                ;;
+
+            --lines|--line)
+                usage_i=$(($usage_i + 1))
+                lines=${got_args[$usage_i]}
+                ;;
+
+            --return|--ret)
+                usage_i=$(($usage_i + 1))
+                case ${got_args[$usage_i]} in
+
+                    pid)
+                        order="pid"
+                        print_single=true
+                        field=2
+                        ;;
+                    usage)
+                        order="p$target"
+                        field=2
+                        print_single=true
+                        ;;
+                    command)
+                        order="args"
+                        print_single=true
+                        field=1
+                        ;;
+                    top)
+                        order="p$target,pid,user,args --cols 80"
+                        ;;
+                    *)  order="${got_args[$usage_i]}"
+                    esac
+                ;;
+
+        esac
+    done
+
+    if [[ $print_single ]] ; then
+        local my_Pid=$$
+        IFS=$'\n'
+        reply=($(ps -eo $order --sort=-p$target --no-headers \
+                        | head -n $lines \
+                        | tr -s " "))
+
+        for line in ${reply[@]} ; do
+            echo $line | grep -v "$my_Pid" | cut -d " " -f $field
+        done
+    else
+        ps -eo $order --sort=-p$target --no-headers \
+            | head -n $lines \
+            | grep -v "$$"
+    fi
+
 }
 
 
@@ -559,7 +672,8 @@ system.poll () {
 
 system.check_fs_access_flag_enabled () {
 # check is system recording file access
-# often when SSD dirve is used the accessed timestamp function is disabled
+# often when SSD drive is used the accessed timestamp function is disabled
+# TBD fix typo
 
     echo "acccess flag is" >/tmp/test_access
 
@@ -580,7 +694,6 @@ system.check_fs_access_flag_enabled () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    #source $GURU_RC # issue with bash? all other variables EXEPT lists are filled when sourced by previous script (the who calls this one)
     system.main "$@"
     exit $?
 fi

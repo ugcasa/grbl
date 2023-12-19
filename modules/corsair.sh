@@ -42,7 +42,7 @@
 #     Device previews are now resizable
 
 source common.sh
-source system.sh
+# source system.sh
 
 # active key list
 key_pipe_list=$(file /tmp/ckbpipe0* | grep fifo | cut -f1 -d ":")
@@ -628,13 +628,14 @@ corsair.indicate () {
         playing)        blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
         active)         blink="aqua aqua_marine 0.5 5" ;;
         pause)          blink="black $GURU_CORSAIR_MODE 1 3600";;
-        error|*)        blink="orange yellow 1 5 yellow" ;;
+        error)          blink="orange yellow 1 5 yellow" ;;
         message)        blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
         call)           blink="deep_pink black 0.75 30 deep_pink" ;;
         customer)       blink="deep_pink white 0.75 30 deep_pink" ;;
         offline)        blink="blue orange 1.25 $GURU_DAEMON_INTERVAL orange" ;;
         warning)        blink="red orange 0.75 3600 orange" ;;
-        alert)          blink="orange_red black 0.5 $GURU_DAEMON_INTERVAL orange_red" ;;
+        alert)          blink="red black 0.5 $GURU_DAEMON_INTERVAL" ;;
+        blue)          blink="blue black 0.5 $GURU_DAEMON_INTERVAL" ;;
         notice)         blink="orange_red black 0.75 $GURU_DAEMON_INTERVAL " ;;
         panic)          blink="red white 0.2 $GURU_DAEMON_INTERVAL red" ;;
         breath|calm)    blink="dark_cyan dark_turquoise 6 600" ;;

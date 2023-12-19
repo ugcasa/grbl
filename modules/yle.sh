@@ -517,13 +517,25 @@ yle.play_media () {
 
 
 yle.upgrade() {
-    pip3 install --user --upgrade yle-dl
+    # pip3 install --user --upgrade yle-dl
+    python3 -m pip install --user --upgrade pipx
 }
 
 
 yle.install() {
-    pip3 install --upgrade pip
-    [[ -f /home/casa/.local/bin/yle-dl ]] || pip3 install --user --upgrade yle-dl
+
+    # # Ubuntu 23.04 or above
+    # sudo apt update
+    # sudo apt install pipx
+    # pipx ensurepath
+
+    # Ubuntu 22.04 or below
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install yle-dl --force
+
+    # pip3 install --upgrade pip
+    # [[ -f /home/casa/.local/bin/yle-dl ]] || pip3 install --user --upgrade yle-dl
     ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
     jq --version >/dev/null || sudo apt install jq -y
     sudo apt install detox mpv
@@ -533,7 +545,7 @@ yle.install() {
 
 yle.uninstall(){
 
-    sudo -H pip3 unisntall --user yle-dl
+    sudo -H pip3 uninstall --user yle-dl
     sudo apt remove ffmpeg jq  -y
     echo "uninstalled"
 }
