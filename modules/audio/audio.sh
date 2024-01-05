@@ -2,6 +2,7 @@
 # guru-cli audio module 2020 - 2023 casa@ujo.guru
 
 source corsair.sh
+source flag.sh
 source $GURU_BIN/audio/mpv.sh
 
 declare -g audio_rc="/tmp/guru-cli_audio.rc"
@@ -19,7 +20,6 @@ audio.help () {
     gr.msg -v2
     #gr.msg -v1 "options:"
     #gr.msg -v1 "  --loop                      loop forever (not fully implemented)"
-    #gr.msg -v1 "  --save                      save output (TBD)"
     #gr.msg -v2
     gr.msg -v1 "  play <song|album|artist>    play files in $GURU_MOUNT_AUDIO"
     gr.msg -v1 "  play list <playlist_name>   play a playlist set in user.cfg"
@@ -102,11 +102,10 @@ audio.main () {
         #     audio.playlist_main $@
         #     return $?
         #     ;;
-
-        # "")
-        #     gr.msg -c error "audio module: unknown command '$_command'"
-        #     return 1
-        #     ;;
+        *)
+            gr.msg -c error "audio module: unknown command '$_command'"
+            return 1
+            ;;
     esac
    # rm $audio_rc
 
@@ -132,7 +131,7 @@ audio.mount () {
 audio.play () {
 # play playlist and song/album/artist name given as parameter
     local _error=
-
+    flag.rm stopaudio
     corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
 
     case $1 in
@@ -163,6 +162,8 @@ audio.stop () {
     pkill mpv
     pkill mpv
     [[ -f $GURU_AUDIO_PAUSE_FLAG ]] && audio.pause
+    #source flag.sh
+    #flag.rm stopaudio
 
     gr.end $GURU_AUDIO_INDICATOR_KEY
     # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
@@ -227,6 +228,7 @@ audio.toggle () {
 # start or stop to play last listened or default audio source
 
     local default_radio='yle puhe'
+    flag.rm stopaudio
 
     if [[ -f $GURU_AUDIO_PAUSE_FLAG ]] ; then
             gr.debug "paused, calling pause: $@"
@@ -268,16 +270,38 @@ audio.toggle () {
 }
 
 
+audio.sort_yle_list () {
+# sort filenames based on yle.areena timestamp in filename
+# do this to folder before: shopt -s globstar ; rename 's/_/-/g' * ; rename 's/ /-/g' *
+
+    local items_to_sort=$(echo $@ | tr " " "\n")
+
+    while read line; do
+        date_stamp=$(echo $line | rev | cut -d'.' -f 2- | cut -d '-' -f-4 | rev)
+        echo "$(date -d ${date_stamp//-/} +%-s) $line"
+    done <<<$items_to_sort | sort | cut -d' ' -f2-
+}
+
+
 audio.find_and_play () {
 # find from known audio locations and play
+    update_list=true
+    timeout=10
+    flag.rm stopaudio
 
-    # TBD fix item_positional list number (+ 1) issue later..
+    print_list () {
+        for (( i = 0; i < ${#_got[@]}; i++ )); do
+            gr.msg -h -n "[$i]: "
+            gr.msg -c list "${_got[$i]##*/}"
+        done
+        update_list=
+        gr.msg -v2 -c dark_gray "commands: (n)ext, (p)revious, (c)ancel timeout, (s)ort yle, (l)ist, (q)uit or number between 0 to $((${#_got[@]} -1 ))"
+    }
+
 
     local to_find='*'$1'*'
     local pre_item=$2
     local _item_nr=0
-
-
 
     # if part of name, look from folders
     if ! [[ $to_find ]] ; then
@@ -296,11 +320,9 @@ audio.find_and_play () {
 
     ifs=$IFS
     IFS=$'\n'
-    local _got=($(find "$GURU_DOC/" -iname $to_find 2>/dev/null | grep -v 'Trash-1000' | grep -e mp3 -e wav -e m4a))
+    local _got=($(find "$GURU_MOUNT_MUSIC/" -iname $to_find 2>/dev/null | grep -v 'Trash-1000' | grep -e mp3 -e wav -e m4a))
     IFS=$ifs
 
-    # try to sort list // find seems to sort stuff
-    #_got=($(echo ${_got[@]} | sort))
 
     if [[ ${#_got[@]} -lt 1 ]] ; then
         gr.msg -c error "sorry, not able to find anything"
@@ -315,24 +337,28 @@ audio.find_and_play () {
         # print list if more than one item found or no pre item is given
         if [[ ${#_got[@]} -gt 1 ]] && ! [[ $pre_item ]] ; then
 
-            for (( i = 0; i < ${#_got[@]}; i++ )); do
-                gr.msg -h -n "[$i]: "
-                gr.msg -c list "${_got[$i]##*/}"
-            done
+            [[ $update_list ]] && print_list
 
-            gr.msg -v2 -c dark_gray "commands: (n)ext, (p)revious, (c)ancel timeout, (q)uit or number between 0 to $((${#_got[@]} -1 ))"
-            [[ $cancel_timeout ]] \
-                    && read -p "select number: " user_input \
-                    || read -t 10 -p "select number (10 s timeout): " user_input
+            if [[ $timeout ]] ; then
+                read -t 5 -p "select number ($timeout s): " user_input
+                user_input=${user_input:-n}
+            else
+                read -p "select number: " user_input
+            fi
 
-            # cancel timeout
+            if flag.get stopaudio ; then
+                timeout=
+                break
+            fi
 
             # user input parser
             case $user_input in
                 q*|Q*|e*|x*) break ;;
                 n*) _item_nr=$(( $_item_nr +1 )) ;;
+                l*) update_list=true ; continue ;;
                 p*) _item_nr=$(( $_item_nr -1 )) ;;
-                c*) cancel_timeout=true ; continue ;;
+                c*) [[ $timeout ]] && timeout= || timeout=5 ; continue ;;
+                s*) _got=($(audio.sort_yle_list ${_got[@]})) ; update_list=true ; _item_nr=0 ; continue ;;
                 "") true ;;
                 *) _item_nr=$user_input
             esac
@@ -352,22 +378,14 @@ audio.find_and_play () {
         # indication
         corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
         gr.msg -h "playing ${_got[$_item_nr]##*/} [$_item_nr/$(( ${#_got[@]} -1 ))]"
-        gr.msg -v2 -c dark_gray "quick keys: 'q+p' previous item, 'q+n' next item, 'q+l' list and 'q+q' quit"
         # now playing
         echo "$to_find [$_item_nr/$(( ${#_got[@]} -1 ))]" >$GURU_AUDIO_NOW_PLAYING
 
-        # actual play
-        mpv ${_got[$_item_nr]} $mpv_options --no-resume-playback --no-video #>/dev/null
+        # play
+        mpv ${_got[$_item_nr]} $mpv_options --no-resume-playback --no-video
         rm $GURU_AUDIO_NOW_PLAYING
+        timeout=5
 
-        # after item is played, "quick key" parser
-        read -s -t 1 -n 1 _quit
-        case $_quit in
-            q|Q) break ;;
-            l|L) pre_item=  ; continue ;;
-            p|P) pre_item=$(( $_item_nr -1 )) ; continue ;;
-            n|N|*) pre_item=$(( $_item_nr +1 )) ; continue ;;
-        esac
     done
 
     gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY

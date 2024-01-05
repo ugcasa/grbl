@@ -2,6 +2,7 @@
 # guru-cli radio functionalities for guru-cli audio module 2023 casa@ujo.guru
 
 source corsair.sh
+source flag.sh
 
 declare -g radio_number=
 declare -g radio_rc="/tmp/guru-cli_radio.rc"
@@ -78,6 +79,7 @@ radio.main() {
         o|open|player)
                 radio_number=$(< $radio_prev_file)
                 local _command='guru radio selector'
+                flag.rm stopaudio
                 gnome-terminal --hide-menubar --geometry 130x$((${#station_list[@]} / 4 + 8 )) --zoom 0.5 --title "radio player" -- bash -c "$_command"
                 ;;
 
@@ -204,6 +206,7 @@ radio.list () {
 radio.listen () {
 # listen radio station by number or name, list of stations
 
+    flag.rm stopaudio
     local station_nro=
     local station_name=
     local station_url=
@@ -286,6 +289,7 @@ radio.rc () {
         fi
 
     source $radio_rc
+    [[ $audio_rc ]] || source audio.sh
 }
 
 
@@ -314,7 +318,6 @@ declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET"
 [[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $GURU_BIN/audio/audio.sh
     # if sourced it probably done by audio.sh, otherwise source here
     radio.main $@     # TBD radio.main $(radio.parse_options $@)
     exit $?
