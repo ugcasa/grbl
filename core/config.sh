@@ -19,7 +19,8 @@ config.help () {
     gr.msg -v1 "  export         export configuration to environment"
     gr.msg -v1 "  pull           pull user configuration from server"
     gr.msg -v1 "  push           push user configuration to server"
-    gr.msg -v1 "  user           open user configuration in dialog"
+    gr.msg -v1 "  dialog         modify configurations in terminal dialog"
+    gr.msg -v2 "    <module>"
     gr.msg -v1 "  edit           edit user config file with preferred editor"
     gr.msg -v1 "  change         change variable in user configuration "
     gr.msg -v2 "    <module> <key> <value>"
@@ -47,18 +48,19 @@ config.help () {
 
 
 config.main () {
-# main comman parser
+# main command parser
+
     local _cmd="$1" ; shift
     case "$_cmd" in
-            user|export|help|edit|get|set|rm|pull|push|list|change)
+            dialog|export|help|edit|get|set|rm|pull|push|list|change)
                     config.$_cmd $@
                     return $?
                     ;;
             status|log|debug)
-                    gr.msg "no $_cmd data"
+                    gr.msg -c dark_grey "no $_cmd data"
                     ;;
 
-                 *) echo "unknown config action '$_cmd'"
+                 *) gr.msg -c error "unknown config action '$_cmd'"
                     config.help  $@
                     return $?
                     ;;
@@ -77,11 +79,16 @@ config.make_rc () {
 
     gr.msg -n -v2 -c gray "$_source_cfg "
 
-    if ! [[ -f $_source_cfg ]] ; then gr.msg -c yellow "$_source_cfg not found" ; return 100 ; fi
+    if ! [[ -f $_source_cfg ]] ; then
+        gr.msg -c yellow "$_source_cfg not found"
+        return 100
+    fi
 
     case $(head -n 1 $_source_cfg) in
-        *"source"*) gr.msg -v2 -c dark_grey "..no need to compile this type of configs" ; return 0 ;;
+        *"source"*) gr.msg -v2 -c dark_grey "..no need to compile this type of configs"
+        return 0 ;;
     esac
+
     gr.msg -v2 -c gray "$_mode $_target_rc"
 
     # read config file, use chapter name as second part of variable name
@@ -125,30 +132,30 @@ config.make_style_rc () {
     color_name_list=$(set | grep rgb_ | grep -v grep | grep -v "   " )            # ; echo "$color_name_list"
     color_list=()
     for color_srt in ${color_name_list[@]} ; do
-            # color name
-            color_name=$(echo $color_srt | cut -f1 -d "=") # ; echo "$color_srt"
-            color_name=${color_name//"rgb_"/""} # ; echo "$color_name"
-            color_list+=("$color_name")
-            # color value
-            color_value=$(echo $color_srt | cut -f2 -d "=") # ; echo "$color_value"
-            # slice hex code to 8 bit pieces
-            _r="${color_value:0:2}"
-            _g="${color_value:2:2}"
-            _b="${color_value:4:2}" # ; echo "$_r:$_g:$_b"
-            # turn hex to dec
-            _r="$((16#$_r))"
-            _g="$((16#$_g))"
-            _b="$((16#$_b))"
-            # compose colorcode
-            color=$(printf '\033[38;2;%s;%s;%sm' "$_r" "$_g" "$_b")
-            color=${color//''/'\033'}  # bubblecum
-            # printout
-            #echo -e "$color $color_name $color_value"
-            gr.msg -n -v1 -V2 -c $color_name "."
-            gr.msg -n -v2 -c $color_name "$color_name "
-            # make style rc
-            printf "\texport C_%s='%s'\n" "${color_name^^}" "$color"  >> $_target_rc
-        done
+        # color name
+        color_name=$(echo $color_srt | cut -f1 -d "=") # ; echo "$color_srt"
+        color_name=${color_name//"rgb_"/""} # ; echo "$color_name"
+        color_list+=("$color_name")
+        # color value
+        color_value=$(echo $color_srt | cut -f2 -d "=") # ; echo "$color_value"
+        # slice hex code to 8 bit pieces
+        _r="${color_value:0:2}"
+        _g="${color_value:2:2}"
+        _b="${color_value:4:2}" # ; echo "$_r:$_g:$_b"
+        # turn hex to dec
+        _r="$((16#$_r))"
+        _g="$((16#$_g))"
+        _b="$((16#$_b))"
+        # compose color code
+        color=$(printf '\033[38;2;%s;%s;%sm' "$_r" "$_g" "$_b")
+        color=${color//''/'\033'}  # bubblecum
+        # printout
+        #echo -e "$color $color_name $color_value"
+        gr.msg -n -v1 -V2 -c $color_name "."
+        gr.msg -n -v2 -c $color_name "$color_name "
+        # make style rc
+        printf "\texport C_%s='%s'\n" "${color_name^^}" "$color"  >> $_target_rc
+    done
     local srt_list=${color_list[@]}
     printf "\texport GURU_COLOR_LIST=(%s)\n" "${srt_list}" >> $_target_rc
     printf 'fi\n\n' >> $_target_rc
@@ -304,7 +311,6 @@ config.push () {
             mkdir -p "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER"
         # "fi"
 
-
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
         "$GURU_CFG/$GURU_USER/" \
         "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/"
@@ -380,30 +386,28 @@ config.list() {
 }
 
 
-config.user () {
-# open user dialog to make changes to user.cfg
+config.dialog () {
+# open user dialog to make changes to configurations
 
-    local _config_file=$GURU_CFG/$GURU_USER/user.cfg
+    local module=user
+    [[ $1 ]] && module=$1
+    local target_config=$GURU_CFG/$GURU_USER/$module.cfg
 
-    if ! [[ -f $_config_file ]] ; then
-        if gr.ask "user configuration fur user did not found, create local config for $GURU_USER" ; then
-                mkdir -p $_config_file
-                cp $GURU_CFG/user-default.cfg $_config_file
-            else
-                return 0
-            fi
-        fi
-
-    gr.msg -v1 "checking dialog installation.."
+    if ! [[ $target_config ]] ; then
+        gr.ask "configuration file does not exist, create?" || return 0
+        printf '%s\n\n' "# guru-cli configuration file for $module module at $(date)" >$target_config
+        printf '%s\n%s\n' "[$module]" >>$target_config
+    fi
+    gr.msg -v2 "checking dialog installation.."
     dialog --version >>/dev/null || sudo apt install dialog
 
-    # open temporary file handle and redirect it to stdout
+    # open temporary file handle and redirect it to std out
     exec 3>&1
-    _new_file="$(dialog --editbox "$GURU_CFG/$GURU_USER/user.cfg" "0" "0" 2>&1 1>&3)"
+    _new_file="$(dialog --editbox "$GURU_CFG/$GURU_USER/$module.cfg" "0" "0" 2>&1 1>&3)"
     return_code=$?
+
     # close new file handle
     exec 3>&-
-
     clear
 
     if (( return_code > 0 )) ; then
@@ -411,18 +415,16 @@ config.user () {
             return 0
         fi
 
-    if gr.ask "overwrite settings" ; then
-            cp -f "$_config_file" "$GURU_CFG/$GURU_USER/user.cfg.backup"
-            gr.msg "backup saved $GURU_CFG/$GURU_USER/user.cfg.backup"
-            echo "$_new_file" >"$_config_file"
-            gr.msg -c white "configure saved, taking configuration in use.."
-            config.export
-            #gr.msg -c white "to save new configuration to sever type: '$GURU_CALL config push'"
-            config.push
-        else
-            gr.msg -c dark_golden_rod "ignored"
-            gr.msg -c white "to get previous configurations from sever type: '$GURU_CALL config pull'"
-        fi
+    cp -f "$target_config" "$GURU_CFG/$GURU_USER/$module.cfg.backup" && \
+        gr.msg -v2 "backup saved $GURU_CFG/$GURU_USER/$module.cfg.backup"
+
+    echo "$_new_file" >"$target_config" && \
+        gr.msg "$GURU_CFG/$GURU_USER/$module.cfg saved"
+
+    if gr.ask "take settings in use?" ; then
+        gr.msg -c white "configure saved, taking configuration in use.."
+        config.export
+    fi
     return 0
 }
 
@@ -497,51 +499,62 @@ config.rm () {
 
 
 config.change () {
-#  change user configuration value
+# change user configuration value to configuration file.
+# GURU_MODULE_KEY='value' Global variables do not include module name.
+# Value are optional, key is needed and module needs placeholder.
+# Target is user configuration in ~/.config/guru/<USER_NAME>
+# Default configuration is kept in ~/.config/guru and is overwritten during installation
 
     local module=$1
     shift
     local key=$1
     shift
     local value="$@"
+    local target_config=
 
+    # Check is user name and config folder variables filled
     if ! [[ $GURU_USER_NAME ]] || ! [[ -d $GURU_CFG ]];  then
         gr.msg "user '$GURU_USER_NAME' is not filled or config folder '$GURU_CFG', assuming that guru is not in installed/in use, exiting.."
+        # 101: guru not in use
         return 101
     fi
 
+    # re-ask module name if not given. Set module to system if still left empty
     [[ $module ]] || read -p "please insert target module name (if global variable, leave empty): " module
-    [[ $module ]] || module="user"
+    [[ $module ]] || module="system"
 
-    # check if user input module name or search term
+    # check is user module name, can be empty when setting global variables GURU_KEY
     if ! [[ "$module" == "system" ]] && ! [[ " ${GURU_MODULES[@]} " =~ " $module " ]]; then
         gr.msg -c error "module '$module' does not exist"
         return 102
     fi
 
+    # ask user to fulfill key name. GURU_MODULE_KEY or GURU_KEY
     [[ $key ]] || read -p "please insert key name: " key
     if ! [[ $key ]] ; then
         gr.msg -c error "key cannot be empty"
         return 103
     fi
 
-    #[[ $value ]] || read -p "please insert value: " value
+    # in bash 'false' is empty, therefore value can be empty
+    # [[ $value ]] || read -p "please insert value: " value
 
-    if [[ -f $GURU_CFG/$GURU_USER_NAME/$module.cfg ]]; then
-        local target_config="$GURU_CFG/$GURU_USER_NAME/$module.cfg"
-    else
-        local target_config="$GURU_CFG/$module.cfg"
-    fi
+    # header is not in use, did not found easy method to parse file under wanted header
+    target_config="$GURU_CFG/$GURU_USER_NAME/$module.cfg"
+    # [[ $module == "system" ]] || [[ $module == "user" ]] || header="$module"
 
-    [[ $module == "system" ]] || [[ $module == "user" ]] || header="$module"
+    # all needed variables filled, print is these out for debug use
+    gr.debug "$FUNCNAME: file:'$target_config', module:'$module', key:'$key', value:'$value'"
 
-    gr.debug "$FUNCNAME: file:'$target_config', module:'$module', header:'$header', key:'$key', value:'$value'"
-
+    # check configuration file is created
     if [[ -f $target_config ]]; then
 
+        # create list of matches
         IFS=$'\n'
         match=($(grep "${key}" $target_config))
         if [[ ${#match[@]} -gt 1 ]] ; then
+
+            # go trough matched lines and printout list with numbers
             for (( i = 0; i < ${#match[@]}; i++ )); do
                 gr.msg -n -h "$i: "
                 gr.msg -n -c list "$(cut -d"=" -f1 <<<${match[$i]})"
@@ -549,9 +562,12 @@ config.change () {
                 gr.msg -c aqua "$(cut -d"=" -f2 <<<${match[$i]})"
             done
             read -p "multiple matches, please select: " ans
+
+            # ask user to select line or quit
             case $ans in q*) return 0 ;; esac
             if [[ $ans -ge 0 ]] && [[ $ans -lt ${#match[@]} ]] ; then
 
+                # printout for debug and change matching line
                 gr.debug "$FUNCNAME command: sed -i s/${match[$ans]}/$(cut -d= -f1 <<<${match[$ans]})='${value}'/ $target_config"
                 sed -i "s/${match[$ans]}/$(cut -d"=" -f1 <<<${match[$ans]})='${value}'/" $target_config
                 return 0
@@ -560,14 +576,16 @@ config.change () {
                 return 1
             fi
         fi
-
+        # in case where there is only on matching line, just change it
         gr.debug "$FUNCNAME command: sed -i s/${key}=.*/${key}='${value}'/ $target_config"
         sed -i "s/${key}=.*/${key}='${value}'/" $target_config
     else
+    # create configuration file from // better to use template from parent directory?
         gr.msg -n "$target_config does not exist, creating.. "
+
         if touch $target_config ; then
-            echo "# $target_config $'\n'# guru-cli configuration file for $module module at $(date)" >$target_config
-            echo "[$header]$'\n'$key=$value$'\n'" >>$target_config
+            printf '%s\n\n' "# guru-cli configuration file for $module module at $(date)" >$target_config
+            printf '%s\n%s\n' "[$module]" "$key='$value'" >>$target_config
             gr.msg -c green "ok"
         else
             gr.msg -c error "error $? when creating file: $target_config"
