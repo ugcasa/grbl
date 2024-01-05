@@ -129,7 +129,7 @@ config.make_style_rc () {
     printf "\texport C_NORMAL=%s\n" "'\033[0m'"  >> $_target_rc
     printf "\texport C_HEADER=%s\n" "'\033[1;37m'" >> $_target_rc
     # parse trough color strings
-    color_name_list=$(set | grep rgb_ | grep -v grep | grep -v "   " )            # ; echo "$color_name_list"
+    color_name_list=$(set | grep rgb_ | grep -v grep | grep -v "   " ) # ; echo "$color_name_list"
     color_list=()
     for color_srt in ${color_name_list[@]} ; do
         # color name
@@ -148,7 +148,7 @@ config.make_style_rc () {
         _b="$((16#$_b))"
         # compose color code
         color=$(printf '\033[38;2;%s;%s;%sm' "$_r" "$_g" "$_b")
-        color=${color//''/'\033'}  # bubblecum
+        color=${color//''/'\033'}  # bubble cum
         # printout
         #echo -e "$color $color_name $color_value"
         gr.msg -n -v1 -V2 -c $color_name "."
@@ -248,8 +248,7 @@ config.export () {
         chmod +x "$_target_rc"
         source "$_target_rc"
 
-        ## TBD indicator.keyboard init > corsair.main init
-        # init corsair profile
+        # initialize corsair profile
         if [[ $GURU_CORSAIR_ENABLED ]] ; then
             source $GURU_BIN/corsair.sh
             corsair.main init
@@ -514,7 +513,8 @@ config.change () {
 
     # Check is user name and config folder variables filled
     if ! [[ $GURU_USER_NAME ]] || ! [[ -d $GURU_CFG ]];  then
-        gr.msg "user '$GURU_USER_NAME' is not filled or config folder '$GURU_CFG', assuming that guru is not in installed/in use, exiting.."
+        gr.msg "user '$GURU_USER_NAME' is not filled or config folder '$GURU_CFG', \
+                assuming that guru is not in installed/in use, exiting.."
         # 101: guru not in use
         return 101
     fi
@@ -637,8 +637,7 @@ EOL
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        #source $GURU_RC
-        config.main "$@"
-    fi
+    config.main "$@"
+fi
 
 
