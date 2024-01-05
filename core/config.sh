@@ -17,7 +17,7 @@ config.help () {
     gr.msg -v1 "commands:" -h
     gr.msg -v2
     gr.msg -v1 "  export         export configuration to environment"
-    gr.msg -v1 "  pull           poll user configuration from server"
+    gr.msg -v1 "  pull           pull user configuration from server"
     gr.msg -v1 "  push           push user configuration to server"
     gr.msg -v1 "  user           open user configuration in dialog"
     gr.msg -v1 "  edit           edit user config file with preferred editor"
