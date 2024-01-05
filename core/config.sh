@@ -1,11 +1,56 @@
 #!/bin/bash
 # guru-client configuration manager 2020 casa@ujo.guru
 
+config.help () {
+# general help
+
+    case $1 in
+        format|cfg|files)
+            config.help_format
+            return 0
+    esac
+
+    gr.msg -v1 "guru-client config module help " -h
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL config pull|push|edit|export|user|get|set|help" -h
+    gr.msg -v2
+    gr.msg -v1 "commands:" -h
+    gr.msg -v2
+    gr.msg -v1 "  export         export configuration to environment"
+    gr.msg -v1 "  pull           poll user configuration from server"
+    gr.msg -v1 "  push           push user configuration to server"
+    gr.msg -v1 "  user           open user configuration in dialog"
+    gr.msg -v1 "  edit           edit user config file with preferred editor"
+    gr.msg -v1 "  change         change variable in user configuration "
+    gr.msg -v2 "    <module> <key> <value>"
+    gr.msg -v1 "  get            get single value from environment"
+    gr.msg -v2 "    <key>"
+    gr.msg -v1 "  set            set value to user config and current environment"
+    gr.msg -v2 "    <key> <value>"
+    gr.msg -v1 "  rm             remove key value pair from environment"
+    gr.msg -v2 "    <key>"
+    gr.msg -v1 "  help           try '$GURU_CALL help -v2' full help" -V2
+    gr.msg -v1 "  help format    config file format information"
+    gr.msg -v2
+    gr.msg -v1 "examples:" -h
+    gr.msg -v2
+    gr.msg -v2 "set user settings"
+    gr.msg -v1 "  '$GURU_CALL config user'"
+    gr.msg -v2
+    gr.msg -v2 "get user and host specific settings from server"
+    gr.msg -v1 "  '$GURU_CALL config pull -h <host_name> -u <user_name>'"
+    gr.msg -v2
+    gr.msg -v2 "set user name to permanent configuration"
+    gr.msg -v1 "  '$GURU_CALL config change user full_name Martti Servo'"
+    gr.msg -v2
+}
+
+
 config.main () {
 # main comman parser
     local _cmd="$1" ; shift
     case "$_cmd" in
-            user|export|help|edit|get|set|pull|push)
+            user|export|help|edit|get|set|rm|pull|push|list|change)
                     config.$_cmd $@
                     return $?
                     ;;
@@ -18,41 +63,6 @@ config.main () {
                     return $?
                     ;;
         esac
-}
-
-
-config.help () {
-# general help
-
-    case $1 in
-        format|cfg|files)
-            config.help_format
-            return 0
-    esac
-
-    gr.msg -v1 "guru-client config help " -h
-    gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL config pull|push|edit|export|user|get|set|help" -h
-    gr.msg -v2
-    gr.msg -v1 "actions:" -h
-    gr.msg -v2
-    gr.msg -v1 " export        export configuration to environment"
-    gr.msg -v1 " pull          poll user configuration from server "
-    gr.msg -v1 " push          push user configuration to server "
-    gr.msg -v1 " user          open user configuration in dialog "
-    gr.msg -v1 " edit          edit user config file with preferred editor "
-    gr.msg -v1 " get           get single value from user config"
-    gr.msg -v1 " set           set value to user config and current environment "
-    gr.msg -v1 " help          try '$GURU_CALL help -v2' full help" -V2
-    gr.msg -v1 " help format   config file format information"
-    gr.msg -v2
-    gr.msg -v1 "examples:" -h
-    gr.msg -v2
-    gr.msg -v1 "set user settings:"
-    gr.msg -v1 "  '$GURU_CALL config user'"
-    gr.msg -v1 "get user and host specific settings from server:"
-    gr.msg -v1 "  '$GURU_CALL pull -h <host_name> -u <user_name>'"
-    gr.msg -v2
 }
 
 
@@ -250,9 +260,14 @@ config.export () {
 config.pull () {
 # pull configuration files from server
 
+    gr.debug "$FUNCNAME: rsync -rav --quiet -e ssh -p $GURU_ACCESS_PORT \
+              $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/ \
+              $GURU_CFG/$GURU_USER"
+
     gr.msg -v1 -n -V2 "pulling $GURU_USER@$GURU_HOSTNAME configs.. "
     gr.msg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
+
 
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
         "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/" \
@@ -272,6 +287,9 @@ config.pull () {
 config.push () {
 # save configuration to server
 
+    gr.debug "$FUNCNAME: rsync -rav --quiet -e ssh -p $GURU_ACCESS_PORT $GURU_CFG/$GURU_USER/ \
+              $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/"
+
     gr.msg -v1 -n -V2 "pushing $GURU_USER@$GURU_HOSTNAME configs.. "
     gr.msg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
@@ -285,6 +303,7 @@ config.push () {
             -p "$GURU_ACCESS_PORT" \
             mkdir -p "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER"
         # "fi"
+
 
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
         "$GURU_CFG/$GURU_USER/" \
@@ -321,6 +340,43 @@ config.edit () {
 
     gr.debug "${sortedfilearr[*]} Thanks RomanPerekhrest https://unix.stackexchange.com/questions/393987"
     $GURU_PREFERRED_EDITOR -n ${sortedfilearr[*]}
+}
+
+
+config.list() {
+
+    IFS=$'\n'
+    local search_term=""
+
+    # check if user input module name or search term
+    if [[ $1 ]] ; then
+        if [[ " ${GURU_MODULES[@]} " =~ " $1 " ]] ; then
+            search_term="$1_"
+        else
+            search_term="$1"
+        fi
+        shift
+    fi
+
+    # search variables
+    local global_variables=($(declare -xp | grep "GURU_${search_term^^}" | cut -d" " -f3-))
+
+    # go trough got guru variables
+    for variable in ${global_variables[@]} ; do
+
+        key=$(cut -d"=" -f1 <<< $variable)
+        value=$(cut -d"=" -f2- <<< $variable)
+
+        # printout key differently depending verbose level
+        gr.msg -v1 -V2 -n -c list "$key "
+        gr.msg -v2 -V3 -n -c list "$key"
+        gr.msg -v3 -n -c list "$key "
+        gr.msg -v2 -n -c dark_grey "="
+        gr.msg -v3 -n -c list " "
+
+        #printout key
+        gr.msg -c white "$value"
+    done
 }
 
 
@@ -374,9 +430,21 @@ config.user () {
 config.get (){
 # get environmental value of variable
 
-    [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
-    set | grep "GURU_${_variable^^}" | head -1 | cut -d "=" -f2
-    # set |grep "GURU_${_variable^^}"
+    IFS=$'\n'
+    local key=""
+
+    # check if user input module name or search term
+    if [[ $1 ]] ; then
+        key="$1"
+        shift
+    else
+        read -r -p "key: " key
+    fi
+
+    # get first match
+    return=$(declare -xp | grep "GURU_${key^^}" | head -n1 |cut -d" " -f3-)
+    gr.debug "$return"
+    gr.msg "$(cut -d"=" -f2 <<<$return)"
     return $?
 }
 
@@ -384,25 +452,133 @@ config.get (){
 config.set () {
 # change environment temporary
 
-    [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable
-    [[ "$2" ]] && _value="$2" || read -r -p "$_variable value: " _value
+    [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable ; shift
+    [[ "$1" ]] && _value="$@"
 
     #if ! cat $GURU_RC | grep "GURU_${_variable^^}=" >/dev/null; then
     if ! grep "GURU_${_variable^^}=" -q $GURU_RC ; then
-            gr.msg -c yellow "no variable 'GURU_${_variable^^}' found"
-            return 2
+            gr.msg -v2 -c yellow "variable 'GURU_${_variable^^}' not found"
+            if gr.ask "add new temporary key value pair 'GURU_${_variable^^}=${_value}' ? " ; then
+                gr.msg -v2 "setting GURU_${_variable^^} to '$_value'"
+                echo "GURU_${_variable^^}=${_value}" >>$GURU_RC
+                return 0
+            else
+                return 1
+            fi
         fi
 
-    #local _found=$(cat $GURU_RC | grep "GURU_${_variable^^}=" | cut -d '=' -f 2)
-    local _found=$(grep -q "GURU_${_variable^^}=" $GURU_RC | cut -d '=' -f 2)
+    local _found=$(grep "GURU_${_variable^^}=" $GURU_RC | cut -d '=' -f 2)
     sed -i "s/GURU_${_variable^^}=.*/GURU_${_variable^^}='${_value}'/" $GURU_RC
-    gr.msg -v1 "changing GURU_${_variable^^} from $_found to '$_value'"
+
+    gr.msg -v2 "changing GURU_${_variable^^} from $_found to '$_value'"
     source $GURU_RC
     return 0
 }
 
+
+config.rm () {
+# change environment temporary
+
+    [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable ; shift
+    [[ "$1" ]] && _value="$@"
+
+    #if ! cat $GURU_RC | grep "GURU_${_variable^^}=" >/dev/null; then
+    if grep "GURU_${_variable^^}=" -q $GURU_RC ; then
+        if gr.ask "remove key value pair 'GURU_${_variable^^}=${_value}' ? " ; then
+            sed -i "s/GURU_${_variable^^}=.*//" $GURU_RC
+            return 0
+        else
+            return 1
+        fi
+    else
+        gr.msg -v2 -c yellow "variable 'GURU_${_variable^^}' not found"
+    fi
+}
+
+
+config.change () {
+#  change user configuration value
+
+    local module=$1
+    shift
+    local key=$1
+    shift
+    local value="$@"
+
+    if ! [[ $GURU_USER_NAME ]] || ! [[ -d $GURU_CFG ]];  then
+        gr.msg "user '$GURU_USER_NAME' is not filled or config folder '$GURU_CFG', assuming that guru is not in installed/in use, exiting.."
+        return 101
+    fi
+
+    [[ $module ]] || read -p "please insert target module name (if global variable, leave empty): " module
+    [[ $module ]] || module="user"
+
+    # check if user input module name or search term
+    if ! [[ "$module" == "system" ]] && ! [[ " ${GURU_MODULES[@]} " =~ " $module " ]]; then
+        gr.msg -c error "module '$module' does not exist"
+        return 102
+    fi
+
+    [[ $key ]] || read -p "please insert key name: " key
+    if ! [[ $key ]] ; then
+        gr.msg -c error "key cannot be empty"
+        return 103
+    fi
+
+    #[[ $value ]] || read -p "please insert value: " value
+
+    if [[ -f $GURU_CFG/$GURU_USER_NAME/$module.cfg ]]; then
+        local target_config="$GURU_CFG/$GURU_USER_NAME/$module.cfg"
+    else
+        local target_config="$GURU_CFG/$module.cfg"
+    fi
+
+    [[ $module == "system" ]] || [[ $module == "user" ]] || header="$module"
+
+    gr.debug "$FUNCNAME: file:'$target_config', module:'$module', header:'$header', key:'$key', value:'$value'"
+
+    if [[ -f $target_config ]]; then
+
+        IFS=$'\n'
+        match=($(grep "${key}" $target_config))
+        if [[ ${#match[@]} -gt 1 ]] ; then
+            for (( i = 0; i < ${#match[@]}; i++ )); do
+                gr.msg -n -h "$i: "
+                gr.msg -n -c list "$(cut -d"=" -f1 <<<${match[$i]})"
+                gr.msg -n -c dark_grey "="
+                gr.msg -c aqua "$(cut -d"=" -f2 <<<${match[$i]})"
+            done
+            read -p "multiple matches, please select: " ans
+            case $ans in q*) return 0 ;; esac
+            if [[ $ans -ge 0 ]] && [[ $ans -lt ${#match[@]} ]] ; then
+
+                gr.debug "$FUNCNAME command: sed -i s/${match[$ans]}/$(cut -d= -f1 <<<${match[$ans]})='${value}'/ $target_config"
+                sed -i "s/${match[$ans]}/$(cut -d"=" -f1 <<<${match[$ans]})='${value}'/" $target_config
+                return 0
+            else
+                gr.msg -c error "non valid answer, canceling.. "
+                return 1
+            fi
+        fi
+
+        gr.debug "$FUNCNAME command: sed -i s/${key}=.*/${key}='${value}'/ $target_config"
+        sed -i "s/${key}=.*/${key}='${value}'/" $target_config
+    else
+        gr.msg -n "$target_config does not exist, creating.. "
+        if touch $target_config ; then
+            echo "# $target_config $'\n'# guru-cli configuration file for $module module at $(date)" >$target_config
+            echo "[$header]$'\n'$key=$value$'\n'" >>$target_config
+            gr.msg -c green "ok"
+        else
+            gr.msg -c error "error $? when creating file: $target_config"
+            return 110
+        fi
+    fi
+}
+
+
 config.help_format() {
-    gr.msg -v1 "guru-client config file format information " -h
+    gr.msg -v1 "guru-client configuration file format information " -h
     cat << EOL
 
     Two different configuration file types are supported.
