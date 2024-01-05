@@ -190,8 +190,12 @@ gr.help () {
 gr.dump () {
 # dump environmental status to file
     # TBD revisit this
-    echo "core dumped to $GURU_CORE_DUMP"
-    set > "$GURU_CORE_DUMP"
+    echo "core dumped to /tmp/guru_dump"
+    set > "/tmp/guru_dump"
+    echo "environment  lines $(set | wc | xargs)"  >> "/tmp/guru_dump"
+    getconf -a | grep ARG_MAX >> "/tmp/guru_dump"
+    true | xargs --show-limits >> "/tmp/guru_dump"
+    exit 0
 }
 
 
@@ -276,11 +280,13 @@ gr.msg () {
     local _indicator_key=
     local _color_only=
     local _c_var=
-    local _column_width
+    local _column_width=
+    local _debug=
+    local _error=
     local _return=
 
     # parse flags
-    TEMP=`getopt --long -o "tlsrnhNx:w:V:v:c:C:q:k:m:" "$@"`
+    TEMP=`getopt --long -o "tlsrnhNde:x:w:V:v:c:C:q:k:m:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
@@ -293,6 +299,8 @@ gr.msg () {
             -n ) _newline=                                  ; shift ;;
             -r ) _return="\r" ;_newline=                    ; shift ;;
             -N ) _pre_newline="\n"                          ; shift ;;
+            -d ) _debug=true                                ; shift ;;
+            -e ) _error=$2                                  ; shift 2 ;;
             -x ) _exit=$2                                   ; shift 2 ;;
             -w ) _column_width=$2                           ; shift 2 ;;
             -V ) verbose_limiter=$2                         ; shift 2 ;;
@@ -316,6 +324,14 @@ gr.msg () {
     # --) check message for long parameters (don't remember why like this)
     local _arg="$@"
     [[ "$_arg" != "--" ]] && _message="${_arg#* }"
+
+    # -d) debug messages to stderr
+    if [[ $_debug ]] ; then
+        _c_var="C_FUCHSIA"
+        _color_code=${!_c_var}
+        >&2 printf "$_color_code%s\033[0m" "${_message}"
+        return 0
+    fi
 
     # -x) add exit code to message
     [[ $_exit -gt 0 ]] && _message="$_exit: $_message"
@@ -365,6 +381,25 @@ gr.msg () {
     # -w) fill message length to column limiter
     if ! [[ $_column_width ]] ; then
         _column_width=${#_message}
+    fi
+
+    # -e) error messages to stderr
+    if [[ $_error ]] ; then
+        if [[ $GURU_COLOR ]] && ! [[ $GURU_VERBOSE -eq 0 ]]; then
+            case $_error in
+                0) _c_var="C_WHITE" ;;
+                1) _c_var="C_YELLOW" ;;
+                2) _c_var="C_ORANGE" ;;
+                3) _c_var="C_RED" ;;
+                4) _c_var="C_FUCHSIA" ;;
+                ""|*) _c_var="C_YELLOW" ; _message="undefined error" ; _column_width=${#_message};;
+            esac
+            _color_code=${!_c_var}
+            >&2 printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message}"
+        else
+            >&2 printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_column_width}"
+        fi
+        return 0
     fi
 
     # -c) color printout
@@ -504,7 +539,7 @@ gr.ind () {
 
 
 gr.ask () {
-# yes or no with blinky bling. if first is number 1-99 it is set as timeout
+# yes or no with y and n bling on keyboard
 
     local _answer=
     local _def_answer='n'
@@ -553,7 +588,7 @@ gr.ask () {
         _message="$_message ($_timeout sec timeout)"
      fi
 
-    # make y and n blinky on keyboard
+    # make y and n blink on keyboard
     if [[ GURU_CORSAIR_ENABLED ]] ; then
         source corsair.sh
         corsair.indicate yes y 2>/dev/null >/dev/null
@@ -570,11 +605,19 @@ gr.ask () {
     # ask from user
     [[ $_read_it ]] && espeak "$_message" #& >/dev/null
 
-    # clorize message
+    # colorize message
     [[ $GURU_COLOR ]] && _message="$(gr.msg -n -c gold $_message)"
 
     # ask the question
-    read $_options -n 1 -p "${_message} $_box" _answer
+    if [[ $GURU_FORCE ]] ; then
+        _answer=y
+    else
+        read $_options -n 1 -p "${_message} $_box" _answer
+        echo
+    fi
+
+    # fulfill default answer
+    _answer="${_answer:-$_def_answer}"
 
     # stop blinking the keys
     if [[ GURU_CORSAIR_ENABLED ]] ; then
@@ -582,11 +625,7 @@ gr.ask () {
         corsair.blink_stop n
     fi
 
-    # sense timeout
-    (( $? > 128 )) && _answer=$_def_answer
-    echo
-
-    # return for callers if statment
+    # return for callers if statement
     case ${_answer^^} in Y)
         [[ $_read_it ]] && espeak "yes" #& >/dev/null
         return 0
@@ -625,9 +664,20 @@ gr.kv() {
 gr.kvt () {
 # print key value pair list
     input=($@)
-    for (( i = 0; i < ${#input[@]}; i + 1 )); do
+    for (( i = 0; i < ${#input[@]}; i++ )); do
         gr.kv "${input[$i]}" "${input[$(($i+1))]}"
-        i=$(( i + 2 ))
+        i=$(( i + 1 ))
+    done
+}
+
+
+gr.kvp () {
+# print key value pairs based list of variable names
+    input=($@)
+    for (( i = 0 ; i < ${#input[@]} ; i++ )); do
+        gr.msg -n -c light_blue "${input[$i]}"
+        gr.msg -n -c white " = "
+        gr.msg -c aqua_marine "$(eval echo '$'${input[$i]})"
     done
 }
 
@@ -797,10 +847,9 @@ gr.debug2 () {
 
 gr.debug () {
 # printout debug messages
-    # local colors=(white red dark_orange orange salmon moccasin)
     if [[ $GURU_DEBUG ]] ; then
-        gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n
-        echo ${@}
+        gr.msg -d "${FUNCNAME[0]^^}: "
+        >&2 echo ${@}
     fi
 }
 
