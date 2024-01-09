@@ -2,14 +2,13 @@
 
 #source common.sh
 
+declare -g yle_rc="/tmp/guru-cli_yle.rc"
 declare -g yle_run_folder="$(pwd)"
-declare -g yle_temp="$HOME/tmp/yle"
-declare -g yle_media_title="no media"
+declare -g yle_playlist_folder="$GURU_DATA/yle/playlists"
+declare -g yle_temp_folder="$HOME/tmp/yle"
 declare -g yle_episodes=()
 declare -g yle_media_address=
 declare -g yle_media_filename=
-declare -g yle_playlist_folder=$GURU_DATA/yle/playlists
-declare -g base_url="https://areena.yle.fi/"
 
 yle.help () {
 
@@ -70,9 +69,9 @@ yle.main () {
             ;;
 
         play)
-            # echo "$1" | grep "https://" && base_url="" || base_url="https://areena.yle.fi/" >/dev/null
-            # gr.msg "getting from url $base_url$1"
-            yle-dl --pipe "$base_url$1" 2>/dev/null | mpv -
+            # echo "$1" | grep "https://" && $GURU_YLE_BASE_URL="" || $GURU_YLE_BASE_URL="https://areena.yle.fi/" >/dev/null
+            # gr.msg "getting from url ${GURU_YLE_BASE_URL%/}$1"
+            yle-dl --pipe "${GURU_YLE_BASE_URL%/}$1" 2>/dev/null | mpv -
             return $?
             ;;
 
@@ -164,10 +163,19 @@ yle.podcast () {
     declare -g json_folder="$GURU_DATA/yle/podcasts"
     declare -ag episode_list=()
     declare -g serie_id="single"
-    declare -g podcast_json=
-    declare -g episode_url=
+    declare -g selected_podcast_file=
     declare -g selection=0
-    declare -ag titles descriptions duration published
+    declare -g podcast_name=
+    # podcast episode variables for menu
+    declare -ag title description duration published webpage episode_url
+    # podcast list variables for selector
+    declare -ag podcast_episde_amount podcast_files podcast_list_title
+
+    # initialize
+    [[ -d $json_folder ]] || mkdir -p $json_folder
+
+    #colors
+
 
     podcast.get () {
     # get episode or or list of episodes by url given
@@ -179,15 +187,13 @@ yle.podcast () {
             read -p "Annan sarjan koontisivu tai sivun id: " got
         fi
 
-        local base_url=https://areena.yle.fi/podcastit/
-
-        if [[ $got =~ "$base_url" ]] ; then
+        if [[ $got =~ "${GURU_YLE_PODCAST_URL%/}" ]] ; then
            areena_url=$got
         else
-            areena_url=$base_url$got
+            areena_url=${GURU_YLE_PODCAST_URL%/}/$got
         fi
 
-        gr.debug "$FUNCNAME got: $areena_url"
+        gr.debug "$FUNCNAME GURU_YLE_PODCAST_URL:${GURU_YLE_PODCAST_URL%/}, areena_url: $areena_url"
 
         # all program_id's start with '1-'
         if ! [[ "$areena_url" =~ "/1-" ]] ; then
@@ -207,7 +213,7 @@ yle.podcast () {
         # check did episode_list list is single or list of episodes
         if [[ ${#episode_list[@]} -gt 1 ]] ; then
             serie_id=${areena_url##*/}
-            podcast_json=$json_folder/$serie_id.json
+            selected_podcast_file=$json_folder/$serie_id.json
             gr.debug "found ${#episode_list[@]} episodes"
 
         elif [[ ${#episode_list[@]} == 1 ]] ; then
@@ -225,84 +231,89 @@ yle.podcast () {
         return 0
     }
 
-    podcast.collect () {
+    podcast.build () {
     # play list of episodes given in episode_list variable
-        if [[ -f $podcast_json ]] ; then
-            gr.ask "database found, overwrite $podcast_json?" || return 0
+        if [[ -f $selected_podcast_file ]] ; then
+            gr.ask "database found, overwrite $selected_podcast_file?" || return 0
         fi
 
-        gr.debug "$FUNCNAME got: ${episode_list[@]} json:$podcast_json"
+        gr.debug "$FUNCNAME got: ${episode_list[@]} json:$selected_podcast_file"
 
         gr.msg -v2 -h "building database for ${#episode_list[@]} episodes:"
         gr.msg -V2 -n "building database for ${#episode_list[@]} episodes "
         for (( i = 0; i < ${#episode_list[@]}; i++ )); do
             gr.msg -v2 -c dark_grey "$i ${episode_list[$i]}"
-            yle-dl --showmetadata ${episode_list[$i]} | jq -s 'flatten' >>$podcast_json
+            yle-dl --showmetadata ${episode_list[$i]} | jq -s 'flatten' >>$selected_podcast_file
             gr.msg -V2 -n -c dark_grey "."
         done
         gr.msg -c green "ok"
     }
 
+    podcast.update () {
+    # read database
+        local _title=
+        podcast_list_title=()
+        podcast_files=($(find $json_folder -maxdepth 1 -type f))
+        for file in ${podcast_files[@]} ; do
+            _title="$(jq '.[] | .episode_title' "$file" | head -n1 | cut -d':' -f1 )"
+            _title=${_title//'–'/'-'}
+            podcast_list_title+=("${_title//'"'}")
+            podcast_episde_amount+=($(jq length $file | wc -l))
+        done
+    }
+
     podcast.select () {
     # select from known series
-        [[ -d $json_folder ]] || mkdir -p $json_folder
-        local titles=()
-        local title=
-        selection=0
-        podcast_json=
 
-        select.update () {
-        # read database
-            titles=()
-            podcast_files=($(find $json_folder -maxdepth 1 -type f | sort ))
-            for file in ${podcast_files[@]} ; do
-                title="$(jq '.[] | .episode_title' "$file" | head -n1 | cut -d':' -f1 )"
-                titles+=("${title//'"'}")
-                lenghts+=($(jq length $file | wc -l))
-            done
-        }
+        local selection=0
+        local pre_selection=
 
-        select.printout ()  {
+        select.list ()  {
         # printout list of known series
-           [[ $GURU_DEBUG ]] || clear
-           gr.msg -h "yle.areena podcasts"
-            for (( i = 0; i < ${#titles[@]}; i++ )); do
+            local _title=
+            [[ $GURU_DEBUG ]] || clear
+            gr.msg -h "yle.areena podcasts"
+            for (( i = 0; i < ${#podcast_list_title[@]}; i++ )); do
 
-                title=${titles[$i]}
+                _title=${podcast_list_title[$i]}
                 gr.msg -n -h -w4 "${i})"
-                gr.msg -n -c list "$title"
-                gr.msg -n -v2 -c  dark_grey " (${lenghts[$i]})"
+                gr.msg -n -c list "$_title"
+                gr.msg -n -v2 -c dark_grey " (${podcast_episde_amount[$i]})"
                 gr.msg
 
-                if [[ $1 ]] && [[ ${title,,} == $1* ]] ; then
-                        podcast_json=${podcast_files[$i]}
+                if [[ $1 ]] && [[ ${_title,,} == $1* ]] ; then
+                        selected_podcast_file=${podcast_files[$i]}
+                        pre_selection=true
                         break
                 fi
             done
-            gr.msg -v1 -c dark_grey "(a)dd, (r)emove, (u)pdate, (v)erbosity (q)uit or (0..$((${#titles[@]}-1)))"
+            gr.msg -v1 -c dark_grey "(a)dd, (r)emove, (u)pdate, (v)erbosity (q)uit or (0..$((${#podcast_list_title[@]}-1)))"
         }
 
-        select.update
+
+        # need to update only once during session
+        [[ $podcast_name ]] || podcast.update
+
         # select series file
         while true ; do
 
-            select.printout
-            [[ $podcast_json ]] && break
+            select.list
+            [[ $pre_selection ]] && [[ $selected_podcast_file ]] && break
             read -p "select: " selection
 
             case $selection in
                 [0-9]|1[0-9]|2[0-9]|3[0-9])
-                    if [[ $selection -ge 0 ]] && [[ $selection -lt ${#titles[@]} ]] ; then
-                        podcast_json=${podcast_files[$selection]}
+                    if [[ $selection -ge 0 ]] && [[ $selection -lt ${#podcast_list_title[@]} ]] ; then
+                        selected_podcast_file=${podcast_files[$selection]}
                         break
                     fi
                     ;;
                 a)
                     podcast.get $@
-                    podcast.collect
+                    podcast.build
                     ;;
                 u)
-                    select.update
+                    podcast.update
                     ;;
                 v)  read -p "select verbosity: " selection
                     if [[ $selection -ge 0 ]] && [[ $selection -lt 3 ]] ; then
@@ -310,14 +321,13 @@ yle.podcast () {
                     fi
                     ;;
                 r)  read -p "podcast to remove: " selection
-                    if [[ $selection -ge 0 ]] && [[ $selection -lt ${#titles[@]} ]] ; then
-                        if gr.ask "remove ${titles[$selection]}?" ; then
+                    if [[ $selection -ge 0 ]] && [[ $selection -lt ${#podcast_list_title[@]} ]] ; then
+                        if gr.ask "remove ${podcast_list_title[$selection]}?" ; then
                             gr.debug "$FUNCNAME rm :${podcast_files[$selection]}"
                             rm ${podcast_files[$selection]}
                         fi
                     fi
-                    select.update
-
+                    podcast.update
                     ;;
                 q)
                     exit 0
@@ -327,42 +337,60 @@ yle.podcast () {
             esac
         done
 
-        gr.debug "$FUNCNAME podcast_json:'$podcast_json'"
+        gr.debug "$FUNCNAME selected_podcast_file:'$selected_podcast_file'"
         return 0
     }
 
     podcast.episodes () {
 
         IFS=$'\n'
-        titles=($(jq '.[] | .episode_title' $podcast_json))
-        descriptions=($(jq '.[] | .description' $podcast_json))
-        episode_url=($(jq '.[] | .flavors[] | .url' $podcast_json))
-        duration=($(jq '.[] | .duration_seconds' $podcast_json))
-        published=($(jq '.[] | .publish_timestamp' $podcast_json))
-        webpage=($(jq '.[] | .webpage' $podcast_json))
+        published=($(jq '.[] | .publish_timestamp' $selected_podcast_file))
+        title=($(jq '.[] | .episode_title' $selected_podcast_file))
+        description=($(jq '.[] | .description' $selected_podcast_file))
+        duration=($(jq '.[] | .duration_seconds' $selected_podcast_file))
+        webpage=($(jq '.[] | .webpage' $selected_podcast_file))
+        episode_url=($(jq '.[] | .flavors[] | .url' $selected_podcast_file))
 
-        local series=$(cut -d":" -f1 <<<${titles[0]//'"'})
-
+        # podcast name
         [[ $GURU_DEBUG ]] || clear
-        gr.msg -h "$series"
+        podcast_name=$(cut -d":" -f1 <<<${title[0]//'"'})
+        gr.msg -h "${podcast_name//'–'/'-'}"
 
-        [[ ${#titles[@]} -lt 10 ]] && width=3
-        [[ ${#titles[@]} -gt 9 ]] && width=4
-        [[ ${#titles[@]} -gt 99 ]] && width=5
+        # date stamp width
+        [[ ${#title[@]} -lt 10 ]] && width=3
+        [[ ${#title[@]} -gt 9 ]] && width=4
+        [[ ${#title[@]} -gt 99 ]] && width=5
 
-        for (( i = 0; i < ${#titles[@]}; i++ )); do
-            title=${titles[$i]//$series: } ; title=${title//'"'}
-            duration=$((${duration[$i]} / 60 ))
-            date=$(date -d ${published[$i]//'"'} +%d.%m.%Y)
-            description=${descriptions[$i]//'\n'/' '}
+        for (( i = 0; i < ${#title[@]}; i++ )); do
 
+            # clean up and formatting
+            published[$i]=$(date -d ${published[$i]//'"'} +%d.%m.%Y)
+            title[$i]=${title[$i]//$podcast_name: }
+                title[$i]=${title[$i]//'"'}
+                title[$i]=${title[$i]//' _'}
+                title[$i]=${title[$i]//'–'/'-'}
+                title[$i]=${title[$i]//'\'/'”'}
+                title[$i]=${title[$i]//'  '/' '}
+                title[$i]=${title[$i]//'*'}
+                title[$i]=${title[$i]//'’'/"'"}
+            description[$i]=${description[$i]//'\n\n'/' '}
+                description[$i]=${description[$i]//'\n'/' '}
+                description[$i]=${description[$i]//'\r\r'/ }
+                description[$i]=${description[$i]//'\r'}
+                description[$i]=${description[$i]//'  '/' '}
+                description[$i]=${description[$i]//'//'/'/'}
+            duration[$i]=$((${duration[$i]} / 60 ))
+            webpage[$i]=${webpage[$i]//'"'}
+            episode_url[$i]=${episode_url[$i]//'"'}
+
+            # printout
             gr.msg -h -n -w$width "$(($i+1)))"
-            gr.msg -v2 -n -w11 -c dark_grey "$date "
-            gr.msg -n -c list "$title "
-            gr.msg -n -v2 -c dark_grey "$duration min"
+            gr.msg -v2 -n -w11 -c dark_grey "${published[$i]} "
+            gr.msg -n -c list "${title[$i]} "
+            gr.msg -n -v2 -c dark_grey "${duration[$i]} min"
             gr.msg
-            gr.msg -v3 -n -c grey "$description"
-            gr.msg -v3 -n -c dark_grey " ${webpage[$i]//'"'}"
+            gr.msg -v3 -n -c grey "${description[$i]}"
+            gr.msg -v3 -n -c dark_grey " ${webpage[$i]}"
             gr.msg -v3 -N
         done
     }
@@ -375,17 +403,17 @@ yle.podcast () {
         # now playing for other modules
         audio.stop
         flag.set audio_stop
-        local np="${titles[$item]//'"'} [$1/${#titles[@]}]"
+        local np="${title[$item]} [$1/${#title[@]}]"
         echo ${np} >$GURU_AUDIO_NOW_PLAYING
 
         # printout user view
         gr.msg -N -h ${np}
-        local description=${descriptions[$item]//'\n'}
-        gr.msg -n -c grey ${description//'"'}
-        gr.msg -c dark_grey " ${webpage[$item]//'"'}"
+
+        gr.msg -n -c grey "${description[$item]}"
+        gr.msg -c dark_grey " ${webpage[$item]}"
 
         # play item
-        mpv ${episode_url[$item]//'"'}
+        mpv ${episode_url[$item]}
         [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
     }
 
@@ -401,10 +429,10 @@ yle.podcast () {
 
         podcast.episodes
         local loops=3
-        local max=$((${#titles[@]}))
+        local max=$((${#title[@]}))
         while true ; do
 
-            gr.msg -v1 -c dark_grey "(n)ext, (p)revious, (c)ontinuous, (l)ist, (d)escriptions, (s)eries, (a)dd, (q)uit or (1..$max)"
+            gr.msg -v1 -c dark_grey "(n)ext, (p)revious, (c)ontinuous, (l)ist, (d)escriptions, (s)eries, (a)dd, (u)pdate, (q)uit or (1..$max)"
             if [[ $timeout ]] ; then
                 read -p "[$item/$max] continue ${timeout}s: " -t $timeout selection
             else
@@ -414,17 +442,13 @@ yle.podcast () {
 
             case $selection in
                 [0-9]|[1-9][0-9]|[1-9][0-9][0-9])
-                    if [[ $selection -ge 1 ]] && [[ $selection -le $max ]] ; then
-                        item=$selection
-                    else
-                        continue
-                    fi
-                    ;;
+                    [[ $selection -ge 1 ]] && [[ $selection -le $max ]] && item=$selection || continue ;;
                 n)  [[ $item -lt $max ]] && item=$(( item + 1 )) || continue ;;
                 p)  [[ $item -gt 1 ]] && item=$(( item - 2 )) || continue ;;
                 l)  export GURU_VERBOSE=2 ; podcast.episodes ; continue ;;
+                u)  podcast.update ; podcast.episodes ; continue ;;
                 s)  podcast.select ; podcast.menu ;;
-                a)  podcast.get ; podcast.collect ; podcast.select ; podcast.menu ;;
+                a)  podcast.get ; podcast.build ; podcast.select ; podcast.menu ;;
                 d)  [[ $GURU_VERBOSE -gt 2 ]] && export GURU_VERBOSE=2 || export GURU_VERBOSE=3 ; podcast.episodes ; continue ;;
                 c)  ! [[ $timeout ]] && timeout=5 || timeout= ; continue ;;
                 q*)  exit 0 ;;
@@ -457,7 +481,7 @@ yle.podcast () {
 
         add)
             podcast.get $@
-            podcast.collect
+            podcast.build
             ;;
         play)
             podcast.select $1
@@ -723,19 +747,20 @@ yle.make_playlist () {
 yle.get_metadata () {
 
     local error=
-    local meta_data="$yle_temp/meta.json"
+    local meta_data="$yle_temp_folder/meta.json"
+    local yle_media_title="no media"
 
     # make temp if not exist already
-    [[ -d "$yle_temp" ]] || mkdir -p "$yle_temp"
-    cd "$yle_temp"
+    [[ -d "$yle_temp_folder" ]] || mkdir -p "$yle_temp_folder"
+    cd "$yle_temp_folder"
 
-    local base_url="https://areena.yle.fi/"
+    #local $GURU_YLE_BASE_URL="https://areena.yle.fi/"
     # do not add base url if it already given
     if echo $1 | grep "http" ; then
-            base_url=
+            media_url=$1
         fi
 
-    media_url="$base_url$1"
+    media_url="${GURU_YLE_BASE_URL%/}$1"
 
     gr.msg -v3 -c deep_pink "media_url: $media_url"
 
@@ -813,9 +838,9 @@ yle.get_media () {
 yle.get_subtitles () {
 
 
-    [ -d "$yle_temp" ] && rm -rf "$yle_temp"
-    mkdir -p "$yle_temp"
-    cd "$yle_temp"
+    [ -d "$yle_temp_folder" ] && rm -rf "$yle_temp_folder"
+    mkdir -p "$yle_temp_folder"
+    cd "$yle_temp_folder"
     yle-dl "$media_url" --subtitlesonly #2>/dev/null
     #yle_media_filename=$(detox -v * | grep -v "Scanning")
     #yle_media_filename=${yle_media_filename#*"-> "}
@@ -930,11 +955,44 @@ yle.uninstall(){
 }
 
 
+yle.rc () {
+# source configurations (to be faster)
+
+    if [[ ! -f $yle_rc ]] \
+        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/yle.cfg) - $(stat -c %Y $yle_rc) )) -gt 0 ]] \
+        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/audio.cfg) - $(stat -c %Y $yle_rc) )) -gt 0 ]]
+        then
+            yle.make_rc && \
+                gr.msg -v1 -c dark_gray "$yle_rc updated"
+        fi
+
+    source $yle_rc
+}
+
+
+yle.make_rc () {
+# configure yle module
+
+    source config.sh
+
+    # make rc out of config file and run it
+    if [[ -f $yle_rc ]] ; then
+            rm -f $yle_rc
+        fi
+
+    config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $yle_rc
+    config.make_rc "$GURU_CFG/$GURU_USER/yle.cfg" $yle_rc append
+    chmod +x $yle_rc
+    source $yle_rc
+}
+
+yle.rc
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # source "$GURU_RC"
     yle.main "$@"
 fi
-
+# local $GURU_YLE_BASE_URL
 
 # same but for youtube
 
