@@ -9,6 +9,7 @@ declare -g yle_episodes=()
 declare -g yle_media_address=
 declare -g yle_media_filename=
 declare -g yle_playlist_folder=$GURU_DATA/yle/playlists
+declare -g base_url="https://areena.yle.fi/"
 
 yle.help () {
 
@@ -24,6 +25,7 @@ yle.help () {
     gr.msg -v1 "  radio <station>     listen radio <station>"
     gr.msg -v1 "  news                play latest yle tv news "
     gr.msg -v1 "  episodes <url>      get episodes of collection page"
+    gr.msg -v1 "  sort                sort files in folder based on yle timestamp"
     gr.msg -v1 "  sub <id|url>        get subtitles for video"
     gr.msg -v1 "  playlist <name>     play playlist"
     gr.msg -v2 "    list              list of playlists"
@@ -50,21 +52,21 @@ yle.help () {
 
 yle.main () {
 
-    local command=$1
-    shift
+    yle.arguments $@
+    gr.debug "$FUNCNAME command: ${module_command[@]:0:1} transfer:${module_command[@]:1}"
 
-    case "$command" in
+    case ${module_command[@]:0:1} in
 
         listen|radio)
-            yle.radio_listen $@
+            yle.radio_listen ${module_command[@]:1}
             ;;
 
         list|playlist)
-            yle.playlist $@
+            yle.playlist ${module_command[@]:1}
             ;;
 
-        install|uninstall|upgrade)
-            yle.$command $@
+        podcast|install|uninstall|upgrade|sort)
+            yle.${module_command[@]:0:1} ${module_command[@]:1}
             ;;
 
         play)
@@ -75,7 +77,7 @@ yle.main () {
             ;;
 
         get|dl|download)
-            for item in "$@"
+            for item in "${module_command[@]}"
                 do
                    yle.get_metadata "$item" || return 127
                    yle.get_media
@@ -93,7 +95,7 @@ yle.main () {
 
         episode|episodes)
 
-            yle.get_metadata $@ || return 127
+            yle.get_metadata ${module_command[@]} || return 127
 
             if ! [[ $yle_episodes ]] ; then
                 gr.msg -c white "single episode"
@@ -120,7 +122,7 @@ yle.main () {
             ;;
 
         subtitle|subtitles|sub|subs)
-            yle.get_metadata $command || return 127
+            yle.get_metadata ${module_command[@]} || return 127
             yle.get_subtitles
             yle.place_media "$yle_run_folder"
             ;;
@@ -129,18 +131,18 @@ yle.main () {
 
         meta|data|metadata|information|info)
 
-            for item in "$@"
+            for item in "${module_command[@]}"
                 do
                    yle.get_metadata $item && yle.get_media
                 done
             ;;
 
         help)
-            yle.help $@
+            yle.help ${module_command[@]}
             ;;
 
         *)
-            for item in "$@"
+            for item in "${module_command[@]}"
                 do
                    yle.get_metadata $item
                 done
@@ -149,6 +151,289 @@ yle.main () {
         esac
 
     return 0
+}
+
+
+yle.podcast () {
+# play yle.areena podcasts
+
+    source audio.sh
+    source flag.sh
+    declare -g areena_url=
+    declare -g temp_playlist="$GURU_DATA/yle/playlists/temp.playlist"
+    declare -g json_folder="$GURU_DATA/yle/podcasts"
+    declare -ag episode_list=()
+    declare -g serie_id="single"
+    declare -g podcast_json=
+    declare -g episode_url=
+    declare -g selection=0
+    declare -ag titles descriptions duration published
+
+    podcast.get () {
+    # get episode or or list of episodes by url given
+    # returns episode list in global episode_list variable
+
+        local got=$1
+
+        if ! [[ $got ]]; then
+            read -p "Annan sarjan koontisivu tai sivun id: " got
+        fi
+
+        local base_url=https://areena.yle.fi/podcastit/
+
+        if [[ $got =~ "$base_url" ]] ; then
+           areena_url=$got
+        else
+            areena_url=$base_url$got
+        fi
+
+        gr.debug "$FUNCNAME got: $areena_url"
+
+        # all program_id's start with '1-'
+        if ! [[ "$areena_url" =~ "/1-" ]] ; then
+            gr.msg -e1 "not a stream page"
+            return 101
+        fi
+
+        episode_list=($(yle-dl --showepisodepage $areena_url 2>&1))
+
+        # check is program_id valid (yle-dl crashes if not)
+        _error=$?
+        if [[ $_error -gt 0 ]] ; then
+            gr.msg -e1 "non valid url got $_error from yle-dl"
+            return 102
+        fi
+
+        # check did episode_list list is single or list of episodes
+        if [[ ${#episode_list[@]} -gt 1 ]] ; then
+            serie_id=${areena_url##*/}
+            podcast_json=$json_folder/$serie_id.json
+            gr.msg -e0 "found ${#episode_list[@]} episodes"
+
+        elif [[ ${#episode_list[@]} == 1 ]] ; then
+            gr.msg -e0 "single episode "
+
+            if [[ "$episode_list" == "$areena_url" ]] ; then
+                gr.debug "given url is single episode page"
+            fi
+        else
+            gr.msg -e1 "got nothing"
+            return 103
+        fi
+
+        echo ${episode_list[@]} >/home/casa/guru/.data/yle/playlists/playlist
+        return 0
+    }
+
+    podcast.collect () {
+    # play list of episodes given in episode_list variable
+        if [[ -f $podcast_json ]] ; then
+            gr.ask "overwrite current?" || return 0
+        fi
+
+        gr.debug "$FUNCNAME got: ${episode_list[@]} json:$podcast_json"
+
+        gr.msg -v2 -h "building ${#episode_list[@]} episode data:"
+        gr.msg -V2 -n "building ${#episode_list[@]} episode data "
+        for (( i = 0; i < ${#episode_list[@]}; i++ )); do
+            gr.msg -v2 -c dark_grey "$i ${episode_list[$i]}"
+            yle-dl --showmetadata ${episode_list[$i]} | jq -s 'flatten' >>$podcast_json
+            gr.msg -V2 -n -c dark_grey "."
+        done
+        gr.msg -c green "ok"
+    }
+
+    podcast.select () {
+    # select from known series
+        [[ -d $json_folder ]] || mkdir -p $json_folder
+        local titles=()
+        local title=
+        selection=0
+        podcast_json=
+
+        # printout list of known series
+        podcast_files=($(find $json_folder -maxdepth 1 -type f | sort ))
+        for file in ${podcast_files[@]} ; do
+            title="$(jq '.[] | .episode_title' "$file" | head -n1 | cut -d':' -f1 )"
+            titles+=("${title//'"'}")
+        done
+
+        # select series file
+        while true ; do
+            for (( i = 0; i < ${#titles[@]}; i++ )); do
+
+                title=${titles[$i]}
+                gr.msg -n -h -w4 "${i}: "
+                gr.msg -c list "$title"
+
+                if [[ $1 ]] && [[ ${title,,} == $1* ]] ; then
+                        podcast_json=${podcast_files[$i]}
+                        break
+                fi
+            done
+
+            [[ $podcast_json ]] && break
+            read -p "select: " selection
+
+            case $selection in
+                [0-9]|1[0-9]|2[0-9]|3[0-9])
+                    if [[ $selection -ge 0 ]] && [[ $selection -lt ${#titles[@]} ]] ; then
+                        podcast_json=${podcast_files[$selection]}
+                        break
+                    fi
+                    ;;
+                q)
+                    gr.msg -e0 "canceled"
+                    return 100
+                    ;;
+                *)
+                    gr.msg "wrong answer, select q to quit"
+            esac
+        done
+
+        gr.debug "$FUNCNAME podcast_json:'$podcast_json'"
+        return 0
+    }
+
+    podcast.episodes () {
+
+        IFS=$'\n'
+        titles=($(jq '.[] | .episode_title' $podcast_json))
+        descriptions=($(jq '.[] | .description' $podcast_json))
+        episode_url=($(jq '.[] | .flavors[] | .url' $podcast_json))
+        duration=($(jq '.[] | .duration_seconds' $podcast_json))
+        published=($(jq '.[] | .publish_timestamp' $podcast_json))
+        webpage=($(jq '.[] | .webpage' $podcast_json))
+
+        local series=$(cut -d":" -f1 <<<${titles[0]//'"'})
+        gr.msg -h "$series"
+
+        [[ ${#titles[@]} -lt 10 ]] && width=2
+        [[ ${#titles[@]} -gt 9 ]] && width=3
+        [[ ${#titles[@]} -gt 99 ]] && width=4
+
+        for (( i = 0; i < ${#titles[@]}; i++ )); do
+            title=${titles[$i]//$series: } ; title=${title//'"'}
+            duration=$((${duration[$i]} / 60 ))
+            date=$(date -d ${published[$i]//'"'} +%d.%m.%Y)
+            description=${descriptions[$i]//'\n'/' '}
+
+            gr.msg -h -n -w$width "$(($i+1))"
+            gr.msg -v2 -n -w11 -c dark_grey "$date "
+            gr.msg -n -c list "$title "
+            gr.msg -n -v2 -c dark_grey "$duration min"
+            gr.msg
+            gr.msg -v3 -n "$description"
+            gr.msg -v3 -n -c dark_grey " ${webpage[$i]//'"'}"
+            gr.msg -v3 -N
+        done
+    }
+
+    podcast.play () {
+    # play url
+
+        local item=$(($1-1))
+
+        # now playing for other modules
+        audio.stop
+        flag.set audio_stop
+        local np="[$1/${#titles[@]}] ${titles[$item]//'"'}"
+        echo ${np} >$GURU_AUDIO_NOW_PLAYING
+
+        # printout user view
+        gr.msg -h ${np}
+        local description=${descriptions[$item]//'\n'}
+        gr.msg -c gray ${description//'"'}
+
+        # play item
+        mpv ${episode_url[$item]//'"'}
+        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+    }
+
+    podcast.menu () {
+
+        local item=1
+        local timeout=
+
+        if [[ $1 ]] ; then
+            item=$1
+            timeout=5
+        fi
+
+        podcast.episodes
+        local loops=3
+        local max=$((${#titles[@]}))
+        while true ; do
+
+            gr.msg -v1 -c dark_grey "(n)ext, (p)revious, (c)ontinuous, (l)ist, (d)escriptions, (s)eries, (a)dd, (q)uit or 1..$max"
+            if [[ $timeout ]] ; then
+                read -p "[$item/$max] continue ${timeout}s: " -t $timeout selection
+            else
+                read -p "[$item/$max] select: " selection
+            fi
+            selection=${selection:-continue}
+
+            case $selection in
+                [0-9]|[1-9][0-9]|[1-9][0-9][0-9])
+                    if [[ $selection -ge 1 ]] && [[ $selection -le $max ]] ; then
+                        item=$selection
+                    else
+                        continue
+                    fi
+                    ;;
+                n)  [[ $item -lt $max ]] && item=$(( item + 1 )) || continue ;;
+                p)  [[ $item -gt 1 ]] && item=$(( item - 2 )) || continue ;;
+                l)  export GURU_VERBOSE=2 ; podcast.episodes ; continue ;;
+                s)  podcast.select ; podcast.menu ;;
+                a)  podcast.get ; podcast.collect ; podcast.select ; podcast.menu ;;
+                d)  [[ $GURU_VERBOSE -gt 2 ]] && export GURU_VERBOSE=2 || export GURU_VERBOSE=3 ; podcast.episodes ; continue ;;
+                c)  ! [[ $timeout ]] && timeout=5 || timeout= ; continue ;;
+                q*)  exit 0 ;;
+                continue) true ;;
+                *)  continue ;;
+            esac
+
+            podcast.play $item
+
+            if [[ $item -lt $max ]] ; then
+                [[ $timeout ]] && item=$(( item + 1 ))
+            else
+                item=1
+            fi
+
+            # print list when it goes hide
+            loops=$((loops-1))
+            if [[ $GURU_VERBOSE -lt 3 ]] && [[ $loops -le 0 ]]; then
+                podcast.episodes
+                loops=3
+            fi
+         done
+    }
+
+    local command=$1
+    shift
+    gr.debug "$FUNCNAME command: $command, rest: $@"
+
+    case $command in
+
+        add)
+            podcast.get $@
+            podcast.collect
+            ;;
+        play)
+            podcast.select $1 || return 0
+            podcast.menu $2
+            ;;
+        *)
+            podcast.select $1
+            podcast.collect
+            podcast.menu
+            ;;
+        help)
+            yle.help
+            ;;
+    esac
+
 }
 
 
@@ -342,6 +627,61 @@ yle.playlist () {
 # }
 
 
+yle.arguments () {
+# module argument parser
+
+    local got_args=($@)
+
+    for (( i = 0; i < ${#got_args[@]}; i++ )); do
+        # gr.debug "${FUNCNAME[0]}: argument: $i:${got_args[$i]}"
+
+        case ${got_args[$i]} in
+
+            --play)
+                export yle_do_play=true
+                ;;
+            *)
+                export module_command+=("${got_args[$i]}")
+                ;;
+        esac
+    done
+}
+
+
+
+yle.sort () {
+
+    if [[ $yle_do_play ]] ; then
+        yle.make_playlist $@ | mpv --playlist=-
+    else
+        yle.make_playlist $@
+    fi
+}
+
+
+yle.make_playlist () {
+# process list of files given in file ardered by given way
+# do this to folder before: shopt -s globstar ; rename 's/_/-/g' * ; rename 's/ /-/g' *
+
+    local items_to_sort=$1
+
+    # if input contains
+    if [[ -d $items_to_sort ]] ; then
+        folder="$(realpath -s ${items_to_sort})/"
+        shift
+        items_to_sort=$1
+    fi
+
+    items=$(ls $folder*$items_to_sort*)
+    [[ $items ]] || return 1
+
+    while read line; do
+        date_stamp=$(echo $line | rev | cut -d'.' -f 2- | cut -d '-' -f-4 | rev)
+        echo "$(date -d ${date_stamp//-/} +%-s) $line"
+    done <<<$items | sort | cut -d' ' -f2-
+}
+
+
 yle.get_metadata () {
 
     local error=
@@ -392,6 +732,7 @@ yle.get_metadata () {
 
 yle.get_media () {
     # get media from server and place it to /$USER/tmp
+
 
     # detox filename
     output_filename=${yle_media_filename//. /-}
