@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #source common.sh
+source audio.sh
 
 declare -g yle_rc="/tmp/guru-cli_yle.rc"
 declare -g yle_run_folder="$(pwd)"
@@ -64,7 +65,7 @@ yle.main () {
             yle.playlist ${module_command[@]:1}
             ;;
 
-        podcast|install|uninstall|upgrade|sort)
+        podcast|install|uninstall|upgrade|sort|status|poll)
             yle.${module_command[@]:0:1} ${module_command[@]:1}
             ;;
 
@@ -84,7 +85,11 @@ yle.main () {
                 done
             ;;
 
-        news|uutiset)
+        uutiset)
+            yle.read_news
+            ;;
+
+        news)
 
             news_core="https://areena.yle.fi/1-3235352"
             # yle-dl --pipe --latestepisode "$news_core" 2>/dev/null | mpv -
@@ -126,8 +131,6 @@ yle.main () {
             yle.place_media "$yle_run_folder"
             ;;
 
-        status)  echo "no status data" ;;
-
         meta|data|metadata|information|info)
 
             for item in "${module_command[@]}"
@@ -153,10 +156,48 @@ yle.main () {
 }
 
 
+yle.read_news () {
+
+    audio.stop
+    local link=
+
+    # gr.msg -s "reading news"
+
+    links=($(curl --silent https://yle.fi/uutiset/tuoreimmat | tr " " "\n" | grep fullUrl |  tr "," "\n" | grep fullUrl))
+
+    link_list=()
+
+    for link in ${links[@]}; do
+        honey_link=$(echo ${link#*'fullUrl":'})
+        honey_link=$(echo ${honey_link//'\u002F'/'/'})
+        honey_link=$(echo ${honey_link//'"'})
+        link_list+=("$honey_link")
+    done
+
+    for (( i = 0; i < ${#link_list[@]}; i++ )); do
+        link=${link_list[$i]}
+        honey_line=$(curl --silent $link | tr " " "\n" | grep mp3 |  tr "," "\n" | grep audioContent)
+        honey_line=$(echo ${honey_line#*'url":'})
+        honey_line=$(echo ${honey_line//'\u002F'/'/'})
+        honey_line=$(echo ${honey_line//'"'})
+
+        echo "UUTISET $link [$(($i+1))/${#link_list[@]}] " >$GURU_AUDIO_NOW_PLAYING
+        mpv $honey_line --input-ipc-server=$GURU_AUDIO_MPV_SOCKET --quiet >/dev/null
+        _error=$?
+        gr.debug "$FUNCNAME _error:$_error"
+        if [[ $_error -eq 143 ]] ; then
+            gr.debug "stopped"
+            [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm -f $GURU_AUDIO_NOW_PLAYING
+            return 0
+        fi
+        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm -f $GURU_AUDIO_NOW_PLAYING
+    done
+}
+
+
 yle.podcast () {
 # play yle.areena podcasts
 
-    source audio.sh
     source flag.sh
     declare -g areena_url=
     declare -g temp_playlist="$GURU_DATA/yle/playlists/temp.playlist"
@@ -169,13 +210,38 @@ yle.podcast () {
     # podcast episode variables for menu
     declare -ag title description duration published webpage episode_url
     # podcast list variables for selector
-    declare -ag podcast_episde_amount podcast_files podcast_list_title
+    declare -ag podcast_episode_amount podcast_files podcast_list_title
 
     # initialize
     [[ -d $json_folder ]] || mkdir -p $json_folder
 
     #colors
 
+    podcast.play () {
+    # play url
+
+        local item=$(($1-1))
+        local _error=0
+
+        # now playing for other modules
+        local np="${title[$item]} [$1/${#title[@]}]"
+        echo ${np} >$GURU_AUDIO_NOW_PLAYING
+
+        # printout user view
+        gr.msg -N -h ${np}
+
+        gr.msg -n -c grey "${description[$item]}"
+        gr.msg -c dark_grey " ${webpage[$item]}"
+
+        # play item
+
+        mpv $(yle-dl "${webpage[$item]}" --showurl)
+        _error=$?
+        gr.debug "$FUNCNAME _error:$_error"
+
+        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+        return $_error
+    }
 
     podcast.get () {
     # get episode or or list of episodes by url given
@@ -258,7 +324,7 @@ yle.podcast () {
             _title="$(jq '.[] | .episode_title' "$file" | head -n1 | cut -d':' -f1 )"
             _title=${_title//'–'/'-'}
             podcast_list_title+=("${_title//'"'}")
-            podcast_episde_amount+=($(jq length $file | wc -l))
+            podcast_episode_amount+=($(jq length $file | wc -l))
         done
     }
 
@@ -271,14 +337,16 @@ yle.podcast () {
         select.list ()  {
         # printout list of known series
             local _title=
+            local _episodes
             [[ $GURU_DEBUG ]] || clear
             gr.msg -h "yle.areena podcasts"
             for (( i = 0; i < ${#podcast_list_title[@]}; i++ )); do
 
                 _title=${podcast_list_title[$i]}
+                _episodes=${podcast_episode_amount[$i]}
                 gr.msg -n -h -w4 "${i})"
                 gr.msg -n -c list "$_title"
-                gr.msg -n -v2 -c dark_grey " (${podcast_episde_amount[$i]})"
+                gr.msg -n -v2 -c dark_grey " ($_episodes episode$([[ $_episodes -gt 1 ]] && printf 's'))"
                 gr.msg
 
                 if [[ $1 ]] && [[ ${_title,,} == $1* ]] ; then
@@ -297,8 +365,9 @@ yle.podcast () {
         # select series file
         while true ; do
 
-            select.list
+            select.list $1
             [[ $pre_selection ]] && [[ $selected_podcast_file ]] && break
+            gr.msg -n -c dark_turquoise "yle.areena "
             read -p "select: " selection
 
             case $selection in
@@ -349,7 +418,7 @@ yle.podcast () {
         description=($(jq '.[] | .description' $selected_podcast_file))
         duration=($(jq '.[] | .duration_seconds' $selected_podcast_file))
         webpage=($(jq '.[] | .webpage' $selected_podcast_file))
-        episode_url=($(jq '.[] | .flavors[] | .url' $selected_podcast_file))
+        # episode_url=($(jq '.[] | .flavors[] | .url' $selected_podcast_file))
 
         # podcast name
         [[ $GURU_DEBUG ]] || clear
@@ -381,7 +450,7 @@ yle.podcast () {
                 description[$i]=${description[$i]//'//'/'/'}
             duration[$i]=$((${duration[$i]} / 60 ))
             webpage[$i]=${webpage[$i]//'"'}
-            episode_url[$i]=${episode_url[$i]//'"'}
+            # episode_url[$i]=${episode_url[$i]//'"'}
 
             # printout
             gr.msg -h -n -w$width "$(($i+1)))"
@@ -393,28 +462,6 @@ yle.podcast () {
             gr.msg -v3 -n -c dark_grey " ${webpage[$i]}"
             gr.msg -v3 -N
         done
-    }
-
-    podcast.play () {
-    # play url
-
-        local item=$(($1-1))
-
-        # now playing for other modules
-        audio.stop
-        flag.set audio_stop
-        local np="${title[$item]} [$1/${#title[@]}]"
-        echo ${np} >$GURU_AUDIO_NOW_PLAYING
-
-        # printout user view
-        gr.msg -N -h ${np}
-
-        gr.msg -n -c grey "${description[$item]}"
-        gr.msg -c dark_grey " ${webpage[$item]}"
-
-        # play item
-        mpv ${episode_url[$item]}
-        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
     }
 
     podcast.menu () {
@@ -432,11 +479,13 @@ yle.podcast () {
         local max=$((${#title[@]}))
         while true ; do
 
-            gr.msg -v1 -c dark_grey "(n)ext, (p)revious, (c)ontinuous, (l)ist, (d)escriptions, (s)eries, (a)dd, (u)pdate, (q)uit or (1..$max)"
+            gr.msg -v1 -c dark_grey "(n)ext, (p)revious, (c)ontinuous, (l)ist, (d)escriptions, (s)eries, (a)dd, (u)pdate, (m)ore, (q)uit or (1..$max)"
+            gr.msg -n -c dark_turquoise "yle.areena [$item/$max] "
+            # gr.msg -n "[$item/$max] "
             if [[ $timeout ]] ; then
-                read -p "[$item/$max] continue ${timeout}s: " -t $timeout selection
+                read -p "continue ${timeout}s: " -t $timeout selection
             else
-                read -p "[$item/$max] select: " selection
+                read -p "select: " selection
             fi
             selection=${selection:-continue}
 
@@ -446,6 +495,7 @@ yle.podcast () {
                 n)  [[ $item -lt $max ]] && item=$(( item + 1 )) || continue ;;
                 p)  [[ $item -gt 1 ]] && item=$(( item - 2 )) || continue ;;
                 l)  export GURU_VERBOSE=2 ; podcast.episodes ; continue ;;
+                m)  podcast.update ; podcast.episodes ; continue ;;
                 u)  podcast.update ; podcast.episodes ; continue ;;
                 s)  podcast.select ; podcast.menu ;;
                 a)  podcast.get ; podcast.build ; podcast.select ; podcast.menu ;;
@@ -456,7 +506,18 @@ yle.podcast () {
                 *)  continue ;;
             esac
 
+            if ! [[ $stopped ]] ; then
+                local stopped=true
+                audio.stop
+            fi
+
             podcast.play $item
+            _error=$?
+            gr.debug "$FUNCNAME _error:$_error"
+            if [[ $_error -eq 143 ]]; then
+                 gr.debug "timeout removed"
+                timeout=
+            fi
 
             if [[ $item -lt $max ]] ; then
                 [[ $timeout ]] && item=$(( item + 1 ))
@@ -952,6 +1013,56 @@ yle.uninstall(){
     sudo -H pip3 uninstall --user yle-dl
     sudo apt remove ffmpeg jq  -y
     echo "uninstalled"
+}
+
+
+yle.status () {
+# printout network status
+
+    gr.msg -t -v1 -n "${FUNCNAME[0]}: "
+
+    if [[ $GURU_YLE_ENABLED ]] ; then
+            gr.msg -v1 -c green "enabled"
+        else
+            gr.msg -v1 -c black "disabled"
+            return 100
+        fi
+
+        times=($GURU_YLE_NEWS_TIME)
+        now=$(date -d now +%s)
+        for _time in ${times[@]} ; do
+            diff=$(( $now - $(date -d "$_time" +%s)))
+            gr.debug "time:$diff"
+            if [[ $diff -gt 0 ]] && [[ $diff -lt 600 ]] ; then
+                # gr.msg -c aqua_marine "reading news"
+                yle.read_news &
+            else
+                add_newline=true
+            fi
+        done
+    # [[ $add_newline ]] && gr.msg -c dark_grey "not news time"
+    return 0
+}
+
+
+yle.poll () {
+    # poll functions
+
+    local _cmd="$1" ; shift
+
+    case $_cmd in
+            start)
+                gr.msg -v1 -t -c black "${FUNCNAME[0]}: yle status polling started"
+                ;;
+            end)
+                gr.msg -v1 -t -c reset "${FUNCNAME[0]}: yle status polling ended"
+                ;;
+            status)
+                yle.status
+                ;;
+            *)  gr.msg -c dark_grey "function not written"
+                return 0
+        esac
 }
 
 
