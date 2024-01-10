@@ -132,13 +132,13 @@ timer.status () {
         fi
 
     # check is timer set
-    if [[ ! -f "$GURU_FILE_TRACKSTATUS" ]] ; then
+    if [[ ! -f "$GURU_TIMER_TRACKSTATUS" ]] ; then
         gr.msg -v1 -c reset "no timer tasks" -k $GURU_TIMER_INDICATOR_KEY
         return 2
     fi
 
     # get timer variables
-    source "$GURU_FILE_TRACKSTATUS"
+    source "$GURU_TIMER_TRACKSTATUS"
 
     # fill variables
     timer_now=$(date +%s)
@@ -188,8 +188,8 @@ timer.status () {
 timer.last () {
 # get last timer state
 
-    if [[ -f $GURU_FILE_TRACKLAST ]] ; then
-            gr.msg -c light_blue "$(cat $GURU_FILE_TRACKLAST)"
+    if [[ -f $GURU_TIMER_TRACKLAST ]] ; then
+            gr.msg -c light_blue "$(cat $GURU_TIMER_TRACKLAST)"
         else
             gr.msg -c yellow "no last tasks"
         fi
@@ -200,10 +200,9 @@ timer.start () {
 # Start timer TBD rewrite this thole module
 
     GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
-    #[[ -d "$GURU_LOCAL_WORKTRACK" ]] || mkdir -p "$GURU_LOCAL_WORKTRACK"
 
     # check is timer alredy set
-    if [[ -f "$GURU_FILE_TRACKSTATUS" ]] ; then
+    if [[ -f "$GURU_TIMER_TRACKSTATUS" ]] ; then
         timer.main end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
     fi
 
@@ -243,19 +242,19 @@ timer.start () {
     nice_date=$(date -d $start_date '+%d.%m.%Y')
     timer_start=$(date -d "$start_date $start_time" '+%s')
 
-    [[ -f $GURU_FILE_TRACKLAST ]] && source $GURU_FILE_TRACKLAST
+    [[ -f $GURU_TIMER_TRACKLAST ]] && source $GURU_TIMER_TRACKLAST
     [[ "$1" ]] && task="$1" || task="$last_task"
     [[ "$2" ]] && project="$2" || project="$last_project"
     [[ "$3" ]] && customer="$3" || customer="$last_customer"
 
     # update work files TODO some other method, soon please
-    printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_FILE_TRACKSTATUS
-    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_FILE_TRACKSTATUS
+    printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_TIMER_TRACKSTATUS
+    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_TIMER_TRACKSTATUS
 
     # signal user and others
     gr.msg -v1 -c aqua -k $GURU_TIMER_INDICATOR_KEY "$start_time $customer $project $task"
-    gr.msg -v4 -m $GURU_USER/message $GURU_TIMER_START_MESSAGE
-    gr.msg -v4 -m $GURU_USER/status $GURU_TIMER_START_STATUS
+    gr.msg -v3 -m $GURU_USER/message $GURU_TIMER_START_MESSAGE
+    gr.msg -v3 -m $GURU_USER/status $GURU_TIMER_START_STATUS
     return 0
 }
 
@@ -263,8 +262,8 @@ timer.start () {
 timer.end () {
 # end timer and save to database (file)
 
-    if [ -f $GURU_FILE_TRACKSTATUS ]; then
-        source $GURU_FILE_TRACKSTATUS
+    if [ -f $GURU_TIMER_TRACKSTATUS ]; then
+        source $GURU_TIMER_TRACKSTATUS
     else
         gr.msg -v1 "timer not started"
         return 13
@@ -325,18 +324,18 @@ timer.end () {
     fi
 
     # close track file
-    if ! [[ -f $GURU_FILE_TRACKDATA ]] ; then
-            printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n" >$GURU_FILE_TRACKDATA
+    if ! [[ -f $GURU_TIMER_TRACKDATA ]] ; then
+            printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n" >$GURU_TIMER_TRACKDATA
         fi
 
     hours="$spend_hour.$spend_min_dec"
     #if (( spend_min_dec > 11 )) ; then
-            printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n" >>$GURU_FILE_TRACKDATA
+            printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n" >>$GURU_TIMER_TRACKDATA
     #    fi
 
-    printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_FILE_TRACKLAST
+    printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_TIMER_TRACKLAST
 
-    rm $GURU_FILE_TRACKSTATUS
+    rm $GURU_TIMER_TRACKSTATUS
 
     # inform
     gr.msg -v1 -c reset -k $GURU_TIMER_INDICATOR_KEY "$start_time - $end_time$option_end_date $customer $project $task spend $hours"
@@ -480,7 +479,7 @@ timer.change () {
 
 
     timer.start "$@"
-    gr.msg -v1 -c dark_golden_rod "work topic changed"
+    gr.msg -v1 -c yellow "work topic changed"
     return $?
 }
 
@@ -490,8 +489,8 @@ timer.cancel () {
 
     GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
 
-    if [[ -f $GURU_FILE_TRACKSTATUS ]]; then
-            rm $GURU_FILE_TRACKSTATUS
+    if [[ -f $GURU_TIMER_TRACKSTATUS ]]; then
+            rm $GURU_TIMER_TRACKSTATUS
             gr.msg -v1 -t -c reset -k $GURU_TIMER_INDICATOR_KEY "work canceled"
             gr.msg -v4 -m $GURU_USER/message "glitch in the matrix, something changed"
             gr.msg -v4 -m $GURU_USER/status "available"
@@ -505,7 +504,7 @@ timer.cancel () {
 timer.log () {
 # printout short list of recent records
 
-    printf "last logged records:\n$(tail $GURU_FILE_TRACKDATA | tr ";" "  ")\n"
+    printf "last logged records:\n$(tail $GURU_TIMER_TRACKDATA | tr ";" "  ")\n"
     return 0
 }
 
@@ -513,7 +512,7 @@ timer.log () {
 timer.edit () {
 # edit data csv file
 
-    $GURU_PREFERRED_EDITOR "$GURU_FILE_TRACKDATA" &
+    $GURU_PREFERRED_EDITOR "$GURU_TIMER_TRACKDATA" &
     return 0
 }
 
@@ -525,9 +524,9 @@ timer.report() {
     report_file="work-track-report-$(date +%Y%m%d)-$team.csv"
     output_folder=$HOME/Documents
     [[ "$team" == "all" ]] && team=""
-    [[ -f $GURU_FILE_TRACKDATA ]] || return 13
+    [[ -f $GURU_TIMER_TRACKDATA ]] || return 13
 
-    cat $GURU_FILE_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
+    cat $GURU_TIMER_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
     $GURU_PREFERRED_OFFICE_DOC $output_folder/$report_file &
     timer.end $""
 }

@@ -176,8 +176,8 @@ cal.print_month () {
             fi
         fi
 
-        gr.msg -v3 -c dark_grey "style=$style month=$month year=$year"
-        gr.msg -v3 -c dark_grey "list=(${list[@]}) item=$item"
+        gr.debug -v3 -c dark_grey "style=$style month=$month year=$year"
+        gr.debug -v3 -c dark_grey "list=(${list[@]}) item=$item"
 
         # # save to wait
         # if [[ $clipboard_flag ]] ; then
@@ -188,7 +188,7 @@ cal.print_month () {
         # make small unicode based calendar
         if [[ $unicode ]] ; then
             # TBD add selector terminal|editor
-            gr.debug "ncal -s FI -w -b -M -h $style $month $year"
+            # gr.debug "ncal -s FI -w -b -M -h $style $month $year"
             ncal -s FI -w -b -M -h $style $month $year > $temp_file
             cal.unistrings_gnome_terminal "$(ncal -s FI -w -b -M -h $style $month $year)"
             #cal.unistrings_gnome_terminal
@@ -197,7 +197,7 @@ cal.print_month () {
         fi
 
         # print to user
-        gr.debug "ncal -s FI -w -b -M $style $month $year"
+        # gr.debug "ncal -s FI -w -b -M $style $month $year"
         ncal -s FI -w -b -M $style $month $year
 
     done
@@ -345,7 +345,7 @@ cal.sync_google () {
 
     # import authentication code to calcurse
 
-    gr.debug "caldavid ${google[caldav_id]}"
+    # gr.debug "caldavid ${google[caldav_id]}"
 
     calcurse-caldav --init $method --authcode ${google[caldav_id]}
 

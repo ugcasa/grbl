@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru client MQTT functions casa@ujo.guru 2020 - 2023
+# guru client MQTT functions casa@ujo.guru 2020
 
 declare -g mqtt_rc="/tmp/guru-cli_mqtt.rc"
 [[ GURU_DEBUG ]] && mqtt_client_options='-d '

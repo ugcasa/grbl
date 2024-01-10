@@ -44,7 +44,7 @@ backup_rc="$HOME/.bashrc.backup-by-guru"
 # modules where user have direct access
 # modify this when module is ready to publish.
 # argument -d will overwrite this list and install all present modules
-core_module_access=(net counter install uninstall config mount unmount daemon keyboard prompt system user flag os)
+core_module_access=(net counter install uninstall config mount unmount daemon keyboard prompt system user flag os cheatsheet help)
 modules_to_install=(ai radio say game youtube mqtt conda fingrid note print project scan audio display vpn ssh stamp tag timer tor trans vol yle news program tmux tunnel corsair backup convert telegram cal place android)
 
 # TBD
@@ -493,6 +493,9 @@ install.modules () {
             else
                 gr.msg -n -v2 -c yellow "error "
                 gr.msg -v2 "module adapter '$_module.sh' missing or module not exist"
+                gr.msg -v2 "adding to list anyway, core will build adapter file on first run"
+                installed_files=( ${installed_files[@]} $TARGET_BIN/${module_file#*/} )
+                installed_modules=( ${installed_modules[@]} ${_module} )
             fi
 
 
@@ -515,10 +518,10 @@ install.modules () {
                         fi
                 done
 
-                # create adapter if not included
-                if ! [[ -f $TARGET_BIN/$_module.sh ]] ; then
-                        ln -s $TARGET_BIN/$_module/$_module.sh $TARGET_BIN/$_module.sh
-                     fi
+                # create adapter if not included // RM 20240105 core will make adapters
+                # if ! [[ -f $TARGET_BIN/$_module.sh ]] ; then
+                #         ln -s $TARGET_BIN/$_module/$_module.sh $TARGET_BIN/$_module.sh
+                #      fi
             fi
         done
     # pass

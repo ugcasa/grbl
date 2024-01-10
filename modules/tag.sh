@@ -1,30 +1,23 @@
 #!/bin/bash
 # Mick Tagger - ujo.guru 2019
 
-
-declare -g tag_file_name=
+# TBD code review for this module.. shit load of elementary stupidity
 
 tag.main () {
     # get arguments
 
-    case "$1" in
-        help|status|install)
-           tag.$1
-           return 0
-           ;;
-    esac
-
-    if [[ $2 ]]; then
-        tag_action="$1" ; shift
-    fi
-
+    tag_action="$1" ; shift
     tag_file_name="$1" ; shift
-
 
     # parse file format
     tag_file_format="${tag_file_name: -5}"      #read last characters of filename
     tag_file_format="${tag_file_format#*.}"     #read after separator
     tag_file_format="${tag_file_format^^}"      #upcase
+
+    gr.debug "tag_action: '$tag_action', \
+              tag_file_name: '$tag_file_name' \
+              tag_file_format: $tag_file_format, \
+              string: '$@'"
 
     case "$tag_file_format" in                                           ### # #
     3G2|3GP2|3GP|3GPP|AAX|AI|AIT|ARQ|ARW|CR2|CR3|CRM|CRW|CIFF|PBM|GIF|GPR|\
@@ -35,9 +28,8 @@ tag.main () {
                                     PGM|PSD|PSB|PSDT|QTIF|QTI|QIF|RAF|RAW|RW2|\
                                     TIFF|TIF|VRD|X3F|XMP) tag.picture $tag_action $@   ;;
                                                      MP3) tag.audio $tag_action $@     ;;
-                                                     MP4) tag.mp4 $tag_action $@        ;;
-                                              MD|TXT|MDD) tag.text $tag_action $@       ;;
-
+                                                     MP4) tag.mp4 $tag_action $@       ;;
+                                              MD|TXT|MDD) tag.text $@      ;;
                                                        *) echo "unknown format"
                                                             return 123          #####
     esac                                                           ###################
@@ -51,44 +43,47 @@ tag.help () {
     echo "usage:    $GURU_CALL tag [add|rm|get] <file>"
 }
 
+
 tag.text () {
     # If file has more than two lines it's taggable
+    local temp_file=/tmp/tag_temp
 
     _get_tags () {
         current_tags=$(sed -n '2p' $tag_file_name)
-        # Cut "tag:" text away
         current_tags=${current_tags##*": "}
     }
-
 
     _add_tags () {
         _new_tags=$@
         _get_tags
 
+        gr.debug "current_tags. '$current_tags', \
+                  temp_file, '$temp_file', \
+                  tag_file_name: '$tag_file_name', \
+                  temp_file: '$temp_file'"
+
         if [[ "$current_tags" ]] ; then
-            sed '2d' $tag_file_name > temp_file.txt \
-                && mv -f temp_file.txt $tag_file_name
+            sed '2d' $tag_file_name > $temp_file \
+                && mv -f $temp_file $tag_file_name
         else
             current_tags="text ${tag_file_format,,} $GURU_USER $GURU_TEAM"
         fi
 
-        sed "2i\\tag: $current_tags ${_new_tags[@]}" "$tag_file_name" > "temp_file.txt" \
-            && mv -f "temp_file.txt" "$tag_file_name"
+        sed "2i\\tag: $current_tags ${_new_tags[@]}" "$tag_file_name" > "$temp_file" \
+            && mv -f "$temp_file" "$tag_file_name"
 
-        # printf "%-17s | %-10s | %s \n" \
-        #     "$(date +$GURU_FORMAT_FILE_DATE)-$(date +$GURU_FORMAT_TIME)" \
-        #     "$GURU_USER" "tags ${_new_tags[@]} added" \
-        #     >>$tag_file_name
     }
 
     _rm_tags () {
+
         _get_tags
 
         if [[ "$current_tags" ]]; then
-            sed '2d' $tag_file_name  >temp_file.txt && mv -f temp_file.txt $tag_file_name
+            sed '2d' $tag_file_name >$temp_file && mv -f temp_file.txt $tag_file_name
         fi
     }
 
+    gr.debug "$FUNCNAME: got: '$@'"
 
     case "$tag_action" in
 
@@ -97,14 +92,13 @@ tag.text () {
             [[ "$current_tags" ]] && echo $current_tags
             ;;
         add)
-            [[ $@ ]] && _add_tags $@
+            _add_tags $@
             ;;
         rm)
-            _rm_tags
+            _rm_tags $1
             ;;
         *)
-            [[ $@ ]] && string="$tag_action $@" || string="$tag_action"
-            [[ "$tag_action" ]] && _add_tags "$string"
+            _add_tags $@
             ;;
         esac
 }

@@ -2,14 +2,7 @@
 # query results before 30.11.2022 is test date
 # source common.sh
 
-declare -gA fingrid
-
-source $GURU_CFG/fingrid.cfg
-[[ -f $GURU_CFG/$GURU_USER/fingrid.cfg ]] && source $GURU_CFG/$GURU_USER/fingrid.cfg
-
-if [[ $(stat -c %Y $GURU_CFG/$GURU_USER/fingrid.cfg) -gt $(stat -c %Y /tmp/guru.daemon-pid) ]] ; then
-            gr.msg -v1 -c dark_gray "$GURU_CFG/$GURU_USER/fingrid.cfg updated"
-        fi
+fingrid_rc="/tmp/guru-cli_fingrid.rc"
 
 
 fingrid.main () {
@@ -27,10 +20,61 @@ fingrid.main () {
 }
 
 
+fingrid.rc () {
+# source configurations
+
+    local module_config="$GURU_CFG/$GURU_USER/fingrid.cfg"
+
+    # use defaults if not exist
+    [[ -f $module_config ]] || module_config="$GURU_CFG/fingrid.cfg"
+
+    # check is module configuration changed lately, update rc if so
+    if [[ ! -f $fingrid_rc ]] \
+        || [[ $(( $(stat -c %Y $module_config) - $(stat -c %Y $fingrid_rc) )) -gt 0 ]]
+        then
+            fingrid.make_rc && gr.msg -v1 -c dark_gray "$fingrid_rc updated"
+        fi
+
+    if [[ -f $fingrid_rc ]] ; then
+        source $fingrid_rc
+    else
+        gr.msg -v2 -c dark_gray "no configuration"
+    fi
+}
+
+
+fingrid.make_rc () {
+# construct fingrid configuration rc
+
+    source config.sh
+    local module_config="$GURU_CFG/$GURU_USER/fingrid.cfg"
+
+    # try to find user configuration
+    if ! [[ -f $module_config ]] ; then
+        gr.debug "$module_config does not exist"
+        module_config="$GURU_CFG/fingrid.cfg"
+
+        # try to find default configuration
+        if ! [[ -f $module_config ]] ; then
+            gr.debug "$module_config not exist, skipping"
+            return 1
+        fi
+    fi
+
+    # remove existing rc file
+    if [[ -f $fingrid_rc ]] ; then
+            rm -f $fingrid_rc
+        fi
+
+    config.make_rc $module_config $fingrid_rc
+    chmod +x $fingrid_rc
+}
+
+
 fingrid.check () {
 # check that user is registered
-    if ! [[ ${fingrid[api_key]} ]] ; then
-            gr.msg -c yellow "please set global variable fingrid[api_key]"
+    if ! [[ $GURU_FINGRID_API_KEY ]] ; then
+            gr.msg -c yellow "please set global variable [fingrid] api_key="
             gr.msg -v1 "get access to Fingrids open datasets at https://data.fingrid.fi/open-data-forms/registration"
             return 100
         fi
@@ -55,7 +99,7 @@ fingrid.get_value () {
     local answer_json=$(curl -s -X GET \
         "https://api.fingrid.fi/v1/variable/$variable_id/events/json?start_time=$start_time&end_time=$end_time" \
         --header 'Accept: application/json' \
-        --header "x-api-key: ${fingrid[api_key]}" \
+        --header "x-api-key: $GURU_FINGRID_API_KEY" \
         )
     # [[ GURU_VERBOSE -gt 3 ]] && echo $answer_json | jq
     local value=$(echo $answer_json | jq | grep value | tail | xargs | cut -d ' ' -f2 | sed -e 's/,//g')
@@ -70,39 +114,39 @@ fingrid.status () {
 
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
-    if [[ ${fingrid[enabled]} ]] ; then
-            gr.msg -v2 -n -c green "enabled, " -k ${fingrid[indicator_key]}
+    if [[ $GURU_FINGRID_ENABLED ]] ; then
+            gr.msg -v2 -n -c green "enabled, " -k $GURU_FINGRID_INDICATOR_KEY
         else
-            gr.msg -v1 -c black "disabled" -k ${fingrid[indicator_key]}
+            gr.msg -v1 -c black "disabled" -k $GURU_FINGRID_INDICATOR_KEY
             return 100
         fi
 
     local grid_status=$(fingrid.get_value 209)
 
     case $grid_status in
-            *1) gr.end ${fingrid[indicator_key]}
-                gr.msg -v1 -n -c green "normal " -k ${fingrid[indicator_key]}
+            *1) gr.end $GURU_FINGRID_INDICATOR_KEY
+                gr.msg -v1 -n -c green "normal " -k $GURU_FINGRID_INDICATOR_KEY
                 gr.msg -v1 "The operating status of the electrical system is normal."
                 ;;
             *2) audio.main pause
                 gr.msg -n -c yellow "under threat "
                 gr.msg -v1 -s -c white "The operating situation of the electrical system has deteriorated. The sufficiency of electricity in Finland is under threat (the risk of power shortages is high) or the power system does not meet the security criteria"
-                gr.ind warning -m "electric grid is in under threat" -k ${fingrid[indicator_key]}
+                gr.ind warning -m "electric grid is in under threat" -k $GURU_FINGRID_INDICATOR_KEY
                 audio.main pause
                 ;;
             *3) audio.main radio yle yksi
                 gr.msg -n -c orange "in danger! "
                 gr.msg -v1 -s -h "The operational reliability of the electrical system is at risk. Electricity consumption has been disconnected to ensure the operational reliability of the power system (power shortage) or the risk of a large-scale power outage is considerable."
-                gr.ind alert -m "electric grid is in danger!" -k ${fingrid[indicator_key]}
+                gr.ind alert -m "electric grid is in danger!" -k $GURU_FINGRID_INDICATOR_KEY
                 ;;
             *4) audio.main radio yle yksi
                 gr.msg -n -c red "nationwide disruptions! "
                 gr.msg -v1 -s -h "A serious disturbance covering a large part of country or the whole of Finland."
-                gr.ind panic -m "electric grid is about to collapse!" -k ${fingrid[indicator_key]}
+                gr.ind panic -m "electric grid is about to collapse!" -k $GURU_FINGRID_INDICATOR_KEY
                 ;;
             *5) gr.msg -n -c sky_blue "in recovery "
                 gr.msg -v1 -s -c white "The restoration of the use of a serious glitch is going. For more information https://www.fingrid.fi/sahkomarkkinat/sahkojarjestelman-tila/"
-                gr.ind recovery -m "electrical grid" -k ${fingrid[indicator_key]}
+                gr.ind recovery -m "electrical grid" -k $GURU_FINGRID_INDICATOR_KEY
                 ;;
             *)  gr.msg -c yellow "something went wrong.."
                 return 112
@@ -125,7 +169,7 @@ fingrid.info () {
     gr.msg -v1 -n "Finnish electric grid status is: "
 
     case $grid_status in
-            *1) gr.msg -v1 -c green "normal " -k ${fingrid[indicator_key]}
+            *1) gr.msg -v1 -c green "normal " -k $GURU_FINGRID_INDICATOR_KEY
                 gr.msg "The operating status of the electrical system is normal."
                 ;;
             *2) gr.msg -c yellow "under threat "
@@ -191,10 +235,10 @@ fingrid.poll () {
 
     case $_cmd in
             start )
-                gr.msg -v1 -t -c black "${FUNCNAME[0]}: fingrid status polling started" -k ${fingrid[indicator_key]}
+                gr.msg -v1 -t -c black "${FUNCNAME[0]}: fingrid status polling started" -k $GURU_FINGRID_INDICATOR_KEY
                 ;;
             end )
-                gr.msg -v1 -t -c reset "${FUNCNAME[0]}: fingrid status polling ended" -k ${fingrid[indicator_key]}
+                gr.msg -v1 -t -c reset "${FUNCNAME[0]}: fingrid status polling ended" -k $GURU_FINGRID_INDICATOR_KEY
                 ;;
             status )
                 fingrid.status
@@ -204,6 +248,8 @@ fingrid.poll () {
         esac
 }
 
+
+fingrid.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     fingrid.main "$@"

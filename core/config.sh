@@ -112,7 +112,7 @@ config.make_rc () {
 
 
 config.make_style_rc () {
-# export color configuration for shell scripts"
+# export color configuration for shell scripts
 
     local _source_cfg="$1"  # source configuration file
     local _target_rc="$2"   # target rc file

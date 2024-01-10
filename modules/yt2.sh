@@ -1,76 +1,80 @@
 #!/bin/bash
-# guru-cli play and get from youtube casa@ujo.guru 2022
+# play and get from youtube casa@ujo.guru 2022
 
-source flag.sh
-source audio.sh
 declare -g youtube_rc="/tmp/guru-cli_youtube.rc"
-declare -g continue_to_play=
 # more global variables downstairs (after sourcing rc file)
 
 youtube.help () {
 
-    gr.msg -v1 "guru-cli youtube help " -h
+    gr.msg -v1 "guru-cli youtube help " -c white
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL youtube play|get|list|song|search|install|uninstall|help"
+    gr.msg -v0  "usage:    $GURU_CALL youtube play|get|list|install|uninstall|help"
+    gr.msg -v2
+    gr.msg -v1 "  <search string> --<args>  search and play (more info -v2)" -V1
+    gr.msg -v2 "  <search string>   search and play, options below "
+    gr.msg -v2 "   --video          optimized for video quality"
+    gr.msg -v2 "   --audio          optimized for audio quality"
+    gr.msg -v2 "   --loop           play it forever"
+    gr.msg -v2 "   --save           save media, audio is converted to mp3"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v2
     gr.msg -v1 "  play <id|url>           play media from stream"
-    gr.msg -v1 "  get <ids|urls>          download list of media to media folder "
     gr.msg -v1 "  list <search string>    play list of search results, no video playback"
+    gr.msg -v1 "  get <ids|urls>          download list of media to media folder "
     gr.msg -v3 "  song <id|url>           download audio to audio folder "
-    gr.msg -v3 "  search <string>         search, printout list of results "
     gr.msg -v1 "  install                 install requirements"
     gr.msg -v1 "  uninstall               remove requirements "
     gr.msg -v1 "  help                    this help window"
     gr.msg -v2
-    gr.msg -v1 "options: " -c white
-    gr.msg -v2
-    gr.msg -v1 "   --video          optimized for video quality"
-    gr.msg -v1 "   --audio          optimized for audio quality (video may not have audio only version)"
-    gr.msg -v1 "   --continue       if result is list start to play it and continue to do so "
-    gr.msg -v1 "   --loop           play it forever"
-    gr.msg -v1 "   --save           save media, audio is converted to mp3"
-#TODO gr.msg -v1 "   --pos           start play from position hh:mm"
-    gr.msg -v2
     gr.msg -v1 "examples: " -c white
     gr.msg -v2
-    gr.msg -v1 "  $GURU_CALL youtube search nyan cat"
     gr.msg -v1 "  $GURU_CALL youtube juna kulkee taas"
     gr.msg -v1 "  $GURU_CALL youtube play eF1D-W27Wzg"
     gr.msg -v1 "  $GURU_CALL youtube get https://www.youtube.com/watch?v=eF1D-W27Wzg"
     gr.msg -v2
-    gr.msg -v2 "aliases 'tube' and 'tubes' are present to to replace '$GURU_CALL youtube' and 'search'"
+    gr.msg -v2 "alias 'tube' to replace '$GURU_CALL youtube' is available"
 }
 
 
 youtube.main () {
 # module command parser
 
-    youtube.arguments $@
+    local command=$1
+    shift
 
-    case ${module_command[@]:0:1} in
+    case "$command" in
 
-        install|uninstall|upgrade|play|search|help|status)
-            youtube.${module_command[@]:0:1} ${module_command[@]:1}
+        install|uninstall|upgrade|play|help)
+            youtube.$command $@
             ;;
 
         get|dl|download)
-            for item in ${module_command[@]:1} ; do
-               youtube.get_media $item
-            done
+            for item in "$@"
+                do
+                   youtube.get_media $item
+                done
+            ;;
+
+        search)
+            local query=$(youtube.search 10 json $@)
+            echo $query | jq
             ;;
 
         song|music)
-            youtube.get_audio ${module_command[@]:1}
+            youtube.get_audio $@
+            ;;
+
+        status)
+            gr.msg -c dark_grey "no status data"
             ;;
 
         list)
-            youtube.search_list ${module_command[@]:1}
+            youtube.search_list $@
             ;;
 
         *)
-            youtube.search_n_play ${module_command[@]}
+            youtube.search_n_play $command $@
             ;;
 
     esac
@@ -78,58 +82,34 @@ youtube.main () {
 }
 
 
-youtube.status () {
-    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
-    if [[ -f /usr/local/bin/yt-dlp ]] || [[ -f /usr/bin/yt-dlp ]] ; then
-        gr.msg -c green "installed"
-        return 0
-    else
-        gr.msg -c dark_grey "not installed"
-        return 1
-    fi
-
-}
-
 youtube.arguments () {
 # module argument parser
 
     local got_args=($@)
 
     for (( i = 0; i < ${#got_args[@]}; i++ )); do
-        # gr.debug "${FUNCNAME[0]}: argument: $i:${got_args[$i]}"
+        gr.debug "${FUNCNAME[0]}: argument: $i:${got_args[$i]}"
 
         case ${got_args[$i]} in
 
             --get|--download|--save)
-                export youtube_options="-f b"
-                export save_to_file=true
-                ;;
-
-            --continue|--c|--cont)
-                continue_to_play=true
+                youtube_options="-f b"
+                save_to_file=true
                 ;;
 
             --repeat|--l|--loop)
-                export mpv_options="$mpv_options --loop"
-                ;;
-
-            --fullscreen|--fs|--f)
-                export mpv_options="$mpv_options --fs"
+                mpv_options="$mpv_options --loop"
                 ;;
 
             --video|--v)
-                export youtube_options=
-                export save_location=$GURU_MOUNT_VIDEO
+                youtube_options=
+                save_location=$GURU_MOUNT_VIDEO
                 ;;
 
             --audio|--a)
-                export youtube_options="-f bestaudio --no-resize-buffer --ignore-errors"
-                export mpv_options="$mpv_options --no-video"
-                export save_location=$GURU_MOUNT_AUDIO
-                ;;
-
-            --list-formats)
-                export youtube_options="$youtube_options --list-formats"
+                youtube_options="-f bestaudio --no-resize-buffer --ignore-errors"
+                mpv_options="$mpv_options --no-video"
+                save_location=$GURU_MOUNT_AUDIO
                 ;;
 
             # --playlist|--pl)        ## TBD search for playlists
@@ -144,6 +124,7 @@ youtube.arguments () {
             #     position=${got_args[$i]}
             #     ;;
 
+
             # --start|--s)          ## TBD mpv does not support this ffmpg can, but not too important
             #     i=$((i+1))
             #     gr.debug "got position: ${got_args[$i]} "
@@ -154,9 +135,8 @@ youtube.arguments () {
             #     gr.debug "got position: ${got_args[$i]} "
             #     position=${got_args[$i]}
             #     ;;
-
             *)
-                export module_command+=("${got_args[$i]}")
+                module_options+=("${got_args[$i]}")
                 ;;
         esac
     done
@@ -165,12 +145,16 @@ youtube.arguments () {
         if [[ $save_to_file ]] ; then
 
             [[ "$save_location" == "$GURU_MOUNT_AUDIO" ]] \
-                && export youtube_options="$youtube_options -x --audio-format mp3"
+                && youtube_options="$youtube_options -x --audio-format mp3"
 
             [[ "$save_location" == "$GURU_MOUNT_VIDEO" ]] \
-                && export youtube_options="$youtube_options --recode-video mp4"
+                && youtube_options="$youtube_options --recode-video mp4"
         fi
-    #echo ${module_command[@]}
+
+    # debug stuff (TBD remove later)
+    gr.debug "${FUNCNAME[0]}: passing args: ${module_options[@]}"
+    gr.debug "${FUNCNAME[0]}: youtube_options: $youtube_options"
+    gr.debug "${FUNCNAME[0]}: mpv_options: $mpv_options"
 }
 
 
@@ -206,174 +190,6 @@ youtube.make_rc () {
 
 
 youtube.search () {
-# search from youtube, print list of results and ask user to select one, then play it
-
-    gr.debug "$FUNCNAME: mpv socket: $GURU_AUDIO_MPV_SOCKET"
-    local items=
-    local optimization="video"
-
-    print_list() {
-        # printout list of results
-
-        [[ ${#list[@]} -lt 10 ]] && width=3
-        [[ ${#list[@]} -gt 9 ]] && width=4
-        [[ ${#list[@]} -gt 99 ]] && width=5
-
-        for (( i = 0; i < ${#list[@]}; i++ )); do
-            gr.msg -hn -w$width "$i)"
-            gr.msg -nc light_blue "${list[i]} "
-            gr.msg -c dark_gray "(${duration[i]})"
-            items=$(( ${#list[@]} -1 ))
-        done
-    }
-
-    play_item () {
-    # play item
-
-        [[ $optimization == audio ]] && audio.stop
-        local last_item=$1
-        local np="${list[$last_item]} (${duration[$last_item]})"
-        [[ $continue_to_play ]] && np="[$last_item/$items] $np"
-        echo "$np" >$GURU_AUDIO_NOW_PLAYING
-        gr.msg -h "$np"
-        youtube.play "https://www.youtube.com${urls[$last_item]}"
-        local _error=$?
-        gr.debug "$FUNCNAME _error:$_error"
-
-        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
-        return $_error
-    }
-
-    local search_term=$@
-
-    # user did not give search string
-    [[ $search_term ]] || read -p "search term: " search_term
-
-    gr.debug "$search_term"
-
-    # search from youtube
-    local query=$(youtube.find 25 json "$search_term")
-
-    # make lists of results (yeah stupid, but it works)
-    IFS=$'\n'
-    local list=($(echo $query | jq | grep title | cut -d '"' -f 4 | tr -s ' '))
-    local urls=($(echo $query | jq | grep url_suffix | cut -d '"' -f 4))
-    IFS=$' '
-    local duration=($(echo $query | jq | grep duration | cut -d':' -f2 | xargs | sed 's/,//g'))
-
-    # optimize for videos
-    export youtube_options=
-    last_item=0
-
-    print_list
-
-    while true ; do
-
-        gr.debug "$FUNCNAME: continue_to_play: '$continue_to_play'"
-        gr.debug "$FUNCNAME: ans: '$ans'"
-        gr.debug "$FUNCNAME: mpv_options: $mpv_options"
-        gr.debug "$FUNCNAME: youtube_options: $youtube_options"
-
-        gr.msg -v1 -c dark_gray "(n)ext, (p)revious, (c)ontinued, (t)ype, (l)ist, (q)uit or (0..$items)"
-
-        gr.msg -n -c red "youtube [$last_item/${#list[@]}] "
-        # gr.msg -n "[$last_item/${#list[@]}] "
-        if [[ $continue_to_play ]] ; then
-            read -t5 -p "continuing $optimization: " ans
-            ans=${ans:-continue}
-        else
-            read -p "select $optimization: " ans
-        fi
-
-        case $ans in
-
-            [0-9]|1[0-9]|2[0-9]|3[0-9])
-                if [[ $ans -ge ${#list[@]} ]] ; then
-                    gr.msg -c error "list is only $items items long"
-                    continue
-                fi
-                last_item=$ans
-                ;;
-
-            continue)
-                [[ $last_item -gt ${#list[@]} ]] && last_item=0
-                last_item=$(( last_item + 1 ))
-                ;;
-
-            t)
-                if [[ $optimization == "audio" ]] ; then
-                    optimization=video
-                    export youtube_options="-f best"
-                    export mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET"
-                else
-                    optimization=audio
-                    export youtube_options=
-                    export mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET --vo=null --no-video "
-                fi
-                continue
-                ;;
-            c)
-                if [[ $continue_to_play ]] ; then
-                    gr.msg "continues playing canceled"
-                    continue_to_play=
-                else
-                    gr.msg "continues playing set"
-                    continue_to_play=true
-                fi
-                continue
-                ;;
-            f)
-                if ! [[ $mpv_temp_options ]] ; then
-                    mpv_temp_options=$mpv_options
-                    mpv_options="$mpv_options --fs"
-                else
-                    mpv_options=$mpv_temp_options
-                    mpv_temp_options=
-                fi
-                continue
-                ;;
-            n)
-                last_item=$(( last_item + 1 ))
-                ;;
-            p)
-                last_item=$(( last_item - 1 ))
-                ;;
-            l)
-                print_list
-                continue_to_play=
-                ;;
-            q*|exit|bye)
-                break
-                ;;
-            "")
-                true
-                ;;
-            *)
-                gr.msg -c error "please select 0-$items;"
-                continue
-                ;;
-
-        esac
-
-        if ! [[ $stopped ]] && [[ $optimization == audio ]] ; then
-            local stopped=true
-            audio.stop
-        fi
-
-        play_item $last_item
-
-        if [[ $? -eq 143 ]]; then
-            gr.msg "continues playing canceled"
-            continue_to_play=
-        fi
-
-
-    done
-    return 0
-}
-
-
-youtube.find () {
 # search from youtube and return json of $1 amount of results
 
     # deliver decimal value for inline python
@@ -410,7 +226,7 @@ youtube.search_n_play () {
     youtube.arguments $@
 
     # make search and get media data and address
-    local query=$(youtube.find 1 json ${module_command[@]})
+    local query=$(youtube.search 1 json ${module_options[@]})
 
     # get information of found media
     # TBD make able to parse multiple search results ans for them trough to replace search_list function"
@@ -465,13 +281,13 @@ youtube.search_n_play () {
     if [[ -f /tmp/mpv.error ]]; then
         _error=$(grep 'ERROR:' /tmp/youtube.error)
         [[ $_error ]] && gr.msg -v2 -c red $_error
-        rm "/tmp/mpv.error"
+        [[ -f /tmp/mpv.error ]] && rm /tmp/mpv.error
     fi
 
     if [[ -f /tmp/youtube.error ]]; then
         _error=$(grep 'Failed' /tmp/mpv.error)
         [[ $_error ]] && gr.msg -v2 -c yellow $_error
-        rm "/tmp/youtube.error"
+        [[ -f /tmp/youtube.error ]] && rm /tmp/youtube.error
     fi
     # remove now playing and error data
     [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
@@ -492,7 +308,7 @@ youtube.search_list () {
     youtube_options="-f bestaudio --no-resize-buffer --ignore-errors"
 
     # make search and get media data and address
-    local query=$(youtube.find 20 json $@)
+    local query=$(youtube.search 20 json $@)
 
     # format information of found media
     declare -a id_list=($(echo $query | jq | grep url_suffix \
@@ -517,12 +333,7 @@ youtube.search_list () {
         yt-dlp $youtube_options "$_url" -o - 2>/dev/null| mpv $mpv_options --no-video - >/tmp/mpv.error
 
         #remove now playing data
-        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
-
-        if flag.get audio_stop ; then
-            flag.rm audio_stop
-            break
-        fi
+        rm $GURU_AUDIO_NOW_PLAYING
     done
     return 0
 }
@@ -581,32 +392,24 @@ youtube.play () {
 # play input file
 
     # check is user input url or id
-    echo "$@" | grep -q "https://" && base_url="" || base_url="https://www.youtube.com/watch?v="
-
-     # debug stuff (TBD remove later)
-    gr.debug "save_to_file" "$save_to_file"
-    gr.debug "youtube_options" "$youtube_options"
-    gr.debug "module_command" "${module_command[@]}"
-    gr.debug "mpv_options" "$mpv_options"
-    gr.debug "save_location" "$save_location"
+    echo "$@" | grep "https://" && base_url="" || base_url="https://www.youtube.com/watch?v="
 
     # set playing and saving options and generate url
-    local media_address="$base_url$1"
+    youtube.arguments $@
+    local media_address="$base_url${module_options[0]}"
 
     # indicate playing
-    gr.msg -c dark_grey "$media_address" -k $GURU_AUDIO_INDICATOR_KEY
+    gr.msg -c aqua "$media_address" -k $GURU_AUDIO_INDICATOR_KEY
+    echo $media_address >$GURU_AUDIO_NOW_PLAYING
 
-    # get steam and play
-    gr.debug "yt-dlp $youtube_options $media_address -o - | mpv $mpv_options -"
-    yt-dlp $youtube_options $media_address -o - 2>/tmp/youtube.error | mpv $mpv_options -
+    # get staream and play
+    yt-dlp -v $youtube_options $media_address -o - 2>/tmp/youtube.error \
+        | mpv $mpv_options - >/dev/null
     local _error=$?
-    gr.debug "$FUNCNAME _error:$_error"
-
-    # flag.rm audio_reseved
 
     # remove playing indications
     gr.msg -c reset -k $GURU_AUDIO_INDICATOR_KEY
-    [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+    rm $GURU_AUDIO_NOW_PLAYING
 
     # (( $_error > 0 )) && gr.msg -c yellow "${FUNCNAME[0]} returned $_error"
     return $_error
@@ -614,13 +417,12 @@ youtube.play () {
 
 
 youtube.upgrade() {
-# upgrade needed tools, youtube do changes often and shit causing weird errors
+# upgrade needed tools, ofter youtube changes shit causing weird errors
 
     # get new version of
     sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
     sudo chmod a+rx /usr/local/bin/yt-dlp
-
-    pip3 install --upgrade pip || rm -r ~/.cache/pip/selfcheck/ && pip3 install --upgrade pip
+    pip3 install --upgrade pip
     pip3 install --user --upgrade yt-dlp
     return 0
 }
@@ -652,8 +454,7 @@ youtube.uninstall(){
 # remove requirements
 
     # remove only youtube special requiderements, leave players etc.
-    [[ -f /usr/bin/yt-dlp ]] && rm -y /usr/bin/yt-dlp
-    [[ -f /usr/local/bin/yt-dlp ]] && rm -y /usr/local/bin/yt-dlp
+    rm -y /usr/bin/yt-dlp /usr/local/bin/yt-dlp
     sudo apt-get remove yt-dlp -y
     pip3 uninstall youtube-search
     gr.msg -c green "uninstalled"
@@ -663,12 +464,10 @@ youtube.uninstall(){
 
 # get configs and set variables
 youtube.rc
-source $GURU_BIN/audio.sh
-declare -g module_command=()
+declare -g module_options=()
 declare -g save_location=$GURU_MOUNT_DOWNLOADS
-declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET"
-[[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
-declare -g youtube_options= #"-f worst"
+declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_SOCKET --stream-record=/tmp/mpv_audio.cache"
+declare -g youtube_options="-f worst"
 declare -g save_to_file=
 
 # run main only if run, not sourced

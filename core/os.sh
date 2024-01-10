@@ -3,13 +3,42 @@
 os_indicator_key=f8
 system_indicator_key="esc"
 
+
+
 source net.sh
+
+os.help () {
+    gr.msg -v1 -c white "guru-client installer help "
+    gr.msg -v2
+    gr.msg -v0  "usage:    $GURU_CALL status|info|poll|get|capslock|upgrade|update|usermerge "
+    gr.msg -v2
+    gr.msg -v1 -c white  "commands:"
+    gr.msg -v1 " status             operating system info with kernel version"
+    gr.msg -v1 " info               operating system info"
+    gr.msg -v2 " poll               daemon compatibility functions"
+    gr.msg -v1 " get <var_name>     get os information by variable name or all if empty"
+    gr.msg -v2 "     available      list variables variables"
+    gr.msg -v1 " capslock           capslock state and control"
+    gr.msg -v2 "     state          printout capslock status "
+    gr.msg -v2 "     on/off         enable / disable capslock "
+    gr.msg -v1 " upgrade            upgrade operating system"
+    gr.msg -v1 " update             printout updateable and ask to upgrade "
+    gr.msg -v1 " usermerge          support for the merged /usr directories scheme"
+    gr.msg -v1 "                    https://wiki.debian.org/UsrMerge"
+    gr.msg -v2 "                    /bin → /usr/bin,"
+    gr.msg -v2 "                    /sbin → /usr/sbin,"
+    gr.msg -v2 "                    /lib → /usr/lib and"
+    gr.msg -v2 "                    /lib64 → /usr/lib64"
+    gr.msg -v2
+    gr.msg -v1 "increase verbosity to get more information"
+}
+
 
 os.main () {
 
     local command=$1 ; shift
     case $command in
-        status|info|poll|capslock|upgrade|update|usermerge)
+        status|info|poll|capslock|upgrade|update|usermerge|help|get)
         os.$command $@
         return $?
         ;;
@@ -17,7 +46,8 @@ os.main () {
     esac
 }
 
-os.compatible_with(){
+
+os.compatible_with () {
     # check that current os is compatible with input [ID] {VERSION_ID}
     source /etc/os-release
     #[ "$ID" == "$1" ] && return 0 || return 255
@@ -35,8 +65,8 @@ os.compatible_with(){
 }
 
 
-os.status() {
-    # returns least linux distribution name
+os.status () {
+# returns least linux distribution name
     if [ -f /etc/os-release ]; then
         source /etc/os-release
         gr.msg -t -v1 -V2 "$FUNCNAME: $NAME $VERSION_ID '$VERSION_CODENAME' Kernel $(uname -r)"
@@ -45,16 +75,133 @@ os.status() {
 }
 
 
-os.info() {
-    # returns least linux distribution name
-    if [ -f /etc/os-release ]; then
-        source /etc/os-release
-        gr.msg "$NAME $VERSION_ID '$VERSION_CODENAME' based on $ID_LIKE '$UBUNTU_CODENAME'"
-        return 0
-    else
-        echo "cannot stat"
-        return 100
-    fi
+os.information () {
+# printout
+    local variable=$1
+    shift
+    local dmi_var_list=(bios-vendor bios-version bios-release-date baseboard-manufacturer baseboard-product-name baseboard-version chassis-type processor-family processor-manufacturer processor-version processor-frequency)
+
+    case $variable in
+
+        cpu)
+            lscpu
+            ;;
+
+        architechture|arch)
+            case $(uname -m) in
+                aarch64|arm64) echo "arm64" ;;
+                amd64|x86_64) echo "amd64" ;;
+                # TODO add rest later
+            esac
+            ;;
+
+        bios|system|baseboard|chassis|processor|memory|cache|connector|slot)
+            sudo dmidecode -t $variable
+            ;;
+
+        help)
+            gr.msg -h "type keywords"
+            gr.msg -c list "bios system baseboard chassis processor memory cache connector slot"
+            gr.msg -h "variables"
+            gr.msg -c list "${dmi_var_list[@]}"
+            gr.msg -h "cpu variables"
+            gr.msg -c list "${dmi_var_list[@]}"
+
+            ;;
+
+        "")
+            sudo true
+            for var in ${dmi_var_list[@]} ; do
+                gr.msg -n -c light_blue "$var: "
+                gr.msg -c aqua_marine "$(sudo dmidecode -s $var)"
+            done
+            ;;
+        *)
+            sudo true
+            for var in ${dmi_var_list[@]} ; do
+                if [[ $var == $variable ]] ; then
+                    sudo dmidecode -s $var
+                    return 0
+                fi
+            done
+            ;;
+    esac
+}
+
+
+# os.df () {
+
+#      local home_use_percent=$(df /home --output=pcent -h | tail -n+2 | xargs)
+#      local system_use_percent=$(df / --output=pcent -h | tail -n+2 | xargs)
+#      local store_use_percent=$(df /media/casa/store --output=pcent -h | tail -n+2 | xargs)
+#      gr.msg "home: $home_use_percent"
+#      gr.msg "system: $system_use_percent"
+#      gr.msg "store: $store_use_percent"
+
+#      # local home_usedf=$(df /home --output=ipcent -h | tail -n+2 | xargs)
+#      # local system_use=$(df / --output=ipcent -h | tail -n+2 | xargs)
+#      # local store_use=$(df /media/casa/store --output=ipcent -h | tail -n+2 | xargs)
+#      # gr.msg "home: $home_use"
+#      # gr.msg "system: $system_use"
+#      # gr.msg "store: $store_use"
+
+
+
+# }
+
+
+os.variables () {
+# list of os variables
+    variables=($(cat /etc/os-release | cut -d'=' -f1))
+    variables=(${variables[@]} $(cat /etc/upstream-release/lsb-release | cut -d'=' -f1))
+    echo ${variables[@]}
+}
+
+
+os.get () {
+# printout os variables
+
+    local variable="$1"
+
+    source /etc/os-release
+    source /etc/upstream-release/lsb-release
+
+    case $variable in
+
+        architechture|arch)
+            os.information $variable
+            ;;
+        available)
+            local list=$(os.variables)
+            gr.msg -c list "${list[@],,}"
+            return 0
+            ;;
+        "")
+            gr.kvp $(os.variables)
+            ;;
+        *)
+            local got="$(eval echo '$'${variable^^})"
+            echo ${got,,}
+            ;;
+    esac
+
+}
+
+
+os.info () {
+# returns least linux distribution name
+
+    source /etc/os-release
+    source /etc/upstream-release/lsb-release
+
+    case $GURU_VERBOSE in
+        0) gr.msg "$NAME $VERSION_ID/$DISTRIB_ID $DISTRIB_RELEASE" ;;
+        1) gr.msg "$NAME $VERSION_ID '$VERSION_CODENAME' based on $DISTRIB_ID $DISTRIB_RELEASE '$DISTRIB_CODENAME' $HOME_URL" ;;
+        2) gr.kvp NAME VERSION SUPPORT_URL  DISTRIB_ID DISTRIB_RELEASE DISTRIB_CODENAME ;;
+        3|*) gr.kvp $(os.variables) ;;
+    esac
+
+
 }
 
 
@@ -334,12 +481,14 @@ os.capslock() {
 
 
     case $1 in
-            check|state)
+            check|state|status)
 
+                gr.msg -n -v2 "capslock is: "
                 if capslock_state ; then
-                    gr.msg -v2 "capslock is active"
+                    gr.msg -c green -v1 "active"
                     return 0
                 else
+                    gr.msg -c black -v1 "disabled"
                     return 1
                 fi
                 ;;

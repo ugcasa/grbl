@@ -270,6 +270,75 @@ dokuwiki.backup () {
     return 0
 }
 
+# fuckit
+# wekan.update () {
+#     # take a database dump and copy it to location set in user.cfg where normal process can copy it to local
+
+#     local _domain=$1
+#     local _port=$2
+#     local _user=$3
+#     local _location=$4
+
+#     # stop container
+#     gr.msg -h "stopping docker container.. "
+#     gr.debug "Command: ssh ${_user}@${_domain} -p ${_port} ssh ${_user}@${_domain} -p ${_port} -- docker stop wekan"
+
+#     if ssh ${_user}@${_domain} -p ${_port} -- docker stop wekan >/dev/null ; then
+#         gr.msg -v2 -c green "ok"
+#     else
+#         gr.msg -c yellow "error $?"
+#         return 128
+#     fi
+
+#     # # delete current dump
+#     gr.msg -h "delete last dump.. "
+#     gr.debug "Command: ${_user}@${_domain} -p ${_port} -- docker exec wekan-db rm -rf /data/dump"
+
+#     if ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db rm -rf /data/dump >/dev/null ; then
+#         gr.msg -v2 -c green "ok"
+#     else
+#         gr.msg -c yellow "error $?"
+#         return 129
+#     fi
+
+#     # take a dump
+#     gr.msg -h "take a dump /data/dump.. "
+#     gr.debug "Command: ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db mongodump -o /data/dump"
+
+#     if ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db mongodump -o /data/dump 2>/dev/null ; then
+#         gr.msg -c green "ok"
+#     else
+#         gr.msg -c yellow "error $?"
+#         return 130
+#     fi
+
+#     # copy to where to rsyck it to final location
+#     gr.msg -h "copy to ${_location}.. "
+#     gr.debug "Command: ssh ${_user}@${_domain} -p ${_port} -- [[ -d ${_location} ]] || mkdir -p ${_location}"
+
+#     if ssh ${_user}@${_domain} -p ${_port} -- docker cp wekan-db:/data/dump ${_location}  ; then
+#         gr.msg -v2 -c green "ok"
+#     else
+#         gr.msg -c yellow "error $?"
+#         return 131
+#     fi
+
+#     # start container
+#     gr.msg -h "starting docker container.. "
+#     gr.debug "Command: ssh ${_user}@${_domain} -p ${_port} -- docker start wekan"
+
+#     if ssh ${_user}@${_domain} -p ${_port} -- docker start wekan >/dev/null ; then
+#         gr.msg -v2 -c green "ok"
+#     else
+#         gr.msg -c yellow "error $?"
+#         return 132
+#     fi
+
+#     return 0
+# }
+
+
+
 
 tovsdf.debug () {
     gr.msg  "${FUNCNAME[0]^^}: tovsdf.sh" -c white

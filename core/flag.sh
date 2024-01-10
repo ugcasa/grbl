@@ -1,6 +1,5 @@
 #!/bin/bash flag.sh is for soursing only
-
-declare -g flag_list=(running fast pause stop suspend)
+declare -g flag_list=(running fast pause stop suspend audio_reseved audio_stop)
 
 flag.help () {
 # flag help
@@ -29,7 +28,7 @@ flag.main () {
     local cmd=$1 ; shift
     case $cmd in
 
-        set|rm|ls|toggle|check|status|help)
+        set|get|rm|ls|toggle|check|status|help)
                 flag.$cmd $@
                 return $?
                 ;;
@@ -62,6 +61,20 @@ flag.check () {
 }
 
 
+flag.get () {
+# return flag status
+
+    if flag.check $1 ; then
+        gr.msg -v1 -c green "$1 is set"
+        return 0
+    else
+        gr.msg -v3 -c dark_grey "$1 not set"
+        return 1
+    fi
+}
+
+
+
 flag.ls () {
 # return true if flag is set, no printout
     for flag in ${flag_list[@]} ; do
@@ -83,8 +96,8 @@ flag.status () {
 # list of flags
 
     gr.msg -v2 -c white "guru-cli flag status:"
-
     local flag=
+
     for flag in ${flag_list[@]} ; do
 
         gr.msg -n "$flag: "
@@ -112,7 +125,7 @@ flag.set () {
         gr.msg -t -v3 "$flag flag already set"
         return 0
     else
-        touch /tmp/guru-$flag.flag && gr.msg -t -v1 "$flag flag set"
+        touch /tmp/guru-$flag.flag && gr.msg -v3 -t "$flag flag set"
     fi
 }
 
@@ -128,7 +141,7 @@ flag.rm () {
     fi
 
     if [[ -f /tmp/guru-$flag.flag ]] ; then
-        rm -f /tmp/guru-$flag.flag && gr.msg -t -v1 "$flag flag removed"
+        rm -f /tmp/guru-$flag.flag && gr.msg -v3 -t "$flag flag removed"
         return 0
     else
         gr.msg -t -v3 "$flag flag not set"
@@ -147,9 +160,9 @@ flag.toggle () {
     fi
 
     if [[ -f /tmp/guru-$flag.flag ]] ; then
-        rm -f /tmp/guru-$flag.flag && gr.msg -t -v1 "$flag flag disabled"
+        rm -f /tmp/guru-$flag.flag && gr.msg -v3 -t "$flag flag disabled"
         return 0
     else
-        touch /tmp/guru-$flag.flag && gr.msg -t -v1 "$flag flag set"
+        touch /tmp/guru-$flag.flag && gr.msg -v3 -t "$flag flag set"
     fi
 }

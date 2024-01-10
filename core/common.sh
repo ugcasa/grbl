@@ -3,189 +3,6 @@
 # collection of functions be sourced every time module needs it
 # casa@ujo.guru 2019 - 2023
 
-gr.help () {
-
-    gr.help_msg(){
-
-        gr.msg -v0 'gr.msg <options> "message"' -hN
-        gr.msg -v2
-        gr.msg -v1 "print out text, colors and mqtt messages. Supports verbose leveling, text color, "
-        gr.msg -v1 "speak out, control line width, blink indication keys on keyboard, timestamps etc."
-        gr.msg -v2
-        gr.msg -v1 "    -v <1..4>       verbose_trigger, print after given verbose level"
-        gr.msg -v1 "    -k <key_name>   keyboard key="
-        gr.msg -v1 "    -c <color>      text and key color"
-        gr.msg -v1 "    -l              write to log"
-        gr.msg -v1 "    -s              speaks message out "
-        gr.msg -v1 "    -q              quick message to default MQTT topic "
-        gr.msg -v1 "    -t              timestamp"
-        gr.msg -v1 "    -h              header formatting"
-        gr.msg -v1 "    -n              add newline after string"
-        gr.msg -v1 "    -N              add newline before string"
-        gr.msg -v1 "    -w <width>      column width"
-        gr.msg -v1 "    -m <topic>      MQTT server topic "
-        gr.msg -v1 "    -V <1..4>       verbose limiter, do not print higher than this verbose level"
-        gr.msg -v1 "    -C <color>      change line color"
-        gr.msg -v1 "    -x <exit_code>  exit after message with error code"
-        gr.msg -v2
-    }
-
-    gr.help_ask() {
-
-        gr.msg -v0 'gr.ask <options> "message"' -hN
-        gr.msg -v2
-        gr.msg -v1 "simple yes no selector."
-        gr.msg -v2
-        gr.msg -v1 "    -v <1..4>       verbose_trigger, print after given verbose level"
-        gr.msg -v1 "    -k <key_name>   keyboard key="
-        gr.msg -v1 "    -c <color>      text and key color"
-        gr.msg -v1 "    -l              write to log"
-        gr.msg -v1 "    -s              speaks message out "
-        gr.msg -v1 "    -q              quick message to default MQTT topic "
-        gr.msg -v1 "    -t              timestamp"
-        gr.msg -v1 "    -h              header formatting"
-        gr.msg -v1 "    -n              add newline after string"
-        gr.msg -v1 "    -N              add newline before string"
-        gr.msg -v1 "    -w <width>      column width"
-        gr.msg -v1 "    -m <topic>      MQTT server topic "
-        gr.msg -v1 "    -V <1..4>       verbose limiter, do not print higher than this verbose level"
-        gr.msg -v1 "    -C <color>      change line color"
-        gr.msg -v1 "    -x <exit_code>  exit after message with error code"
-
-        gr.msg -v1 "known issues" -c white
-        gr.msg -v1 " With both, message string cannot start with a line '-'"
-        gr.msg -v2
-    }
-
-    gr.help_dump () {
-
-        gr.msg -v0 'gr.dump ' -hN
-        gr.msg -v2
-        gr.msg -v1 "core dump to $GURU_CORE_DUMP"
-        gr.msg -v2
-    }
-
-    gr.help_ts () {
-
-        gr.msg -v0 'gr.ts <format> ' -hN
-        gr.msg -v2
-        gr.msg -v1 "timestamp printout in different formats + place to clipboard"
-        gr.msg -v2
-        gr.msg -v1 "    epoch|-e    epoch format: $(date -d now +"%s")"
-        gr.msg -v1 "    file|-f     file name compatible: $(date -d now +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_FILE_TIME)"
-        gr.msg -v1 "    human|-h    human readable: $(date -d now +$GURU_FORMAT_DATE $GURU_FORMAT_TIME)"
-        gr.msg -v1 "    nice|-n     nice TBD: $(date -d now +$GURU_FORMAT_NICE)"
-        gr.msg -v1 "                default is: $(date -d now +$GURU_FORMAT_TIMESTAMP)"
-        gr.msg -v2
-    }
-
-    gr.help_poll () {
-
-        gr.msg -v0 'gr.poll <module_name> ' -hN
-        gr.msg -v2
-        gr.msg -v1 "returns module polling order"
-        gr.msg -v2
-    }
-
-    gr.help_source () {
-
-        gr.msg -v0 'gr.source <module_name> [list on wanted functions] ' -hN
-        gr.msg -v2
-        gr.msg -v1 "source only wanted functions from module"
-        gr.msg -v2
-
-    }
-
-    gr.help_end () {
-
-        gr.msg -v0 'gr.end <keyboard_key> ' -hN
-        gr.msg -v2
-        gr.msg -v1 "ends blinking animation on keys of corsair keyboard"
-        gr.msg -v2
-    }
-
-    gr.help_ind () {
-
-        gr.msg -v0 'gr.ind <options> <action> ' -hN
-        gr.msg -v2
-        gr.msg -v1 "keyboard, text and audio indication actions"
-        gr.msg -v2
-        gr.msg -v1 "  -m     message string"
-        gr.msg -v1 "  -k     keyboard key"
-        gr.msg -v1 "  -c     color name"
-        gr.msg -v1 "  -t     timestamp  "
-        gr.msg -v2
-        gr.msg -v1 "currently available actions: keyboard and audio indications "
-        gr.msg -v1 "   done, available, recovery, working, pause, cancel, error, offline, "
-        gr.msg -v1 "   warning, alert, panic, pass, failed, message, flash, cops, police, "
-        gr.msg -v1 "   calm, hacker, russia, china, call and customer"
-        gr.msg -v2
-    }
-
-    gr.help_installed () {
-        gr.msg -v0 'gr.installed <module> ' -hN
-        gr.msg -v2
-        gr.msg -v1 "check is module installed"
-        gr.msg -v2
-    }
-
-    gr.help_presence () {
-
-        gr.msg -v0 'gr.presence <action> ' -hN
-        gr.msg -v2
-        gr.msg -v1 "user presence check based on phone wifi"
-        gr.msg -v2
-        gr.msg -v1 "actions: stop|end stop polling phone"
-        gr.msg -v2
-
-    }
-
-    gr.help.kv () {
-        gr.msg -v0 'gr.kv <variable> <value> ' -hN
-        gr.msg -v2
-        gr.msg -v1 "print one line of variable value list. "
-    }
-
-    gr.help_kvt () {
-        gr.msg -v0 'gr.kvt <variable> <value> <variable> <value> ... ' -hN
-        gr.msg -v2
-        gr.msg -v1 "format list of sting pairs to two column list view"
-    }
-
-    gr.help_debug () {
-        gr.msg -v0 'gr.debug <string> ' -hN
-        gr.msg -v2
-        gr.msg -v1 "printout pink debug stuff"
-        gr.msg -v2
-    }
-
-    function=$1
-
-    case $function in
-        msg|ask|dump|ts|poll|source|end|ind|installed|presence|debug)
-            gr.help_$function
-            ;;
-        all)
-            gr.help_msg
-            gr.help_ask
-            gr.help_dump
-            gr.help_ts
-            gr.help_poll
-            gr.help_source
-            gr.help_end
-            gr.help_ind
-            gr.help_installed
-            gr.help_presence
-            gr.help_debug
-            ;;
-        *)
-            gr.msg -c yellow "unknown function '$function'"
-            gr.msg "available: msg, ask, dump, ts, poll, source, end, ind, installed, presence and debug "
-            ;;
-    esac
-
-}
-
 
 gr.dump () {
 # dump environmental status to file
@@ -237,28 +54,31 @@ gr.poll () {
 
 
 gr.source () {
-# source only wanted functions. slow ~0,03 sec, but saves environment space
+# source only wanted functions to save environment space
 
-    local file=$1 ; shift
-    local functions=($@)
+    gr.msg "TBD, how to detect end function, read till }?"
+    return 0
 
-    # use ram disk as a temp to avoid ssd wear out and might be little faster?
-    if df -T | grep /dev/shm >/dev/null; then
-        gtemp=/dev/shm/guru
-    else
-        gtemp=/tmp/guru
-    fi
+    # local file=$1 ; shift
+    # local functions=($@)
 
-    if ! [[ -d $gtemp ]] ; then
-        mkdir -p $gtemp
-    fi
+    # # use ram disk as a temp to avoid ssd wear out and might be little faster?
+    # if df -T | grep /dev/shm >/dev/null; then
+    #     gtemp=/dev/shm/guru
+    # else
+    #     gtemp=/tmp/guru
+    # fi
 
-    for function in ${functions[@]} ; do
-        sed -n "/$function ()/,/}/p" $file >> $gtemp/functions.sh
-    done
+    # if ! [[ -d $gtemp ]] ; then
+    #     mkdir -p $gtemp
+    # fi
+    # echo "script: $GURU_BIN/$file, temp_folder: $gtemp"
+    # for function in ${functions[@]} ; do
+    #     sed -n "/$function ()/,/$'\n'    }/p" $GURU_BIN/$file >> $gtemp/functions.sh
+    # done
 
-    source $gtemp/functions.sh
-    rm $gtemp/functions.sh
+    # source $gtemp/functions.sh
+    # rm $gtemp/functions.sh
 }
 
 
@@ -371,11 +191,6 @@ gr.msg () {
     # "do not print after this verbose level"
     if [[ $verbose_limiter -le $GURU_VERBOSE ]]; then
         return 0
-    fi
-
-    # On verbose level 3+ timestamp is always on
-    if [[ $verbose_trigger -gt 3 ]] && [[ ${#_message} -gt 1 ]]; then
-        _timestamp="$(date +$GURU_FORMAT_TIME.%3N) DEBUG: "
     fi
 
     # -w) fill message length to column limiter

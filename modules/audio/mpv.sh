@@ -18,8 +18,9 @@ mpv.stat() {
 
     position="$(mpv.communicate "percent-pos" | cut -d'.' -f1)%"
     file="$(mpv.communicate "filename")"
-    playlist_pos="$(( $(mpv.communicate 'playlist-pos') + 1 ))"
-    playlist_count="$(mpv.communicate "playlist-count")"
+    printf "%s %s " "$file" "$position"
 
-    printf "%s %s [%s/%s]" "$file" "$position" "$playlist_pos" "$playlist_count"
+    #playlist_pos="$(( $(mpv.communicate 'playlist-pos') + 1 ))"
+    #playlist_count="$(mpv.communicate "playlist-count")"
+    # printf "%s %s [%s/%s]" "$file" "$position" "$playlist_pos" "$playlist_count"
 }

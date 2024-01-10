@@ -125,7 +125,6 @@ project.configure () {
     # project_home="$GURU_MOUNT/projects/$project_name"
 
     gr.msg -v3 "$GURU_USER working on $project_name home folder:$project_git"
-    declare -g sublime_project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
 
     # check that project is in projects list
     if ! project.exist $project_name ; then
@@ -193,8 +192,10 @@ project.info () {
            "project_archive" "$project_archive"
 
     # active project information
+
     if [[ -f $GURU_PROJECT_CFG ]]
     then
+        source $GURU_PROJECT_SCRIPT
         gr.msg -N -h "project '$active' variables"
         gr.kvt "project_name" "$GURU_PROJECT_NAME" \
                "description" "$GURU_PROJECT_DESCRIPTION" \
@@ -205,7 +206,6 @@ project.info () {
                "config_script" "$GURU_PROJECT_SCRIPT" \
                "project_files" "$GURU_PROJECT_FOLDER" \
                "git_folder" "$GURU_PROJECT_GIT" \
-               "sublime_project" "$sublime_project_file" \
                "environment" "$GURU_PROJECT_ENV" \
                "issues" "$GURU_PROJECT_ISSUES"
     else
@@ -224,27 +224,50 @@ project.run () {
 project.sublime () {
 # open sublime with project file
 
-    project.configure $1
+    local project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
 
     if ! [[ -d $project_folder ]] ; then
             gr.msg -c yellow "project not exist"
             return 131
         fi
 
-    if [[ -f "$sublime_project_file" ]] ; then
-            gr.msg -v2 "using $sublime_project_file"
-            # TBD edit/subl.sh?  << subl --project "$sublime_project_file" -a
-            subl --project "$sublime_project_file" -a
+    if [[ -f "$project_file" ]] ; then
+            gr.msg -v2 "using $project_file"
+            # TBD edit/subl.sh?  << subl --project "$project_file" -a
+            subl --project "$project_file" -a
         else
-            gr.msg -c yellow "$sublime_project_file not found"
+            gr.msg -c yellow "$project_file not found"
             return 132
         fi
 }
 
 
+project.code () {
+# open code with project file
+
+    local project_file="$project_folder/$project_name.code-workspace"
+
+    if ! [[ -d $project_folder ]] ; then
+            gr.msg -c yellow "project not exist"
+            return 131
+        fi
+
+    if [[ -f "$project_file" ]] ; then
+            gr.msg -v2 "using $project_file"
+            # TBD edit/subl.sh?  << subl --project "$project_file" -a
+            code --profile "$project_file" -r
+        else
+            gr.msg -c yellow "$project_file not found"
+            return 132
+        fi
+}
+
+
+
 project.subl () {
 # aliases
-
+    project.configure $1
+    shift
     project.sublime $@
     return $?
 }
@@ -296,16 +319,16 @@ project.open () {
     case $GURU_PREFERRED_EDITOR in
 
         sublime|subl|sub3|sub4)
-            project.sublime $project_name
+            project.sublime
         ;;
 
-        code|vcode|v-code|visual-code|vs)
+        code|vscode)
             gr.msg "project '$project_name' code folder '$project_git' "
             [[ $GURU_FORCE ]] \
                 && code $project_git \
                 || gr.msg -v2 "let user launch editor $project_git"
 
-            code $GURU_PROJECT_GIT
+            project.code
         ;;
 
         vi|vim)
@@ -333,7 +356,7 @@ project.terminal () {
     local project_name=$1
     project.configure $project_name
 
-    gr.debug "$FUNCNAME project config file: $GURU_PROJECT_GIT:$GURU_PREFERRED_TERMINAL:$project_folder/config.sh"
+    gr.debug "$FUNCNAME: git_folder:$GURU_PROJECT_GIT terminal:$GURU_PREFERRED_TERMINAL script:$project_folder/config.sh"
 
     case $GURU_PREFERRED_TERMINAL in
 
@@ -373,7 +396,6 @@ project.terminal () {
                 gr.msg "non supported terminal"
             ;;
     esac
-
     return $?
 }
 

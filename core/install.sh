@@ -19,7 +19,7 @@ install.main () {
     esac
 
     case "$argument" in
-        status|earth|help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams|fail2ban)
+        steam|status|earth|help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams|fail2ban)
                     install.$argument "$@" ;;
         *)          gr.msg -v dark_grey "no installer for '$argument'"; install.help
     esac
@@ -416,6 +416,17 @@ install.fail2ban () {
        sudo systemctl start fail2ban.service
        sudo fail2ban-client status sshd && gr.msg -c green "setup ok" || gr.msg -c red "failed to setup"
 }
+
+install.steam () {
+# install steam (tested once)
+    sudo add-apt-repository multiverse
+    sudo apt update
+    sudo apt install -y wget gdebi-core libgl1-mesa-dri:i386 libgl1-mesa-glx:i386 libc6:amd64 libc6:i386 libegl1:amd64 libegl1:i386 libgbm1:amd64 libgbm1:i386 libgl1-mesa-dri:amd64 libgl1-mesa-dri:i386 libgl1:amd64 libgl1:i386 steam-libs-amd64:amd64 steam-libs-i386:i386
+    cd /tmp
+    wget https://cdn.akamai.steamstatic.com/client/installer/steam.deb
+    sudo gdebi -y steam.deb
+}
+
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

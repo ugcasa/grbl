@@ -12,7 +12,7 @@ source $temp_rc
 
 all_list=($(\
         grep "export GURU_MOUNT_" $temp_rc | \
-        grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' | \
+        grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve '_INDICATOR_KEY' | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
 all_list=(${all_list[@],,})
@@ -24,6 +24,7 @@ _default_list=($(\
         grep -v "ENABLED" | \
         grep -v "LIST" | \
         grep -v '$GURU_MOUNT' | \
+        grep -v 'INDICATOR_KEY' | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
 

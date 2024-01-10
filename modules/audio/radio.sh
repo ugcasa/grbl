@@ -79,7 +79,7 @@ radio.main() {
         o|open|player)
                 radio_number=$(< $radio_prev_file)
                 local _command='guru radio selector'
-                flag.rm stopaudio
+                flag.rm audio_stop
                 gnome-terminal --hide-menubar --geometry 130x$((${#station_list[@]} / 4 + 8 )) --zoom 0.5 --title "radio player" -- bash -c "$_command"
                 ;;
 
@@ -206,7 +206,7 @@ radio.list () {
 radio.listen () {
 # listen radio station by number or name, list of stations
 
-    flag.rm stopaudio
+    flag.rm audio_stop
     local station_nro=
     local station_name=
     local station_url=

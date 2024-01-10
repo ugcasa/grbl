@@ -1,13 +1,6 @@
 http://s3.radio.co/scfd7273b2/listen doubleclap
 http://radio2.6net.fi:8000/jarviradio2 järviradio
-https://supla.digitacdn.net/live/_definst_/supla/radiorock/chunklist.m3u8 radio_rock
-https://supla.digitacdn.net/live/_definst_/supla/aitoiskelma/chunklist.m3u8 aito_iskelmä
-https://supla.digitacdn.net/live/_definst_/supla/groove/chunklist.m3u8 groove_fm
-https://supla.digitacdn.net/live/_definst_/supla/radiohelmi/chunklist.m3u8 helmiradio
-https://supla.digitacdn.net/live/_definst_/supla/hitmix/chunklist.m3u8 radio_hitmix
-https://supla.digitacdn.net/live/_definst_/supla/loop/chunklist.m3u8 radio_loop
-http://isojako.radiodei.fi:8000/yleisohjelma dei
-https://supla.digitacdn.net/live/_definst_/supla/suomipop/chunklist.m3u8 suomipop
+http://isojako.radiodei.fi:8000/yleisohjelma radio_dei
 https://stream.radiohelsinki.fi radio_helsinki
 http://wr2.downtime.fi/kaakko.aac kaakko
 https://lff.radiotaajuus.fi:9042/lff lff_radio
@@ -16,12 +9,12 @@ https://stream.radiojar.com/n6yg5q0z8vzuv musa_tampere
 http://185.123.117.122:8000/ramona.mp3 ramona
 https://stream.radiorex.fi:8000/radiorex radio_rex
 http://suomiradio.pro:8080 radio_sandels
-http://st.downtime.fi/sun.mp3 sun
+http://st.downtime.fi/sun.mp3 radio_sun
 https://stream.protonbroadcast.com:8443/radiovaasa.mp3 radio_vaasa
-https://cast2.radiovoima.fi/voima.mp3 voima
-http://s3.myradiostream.com:4976 sea fm
-http://st.downtime.fi/kiakko-ilves.aac kiekko ilves
-http://st.downtime.fi/kiakko-tappara.aac kiekko tappara
+https://cast2.radiovoima.fi/voima.mp3 radio_voima
+http://s3.myradiostream.com:4976 sea_fm
+http://st.downtime.fi/kiakko-ilves.aac kiekkoradio_ilves
+http://st.downtime.fi/kiakko-tappara.aac kiekkoradio_tappara
 http://solid9.streamupsolutions.com/proxy/kookmuod?mp=/live gramofoni
 http://radio.hear.fi:8000/hear.mp3 radio_hear
 http://radioinari.radioman.fi:8000/radioinari radio_inari

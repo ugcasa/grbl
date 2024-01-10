@@ -411,12 +411,12 @@ backup.wekan () {
 
 
 backup.now () {
-    # check things and if pass then make backup
-    # 1) get config for backup name
-    # 2) check and place variables for rsynck
-    # 3) check backup method get files out of service containers
-    # 4) file checks to avoid broken/infected copy over good files
-    # 5) perform copy
+# check things and if pass then make backup
+# 1) get config for backup name
+# 2) check and place variables for rsynck
+# 3) check backup method get files out of service containers
+# 4) file checks to avoid broken/infected copy over good files
+# 5) perform copy
 
     server_to_local () {
 
@@ -463,7 +463,7 @@ backup.now () {
                 && store_param="$store_location$backup_name" \
                 || store_param="$store_location/$backup_name"
 
-            gr.msg -v3 "location: $store_location folder: $store_folder param: $store_param "
+            gr.debug "location: $store_location folder: $store_folder param: $store_param "
     }
 
 
@@ -472,7 +472,7 @@ backup.now () {
         if ! mount | grep $store_mount_point >/dev/null ; then
             if [[ $DISPLAY ]] && [[ $store_device_file ]] ; then
                 gr.msg -v2 -n "mounting store media $store_device_file.. "
-                gr.msg -v3 -N -c deep_pink "gio mount -d $store_device_file"
+                gr.debug "gio mount -d $store_device_file"
                 gio mount -d $store_device_file \
                     && gr.msg -v1 -c green "ok" \
                     || gr.msg -v1 -c yellow "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
@@ -537,7 +537,7 @@ backup.now () {
     # make dir if not exist (like when year changes)
     if ! [[ $store_domain ]] && [[ $store_location ]] ; then
         gr.msg -v3 -c deep_pink "mkdir -p $store_location"
-        [[ -d $store_location ]] || mkdir -p $store_location
+        [[ -d $store_location ]] || mkdir -p $store_location || return 111
     fi
 
 ### 3) check backup method get files out of service containers based settings in user.cfg
@@ -623,7 +623,8 @@ backup.now () {
 ### 5) perform copy
 
     local _error=$?
-    gr.msg -v3 -c deep_pink "eval rsync $command_param $from_param $store_param"
+    gr.debug "$FUNCNAME: eval rsync $command_param $from_param $store_param"
+
     eval rsync $command_param $from_param $store_param
 
     if [[ $_error -gt 0 ]] ; then

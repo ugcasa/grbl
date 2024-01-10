@@ -23,6 +23,8 @@ case $all in
     ws)     guru stamp weekplan | timeout 0.5 xclip ;;
     ss)     guru stamp signature | timeout 0.5 xclip ;;
     ca)     os.capslock toggle ;;
+    cs)     gnome-terminal --hide-menubar --geometry 200x60 --zoom 0.7 --hide-menubar --title "guru-cli cheatsheet"  -- $GURU_BIN/guru cheatsheet ;;
+    cc)     gnome-terminal --hide-menubar --geometry 50x35 --zoom 1.2 --hide-menubar --title "guru-cli cheatsheet"  -- $GURU_BIN/guru help capslauncher ;;
     tt)     guru say "timer start"
             guru timer start ;;
     to)     guru say "timer stop"
@@ -30,7 +32,7 @@ case $all in
     tc)     guru say "timer canceled"
             guru timer cancel ;;
     # audio controls kill all audio and lights
-    r*)     guru radio $key2$key3 ;;
+    r*)     guru audio radio $key2$key3 ;;
     # kill all audio and lights
     as)     guru audio stop ;;
     ts)     printf "%s\n" "$(gr.ts -f)" | xclip -selection clipboard ;;
@@ -55,4 +57,3 @@ esac
 
 guru corsair reset caps
 #sleep 3
-

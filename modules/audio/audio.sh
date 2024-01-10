@@ -98,10 +98,6 @@ audio.main () {
             return $?
             ;;
 
-        # playlist)
-        #     audio.playlist_main $@
-        #     return $?
-        #     ;;
         *)
             gr.msg -c error "audio module: unknown command '$_command'"
             return 1
@@ -131,13 +127,13 @@ audio.mount () {
 audio.play () {
 # play playlist and song/album/artist name given as parameter
     local _error=
-    flag.rm stopaudio
+    flag.rm audio_stop
     corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
 
     case $1 in
             find)
                 shift
-                audio.find_and_play $1
+                audio.find_and_play $@
                 _error=$?
                 ;;
             "")
@@ -163,7 +159,7 @@ audio.stop () {
     pkill mpv
     [[ -f $GURU_AUDIO_PAUSE_FLAG ]] && audio.pause
     #source flag.sh
-    #flag.rm stopaudio
+    #flag.rm audio_stop
 
     gr.end $GURU_AUDIO_INDICATOR_KEY
     # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
@@ -228,7 +224,7 @@ audio.toggle () {
 # start or stop to play last listened or default audio source
 
     local default_radio='yle puhe'
-    flag.rm stopaudio
+    flag.rm audio_stop
 
     if [[ -f $GURU_AUDIO_PAUSE_FLAG ]] ; then
             gr.debug "paused, calling pause: $@"
@@ -285,17 +281,41 @@ audio.sort_yle_list () {
 
 audio.find_and_play () {
 # find from known audio locations and play
+
     update_list=true
-    timeout=10
-    flag.rm stopaudio
+    timeout=
 
     print_list () {
+
+        [[ ${#_got[@]} -lt 10 ]] && width=3
+        [[ ${#_got[@]} -gt 9 ]] && width=4
+        [[ ${#_got[@]} -gt 99 ]] && width=5
+
         for (( i = 0; i < ${#_got[@]}; i++ )); do
-            gr.msg -h -n "[$i]: "
+            gr.msg -h -n -w$width "$i)"
             gr.msg -c list "${_got[$i]##*/}"
         done
         update_list=
-        gr.msg -v2 -c dark_gray "commands: (n)ext, (p)revious, (c)ancel timeout, (s)ort yle, (l)ist, (q)uit or number between 0 to $((${#_got[@]} -1 ))"
+        gr.msg -v1 -c dark_gray "(n)ext, (p)revious, (c)acontinue, (s)ort, (l)ist, (q)uit or (0..$((${#_got[@]} -1 )))"
+    }
+
+    play () {
+
+        # indication
+        corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+        gr.msg -h "playing ${_got[$_item_nr]##*/} [$_item_nr/$(( ${#_got[@]} -1 ))]"
+        # now playing
+        echo "$to_find [$_item_nr/$(( ${#_got[@]} -1 ))]" >$GURU_AUDIO_NOW_PLAYING
+
+        # play
+        mpv $1 $mpv_options --no-resume-playback --no-video
+        local _error=$?
+        gr.debug "$FUNCNAME _error:$_error"
+
+        # flag.rm audio_reseved
+        rm $GURU_AUDIO_NOW_PLAYING
+        return $_error
+
     }
 
 
@@ -329,26 +349,23 @@ audio.find_and_play () {
         return 0
     fi
 
+    update_list=true
     while true ; do
 
         gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
-        audio.stop
 
         # print list if more than one item found or no pre item is given
         if [[ ${#_got[@]} -gt 1 ]] && ! [[ $pre_item ]] ; then
 
             [[ $update_list ]] && print_list
 
+            gr.msg -n -c yellow_green "audio.sh [$_item_nr/$((${#_got[@]} -1 ))] "
+            # gr.msg -n "[$_item_nr/$((${#_got[@]} -1 ))] "
             if [[ $timeout ]] ; then
-                read -t 5 -p "select number ($timeout s): " user_input
+                read -t 5 -p "select ($timeout s): " user_input
                 user_input=${user_input:-n}
             else
-                read -p "select number: " user_input
-            fi
-
-            if flag.get stopaudio ; then
-                timeout=
-                break
+                read -p "select: " user_input
             fi
 
             # user input parser
@@ -356,7 +373,7 @@ audio.find_and_play () {
                 q*|Q*|e*|x*) break ;;
                 n*) _item_nr=$(( $_item_nr +1 )) ;;
                 l*) update_list=true ; continue ;;
-                p*) _item_nr=$(( $_item_nr -1 )) ;;
+                p) _item_nr=$(( $_item_nr -1 )) ;;
                 c*) [[ $timeout ]] && timeout= || timeout=5 ; continue ;;
                 s*) _got=($(audio.sort_yle_list ${_got[@]})) ; update_list=true ; _item_nr=0 ; continue ;;
                 "") true ;;
@@ -375,17 +392,18 @@ audio.find_and_play () {
             continue
         fi
 
-        # indication
-        corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-        gr.msg -h "playing ${_got[$_item_nr]##*/} [$_item_nr/$(( ${#_got[@]} -1 ))]"
-        # now playing
-        echo "$to_find [$_item_nr/$(( ${#_got[@]} -1 ))]" >$GURU_AUDIO_NOW_PLAYING
+        if ! [[ $stopped ]] ; then
+            local stopped=true
+            audio.stop
+        fi
 
-        # play
-        mpv ${_got[$_item_nr]} $mpv_options --no-resume-playback --no-video
-        rm $GURU_AUDIO_NOW_PLAYING
-        timeout=5
-
+        play ${_got[$_item_nr]}
+        _error=$?
+        gr.debug "$FUNCNAME _error:$_error"
+        if [[ $_error -eq 143 ]]; then
+            gr.msg "timeout removed"
+            timeout=
+        fi
     done
 
     gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
@@ -422,12 +440,11 @@ audio.status () {
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
     # for playing files
-    local now_playing=$(mpv.stat)
+    local now_playing=$(mpv.stat 2>/dev/null)
 
     # add string from now playing file (adds station number)
     if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
-            local station=$(cat $GURU_AUDIO_NOW_PLAYING)
-            now_playing="$station $now_playing"
+            now_playing="$(cat $GURU_AUDIO_NOW_PLAYING)$now_playing"
         fi
 
     if [[ $GURU_AUDIO_ENABLED ]] ; then
@@ -441,7 +458,7 @@ audio.status () {
 
     if [[ $now_playing ]] ; then
 
-            gr.msg -v1 -n -c aqua "playing: $now_playing"
+            gr.msg -v1 -n -c aqua_marine "$now_playing"
 
             if audio.is_paused ; then
                 gr.msg -v1 -h " [paused]"
