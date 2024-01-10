@@ -160,7 +160,7 @@ daemon.start () {
                 if [[ -f "$GURU_BIN/$module.sh" ]]; then
                         source "$GURU_BIN/$module.sh"
                         # gr.msg -v3 ": $GURU_BIN/$GURU_BIN/$module.sh"
-                        $module.main poll start
+                        $module.poll start
                     else
                         gr.msg -v1 -c yellow "${FUNCNAME[0]}: module $module not installed" \
                             -k "f$(gr.poll $module)"
