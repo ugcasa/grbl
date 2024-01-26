@@ -244,3 +244,42 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     exit "$?"
 fi
 
+
+
+# while read -rsn1 ui; do
+#     echo "ui:'$ui'"
+#     case "$ui" in
+#     $'\x1b')    # Handle ESC sequence.
+#         # Flush read. We account for sequences for Fx keys as
+#         # well. 6 should suffice far more then enough.
+#         read -rsn1 -t 0.1 tmp
+#         echo "tmp:'$tmp'"
+#         if [[ "$tmp" == "[" ]]; then
+#             read -rsn1 -t 0.1 tmp
+#             case "$tmp" in
+#             "A") printf "Up\n";;
+#             "B") printf "Down\n";;
+#             "C") printf "Right\n";;
+#             "D") printf "Left\n";;
+#             "E") printf "center\n";;
+#             "F") printf "End\n";;
+
+#             "H") printf "Home\n";;
+#             "1") printf "Function first part\n";;
+#             "2") printf "insert\n";;
+#             "3") printf "delete\n";;
+#             "3") printf "end\n";;
+#             "5") printf "pageup\n";;
+#             "6") printf "pagedown\n";;
+#             esac
+
+#         fi
+#         # Flush "stdin" with 0.1  sec timeout.
+#         read -rsn5 -t 0.1
+#         ;;
+#     # Other one byte (char) cases. Here only quit.
+#     q) break;;
+#     esac
+# done
+
+# flasher () { while true; do printf \\e[?5h; sleep 0.1; printf \\e[?5l; read -s -n1 -t1 && break; done; }

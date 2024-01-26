@@ -139,6 +139,9 @@ core.active () {
     # mound defaults
     mount.main
 
+    # copy sounds locally to be fast enough
+    cp $GURU_DATA/sounds/*wav /tmp
+
     # start daemon
     source daemon.sh
     daemon.main start

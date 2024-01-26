@@ -130,7 +130,7 @@ tunnel.status () {
     [[ $GURU_VERBOSE -gt 0 ]] && tunnel.ls
 
     # indicate user if active tunnels
-    if ps -x | grep -v grep | grep "ssh -L " | grep localhost >/dev/null; then
+    if ps -x | grep -v grep | grep "ssh -L " | grep -q localhost ; then
             gr.msg -v3 -c aqua "active tunnels" -k $GURU_TUNNEL_INDICATOR_KEY
         else
             gr.msg -v3 -c green "no active tunnels" -k $GURU_TUNNEL_INDICATOR_KEY

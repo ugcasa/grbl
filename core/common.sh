@@ -106,7 +106,7 @@ gr.msg () {
     local _return=
 
     # parse flags
-    TEMP=`getopt --long -o "tlsrnhNde:x:w:V:v:c:C:q:k:m:" "$@"`
+    TEMP=`getopt --long -o "tlsrnhNpde:x:w:V:v:c:C:q:k:m:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
@@ -117,6 +117,7 @@ gr.msg () {
             -s ) _say=true                                  ; shift ;;
             -h ) _color_code="$C_HEADER"                    ; shift ;;
             -n ) _newline=                                  ; shift ;;
+            -p ) _newline="\n\n"                            ; shift ;;
             -r ) _return="\r" ;_newline=                    ; shift ;;
             -N ) _pre_newline="\n"                          ; shift ;;
             -d ) _debug=true                                ; shift ;;
@@ -404,7 +405,7 @@ gr.ask () {
      fi
 
     # make y and n blink on keyboard
-    if [[ GURU_CORSAIR_ENABLED ]] ; then
+    if [[ $GURU_CORSAIR_ENABLED ]] ; then
         source corsair.sh
         corsair.indicate yes y 2>/dev/null >/dev/null
         sleep 0.75

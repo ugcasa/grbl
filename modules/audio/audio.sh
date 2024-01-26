@@ -10,6 +10,7 @@ declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
 declare -g audio_playlist_folder="$audio_data_folder/playlists"
 declare -g audio_temp_file="/tmp/guru-cli_audio.playlist"
 declare -g audio_playing_pid=$(ps x | grep mpv | grep -v grep | cut -f1 -d" ")
+declare -g audio_modules=(yle youtube audio uutiset)
 # more global variables downstairs (after sourcing rc file)
 
 audio.help () {
@@ -69,11 +70,17 @@ audio.main () {
         continue)
             if [[ -f $audio_temp_file ]] ; then
                 [[ $audio_playing_pid ]] && kill $audio_playing_pid
+                echo "audio $audio_temp_file" >$GURU_AUDIO_NOW_PLAYING
                 mpv $mpv_options --playlist=$audio_temp_file --save-position-on-quit
+                [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
             else
                 gr.msg -c error "no saved position"
                 return 0
             fi
+            ;;
+
+        paused)
+            audio.paused && gr.msg -x0 -c green "true" || gr.msg -x1 -c dark_gray "false"
             ;;
 
         tunnel)
@@ -88,11 +95,13 @@ audio.main () {
             return $?
 			;;
 
-        play|ls|pause|mount|unmount|mute|stop|tunnel|toggle|install|update|remove|help|poll|status|help)
+        mpv|play|ls|pause|hold|release|mount|unmount|mute|stop|tunnel|toggle|install|update|remove|help|poll|status|help|np|playing)
             audio.$_command $@
             return $?
             ;;
-
+        next|prev)
+            audio.$command
+            ;;
         mpvstat)
             mpv.stat
             return $?
@@ -106,6 +115,197 @@ audio.main () {
    # rm $audio_rc
 
 }
+
+
+audio.mpv () {
+
+    local command=$1
+    shift
+
+    case $command in
+        pause)
+            mpv.set pause $1
+            ;;
+        list|get|set|stat)
+            mpv.$command $@
+    esac
+}
+
+
+audio.hold () {
+
+    flag.set audio_hold
+    audio.stop
+}
+
+
+audio.release () {
+
+    flag.rm audio_hold
+}
+
+
+audio.next () {
+# jump to next item depending what ever is playing
+
+    gr.debug "$FUNCNAME np:$GURU_AUDIO_NOW_PLAYING"
+
+    if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
+        contains="$(cat $GURU_AUDIO_NOW_PLAYING)"
+
+        gr.debug "$FUNCNAME np-contains:$contains"
+
+        # skip yle news item
+        if [[ ${contains,,} == uutiset* ]]; then
+            source $GURU_BIN/yle.sh
+            yle.main next
+        fi
+
+        # skip yle item
+        if [[ ${contains,,} == yle* ]]; then
+            source $GURU_BIN/yle.sh
+            yle.main next
+        fi
+
+        # next radio station
+        if [[ ${contains,,} == radio* ]]; then
+            #source $GURU_BIN/audio/radio.sh
+            radio.next
+        fi
+
+        # next tube item
+        if [[ ${contains,,} == youtube* ]]; then
+            flag.set next
+            audio.stop
+        fi
+    else
+        gr.debug "$FUNCNAME nothing playing "
+    fi
+}
+
+
+audio.prev () {
+# jump to previous item depending what ever is playing
+
+    gr.debug "$FUNCNAME np:$GURU_AUDIO_NOW_PLAYING"
+    if [[ $GURU_AUDIO_NOW_PLAYING ]] ; then
+        contains="$(cat $GURU_AUDIO_NOW_PLAYING)"
+        gr.debug "$FUNCNAME np-contains:$contains"
+
+        # next radio station
+        if [[ ${contains,,} == radio* ]]; then
+            source $GURU_BIN/audio/radio.sh
+            radio.main prev
+        fi
+
+        # skip yle item
+        if [[ ${contains,,} == yle* ]]; then
+            source $GURU_BIN/yle.sh
+            yle.main prev
+        fi
+
+         # prev tube item
+        if [[ ${contains,,} == youtube* ]]; then
+            flag.set prev
+            audio.stop
+        fi
+
+    fi
+}
+
+
+audio.now_playing () {
+# now playing string
+    local now_playing=
+
+    cols=$(($(echo "cols"|tput -S) -10 ))
+    if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
+        now_playing="$(cat $GURU_AUDIO_NOW_PLAYING)"
+        if audio.paused ; then
+            gr.msg -v1 -n -c white "[paused] "
+        else
+            gr.msg -v1 -n -c lime "[playing] "
+        fi
+         gr.msg -v1 -c aqua_marine "$now_playing"
+    else
+        gr.msg -v1 -n -c dark_grey "[stopped] "
+        #gr.msg -v1 -c dark_gray "$now_playing"
+    fi
+}
+
+
+audio.playing () {
+# now playing loop
+    local now_playing=
+    local length
+    local cols
+    while true ; do
+        cols=$(($(echo "cols"|tput -S) -10 ))
+        if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
+            now_playing="$(cat $GURU_AUDIO_NOW_PLAYING)"
+            if audio.paused ; then
+                gr.msg -w10 -v1 -n -c white "[paused] "
+            else
+                gr.msg -w10 -v1 -n -c lime "[playing] "
+            fi
+             gr.msg -w$cols -v1 -n -r -c aqua_marine "$now_playing"
+        else
+            gr.msg -w10 -v1 -n -c grey "[stopped] "
+            gr.msg -w$cols -v1 -n -r -c dark_gray "$now_playing"
+        fi
+        gr.msg -n -r
+        read -sr -n1 -t3 ans && break
+    done
+    echo
+}
+
+
+audio.np () {
+# open now playing window
+    local window_name="now playing"
+
+    if wmctrl -l | grep -q "$window_name" ; then
+        wmctrl -R "$window_name"
+        wmctrl -r "$window_name" -e 0,2900,65,-1,-1
+        # wmctrl -r "$window_name" -e 0,1,1500,-1,-1
+    else
+        gnome-terminal --hide-menubar --window-with-profile="NoScrollbar" --geometry 80x1 --zoom 1 --title "$window_name"  -- $GURU_BIN/guru audio playing
+        wmctrl -r "$window_name" -e 0,2900,65,-1,-1
+    fi
+    # 0x05016a46  1 530  382  904  46   electra now playing
+    # wmctrl -r "now playing" -e 0,1,1,-1,-1
+}
+
+
+# audio.playing () {
+# # nice but slow now playing, not suitable for loops
+#     local now_playing=
+
+#     if ps auxf | grep 'mpv ' | grep -q -v grep ; then
+
+#         if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
+#             now_playing="$(cat $GURU_AUDIO_NOW_PLAYING)"
+#         fi
+
+#         now_playing="$(cat $GURU_AUDIO_NOW_PLAYING)"
+#         now_playing="$now_playing $(mpv.stat ${now_playing#* } 2>/dev/null)"
+
+#         gr.msg -v1 -n -c aqua_marine "$now_playing"
+
+#         if audio.paused ; then
+#             gr.msg -v1 -h " [paused]"
+#             corsair.indicate pause $GURU_AUDIO_INDICATOR_KEY
+#         else
+#             gr.msg -v1
+#             corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+#         fi
+
+#     else
+#         gr.end $GURU_AUDIO_INDICATOR_KEY
+#         gr.msg -v1 -c dark_grey "[stopped]"
+#     fi
+# }
+
 
 
 audio.unmount () {
@@ -138,7 +338,7 @@ audio.play () {
                 ;;
             "")
                 source $GURU_BIN/audio/radio.sh
-                radio.listen yle kajaani
+                radio.listen $GURU_RADIO_WAKEUP_STATION
                 _error=$?
                 ;;
             *)
@@ -158,11 +358,7 @@ audio.stop () {
     pkill mpv
     pkill mpv
     [[ -f $GURU_AUDIO_PAUSE_FLAG ]] && audio.pause
-    #source flag.sh
-    #flag.rm audio_stop
-
     gr.end $GURU_AUDIO_INDICATOR_KEY
-    # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
 
 }
 
@@ -170,19 +366,74 @@ audio.stop () {
 audio.pause () {
 # pause all audio and video system wide
 
+    local input=$1
+    local me=
+    shift
+
+    # pause mpv based things
+    case $input in
+
+        # TODO test can this be variable
+        audio|yle|uutiset|youtube)
+            if [[ $(mpv.get pause $input) == "false" ]]; then
+                mpv.set pause true $input 2>/dev/null >/dev/null
+            else
+                mpv.set pause false $input 2>/dev/null >/dev/null
+            fi
+            return 0
+            ;;
+
+        others|other)
+
+            if [[ $1 ]]; then
+                me=$1
+            else
+                if [[ -f $GURU_AUDIO_NOW_PLAYING ]]; then
+                    me="$(cat $GURU_AUDIO_NOW_PLAYING)"
+                    me=${me%% *}
+                else
+                    gr.msg "no playing"
+                    return 0
+                fi
+            fi
+
+            gr.debug "$FUNCNAME me:$me, modules:${audio_modules[@]}"
+
+            for module in ${audio_modules[@]} ; do
+                gr.msg -v2 "pausing $module.."
+                if [[ $module == $me ]] ; then continue ; fi
+                mpv.set pause true $module 2>/dev/null >/dev/null
+            done
+
+            return 0
+
+            ;;
+
+        all|soft)
+            for module in ${audio_modules[@]} ; do
+                gr.msg -v2 "pausing $module.."
+                mpv.set pause true $module 2>/dev/null >/dev/null
+            done
+            return 0
+            ;;
+    esac
+
+    # 'superpause' pause all, even browser based stuff
     [[ -d "/tmp/guru" ]] || mkdir "/tmp/guru"
 
-    if ! [[ -f $GURU_AUDIO_PAUSE_FLAG ]] ; then
-        gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
+    if ! [[ -f $GURU_AUDIO_PAUSE_FLAG ]] || [[ "$input" == "set" ]] ; then
+        gr.end $GURU_AUDIO_INDICATOR_KEY
         /bin/bash -c "/usr/bin/amixer -q -D pulse sset Master mute; /usr/bin/killall -q -STOP 'pulseaudio'"
         touch $GURU_AUDIO_PAUSE_FLAG
         corsair.indicate pause $GURU_AUDIO_INDICATOR_KEY
-    else
-        # resume
-        gr.end $GURU_AUDIO_INDICATOR_KEY # corsair.blink_stop $GURU_AUDIO_INDICATOR_KEY
+        gr.debug "$FUNCNAME: now set paused"
+
+    elif [[ -f $GURU_AUDIO_PAUSE_FLAG ]] || [[ "$input" == "rm" ]] ; then
+        gr.end $GURU_AUDIO_INDICATOR_KEY
         /bin/bash -c "/usr/bin/killall -q -CONT 'pulseaudio'; /usr/bin/amixer -q -D pulse sset Master unmute"
         rm $GURU_AUDIO_PAUSE_FLAG
-        audio.status
+        gr.debug "$FUNCNAME: pause released"
+        audio.now_playing
     fi
 }
 
@@ -203,10 +454,25 @@ audio.ls () {
 }
 
 
-audio.is_paused () {
+audio.paused () {
 # check is module set to pause
 
-    [[ -f $GURU_AUDIO_PAUSE_FLAG ]] && return 0 || return 1
+    # check master pause status
+    if [[ -f $GURU_AUDIO_PAUSE_FLAG ]] ; then
+        return 0
+    fi
+
+    # check mpv status
+    players=(youtube yle uutiset audio)
+    for player in ${players[@]} ; do
+        if [[ $(mpv.get pause $player 2>/dev/null) == "true" ]]; then
+            return 0
+        fi
+    done
+
+    # did not found anything paused
+    return 1
+
 }
 
 
@@ -223,16 +489,13 @@ audio.is_playing () {
 audio.toggle () {
 # start or stop to play last listened or default audio source
 
-    local default_radio='yle puhe'
-    flag.rm audio_stop
-
     if [[ -f $GURU_AUDIO_PAUSE_FLAG ]] ; then
-            gr.debug "paused, calling pause: $@"
+            gr.debug "paused, toggling by calling pause"
             audio.pause
             return 0
         fi
 
-    if ps auxf | grep "mpv " | grep -v grep ; then
+    if ps auxf | grep "mpv " | grep -q -v grep ; then
     # if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
             gr.debug "running, calling pause: $@"
             audio.pause
@@ -241,24 +504,29 @@ audio.toggle () {
 
     # check is there something
     if [[ -f $audio_temp_file ]] ; then
+        echo "playlist $to_play" >$GURU_AUDIO_NOW_PLAYING
         to_play="--playlist=$audio_temp_file"
 
         # continue from last played if not playing
         elif [[ -f $GURU_AUDIO_LAST_PLAYED ]] ; then
+            echo "$to_play" >$GURU_AUDIO_NOW_PLAYING
             to_play=$(< $GURU_AUDIO_LAST_PLAYED)
 
         # play default if no last played file
         else
             # why audio.main listen "$default_radio"
-            radio.listen "$default_radio"
+            gr.debug "$FUNCNAME playing radio"
+            $GURU_CALL radio
             return $?
         fi
 
     [[ $audio_playing_pid ]] && kill $audio_playing_pid
 
     corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+    gr.debug "$FUNCNAME continued $to_play"
     mpv $to_play $mpv_options
 
+    [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
     echo "$to_play" > $GURU_AUDIO_LAST_PLAYED
     gr.end $GURU_AUDIO_INDICATOR_KEY
 
@@ -303,19 +571,19 @@ audio.find_and_play () {
 
         # indication
         corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-        gr.msg -h "playing ${_got[$_item_nr]##*/} [$_item_nr/$(( ${#_got[@]} -1 ))]"
+
         # now playing
-        echo "$to_find [$_item_nr/$(( ${#_got[@]} -1 ))]" >$GURU_AUDIO_NOW_PLAYING
+        local now_playing="${_got[$_item_nr]##*/} [$_item_nr/$(( ${#_got[@]} -1 ))]"
+        gr.msg -h "$now_playing"
+        echo "audio $now_playing" >$GURU_AUDIO_NOW_PLAYING
 
         # play
         mpv $1 $mpv_options --no-resume-playback --no-video
         local _error=$?
         gr.debug "$FUNCNAME _error:$_error"
 
-        # flag.rm audio_reseved
-        rm $GURU_AUDIO_NOW_PLAYING
+        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
         return $_error
-
     }
 
 
@@ -325,7 +593,7 @@ audio.find_and_play () {
 
     # if part of name, look from folders
     if ! [[ $to_find ]] ; then
-        gr.msg -c error "please specify what to find '$1' "
+        gr.msg -c error "please specify what to find '$to_find' "
         return 100
     fi
 
@@ -333,16 +601,20 @@ audio.find_and_play () {
     to_find=${to_find//'å'/'a'}
     to_find=${to_find//'ö'/'o'}
 
-    gr.msg -v2 -c white "searching $to_find.."
+    gr.msg -v2 -c white "searching $to_find.."q
 
     # mount possible audio material
     audio.mount
 
     ifs=$IFS
     IFS=$'\n'
-    local _got=($(find "$GURU_MOUNT_MUSIC/" -iname $to_find 2>/dev/null | grep -v 'Trash-1000' | grep -e mp3 -e wav -e m4a))
+    local _got=()
+    [[ -f $GURU_MOUNT_MUUSIC/.online ]] && _got=($(find "$GURU_MOUNT_MUSIC/" -iname $to_find 2>/dev/null | grep -v 'Trash-1000' | grep -e mp3 -e wav -e m4a))
+    [[ -f $GURU_MOUNT_AUDIO/.online ]] && _got+=($(find "$GURU_MOUNT_AUDIO/" -iname $to_find 2>/dev/null | grep -v 'Trash-1000' | grep -e mp3 -e wav -e m4a))
+    [[ -f $GURU_MOUNT_AUDIOBOOKS/.online ]] && _got+=($(find "$GURU_MOUNT_AUDIOBOOKS/" -iname $to_find 2>/dev/null | grep -v 'Trash-1000' | grep -e mp3 -e wav -e m4a))
     IFS=$ifs
 
+    gr.debug "got: $_got"
 
     if [[ ${#_got[@]} -lt 1 ]] ; then
         gr.msg -c error "sorry, not able to find anything"
@@ -401,6 +673,12 @@ audio.find_and_play () {
         _error=$?
         gr.debug "$FUNCNAME _error:$_error"
         if [[ $_error -eq 143 ]]; then
+
+            if flag.get audio_hold ; then
+                while flag.get audio_hold >/dev/null; do
+                    sleep 2
+                done
+            fi
             gr.msg "timeout removed"
             timeout=
         fi
@@ -439,39 +717,16 @@ audio.status () {
 
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
-    # for playing files
-    local now_playing=$(mpv.stat 2>/dev/null)
-
-    # add string from now playing file (adds station number)
-    if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
-            now_playing="$(cat $GURU_AUDIO_NOW_PLAYING)$now_playing"
-        fi
-
     if [[ $GURU_AUDIO_ENABLED ]] ; then
-            gr.msg -n -v1 -c green "enabled "
+        gr.msg -n -v1 -c green "enabled "
+    else
+        gr.end $GURU_AUDIO_INDICATOR_KEY
+        gr.msg -c black "disabled" -k $GURU_AUDIO_INDICATOR_KEY
+        return 0
+    fi
 
-        else
-            gr.end $GURU_AUDIO_INDICATOR_KEY
-            gr.msg -c black "disabled" -k $GURU_AUDIO_INDICATOR_KEY
-            return 0
-        fi
-
-    if [[ $now_playing ]] ; then
-
-            gr.msg -v1 -n -c aqua_marine "$now_playing"
-
-            if audio.is_paused ; then
-                gr.msg -v1 -h " [paused]"
-                corsair.indicate pause $GURU_AUDIO_INDICATOR_KEY
-            else
-                gr.msg -v1
-                corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-            fi
-        else
-            gr.end $GURU_AUDIO_INDICATOR_KEY
-            gr.msg -v1 -c dark_grey "stopped"
-
-        fi
+    # for playing files
+    audio.now_playing
 }
 
 
@@ -493,7 +748,6 @@ audio.poll () {
         *) audio.help
             ;;
         esac
-
 }
 
 
@@ -501,6 +755,7 @@ audio.rc () {
 # source configurations (to be faster)
 
     if [[ ! -f $audio_rc ]] \
+        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/radio.cfg) - $(stat -c %Y $audio_rc) )) -gt 0 ]] \
         || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/audio.cfg) - $(stat -c %Y $audio_rc) )) -gt 0 ]] \
         || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $audio_rc) )) -gt 0 ]]
         then
@@ -527,6 +782,7 @@ audio.make_rc () {
 
     config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $audio_rc
     config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $audio_rc append
+    config.make_rc "$GURU_CFG/$GURU_USER/radio.cfg" $audio_rc append
     chmod +x $audio_rc
     source $audio_rc
 }
@@ -534,7 +790,7 @@ audio.make_rc () {
 # located here cause rc needs to see some of functions above
 audio.rc
 # variables that needs values that audio.rc provides
-declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET"
+declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-audio"
 [[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

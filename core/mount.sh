@@ -539,7 +539,7 @@ mount.status () {
         done
 
     # serve enter and key color
-    [[ $_private ]] \
+    [[ $_private ]] && [[ $GURU_VERBOSE -gt 0 ]]\
         && gr.msg -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY \
         || gr.msg -c aqua -k $GURU_MOUNT_INDICATOR_KEY
 

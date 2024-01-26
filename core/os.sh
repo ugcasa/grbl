@@ -2,6 +2,7 @@
 # echo "common.sh: included by: $0"
 os_indicator_key=f8
 system_indicator_key="esc"
+os_rc=/tmp/guru-cli_os.rc
 
 
 
@@ -67,7 +68,8 @@ os.compatible_with () {
 
 os.status () {
 # returns least linux distribution name
-    if [ -f /etc/os-release ]; then
+    gr.msg && alias 'gr.msg'='echo'
+    if [[ -f /etc/os-release ]]; then
         source /etc/os-release
         gr.msg -t -v1 -V2 "$FUNCNAME: $NAME $VERSION_ID '$VERSION_CODENAME' Kernel $(uname -r)"
         gr.msg -t -v2 "$FUNCNAME: $NAME $VERSION_ID '$VERSION_CODENAME'/$ID_LIKE '$UBUNTU_CODENAME' $(uname -v)/Linux kernel $(uname -r)"
@@ -506,10 +508,41 @@ os.capslock() {
 
 
 
+os.rc () {
+# source configurations (to be faster)
+
+    if [[ ! -f $os_rc ]] || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/os.cfg) - $(stat -c %Y $os_rc) )) -gt 0 ]]
+        then
+            os.make_rc && \
+                gr.msg -v1 -c dark_gray "$os_rc updated"
+        fi
+
+    source $os_rc
+}
+
+
+os.make_rc () {
+# configure os module
+
+    source config.sh
+
+    # make rc out of config file and run it
+    if [[ -f $os_rc ]] ; then
+            rm -f $os_rc
+        fi
+
+    config.make_rc "$GURU_CFG/$GURU_USER/os.cfg" $os_rc
+    #config.make_rc "$GURU_CFG/$GURU_USER/os.cfg" $os_rc append
+    chmod +x $os_rc
+    source $os_rc
+}
+
+
 # os.check_python_module () {                                      # Does work, but returns funny (futile: not called from anywhere)
 #    python -c "import $1"
 #    return "$?"
 # }
+os.rc
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then

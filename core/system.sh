@@ -156,7 +156,7 @@ system.status () {
 
     gr.msg -v1 -t -n "${FUNCNAME[0]}: "
     if [[ -f ${GURU_SYSTEM_MOUNT[0]}/.online ]] ; then
-        gr.msg -n -c green "ok "
+        gr.msg -n -v1 -c green "ok "
     else
         gr.msg -n -v1 -c yellow ".data is unmounted " #-k $system_indicator_key
     fi

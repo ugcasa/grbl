@@ -1,5 +1,5 @@
 #!/bin/bash flag.sh is for soursing only
-declare -g flag_list=(running fast pause stop suspend audio_reseved audio_stop)
+declare -g flag_list=(running fast pause cancel ok stop next prev skip suspend audio_stop audio_hold)
 
 flag.help () {
 # flag help
@@ -63,12 +63,12 @@ flag.check () {
 
 flag.get () {
 # return flag status
-
+    local flag_name=${1//'_'/' '}
     if flag.check $1 ; then
-        gr.msg -v1 -c green "$1 is set"
+        gr.msg -v1 -c green "$flag_name is set"
         return 0
     else
-        gr.msg -v3 -c dark_grey "$1 not set"
+        gr.msg -v4 -c dark_grey "$flag_name not set"
         return 1
     fi
 }

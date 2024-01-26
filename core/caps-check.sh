@@ -9,4 +9,4 @@ if os.capslock state ; then
 	exit 0
 fi
 
-gnome-terminal --hide-menubar --geometry 3x1 --zoom 2 --hide-menubar --title "caps-launcher"  -- $GURU_BIN/caps-launcher.sh
+gnome-terminal --hide-menubar --geometry 8x1 --zoom 2.5 --hide-menubar --title "caps-launcher"  -- $GURU_BIN/caps-launcher.sh

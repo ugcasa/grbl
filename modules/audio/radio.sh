@@ -1,12 +1,14 @@
 #!/bin/bash
-# guru-cli radio functionalities for guru-cli audio module 2023 casa@ujo.guru
+# guru-cli radio functionalities for guru-cli audio module casa@ujo.guru
 
 source corsair.sh
 source flag.sh
 
-declare -g radio_number=
 declare -g radio_rc="/tmp/guru-cli_radio.rc"
-declare -g radio_prev_file="/tmp/guru-cli_radio.nr"
+declare -g radio_number_file="/tmp/guru-cli_radio.nr"
+declare -g station_nro
+declare -g station_name
+declare -g station_url
 
 radio.help () {
     gr.msg -v1 -c white "guru-cli radio help "
@@ -29,77 +31,111 @@ radio.help () {
 
 radio.main() {
 # simple radio player, number or station name
-    gr.debug "$FUNCNAME: $@"
-    local key1=$1
-    local key2=$2
-    local radio_nr=
-    local station_list=($(radio.ls))
-    #gr.debug "stations: ${station_list[0]} mpv_options: $mpv_options, audio rc: $audio_rc now_playing: $GURU_AUDIO_NOW_PLAYING"
 
-    case $key1 in
+    gr.debug "$FUNCNAME got:$@"
 
-        ls|listen|help|status)
-                shift
-                radio.$key1 $@
+    local command=$1
+    shift
+
+
+    case $command in
+
+        play|listen)
+                radio.parse $@ || return $?
+                radio.play
                 ;;
 
-        l|list)
+        ls|help|status)
+                radio.$command $@
+                ;;
+        list)
                 radio.list | column -s ':' 2>/dev/null
                 ;;
 
-        n|next|prev|p)
-                radio.change $key1
+        next|prev)
+                radio.$command
                 ;;
 
         [0-9]|[1-9][0-9])
-                radio_nro="$key1$key2"
-                radio_number=$radio_nro
-                radio_name=${station_list[$radio_number]}
-                echo $radio_number >$radio_prev_file
-                radio.listen ${radio_name//_/ }
+                radio.parse $command || return $?
+                radio.play
                 return 0
                 ;;
 
-        s|select|selector)
-                while true ; do
-                    clear
-                    radio.list | column -s ':' 2>/dev/null
-                    audio.status
-                    gr.msg -v1 -n -c white "(p)rev (n)ext (c)ontinue (q)uit or station: "
-                    read -t 60 ans
-                    case $ans in
-                        q) break ;;
-                       "") continue ;;
-                        c) radio.main ;;
-                        *) radio.main $ans ;;
-                    esac
-                done
+        player)
+                radio.selector $@
                 ;;
 
-        o|open|player)
-                radio_number=$(< $radio_prev_file)
-                local _command='guru radio selector'
-                flag.rm audio_stop
-                gnome-terminal --hide-menubar --geometry 130x$((${#station_list[@]} / 4 + 8 )) --zoom 0.5 --title "radio player" -- bash -c "$_command"
-                ;;
-
-        "")
-                if [[ -f $radio_prev_file ]]; then
-                        radio_number=$(< $radio_prev_file)
-                        radio_name=${station_list[$radio_number]}
-                        #echo $radio_number >$radio_prev_file
-                        radio.listen ${radio_name//_/ }
-
-                    else
-                        radio_number=0
-                        radio_name=${station_list[$radio_number]}
-                        echo $radio_number >$radio_prev_file
-                        radio.listen ${radio_name//_/ }
-                    fi
-                ;;
         *)
-                radio.listen $@
+                radio.parse $command $@ || return $?
+                radio.play
         esac
+}
+
+
+radio.next () {
+
+    flag.set skip
+
+    station_nro=$(< $radio_number_file)
+
+    if [[ $station_nro -ge $amount_of_stations ]] ; then
+        station_nro=0
+    else
+        station_nro=$(( $station_nro +1 ))
+    fi
+
+    echo $station_nro >$radio_number_file
+    audio.stop
+}
+
+radio.prev () {
+
+    flag.set skip
+
+    station_nro=$(< $radio_number_file)
+
+    if [[ $station_nro -le 0 ]] ; then
+        station_nro=$amount_of_stations
+    else
+        station_nro=$(( $station_nro -1 ))
+    fi
+
+    echo $station_nro >$radio_number_file
+    audio.stop
+}
+
+
+radio.selector () {
+# selector
+
+    audio.stop
+    guru flag rm audio_stop
+
+    local firstime=true
+    if [[ $1 ]] ; then
+        station_nro=$1
+    else
+        station_nro=$(< $radio_number_file)
+    fi
+    radio.parse $station_nro
+    while true ; do
+        clear
+
+        guru flag get audio_stop && return 0
+
+        radio.list $station_nro | column -s ':' 2>/dev/null
+        gr.msg -v1 -n -c white "(p)rev (n)ext (c)ontinue (q)uit or station: "
+
+        [[ $firstime ]] || read station_nro
+
+        clear
+        case $station_nro in q*) return 0 ;; esac
+        radio.parse $station_nro
+        radio.list $station_nro | column -s ':' 2>/dev/null
+        radio.play $station_nro
+        firstime=
+    done
 }
 
 
@@ -109,7 +145,7 @@ radio.change (){
     local next=
     local value="$1"
     local current=
-    [[ -f $radio_prev_file ]] && current=$(< $radio_prev_file)
+    [[ -f $radio_number_file ]] && current=$(< $radio_number_file)
 
     [[ -f $GURU_AUDIO_PAUSE_FLAG ]] && return 0
 
@@ -124,49 +160,49 @@ radio.change (){
     elif (( $next < 0 )) ; then
         next=$(( ${#station_list[@]} -1 ))
     fi
-    #echo "$next" >$radio_prev_file
+    #echo "$next" >$radio_number_file
 
     corsair.type_end
     audio.stop
     local station_list=($(radio.ls))
-    radio_number=$next
-    echo $radio_number >$radio_prev_file
-    radio_name=${station_list[$radio_number]}
+    station_nro=$next
+    echo $station_nro >$radio_number_file
+    radio_name=${station_list[$station_nro]}
 
-    corsair.type white "$radio_number"
-    radio.listen ${radio_name//_/ }
+    corsair.type white "$station_nro"
+    radio.play ${radio_name//_/ }
 }
 
 
 radio.ls (){
 # gather list of radio stations, printout all stations
 
-    local all_radio=()
+    local all_channels=()
     local favorite_channels=(${GURU_RADIO_FAVORITE_STATIONS[@]})
-    local commercial_channels=($(cat $GURU_CFG/radio.list | cut -d ' ' -f2-))
+    local commercial_stations=($(cat $GURU_CFG/radio.list | cut -d ' ' -f2-))
     local yle_channels=(${GURU_RADIO_YLE_STATIONS[@]})
 
     # add favorite channels (0-9)
     for (( i = 0; i <= 9; i++ )); do
 
         if [[ ${favorite_channels[$i]} == "" ]] ; then
-                all_radio+=( "--" )
+                all_channels+=( "--" )
             else
-                all_radio+=( "${favorite_channels[$i]}" )
+                all_channels+=( "${favorite_channels[$i]}" )
             fi
     done
 
     # add commercial channels
-    for station in ${commercial_channels[@]} ; do
-            all_radio+=( "${station}" )
+    for station in ${commercial_stations[@]} ; do
+            all_channels+=( "${station}" )
         done
 
     # add yle channels
     for station in ${yle_channels[@]} ; do
-            all_radio+=( "${station}" )
+            all_channels+=( "${station}" )
         done
 
-    echo ${all_radio[@]}
+    echo ${all_channels[@]}
     return 0
 }
 
@@ -174,16 +210,20 @@ radio.ls (){
 radio.list () {
 # human readable list own favorite and other radio stations
 
-    local i=0
-    local current=0
     local list=($(radio.ls))
-    [[ -f $radio_prev_file ]] && current=$(< $radio_prev_file)
+
+    if [[ $1 ]] ; then
+        station_nro=$1
+    else
+        station_nro=$(< $radio_number_file)
+    fi
+
 
     for (( i = 0; i < 10; i++ )); do
             gr.msg -n "$i: "
             item=${list[$i]//_/ }
 
-             if [[ $current -eq $i ]] ; then
+             if [[ $station_nro -eq $i ]] ; then
                     gr.msg -h -c slime "$item"
                 else
                     gr.msg -c aqua_marine "$item"
@@ -194,7 +234,7 @@ radio.list () {
             gr.msg -n "$i: "
             item=${list[$i]//_/ }
 
-            if [[ $current -eq $i ]] ; then
+            if [[ $station_nro -eq $i ]] ; then
                     gr.msg -h -c slime "$item"
                 else
                     gr.msg -c turquoise "$item"
@@ -203,74 +243,152 @@ radio.list () {
 }
 
 
-radio.listen () {
-# listen radio station by number or name, list of stations
+radio.parse () {
 
-    flag.rm audio_stop
-    local station_nro=
-    local station_name=
-    local station_url=
     local station_str=
+    local got=$1
+    shift
 
-    [[ -f $radio_prev_file ]] && station_nro=$(< $radio_prev_file)
+    gr.debug "$FUNCNAME got: $got $@"
 
-    source net.sh
-    if ! net.check >/dev/null; then
-            gr.msg "unable to play streams, network unplugged"
-            return 100
+    case $got in
+
+        # by favorite list
+        [0-9])
+            gr.debug "1-9"
+            station_str="${GURU_RADIO_FAVORITE_STATIONS[$got]}"
+            station_nro=$got
+            ;;
+        # by radio list file
+        [1-9][0-9])
+            gr.debug "10-99"
+            station_nro=$got
+
+            if [[ $station_nro -gt $amount_of_stations ]] ; then
+                gr.msg -e1 "station number '$station_nro' is damn too high"
+                return 101
+            fi
+
+            local first_yle_station=$(( ${#GURU_RADIO_FAVORITE_STATIONS[@]} + ${#commercial_stations[@]}))
+
+            if [[ $station_nro -ge $first_yle_station ]]; then
+                yle_location=$(( $station_nro - $first_yle_station ))
+                station_str=${GURU_RADIO_YLE_STATIONS[$yle_location]}
+                gr.debug "station_str:$station_str, first_yle_station:$first_yle_station, yle_stations[yle_location]:${yle_stations[$yle_location]}"
+            else
+                station_str=$(sed -n "$(( $station_nro - 9 ))p" < "$GURU_CFG/radio.list")
+                station_url=$(cut -d"_" -f1 <<<$station_str)
+                station_name=$(cut -d"_" -f2- <<<$station_str)
+            fi
+            ;;
+
+        # url given
+        http*)
+            gr.debug "http"
+            station_url=$got
+            station_nro=0
+            #radio.play $station_url
+            ;;
+        yle)
+            gr.debug "yle"
+            station_str="yle_$1"
+            if ! [[ ${GURU_RADIO_YLE_STATIONS[@]} =~ $station_str ]] ; then
+                gr.msg -e1 "station '$station_str' is not yle radio station "
+                return 100
+            fi
+
+            ;;
+        *)
+            gr.debug "radio.ls"
+            station_list=($(radio.ls))
+            for (( i = 0; i < ${#station_list[@]}; i++ )); do
+                if [[ ${station_list[$i]} == *$got* ]] ; then
+                    station_str=${station_list[$i]}
+                    station_nro=$i
+                    break
+                fi
+            done
+            ;;
+    esac
+
+    if ! [[ $station_str ]] ; then
+        gr.msg -e1 "did not able to solve radio station name '$got'"
+        return 100
+    fi
+
+    if [[ $station_str == yle* ]] ; then
+        gr.debug "yle station_str: $station_str, station_nro,$station_nro"
+
+        if ! [[ $station_nro ]] ; then
+            station_list=($(radio.ls))
+           for (( i = 0; i < ${#station_list[@]}; i++ )); do
+            if [[ ${station_list[$i]} == $station_str ]] ; then
+                station_nro=$i
+                break
+            fi
+            done
         fi
 
-    case $1 in
+        station_str=${station_str//'_'/' '}
+        station_name=$(sed -e "s/\b\(.\)/\u\1/g" <<<$station_str)
+        station_str=$(sed -r 's/(^| )([a-z])/\U\2/g' <<<$station_str)
+        station_url="https://icecast.live.yle.fi/radio/$station_str/icecast.audio"
 
-        ls|list)
-            radio.$1
-            ;;
+    else
+        gr.debug "radio.list"
+        local station_tmp=$(grep -e "$station_str" "$GURU_CFG/radio.list" | head -n1 )
+        station_url=$(cut -d' ' -f1 <<<$station_tmp)
+        station_name="$(cut -d'_' -f2- <<<$station_tmp)"
+        station_name="${station_name^}"
+        station_name="$(cut -d'_' -f1 <<<$station_str) $station_name"
+        station_name="${station_name^}"
+        [[ $station_nro ]] || station_nro=$(( $i + 9 ))
+    fi
+}
 
-        url)
-        # play url streams
-            shift
-            station_url=$1
-            station_name=$station_url
-            ;;
 
-        yle)
-        # listen yleisradio channels
-            station_str=$(echo $@ | sed -r 's/(^| )([a-z])/\U\2/g' )
-            station_url="https://icecast.live.yle.fi/radio/$station_str/icecast.audio"
-            station_name="${1^} ${2^} ${3^} ${4^}"
-            ;;
+radio.play () {
+# listen radio station by number or name, list of stations
 
-        *)
-        # listen radio stations listed in radio.list in config
-            ifs=$IFS ; IFS=$'\n'
-            station_str=$(cat $GURU_CFG/radio.list | grep $1 | grep "http" | head -n1 )
-            station_url=$(echo $station_str | cut -d ' ' -f1 )
-            station_name=$(echo $station_str | cut -d ' ' -f2- )
-            IFS=$ifs
-            station_name=${station_name/_/' '}
-            station_name=${station_name^}
-        esac
+    gr.debug "station_url: $station_url, station_name: $station_name, station_nro: $station_nro "
 
-        # stop currently playing audio
-        audio.stop
+    # stop currently playing audio
+    audio.stop
 
-        # indicate and inform user
-        gr.msg -v1 -h "playing $station_name"
-        echo "$station_name" >$GURU_AUDIO_NOW_PLAYING
-        corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-        echo $station_nro > $radio_prev_file
 
-        # play media
-        mpv $station_url $mpv_options --no-resume-playback
-        #gnome-terminal --hide-menubar --geometry 30x5 --zoom 0.7 --title "guru radio $radio_nro ${station_name^}" -- bash -c "mpv $station_url $mpv_options --no-resume-playback"
+    # play media
 
-        # remove now playing and indications
-        echo $station_url > $GURU_AUDIO_LAST_PLAYED
-        rm $GURU_AUDIO_NOW_PLAYING
-        gr.end $GURU_AUDIO_INDICATOR_KEY
+    corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+    echo $station_nro > $radio_number_file
+
+  while true ; do
+    # indicate and inform user
+    gr.msg -v1 -h "Radio nr.$station_nro '$station_name'"
+    echo "Radio nr.$station_nro '$station_name'" >$GURU_AUDIO_NOW_PLAYING
+
+    mpv $station_url $mpv_options
+
+    if flag.get audio_hold ; then
+        while flag.get audio_hold >/dev/null; do
+            sleep 5
+        done
+    elif flag.get skip ; then
+        flag.rm skip
+        station_nro=$(< $radio_number_file)
+        radio.parse $station_nro
+    else
+        break
+    fi
+
+    done
+    #gnome-terminal --hide-menubar --geometry 30x5 --zoom 0.7 --title "guru radio $station_nro ${station_name^}" -- bash -c "mpv $station_url $mpv_options --no-resume-playback"
+    # remove now playing and indications
+    [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+    gr.end $GURU_AUDIO_INDICATOR_KEY
 
     return 0
 }
+
 
 radio.status() {
     audio.status
@@ -313,8 +431,16 @@ radio.make_rc () {
 # located here cause rc needs to see some of functions above
 radio.rc
 
+declare -ga commercial_stations=($(cat $GURU_CFG/radio.list | cut -d ' ' -f2-))
+declare -g amount_of_stations=$(( ${#GURU_RADIO_FAVORITE_STATIONS[@]} + ${#commercial_stations[@]} + ${#GURU_RADIO_YLE_STATIONS[@]} -1 ))
+
+gr.debug "amount_of_stations:$amount_of_stations "
+gr.debug "GURU_RADIO_FAVORITE_STATIONS:${#GURU_RADIO_FAVORITE_STATIONS[@]} "
+gr.debug "commercial_stations: ${#commercial_stations[@]}"
+gr.debug "GURU_RADIO_YLE_STATIONS: ${#GURU_RADIO_YLE_STATIONS[@]}"
+
 # variables that needs values that radio.rc provides
-declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET"
+declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-radio"
 [[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

@@ -52,8 +52,18 @@ daemon.help () {
 
 
 daemon.pid () {
+# fetch pid for running daemon preocess(es)
+# this cannot find preocess of sourced and then called daemon.start function
+
     local _ifs=$IFS; IFS=$'\n'
-    process_list=($(ps auxf | grep -v grep | grep -e "$GURU_BIN/guru start" -e "daemon.sh start" | grep -e "$USER"))
+    process_list=($(ps auxf | \
+        grep -v grep | \
+        grep -e "$GURU_BIN/$GURU_CALL start" \
+             -e "$GURU_BIN/$GURU_CALL daemon start" \
+             -e "$GURU_BIN/$GURU_CALL active" \
+             -e "$GURU_BIN/daemon.sh start" | \
+        grep -e "$USER"))
+
     IFS=$_ifs
 
     GURU_DAEMON_PID=()
@@ -125,14 +135,6 @@ daemon.status () {
 daemon.start () {
 # start daemon
 
-    # if daemon.status && ! [[ $GURU_FORCE ]]; then
-    #         gr.msg -v1 -c green "already running"
-    #         gr.msg -v2  "use force to restart"
-    #         return 0
-    #     fi
-
-    # daemon.status fixes previous PID file, so we can trust that $daemon_pid_file includes current pid of running daemon
-    # EDIT: $GURU_DAEMON_PID declared globally and is exported
     if [[ -f "$daemon_pid_file" ]]; then
             local last_pid=$(cat "$daemon_pid_file")
             gr.msg -v2 "${FUNCNAME[0]}: killing $last_pid"
@@ -179,7 +181,7 @@ daemon.stop () {
 # stop daemon
 
     flag.rm stop
-    gr.msg -N -n -V1 -c white "stopping daemon.. "
+    gr.msg -N -n -V1 -c white "stopping guru-cli.. "
     # if pid file is not exist
     if ! [[ -f "$daemon_pid_file" ]]; then
             gr.msg "${FUNCNAME[0]}: daemon not running"
@@ -190,23 +192,26 @@ daemon.stop () {
     local _pid=$(cat $daemon_pid_file)
 
     gr.msg -t -v1 "stopping modules.. "
-    #for module in ${GURU_DAEMON_POLL_ORDER[@]} ; do
 
     for ((i=1 ; i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; i++)) ; do
 
         module=${GURU_DAEMON_POLL_ORDER[i-1]}
         #gr.msg -v3 -c dark_golden_rod "$i $module"
         case $module in
-            null|empty )
+            null|empty)
                 #gr.msg -v3 -c dark_grey "skipping $module"
                 ;;
             * )
-                gr.debug "$i:$module: "
+                gr.debug "$FUNCNAME $i:$module"
+
+                if ! grep -q -e $module.poll end | $GURU_BIN/$module.sh ; then
+                    gr.msg -v1 "$FUNCNAME: $module has no poll function"
+                    return 12
+                fi
+
                 if [[ -f "$GURU_BIN/$module.sh" ]]; then
                         source "$GURU_BIN/$module.sh"
-                        $module.main poll end
-                        # gr.msg -v3 "module: $GURU_BIN/$GURU_BIN/$module.sh"
-                        # gr.msg -v2 "command: $module.main poll end"
+                        $module.poll end
                     else
                         gr.msg -v1 "${FUNCNAME[0]}: module '$module' not installed"
                     fi
@@ -215,7 +220,6 @@ daemon.stop () {
         done
 
     gr.msg -t -v1 "stopping guru-daemon.. "
-
 
     [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
 
@@ -260,22 +264,6 @@ daemon.kill () {
         else
             gr.msg -v1 -c green "done" -k $GURU_DAEMON_INDICATOR_KEY
         fi
-
-
-    #daemon.status && gr.msg -c red "failed to stop daemons"
-
-    # if ps auxf | grep "$GURU_BIN/guru" | grep "start" | grep -v "grep" >/dev/null ; then
-    #         gr.msg -v1 -c yellow "daemon still running, try to 'sudo guru kill' again"
-    #         gr.ind failed $GURU_DAEMON_INDICATOR_KEY
-    #         return 100
-    #     else
-    #         gr.msg -v3 -c white "kill verified"
-    #         [[ -f $daemon_pid_file ]] && rm -f $daemon_pid_file
-    #         gr.end $GURU_DAEMON_INDICATOR_KEY
-    #         return 0
-    #     fi
-
-    #IFS=$_ifs
 }
 
 
@@ -286,7 +274,7 @@ daemon.day_change () {
     local now="d$(date +%Y-%m-%d)"
     local was="d$(stat -c '%x' /tmp/guru.daemon-pid | cut -d' ' -f1)"
     [[ "$now" == "$was" ]] && return 0
-    gr.msg -t -c white "${FUNCNAME[0]}: $(date +%-d.%-m.%Y)"
+    gr.msg -v1 -t -c white "${FUNCNAME[0]}: $(date +%-d.%-m.%Y)"
     touch /tmp/guru.daemon-pid
     return 0
 }
@@ -376,7 +364,7 @@ daemon.poll () {
 
                         if [[ -f "$GURU_BIN/$module.sh" ]]; then
                                 source "$GURU_BIN/$module.sh"
-                                $module.main poll status
+                                $module.main poll status 2>/tmp/daemon.error
                             else
                                 gr.msg -v1 -c dark_gray "${FUNCNAME[0]}: module '$module' not installed"
                             fi
@@ -394,8 +382,8 @@ daemon.poll () {
                 flag.check suspend && continue
                 flag.check pause && continue
                 flag.check fast && continue || sleep 1
-                gr.msg -v2 -n -c reset "."
-                printf '%s %s %s\r' "sleep for" "$(( $GURU_DAEMON_INTERVAL - $_seconds ))" "seconds"
+                # gr.msg -v2 -n -c reset "."
+                [[ $GURU_VERBOSE -gt 1 ]] && printf '%s %s %s\r' "sleep for" "$(( $GURU_DAEMON_INTERVAL - $_seconds ))" "seconds"
                 daemon.day_change
             done
         gr.msg -v2 ""
@@ -403,7 +391,7 @@ daemon.poll () {
 
     gr.msg -N -t -v1 "daemon got tired, dropped out and died"
     gr.ind cancel $GURU_DAEMON_INDICATOR_KEY
-    daemon.stop
+    daemo-v1 n.stop
 }
 
 
