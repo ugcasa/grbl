@@ -37,12 +37,12 @@ vpn.help () {
     gr.msg -v2 "  check                return zero if vpn connection is active"
     gr.msg -v2 "  ip                   display ip if vpn is active"
     gr.msg -v1 "  install              install requirements "
-    gr.msg -v1 "  update               update server list "
+    gr.msg -v1 "  change               change provider and set server list files "
     gr.msg -v1 "  uninstall            remove installed requirements "
     gr.msg -v2
     gr.msg -v1 "example:" -c white
-    gr.msg -v1 "  $GURU_CALL vpn open new orleans     # open connection to Louisiana"
-    gr.msg -v1 "  $GURU_CALL vpn open -f              # kill previous session and open new to default location"
+    gr.msg -v1 "  $GURU_CALL vpn open jp                # open connection to first server in Japan"
+    gr.msg -v1 "  $GURU_CALL vpn open new orleans -f    # close previous connection and open connection to Louisiana"
     gr.msg -v2
 }
 
@@ -54,7 +54,7 @@ vpn.main () {
     shift
 
     case $cmd in
-        status|poll|close|install|uninstall|toggle|check|ip|help|kill|update)
+        status|poll|close|install|uninstall|toggle|check|ip|help|kill|change)
             vpn.$cmd "$@"
             return $?
             ;;
@@ -214,6 +214,11 @@ vpn.open () {
             return 101
         fi
 
+    if ! [[ ${vpn[enabled]} ]] ; then
+        gr.msg -v2 -c black "disabled" -k ${vpn[indicator_key]}
+        return 1
+    fi
+
     local ifs=$IFS
     IFS=$'\n'
     local file_list=($(ls /etc/openvpn/tcp))
@@ -222,8 +227,23 @@ vpn.open () {
     if [[ $user_input ]] ; then
         for (( i = 0; i < ${#file_list[@]}; i++ )); do
             # gr.debug "${file_list[$i],,}"
-            connect_to_country="$(echo ${file_list[$i],,} | cut -f 2 -d '-' )"
-            connect_to_city="$(echo ${file_list[$i],,} | cut -f 3 -d '-' )"
+
+
+            case ${vpn[provider]} in
+
+                namecheap|fastvpn)
+                    # NCVPN-US-Cincinnati-UDP.ovpn
+                    connect_to_country="$(echo ${file_list[$i],,} | cut -f 2 -d '-' )"
+                    connect_to_city="$(echo ${file_list[$i],,} | cut -f 3 -d '-' )"
+                    ;;
+                protonvpn|protonmail)
+                    # jp-free-118016.protonvpn.tcp.ovpn
+                    connect_to_country="$(echo ${file_list[$i],,} | cut -f 1 -d '-' )"
+                    connect_to_city="$(echo ${file_list[$i],,} | cut -f 1 -d '.' )"
+                    connect_to_city="$(echo $connect_to_city | cut -f 3 -d '-' )"
+                    ;;
+
+                esac
 
             if [[ "$connect_to_country" == "$user_input" ]] || [[ "$connect_to_city" == "$user_input" ]] ; then
                     gr.debug "server_found_in_list '$connect_to_city' at '$connect_to_country'"
@@ -240,7 +260,12 @@ vpn.open () {
 
     if [[ -z $server_found_in_list ]] ; then
         gr.msg -c yellow "no server in '$user_input' "
-        local server_list=$(ls /etc/openvpn/tcp | cut  -f 3 -d '-' | sort)
+
+        case ${vpn[provider]} in
+            namecheap|fastvpn) local server_list=$(ls /etc/openvpn/tcp | cut  -f 3 -d '-' | sort) ;;
+            proton*) local server_list=$(ls /etc/openvpn/tcp | cut  -f 1 -d '.' | sort) ;;
+        esac
+
         gr.msg -c light_blue "$(sed -z 's/\n/, /g' <<<$server_list)"
         return 102
     fi
@@ -256,7 +281,12 @@ vpn.open () {
     fi
 
     # change words to upcase (yes there is bash 4.1+ native method)
-    connect_to_city=$(sed -e 's/^./\U&/g; s/ ./\U&/g' <<<$connect_to_city)
+     case ${vpn[provider]} in
+        namecheap|fastvpn) connect_to_city=$(sed -e 's/^./\U&/g; s/ ./\U&/g' <<<$connect_to_city) ;;
+        # proton*)  true;;
+    esac
+
+
 
     local original_ip=$(head -n1 $original_ip_file)
     local tunneled_ip=
@@ -291,7 +321,10 @@ vpn.open () {
     gr.msg -c white -v2 "vpn username and password copied to clipboard, paste it to 'Enter Auth Username:' field"
     printf "%s\n%s\n" "${vpn[username]}" "${vpn[password]}" | xclip -i -selection clipboard
 
-    sudo openvpn --config /etc/openvpn/tcp/NCVPN-${connect_to_country^^}-"$connect_to_city"-TCP.ovpn --daemon
+   case ${vpn[provider]} in
+        namecheap|fastvpn) sudo openvpn --config "/etc/openvpn/tcp/NCVPN-${connect_to_country^^}-"$connect_to_city"-TCP.ovpn" --daemon ;;
+        proton*)  sudo openvpn --config "/etc/openvpn/tcp/${connect_to_country}-free-${connect_to_city}.protonvpn.tcp.ovpn" --daemon ;;
+    esac
 
     for (( i = 0; i < 10; i++ )); do
         current_ip="$(curl -s https://ipinfo.io/ip)"
@@ -325,8 +358,6 @@ vpn.allow-ssh () {
     # export SERVER_PUB_IP="198.74.55.33"  # server IPv4 address
     # export SSH_PUB_PORT="22"   # server ssh port number
     # sudo ufw allow from "$VPN_IP" to "$SERVER_PUB_IP" port "$SSH_PUB_PORT" proto tcp comment 'Only allow VPN IP to access SSH port'
-
-V
 }
 
 
@@ -424,8 +455,15 @@ vpn.install () {
     if [[ -d /etc/openvpn/tcp ]] ; then
             gr.msg "server list found"
         else
-            vpn.update
+            vpn.change
         fi
+
+    gr.msg -Nh "update account details"
+    gr.msg "1) get providers vpn username and password"
+    gr.msg "2) edit file '$GURU_CFG/$GURU_USER/vpn.cfg'"
+    gr.msg "3) change provider to protonvpn 'vpn[provider]=protonvpn'"
+    gr.msg "4) copy username to 'vpn[username]=' and passwod to 'vpn[password]='"
+    gr.msg "5) save file"
 
     if [[ -f /etc/openvpn/credentials ]] ; then
             gr.msg "credentials found"
@@ -441,27 +479,114 @@ vpn.install () {
 }
 
 
-vpn.update () {
-# update server list
+vpn.change () {
+# change vpn provider and update server list
+# only Protonmail's protonVPN and Namecheap's fastVPN supported for now
+
+    local provider=$1
+
+    if [[ -z $provider ]] ; then
+        read -p "please input vpn provider name, 'fastvpn' or 'protonvpn': " provider
+    fi
+
     [[ -d /tmp/vpn ]] && rm -r /tmp/vpn
     mkdir -p /tmp/vpn
     cd /tmp/vpn
-    wget https://vpn.ncapi.io/groupedServerList.zip
-    unzip groupedServerList.zip
+
     [[ -d /etc/openvpn ]] || sudo mkdir -p /etc/openvpn
-    [[ -d /etc/openvpn/tcp ]] && sudo rm -r /etc/openvpn/tcp
-    [[ -d /etc/openvpn/udp ]] && sudo rm -r /etc/openvpn/udp
-    sudo mv tcp /etc/openvpn
-    sudo mv udp /etc/openvpn
-    rm -f groupedServerList.zip
+    [[ -d /etc/openvpn/tcp ]] || sudo mkdir -p /etc/openvpn/tcp
+    [[ -d /etc/openvpn/udp ]] || sudo mkdir -p /etc/openvpn/udp
+    [[ -f $GURU_CFG/$GURU_USER/vpn.cfg ]] || cp $GURU_CFG/vpn.cfg $GURU_CFG/$GURU_USER/vpn.cfg
+
+    case $provider in
+
+        protonvpn|protonmail)
+
+            gr.msg -Nh "update account details"
+            gr.msg "1) go to https://account.protonvpn.com/account#openvpn"
+            gr.msg "2) edit file '$GURU_CFG/$GURU_USER/vpn.cfg'"
+            gr.msg "3) change provider to protonvpn 'vpn[provider]=protonvpn'"
+            gr.msg "4) copy username to 'vpn[username]=' and passwod to 'vpn[password]='"
+            gr.msg "5) save file"
+
+            read -p "continue by pressing enter: " ans
+
+            if gr.ask "remove current openvpn server files? (sudo needed)" ; then
+                sudo rm "/etc/openvpn/tcp/*.protonvpn.tcp.ovpn"
+                sudo rm "/etc/openvpn/udp/*.protonvpn.udp.ovpn"
+            fi
+
+            gr.msg -Nh "copy server files"
+            gr.msg "1) go to https://account.protonvpn.com/downloads#openvpn-configuration-files"
+            gr.msg "2) login or make account "
+            gr.msg "3) select platform 'GNU/Linux' and protocol TCP"
+            gr.msg "4) download tcp and udp configuration files you like to use"
+            gr.msg "5) select protocol UDP and download files again (optional)"
+            gr.msg "6) go folder where files ovpn files were downloaded (often $HOME/Download"
+            gr.msg "7) run: 'sudo cp *tcp.ovpn /etc/openvpn/tcp' "
+            gr.msg "        'sudo cp *udp.ovpn /etc/openvpn/udp' (optional)"
+
+            read -p "continue by pressing enter: " ans
+
+            if [[ -f /etc/openvpn/credentials ]] ; then
+                gr.ask "remove current openvpn credentials file?" && rm /etc/openvpn/credentials
+            fi
+
+            if gr.ask "update newly updated credentials to openvpn config (optional) "; then
+                source $GURU_CFG/$GURU_USER/vpn.cfg
+                echo "${vpn[username]}" | sudo tee /etc/openvpn/credentials
+                echo "${vpn[password]}" | sudo tee -a /etc/openvpn/credentials
+            fi
+
+            gr.msg -Nh "test"
+            gr.msg "try to connect by 'gr vpn open jp' (or other downloaded country code"
+            gr.msg "if fails, check configs in $GURU_CFG/$GURU_USER/vpn.cfg "
+            gr.msg "          check files in /etc/openvpn/tcp/ "
+            ;;
+
+        namecheap|fastvpn)
+
+            gr.msg -Nh "update account details"
+            gr.msg "1) go to https://account.fastvpn.com/login/ and log in and "
+            gr.msg "   navigate to page where credentials are shown"
+            gr.msg "2) edit file '$GURU_CFG/$GURU_USER/vpn.cfg'"
+            gr.msg "3) change provider to fastvpn 'vpn[provider]=fastvpn'"
+            gr.msg "4) copy username to 'vpn[username]=' and passwod to 'vpn[password]='"
+            gr.msg "5) save file"
+
+            read -p "continue by pressing enter: " ans
+
+            if gr.ask "remove current openvpn server files? (sudo needed)" ; then
+                sudo rm "/etc/openvpn/tcp/NCVPN-*.ovpn"
+                sudo rm "/etc/openvpn/udp/NCVPN-*.ovpn"
+            fi
+
+            gr.msg -Nh "copying server lists.."
+            wget https://vpn.ncapi.io/groupedServerList.zip
+            unzip groupedServerList.zip
+            sudo mv tcp /etc/openvpn
+            sudo mv udp /etc/openvpn
+            rm -f groupedServerList.zip
+            ;;
+
+        *)
+            gr.msg -e1 "'${vpn[provider]}' is not proper provider, please fill 'vpn[provider]=' to $GURU_CFG/$GURU_USER/vpn.cfg."
+            return 100
+            ;;
+    esac
 }
 
 
 vpn.uninstall () {
 # uninstall and remove configuration
-    [[ -f /usr/sbin/openvpn ]] || apt-get install openvpn
-    # TBD clear /etc/openvpn
-    # TBD clear /etc/openvpn/credentials
+
+    if gr.ask "remove current openvpn server files and credentials? (sudo needed)" ; then
+        sudo rm "/etc/openvpn/tcp/*.ovpn"
+        sudo rm "/etc/openvpn/udp/*.ovpn"
+        sudo rm "/etc/openvpn/credentials"
+    fi
+
+    [[ -f /usr/sbin/openvpn ]] && apt-get remove openvpn
 }
 
 
