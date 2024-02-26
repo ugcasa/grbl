@@ -508,7 +508,7 @@ youtube.search () {
 
             # play selected search result
             [1-9]|1[0-9]|2[0-9]|3[0-9])
-                if [[ $ans -ge $items ]] ; then
+                if [[ $ans -gt $items ]] ; then
                     gr.msg -c error "list is $items items long"
                     continue
                 fi
