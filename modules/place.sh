@@ -72,7 +72,7 @@ place.mime () {
 # to be run in source folder from where files should be moved
 
     declare -ga type_list dest_list file_names mime_types image video audio other_system archive document code other
-    declare -gi file_count=0 moved_files=0 sorted_files=0 ignored_files=0
+    declare -gi file_count=0 moved_files=0 sorted_files=0 ignored_files=0 directory=0
 
     mime.config () {
     # get configurations
@@ -150,6 +150,10 @@ place.mime () {
             gr.msg -v4 -c white "${mime_types[$i]} "
 
             case ${mime_types[$i]} in
+                # inode/directory)
+                #     directory+=( "${file_names[$i]}" )
+                #     ignored_files=$((ignored_files + 1 ))
+                #     ;;
                 image*)
                     image+=( "${file_names[$i]}" )
                     ;;
@@ -161,6 +165,9 @@ place.mime () {
                     ;;
                 *vnd.ms*|*apple*)
                     other_system+=("${file_names[$i]}" )
+                    ;;
+                application/*debian*)
+                    application+=( "${file_names[$i]}" )
                     ;;
                 */zip|*/gzip|*/x-7z-compressed)
                     archive+=( "${file_names[$i]}" )
@@ -300,7 +307,7 @@ place.mime () {
             gr.msg -n "available file type list: "
             gr.msg -c list "${type_list[@]}"
             ;;
-        image|video|audio|other_system|archive|document|code|other)
+        image|video|audio|other_system|archive|document|code|other|application)
             mime.config || return $?
             mime.given_list $command $@ || return $?
             mime.sort || return $?
