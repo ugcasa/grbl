@@ -63,7 +63,7 @@ yle.main () {
 
     case ${command} in
 
-        listen|radio)
+        radio)
             yle.radio_listen $@
             ;;
 
@@ -93,7 +93,7 @@ yle.main () {
                 done
             ;;
 
-        listen*|watch*)
+        listen|watch)
                 yle.${command}_news
             ;;
 
@@ -173,19 +173,17 @@ yle.main () {
 
 
 yle.watch_news () {
-# watch fresh news articles from https://areena.yle.fi
+# watch news stream from https://areena.yle.fi
 
     gr.debug "$FUNCNAME: GURU_YLE_TV_NEWS_URL: $GURU_YLE_TV_NEWS_URL"
     gr.debug "$FUNCNAME: yle-dl --showepisodepage $GURU_YLE_TV_NEWS_URL"
 
     declare -a url_list=($(yle-dl --showepisodepage $GURU_YLE_TV_NEWS_URL))
-    gr.debug "$FUNCNAME: url_list: ${#url_list[*]}:  ${url_list[@]}"
+    gr.debug "$FUNCNAME: url_list: ${#url_list[*]}: ${url_list[@]}"
 
-    local item=
     for (( i = $((${#url_list[@]}-1)); i > 0; i-- )); do
 
        gr.msg -n "checking $i/${#url_list[@]}: ${url_list[$i]}.. "
-
        media_url=$(yle-dl --showurl ${url_list[$i]} 2>/dev/null)
 
        if [[ $media_url ]] ; then
@@ -208,7 +206,7 @@ yle.watch_news () {
 
 
 yle.listen_news () {
-# read fresh news articles from https://yle.fi/uutiset
+# listen fresh news articles from https://yle.fi/uutiset
 
     source corsair.sh
 
@@ -317,8 +315,6 @@ yle.podcast () {
 
     # initialize
     [[ -d $json_folder ]] || mkdir -p $json_folder
-
-    #colors
 
     podcast.play () {
     # play url
@@ -600,7 +596,6 @@ yle.podcast () {
                 n)  [[ $item -lt $max ]] && item=$(( item + 1 )) || continue ;;
                 p)  [[ $item -gt 1 ]] && item=$(( item - 2 )) || continue ;;
                 l)  export GURU_VERBOSE=2 ; podcast.episodes ; continue ;;
-                #m)  podcast.update ; podcast.episodes ; continue ;;
                 u)  podcast.update ; podcast.episodes ; continue ;;
                 g)  local temp_id=${selected_podcast_file%.*}
                     podcast.get ${temp_id##*'/'} ; podcast.build ; podcast.update ; podcast.episodes ; continue ;;
