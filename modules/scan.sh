@@ -6,7 +6,7 @@
 scan.main () {
     local _cmd=$1 ; shift
     case $_cmd in
-            check|receipt|invoice|install|remove|status|help)
+            check|receipt|invoice|install|remove|status|help|fix)
                     scan.$_cmd $@                   ; return $? ;;
             *)      gr.msg "scan: unknown command"    ; return 1  ;;
         esac
@@ -44,10 +44,10 @@ scan.install () {
         fi
 
     source /etc/os-release
-    ver="3.63.0" ; [[ $1 ]] && ver="$1"
-    arch="x64"
-    source="https://download2.ebz.epson.net/imagescanv3/linuxmint/lts1/deb/x64"
-    dep_file="imagescan-bundle-${ID}-${VERSION_ID}-${ver}.${arch}.deb"
+    #ver="3.63.0" ; [[ $1 ]] && ver="$1"
+    #arch="x64"
+    source="https://download.ebz.epson.net/dsc/du/02/DriverDownloadInfo.do?LG2=JA&CN2=US&CTI=171&PRN=Linux%20deb%2064bit%20package&OSC=LX&DL"
+    dep_file="epsonscan2-bundle-6.7.63.0.x86_64.deb"
     gz_file="${dep_file}.tar.gz"
     gr.msg -v3 -c pink "${gz_file}"
     gr.msg -v3 -c deep_pink "${source}/${gz_file}"
@@ -57,12 +57,35 @@ scan.install () {
 
                 gr.msg -v1 -c white "downloading.."
                 cd /tmp
-                wget "${source}/${gz_file}" || gr.msg -c red -x 101 "source location not found $source/${gz_file}"
+                if wget "${source}/${gz_file}" ; then
+                    gr.msg -c green "done"
+                else
+                    gr.msg -c red "source location not found $source/${gz_file}"
+                    gr.msg -c white "got to ${source} and download deb to $HOME/Downloads"
+                    gr.ask "continue.." || return 111
+                    cd $HOME/Downloads
+                fi
 
                 gr.msg -v1 -c white "decompressing.."
-                [[ -f $gz_file ]] || gr.msg -c red -x 102 "source ${gz_file} not found"
-                tar -xvf $gz_file || gr.msg -c red -x 103 "unable to extract ${gz_file}"
-                cd $dep_file || gr.msg -c red -x 104 "cannot enter folder ${dep_file}"
+                if [[ -f $gz_file ]] ; then
+                    gr.msg -c green "done"
+                else
+                    gr.msg -c red "source ${gz_file} not found"
+                    return 102
+                fi
+
+                if tar -xvf $gz_file ; then
+                    gr.msg -c green "done"
+                else
+                    gr.msg -c red "unable to extract ${gz_file}"
+                fi
+
+
+                if cd $dep_file ; then
+                    gr.msg -c green "done"
+                else
+                    gr.msg -c red "cannot enter folder ${dep_file}"
+                fi
 
                 gr.msg -v1 -c white "running installer.."
                 ./install.sh
@@ -77,9 +100,13 @@ scan.install () {
 
                 #[[ $ID != "debian" ]] && sudo add-apt-repository ppa:rolfbensch/sane-git
                 sudo apt update
-                sudo apt install -y xsane imagemagick gocr || gr.msg -c red -x 105 "apt install error"
+                if sudo apt install -y xsane imagemagick gocr ; then
+                    gr.msg -c green "done"
+                else
+                    gr.msg -c red  "apt install error"
+                    return 101
+                fi
 
-                gr.msg -c green "done"
                 ;;
 
             *)
@@ -138,7 +165,7 @@ scan.check () {
         fi
 
     if sudo sudo scanimage -L | grep "No scanners" >/dev/null ; then
-            gr.msg -c red -x 106 "no sane support for $scanner_type"
+            gr.msg -c red "no sane support for $scanner_type"
             return 101
         fi
 
