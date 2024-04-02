@@ -332,12 +332,12 @@ yle.podcast () {
         fi
 
         if [[ $got =~ "${GURU_YLE_PODCAST_URL%/}" ]] ; then
-           areena_url=$got
+            areena_url=$got
         else
             areena_url=${GURU_YLE_PODCAST_URL%/}/$got
         fi
 
-        gr.debug "$FUNCNAME GURU_YLE_PODCAST_URL:${GURU_YLE_PODCAST_URL%/}, areena_url: $areena_url"
+        gr.debug "$FUNCNAME: GURU_YLE_PODCAST_URL:${GURU_YLE_PODCAST_URL%/}, areena_url: $areena_url"
 
         # all program_id's start with '1-'
         if ! [[ "$areena_url" =~ "/1-" ]] ; then
@@ -358,7 +358,7 @@ yle.podcast () {
         if [[ ${#episode_list[@]} -gt 1 ]] ; then
             serie_id=${areena_url##*/}
             selected_podcast_file=$json_folder/$serie_id.json
-            gr.debug "found ${#episode_list[@]} episodes"
+            gr.debug "$FUNCNAME: found ${#episode_list[@]} episodes"
 
         elif [[ ${#episode_list[@]} == 1 ]] ; then
             gr.debug "$FUNCNAME surprisingly short list: $episode_list"
@@ -379,6 +379,7 @@ yle.podcast () {
     # play list of episodes given in episode_list variable
         if [[ -f $selected_podcast_file ]] ; then
             gr.ask "database found, overwrite $selected_podcast_file?" || return 0
+            rm $selected_podcast_file
         fi
 
         gr.debug "$FUNCNAME got: ${episode_list[@]} json:$selected_podcast_file"
@@ -386,7 +387,7 @@ yle.podcast () {
         gr.msg -v2 -h "building database for ${#episode_list[@]} episodes:"
         gr.msg -V2 -n "building database for ${#episode_list[@]} episodes "
         for (( i = 0; i < ${#episode_list[@]}; i++ )); do
-            gr.msg -v2 -c dark_grey "$i ${episode_list[$i]}"
+            gr.msg -v2 -c dark_grey "$(($i+1)) ${episode_list[$i]}"
             yle-dl --showmetadata ${episode_list[$i]} 2>/tmp/yle.error | jq -s 'flatten' >>$selected_podcast_file
             gr.msg -V2 -n -c dark_grey "."
         done
@@ -470,7 +471,7 @@ yle.podcast () {
                 r)  read -p "podcast to remove: " selection
                     if [[ $selection -ge 0 ]] && [[ $selection -lt ${#podcast_list_title[@]} ]] ; then
                         if gr.ask "remove ${podcast_list_title[$selection]}?" ; then
-                            gr.debug "$FUNCNAME rm :${podcast_files[$selection]}"
+                            gr.debug "$FUNCNAME: rm :${podcast_files[$selection]}"
                             rm ${podcast_files[$selection]}
                         fi
                     fi
@@ -484,7 +485,7 @@ yle.podcast () {
             esac
         done
 
-        gr.debug "$FUNCNAME selected_podcast_file:'$selected_podcast_file'"
+        gr.debug "$FUNCNAME: selected_podcast_file:'$selected_podcast_file'"
         return 0
     }
 
@@ -557,7 +558,7 @@ yle.podcast () {
         local max=$((${#title[@]}))
         while true ; do
 
-            gr.msg -v1 -c dark_grey "(n)ext, (p)revious, (c)ontinuous, (l)ist, (d)escriptions, (s)eries, (a)dd, (u)pdate, (m)ore, (q)uit or (1..$max)"
+            gr.msg -v1 -c dark_grey "(n)ext, (p)revious, (c)ontinuous, (l)ist, (d)escriptions, (s)eries, (a)dd, (u)pdate, up(g)rade, (q)uit or (1..$max)" # (m)ore,
             gr.msg -n -c dark_turquoise "yle.areena [$item/$max] "
             # gr.msg -n "[$item/$max] "
             if [[ $timeout ]] ; then
@@ -573,8 +574,10 @@ yle.podcast () {
                 n)  [[ $item -lt $max ]] && item=$(( item + 1 )) || continue ;;
                 p)  [[ $item -gt 1 ]] && item=$(( item - 2 )) || continue ;;
                 l)  export GURU_VERBOSE=2 ; podcast.episodes ; continue ;;
-                m)  podcast.update ; podcast.episodes ; continue ;;
+                #m)  podcast.update ; podcast.episodes ; continue ;;
                 u)  podcast.update ; podcast.episodes ; continue ;;
+                g)  local temp_id=${selected_podcast_file%.*}
+                    podcast.get ${temp_id##*'/'} ; podcast.build ; podcast.update ; podcast.episodes ; continue ;;
                 s)  podcast.select ; podcast.menu ;;
                 a)  podcast.get ; podcast.build ; podcast.select ; podcast.menu ;;
                 d)  [[ $GURU_VERBOSE -gt 2 ]] && export GURU_VERBOSE=2 || export GURU_VERBOSE=3 ; podcast.episodes ; continue ;;
