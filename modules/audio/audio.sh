@@ -28,6 +28,7 @@ audio.help () {
     gr.msg -v1 "  mute                        mute (or un-mute) main audio device"
     gr.msg -v1 "  stop                        try to stop audio sources (TBD)"
     gr.msg -v1 "  pause                       pause all audio and video"
+    gr.msg -v1 "  reload                      reload fallen audio system "
     gr.msg -v2 "  toggle                      toggle last/default audio (for keyboard launch)"
     gr.msg -v2 "  mount                       mount audio media file locations"
     gr.msg -v2 "  unmount                     unmount audio media file locations"
@@ -95,11 +96,12 @@ audio.main () {
             return $?
 			;;
 
-        mpv|play|ls|pause|hold|release|mount|unmount|mute|stop|tunnel|toggle|install|update|remove|help|poll|status|help|np|playing)
+        pause|mpv|play|ls|hold|release|mount|unmount|mute|stop|tunnel|toggle|install|update|remove|help|poll|status|help|np|playing|reload)
             audio.$_command $@
             return $?
             ;;
         next|prev)
+            audio.np
             audio.$command
             ;;
         mpvstat)
@@ -112,13 +114,18 @@ audio.main () {
             return 1
             ;;
     esac
-   # rm $audio_rc
+}
 
+
+audio.default () {
+        gr.debug "$FUNCNAME starting play default shit "
+        source $GURU_BIN/audio/radio.sh
+        radio.main 0
 }
 
 
 audio.mpv () {
-
+# adapter for mpv
     local command=$1
     shift
 
@@ -133,15 +140,32 @@ audio.mpv () {
 
 
 audio.hold () {
-
+# setting hold flag ans stop audio
     flag.set audio_hold
     audio.stop
 }
 
 
 audio.release () {
-
+# removing hold flag
     flag.rm audio_hold
+}
+
+
+audio.reload () {
+# rebuild fallen audio tree
+    gr.msg -v2 "reloading audio.. "
+    if pulseaudio -k ; then
+        if sudo alsa force-reload ; then
+            gr.msg -v2 -c green "audio stack reloaded"
+        else
+            gr.msg -e2 "failed to reload alsa stack"
+            return 112
+        fi
+    else
+        gr.msg -e1 "failed to kill audio stack"
+        return 111
+    fi
 }
 
 
@@ -151,6 +175,7 @@ audio.next () {
     gr.debug "$FUNCNAME np:$GURU_AUDIO_NOW_PLAYING"
 
     if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
+
         contains="$(cat $GURU_AUDIO_NOW_PLAYING)"
 
         gr.debug "$FUNCNAME np-contains:$contains"
@@ -169,7 +194,7 @@ audio.next () {
 
         # next radio station
         if [[ ${contains,,} == radio* ]]; then
-            #source $GURU_BIN/audio/radio.sh
+            source $GURU_BIN/audio/radio.sh
             radio.next
         fi
 
@@ -180,7 +205,9 @@ audio.next () {
         fi
     else
         gr.debug "$FUNCNAME nothing playing "
+        audio.default
     fi
+
 }
 
 
@@ -188,7 +215,9 @@ audio.prev () {
 # jump to previous item depending what ever is playing
 
     gr.debug "$FUNCNAME np:$GURU_AUDIO_NOW_PLAYING"
-    if [[ $GURU_AUDIO_NOW_PLAYING ]] ; then
+
+    if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
+
         contains="$(cat $GURU_AUDIO_NOW_PLAYING)"
         gr.debug "$FUNCNAME np-contains:$contains"
 
@@ -209,7 +238,9 @@ audio.prev () {
             flag.set prev
             audio.stop
         fi
-
+    else
+        gr.debug "$FUNCNAME nothing playing "
+        audio.default
     fi
 }
 
@@ -226,9 +257,9 @@ audio.now_playing () {
         else
             gr.msg -v1 -n -c lime "[playing] "
         fi
-         gr.msg -v1 -c aqua_marine "$now_playing"
+        gr.msg -v1 -c aqua_marine "$now_playing"
     else
-        gr.msg -v1 -n -c dark_grey "[stopped] "
+        gr.msg -v1 -c dark_grey "[stopped] "
         #gr.msg -v1 -c dark_gray "$now_playing"
     fi
 }
@@ -239,6 +270,7 @@ audio.playing () {
     local now_playing=
     local length
     local cols
+    clear
     while true ; do
         cols=$(($(echo "cols"|tput -S) -10 ))
         if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
@@ -250,11 +282,15 @@ audio.playing () {
             fi
              gr.msg -w$cols -v1 -n -r -c aqua_marine "$now_playing"
         else
-            gr.msg -w10 -v1 -n -c grey "[stopped] "
+            if audio.paused ; then
+                gr.msg -w10 -v1 -n -c white "[paused] "
+            else
+                gr.msg -w10 -v1 -n -c grey "[stopped] "
+            fi
             gr.msg -w$cols -v1 -n -r -c dark_gray "$now_playing"
         fi
         gr.msg -n -r
-        read -sr -n1 -t3 ans && break
+        read -sr -n1 -t1 ans && break
     done
     echo
 }
@@ -266,11 +302,11 @@ audio.np () {
 
     if wmctrl -l | grep -q "$window_name" ; then
         wmctrl -R "$window_name"
-        wmctrl -r "$window_name" -e 0,2900,65,-1,-1
+        wmctrl -r "$window_name" -e 0,1200,1114,-1,-1
         # wmctrl -r "$window_name" -e 0,1,1500,-1,-1
     else
         gnome-terminal --hide-menubar --window-with-profile="NoScrollbar" --geometry 80x1 --zoom 1 --title "$window_name"  -- $GURU_BIN/guru audio playing
-        wmctrl -r "$window_name" -e 0,2900,65,-1,-1
+        wmctrl -r "$window_name" -e 0,1200,1114,-1,-1
     fi
     # 0x05016a46  1 530  382  904  46   electra now playing
     # wmctrl -r "now playing" -e 0,1,1,-1,-1
@@ -338,7 +374,7 @@ audio.play () {
                 ;;
             "")
                 source $GURU_BIN/audio/radio.sh
-                radio.listen $GURU_RADIO_WAKEUP_STATION
+                radio.play $GURU_RADIO_WAKEUP_STATION
                 _error=$?
                 ;;
             *)
@@ -392,7 +428,7 @@ audio.pause () {
                     me="$(cat $GURU_AUDIO_NOW_PLAYING)"
                     me=${me%% *}
                 else
-                    gr.msg "no playing"
+                    gr.msg "not playing"
                     return 0
                 fi
             fi
@@ -426,14 +462,14 @@ audio.pause () {
         /bin/bash -c "/usr/bin/amixer -q -D pulse sset Master mute; /usr/bin/killall -q -STOP 'pulseaudio'"
         touch $GURU_AUDIO_PAUSE_FLAG
         corsair.indicate pause $GURU_AUDIO_INDICATOR_KEY
-        gr.debug "$FUNCNAME: now set paused"
+        gr.debug "$FUNCNAME: paused"
 
     elif [[ -f $GURU_AUDIO_PAUSE_FLAG ]] || [[ "$input" == "rm" ]] ; then
         gr.end $GURU_AUDIO_INDICATOR_KEY
         /bin/bash -c "/usr/bin/killall -q -CONT 'pulseaudio'; /usr/bin/amixer -q -D pulse sset Master unmute"
         rm $GURU_AUDIO_PAUSE_FLAG
         gr.debug "$FUNCNAME: pause released"
-        audio.now_playing
+        #audio.now_playing
     fi
 }
 

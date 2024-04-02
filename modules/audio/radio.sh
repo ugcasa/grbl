@@ -338,10 +338,11 @@ radio.parse () {
         gr.debug "radio.list"
         local station_tmp=$(grep -e "$station_str" "$GURU_CFG/radio.list" | head -n1 )
         station_url=$(cut -d' ' -f1 <<<$station_tmp)
-        station_name="$(cut -d'_' -f2- <<<$station_tmp)"
-        station_name="${station_name^}"
-        station_name="$(cut -d'_' -f1 <<<$station_str) $station_name"
-        station_name="${station_name^}"
+        station_name=$(cut -d' ' -f2- <<<$station_tmp)
+        station_name="${station_name//[_-]/ }"
+        gr.debug "1:${station_name}"
+        station_name="${station_name^^}"
+        gr.debug "2:${station_name}"
         [[ $station_nro ]] || station_nro=$(( $i + 9 ))
     fi
 }
@@ -355,17 +356,15 @@ radio.play () {
     # stop currently playing audio
     audio.stop
 
-
-    # play media
-
     corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
     echo $station_nro > $radio_number_file
 
   while true ; do
     # indicate and inform user
-    gr.msg -v1 -h "Radio nr.$station_nro '$station_name'"
-    echo "Radio nr.$station_nro '$station_name'" >$GURU_AUDIO_NOW_PLAYING
+    gr.msg -v1 -h "Radio #$station_nro $station_name"
+    echo "Radio #$station_nro $station_name" >$GURU_AUDIO_NOW_PLAYING
 
+    # play media
     mpv $station_url $mpv_options
 
     if flag.get audio_hold ; then
