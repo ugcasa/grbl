@@ -175,6 +175,8 @@ yle.main () {
 yle.watch_news () {
 # watch news stream from https://areena.yle.fi
 
+    source corsair.sh
+
     gr.debug "$FUNCNAME: GURU_YLE_TV_NEWS_URL: $GURU_YLE_TV_NEWS_URL"
     gr.debug "$FUNCNAME: yle-dl --showepisodepage $GURU_YLE_TV_NEWS_URL"
 
@@ -191,7 +193,7 @@ yle.watch_news () {
             latest_url=${url_list[$i]}
             break
        else
-            gr.msg -e1 "web page only "
+            gr.msg -c dark_grey "available only in web page "
        fi
     done
 
@@ -199,7 +201,9 @@ yle.watch_news () {
     gr.debug "$FUNCNAME: mpv $mpv_options $media_url"
 
     echo "uutiset $latest_url" >$GURU_AUDIO_NOW_PLAYING
+    corsair.indicate grinding $GURU_YLE_INDICATOR_KEY
     mpv $mpv_options $media_url
+    corsair.blink_stop $GURU_YLE_INDICATOR_KEY
 
     [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
 }
@@ -227,7 +231,7 @@ yle.listen_news () {
         return 0
     fi
     # set pause to other players
-    audio.mpv pause true
+    audio.mpv pause true 2>/dev/null
 
     # get main news page and cut it to raw lines
     local links=($(curl --silent $GURU_YLE_NEWS_URL | tr " " "\n" | grep fullUrl |  tr "," "\n" | grep fullUrl))
@@ -260,40 +264,51 @@ yle.listen_news () {
         gr.debug "$FUNCNAME found link: '${honey_line}'"
 
         # indicate user and update now playing information
-        gr.msg "$link [$item/$GURU_YLE_NEWS_READ_MAX]"
-        echo "uutiset $link [$item/$GURU_YLE_NEWS_READ_MAX]" >$GURU_AUDIO_NOW_PLAYING
+        gr.msg -n "$link [$item/$GURU_YLE_NEWS_READ_MAX] "
 
-        # play transition theme
-        [[ $trans_theme ]] && mpv $mpv_options "$trans_theme" --quiet >/dev/null
+        if [[ $honey_line ]] ; then
+            echo "uutiset $link [$item/$GURU_YLE_NEWS_READ_MAX]" >$GURU_AUDIO_NOW_PLAYING
 
-        # play news
-        mpv $mpv_options $honey_line --quiet >/dev/null
+            # play transition theme
+            gr.msg -c aqua "playing.. "
 
-        # quit if stopped by other module or user with keyboard
-        _error=$?
-        gr.debug "$FUNCNAME _error:$_error"
+            [[ $trans_theme ]] && mpv $mpv_options "$trans_theme" --quiet >/dev/null
 
-        if [[ $_error -gt 0 ]] ; then
-            # check is user requested next item instead of stop
-            if flag.get next ; then
-                flag.rm next
-                continue
+            # play news
+            corsair.indicate grinding $GURU_YLE_INDICATOR_KEY
+            mpv $mpv_options $honey_line --quiet >/dev/null
+
+            # quit if stopped by other module or user with keyboard
+            _error=$?
+            gr.debug "$FUNCNAME _error:$_error"
+
+            corsair.blink_stop $GURU_YLE_INDICATOR_KEY
+
+            if [[ $_error -gt 0 ]] ; then
+                # check is user requested next item instead of stop
+                if flag.get next ; then
+                    flag.rm next
+                    continue
+                fi
+                break
             fi
-            break
+
+            # if user cancels, read current iten and exit
+            if flag.get cancel ; then
+                flag.rm cancel
+                break
+            fi
+        else
+            gr.msg -c dark_grey "no speaky lady, skipping.. "
         fi
 
-        # if user cancels, read current iten and exit
-        if flag.get cancel ; then
-            flag.rm cancel
-            break
-        fi
     done
 
     # stop blinking and play end tune
-    corsair.blink_stop $GURU_YLE_INDICATOR_KEY
+    corsair.blink_stop $GURU_YLE_INDICATOR_KEY 2>/dev/null
     [[ -f "$GURU_AUDIO_NOW_PLAYING" ]] && rm -f $GURU_AUDIO_NOW_PLAYING
     [[ -f "$end_theme" ]] && mpv $mpv_options "$end_theme" --quiet >/dev/null
-    audio.mpv pause false
+    audio.mpv pause false 2>/dev/null
 }
 
 
