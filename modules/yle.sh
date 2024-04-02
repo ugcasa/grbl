@@ -25,7 +25,9 @@ yle.help () {
     gr.msg -v1 "  play <id|url>       play episode from stream"
     gr.msg -v1 "  radio ls            list of known yle radio stations"
     gr.msg -v1 "  radio <station>     listen radio <station>"
-    gr.msg -v1 "  news                play latest yle tv news "
+    gr.msg -v1 "  news <listen|watch> listen or watch most recent yle news "
+    gr.msg -v1 "  watch news          watch most recent yle tv news "
+    gr.msg -v1 "  listen news         listen most recent news articles"
     gr.msg -v1 "  episodes <url>      get episodes of collection page"
     gr.msg -v1 "  sort                sort files in folder based on yle timestamp"
     gr.msg -v1 "  sub <id|url>        get subtitles for video"
@@ -91,22 +93,22 @@ yle.main () {
                 done
             ;;
 
-        read|watch)
+        listen*|watch*)
                 yle.${command}_news
+            ;;
+
+        news)
+            case $1 in
+                listen|watch)
+                    yle.${1}_${command} ;;
+                *)
+                    $GURU_CALL news
+            esac
             ;;
 
         next|prev)
                 flag.set ${command}
                 audio.stop
-            ;;
-
-        news)
-            case $1 in
-                read|watch)
-                    yle.${1}_${command} ;;
-                *)
-                    $GURU_CALL news
-            esac
             ;;
 
         episode|episodes)
@@ -172,16 +174,40 @@ yle.main () {
 
 yle.watch_news () {
 # watch fresh news articles from https://areena.yle.fi
-    mpṿ.set pause true
+
+    gr.debug "$FUNCNAME: GURU_YLE_TV_NEWS_URL: $GURU_YLE_TV_NEWS_URL"
+    gr.debug "$FUNCNAME: yle-dl --showepisodepage $GURU_YLE_TV_NEWS_URL"
+
+    declare -a url_list=($(yle-dl --showepisodepage $GURU_YLE_TV_NEWS_URL))
+    gr.debug "$FUNCNAME: url_list: ${#url_list[*]}:  ${url_list[@]}"
+
+    local item=
+    for (( i = $((${#url_list[@]}-1)); i > 0; i-- )); do
+
+       gr.msg -n "checking $i/${#url_list[@]}: ${url_list[$i]}.. "
+
+       media_url=$(yle-dl --showurl ${url_list[$i]} 2>/dev/null)
+
+       if [[ $media_url ]] ; then
+            gr.msg -c green "available "
+            latest_url=${url_list[$i]}
+            break
+       else
+            gr.msg -e1 "web page only "
+       fi
+    done
+
     mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-uutiset"
-    echo "uutiset $GURU_YLE_TV_NEWS_URL " >$GURU_AUDIO_NOW_PLAYING
-    yle-dl --pipe $(yle-dl --showepisodepage $GURU_YLE_TV_NEWS_URL | tail -n2 | head -n1)  2>/dev/null | mpv $mpv_options -
+    gr.debug "$FUNCNAME: mpv $mpv_options $media_url"
+
+    echo "uutiset $latest_url" >$GURU_AUDIO_NOW_PLAYING
+    mpv $mpv_options $media_url
+
     [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
-    mpṿ.set pause false
 }
 
 
-yle.read_news () {
+yle.listen_news () {
 # read fresh news articles from https://yle.fi/uutiset
 
     source corsair.sh
@@ -1210,7 +1236,7 @@ yle.make_rc () {
 
 yle.rc
 declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-yle"
-[[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
+[[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet " #--force-seekable
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # source "$GURU_RC"

@@ -29,7 +29,6 @@ audio.help () {
     gr.msg -v1 "  stop                        try to stop audio sources (TBD)"
     gr.msg -v1 "  pause                       pause all audio and video"
     gr.msg -v1 "  reload                      reload fallen audio system "
-    gr.msg -v2 "  toggle                      toggle last/default audio (for keyboard launch)"
     gr.msg -v2 "  mount                       mount audio media file locations"
     gr.msg -v2 "  unmount                     unmount audio media file locations"
     gr.msg -v2 "  ls                          list of local audio devices "
@@ -120,7 +119,7 @@ audio.main () {
 audio.default () {
         gr.debug "$FUNCNAME starting play default shit "
         source $GURU_BIN/audio/radio.sh
-        radio.main 0
+        radio.main
 }
 
 
@@ -313,37 +312,6 @@ audio.np () {
 }
 
 
-# audio.playing () {
-# # nice but slow now playing, not suitable for loops
-#     local now_playing=
-
-#     if ps auxf | grep 'mpv ' | grep -q -v grep ; then
-
-#         if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
-#             now_playing="$(cat $GURU_AUDIO_NOW_PLAYING)"
-#         fi
-
-#         now_playing="$(cat $GURU_AUDIO_NOW_PLAYING)"
-#         now_playing="$now_playing $(mpv.stat ${now_playing#* } 2>/dev/null)"
-
-#         gr.msg -v1 -n -c aqua_marine "$now_playing"
-
-#         if audio.paused ; then
-#             gr.msg -v1 -h " [paused]"
-#             corsair.indicate pause $GURU_AUDIO_INDICATOR_KEY
-#         else
-#             gr.msg -v1
-#             corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-#         fi
-
-#     else
-#         gr.end $GURU_AUDIO_INDICATOR_KEY
-#         gr.msg -v1 -c dark_grey "[stopped]"
-#     fi
-# }
-
-
-
 audio.unmount () {
 # when mount.cfg does not know mount configuration, module should u-mount own mount points
     source unmount.sh
@@ -468,6 +436,9 @@ audio.pause () {
         gr.end $GURU_AUDIO_INDICATOR_KEY
         /bin/bash -c "/usr/bin/killall -q -CONT 'pulseaudio'; /usr/bin/amixer -q -D pulse sset Master unmute"
         rm $GURU_AUDIO_PAUSE_FLAG
+
+        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+
         gr.debug "$FUNCNAME: pause released"
         #audio.now_playing
     fi
@@ -518,54 +489,6 @@ audio.is_playing () {
     mpv.stat || return 1
     [[ -f $GURU_AUDIO_NOW_PLAYING ]] || return 1
     [[ -f $GURU_AUDIO_PAUSE_FLAG ]] || return 1
-    return 0
-}
-
-
-audio.toggle () {
-# start or stop to play last listened or default audio source
-
-    if [[ -f $GURU_AUDIO_PAUSE_FLAG ]] ; then
-            gr.debug "paused, toggling by calling pause"
-            audio.pause
-            return 0
-        fi
-
-    if ps auxf | grep "mpv " | grep -q -v grep ; then
-    # if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
-            gr.debug "running, calling pause: $@"
-            audio.pause
-            return 0
-        fi
-
-    # check is there something
-    if [[ -f $audio_temp_file ]] ; then
-        echo "playlist $to_play" >$GURU_AUDIO_NOW_PLAYING
-        to_play="--playlist=$audio_temp_file"
-
-        # continue from last played if not playing
-        elif [[ -f $GURU_AUDIO_LAST_PLAYED ]] ; then
-            echo "$to_play" >$GURU_AUDIO_NOW_PLAYING
-            to_play=$(< $GURU_AUDIO_LAST_PLAYED)
-
-        # play default if no last played file
-        else
-            # why audio.main listen "$default_radio"
-            gr.debug "$FUNCNAME playing radio"
-            $GURU_CALL radio
-            return $?
-        fi
-
-    [[ $audio_playing_pid ]] && kill $audio_playing_pid
-
-    corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
-    gr.debug "$FUNCNAME continued $to_play"
-    mpv $to_play $mpv_options
-
-    [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
-    echo "$to_play" > $GURU_AUDIO_LAST_PLAYED
-    gr.end $GURU_AUDIO_INDICATOR_KEY
-
     return 0
 }
 

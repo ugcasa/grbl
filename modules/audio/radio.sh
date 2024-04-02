@@ -255,13 +255,13 @@ radio.parse () {
 
         # by favorite list
         [0-9])
-            gr.debug "1-9"
+            gr.debug "1-9: $got"
             station_str="${GURU_RADIO_FAVORITE_STATIONS[$got]}"
             station_nro=$got
             ;;
         # by radio list file
         [1-9][0-9])
-            gr.debug "10-99"
+            gr.debug "10-99: $got"
             station_nro=$got
 
             if [[ $station_nro -gt $amount_of_stations ]] ; then
@@ -284,13 +284,13 @@ radio.parse () {
 
         # url given
         http*)
-            gr.debug "http"
+            gr.debug "http: $got"
             station_url=$got
             station_nro=0
             #radio.play $station_url
             ;;
         yle)
-            gr.debug "yle"
+            gr.debug "yle: $got, $1"
             station_str="yle_$1"
             if ! [[ ${GURU_RADIO_YLE_STATIONS[@]} =~ $station_str ]] ; then
                 gr.msg -e1 "station '$station_str' is not yle radio station "
@@ -298,8 +298,18 @@ radio.parse () {
             fi
 
             ;;
+        "")
+            if [[ -f ${radio_number_file} ]] ; then
+                station_nro=$(cat $radio_number_file)
+            else
+                station_nro=0
+            fi
+            station_list=($(radio.ls))
+            station_str=${station_list[$station_nro]}
+            ;;
+
         *)
-            gr.debug "radio.ls"
+            gr.debug "radio.ls: $got"
             station_list=($(radio.ls))
             for (( i = 0; i < ${#station_list[@]}; i++ )); do
                 if [[ ${station_list[$i]} == *$got* ]] ; then
