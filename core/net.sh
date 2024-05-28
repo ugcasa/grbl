@@ -2,6 +2,7 @@
 # guru-client network module casa@ujo.guru 2022
 
 declare -g net_rc="/tmp/guru-cli_net.rc"
+declare -g tunneled_flag="/tmp/guru-cli_service_tunnel.flag"
 
 net.help () {
     # user help
@@ -11,11 +12,13 @@ net.help () {
     gr.msg -v0 -c white  "usage:    net check|status|help"
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
-    gr.msg -v1 " status     return network status "
-    gr.msg -v1 " check      check internet is reachable "
-    gr.msg -v1 " server     check accesspoint is reachable "
-    gr.msg -v1 " cloud      fileserver is reachable"
-    gr.msg -v2 " help       printout this help "
+    gr.msg -v1 " status         return network status "
+    gr.msg -v1 " check          check internet is reachable "
+    gr.msg -v1 " host           set or check /etc/hosts domain redirection "
+    gr.msg -v1 "   check|direct|tunnel|basic    "
+    gr.msg -v1 " server         check accesspoint is reachable "
+    gr.msg -v1 " cloud          fileserver is reachable"
+    gr.msg -v2 " help           printout this help "
     gr.msg -v2
     gr.msg -v1 -c white "examples:  "
     gr.msg -v1 "$GURU_CALL net      textual status info"
@@ -36,6 +39,10 @@ net.main () {
                 net.$function $@
                 return $?
                 ;;
+            host)
+                net.set_service_hosts $@
+                return $?
+                ;;
             server|accesspoint|access)
                 net.check_server $@
                 return $?
@@ -46,10 +53,132 @@ net.main () {
                 ;;
 
             *)
-                net.check_server && gr.msg -c green "server reachable" || gr.msg -c orange "server offline"
-                net.check && gr.msg -c green "internet available" || gr.msg -c orange "internet unreachable"
+                net.check
                 ;;
         esac
+}
+
+
+net.ip () {
+# get ip of SERVICE domain*, return \n reparated list of found ip's
+
+# service domain is new for this purpose added variable to point services,
+# like wekan, dokuwiki on access point server. services can be accessed trough
+# tunnel and therefore use of same variable fucks things up lit try to make ssh
+# tunnel to sever domain set to localhost .
+# GURU_SERVICE_DOMAIN allows point service domain to localhost when services are tunneled.
+
+    local domain=$GURU_SERVICE_DOMAIN
+    [[ $1 ]] && domain=$1
+    [[ $domain ]] || return 127
+    dig $domain A +short
+}
+
+
+net.check_service_type () {
+# check is access domain set to /etc/hosts point to localhost
+
+    if [[ $(net.ip) == $(net.ip localhost) ]] ; then
+        gr.debug "$FUNCNAME: services are accessed trough tunnel"
+        touch $tunneled_flag
+    else
+        gr.debug "$FUNCNAME: services are accessed from LAN"
+        [[ -f $tunneled_flag ]] && rm $tunneled_flag
+    fi
+}
+
+
+net.set_service_hosts () {
+# check and set domain name to /etc/hosts to point url's of services globally to right server
+
+    local command=$1
+    local target_file="/tmp/hosts"
+    local line=
+
+    # Copy original file for modifications
+    cp /etc/hosts $target_file
+
+    check_direct_rule () {
+    # check is ujo.guru pointed directly to server
+        line=$(grep $GURU_ACCESS_LAN_IP $target_file | grep $GURU_SERVICE_DOMAIN | grep -v "#" | head -n1 )
+        [[ $line ]] || return 1
+        gr.debug "$FUNCNAME: exist $line"
+        return 0
+    }
+
+    check_tunnel_rule () {
+    # check is ujo.guru and localhost pointed to 127.0.0.1
+        line=$(grep "127.0.0.1" $target_file | grep "localhost" | grep -v $GURU_SERVICE_DOMAIN | grep -v "#" | head -n1 )
+        [[ $line ]] || return 1
+        gr.debug "$FUNCNAME: exist '$line'"
+        return 0
+    }
+
+    check_basic_rule () {
+    # check is there localhost without ujo.guru domain point (basic setup)
+        line=$(grep "127.0.0.1" $target_file | grep $GURU_SERVICE_DOMAIN | grep -v "#" | head -n1 )
+        [[ $line ]] || return 1
+        gr.debug "$FUNCNAME: exist $line"
+        return 0
+    }
+
+    check_all () {
+        check_basic_rule && gr.msg "${GURU_SERVICE_DOMAIN} points to localhost but tunnel needed to access ${GURU_ACCESS_DOMAIN} services"
+
+        if check_direct_rule; then
+            gr.msg "${GURU_ACCESS_DOMAIN} access from LAN ${GURU_SERVICE_DOMAIN} > $GURU_ACCESS_LAN_IP"
+            return 0
+        fi
+
+        check_tunnel_rule && gr.msg "${GURU_ACCESS_DOMAIN} access trough ssh tunnel or from web"
+        return 0
+    }
+
+    set_direct () {
+        check_basic_rule && sed -i "/${line}/d" $target_file
+        check_tunnel_rule || sed -i '1s/^/127.0.0.1\tlocalhost\n/' $target_file
+        check_direct_rule || sed -i "1s/^/${GURU_ACCESS_LAN_IP}\t${GURU_SERVICE_DOMAIN}\n/" $target_file
+    }
+
+    set_basic () {
+        check_tunnel_rule && sed -i "/${line}/d" $target_file
+        check_direct_rule && sed -i "/${line}/d" $target_file
+        check_basic_rule || sed -i "1s/^/127.0.0.1\tlocalhost ${GURU_SERVICE_DOMAIN}\n/" $target_file
+    }
+
+    set_clean () {
+        check_basic_rule && sed -i "/${line}/d" $target_file
+        check_direct_rule && sed -i "/${line}/d" $target_file
+        check_tunnel_rule || sed -i '1s/^/127.0.0.1\tlocalhost\n/' $target_file
+    }
+
+    set_tunnel () {
+        source tunnel.sh
+        if ! tunnel.check ; then
+            if gr.ask "you might like to establish tunnels first?"; then
+                set_clean
+                tunnel.main open
+            fi
+        fi
+        check_tunnel_rule && sed -i "/${line}/d" $target_file
+        check_direct_rule && sed -i "/${line}/d" $target_file
+        check_basic_rule || sed -i "1s/^/127.0.0.1\tlocalhost ${GURU_SERVICE_DOMAIN}\n/" $target_file
+    }
+
+    case $command in
+        direct|tunnel|basic|clean)
+            set_$command
+            ;;
+        check|"")
+            check_all
+            ;;
+        *)
+            gr.msg -e1 "please check, local, tunnel or basic"
+            return 0
+            ;;
+    esac
+
+    sudo cp $target_file /etc/hosts
 }
 
 
@@ -159,13 +288,15 @@ net.check_server () {
     local _server=$GURU_ACCESS_DOMAIN
     [[ $1 ]] && _server=$1
 
-    gr.msg -n -t -v3 "ping $_server.. "
+    #gr.msg -t -n "server.status "
+    gr.debug "ping $_server.. "
     if timeout 2 ping $_server -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
-        gr.msg -v3 "ok "
+        gr.msg -v3 -c green "$_server available "
         gr.end $GURU_NET_INDICATOR_KEY
         return 0
     else
-        gr.msg -v3 "$_server unreachable! "
+        #gr.msg -t -n "server.status "
+        gr.msg -v3 -c orange "$_server unreachable! "
         gr.ind offline -m "$_server unreachable" -k $GURU_NET_INDICATOR_KEY
         return 127
     fi
@@ -174,22 +305,32 @@ net.check_server () {
 
 net.check () {
 # quick check network connection, no analysis
-    gr.msg -n -t -v3 "ping google.com.. "
+    gr.debug "ping google.com.. "
     if timeout 3 ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
 
         gr.end $GURU_NET_INDICATOR_KEY
         gr.msg -v1 -c green "online " -k $GURU_NET_INDICATOR_KEY
         return 0
     else
-        gr.msg -c red "offline "
+        gr.msg -v1 -c red "offline "
         gr.ind offline -m "network offline" -k $GURU_NET_INDICATOR_KEY
         return 127
     fi
 }
 
+
 net.status () {
 # output net status
     local _return=0
+    local _sub_command=$1
+
+    case $_sub_command in
+        loop)
+            net.status_loop
+            return 0
+            ;;
+    esac
+
     gr.msg -n -t -v1 "${FUNCNAME[0]}: "
 
     # check net is enabled
@@ -203,23 +344,43 @@ net.status () {
     # other tests with output, return errors
 
     if net.check >/dev/null; then
-            gr.msg -n -v1 -c green "online, "
+            gr.msg  -c aqua "online "
         else
             if [[ $GURU_NET_LOG ]] ; then
+                    gr.msg -v1  -c red "offline "
                     [[ -d $GURU_NET_LOG_FOLDER ]] || mkdir -p "$GURU_NET_LOG_FOLDER"
                     gr.msg "$(date "+%Y-%m-%d %H:%M:%S") network offline" >>"$GURU_NET_LOG_FOLDER/net.log"
                 fi
             _return=101
         fi
 
+    gr.msg -v1 -n -t "net.server "
     if net.check_server >/dev/null; then
-            gr.msg -v1 -c aqua "connected to $GURU_ACCESS_DOMAIN "
+            gr.msg -v1 -n -c green "available, "
+            if ps auxf | grep $GURU_DATA | grep -v grep -q ; then
+                gr.msg -v1 -c aqua "connected "
+            else
+                gr.msg -v1 -c black "not connected "
+            fi
+
         else
-            gr.msg -v1 -c orange "$GURU_ACCESS_DOMAIN unreachable"
+            gr.msg -v1 -c orange "unreachable"
             _return=102
         fi
     return $_return
-    }
+}
+
+
+net.status_loop () {
+# do loop test
+    while true ; do
+        if net.status ; then
+            gr.ind available -c green -m "$GURU_ACCESS_DOMAIN accessible" -k $GURU_NET_INDICATOR_KEY
+            return 0
+        fi
+        sleep 10
+    done
+}
 
 
 net.poll () {
@@ -242,7 +403,7 @@ net.poll () {
             ;;
         *)  net.help
             ;;
-        esac
+    esac
 }
 
 
