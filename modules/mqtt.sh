@@ -2,7 +2,7 @@
 # guru client MQTT functions casa@ujo.guru 2020
 
 declare -g mqtt_rc="/tmp/guru-cli_mqtt.rc"
-[[ GURU_DEBUG ]] && mqtt_client_options='-d '
+[[ $GURU_DEBUG ]] && mqtt_client_options='-d '
 
 
 mqtt.main () {
@@ -123,7 +123,7 @@ mqtt.online () {
     }
 
     # delayed publish
-    mqtt.online_send &
+    (mqtt.online_send &)
 
     # subscribe to channel no output
     gr.msg -v4 -c aqua_marine -k $GURU_MQTT_INDICATOR_KEY
@@ -147,6 +147,7 @@ mqtt.sub () {
 # subscribe to channel, stay listening
 
     local _topic="$1" ; shift
+    case $_topic in *#*|root|all) mqtt_client_options="$mqtt_client_options -v " ; _topic='#';; esac
 
     gr.msg -v4 -c white -k $GURU_MQTT_INDICATOR_KEY
 
@@ -154,7 +155,7 @@ mqtt.sub () {
     [[ $1 ]] && local _options="-$@"
 
     # subscribe
-    if mosquitto_sub $mqtt_client_options \
+    if mosquitto_sub $mqtt_client_options -R --quiet \
             -h $GURU_MQTT_BROKER \
             -p $GURU_MQTT_PORT \
             -t "$_topic" $_options ; then
@@ -213,22 +214,46 @@ mqtt.pub () {
 
 
 mqtt.single () {
-# subscribe to channel, stay listening until one message received
+# Subscribe to channel, stay listening until one message received. Timeout is minute.
+#
+# ## Best variables to just get message it self and mayby find way to get some VALID exit code
+#
+# -E : Exit once all subscriptions have been acknowledged by the broker.
+# -C : disconnect and exit after receiving the 'msg_count' messages.
+# -F : output format. ## Da fuck is this?
+# -R : do not print stale messages (those with retain set).
+# -v : print published messages verbosely.
+# -W : Specifies a timeout in seconds how long to process incoming MQTT messages.
+# --quiet : don't print error messages.
+# --remove-retained : send a message to the server to clear any received retained messages
+#                 Use -T to filter out messages you do not want to be cleared.
+# ## Test string
+#
+# source mqtt.sh
+# mosquitto_sub -C 1 -R -W 60 --quiet --remove-retained -h "$GURU_MQTT_BROKER" -p "$GURU_MQTT_PORT" -t "check"
+#
 
     local _topic="$1" ; shift
+    local _timeout=5
 
-    # lazy ass variable transport. TBD -- for this use
-    [[ $1 ]] && local _options="-$@"
-    gr.msg -v4 -c white -k $GURU_MQTT_INDICATOR_KEY
+    gr.blink $GURU_MQTT_INDICATOR_KEY "active"
 
-    mosquitto_sub -C 1 $mqtt_client_options \
+    local answer=$(mosquitto_sub -C 1 -R -W $_timeout --quiet --remove-retained \
         -h "$GURU_MQTT_BROKER" \
         -p "$GURU_MQTT_PORT" \
-        -t "$_topic" \
-        $_options
+        -t "$_topic" )
         # -u $GURU_MQTT_USER
-    gr.msg -v4 -c green -k $GURU_MQTT_INDICATOR_KEY
-    return $?
+
+    if ! [[ $answer ]]; then
+        gr.msg -c yellow "timeout no message to '$_topic' on $GURU_MQTT_BROKER:$GURU_MQTT_PORT "
+        gr.blink $GURU_MQTT_INDICATOR_KEY "error"
+        return 100
+    fi
+
+    #gr.msg -v4 -c green -k $GURU_MQTT_INDICATOR_KEY
+    gr.blink $GURU_MQTT_INDICATOR_KEY "ok"
+    echo "$answer"
+    return 0
 }
 
 
@@ -263,11 +288,11 @@ mqtt.status () {
 
     # printout and signal by corsair keyboard indicator led
     if mqtt.online ; then
-            gr.msg -v1 -c green "broker available " \
+            gr.msg -v1 -c aqua "on service " \
                  -k $GURU_MQTT_INDICATOR_KEY
             return 0
         else
-            gr.msg -v1 -c red "broker unreachable " \
+            gr.msg -v1 -c red "unreachable " \
                  -k $GURU_MQTT_INDICATOR_KEY
             return 1
         fi
