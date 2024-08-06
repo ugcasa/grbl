@@ -13,16 +13,11 @@ user.main () {
     command="$1"; shift
 
     case "$command" in
-        add )
-
-            [ "$1" == "cloud" ] && add_user_server "$@" || add_user "$@"
+        add|rm)
+            [ "$1" == "server" ] && ${command}_user_server "$@" || ${command}_user "$@"
             ;;
-
-        add )
-            add_user "$@"
-            ;;
-        rm )
-            rm_user "$@"
+        info)
+            user.info
             ;;
         help)
             echo "usage:    $GURU_CALL user [add|rm|change|help]"
@@ -41,6 +36,30 @@ user.main () {
 
 
 }
+
+
+user.info () {
+
+    gr.msg -h "user information"
+    gr.kvp GURU_USER
+    gr.kvp GURU_USER_FULL_NAME
+    gr.kvp GURU_USER_EMAIL
+    gr.kvp GURU_USER_PHONE
+    gr.kvp GURU_USER_DOMAIN
+    gr.kvp GURU_USER_TEAM
+
+    gr.msg -h "system information"
+    gr.kvp GURU_SYSTEM_CALL_NAME
+    gr.kvp GURU_SYSTEM_ALIAS
+    gr.kvp GURU_SYSTEM_LOCATION
+    gr.kvp GURU_SYSTEM_MOUNT
+
+    gr.msg -h "service information"
+    gr.kvp GURU_SERVICE_DOMAIN
+    gr.kvp GURU_ACCESS_DOMAIN
+    gr.kvp GURU_CLOUD_DOMAIN
+}
+
 
 user.set_value () {
     # set value to user (or any) config file
