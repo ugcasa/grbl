@@ -3,14 +3,14 @@
 
 declare -g tunnel_rc="/tmp/guru-cli_tunnel.rc"
 
-tunnel.help () {
-# genereal help
 
-    gr.msg -v1 -c white "guru-client tunnel help "
+tunnel.help () {
+# tunnel commands
+    gr.msg -v1 "guru-client tunnel help " -c white
     gr.msg -v2
     gr.msg -v0 "usage:    $GURU_CALL tunnel status|ls|open|close|add|rm|start|end|install|remove] "
     gr.msg -v2
-    gr.msg -v1 -c white  "commands:"
+    gr.msg -v1 "commands:" -c white
     gr.msg -v1 " ls               list, active highlighted"
     gr.msg -v1 " status           tunnel status "
     gr.msg -v1 " open <service>   open known tunnel set in user config"
@@ -21,9 +21,8 @@ tunnel.help () {
     gr.msg -v1 " remove           remove installed requirements "
     gr.msg -v2 " poll start|end   start or end module status polling "
     gr.msg -v3 " hop              TBD hopping tunnel support"
-
     gr.msg -v2
-    gr.msg -v1 -c white  "example:"
+    gr.msg -v1 "example:" -c white
     gr.msg -v1 "    $GURU_CALL tunnel open wiki"
     gr.msg -v2
 }
@@ -271,7 +270,7 @@ tunnel.open () {
 
     if ! [[ $DISPLAY ]] ; then
             gr.msg -v1 "Seems that session is not local, least it does not have DISPLAY variable set."
-            gr.msg -v2 "Therefore multible terminal windows cannot be lauched automatically."
+            gr.msg -v2 "Therefore multiple terminal windows cannot be launch automatically."
             gr.msg -v0 "Open another terminal and paste following commands to avoid tunnel to open here."
         fi
 
@@ -300,9 +299,10 @@ tunnel.open () {
                 fi
 
             if [[ $DISPLAY ]] ; then
-
+                    # open terminal and make ssh tunnel
+                    # TBD terminal title changes to USER@HOST and is too much of effort to keep as $_service
                     gnome-terminal  --hide-menubar --geometry 45x12 --zoom 0.5 \
-                                    --title "$_service"  -- \
+                                    --title "$_service" -- \
                                     ssh -L $to_port:localhost:$from_port \
                                     $user@$domain -p $ssh_port \
                                     $ssh_param \
