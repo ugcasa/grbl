@@ -16,20 +16,16 @@ config.help () {
     gr.msg -v2
     gr.msg -v1 "commands:" -h
     gr.msg -v2
-    gr.msg -v1 "  export         export configuration to environment"
-    gr.msg -v1 "  pull           pull user configuration from server"
-    gr.msg -v1 "  push           push user configuration to server"
-    gr.msg -v1 "  dialog         modify configurations in terminal dialog"
-    gr.msg -v2 "    <module>"
-    gr.msg -v1 "  edit           edit user config file with preferred editor"
-    gr.msg -v1 "  change         change variable in user configuration "
-    gr.msg -v2 "    <module> <key> <value>"
-    gr.msg -v1 "  get            get single value from environment"
-    gr.msg -v2 "    <key>"
-    gr.msg -v1 "  set            set value to user config and current environment"
-    gr.msg -v2 "    <key> <value>"
-    gr.msg -v1 "  rm             remove key value pair from environment"
-    gr.msg -v2 "    <key>"
+    gr.msg -v1 "  export                    export configuration to environment"
+    gr.msg -v1 "  pull                      pull user configuration from server"
+    gr.msg -v1 "  push                      push user configuration to server"
+    gr.msg -v1 "  dialog <module>           modify configurations in terminal dialog"
+    gr.msg -v1 "  edit                      edit user config file with preferred editor"
+    gr.msg -v2 "  edit <module1 module2>    edit configurations of following moudules"
+    gr.msg -v1 "  change <module key value> change variable in user configuration "
+    gr.msg -v1 "  get <key>                 get single value from environment"
+    gr.msg -v1 "  set <key> <value>         set value to user config and current environment"
+    gr.msg -v1 "  rm <key>                  remove key value pair from environment"
     gr.msg -v1 "  help           try '$GURU_CALL help -v2' full help" -V2
     gr.msg -v1 "  help format    config file format information"
     gr.msg -v2
@@ -328,23 +324,45 @@ config.push () {
 config.edit () {
 # edit user config file with preferred editor
 
+    local module_list=($@)
+    local file_list=()
     local default_configs=($(find $GURU_CFG/*cfg $GURU_CFG/*list -maxdepth 1 -type f -path '*/\.*'))
 
     if [[ -d $GURU_CFG/$GURU_USER ]] ; then
         local user_configs=($(find $GURU_CFG/$GURU_USER/*cfg $GURU_CFG/$GURU_USER/*list -maxdepth 1 -type f -path '*/\.*'))
     else
         gr.msg -c yellow "user configuration not found"
+        gr.msg -v2 "to create it copy $GURU_CFG/${module}.cfg to $GURU_CFG/$GURU_USER/${module}.cfg"
     fi
 
-    local list_of_files=(${user_configs[@]} ${default_configs[@]})
+    # files given as arguments or find all config files
+    if [[ $module_list ]] ; then
 
-    readarray -t sortedfilearr < <(printf '%s\n' "${list_of_files[@]}" | awk -F'/' '
-       BEGIN{PROCINFO["sorted_in"]="@val_num_asc"}
-       { a[$0]=$NF }
-       END{ for(i in a) print i}')
+        # check module config exist
+        for module in ${module_list[@]} ; do
+            if [[ -f "$GURU_CFG/$GURU_USER/${module}.cfg" ]]; then
+                file_list+=("$GURU_CFG/$GURU_USER/${module}.cfg")
+            else
+                # TBD if module exits and config does not ask to create config
+                gr.msg -e1 "no config found $GURU_PREFERRED_EDITOR $GURU_CFG/$GURU_USER/${module}.cfg"
+            fi
+        done
+        # open configs to new editor window
+        $GURU_PREFERRED_EDITOR -n ${file_list[@]}
+        return $?
+    else
+        # collect found files
+        local list_of_files=(${user_configs[@]} ${default_configs[@]})
+        # sort files to
+        readarray -t sortedfilearr < <(printf '%s\n' "${list_of_files[@]}" | awk -F'/' '
+           BEGIN{PROCINFO["sorted_in"]="@val_num_asc"}
+           { a[$0]=$NF }
+           END{ for(i in a) print i}')
 
-    gr.debug "${sortedfilearr[*]} Thanks RomanPerekhrest https://unix.stackexchange.com/questions/393987"
-    $GURU_PREFERRED_EDITOR -n ${sortedfilearr[*]}
+        gr.debug "${sortedfilearr[*]} Thanks RomanPerekhrest https://unix.stackexchange.com/questions/393987"
+        $GURU_PREFERRED_EDITOR -n ${sortedfilearr[*]}
+        return $?
+    fi
 }
 
 
