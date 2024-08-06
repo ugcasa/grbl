@@ -81,6 +81,17 @@ gr.source () {
     # rm $gtemp/functions.sh
 }
 
+gr.ok () {
+# printout ok sing defined in system.cfg chapter [sing]
+    gr.msg -c green "$GURU_SING_OK"
+}
+
+gr.error () {
+# printout ok sing defined in system.cfg chapter [sing]
+    gr.msg -c yellow "$GURU_SING_ERROR"
+}
+
+
 
 gr.msg () {
 # function for output messages and make log notifications
@@ -246,24 +257,77 @@ gr.msg () {
     return 0
 }
 
+gr.emsg () {
+
+     printf "$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_column_width}"
+    $@
+}
 
 gr.end () {
 # stop blinking in next cycle
 
-    local key="esc"
+    local key="caps"
     [[ $1 ]] && key=$1 ; shift
 
     [[ -f /tmp/blink_$key ]] && rm /tmp/blink_$key
     return 0
 }
 
+gr.blink () {
+    #gr.msg -c aqua -k $GURU_MQTT_INDICATOR_KEY
+
+    local key="caps"
+    [[ $1 ]] && key=$1
+    shift
+
+    local mood=$1
+
+    case $mood in
+    # color1 color2 interval timeout leave-color
+        ok)             blink="green slime 0.5 3 green" ;;
+        available)      blink="green aqua_marine 0.2 1 green" ;;
+        yes)            blink="green black 0.75 10 " ;;
+        no)             blink="red black 0.75 10 " ;;
+        cancel)         blink="orange $GURU_CORSAIR_MODE 0.2 3 " ;;
+        init)           blink="blue dark_blue 0.1 5 " ;;
+        pass*)          blink="slime $GURU_CORSAIR_MODE 1 300 green" ;;
+        fail*)          blink="red $GURU_CORSAIR_MODE 1 300 red" ;;
+        done)           blink="green slime 4 $GURU_DAEMON_INTERVAL green" ;;
+        do*)            blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL" ;;
+        work*)          blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL" ;;
+        recovery)       blink="blue black 5 $GURU_DAEMON_INTERVAL blue" ;;
+        grinding)       blink="blue aqua_marine 1 $GURU_DAEMON_INTERVAL" ;;
+        play*)          blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
+        active)         blink="aqua aqua_marine 0.5 5" ;;
+        pause)          blink="black $GURU_CORSAIR_MODE 1 3600";;
+        error)          blink="orange yellow 1 10 orange" ;;
+        message)        blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
+        call)           blink="deep_pink black 0.75 30 deep_pink" ;;
+        customer)       blink="deep_pink white 0.75 30 deep_pink" ;;
+        offline)        blink="blue orange 1.25 $GURU_DAEMON_INTERVAL orange" ;;
+        warn*)          blink="red orange 0.75 3600 orange" ;;
+        alert)          blink="red black 0.5 $GURU_DAEMON_INTERVAL" ;;
+        blue)           blink="blue black 0.5 $GURU_DAEMON_INTERVAL" ;;
+        notice)         blink="orange_red black 0.75 $GURU_DAEMON_INTERVAL " ;;
+        panic)          blink="red white 0.2 $GURU_DAEMON_INTERVAL red" ;;
+        breath|calm)    blink="dark_cyan dark_turquoise 6 600" ;;
+        cops|police)    blink="medium_blue red 0.75 60" ;;
+        hacker)         blink="white black 0.2 3600 red" ;;
+        important)      blink="red yellow 0.75 3600" ;;
+        *)              gr.msg -e1 "no valid mood '$mood'" ; return 0 ;;
+    esac
+
+    source corsair.sh
+    corsair.blink_set $key $blink
+
+}
 
 gr.ind () {
 # indicate status by message, voice  and keyboard indicators
 
     local _timestamp=
     local _mqtt_topic="/status/$(hostname)"
-    local _indicator_key="esc"
+    local _indicator_key="caps"
     local _color="black"
     local _status="message"
     local _message=""
@@ -284,6 +348,13 @@ gr.ind () {
     # --) check message for long parameters (don't remember why like this)
     local _arg="$@"
     [[ "$_arg" != "--" ]] && _status="${_arg#* }"
+
+    # gr.debug "_timestamp:$_timestamp"
+    # gr.debug "_mqtt_topic:$_mqtt_topic"
+    # gr.debug "_indicator_key:$_indicator_key"
+    # gr.debug "_color:$_color"
+    # gr.debug "_status:$_status"
+    # gr.debug "_message:$_message"
 
     if ! [[ $_status ]] ; then
         return 0
@@ -315,6 +386,7 @@ gr.ind () {
         # TBD sound.main nnn
 
         [[ $_message ]] || _message=$_status
+
         case $_status in
             say)            espeak -p 85 -s 130 -v en "$_message" ;;
             done)           espeak -p 100 -s 120 -v en "$_message done! " ;;
@@ -323,7 +395,7 @@ gr.ind () {
             working)        espeak -p 85 -s 130 -v en "working... $_message" ;;
             pause)          espeak -p 85 -s 130 -v en "$_message is paused" ;;
             cancel)         espeak -p 85 -s 130 -v en "$_messagasde is canceled. I repeat, $_message is canceled" ;;
-            error)          espeak -p 85 -s 130 -v en "Error! $_message. I repeat, $_message" ;;
+            error)          espeak -p 85 -s 130 -v en "Error! $_message" ;;
             offline)        espeak -p 85 -s 130 -v en "$_message" ;;
             warning)        espeak -p 85 -s 130 -v en "Warning! $_message. I repeat, $_message" ;;
             alert)          espeak -p 85 -s 130 -v en "Alarm! $_message. I repeat, $_message" ;;
@@ -436,7 +508,7 @@ gr.ask () {
     _answer="${_answer:-$_def_answer}"
 
     # stop blinking the keys
-    if [[ GURU_CORSAIR_ENABLED ]] ; then
+    if [[ $GURU_CORSAIR_ENABLED ]] ; then
         corsair.blink_stop y
         corsair.blink_stop n
     fi
@@ -450,7 +522,7 @@ gr.ask () {
     return 1
 }
 
-
+# TBD rename following three functions
 gr.kv() {
 # print key value pair
 
@@ -543,9 +615,8 @@ gr.presence () {
 
             if [[ -f /tmp/hello.indicator ]] ; then
                 guru start
-                gr.ind available -m "$GURU_USER seems to be activated"
+                gr.ind available -m "$GURU_USER seems to be active"
                 guru mount
-                # guru note
                 rm /tmp/hello.indicator
             fi
 
@@ -556,9 +627,9 @@ gr.presence () {
                 gr.ind available -m "$GURU_USER has left the building"
                 guru unmount all
                 guru daemon stop
-                #cinnamon-screensaver-command --lock
-                sleep 10
-                guru system suspend now
+                cinnamon-screensaver-command --lock
+                # sleep 10
+                # guru system suspend now
             fi
         fi
         sleep $_interv
@@ -567,77 +638,42 @@ gr.presence () {
 
 
 gr.date () {
-# printout date
+# printout date in readable format
     local when="now"
-
-    if [[ $1 ]] ; then
-        when="$@"
-        shift
-    fi
-
-    local output=$(date -d "$when" +$GURU_FORMAT_DATE)
-    echo $output
-    # echo $output | xclip -selection clipboard
+    [[ $1 ]] && when="$@"
+    echo $(date -d "$when" +$GURU_FORMAT_DATE)
 }
 
 
 gr.time () {
-# printout date
+# printout time in readable format
     local when="now"
-
-    if [[ $1 ]] ; then
-        when="$@"
-        shift
-    fi
-
-    local output=$(date -d "$when" +$GURU_FORMAT_TIME)
-    echo $output
-    # echo $output | xclip -selection clipboard
+    [[ $1 ]] && when="$@"
+    echo $(date -d "$when" +$GURU_FORMAT_TIME)
 }
 
 
 gr.datestamp () {
-
+# printout date stamp
     local when="now"
-
-    if [[ $1 ]] ; then
-        when="$@"
-        shift
-    fi
-
-    local output=$(date -d "$when" +$GURU_FORMAT_FILE_DATE)
-    echo $output
-    # echo $output | xclip -selection clipboard
+    [[ $1 ]] && when="$@"
+    echo $(date -d "$when" +$GURU_FORMAT_FILE_DATE)
 }
 
 
 gr.timestamp () {
 # printout date
     local when="now"
-
-    if [[ $1 ]] ; then
-        when="$@"
-        shift
-    fi
-
-    local output=$(date -d "$when" +$GURU_FORMAT_FILE_TIME)
-    echo $output
-    # echo $output | xclip -selection clipboard
+    [[ $1 ]] && when="$@"
+    echo $(date -d "$when" +$GURU_FORMAT_FILE_TIME)
 }
 
 
 gr.epoch () {
 # printout date
     local when="now"
-
-    if [[ $1 ]] ; then
-        when="$@"
-        shift
-    fi
-
-    local output=$(date -d "$when" +%s)
-    echo $output
-    # echo $output | xclip -selection clipboard
+    [[ $1 ]] && when="$@"
+    echo $(date -d "$when" +%s)
 }
 
 
@@ -648,8 +684,8 @@ gr.filedate () {
 
 gr.debug2 () {
 # printout debug messages
-    # local colors=(white red dark_orange orange salmon moccasin)
     local colors=(white fuchsia deep_pink hot_pink orchid dark_orchid dark_violet)
+    # local colors=(white red dark_orange orange salmon moccasin)
     local words=(${@})
     if [[ $GURU_DEBUG ]] ; then
         gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n
@@ -661,6 +697,7 @@ gr.debug2 () {
     fi
 }
 
+
 gr.debug () {
 # printout debug messages
     if [[ $GURU_DEBUG ]] ; then
@@ -669,14 +706,30 @@ gr.debug () {
     fi
 }
 
+
 gr.colors () {
 # printout available colors
+    export GURU_COLOR=true
+    export GURU_VERBOSE=2
 
-    for color in ${GURU_COLOR_LIST[@]} ; do
-        gr.msg -n -c $color "$color "
-    done
+    case $1 in
+        "")
+            for color in ${GURU_COLOR_LIST[@]} ; do
+                gr.msg -n -c $color "$color "
+            done
+            ;;
+        *)
+            for color in ${GURU_COLOR_LIST[@]} ; do
+                gr.msg -n -c $color "$1"
+            done
+
+            ;;
+
+        esac
+        echo
 }
 
+# TBD is following really needed or some old tail?
 # export -f gr.poll
 export -f gr.msg
 export -f gr.ask
