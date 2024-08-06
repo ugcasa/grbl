@@ -690,11 +690,21 @@ backup.plan () {
                     source $backup_stat_file
 
                     case $schedule in
-                             hourly)  add_seconds=3600 ;;
-                             daily)   add_seconds=86400 ;;
-                             weekly)  add_seconds=604800 ;;
-                             monthly) add_seconds=2629743 ;;
-                             yearly)  add_seconds=31556926 ;;
+                             hourly)
+                                add_seconds=3600
+                                ;;
+                             panic|all|daily)
+                                add_seconds=86400
+                                ;;
+                             weekly)
+                                add_seconds=604800
+                                ;;
+                             monthly)
+                                add_seconds=2629743
+                                ;;
+                             yearly)
+                                add_seconds=31556926
+                                ;;
                         esac
 
                     next_backup=$(( last_backup_time + add_seconds ))
@@ -711,11 +721,11 @@ backup.plan () {
 
     if [[ $_error -gt 0 ]] ; then
             gr.msg "$_error warnings, check log above" -c yellow -k $GURU_BACKUP_INDICATOR_KEY
-            gr.ind say -m "$_error warnings during $schedule backup"
+            [[ $GURU_BACKUP_VERBOSE ]] && gr.ind say -m "$_error warnings during $schedule backup"
             return 12
         else
             #gr.msg -v3 -c green "$schedule done"
-            gr.ind done -m "$schedule backup" -k $GURU_BACKUP_INDICATOR_KEY
+            [[ $GURU_BACKUP_VERBOSE ]] && gr.ind done -m "$schedule backup" -k $GURU_BACKUP_INDICATOR_KEY
             return 0
         fi
     }
@@ -765,7 +775,7 @@ backup.scheduled () {
 
         local rechedule="next backup scheduled to $(date -d @$(cat $backup_data_folder/next) '+%d.%m.%Y %H:%M')"
         gr.msg -c white $rechedule
-        gr.ind say -m "next backup scheduled for tomorrow"
+        [[ $GURU_BACKUP_VERBOSE ]] && gr.ind say -m "next backup scheduled for tomorrow"
 
         return $_error
     fi
