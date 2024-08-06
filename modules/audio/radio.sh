@@ -152,7 +152,7 @@ radio.change (){
     case $1 in
         next|n) next=$(( $current + 1 )) ;;
         prev|p) next=$(( $current - 1 )) ;;
-        current|contnue|c) next=$current ;;
+        current|continue|c) next=$current ;;
     esac
 
     if (( $next >= ${#station_list[@]} )) ; then

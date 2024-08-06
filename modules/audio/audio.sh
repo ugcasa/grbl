@@ -11,6 +11,7 @@ declare -g audio_playlist_folder="$audio_data_folder/playlists"
 declare -g audio_temp_file="/tmp/guru-cli_audio.playlist"
 declare -g audio_playing_pid=$(ps x | grep mpv | grep -v grep | cut -f1 -d" ")
 declare -g audio_modules=(yle youtube audio uutiset)
+declare -g audio_available_sockets=(audio radio uutiset yle youtube)
 # more global variables downstairs (after sourcing rc file)
 
 audio.help () {
@@ -32,6 +33,7 @@ audio.help () {
     gr.msg -v2 "  mount                       mount audio media file locations"
     gr.msg -v2 "  unmount                     unmount audio media file locations"
     gr.msg -v2 "  ls                          list of local audio devices "
+    gr.msg -v1 "  title                       get song title "
     gr.msg -v1 "  install                     install requirements "
     gr.msg -v1 "  remove                      remove requirements "
     gr.msg -v1 "  help                        printout this help "
@@ -105,6 +107,10 @@ audio.main () {
             ;;
         mpvstat)
             mpv.stat
+            return $?
+            ;;
+        title)
+            audio.song_title --no_separator
             return $?
             ;;
 
@@ -248,9 +254,9 @@ audio.now_playing () {
 # now playing string
     local now_playing=
 
-    cols=$(($(echo "cols"|tput -S) -10 ))
+    # cols=$(($(echo "cols"|tput -S) -10 ))
     if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
-        now_playing="$(cat $GURU_AUDIO_NOW_PLAYING)"
+        now_playing="$(cat $GURU_AUDIO_NOW_PLAYING) $(audio.song_title)"
         if audio.paused ; then
             gr.msg -v1 -n -c white "[paused] "
         else
@@ -264,6 +270,31 @@ audio.now_playing () {
 }
 
 
+audio.song_title () {
+# get song title from mpv daemon, to remove separator give argument
+
+    local separator="| "
+
+    [[ $1 ]] && separator=
+
+    for socket in ${audio_available_sockets[@]}; do
+        song_title=$(audio.mpv get media-title $socket 2>/dev/null)
+        [[ $song_title ]] && break
+    done
+
+    # cleanup and add separator
+    case $song_title in
+        -|*icecast*|*stream*|*mp3|listen|*.pls|""*.aac)
+            song_title=
+            ;;
+        *)
+            song_title="$separator$song_title"
+    esac
+
+    echo $song_title
+}
+
+
 audio.playing () {
 # now playing loop
     local now_playing=
@@ -273,7 +304,10 @@ audio.playing () {
     while true ; do
         cols=$(($(echo "cols"|tput -S) -10 ))
         if [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; then
-            now_playing="$(cat $GURU_AUDIO_NOW_PLAYING)"
+
+            # collecting output string
+            now_playing="$(cat $GURU_AUDIO_NOW_PLAYING) $(audio.song_title)"
+
             if audio.paused ; then
                 gr.msg -w10 -v1 -n -c white "[paused] "
             else
@@ -301,11 +335,11 @@ audio.np () {
 
     if wmctrl -l | grep -q "$window_name" ; then
         wmctrl -R "$window_name"
-        wmctrl -r "$window_name" -e 0,1200,1114,-1,-1
+        wmctrl -r "$window_name" -e 0,1000,1114,-1,-1
         # wmctrl -r "$window_name" -e 0,1,1500,-1,-1
     else
-        gnome-terminal --hide-menubar --window-with-profile="NoScrollbar" --geometry 80x1 --zoom 1 --title "$window_name"  -- $GURU_BIN/guru audio playing
-        wmctrl -r "$window_name" -e 0,1200,1114,-1,-1
+        gnome-terminal --hide-menubar --window-with-profile="NoScrollbar" --geometry 100x1 --zoom 1 --title "$window_name"  -- $GURU_BIN/guru audio playing
+        wmctrl -r "$window_name" -e 0,1000,1114,-1,-1
     fi
     # 0x05016a46  1 530  382  904  46   electra now playing
     # wmctrl -r "now playing" -e 0,1,1,-1,-1
@@ -508,7 +542,7 @@ audio.sort_yle_list () {
 
 audio.find_and_play () {
 # find from known audio locations and play
-
+# BROKEN
     update_list=true
     timeout=
 
@@ -712,6 +746,7 @@ audio.poll () {
 
 audio.rc () {
 # source configurations (to be faster)
+#|| [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mpv.cfg) - $(stat -c %Y $audio_rc) )) -gt 0 ]] \
 
     if [[ ! -f $audio_rc ]] \
         || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/radio.cfg) - $(stat -c %Y $audio_rc) )) -gt 0 ]] \
@@ -742,6 +777,8 @@ audio.make_rc () {
     config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $audio_rc
     config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $audio_rc append
     config.make_rc "$GURU_CFG/$GURU_USER/radio.cfg" $audio_rc append
+    #config.make_rc "$GURU_CFG/$GURU_USER/mpv.cfg" $audio_rc append
+
     chmod +x $audio_rc
     source $audio_rc
 }
