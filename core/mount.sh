@@ -41,6 +41,7 @@ mount.main () {
 
             list)
                 mount.available $@
+                _error=$?
                 ;;
 
             defaults|all|toggle)
@@ -56,8 +57,13 @@ mount.main () {
 
             folder|mount)
                 mount.remote $command $@
+                _error=$?
                 ;;
 
+            size)
+                mount.local_size $@
+                _error=$?
+                ;;
             "")
                 mount.listed default
                 _error=$?
@@ -140,17 +146,40 @@ mount.make_rc () {
 }
 
 
+mount.local_size () {
+# check size of files in locally mounted folder
+
+    local _mount_target=$GURU_DATA
+    [[ $1 ]] && _mount_target="$1"
+
+    # check is mount available
+    gr.msg -n -v2 "checking $_mount_target.. "
+    if ! mount.check $_mount_target ; then
+        gr.msg -e1 "$_mount_target not mounted"
+        return 10
+    fi
+
+    # get values
+    local _total_size=$(du -s $_mount_target 2>/dev/null)
+    local _human_total_size=$(echo "$_total_size" | awk '{ byte =$1 /1024**2 ; print byte " GB" }')
+
+    gr.msg -v2 -n "$_mount_target: "
+    gr.msg -v1 "$_human_total_size"
+    gr.msg -v0 -V1 "$_total_size"
+}
+
+
 mount.info () {
 # detailed list of mounted mountpoints. nice list of information of sshfs mount points
 
     local _error=0
     # header (stdout if verbose rised)
-    gr.msg -v2 -c white "user@server remote_folder local_mountpoint  uptime pid"
+    gr.msg -v1 -c white "user@server remote_folder local_mountpoint  uptime pid"
     mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |
 
     # get the mount data
     while read mount ; do
-        # iterate over them
+        # iterate over them       / how these work here?   --^
         mount | grep -w "$mount" |
         # Get the details of this mount
         perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1 $2 $3"'
