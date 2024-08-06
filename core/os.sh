@@ -1,10 +1,8 @@
 # guru-client os functions for installer casa@ujo.guru 2020
 # echo "common.sh: included by: $0"
 os_indicator_key=f8
-system_indicator_key="esc"
+system_indicator_key=caps
 os_rc=/tmp/guru-cli_os.rc
-
-
 
 source net.sh
 
