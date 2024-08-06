@@ -269,8 +269,26 @@ core.run_module () {
 }
 
 
+core.print_description () {
+# printout function description for documentation and debugging
+
+    local module=$1
+    shift
+    local command=$1
+    shift
+    local file=$1
+    shift
+
+    #gr.msg -n -h "$command "
+    first_line=$(grep -A 2 "$module.$command " $file | grep  -e '() ' -A 1 | tail -n1)
+    [[ $first_line ]] || return 100
+    gr.msg -v3 -c olive "function '$module.$command' description: '${first_line//# /}'"
+}
+
+
 core.run_module_function () {
 # run methods (functions) in module
+
     gr.debug "$FUNCNAME: '$@'"
     # guru add ssh key @ -> guru ssh key add @
     if ! grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
@@ -287,23 +305,26 @@ core.run_module_function () {
 
         if [[ "$_module" == "$module" ]] ; then
 
-            # check is module folder, create adpater if is not found
-            if [[ -f "$GURU_BIN/$_module/$_module.sh" ]] && ! [[ -f "$GURU_BIN/$_module.sh" ]]; then
+            gr.debug "core.sh > $FUNCNAME > $_module.sh > $_module.$command '$function' '$@'"
+
+            # check is module folder, create adapter if is not found
+            if [[ -f "$GURU_BIN/$_module/$_module.sh" ]] && ! [[ -f "$GURU_BIN/$_module.sh" ]] ; then
                 core.make_adapter $_module
             fi
 
-            gr.msg -v3 -c white "DUCUMENT: $_module.sh: $GURU_DOCUMENTATION:module:$_module"
+            gr.msg -v3 -c olive "documentation: $GURU_DOCUMENTATION:module:$_module"
 
             # include all module functions and run called
             if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
+                core.print_description $_module "$command" "$GURU_BIN/$_module.sh"
                 source $GURU_BIN/$_module.sh
-                gr.debug "$FUNCNAME relaying to $_module.sh: $command $function $@"
                 $_module.main "$command" "$function" "$@"
                 return $?
             fi
 
             # run one function in python script
             if [[ -f "$GURU_BIN/$_module.py" ]] ; then
+                # TBD add environment
                 $_module.py "$command" "$function" "$@"
                 return $?
             fi
@@ -335,6 +356,7 @@ core.multi_module_function () {
         _module=${GURU_MODULES[$mod_count]}
 
         gr.msg -v2 -c olive "$mod_count: $_module $function_to_run"
+        gr.msg -v3 -c olive "DUCUMENT: $_module: $GURU_DOCUMENTATION:module:$_module"
 
         # fun shell script module functions
         if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
@@ -387,7 +409,7 @@ core.online () {
 
     if net.check_server ; then
         if [[ -f $offline_flag ]] ; then
-            gr.end esc
+            gr.end caps
             flag.rm pause
             rm $offline_flag
         fi
@@ -395,7 +417,7 @@ core.online () {
     else
         touch $offline_flag
         gr.msg -v1 -c white "offline mode"
-        gr.end esc
+        gr.end caps
         flag.set pause
         return 127
     fi
