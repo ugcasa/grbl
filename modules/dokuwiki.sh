@@ -26,6 +26,8 @@ dokuwiki.main () {
             gr.msg "${FUNCNAME[0]}/dokuwiki_functions='$dokuwiki_functions'"
             return $?
             ;;
+        notes)
+            ;;
         '')
 			gr.msg -c white "more details please"
 			;;
@@ -68,6 +70,7 @@ dokuwiki.help () {
     gr.msg -v1 " upgrade <id:name>  		update service or platform"
     gr.msg -v1 " install            		install requirements "
     gr.msg -v1 " uninstall          		remove installed requirements "
+    gr.msg -v1 " notes                      copy notes to dokuwiki 'muistiinpanot' folder "
     gr.msg -v2
     gr.msg -v1 "examples " -c white
     gr.msg -v2
@@ -75,12 +78,54 @@ dokuwiki.help () {
     gr.msg -v2
 }
 
+
+dokuwiki.copy_notes() {
+    # Checks if the source directory exists. If not, try to mount it .
+    # Checks if the destination directory exists. If not, try to mount it.
+    # Uses find command to recursively search for markdown files (*.md) in the source directory.
+    # For each markdown file found, it copies the file to the destination directory while renaming it to .txt extension.
+
+    # dokuwiki_media_mount_location=
+
+
+    # Source directorie
+    source_dir="$GURU_MOUNT_NOTES/$GURU_USER"
+    # Defines the destination directorie.
+    destination_dir="$dokuwiki_page_mount_location"
+
+    if ! [[ $GURU_MOUNT_NOTES ]] || ! [[ $GURU_MOUNT_WIKIPAGES ]] ; then
+        source mount.sh
+    fi
+
+    # Check if source directory exists
+    if [ ! -d "$source_dir" ]; then
+        gr.msg -e0 "Source directory '$source_dir' does not exist."
+        mount.main mount notes || exit 1
+    fi
+
+    # Check if destination directory exists, if not create it
+    if [ ! -d "$destination_dir" ]; then
+        # mkdir -p "$destination_dir"
+        gr.msg -e0 "destination directory '$destination_dir' does not exist."
+        mount.main mount wikipages || exit 1
+
+    fi
+
+    # Copy markdown files from source to destination while renaming them to .txt
+    find "$source_dir" -type f -name "*.md" -exec sh -c 'cp "$1" "$2/$(basename "$1" .md).txt"' _ {} "$destination_dir/muistiinpanot" \;
+
+    gr.msg "Markdown files copied to '$destination_dir' with .txt extension."
+
+}
+
+
 # module argument TBD parser for --long-arguments
 
 dokuwiki.install () {
 	dokuwiki_functions='tock'
 	gr.msg "${FUNCNAME[0]}/dokuwiki_functions='$dokuwiki_functions'"
 }
+
 
 dokuwiki.debug () {
 # debug stuff, variable printout with different colors
