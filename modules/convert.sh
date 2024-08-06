@@ -40,11 +40,21 @@ convert.main () {
             return $?
             ;;
 
+        doc|document|ods)
+            convert.to_ods $@
+            return $?
+            ;;
+
         help|poll|status)
             convert.$format $@
             return $?
             ;;
-        *)  gr.msg -c yellow "unknown format $format"
+        *)
+            #gr.msg -c yellow "unknown format $format"
+            ## TODO wanted command example 'gr convert hello.jpg to png', see following function below help
+            convert.to $@
+        ;;
+
 
     esac
     return 0
@@ -65,20 +75,85 @@ convert.help () {
     gr.msg -v1 "               specify from format and all videos are converted to $GURU_FORMAT_VIDEO"
     gr.msg -v1 "               supported formats: webp webm mkv avif"
     gr.msg -v1 " <target>      specify target format to convert to it (experimental)"
-    gr.msg -v1 "               supported formats: dokuwiki png"
+    gr.msg -v1 "               supported formats: dokuwiki, png, ods"
     gr.msg -v2
     gr.msg -v1 -c white "example:"
-    gr.msg -v1 "      $GURU_CALL convert webp         # converts all webp in folder to $GURU_FORMAT_PICTURE "
-    gr.msg -v1 "      $GURU_CALL convert dokuwiki     # converts specified markdown files to dokuwiki format "
+    gr.msg -v1 "      $GURU_CALL convert webp                # converts all webp in folder to $GURU_FORMAT_PICTURE "
+    gr.msg -v1 "      $GURU_CALL convert dokuwiki            # converts specified markdown files to dokuwiki format "
+    gr.msg -v1 "      $GURU_CALL convert ods <filename.md>   # converts markdown file to Libre Office Writer format "
     gr.msg -v2
     gr.msg -v1 "avif support is still issue 2018 to 2023 >:/ https://github.com/ImageMagick/ImageMagick/issues/1432"
     return 0
 }
 
 
-## convert from methods. Always convert to png
+convert.to () {
+## TODO wanted command example 'gr convert hello.jpg to png'
+## accept file lists until 'to' is found, after that is target format
+## skip if files do not match mimetype of file ending
+## global GURU_FORCE flag "-f" overwrites existing and deletes original files
+## will accept list of different file (*.*/*/.) types but check if convert possible first, this disables force flag to avoid catastrophes
+## lists of files that share same, known file ending, and mime type (*.webp) can be forced
+## following prototype functions below might be useful
+    gr.msg -e0 TBD
+    return 0
+}
 
-# TBD issue #59 make one convert.format <format> all there three are almost identical
+
+convert.source_options () {
+# returns pandoc/imagemagick convert/inkscape/magick file type option name, file ending and file type specific option flag for given file
+## TODO continue if seems good method, too tired, no time and not needed now
+
+    local _file="$1"
+    if ! [[ -f $_file ]]; then
+        gr.msg -e1 "file $_file not found"
+        return 127
+    fi
+
+    case ${_file##*.} in
+        png)
+            _method="inkscape $_file"
+            ;;
+        jpg|jpeg)
+            _method="convert $_file"
+            ;;
+        md|mmd)
+            _method="pandoc -t markdown $_file"
+            ;;
+        txt)
+            _method="pandoc -t text $_file"
+            ;;
+        html|htm)
+            _method="pandoc -t html $_file -s "
+    esac
+
+}
+
+
+convert.target_options () {
+    return 0
+}
+
+
+convert.perform () {
+
+    source_app=$(convert.source_options | cut -f1 -d' ')
+    source_options=$(convert.source_options | cut -f2- -d' ')
+    target_app=$(convert.target_options | cut -f1 -d' ')
+    target_options=$(convert.source_options | cut -f2- -d' ')
+
+    # if source and target can be done with one application just perform
+    if [[ $source_app == $target_app ]]; then
+        convert.$source_app $source_options $target_options
+        return 0
+    fi
+
+    # otherwise figure out best method to perform convert process
+    gr.msg "unable to perform, TBD: find out what conversion are not available with single app and are those even possible nor needed"
+}
+
+# convert from methods. Always convert to png
+## TODO issue #59 make one convert.format <format> all there three are almost identical
 
 convert.from_webp () {
 # convert all webp in folder to png format
@@ -397,6 +472,145 @@ convert.to_dokuwiki () {
 
     gr.msg -v2 -c green "$message" -k $convert_indicator_key
     rm ${files_done[@]}
+}
+
+
+convert.to_ods () {
+# create odt from from input file, markdown original expexted (what else?)
+
+
+    local _template_name="default"
+
+    case $1 in
+        thin|new)
+        _template_name="thin"
+        shift
+        ;;
+    esac
+
+    if [[ "$1" ]] ; then
+        input_file="$1"
+    else
+        read -p "please input file name to convert .odt format: " input_file
+    fi
+
+    # get date for note
+    _date=$(date +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_FILE_TIME)
+
+    local odt_file="${input_file%%.*}_${_date}.odt"
+    local odt_template="$GURU_MOUNT_TEMPLATES/$_template_name-template.odt"
+
+    # sub second filename ramdomizer
+    if [ -f "$odt_file" ]; then
+        odt_file="${odt_file%%.*}.$RANDOM.odt"
+    fi
+
+    # printout variables for debug purpoces
+    gr.debug "date:'$_date', \
+          input_file: '$input_file', \
+          odt_template: '$odt_template', \
+          odt_file: '$odt_file'"
+
+    if ! [ -f "$input_file" ]; then
+        gr.msg -e1 "no input file '$input_file' found"
+        return 123
+    fi
+
+    # compile markdown to open office file format
+    pandoc "$input_file" --reference-doc="$odt_template" \
+            -f markdown -o "$odt_file"
+    local _error=$?
+
+    if [[ $_error -gt 0 ]] ; then
+        gr.msg -e1 "error '$_error' during pandoc convert progress.. "
+        return $_error
+    fi
+
+    if ! [[ -f $odt_file ]]; then
+        gr.msg -e2 "No file generated, unknown error"
+    fi
+
+    #printout output file location
+    gr.msg -v1 "$odt_file"
+
+    # open office program
+    $GURU_PREFERRED_OFFICE_DOC "$odt_file" 2>/dev/null &
+}
+
+
+convert.html_to_md () {
+# download and convert web page to markdown file
+
+    # output filename
+    if [[ "$1" ]] ; then
+        input_file="$1"
+        shift
+    else
+        read -p "please give markdown file name: " file_name
+    fi
+
+    # url to source
+    if [[ "$1" ]] ; then
+        url="$1"
+    else
+        read -p "please input url to convert markdown: " url
+    fi
+
+    pandoc -s -r html $url -o $file_name
+    sed -n '/:::/!p' temp file
+
+}
+
+
+convert.md_to_pdf () {
+# create pdf from from markdown original
+# TODO make general function for many as possible formats
+
+    if [[ "$1" ]] ; then
+        input_file="$1"
+    else
+        read -p "please input file name to convert .pdf format: " input_file
+    fi
+
+    # get date for note
+    _date=$(date +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_FILE_TIME)
+
+    local target_file="${input_file%%.*}_${_date}.pdf"
+
+
+    # sub second filename random
+    if [ -f "$target_file" ]; then
+        target_file="${target_file%%.*}.$RANDOM.pdf"
+    fi
+
+    # printout variables for debug purposes
+    gr.debug "date:'$_date', \
+          input_file: '$input_file', \
+          target_file: '$target_file'"
+
+    if ! [ -f "$input_file" ]; then
+        gr.msg -e1 "no input file '$input_file' found"
+        return 123
+    fi
+
+    # compile markdown to open office file format
+    pandoc "$input_file" -f markdown -o "$target_file"
+    local _error=$?
+
+    if [[ $_error -gt 0 ]] ; then
+        gr.msg -e1 "error '$_error' during pandoc convert progress.. "
+        return $_error
+    fi
+
+    if ! [[ -f $target_file ]]; then
+        gr.msg -e2 "No file generated, unknown error"
+    fi
+
+    #printout output file location
+    gr.msg -v1 "$target_file"
+
+    # open office program
+    $GURU_PREFERRED_OFFICE_DOC "$target_file" 2>/dev/null &
 }
 
 # covert_bash_2_json () {
