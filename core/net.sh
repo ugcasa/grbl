@@ -5,24 +5,34 @@ declare -g net_rc="/tmp/guru-cli_net.rc"
 declare -g tunneled_flag="/tmp/guru-cli_service_tunnel.flag"
 
 net.help () {
-    # user help
-    gr.msg -n -v2 -c white "guru-cli net help "
-    gr.msg -v1 "guru-cli network control module"
+# network module user help
+
+    gr.msg -v2 -c white "guru-cli network control module help "
     gr.msg -v2
-    gr.msg -v0 -c white  "usage:    net check|status|help"
+    gr.msg -v1 -c white -n "usage:  "
+    gr.msg -v0 " $GURU_CALL net check|status|host|server|cloud|type|ip|listen|help <optional_information>"
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
-    gr.msg -v1 " status         return network status "
-    gr.msg -v1 " check          check internet is reachable "
-    gr.msg -v1 " host           set or check /etc/hosts domain redirection "
-    gr.msg -v1 "   check|direct|tunnel|basic    "
-    gr.msg -v1 " server         check accesspoint is reachable "
-    gr.msg -v1 " cloud          fileserver is reachable"
-    gr.msg -v2 " help           printout this help "
+    gr.msg -v1 " status                         return network status "
+    gr.msg -v1 " check                          check internet is reachable "
+    gr.msg -v1 " host <command>                 set or check /etc/hosts domain redirection "
+    gr.msg -v2 "      check|direct|tunnel|basic    "
+    gr.msg -v1 " server                         check access point is reachable "
+    gr.msg -v2 "      domain_name|ip            check is specific server is reachable"
+    gr.msg -v1 " cloud                          file server is reachable"
+    gr.msg -v2 "      domain_name|ip            check is specific server is reachable"
+    gr.msg -v2 " type                           information of server connection"
+    gr.msg -v1 " help                           printout this help "
+    gr.msg -v2 " ip <domain>                    get ip of specified service"
+    gr.msg -v2 " listen                         listen ip traffic of local computer"
+    gr.msg -v2 "      netstat_options           by default '-nputwc' is in use  "
     gr.msg -v2
     gr.msg -v1 -c white "examples:  "
-    gr.msg -v1 "$GURU_CALL net      textual status info"
+    gr.msg -v1 " $GURU_CALL net status           info of network and server connection"
+    gr.msg -v1 " $GURU_CALL net host tunnel      set ujo.guru to point local host"
+    gr.msg -v1 " $GURU_CALL net check loop       check net status every 10'th second"
     gr.msg -v2
+    gr.msg -v1 "list all commands and options by increasing verbosity by '-v2' " -V2
 }
 
 
@@ -35,25 +45,25 @@ net.main () {
 
     case "$function" in
             ## add functions called from outside on this list
-            check|status|help|poll)
+            check|status|help|poll|host|listen)
                 net.$function $@
-                return $?
-                ;;
-            host)
-                net.set_service_hosts $@
                 return $?
                 ;;
             server|accesspoint|access)
                 net.check_server $@
                 return $?
                 ;;
-            cloud|fileserver|files)
+            cloud)
                 net.check_server $GURU_CLOUD_DOMAIN
                 return $?
                 ;;
-
+            type)
+                net.check_service_type
+                return $?
+                ;;
             *)
                 net.check
+                return $?
                 ;;
         esac
 }
@@ -88,8 +98,8 @@ net.check_service_type () {
 }
 
 
-net.set_service_hosts () {
-# check and set domain name to /etc/hosts to point url's of services globally to right server
+net.host () {
+# check and set domain name to /etc/hosts to point url of services globally to right server
 
     local command=$1
     local target_file="/tmp/hosts"
@@ -171,6 +181,7 @@ net.set_service_hosts () {
             ;;
         check|"")
             check_all
+            return $?
             ;;
         *)
             gr.msg -e1 "please check, local, tunnel or basic"
@@ -222,52 +233,52 @@ net.make_rc () {
 }
 
 
-net.listening () {
-# printout list of used outpund ports
-    netstat -nputwc
-}
-
-
 net.listen () {
-
-# usage: tcpflow [-aBcCDhIpsvVZ] [-b max_bytes] [-d debug_level]
-#      [-[eE] scanner] [-f max_fds] [-F[ctTXMkmg]] [-h|--help] [-i iface]
-#      [-l files...] [-L semlock] [-m min_bytes] [-o outdir] [-r file] [-R file]
-#      [-S name=value] [-T template] [-U|--relinquish-privileges user] [-v|--verbose]
-#      [-w file] [-x scanner] [-X xmlfile] [-z|--chroot dir] [expression]
-#    -a: do ALL post-processing.
-#    -b max_bytes: max number of bytes per flow to save
-#    -d debug_level: debug level; default is 1
-#    -f: maximum number of file descriptors to use
-#    -H: print detailed information about each scanner
-#    -i: network interface on which to listen
-#    -I: write for each flow another file *.findx to provide byte-indexed timestamps
-#    -g: output each flow in alternating colors (note change!)
-#    -l: treat non-flag arguments as input files rather than a pcap expression
-#    -L  semlock - specifies that writes are locked using a named semaphore
-#    -p: don't use promiscuous mode
-#    -q: quiet mode - do not print warnings
-#    -r file      : read packets from tcpdump pcap file (may be repeated)
-#    -R file      : read packets from tcpdump pcap file TO FINISH CONNECTIONS
-#    -v           : verbose operation equivalent to -d 10
-#    -V           : print version number and exit
-#    -w  file     : write packets not processed to file
-#    -o  outdir   : specify output directory (default '.')
-#    -X  filename : DFXML output to filename
-#    -m  bytes    : specifies skip that starts a new stream (default 16777216).
-#    -F{p} : filename prefix/suffix (-hh for options)
-#    -T{t} : filename template (-hh for options; default %A.%a-%B.%b%V%v%C%c)
-#    -Z       do not decompress gzip-compressed HTTP transactions
-
-# Security:
-#    -U user  relinquish privleges and become user (if running as root)
-#    -z dir   chroot to dir (requires that -U be used).
-
-# Control of Scanners:
-#    -E scanner   - turn off all scanners except scanner
-#    -S name=value  Set a configuration parameter (-hh for info)
-    return 0
+# printout list of used out pond ports
+    netstat -nputwc $@
 }
+
+
+# net.listen () {
+
+# # usage: tcpflow [-aBcCDhIpsvVZ] [-b max_bytes] [-d debug_level]
+# #      [-[eE] scanner] [-f max_fds] [-F[ctTXMkmg]] [-h|--help] [-i iface]
+# #      [-l files...] [-L semlock] [-m min_bytes] [-o outdir] [-r file] [-R file]
+# #      [-S name=value] [-T template] [-U|--relinquish-privileges user] [-v|--verbose]
+# #      [-w file] [-x scanner] [-X xmlfile] [-z|--chroot dir] [expression]
+# #    -a: do ALL post-processing.
+# #    -b max_bytes: max number of bytes per flow to save
+# #    -d debug_level: debug level; default is 1
+# #    -f: maximum number of file descriptors to use
+# #    -H: print detailed information about each scanner
+# #    -i: network interface on which to listen
+# #    -I: write for each flow another file *.findx to provide byte-indexed timestamps
+# #    -g: output each flow in alternating colors (note change!)
+# #    -l: treat non-flag arguments as input files rather than a pcap expression
+# #    -L  semlock - specifies that writes are locked using a named semaphore
+# #    -p: don't use promiscuous mode
+# #    -q: quiet mode - do not print warnings
+# #    -r file      : read packets from tcpdump pcap file (may be repeated)
+# #    -R file      : read packets from tcpdump pcap file TO FINISH CONNECTIONS
+# #    -v           : verbose operation equivalent to -d 10
+# #    -V           : print version number and exit
+# #    -w  file     : write packets not processed to file
+# #    -o  outdir   : specify output directory (default '.')
+# #    -X  filename : DFXML output to filename
+# #    -m  bytes    : specifies skip that starts a new stream (default 16777216).
+# #    -F{p} : filename prefix/suffix (-hh for options)
+# #    -T{t} : filename template (-hh for options; default %A.%a-%B.%b%V%v%C%c)
+# #    -Z       do not decompress gzip-compressed HTTP transactions
+
+# # Security:
+# #    -U user  relinquish privleges and become user (if running as root)
+# #    -z dir   chroot to dir (requires that -U be used).
+
+# # Control of Scanners:
+# #    -E scanner   - turn off all scanners except scanner
+# #    -S name=value  Set a configuration parameter (-hh for info)
+#     return 0
+# }
 
 net.portmap () {
 # check open ports of domain $1
@@ -318,15 +329,73 @@ net.check () {
     fi
 }
 
+## call mqtt module to perform checks
+# net.mqtt_check () {
+# # check that mqtt server connection works
+
+#     source mqtt.sh
+
+#     send_message () {
+#         (sleep 2) ; (mqtt.main pub check hello &)
+#     }
+
+#     # check mqtt is enabled
+#     if ! [[ $GURU_MQTT_ENABLED ]] ; then
+#         gr.msg -v1 -c black "disabled" -k $GURU_MQTT_INDICATOR_KEY
+#         return 1
+#     fi
+
+#     send_message
+
+#     if (mqtt.single check1 >/dev/null) ; then
+#         gr.msg -c green "online "
+#         return 0
+#     else
+#         gr.msg -c red "offline "
+#         return 127
+#     fi
+
+# }
+
+net.status_loop () {
+# do loop test till connection gets available.
+# Positional variables: timeout in seconds and optional exit-on-pass flag
+
+    local interval=10
+    local break_set=
+
+    [[ $1 ]] && interval=$1
+    shift
+
+    [[ $1 ]] && break_set=true
+
+    source mqtt.sh
+
+    while true ; do
+        if net.status && mqtt.status; then
+            gr.blink $GURU_NET_INDICATOR_KEY available
+            [[ $break_set ]] && break
+        else
+            gr.blink $GURU_NET_INDICATOR_KEY error
+        fi
+
+        # sleep $interval
+        read -s -n1 -t $interval ans
+        case ans in q|Q|x|X) break ;; esac
+    done
+
+}
+
 
 net.status () {
 # output net status
     local _return=0
     local _sub_command=$1
+    shift
 
     case $_sub_command in
         loop)
-            net.status_loop
+            net.status_loop $@
             return 0
             ;;
     esac
@@ -335,51 +404,45 @@ net.status () {
 
     # check net is enabled
     if [[ $GURU_NET_ENABLED ]] ; then
-            gr.msg -n -v1 -c green "enabled, "
-        else
-            gr.msg -v1 -c black "disabled" -k $GURU_NET_INDICATOR_KEY
-            return 1
-        fi
+        gr.msg -n -v1 -c green "enabled, "
+    else
+        gr.msg -v1 -c black "disabled" -k $GURU_NET_INDICATOR_KEY
+        return 1
+    fi
 
     # other tests with output, return errors
 
     if net.check >/dev/null; then
-            gr.msg  -c aqua "online "
-        else
-            if [[ $GURU_NET_LOG ]] ; then
-                    gr.msg -v1  -c red "offline "
-                    [[ -d $GURU_NET_LOG_FOLDER ]] || mkdir -p "$GURU_NET_LOG_FOLDER"
-                    gr.msg "$(date "+%Y-%m-%d %H:%M:%S") network offline" >>"$GURU_NET_LOG_FOLDER/net.log"
-                fi
-            _return=101
-        fi
+        gr.msg  -c aqua "online "
+    else
+        if [[ $GURU_NET_LOG ]] ; then
+                gr.msg -v1  -c red "offline "
+                [[ -d $GURU_NET_LOG_FOLDER ]] || mkdir -p "$GURU_NET_LOG_FOLDER"
+                gr.msg "$(date "+%Y-%m-%d %H:%M:%S") network offline" >>"$GURU_NET_LOG_FOLDER/net.log"
+            fi
+        _return=101
+    fi
 
     gr.msg -v1 -n -t "net.server "
     if net.check_server >/dev/null; then
-            gr.msg -v1 -n -c green "available, "
-            if ps auxf | grep $GURU_DATA | grep -v grep -q ; then
-                gr.msg -v1 -c aqua "connected "
-            else
-                gr.msg -v1 -c black "not connected "
-            fi
-
+        gr.msg -v1 -n -c green "available, "
+        if ps auxf | grep $GURU_DATA | grep -v grep -q ; then
+            gr.msg -v1 -c aqua "connected "
         else
-            gr.msg -v1 -c orange "unreachable"
-            _return=102
+            gr.msg -v1 -c black "not connected "
         fi
+
+    else
+        gr.msg -v1 -c orange "unreachable"
+        _return=102
+    fi
+
+    # if [[ $GURU_MQTT_ENABLED ]] ; then
+    #       source mqtt.sh
+    #       mqtt.status
+    # fi
+
     return $_return
-}
-
-
-net.status_loop () {
-# do loop test
-    while true ; do
-        if net.status ; then
-            gr.ind available -c green -m "$GURU_ACCESS_DOMAIN accessible" -k $GURU_NET_INDICATOR_KEY
-            return 0
-        fi
-        sleep 10
-    done
 }
 
 
