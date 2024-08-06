@@ -29,7 +29,7 @@ vpn.help () {
     gr.msg -v2
     gr.msg -v1 "commands:" -c white
     gr.msg -v1 "  status               vpn status "
-    gr.msg -v2 "  ls                   list of cities where vpn servers available"
+    gr.msg -v2 "  list                   list of available servers"
     gr.msg -v1 "  open <city|country>  vpn tunnel to default location"
     gr.msg -v1 "  close                close vpn connection"
     gr.msg -v1 "  kill                 force kill open vpn client"
@@ -54,7 +54,7 @@ vpn.main () {
     shift
 
     case $cmd in
-        status|poll|close|install|uninstall|toggle|check|ip|help|kill|change)
+        list|status|poll|close|install|uninstall|toggle|check|ip|help|kill|change)
             vpn.$cmd "$@"
             return $?
             ;;
@@ -102,6 +102,14 @@ vpn.ip () {
         gr.msg -v2 "not connected"
         return 1
     fi
+
+}
+
+
+vpn.list () {
+# list of servers
+        server_list=$(ls /etc/openvpn/tcp | grep "$vpn[provider]" | cut  -f1 -d '.' | sort)
+        gr.msg -c light_blue "$server_list" # "$(sed -z 's/\n/, /g' <<<$server_list)"
 
 }
 
@@ -502,9 +510,11 @@ vpn.change () {
 
         protonvpn|protonmail)
 
+            $GURU_PREFERRED_EDITOR "$GURU_CFG/$GURU_USER/vpn.cfg"
+
             gr.msg -Nh "update account details"
             gr.msg "1) go to https://account.protonvpn.com/account#openvpn"
-            gr.msg "2) edit file '$GURU_CFG/$GURU_USER/vpn.cfg'"
+            gr.msg "2) edit file '$GURU_CFG/$GURU_USER/vpn.cfg' (opened) "
             gr.msg "3) change provider to protonvpn 'vpn[provider]=protonvpn'"
             gr.msg "4) copy username to 'vpn[username]=' and passwod to 'vpn[password]='"
             gr.msg "5) save file"
@@ -529,7 +539,7 @@ vpn.change () {
             read -p "continue by pressing enter: " ans
 
             if [[ -f /etc/openvpn/credentials ]] ; then
-                gr.ask "remove current openvpn credentials file?" && rm /etc/openvpn/credentials
+                gr.ask "remove current openvpn credentials file?" && sudo rm /etc/openvpn/credentials
             fi
 
             if gr.ask "update newly updated credentials to openvpn config (optional) "; then
@@ -545,6 +555,8 @@ vpn.change () {
             ;;
 
         namecheap|fastvpn)
+
+            $GURU_PREFERRED_EDITOR "$GURU_CFG/$GURU_USER/vpn.cfg"
 
             gr.msg -Nh "update account details"
             gr.msg "1) go to https://account.fastvpn.com/login/ and log in and "
