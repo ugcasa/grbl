@@ -76,212 +76,6 @@ declare -ga corsair_keytable=(\
     #thumb wheel logo mouse
 
 
-corsair.blink_all () {
-
-    for key in ${corsair_keytable[@]} ; do
-            # corsair.set $key $color
-            corsair.indicate panic $key
-        done
-
-    sleep 3
-
-    for key in ${corsair_keytable[@]} ; do
-            # corsair.set $key $color
-            gr.end $key
-        done
-
-    sleep 3
-    corsair.init olive
-}
-
-
-corsair.get_key_id () {
-# printout key id number
-    local find_list=($@)
-    local got_value=
-
-    #echo "${find_list[@]}" >>/home/casa/temp.log
-    for to_find in ${find_list[@]} ; do
-        for (( i=0 ; i < ${#corsair_keytable[@]} ; i++ )) ; do
-            # echo "$i:$got_value" >>/home/casa/temp.log
-            if [[ ${corsair_keytable[$i]} == $to_find ]] ; then
-                    got_value=$i
-                    printf "%03d" $got_value
-                    break
-                fi
-            done
-        done
-
-    [[ $got_value ]] && return 0 || return 1
-}
-
-
-
-corsair.get_pipefile () {
-# printout pipe file for given key
-    [[ $1 ]] || return 124
-
-    local id=$(corsair.get_key_id $1)
-
-    if (( $? > 0 )) ; then
-            gr.msg -c yellow "key not found"
-            return 1
-        fi
-
-    local pipefile="/tmp/ckbpipe$id"
-
-    # gr.msg -c deep_pink $pipefile
-    if file $pipefile | grep fifo >/dev/null; then
-            echo $pipefile
-            return 0
-        else
-            gr.msg -c yellow "pipefile not exist"
-            corsair.blink_stop $1
-            return 2
-        fi
-}
-
-
-corsair.help () {
-# general help
-    gr.msg -v1 "guru-client corsair keyboard indicator help" -c white
-    gr.msg -v2
-    gr.msg -v0 "usage:           $GURU_CALL corsair start|init|reset|end|status|help|set|blink <key/profile> <color>"
-    gr.msg -v1 "setup:           install|compile|patch|remove"
-    gr.msg -v2 "without systemd: raw start|raw status|raw stop "
-    gr.msg -v2
-    gr.msg -v1 "commands: " -c white
-    gr.msg -v1 "  status                            printout status "
-    gr.msg -v1 "  start                             start ckb-next-daemon "
-    gr.msg -v1 "  stop                              stop ckb-next-daemon"
-    gr.msg -v1 "  init                              initialize keyboard mode" -V2
-    gr.msg -v2 "  init <mode>                       initialize keyboard mode listed below:  "
-    gr.msg -v2 "                                    olive, blue, eq, trippy, rainbow"
-    gr.msg -v1 "  set <key> <color>                 write key color <color> to keyboard key <key> "
-    gr.msg -v1 "  reset <key>                       reset one key or if empty, all pipes "
-    gr.msg -v1 "  blink set|stop|kill <key>         control blinking keys" -V2
-    gr.msg -v2 "  blink set|stop|kill <key>         control blinking keys. to set key following:"
-    gr.msg -v2 "    set <key color1 color2 speed delay leave_color>  "
-    gr.msg -v2 "    stop <key>                      release one key from blink loop"
-    gr.msg -v2 "    kill <key>                      kill all or just one key blink"
-    gr.msg -v1 "  indicate <state> <key>            set varies blinks to indicate states." -V2
-    gr.msg -v2 "  indicate <state> <key>            set varies blinks to indicate states. states below:"
-    gr.msg -v2 "    done, active, pause, cancel, error, warning, alert, calm"
-    gr.msg -v2 "    panic, passed, ok, failed, message, call, customer, hacker"
-    gr.msg -v1 "  type <strig>                      blink string characters by keylights "
-    gr.msg -v1 "  end                               end playing with keyboard, reset all keys "
-    gr.msg -v1 "  key-id                            printout key indication codes"
-    gr.msg -v1 "  keytable                          printout key table, with id's increase verbose -v2"
-    gr.msg -v2
-    gr.msg -v1 "installation and setup" -c white
-    gr.msg -v2 "  patch <device>                    edit source devices: K68, IRONCLAW"
-    gr.msg -v2 "  compile                           only compile, do not clone or patch"
-    gr.msg -v1 "  install                           install requirements "
-    gr.msg -v1 "  remove                            remove corsair driver "
-    gr.msg -v2 "  set-suspend                       active suspend control to avoid suspend issues"
-    gr.msg -v1
-    gr.msg -v1 "For more detailed help, increase verbose with option '-v2'" -V2
-    gr.msg -v1 -V2
-    gr.msg -v2 "WARNING: This module can prevent system to go suspend and stop keyboard for responding" -c white
-    gr.msg -v2 "If this happens please be patient, control will be returned:"
-    gr.msg -v2 "  - wait until login window reactivate, it should take less than 2 minutes "
-    gr.msg -v2 "  - log back in and remove file '/lib/systemd/system-sleep/guru-client-suspend.sh'"
-    gr.msg -v2 "System suspending should work normally. You may try to install suspend scripts again "
-    gr.msg -v2
-    gr.msg -v2 "setting up daemon and suspend manually: " -c white
-    gr.msg -v2 "  $GURU_CALL corsair help profile       show how configure profile"
-    gr.msg -v2 "  $GURU_CALL corsair enable             enable corsair background service"
-    gr.msg -v2 "  $GURU_CALL system suspend install     set up guru-client suspend scripts"
-    gr.msg -v2
-    gr.msg -v1 "examples:" -c white
-    gr.msg -v1 "  $GURU_CALL corsair help -v2            get more detailed help by adding verbosity flag"
-    gr.msg -v1 "  $GURU_CALL corsair status              printout status report "
-    gr.msg -v1 "  $GURU_CALL corsair init trippy         initialize trippy color profile"
-    gr.msg -v1 "  $GURU_CALL corsair indicate panic esc  to blink red and white"
-    gr.msg -v2 "  $GURU_CALL corsair blink set f1 red blue 1 10 green"
-    gr.msg -v2 "                                         set f1 to blink red and blue second interval "
-    gr.msg -v2 "                                         for 10 seconds and leave green when exit"
-}
-
-
-corsair.key-id () {
-# printout key number for key pipe file '/tmp/ckbpipeNNN'
-
-    local to_find=$1
-    # if individual key is asked, print it out and exit
-
-    # if no user input printout all
-    if ! [[ $to_find ]] ; then
-
-        for (( i = 0; i < ${#corsair_keytable[@]}; i++ )); do
-            gr.msg -n -c white "${corsair_keytable[$i]}"
-            gr.msg -n -c gray ":$(printf "%03d" $i) "
-        done
-
-        gr.msg
-    fi
-
-    # otherwise go trough key table to find requested word
-    for (( i = 0; i < ${#corsair_keytable[@]}; i++ )); do
-
-        if [[ "${corsair_keytable[$i]}" == "$to_find" ]] ; then
-
-            # print out findings if verbose less than 1
-            gr.msg -V2 -v1 "${corsair_keytable[$i]}:" -n
-            gr.msg -V2 "$(printf "%03d" $i)"
-
-            # print out with colors if verbose more than 1
-            if [[ $GURU_VERBOSE -gt 1 ]] ; then
-                gr.msg -c white -v$GURU_VERBOSE "${corsair_keytable[$i]}" -n
-                gr.msg -c grey -v2 ":$(printf "%03d" $i)"
-            fi
-            return 0
-        fi
-
-    done
-
-    gr.msg -c yellow "no '$1' found in key table"
-    return 1
-}
-
-
-corsair.keytable () {
-# printout key table with numbers when verbose is increased
-    case $1 in number|numbers) GURU_VERBOSE=2 ;; esac
-    gr.msg -v1
-    gr.msg -v1 "keyboard indicator pipe file id's"
-    gr.msg -v1
-    gr.msg -v0 -c white "                                                  brtightness  sleep"
-    gr.msg -v2 -c dark  "                                                     109        110 "
-    gr.msg -v0 -c white "esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12        print  scroll  pause      stop prev play next"
-    gr.msg -v2 -c dark  " 0   1  2  3  4  5  6  7  8  9  10  11  12         13      14      15        16   17   18   19"
-    gr.msg -v3
-    gr.msg -v0 -c white "half 1 2 3 4 5 6 7 8 9 0  plus query backscape    insert  home   pageup     numlc div  mul  sub"
-    gr.msg -v2 -c dark  " 20  1 2 3 4 5 6 7 8 9 30  31  32      33          34      35      36        37   38   39   40"
-    gr.msg -v3
-    gr.msg -v0 -c white "tab q w e r t y u i o p  å tilde enter             del   end  pagedown      np7   np8  np9  add"
-    gr.msg -v2 -c dark  " 41 2 3 4 5 6 7 8 9 50 1 2  53    54               55      56      57        58   59   60   61"
-    gr.msg -v3
-    gr.msg -v0 -c white "caps a s d f g h j k  l ö ä asterix                                         np4   np5  np6"
-    gr.msg -v2 -c dark  " 62  3 4 5 6 7 8 9 70 1 2 3    74                                            75   76   77"
-    gr.msg -v3
-    gr.msg -v0 -c white "shiftl less z x  c v b n m comma perioid minus shiftr     up                np1   np2  np3 count"
-    gr.msg -v2 -c dark  "  78    79 80 1  2 3 4 5 6   87     88     89    90       91                92    93   94   95"
-    gr.msg -v3
-    gr.msg -v0 -c white "lctrl func alt space altgr fn set rctrl           left   down  right        np0   decimal "
-    gr.msg -v2 -c dark  "  96   97   98   99  100  101 102  103            104    105    106         107     108"
-    gr.msg -v1
-    gr.msg -v2 "mouse indicator pipe file id's TBD Not implemented!"
-    gr.msg -v3
-    gr.msg -v3 -c white "thumb  wheel logo "
-    gr.msg -v3 -c dark  " 201    202   200 "
-    gr.msg -v1
-    gr.msg -v2 " use thee digits to indicate id in file name example: 'F12' pipe is '/tmp/ckbpipe012'"
-    gr.msg -v3
-    gr.msg -v3 "corsair_key_table list: "
-    gr.msg -v3 "$(corsair.key-id)}"
-    return 0
-}
 
 
 corsair.main () {
@@ -362,30 +156,249 @@ corsair.help-profile () {
     gr.msg -c white "set ckb-next profile manually"
     gr.msg -v1 -n "1) open ckb-next and click profile bar and select "
     gr.msg -v1 -c white "Manage profiles "
-    gr.msg -v1 -n "2) then click " ; gr.msg -v1 -n -c white "Import "
-    gr.msg -v1 -n "and navigate to " ; gr.msg -v1 -n -c white "$GURU_CFG "
-    gr.msg -v1 -n "select " ; gr.msg -v1 -c white "corsair-profile.ckb "
-    gr.msg -v1 -n "3) then click " ; gr.msg -v1 -n -c white "open "
+    gr.msg -v1 -n "2) then click "
+    gr.msg -v1 -n -c white "Import "
+    gr.msg -v1 -n "and navigate to "
+    gr.msg -v1 -n -c white "$GURU_CFG "
+    gr.msg -v1 -n "select "
+    gr.msg -v1 -c white "corsair-profile.ckb "
+    gr.msg -v1 -n "3) then click "
+    gr.msg -v1 -n -c white "open "
     gr.msg -v1 "and close ckb-next"
 }
 
 
-corsair.enabled () {
-# check is corsair enables in user.cfg
+corsair.help () {
+# general help
+    gr.msg -v1 "guru-client corsair keyboard indicator help" -c white
+    gr.msg -v2
+    gr.msg -v0 "usage:           $GURU_CALL corsair start|init|reset|end|status|help|set|blink <key/profile> <color>"
+    gr.msg -v1 "setup:           install|compile|patch|remove"
+    gr.msg -v2 "without systemd: raw start|raw status|raw stop "
+    gr.msg -v2
+    gr.msg -v1 "commands: " -c white
+    gr.msg -v1 "  status                            printout status "
+    gr.msg -v1 "  start                             start ckb-next-daemon "
+    gr.msg -v1 "  stop                              stop ckb-next-daemon"
+    gr.msg -v1 "  init                              initialize keyboard mode" -V2
+    gr.msg -v2 "  init <mode>                       initialize keyboard mode listed below:  "
+    gr.msg -v2 "                                    olive, blue, eq, trippy, rainbow"
+    gr.msg -v1 "  set <key> <color>                 write key color <color> to keyboard key <key> "
+    gr.msg -v1 "  reset <key>                       reset one key or if empty, all pipes "
+    gr.msg -v1 "  blink set|stop|kill <key>         control blinking keys" -V2
+    gr.msg -v2 "  blink set|stop|kill <key>         control blinking keys. to set key following:"
+    gr.msg -v2 "    set <key color1 color2 speed delay leave_color>  "
+    gr.msg -v2 "    stop <key>                      release one key from blink loop"
+    gr.msg -v2 "    kill <key>                      kill all or just one key blink"
+    gr.msg -v1 "  indicate <state> <key>            set varies blinks to indicate states." -V2
+    gr.msg -v2 "  indicate <state> <key>            set varies blinks to indicate states. states below:"
+    gr.msg -v2 "    done, active, pause, cancel, error, warning, alert, calm"
+    gr.msg -v2 "    panic, passed, ok, failed, message, call, customer, hacker"
+    gr.msg -v1 "  type <strig>                      blink string characters by keylights "
+    gr.msg -v1 "  end                               end playing with keyboard, reset all keys "
+    gr.msg -v1 "  key-id                            printout key indication codes"
+    gr.msg -v1 "  keytable                          printout key table, with id's increase verbose -v2"
+    gr.msg -v2
+    gr.msg -v1 "installation and setup" -c white
+    gr.msg -v2 "  patch <device>                    edit source devices: K68, IRONCLAW"
+    gr.msg -v2 "  compile                           only compile, do not clone or patch"
+    gr.msg -v1 "  install                           install requirements "
+    gr.msg -v1 "  remove                            remove corsair driver "
+    gr.msg -v2 "  set-suspend                       active suspend control to avoid suspend issues"
+    gr.msg -v1
+    gr.msg -v1 "For more detailed help, increase verbose with option '-v2'" -V2
+    gr.msg -v1 -V2
+    gr.msg -v2 "WARNING: This module can prevent system to go suspend and stop keyboard for responding" -c white
+    gr.msg -v2 "If this happens please be patient, control will be returned:"
+    gr.msg -v2 "  - wait until login window reactivate, it should take less than 2 minutes "
+    gr.msg -v2 "  - log back in and remove file '/lib/systemd/system-sleep/guru-client-suspend.sh'"
+    gr.msg -v2 "System suspending should work normally. You may try to install suspend scripts again "
+    gr.msg -v2
+    gr.msg -v2 "setting up daemon and suspend manually: " -c white
+    gr.msg -v2 "  $GURU_CALL corsair help profile       show how configure profile"
+    gr.msg -v2 "  $GURU_CALL corsair enable             enable corsair background service"
+    gr.msg -v2 "  $GURU_CALL system suspend install     set up guru-client suspend scripts"
+    gr.msg -v2
+    gr.msg -v1 "examples:" -c white
+    gr.msg -v1 "  $GURU_CALL corsair help -v2            get more detailed help by adding verbosity flag"
+    gr.msg -v1 "  $GURU_CALL corsair status              printout status report "
+    gr.msg -v1 "  $GURU_CALL corsair init trippy         initialize trippy color profile"
+    gr.msg -v1 "  $GURU_CALL corsair indicate panic esc  to blink red and white"
+    gr.msg -v2 "  $GURU_CALL corsair blink set f1 red blue 1 10 green"
+    gr.msg -v2 "                                         set f1 to blink red and blue second interval "
+    gr.msg -v2 "                                         for 10 seconds and leave green when exit"
+}
 
-    gr.msg -n -v2 "checking corsair is enabled.. "
-        if [[ $GURU_CORSAIR_ENABLED ]] ; then
-                gr.msg -v2 -c green "enabled"
-            else
-                gr.msg -v2 -c dark_grey "disabled"
-                gr.msg -v1 -V2 -c dark_grey "corsair disabled"
-                return 1
+
+corsair.keytable () {
+# printout key table with numbers when verbose is increased
+    case $1 in number|numbers) GURU_VERBOSE=2 ;; esac
+    gr.msg -v1
+    gr.msg -v1 "keyboard indicator pipe file id's"
+    gr.msg -v1
+    gr.msg -v0 -c white "                                                  brtightness  sleep"
+    gr.msg -v2 -c dark  "                                                     109        110 "
+    gr.msg -v0 -c white "esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12        print  scroll  pause      stop prev play next"
+    gr.msg -v2 -c dark  " 0   1  2  3  4  5  6  7  8  9  10  11  12         13      14      15        16   17   18   19"
+    gr.msg -v3
+    gr.msg -v0 -c white "half 1 2 3 4 5 6 7 8 9 0  plus query backscape    insert  home   pageup     numlc div  mul  sub"
+    gr.msg -v2 -c dark  " 20  1 2 3 4 5 6 7 8 9 30  31  32      33          34      35      36        37   38   39   40"
+    gr.msg -v3
+    gr.msg -v0 -c white "tab q w e r t y u i o p  å tilde enter             del   end  pagedown      np7   np8  np9  add"
+    gr.msg -v2 -c dark  " 41 2 3 4 5 6 7 8 9 50 1 2  53    54               55      56      57        58   59   60   61"
+    gr.msg -v3
+    gr.msg -v0 -c white "caps a s d f g h j k  l ö ä asterix                                         np4   np5  np6"
+    gr.msg -v2 -c dark  " 62  3 4 5 6 7 8 9 70 1 2 3    74                                            75   76   77"
+    gr.msg -v3
+    gr.msg -v0 -c white "shiftl less z x  c v b n m comma perioid minus shiftr     up                np1   np2  np3 count"
+    gr.msg -v2 -c dark  "  78    79 80 1  2 3 4 5 6   87     88     89    90       91                92    93   94   95"
+    gr.msg -v3
+    gr.msg -v0 -c white "lctrl func alt space altgr fn set rctrl           left   down  right        np0   decimal "
+    gr.msg -v2 -c dark  "  96   97   98   99  100  101 102  103            104    105    106         107     108"
+    gr.msg -v1
+    gr.msg -v2 "mouse indicator pipe file id's TBD Not implemented!"
+    gr.msg -v3
+    gr.msg -v3 -c white "thumb  wheel logo "
+    gr.msg -v3 -c dark  " 201    202   200 "
+    gr.msg -v1
+    gr.msg -v2 " use thee digits to indicate id in file name example: 'F12' pipe is '/tmp/ckbpipe012'"
+    gr.msg -v3
+    gr.msg -v3 "corsair_key_table list: "
+    gr.msg -v3 "$(corsair.key-id)}"
+    return 0
+}
+
+
+corsair.blink_all () {
+
+    for key in ${corsair_keytable[@]} ; do
+            # corsair.set $key $color
+            corsair.indicate panic $key
+        done
+
+    sleep 3
+
+    for key in ${corsair_keytable[@]} ; do
+            # corsair.set $key $color
+            gr.end $key
+        done
+
+    sleep 3
+    corsair.init olive
+}
+
+
+corsair.get_key_id () {
+# printout key id number
+    local find_list=($@)
+    local got_value=
+
+    #echo "${find_list[@]}" >>/home/casa/temp.log
+    for to_find in ${find_list[@]} ; do
+        for (( i=0 ; i < ${#corsair_keytable[@]} ; i++ )) ; do
+            # echo "$i:$got_value" >>/home/casa/temp.log
+            if [[ ${corsair_keytable[$i]} == $to_find ]] ; then
+                    got_value=$i
+                    printf "%03d" $got_value
+                    break
+                fi
+            done
+        done
+
+    [[ $got_value ]] && return 0 || return 1
+}
+
+
+
+corsair.get_pipefile () {
+# printout pipe file for given key
+    [[ $1 ]] || return 124
+
+    local id=$(corsair.get_key_id $1)
+
+    if (( $? > 0 )) ; then
+            gr.msg -c yellow "key not found"
+            return 1
+        fi
+
+    local pipefile="/tmp/ckbpipe$id"
+
+    # gr.msg -c deep_pink $pipefile
+    if file $pipefile | grep fifo >/dev/null; then
+            echo $pipefile
+            return 0
+        else
+            gr.msg -c yellow "pipefile not exist"
+            corsair.blink_stop $1
+            return 2
+        fi
+}
+
+
+corsair.key-id () {
+# printout key number for key pipe file '/tmp/ckbpipeNNN'
+
+    local to_find=$1
+    # if individual key is asked, print it out and exit
+
+    # if no user input printout all
+    if ! [[ $to_find ]] ; then
+
+        for (( i = 0; i < ${#corsair_keytable[@]}; i++ )); do
+            gr.msg -n -c white "${corsair_keytable[$i]}"
+            gr.msg -n -c gray ":$(printf "%03d" $i) "
+        done
+
+        gr.msg
+    fi
+
+    # otherwise go trough key table to find requested word
+    for (( i = 0; i < ${#corsair_keytable[@]}; i++ )); do
+
+        if [[ "${corsair_keytable[$i]}" == "$to_find" ]] ; then
+
+            # print out findings if verbose less than 1
+            gr.msg -V2 -v1 "${corsair_keytable[$i]}:" -n
+            gr.msg -V2 "$(printf "%03d" $i)"
+
+            # print out with colors if verbose more than 1
+            if [[ $GURU_VERBOSE -gt 1 ]] ; then
+                gr.msg -c white -v$GURU_VERBOSE "${corsair_keytable[$i]}" -n
+                gr.msg -c grey -v2 ":$(printf "%03d" $i)"
             fi
+            return 0
+        fi
+
+    done
+
+    gr.msg -c yellow "no '$1' found in key table"
+    return 1
+}
+
+
+corsair.enabled () {
+# check is corsair enabled in current user config
+# remove?: none of functions using this exept user call?
+# nothing should go broken, calling from main is not even listed
+# some other moduĺe might still use this ahter soursing this file
+
+    # gr.msg -n -v2 "checking corsair is enabled.. "
+    #     if [[ $GURU_CORSAIR_ENABLED ]] ; then
+    #             gr.msg -v1 -c green "enabled"
+    #         else
+    #             gr.msg -v1 -c dark_grey "disabled"
+    #             # remove?: why make difference, some bubble cum?
+    #             # gr.msg -v1 -V2 -c dark_grey "corsair disabled"
+    #             return 1
+    #         fi
+
+gr.debug  "function disabled, if see this during debug run, inform casa "
+
 }
 
 
 corsair.check () {
-# Check keyboard driver is available, app and pipes are started and executes if needed
+# Check keyboard driver is available, app and pipes are started and launch those if needed
 
     gr.msg -n -v2 "checking corsair is enabled.. "
     if [[ $GURU_CORSAIR_ENABLED ]] ; then
@@ -443,6 +456,7 @@ corsair.check () {
 
     gr.debug "corsair mode: $corsair_mode"
     gr.debug "status modes: ${status_modes[@]}"
+
     case ${status_modes[@]} in
 
         *"$corsair_mode"*)
@@ -502,9 +516,11 @@ corsair.set () {
             return 1
         fi
 
+    # get user input
     local _key=$1
     local _color='rgb_'"$2"
-    local _bright="FF" ; [[ $3 ]] && _bright="$3"
+    local _bright="FF"
+    [[ $3 ]] && _bright="$3"
 
     # get input key pipe file location
     local key_pipefile=$(corsair.get_pipefile $_key || return 100)
@@ -512,7 +528,7 @@ corsair.set () {
     # get input color code
     _color=$(eval echo '$'$_color)
     if ! [[ $_color ]] ; then
-            gr.msg -v3 -c yellow "no such color '$_color'"
+            gr.msg -v3 -c yellow "please input color '$_color'"
             return 102
         fi
 
@@ -534,9 +550,15 @@ corsair.set () {
 corsair.pipe () {
 # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
 
-    local _button=$1 ; shift
-    local _color=$1 ; shift
-    local _bright="FF" ; [[ $1 ]] && _bright="$1" ; shift
+    local _button=$1
+    shift
+
+    local _color=$1
+    shift
+
+    local _bright="FF"
+    [[ $1 ]] && _bright="$1"
+
     echo "rgb $_color$_bright" > "$_button"
     return 0
 }
@@ -546,13 +568,14 @@ corsair.reset () {
 # application level function, not restarting daemon or application, return normal, if no input reset all
 
     if [[ "$1" ]] ; then
-            corsair.set $1 $corsair_mode 10 && return 0 || return 100
+            corsair.set $1 $corsair_mode 10 || return 100
         else
             for _key_pipe in $key_pipe_list ; do
-                corsair.pipe $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10 || return 100
+                corsair.pipe $_key_pipe $(eval echo '$'rgb_$corsair_mode) 10 || return 101
             done
-            return 0
         fi
+
+    return 0
 }
 
 
@@ -569,15 +592,19 @@ corsair.clear () {
 
 corsair.end () {
 # reserve some keys for future purposes by coloring them now
+# wtf above means? Anyway, this is not endig shit, just chanching profile twice.
+# what is the point? commenting out extra showcase 20240602
+    #corsair.init ftb
+    #sleep 1
 
-    corsair.init ftb
-    sleep 1
-    corsair.init $GURU_CORSAIR_MODE && return 0 || return 100
+    corsair.init $GURU_CORSAIR_MODE
+    return $?
 }
 
 
 corsair.check_pipe () {
-# check that piping is activated. input timeout in seconds
+# check that piping is activated.
+# timeout can be set by first paramater
 
     declare -i timeout=10
     let timeout=$1 loops=timeout*2
@@ -593,7 +620,8 @@ corsair.check_pipe () {
 
 
 corsair.indicate () {
-# indicate state to given key. input: mode_name key_name
+# indicate state to given key.
+# input mode_name and key_name
 
     # corsair.check is too slow to go trough here
     if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
@@ -601,18 +629,19 @@ corsair.indicate () {
             return 1
         fi
 
-    # default settings
-    local level="warning"
+    # default values
+    local concern="warning"
     local key="esc"
     local color="aqua_marine"
     local blink="white black 0.2 1"
 
-    [[ $1 ]] && level=$1 ; shift
+    # user input
+    [[ $1 ]] && concern=$1 ; shift
     [[ $1 ]] && key=$1 ; shift
     [[ $GURU_PROJECT_COLOR ]] && color=$GURU_PROJECT_COLOR
 
-    case $level in
-    # color1 color2 interval timeout leave-color
+    case $concern in
+        # positions: fg color bg_color blink_interval timeout leave_color
         ok)             blink="green slime 0.5 3 green" ;;
         available)      blink="green aqua_marine 0.2 1 green" ;;
         yes)            blink="green black 0.75 10 " ;;
@@ -679,7 +708,8 @@ corsair.blink_set () {
     time_out=$(date +%s)
     time_out=$(( time_out + timeout ))
 
-    while true ; do
+    # https://stackoverflow.com/questions/11097761/is-there-a-way-to-make-bash-job-control-quiet
+    (while true ; do
 
             time_now=$(date +%s)
 
@@ -690,13 +720,13 @@ corsair.blink_set () {
                 break
             else
                 corsair.set $key $base_c
-                [[ $delay ]] && sleep $delay
+                [[ $delay ]] && (sleep $delay)
                 corsair.set $key $high_c
-                [[ $delay ]] && sleep $delay
+                [[ $delay ]] && (sleep $delay)
             fi
 
 
-        done & 2>/dev/null
+        done & )
     pid=$!
     echo "$pid;$key" >>/tmp/blink_pid
     return 0
@@ -801,6 +831,7 @@ corsair.blink_test () {
     flag.rm pause
     return 0
 }
+
 
 corsair.type_end () {
 # end current type process
@@ -962,11 +993,11 @@ corsair.systemd_start () {
 corsair.systemd_restart () {
 # systemd method restart function
 
-    gr.msg -v1 "restarting corsair service.. "
+    gr.msg -h "restarting corsair service.. "
     systemctl --user restart corsair.service
 
     if [[ $GURU_FORCE ]] ; then
-            gr.msg -v1 "restarting daemon service.. "
+            gr.msg -h "restarting daemon service.. "
             sudo systemctl restart ckb-next-daemon
         fi
 }
@@ -975,11 +1006,11 @@ corsair.systemd_restart () {
 corsair.systemd_stop () {
 # systemd method stop service function
 
-    gr.msg -v1 "stopping corsair service.. "
+    gr.msg -h "stopping corsair service.. "
     systemctl --user stop corsair.service || gr.msg -c yellow "stop failed"
 
     if [[ $GURU_FORCE ]] ; then
-            gr.msg -v1 "stopping corsair daemon service.. "
+            gr.msg -h "stopping corsair daemon service.. "
             sudo systemctl stop ckb-next-daemon
         fi
 }
@@ -1026,7 +1057,7 @@ corsair.make_app_service () {
 
     if ! [[ -d  ${corsair_service%/*} ]] ; then
         mkdir -p ${corsair_service%/*} \
-            || gr.msg -c yellow "no permission to create folder ${corsair_service%/*}"
+            || gr.msg -e1 "no permission to create folder ${corsair_service%/*}"
     fi
 
 
