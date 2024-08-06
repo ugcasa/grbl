@@ -6,25 +6,25 @@ declare -xg daemon_pid_file="/tmp/guru.daemon-pid"
 declare -axg GURU_DAEMON_PID=
 declare -xg daemon_arguments=
 
-# source $GURU_BIN/system.sh
 source $GURU_BIN/flag.sh
 
 daemon.main () {
 # daemon main command parser
 
-    daemon.process_opts $@
-    gr.debug "$FUNCNAME: $daemon_arguments"
-    case ${daemon_arguments[0]} in
-            start|stop|status|help|kill|poll|pid)
-                daemon.${daemon_arguments[0]}
+    local command=$1
+    shift
+
+    case $command in
+            start|stop|status|help|kill|poll|ps|caps|pause|fast|end)
+                daemon.$command $@
                 return $?
                 ;;
             install|remove)
-                daemon.systemd ${daemon_arguments[0]}
+                daemon.systemd $@
                 return $?
                 ;;
 
-            *)  gr.msg "unknown daemon command"   ; return 1  ;;
+            *)  gr.msg -e1 "unknown daemon command"  ; return 1  ;;
         esac
     return 0
 }
@@ -35,15 +35,19 @@ daemon.help () {
 
     gr.msg -v1 -c white "guru daemon help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL daemon [start|stop|status|kill|poll]"
+    gr.msg -v0 "usage:    $GURU_CALL daemon [start|stop|status|end|kill|poll|pause]"
     gr.msg -v2
     gr.msg -v1 -c white "commands:"
-    gr.msg -v1 " start        start daemon (same as $GURU_CALL start)"
-    gr.msg -v1 " stop         stop daemon (same as $GURU_CALL stSop)"
     gr.msg -v1 " status       printout status"
-    gr.msg -v1 " pid          get daemon pid(s)"
+    gr.msg -v1 " start        start daemon (same as $GURU_CALL start)"
+    gr.msg -v1 " pause        pause and release daemon polling process"
+    gr.msg -v1 " stop         stop daemon (same as $GURU_CALL stSop)"
+    gr.msg -v1 " stop         stop daemon (same as $GURU_CALL stSop)"
     gr.msg -v1 " kill         kill jammed daemon"
+    gr.msg -v1 " pid          get daemon pid(s)"
     gr.msg -v2 " poll         start polling process"
+    gr.msg -v1 " fast         daemon poll interval to minimal (toggle)"
+    gr.msg -v3 " caps         let module handle caps lock presses"
     gr.msg -v2
     gr.msg -v1 -c white "example:"
     gr.msg -v1 "      $GURU_CALL daemon status"
@@ -51,55 +55,86 @@ daemon.help () {
 }
 
 
-daemon.pid () {
-# fetch pid for running daemon preocess(es)
-# this cannot find preocess of sourced and then called daemon.start function
+daemon.ps () {
+# get daemon process list (not solid, more like guessing ;)
+# this function can be used to fill global GURU_DAEMON_PID, use verbose 0
 
+    local color=aqua
+    local verbosity=1
+
+    # get lines from process list and select valuable lines
     local _ifs=$IFS; IFS=$'\n'
-    process_list=($(ps auxf | \
-        grep -v grep | \
-        grep -e "$GURU_BIN/$GURU_CALL start" \
-             -e "$GURU_BIN/$GURU_CALL daemon start" \
-             -e "$GURU_BIN/$GURU_CALL active" \
-             -e "$GURU_BIN/daemon.sh start" | \
-        grep -e "$USER"))
-
+    local process_list=($(ps -ax -o pid,user,args --sort=pid --no-headers | \
+                            grep -v grep | \
+                            grep -e "$GURU_USER" | \
+                            grep -e "sleep" \
+                                 -e "$GURU_BIN/$GURU_CALL start" \
+                                 -e "$GURU_BIN/$GURU_CALL active" \
+                                 -e "$GURU_BIN/daemon.sh" \
+                                 -e "daemon.main" \
+                                 -e "$GURU_BIN/$GURU_CALL daemon" ))
     IFS=$_ifs
 
+    # go through list of lines collected from ps
     GURU_DAEMON_PID=()
-    descriptions=("guru-cli daemon" "corsair animation" "sub process" "sub process")
     for (( i = 0; i < ${#process_list[@]}; i++ )); do
-            GURU_DAEMON_PID=(${GURU_DAEMON_PID[@]} $(echo ${process_list[$i]} | xargs | cut -f2 -d' '))
-            gr.msg -n -c light_blue "${GURU_DAEMON_PID[$i]} "
-            gr.msg "${descriptions[$i]}"
+            GURU_DAEMON_PID+=( $(echo ${process_list[$i]} | xargs | cut -f1 -d" ") )
+
+            # find patterns of different kind of daemon sessions (yes, messy clean later and like it matters)
+            case $(echo ${process_list[$i]} | xargs | cut -f3- -d' ') in
+                *active)
+                    description="active daemon "
+                    # [[ ${GURU_DAEMON_PID[$i]} -lt 10000 ]] && description="$description (initial)"
+                    color=aqua_marine
+                    verbosity=1
+                    ;;
+                *daemon.sh*)
+                    description="direct start"
+                    color=white
+                    verbosity=1
+                    ;;
+                *start)
+                    description="manual start"
+                    color=aqua
+                    verbosity=1
+                    ;;
+                sleep*)
+                    description="sleeper loop"
+                    color=dark_grey
+                    verbosity=1
+                    ;;
+                *daemon*ps*)
+                    description="this process"
+                    color=black
+                    verbosity=2
+                    ;;
+                *)
+                    description="unknown"
+                    color=black
+                    verbosity=2
+            esac
+
+            # printout if verbose level is more than one
+            gr.msg -v $verbosity -h -n "[$i] "
+            gr.msg -v $verbosity -w8 -n -c light_blue "${GURU_DAEMON_PID[$i]} "
+            gr.msg -v $verbosity -w15 -n -c $color "$description "
+            gr.msg -v $verbosity -n -v2 "$(echo ${process_list[$i]} | xargs | cut -f3- -d' ') "
+            gr.msg -v $verbosity
     done
 }
 
 
 daemon.status () {
 # printout status of daemon
-
-    gr.msg -n -v1 "${FUNCNAME[0]}: "
+# this function can be used to fill global GURU_DAEMON_PID, use verbose 0 (conflict with pid function)
 
     if [[ -f "$daemon_pid_file" ]]; then
             local last_pid="$(cat $daemon_pid_file)"
             gr.msg -n -v2 "(prev. PID: $last_pid) "
         fi
 
-    local _ifs=$IFS; IFS=$'\n'
-    process_list=($(ps auxf | grep -v grep | grep -e "$GURU_BIN/guru start" -e "daemon.sh start" | grep -e "$USER"))
-    IFS=$_ifs
-
-    GURU_DAEMON_PID=()
-
-    for (( i = 0; i < ${#process_list[@]}; i++ )); do
-            GURU_DAEMON_PID=(${GURU_DAEMON_PID[@]} $(echo ${process_list[$i]} | xargs | cut -f2 -d' '))
-            gr.msg -n -c light_blue "${GURU_DAEMON_PID[$i]} "
-            #statements
-        done
-
-    # GURU_DAEMON_PID=($(ps auxf | grep -v grep | grep -e "$GURU_BIN/guru start" -e "daemon.sh start" | grep -e "$USER" | xargs | cut -d' ' -f2))
-    #${GURU_DAEMON_PID[1]}
+    # get current list of guru processes
+    daemon.ps >/dev/null
 
     if ! [[ $GURU_DAEMON_PID ]]; then
             gr.msg -v1 -c red "not running" -k $GURU_DAEMON_INDICATOR_KEY
@@ -107,12 +142,12 @@ daemon.status () {
             return 127
         fi
 
-    if [[ ${#GURU_DAEMON_PID[@]} -gt 2 ]]; then
-            gr.msg -v1 -c yellow "multiple daemons detected, get a shotgun.." -k $GURU_DAEMON_INDICATOR_KEY
-            gr.msg -v2 "kill daemons by '$GURU_CALL daemon kill' command and then start new one by '$GURU_CALL start'"
-            # gr.msg -c -v2 light_blue "${GURU_DAEMON_PID[@]} "
-            return 0
-        fi
+    # if [[ ${#GURU_DAEMON_PID[@]} -gt 2 ]]; then
+    #         gr.msg -v1 -c yellow "multiple daemons detected, get a shotgun.." -k $GURU_DAEMON_INDICATOR_KEY
+    #         gr.msg -v2 "kill daemons by '$GURU_CALL daemon kill' command and then start new one by '$GURU_CALL start'"
+    #         # gr.msg -c -v2 light_blue "${GURU_DAEMON_PID[@]} "
+    #         return 0
+    #     fi
 
     if ! [[ $GURU_DAEMON_PID -eq $last_pid ]]; then
             gr.msg -n -v2 -c yellow "previous PID mismatch " -k $GURU_DAEMON_INDICATOR_KEY
@@ -124,10 +159,9 @@ daemon.status () {
                 || gr.msg -n -v2 -c red "failed to update previous PID " -k $GURU_DAEMON_INDICATOR_KEY
         fi
 
-    #export $GURU_DAEMON_PID
+    gr.msg -n -t "$FUNCNAME: "
     gr.msg -v0 -V1 "$GURU_DAEMON_PID"
     gr.msg -v1 -c green "running"
-    gr.ind done $GURU_DAEMON_INDICATOR_KEY
     return 0
 }
 
@@ -229,11 +263,11 @@ daemon.stop () {
         gr.msg -V1 -c yellow "error $?, retry" -k $GURU_DAEMON_INDICATOR_KEY
 
         if kill -9 "$_pid" ; then
-             gr.end $GURU_DAEMON_INDICATOR_KEY
-             gr.msg -V1 -c green "ok" -k $GURU_DAEMON_INDICATOR_KEY
+            gr.end $GURU_DAEMON_INDICATOR_KEY
+            gr.msg -V1 -c green "ok" -k $GURU_DAEMON_INDICATOR_KEY
         else
-             gr.msg -V1 -c red "failed to kill daemon pid: $_pid"
-             gr.ind failed $GURU_DAEMON_INDICATOR_KEY
+            gr.msg -V1 -c red "failed to kill daemon pid: $_pid"
+            gr.ind failed $GURU_DAEMON_INDICATOR_KEY
             return 124
         fi
     else
@@ -245,25 +279,53 @@ daemon.stop () {
 }
 
 
+daemon.pause () {
+# pause daemon polling process
+    source flag.sh
+    flag.toggle pause
+}
+
+
+daemon.fast () {
+# set daemon poll interval to minimal
+    source flag.sh
+    flag.toggle fast
+}
+
+
+daemon.end () {
+# ask daemon to stop polling
+    source flag.sh
+    flag.toggle stop
+}
+
+
 daemon.kill () {
 # force stop daemon
+    daemon.ps
+    local gpid=$1
 
-    if ! daemon.status ; then
-            return 0
-        fi
+    [[ $gpid ]] || read -p "select process: " gpid
+    [[ $gpid ]] || return 0
+    case $gpid in *[!0-9]*) gr.msg -e0 "'$gpid' geh" ; return 1 ; esac
 
-    for (( i = 0; i < ${#GURU_DAEMON_PID[@]}; i++ )); do
-            gr.msg -v1 -n "killing ${GURU_DAEMON_PID[$i]}.. "
-            kill -9 ${GURU_DAEMON_PID[$i]} \
-                && gr.msg -v1 -c green "ok" -k $GURU_DAEMON_INDICATOR_KEY \
-                || gr.msg -v1 -c red "failed" -k $GURU_DAEMON_INDICATOR_KEY
-        done
+    if [[ $gpid -ge ${#GURU_DAEMON_PID[@]} ]] || [[ $gpid -lt 0 ]] ; then
+        gr.msg -e0 "$gpid/$(( ${#GURU_DAEMON_PID[@]} -1 )) geh"
+        return 1
+    fi
 
-    if daemon.status ; then
-            gr.msg -c red "failed to kill daemons" -k $GURU_DAEMON_INDICATOR_KEY
-        else
-            gr.msg -v1 -c green "done" -k $GURU_DAEMON_INDICATOR_KEY
-        fi
+    if ! [[ -d /proc/${GURU_DAEMON_PID[$gpid]} ]]; then
+        gr.msg -v1 "gone already"
+        return 0
+    fi
+
+    if kill -15 ${GURU_DAEMON_PID[$gpid]} ; then
+        gr.msg -c green -v1 "killed"
+        return 0
+    else
+        gr.msg -e1 "failed"
+        return 100
+    fi
 }
 
 
@@ -280,8 +342,18 @@ daemon.day_change () {
 }
 
 
+# # TBD interesting idea, pretty sure this is not in use anywhere, disabled
+# daemon.caps () {
+# # what to do if user presses caps lock when caps channel is connected to module
+#     gr.debug "$FUNCNAME caps channel actived"
+#     gnome-terminal --hide-menubar --geometry 50x10 --zoom 0.7 --hide-menubar --title "mqtt server feed"  -- $GURU_BIN/guru stop
+#     sleep 3
+#     true
+# }
+
+
 daemon.poll () {
-# poller for modules
+# runs module poll function to printout module status
 
     local _seconds=
     source $GURU_RC
@@ -298,10 +370,12 @@ daemon.poll () {
     #source_timestamp=$(stat -c %Y $GURU_BIN/daemon.sh)
 
     gr.end $GURU_DAEMON_INDICATOR_KEY
+    #gr.msg -v2 -c aqua "$module" -k $GURU_DAEMON_INDICATOR_KEY
 
     # DAEMON POLL LOOP
     while true ; do
         gr.msg -N -t -v3 -c aqua "daemon active" -k $GURU_DAEMON_INDICATOR_KEY
+
         flag.set running
 
         # check is system suspended and perform needed actions
@@ -340,7 +414,7 @@ daemon.poll () {
                 return $?
             fi
 
-        gr.ind doing -k $GURU_DAEMON_INDICATOR_KEY
+        #gr.ind doing -k $GURU_DAEMON_INDICATOR_KEY
         # to update configurations is user changes them
         source $GURU_RC
         # unset caps lock.
@@ -353,73 +427,54 @@ daemon.poll () {
 
         # go trough poll list
         for ((daemon_i=1 ; daemon_i <= ${#GURU_DAEMON_POLL_ORDER[@]} ; daemon_i++)) ; do
-                module=${GURU_DAEMON_POLL_ORDER[daemon_i-1]}
-                flag.check pause && break
-                case $module in
-                    null|empty|na|NA|'-')
-                        gr.msg -v3 -c dark_grey "$daemon_i:$module skipping "
-                        ;;
-                    *)
-                        gr.debug "$daemon_i: ${module}.sh function ${module}.status "
+            module=${GURU_DAEMON_POLL_ORDER[daemon_i-1]}
+            flag.check pause && break
 
-                        if [[ -f "$GURU_BIN/$module.sh" ]]; then
-                                source "$GURU_BIN/$module.sh"
-                                $module.main poll status 2>/tmp/daemon.error
-                            else
-                                gr.msg -v1 -c dark_gray "${FUNCNAME[0]}: module '$module' not installed"
-                            fi
-                        ;;
-                    esac
-            done
+            gr.msg -v2 -c aqua_marine "$module" -k $GURU_DAEMON_INDICATOR_KEY
 
-        gr.end $GURU_DAEMON_INDICATOR_KEY
+            case $module in
+                null|empty|na|NA|'-')
+                    gr.msg -v3 -c dark_grey "$daemon_i:$module skipping "
+                    ;;
+                *)
+                    gr.debug "$daemon_i: ${module}.sh function ${module}.status "
+
+                    if [[ -f "$GURU_BIN/$module.sh" ]]; then
+                            source "$GURU_BIN/$module.sh"
+                            $module.main poll status 2>/tmp/daemon.error
+                        else
+                            gr.msg -v1 -c dark_gray "${FUNCNAME[0]}: module '$module' not installed"
+                        fi
+                    ;;
+            esac
+            gr.msg -n -c aqua -k $GURU_DAEMON_INDICATOR_KEY
+        done
+
+        #gr.end $GURU_DAEMON_INDICATOR_KEY
         gr.ind done $GURU_DAEMON_INDICATOR_KEY
+
         touch $daemon_pid_file
         gr.msg -n -v2 "sleep : "
 
         for (( _seconds = 0; _seconds < $GURU_DAEMON_INTERVAL; _seconds++ )) ; do
-                flag.check stop && break
-                flag.check suspend && continue
-                flag.check pause && continue
-                flag.check fast && continue || sleep 1
-                # gr.msg -v2 -n -c reset "."
-                [[ $GURU_VERBOSE -gt 1 ]] && printf '%s %s %s\r' "sleep for" "$(( $GURU_DAEMON_INTERVAL - $_seconds ))" "seconds"
-                daemon.day_change
-            done
+            flag.check stop && break
+            flag.check suspend && continue
+            flag.check pause && continue
+            flag.check fast && continue || sleep 1
+            # gr.msg -v2 -n -c reset "."
+            [[ $GURU_VERBOSE -gt 1 ]] && printf '%s %s %s\r' "sleep for" "$(( $GURU_DAEMON_INTERVAL - $_seconds ))" "seconds"
+            daemon.day_change
+        done
         gr.msg -v2 ""
     done
 
     gr.msg -N -t -v1 "daemon got tired, dropped out and died"
     gr.ind cancel $GURU_DAEMON_INDICATOR_KEY
-    daemo-v1 n.stop
-}
-
-
-daemon.process_opts () {
-# argument parser
-
-    TEMP=`getopt --long -o "vVflu:h:" "$@"`
-    eval set -- "$TEMP"
-    while true ; do
-        case "$1" in
-            -v ) export GURU_VERBOSE=1      ; shift     ;;
-            -V ) export GURU_VERBOSE=2      ; shift     ;;
-            -f ) export GURU_FORCE=true     ; shift     ;;
-            -l ) export GURU_LOGGING=true   ; shift     ;;
-            -u ) export GURU_USER_NAME=$2   ; shift 2   ;;
-            -h ) export GURU_HOSTNAME=$2    ; shift 2   ;;
-
-             * ) break                  ;;
-        esac
-    done;
-    _arg="$@"
-    [[ "$_arg" != "--" ]] && export daemon_arguments="${_arg#* }"
-    gr.debug "$FUNCNAME: $daemon_arguments"
 }
 
 
 daemon.systemd () {
-# systemd method
+# command parser for systemd methods
 
     local cmd=$1 ; shift
     case $cmd in
@@ -436,7 +491,7 @@ daemon.systemd () {
 daemon.systemd_install () {
 # setup systemd service
 
-    temp="/tmp/starter.temp"
+    local temp="/tmp/starter.temp"
     gr.msg -v1 -V2 -n "setting starter script.. "
     gr.msg -v2 -n "setting starter script $daemon_service_script.. "
 
