@@ -45,13 +45,15 @@ backup_rc="$HOME/.bashrc.backup-by-guru"
 # modify this when module is ready to publish.
 # argument -d will overwrite this list and install all present modules
 core_module_access=(net counter install uninstall config mount unmount daemon keyboard prompt system user flag os cheatsheet help)
-modules_to_install=(ai radio say game youtube mqtt conda fingrid note print project scan audio display vpn ssh stamp tag timer tor trans vol yle news program tmux tunnel corsair backup convert telegram cal place android)
+modules_to_install=(ai radio say game youtube mqtt conda fingrid note print project scan audio display vpn ssh stamp tag timer tor trans vol yle news program tmux tunnel corsair backup convert telegram cal place android dokuwiki)
 
 # TBD
 # client_modules=
 # server_modules=(towsdf)
 
 install.main () {
+
+    date
 
     # Step 1) parse arguments
     install.arguments $@ || gr.msg -x 100 "argumentation error"
@@ -138,7 +140,9 @@ install.main () {
         sleep 1
     fi
     # pass
+    gr.end caps
     return 0
+
 }
 
 
@@ -284,6 +288,7 @@ install.check () {
             install.core || gr.msg -x 150 "error during installing core"
             check.core
             install.modules && check.modules || gr.msg -x 170 "error when installing modules"
+            gr.end caps
             exit 0
         fi
 
@@ -579,5 +584,6 @@ install.config () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         install.main $@
         exit "$?"
+        gr.end caps
 fi
 
