@@ -15,7 +15,7 @@ install.main () {
     case $(uname -m) in
         aarch64|arm64) SYSTEM_ARCHITECTURE="arm64" ;;
         amd64|x86_64) SYSTEM_ARCHITECTURE="amd64" ;;
-        *) gr.msg -c red "unknown architecture" -k esc
+        *) gr.msg -c red "unknown architecture" -k caps
     esac
 
     case "$argument" in
