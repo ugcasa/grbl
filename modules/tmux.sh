@@ -1,6 +1,7 @@
 #!/bin/bash
 # tmux controller
 # casa@ujo.guru 2020
+
 # thanks samoshkin! https://github.com/samoshkin/tmux-config
 # [vim + tmux - OMG!Code](https://www.youtube.com/watch?v=5r6yzFEXajQ)
 # [Complete tmux Tutorial](https://www.youtube.com/watch?v=Yl7NFenTgIo)
@@ -9,17 +10,15 @@
 # https://gist.github.com/sdondley/b01cc5bb1169c8c83401e438a652b84e
 # https://gist.github.com/Muzietto/325344c2b1b3b723985a85800cafef4f
 
-source $GURU_BIN/common.sh
+#source $GURU_BIN/common.sh
 tmux_indicator_key="f$(gr.poll tmux)"
 
 
 tmux.help () {
-    # general help
-
-    gr.msg -v1 -c white "guru-client tmux help "
+# general help
+    gr.msg -v1 -h "guru-client tmux help "
     gr.msg -v2
-    gr.msg -V2 -v0 "usage:    $GURU_CALL tmux ls|attach|config "
-    gr.msg -v2     "usage:    $GURU_CALL tmux ls|attach|config|help|status|start|end|install|remove "
+    gr.msg -v0 "usage:    $GURU_CALL tmux ls|attach|config|status|start|end|install|remove|help "
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " ls                       list on running sessions "
@@ -29,18 +28,19 @@ tmux.help () {
     gr.msg -v1 " config undo              undo last config changes "
     gr.msg -v1 " status                   show status of default tmux server "
     gr.msg -v1 " install                  install client requirements "
-    gr.msg -v1 " remove                   remove installed requirements "
-    gr.msg -v3 " poll start|end           start or end module status polling "
-    gr.msg -v2 " help                     printout this help "
+    gr.msg -v2 " remove                   remove installed requirements "
+    gr.msg -v2 " poll start|end           start or end module status polling "
+    gr.msg -v1 " help                     printout this help use -v2 to more"
     gr.msg -v2
     gr.msg -v1 -c white "examples: "
-    gr.msg -v1 "         $GURU_CALL tmux config "
+    gr.msg -v1 " $GURU_CALL tmux config "
+    gr.msg -v1 " $GURU_CALL attach 0 "
     gr.msg -v2
 }
 
 
 tmux.main () {
-    # tmux main command parser
+# tmux main command parser
 
     local _cmd="$1" ; shift
 
@@ -57,15 +57,14 @@ tmux.main () {
 
 
 tmux.ls () {
-    # list of sessions
-
-    tmux ls | cut -d ':'
+# list of tmux sessions, returns 1 if no sessions
+    tmux ls | cut -d ':' 2>/dev/null
     return $?
 }
 
 
 tmux.config () {
-    # tmux configuration manager
+# tmux configuration manager
 
     local editor='dialog'
     [[ $1 ]] && editor='$1'
@@ -98,9 +97,8 @@ tmux.config () {
 }
 
 
-
 tmux.config_dialog () {
-    # open dialog to make changes to tmux config file
+# open dialog to make changes to tmux config file
 
     # gr.msg -v3 "checking dialog installation.."
     dialog --version >>/dev/null || sudo apt install dialog
@@ -134,7 +132,7 @@ tmux.config_dialog () {
 
 
 tmux.config_undo () {
-    # return previous config
+# return previous config
 
     if [[ $1 ]] ; then
             local config_file="$1"
@@ -155,7 +153,7 @@ tmux.config_undo () {
 
 
 tmux.open () {
-    # open tmux session
+# open tmux session
 
     local session="0"
     [[ $1 ]] && session="$1"
@@ -165,7 +163,7 @@ tmux.open () {
 
 
 tmux.status () {
-    # check tmux broker is reachable. printout and signal by corsair keyboard indicator led - if available
+# check tmux broker is reachable. printout and signal by corsair keyboard indicator led - if available
 
     #tmux_indicator_key="f$(gr.poll tmux)"
 
@@ -196,7 +194,7 @@ tmux.status () {
 
 
 tmux.attach () {
-    # attach to tmux session if exist
+# attach to tmux session if exist
 
     local session="0"
     [[ $1 ]] && session="$1"
@@ -223,7 +221,7 @@ tmux.attach () {
 
 
 tmux.poll () {
-    # daemon required polling functions
+# daemon required polling functions
 
     local _cmd="$1" ; shift
     local tmux_indicator_key="f$(gr.poll tmux)"
@@ -249,7 +247,7 @@ tmux.poll () {
 
 
 tmux.install () {
-    # install tmux
+# install tmux
 
     sudo apt update
     sudo apt install tmux \
@@ -261,7 +259,7 @@ tmux.install () {
 
 
 tmux.remove () {
-    # remove tmux
+# remove tmux
 
     sudo apt remove tmux && return 0
     return 1
