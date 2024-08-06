@@ -43,12 +43,6 @@ backup () {
 }
 
 
-radio () {
-	[[ -f /tmp/audio.playlist ]] && rm /tmp/audio.guru-client
-	guru audio toggle
-}
-
-
 play () {
 
     case $1 in
