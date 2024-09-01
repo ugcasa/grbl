@@ -17,14 +17,14 @@ core.parser () {
             return $?
             ;;
 
-        start|poll|kill|stop)
+        start|poll|stop)
         # daemon controls
             source $GURU_BIN/daemon.sh
             daemon.$_input
             return $?
             ;;
 
-        debug|pause|version|online|list|active)
+        kill|top|ps|debug|pause|version|online|list|active)
         # core control functions
             core.$_input $@
             return $?
@@ -147,6 +147,113 @@ core.active () {
     daemon.main start
     return 0
     gr.msg -c gold "bye!"
+}
+
+process_list=/tmp/guru-cli_ps.list
+
+core.ps () {
+# list of running guru-client processes
+
+    local ifs=$IFS
+    local _pid _int _com _arg
+    local data_string=()
+    # cut by newline
+    IFS=$'\n'
+    # get list of processes
+    local raw_list=($(ps -eo pid,args | grep -v grep | grep -e $GURU_BIN/$GURU_CALL))
+
+    [[ -f $process_list ]] && rm $process_list
+
+    for (( i = 0; i < ${#raw_list[@]}; i++ )); do
+
+        # gr.debug "[$i]: '${raw_list[$i]}'"
+        echo "$i ${raw_list[$i]}" >>$process_list
+
+        # cut by space
+        IFS=$ifs
+        data_string=(${raw_list[$i]})
+        _pid="${data_string[0]}"
+        _int="${data_string[1]}"
+        _com="${data_string[2]}"
+        _arg="${data_string[3]} ${data_string[4]} ${data_string[5]} ${data_string[6]}"
+
+        gr.msg -nh "$i: "
+        gr.msg -n -c dark_grey "$_pid "
+        gr.msg -n -c list "$_arg "
+        gr.msg
+
+        # return cut by newlinefor line parsing
+        IFS=$'\n'
+    done
+
+    IFS=$ifs
+
+}
+
+
+core.top () {
+    while true ; do
+
+        clear
+        core.ps
+
+        #sleep 0.5
+        read -t3 -n1  -p "(k)ill (q)uit: " answer
+
+        case $answer in
+            q*|e*)
+                break
+            ;;
+            k)
+                echo
+                read -p "kill: " answer
+                core.kill $answer
+            ;;
+        esac
+
+        sleep 0.5
+
+    done
+}
+
+core.kill () {
+# list of running guru-client processes
+
+    local ifs=$IFS
+    local gid=$1
+    local data_string=()
+    # get list of processes
+
+    core.ps
+
+    [[ -f $process_list ]] || return 12
+
+    [[ $gid ]] || read -p "select process: " gid
+
+    IFS=$'\n'
+    local raw_list=($(cat $process_list))
+    IFS=$ifs
+
+    if [[ $gid -ge ${#raw_list[@]} ]] ; then #|| [[ $gid -lt 0 ]]
+        gr.msg -e1 "out of list [$gid/$((${#raw_list[@]} -1))]"
+        return 11
+    fi
+
+    local data_string=(${raw_list[$gid]})
+    local _id="${data_string[0]}"
+    local _pid="${data_string[1]}"
+    local _int="${data_string[2]}"
+    local _com="${data_string[3]}"
+    local _arg="${data_string[4]} ${data_string[5]} ${data_string[6]}"
+
+    if ! [[ $_id -eq $gid ]] ; then gr.msg -e1 "id mismatch" ; return 13 ; fi
+
+    gr.msg -n "killing '$_arg' ($_pid).. "
+    kill -9 $_pid && gr.msg -c green "ok" || gr.msg -e1 "failed"
+
+    IFS=$ifs
+    [[ -f $process_list ]] && rm $process_list
+
 }
 
 
