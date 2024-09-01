@@ -21,8 +21,10 @@ backup.help () {
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " <empty>                  make daily backup now "
-    gr.msg -v1 " <entry_name>             run <entry_name> backup right away "
+    gr.msg -v1 " <schelude>               backup events in shedule list right away "
     gr.msg -v2 "     at <YYMMDD> <H:M>    make backup at date and time    "
+    gr.msg -v1 " <event>                  backup given event right away "
+    gr.msg -v2 "     at <YYMMDD> [<H:M>]  make backup at date and time  hours and minutes optinal  "
     gr.msg -v1 " ls                       list of backups "
     gr.msg -v1 " status                   printout status string"
     gr.msg -v2 " restore                  not clear hot to be done  "
@@ -40,45 +42,60 @@ backup.help () {
 }
 
 
+
 backup.main () {
     # command parser
 
     local command=$1 ; shift
 
+    # if given command is entry name
+    if backup.entry_exist $command ; then
+        backup.now $command
+        return $?
+    fi
+
     case $command in
 
+        # command is module command
         ls|restore|status|help|install|poll|at|debug|config)
             backup.$command "$@"
             return $? ;;
 
+        # command ponts to cshedule
         hourly|daily|weekly|monthly|yearly|all)
             backup.plan $command
             return $? ;;
+
         "")
 
+            # default is dialy backup
             backup.plan daily
             return $? ;;
         *)
-            # go trough given items
-            local given_entrys=("$command" "$@")
+            gr.msg -e1 "non reqognized command '$command'"
+            return 1
+            # # command i
 
-            # go trough given entries..
-            for given_entry in ${given_entrys[@]} ; do
+            # # go trough given items
+            # local given_entrys=("$command" "$@")
 
-                    # .. then trough active entry name list..
-                    for enabled_entry in ${GURU_BACKUP_ACTIVE[@]} ; do
+            # # go trough given entries..
+            # for given_entry in ${given_entrys[@]} ; do
 
-                            # ..and check that given item is the requested item
-                            if [[ $given_entry == $enabled_entry ]]; then
-                                    gr.msg -n -c dark_golden_rod "backing up $given_entry.. "
+            #         # .. then trough active entry name list..
+            #         for enabled_entry in ${GURU_BACKUP_ACTIVE[@]} ; do
 
-                                    backup.now $given_entry \
-                                        && gr.msg -v2 -c green "$given_entry backup done" \
-                                        || gr.msg -c yellow "$given_entry backup failed"
-                                    break
-                                fi
-                        done
-                done
+            #                 # ..and check that given item is the requested item
+            #                 if [[ $given_entry == $enabled_entry ]]; then
+            #                         gr.msg -n -c dark_golden_rod "backing up $given_entry.. "
+
+            #                         backup.now $given_entry \
+            #                             && gr.msg -v2 -c green "$given_entry backup done" \
+            #                             || gr.msg -e1 "$given_entry backup failed"
+            #                         break
+            #                     fi
+            #             done
+            #     done
             ;;
         esac
     return 0
@@ -121,14 +138,44 @@ backup.variables () {
 }
 
 
+backup.entry_exist() {
+    # Input entry name, return true if it exist in conefiguration.
+
+    local entry=$1
+    shift
+
+
+    local variable_name="GURU_BACKUP_${entry^^}[@]"
+    local value=($(eval echo ${!variable_name}))
+
+    if ! [[ $value ]] ; then
+            gr.msg -v2 -e1 "unknown entry '$entry'"
+            return 122
+        fi
+    return 0
+}
+
+
+backup.does_it_fit () {
+# check is there space in target file system, return true if there is
+
+    echo "---------------"
+    gr.kvp "from_size store_size"
+    echo "---------------"
+
+    # backup.folder_size
+
+}
+
+
 backup.debug () {
 
     export GURU_VERBOSE=3
     local name=${GURU_BACKUP_ACTIVE[0]}
     [[ $1 ]] && name=$1
     backup.config $name
+    backup.does_it_fit
 }
-
 
 backup.config () {
     # get tunnel configuration an populate common variables
@@ -147,7 +194,7 @@ backup.config () {
 
     # exit if not in active list
     if ! echo "${active_list[@]}" | grep -q $backup_name ; then
-            gr.msg -c yellow "no '$backup_name' in active backup list"
+            gr.msg -e1 "no '$backup_name' in active backup list"
             return 2
         fi
 
@@ -175,9 +222,13 @@ backup.config () {
             declare -g from_domain=$(echo $from_string | cut -d ":" -f2)
             declare -g from_port=$(echo $from_string | cut -d ":" -f3)
             declare -g from_location=$(echo $from_string | cut -d ":" -f4)
+            declare -g from_size=$(ssh ${from_user}@${from_domain} -p ${from_port} -- du -hsb $from_location 2>/dev/null)
+            from_size=$(cut -f1 <<<$from_size)
+
         else
             # source is local drive
             declare -g from_location=$(echo $from_string | cut -d ":" -f3)
+            declare -g from_size=$(du -hsb $from_location)
         fi
 
     # fill store location variables
@@ -187,6 +238,7 @@ backup.config () {
             declare -g store_domain=$(echo ${store_config[1]} | cut -d ":" -f2)
             declare -g store_port=$(echo ${store_config[1]} | cut -d ":" -f3)
             declare -g store_location=$(echo ${store_config[1]} | cut -d ":" -f4)
+            declare -g store_size=$(ssh ${store_user}@${store_domain} -p ${store_port} -- stat -f -c '%f' $store_location 2>/dev/null)
         else
             # store is local drive
             store_is_local=true
@@ -194,6 +246,7 @@ backup.config () {
             declare -g store_file_system=${store_config[1]}
             declare -g store_mount_point=${store_config[2]}
             declare -g store_folder=${store_config[3]}
+            declare -g store_size=$(stat -f -c '%f' $store_mount_point/$store_folder)
 
             [[ ${store_mount_point: -1} == '/' ]] \
                 && declare -g store_location="$store_mount_point$store_folder" \
@@ -215,6 +268,7 @@ backup.config () {
 
     return 0
 }
+
 
 
 
@@ -336,7 +390,7 @@ backup.restore () {
         git|gitea)
                 echo "TBD git server backup restore"
                 ;;
-        *)      gr.msg -c yellow "unknown method '$backup_method'"
+        *)      gr.msg -e1 "unknown method '$backup_method'"
                 return 127
     esac
 
@@ -358,7 +412,7 @@ backup.wekan () {
     if ssh ${_user}@${_domain} -p ${_port} -- docker stop wekan >/dev/null ; then
         gr.msg -v2 -c green "ok"
     else
-        gr.msg -c yellow "error $?"
+        gr.msg -e1 "error $?"
         return 128
     fi
 
@@ -369,7 +423,7 @@ backup.wekan () {
     if ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db rm -rf /data/dump >/dev/null ; then
         gr.msg -v2 -c green "ok"
     else
-        gr.msg -c yellow "error $?"
+        gr.msg -e1 "error $?"
         return 129
     fi
 
@@ -380,7 +434,7 @@ backup.wekan () {
     if ssh ${_user}@${_domain} -p ${_port} -- docker exec wekan-db mongodump -o /data/dump 2>/dev/null ; then
         gr.msg -c green "ok"
     else
-        gr.msg -c yellow "error $?"
+        gr.msg -e1 "error $?"
         return 130
     fi
 
@@ -391,7 +445,7 @@ backup.wekan () {
     if ssh ${_user}@${_domain} -p ${_port} -- docker cp wekan-db:/data/dump ${_location} >/dev/null ; then
         gr.msg -v2 -c green "ok"
     else
-        gr.msg -c yellow "error $?"
+        gr.msg -e1 "error $?"
         return 131
     fi
 
@@ -402,7 +456,7 @@ backup.wekan () {
     if ssh ${_user}@${_domain} -p ${_port} -- docker start wekan >/dev/null ; then
         gr.msg -v2 -c green "ok"
     else
-        gr.msg -c yellow "error $?"
+        gr.msg -e1 "error $?"
         return 132
     fi
 
@@ -420,6 +474,7 @@ backup.now () {
 
     server_to_local () {
 
+
             # build remote to local command variables
             command_param="-a -e 'ssh -p $from_port' --progress --update"
 
@@ -431,7 +486,7 @@ backup.now () {
                     gr.msg -v3 -N -c deep_pink "gio mount -d $store_device_file"
                     gio mount -d $store_device_file \
                         && gr.msg -v1 -c green "ok" \
-                        || gr.msg -v1 -c yellow "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
+                        || gr.msg -v1 -e1 "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
                 else
                     gr.msg -c white "to mount -t $store_file_system $store_device_file $store_mount_point sudo needed"
                     [[ -d $store_mount_point ]] || sudo mkdir -p $store_mount_point
@@ -440,7 +495,7 @@ backup.now () {
                     if sudo mount -t $store_file_system $store_device_file $store_mount_point ; then
                             gr.msg -v1 -c green "ok"
                     else
-                        gr.msg -v1 -c yellow "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
+                        gr.msg -v1 -e1 "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
                         # echo "last_backup_error=32" >>$backup_stat_file
                         return 32
                     fi
@@ -475,7 +530,7 @@ backup.now () {
                 gr.debug "gio mount -d $store_device_file"
                 gio mount -d $store_device_file \
                     && gr.msg -v1 -c green "ok" \
-                    || gr.msg -v1 -c yellow "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
+                    || gr.msg -v1 -e1 "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
             fi
         fi
         command_param="-a --progress --update"
@@ -543,6 +598,12 @@ backup.now () {
 ### 3) check backup method get files out of service containers based settings in user.cfg
     case $backup_method in
         wekan)
+
+                if ! [[ $from_domain ]] ; then
+                    gr.msg -e1 "empty server variables"
+                    return 113
+                fi
+
                 backup.wekan $from_domain $from_port $from_user $from_location || return $?
                 ;;
         mediawiki)
@@ -568,14 +629,14 @@ backup.now () {
                             gr.msg -c red -k $GURU_BACKUP_INDICATOR_KEY \
                                 "POTENTIAL VIRUS: wannacry tracks detected!"
                             gr.msg -c light_blue "$file"
-                            gr.msg -c yellow "backup of $from_location canceled"
+                            gr.msg -e1 "backup of $from_location canceled"
                             # echo "last_backup_error=101" >>$backup_stat_file
                             # echo "### POTENTIAL VIRUS: wannacry tracks detected!" >>$backup_stat_file
                             return 101
                             ;;
 
                      *WORM*)
-                            gr.msg -c tbd "TBD other virus track marks here"
+                            gr.msg "TBD other virus track marks here"
                             # echo "last_backup_error=102" >>$backup_stat_file
                             return 102
                             ;;
@@ -592,7 +653,7 @@ backup.now () {
                 if eval rsync "$command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null" ; then
                     gr.msg -v2 -c green "ok"
                 else
-                    gr.msg -c yellow "cannot get honeypot file "
+                    gr.msg -e1 "cannot get honeypot file "
                 fi
             fi
         fi
@@ -606,11 +667,11 @@ backup.now () {
             gr.msg -n -v3 "expecting 'honeypot' got '${contain[3]}' "
 
             if ! [[ ${contain[3]} == "honeypot" ]] ; then
-                    gr.msg -c yellow \
+                    gr.msg -e1 \
                          "honeypot file changed! got '${contain[3]}' when 'honeypot' expected."
                     gr.msg -c light_blue "${contain[@]}"
                     gr.msg -c red -k $GURU_BACKUP_INDICATOR_KEY \
-                         "backup canceled cause of potential crypto virus action detected!"
+                         "backup canceled cause of potential crypto virus action detected in source destination!"
                     export GURU_BACKUP_ENABLED=
 
                     # echo "last_backup_error=104" >>$backup_stat_file
@@ -620,7 +681,16 @@ backup.now () {
             gr.msg -v2 -c green "ok"
         fi
 
-### 5) perform copy
+### 5) check size
+
+    if [[ $from_size -gt $store_size ]] ; then
+        gr.msg -e1 "not enought space in target device"
+        return 105
+    fi
+
+
+
+### 6) perform copy
 
     local _error=$?
     gr.debug "$FUNCNAME: eval rsync $command_param $from_param $store_param"
@@ -659,14 +729,14 @@ backup.plan () {
                     entries=($(eval echo '${GURU_BACKUP_SCHEDULE_'"${schedule^^}[@]}"))
                     ;;
             "")
-                    gr.msg -c yellow "unknown schedule '$schedule'"
+                    gr.msg -e1 "unknown schedule '$schedule'"
                     return 11
                     ;;
             *)      # try if its set in user.cfg
                     variable="GURU_BACKUP_SCHEDULE_${schedule^^}[@]"
                     entries=($(eval echo ${!variable}))
                     if ! [[ $entries ]] ; then
-                            gr.msg -c yellow "unknown schedule '$schedule'"
+                            gr.msg -e1 "unknown schedule '$schedule'"
                             return 12
                         fi
                     ;;
@@ -720,7 +790,7 @@ backup.plan () {
         done
 
     if [[ $_error -gt 0 ]] ; then
-            gr.msg "$_error warnings, check log above" -c yellow -k $GURU_BACKUP_INDICATOR_KEY
+            gr.msg "$_error warnings, check log above" -e1 -k $GURU_BACKUP_INDICATOR_KEY
             [[ $GURU_BACKUP_VERBOSE ]] && gr.ind say -m "$_error warnings during $schedule backup"
             return 12
         else
@@ -820,7 +890,7 @@ backup.make_rc () {
 # make core module rc file out of configuration file
 
     if ! source config.sh ; then
-            gr.msg -c yellow "unable to load configuration module"
+            gr.msg -e1 "unable to load configuration module"
             return 100
         fi
 
@@ -829,7 +899,7 @@ backup.make_rc () {
         fi
 
     if ! config.make_rc "$GURU_CFG/$GURU_USER/backup.cfg" $backup_rc ; then
-            gr.msg -c yellow "configuration failed"
+            gr.msg -e1 "configuration failed"
             return 101
         fi
 
