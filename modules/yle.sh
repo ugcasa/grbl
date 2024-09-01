@@ -358,6 +358,35 @@ yle.podcast () {
         return $_error
     }
 
+
+    # podcast.save () {
+
+    #     local got=$1
+
+    #     if ! [[ $got ]]; then
+    #         read -p "Annan sarjan koontisivu tai sivun id: " got
+    #     fi
+
+    #     if [[ $got =~ "${GURU_YLE_PODCAST_URL%/}" ]] ; then
+    #         areena_url=$got
+    #     else
+    #         areena_url=${GURU_YLE_PODCAST_URL%/}/$got
+    #     fi
+
+    #     output_filename=
+    #     episode_list=($(yle-dl --showepisodepage $areena_url 2>/tmp/yle.error))
+
+    #     for (( i = 0; i < ${#episode_list[@]}; i++ )); do
+    #         metadata=$(yle-dl --showmetadata ${episode_list[$i]} 2>/tmp/yle.error | jq -s 'flatten' )
+    #         title="$(jq '.[] | .episode_title' <<<$metadata | head -n1 | cut -d':' -f1 )"
+
+    #         output_filename=title_${episode_list[$i]}
+
+    #         yle-dl "${episode_list[$i]}" --showurl -o "$output_filename" 2>/tmp/yle.error
+    #     done
+    # }
+
+
     podcast.get () {
     # get episode or or list of episodes by url given
     # returns episode list in global episode_list variable
@@ -681,6 +710,9 @@ yle.podcast () {
 
     case $command in
 
+        get)
+            podcast.save $@
+            ;;
         add)
             podcast.get $@
             podcast.build
@@ -1014,7 +1046,7 @@ yle.get_media () {
 
     gr.msg -v3 -c deep_pink "output filename: $output_filename"
 
-    # check is tmp file alredy there
+    # check is tmp file already there
     if [[ -f $output_filename ]] ; then
             gr.msg -c yellow "file exist, overwriting "
             rm $output_filename
