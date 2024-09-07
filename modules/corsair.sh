@@ -42,7 +42,7 @@
 #     Device previews are now resizable
 
 source common.sh
-# source system.sh
+source system.sh
 
 # active key list
 key_pipe_list=$(file /tmp/ckbpipe0* | grep fifo | cut -f1 -d ":")

@@ -2,7 +2,6 @@
 # system tools for guru-client
 source os.sh
 source flag.sh
-source corsair.sh
 
 system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
@@ -403,7 +402,6 @@ system.cpu_usage_check () {
             key=$(( ($high_usage - $GURU_SYSTEM_CPU_USAGE_TRIGGER) + 1 ))
             [[ $key -gt 9 ]] && key=0
             gr.debug "$FUNCNAME: key is: $key"
-            corsair.indicate alert "$key"
 
             source say.sh
             say.main "high cpu usage detected"
