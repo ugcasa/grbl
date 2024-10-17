@@ -1,6 +1,5 @@
 # guru-client easy to use platform for ubuntu based os.
 
-
 guru-client contains:
 
 - simplify and rationalize terminal commands (core.sh)
@@ -35,9 +34,7 @@ guru.server will be:
 
 - local server scripts guru-server (under development)
 
-## disclaimer
-
-casa@ujo.guru 2018-2021
+casa@ujo.guru 2018-2024
 
 
 ## runnign demo
@@ -113,10 +110,9 @@ $HOME/bin/uninstall.sh
 
 ## getting account to ujo.guru server
 
-Cause of global cyber security state after year 2018.
+Cause of global cyber security state after year 2018 curent server is not available for external users. 
 
-Not available.
-Ever.
+Sandbox server will be added during year 2024. 
 
 ## Examples - Basic functions
 
@@ -127,15 +123,11 @@ gr.ask is simple yes no selector. it is ´read´ wrap with almost same propertie
 With both, message string cannot stat with a line '-'
 
 
-
-
 ```bash
-gr.ask -s "did it explode?" && gr.msg "it did" -s || gr.msg -s "it didn't"
+gr.ask -s "did it explode?" && gr.msg -c green "it did" -s || gr.msg -s "it didn't"
 ```
 
 speaks out the question and answer, blinks 'y' key green and 'n' key red on corsair rgb gaming keyboard.
-
-
 
 ----
 
