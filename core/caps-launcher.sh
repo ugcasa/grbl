@@ -55,6 +55,9 @@ case $all in
     cc)     gnome-terminal --hide-menubar --geometry 50x35 --zoom 1.2 --hide-menubar --title \
             "guru-cli cheatsheet" -- $GURU_BIN/guru help capslauncher
             ;;
+    t)      gnome-terminal --hide-menubar --geometry 60x20 --zoom 1.0 --hide-menubar --title \
+            "google translator" -- $GURU_BIN/guru trans
+            ;;
     # timer controls
     tt)     guru say "timer start"
             guru timer start ;;
