@@ -12,6 +12,10 @@ trans.main() {
             trans.$_cmd $@
             return $?
             ;;
+
+        "") trans.looper
+            ;;
+
         *)
             trans.get "$_cmd"
             return $?
@@ -23,6 +27,25 @@ trans.main() {
 trans.help () {
     gr.msg -c white "usage:    $GURU_CALL trans source_lang:targed_lang <text>"
     return 0
+}
+
+
+trans.looper ()
+# tranlator looper for quick key
+{
+    while true
+    do
+        read -p  "translate: " input
+        [[ $input ]] || continue
+
+        case $input in
+            q) break ;;
+        esac
+
+        echo "-------------------------"
+        trans "$input"
+        echo "-------------------------"
+    done
 }
 
 
