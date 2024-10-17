@@ -1,134 +1,167 @@
 #!/bin/bash
-# guru client mqtt functions
-# casa@ujo.guru 2020 - 2021
+# guru client MQTT functions casa@ujo.guru 2020
 
-source $GURU_BIN/common.sh
-mqtt_indicator_key="f$(daemon.poll_order mqtt)"
+declare -g mqtt_rc="/tmp/guru-cli_mqtt.rc"
+[[ $GURU_DEBUG ]] && mqtt_client_options='-d '
+
 
 mqtt.main () {
-    # mqtt main command parser
+# MQTT main command parser
 
     local _cmd="$1" ; shift
-    mqtt_indicator_key="f$(daemon.poll_order mqtt)"
 
     case "$_cmd" in
-               status|help|install|remove|enabled)
-                    mqtt.$_cmd "$@"
-                    return $?
-                    ;;
-
-               single|sub|pub|poll)
-                    mqtt.enabled || return 1
-                    mqtt.$_cmd "$@"
-                    ;;
-               *)   gmsg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
-                    return 2
-        esac
-    return 0
+            status|help|install|remove|enabled|poll)
+                mqtt.$_cmd "$@"
+                return $?
+                ;;
+            single|sub|pub)
+                mqtt.enabled || return 1
+                mqtt.$_cmd "$@"
+                ;;
+           *)   gr.msg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
+                return 2
+    esac
 }
 
 
 mqtt.help () {
-    # general help
 
-    gmsg -v1 -c white "guru-client mqtt help "
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL mqtt status|sub|pub|start|end|single|help|install|remove "
-    gmsg -v2
-    gmsg -v1 -c white "commands: "
-    gmsg -v1 " status                   show status of default mqtt server "
-    gmsg -v1 " sub <topic>              subscribe to topic on local mqtt server "
-    gmsg -v1 " pub <topic> <message>    printout mqtt service status "
-    gmsg -v1 " log <topic> <log_file>   subscribe to topic and log it to file "
-    gmsg -v1 " single <topic>           subscribe to topic and wait for message, then exit "
-    gmsg -v1 " install                  install client requirements "
-    gmsg -v1 " remove                   remove installed requirements "
-    gmsg -v3 " poll start|end           start or end module status polling "
-    gmsg -v2 " help                     printout this help "
-    gmsg -v2
-    gmsg -v1 -c white "examples: "
-    gmsg -v2 "         $GURU_CALL mqtt status "
-    gmsg -v1 "         $GURU_CALL mqtt sub '#' "
-    gmsg -v1 "         $GURU_CALL mqtt pub '/msg Hello!' "
-    gmsg -v2
-    return 0
+    gr.msg -v1 -c white "guru-client MQTT help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL MQTT status|sub|pub|start|end|single|help|install|remove "
+    gr.msg -v2
+    gr.msg -v1 -c white "commands: "
+    gr.msg -v1 " status                   show status of default MQTT server "
+    gr.msg -v1 " sub <topic>              subscribe to topic on local MQTT server "
+    gr.msg -v1 " pub <topic> <message>    printout MQTT service status "
+    gr.msg -v1 " log <topic> <log_file>   subscribe to topic and log it to file "
+    gr.msg -v1 " single <topic>           subscribe to topic and wait for message, then exit "
+    gr.msg -v1 " install                  install client requirements "
+    gr.msg -v1 " remove                   remove installed requirements "
+    gr.msg -v3 " poll start|end           start or end module status polling "
+    gr.msg -v2 " help                     printout this help "
+    gr.msg -v2
+    gr.msg -v1 -c white "examples: "
+    gr.msg -v2 "         $GURU_CALL mqtt status "
+    gr.msg -v1 "         $GURU_CALL mqtt sub '#' "
+    gr.msg -v1 "         $GURU_CALL mqtt pub '/msg Hello!' "
+    gr.msg -v2
 }
 
-# TBD enabled, online and status should combine to one function?
+
+mqtt.rc () {
+# source configurations
+
+    if  [[ ! -f $mqtt_rc ]] || \
+        [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mqtt.cfg) - $(stat -c %Y $mqtt_rc) )) -gt 0 ]]
+    then
+        mqtt.make_rc && \
+            gr.msg -v1 -c dark_gray "$mqtt_rc updated"
+    fi
+
+    source $mqtt_rc
+}
+
+
+mqtt.make_rc () {
+# make core module rc file out of configuration file
+
+    if ! source config.sh ; then
+        gr.msg -c yellow "unable to load configuration module"
+        return 100
+    fi
+
+    if [[ -f $mqtt_rc ]] ; then
+        rm -f $mqtt_rc
+    fi
+
+    if ! config.make_rc "$GURU_CFG/$GURU_USER/mqtt.cfg" $mqtt_rc ; then
+        gr.msg -c yellow "configuration failed"
+        return 101
+    fi
+
+    chmod +x $mqtt_rc
+
+    if ! source $mqtt_rc ; then
+        gr.msg -c red "unable to source configuration"
+        return 202
+    fi
+}
+
 
 mqtt.enabled () {
-    # check is function activated and output instructions to enable function on user configuration
+# check is function activated and output instructions to enable function on user configuration
 
     if [[ $GURU_MQTT_ENABLED ]] ; then
-        # gmsg -v2 -c green "mqtt enabled"
+        # gr.msg -v2 -c green "MQTT enabled"
         return 0
     else
-        gmsg -v2 -c black "mqtt disabled in user config"
-        gmsg -v3 "type '$GURU_CALL config user' to change configurations"
+        gr.msg -v2 -c black "MQTT disabled in user config"
+        gr.msg -v3 "type '$GURU_CALL config user' to change configurations"
         return 1
     fi
 }
 
 
 mqtt.online () {
-    # check mqtt is functional, no printout
+# check MQTT is functional, no printout
 
     mqtt.online_send () {
-        # if mqtt message takes more than 2 seconds to return from closest mqtt server there is something wrong
+        # if MQTT message takes more than 2 seconds to return from closest MQTT server there is something wrong
 
         sleep 2
-        gmsg -v4 -c aqua -k $mqtt_indicator_key
-        timeout 1 mosquitto_pub \
+        gr.msg -v4 -c aqua -k $GURU_MQTT_INDICATOR_KEY
+        timeout 1 mosquitto_pub $mqtt_client_options \
             -u "$GURU_MQTT_USER" \
             -h "$GURU_MQTT_BROKER" \
             -p "$GURU_MQTT_PORT" \
             -t "$GURU_HOSTNAME/online" \
             -m "$(date +$GURU_FORMAT_DATE) $(date +$GURU_FORMAT_TIME)" \
              >/dev/null 2>&1 \
-        || gmsg -v2 -c yellow "timeout or mqtt publish issue: $?" -k $mqtt_indicator_key
+                || gr.msg -v2 -c yellow "timeout or MQTT publish issue: $?" -k $GURU_MQTT_INDICATOR_KEY
     }
 
     # delayed publish
-    mqtt.online_send &
+    (mqtt.online_send &)
 
     # subscribe to channel no output
-    gmsg -v4 -c aqua_marine -k $mqtt_indicator_key
-    if timeout 3 mosquitto_sub -C 1 \
+    gr.msg -v4 -c aqua_marine -k $GURU_MQTT_INDICATOR_KEY
+    if timeout 3 mosquitto_sub -C 1 $mqtt_client_options \
                     -u "$GURU_MQTT_USER" \
                     -h "$GURU_MQTT_BROKER" \
                     -p "$GURU_MQTT_PORT" \
                     -t "$GURU_HOSTNAME/online" \
                     $_options >/dev/null
         then
-            gmsg -v4 -c green -k $mqtt_indicator_key
+            gr.msg -v4 -c green -k $GURU_MQTT_INDICATOR_KEY
             return 0
         else
-            gmsg -v2 -c yellow \
-                -k $mqtt_indicator_key \
-                "mqtt subscribe issue: $?"
+            gr.msg -v2 -c yellow "MQTT subscribe issue: $?" -k $GURU_MQTT_INDICATOR_KEY
             return 1
     fi
 }
 
 
 mqtt.sub () {
-    # subscribe to channel, stay listening
+# subscribe to channel, stay listening
 
     local _topic="$1" ; shift
+    case $_topic in *#*|root|all) mqtt_client_options="$mqtt_client_options -v " ; _topic='#';; esac
 
-    gmsg -v4 -c white -k $mqtt_indicator_key
+    gr.msg -v4 -c white -k $GURU_MQTT_INDICATOR_KEY
 
     # lazy way to deliver arguments
     [[ $1 ]] && local _options="-$@"
 
-    # susbsribe
-    if mosquitto_sub \
+    # subscribe
+    if mosquitto_sub $mqtt_client_options -R --quiet \
             -h $GURU_MQTT_BROKER \
             -p $GURU_MQTT_PORT \
             -t "$_topic" $_options ; then
-            gmsg -v4 -c green -k $mqtt_indicator_key
+            gr.msg -v4 -c green -k $GURU_MQTT_INDICATOR_KEY
         else
-            gmsg -v4 -c red -k $mqtt_indicator_key
+            gr.msg -v4 -c red -k $GURU_MQTT_INDICATOR_KEY
         fi
 
     return $?
@@ -136,74 +169,100 @@ mqtt.sub () {
 
 
 mqtt.pub () {
-    # publish to mqtt server
+# publish to MQTT server
 
     local _topic="$1" ; shift
     local _message="$@"
     local _error=
 
     if ! [[ $_topic ]] ; then
-            gmsg -v1  "no topic specified"
+            gr.msg -v1  "no topic specified"
             return 127
         fi
 
     if ! [[ $_message ]] ; then
-        gmsg -v1  "no mesage specified"
+        gr.msg -v1  "no message specified"
             return 128
         fi
 
-    gmsg -v4 -c aqua -k $mqtt_indicator_key
+    gr.msg -v4 -c aqua -k $GURU_MQTT_INDICATOR_KEY
 
     local _i=
+
     for _i in {1..5} ; do
 
-            mosquitto_pub \
-                -u $GURU_MQTT_USER \
-                -h $GURU_MQTT_BROKER \
-                -p $GURU_MQTT_PORT \
-                -t "$_topic" \
-                -m "$_message" >/dev/null 2>&1
-                _error=$?
+        mosquitto_pub $mqtt_client_options \
+            -u $GURU_MQTT_USER \
+            -h $GURU_MQTT_BROKER \
+            -p $GURU_MQTT_PORT \
+            -t "$_topic" \
+            -m "$_message" >/dev/null 2>&1
+            _error=$?
 
-            if (( $_error )) ; then
-                  gmsg -v2 -c red \
-                    -k $mqtt_indicator_key \
-                    "mqtt connection $_i error $_error"
-              else
-                  gmsg -v4 -c green -k $mqtt_indicator_key
-                  break
-              fi
-        done
+        if (( $_error )) ; then
+              gr.msg -v2 -c red \
+                -k $GURU_MQTT_INDICATOR_KEY \
+                "MQTT connection $_i error $_error"
+          else
+              gr.msg -v4 -c green -k $GURU_MQTT_INDICATOR_KEY
+              break
+          fi
+    done
 
     return $_error
 }
 
 
 mqtt.single () {
-    # subscribe to channel, stay listening until one message received
+# Subscribe to channel, stay listening until one message received. Timeout is minute.
+#
+# ## Best variables to just get message it self and mayby find way to get some VALID exit code
+#
+# -E : Exit once all subscriptions have been acknowledged by the broker.
+# -C : disconnect and exit after receiving the 'msg_count' messages.
+# -F : output format. ## Da fuck is this?
+# -R : do not print stale messages (those with retain set).
+# -v : print published messages verbosely.
+# -W : Specifies a timeout in seconds how long to process incoming MQTT messages.
+# --quiet : don't print error messages.
+# --remove-retained : send a message to the server to clear any received retained messages
+#                 Use -T to filter out messages you do not want to be cleared.
+# ## Test string
+#
+# source mqtt.sh
+# mosquitto_sub -C 1 -R -W 60 --quiet --remove-retained -h "$GURU_MQTT_BROKER" -p "$GURU_MQTT_PORT" -t "check"
+#
 
     local _topic="$1" ; shift
-    # lazy ass variable transport. TBD -- for this use
-    [[ $1 ]] && local _options="-$@"
-    gmsg -v4 -c white -k $mqtt_indicator_key
+    local _timeout=5
 
-    mosquitto_sub -C 1 \
+    gr.blink $GURU_MQTT_INDICATOR_KEY "active"
+
+    local answer=$(mosquitto_sub -C 1 -R -W $_timeout --quiet --remove-retained \
         -h "$GURU_MQTT_BROKER" \
         -p "$GURU_MQTT_PORT" \
-        -t "$_topic" \
-        $_options
+        -t "$_topic" )
         # -u $GURU_MQTT_USER
-    gmsg -v4 -c green -k $mqtt_indicator_key
-    return $?
+
+    if ! [[ $answer ]]; then
+        gr.msg -c yellow "timeout no message to '$_topic' on $GURU_MQTT_BROKER:$GURU_MQTT_PORT "
+        gr.blink $GURU_MQTT_INDICATOR_KEY "error"
+        return 100
+    fi
+
+    #gr.msg -v4 -c green -k $GURU_MQTT_INDICATOR_KEY
+    gr.blink $GURU_MQTT_INDICATOR_KEY "ok"
+    echo "$answer"
+    return 0
 }
 
 
 mqtt.log () {
-    # start topic log to file
+# start topic log to file
 
     local _topic="$1" ; shift
     local _log_file=$GURU_LOG ; [[ $1 ]] && _log_file="$1"
-    mosquitto_sub \
+    mosquitto_sub $mqtt_client_options \
         -u "$GURU_MQTT_USER" \
         -h "$GURU_MQTT_BROKER" \
         -p "$GURU_MQTT_PORT" \
@@ -216,28 +275,25 @@ mqtt.log () {
 
 
 mqtt.status () {
-    # check mqtt broker is reachable.
+# check MQTT broker is reachable
 
-    mqtt_indicator_key="f$(daemon.poll_order mqtt)"
-
-    gmsg -n -v1 -t "${FUNCNAME[0]}: "
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
     if [[ $GURU_MQTT_ENABLED ]] ; then
-            gmsg -v1 -n -c green "enabled, "
+            gr.msg -v1 -n -c green "enabled, " -k $GURU_MQTT_INDICATOR_KEY
         else
-            gmsg -v1 -c black "disabled " \
-                 -k $mqtt_indicator_key
+            gr.msg -v1 -c black "disabled " -k $GURU_MQTT_INDICATOR_KEY
             return 1
         fi
 
     # printout and signal by corsair keyboard indicator led
     if mqtt.online ; then
-            gmsg -v1 -c green "broker available " \
-                 -k $mqtt_indicator_key
+            gr.msg -v1 -c aqua "on service " \
+                 -k $GURU_MQTT_INDICATOR_KEY
             return 0
         else
-            gmsg -v1 -c red "broker unreachable " \
-                 -k $mqtt_indicator_key
+            gr.msg -v1 -c red "unreachable " \
+                 -k $GURU_MQTT_INDICATOR_KEY
             return 1
         fi
     #try to keep possible error messages in module segment by waiting mqtt.sub reply after timeout
@@ -246,20 +302,20 @@ mqtt.status () {
 
 
 mqtt.poll () {
-    # daemon required polling functions
+# daemon required polling functions
 
     local _cmd="$1" ; shift
 
     case $_cmd in
         start )
-            gmsg -v1 -t -c black \
-                -k $mqtt_indicator_key \
-                "${FUNCNAME[0]}: mqtt status polling started"
+            gr.msg -v1 -t -c black \
+                -k $GURU_MQTT_INDICATOR_KEY \
+                "${FUNCNAME[0]}: MQTT status polling started"
             ;;
         end )
-            gmsg -v1 -t -c reset \
-                -k $mqtt_indicator_key \
-                "${FUNCNAME[0]}: mqtt status polling ended"
+            gr.msg -v1 -t -c reset \
+                -k $GURU_MQTT_INDICATOR_KEY \
+                "${FUNCNAME[0]}: MQTT status polling ended"
             ;;
         status )
             mqtt.status
@@ -270,33 +326,110 @@ mqtt.poll () {
 }
 
 
+mqtt.install_svr () {
+# install MQTT server 'local', over ssh to 'remote' or in 'docker' container
+
+
+    local command="$1"
+    shift
+
+    uname -a |grep "Ubuntu" -q || gr.msg -c error -x 13 "installer expects that it is run on Ubuntu based system "
+
+    case $command in
+
+        local|remote|docker)
+            mqtt.install_svr_$command "$@"
+            return $?
+            ;;
+        server)
+            local platform="$1"
+            shift
+            mqtt.install_svr_$platform "$@"
+            return $?
+            ;;
+        *)
+            mqtt.install_svr_$command local "$command" "$@"
+
+    esac
+
+}
+
+
+mqtt.install_svr_local () {
+# install MQTT server on local computer
+# any install tool expects to run Ubuntu based distribution
+    gr.debug "$FUNCNAME: TBD"
+
+
+}
+
+
+mqtt.install_svr_remote () {
+# install MQTT server on remote computer
+# any install tool expects to run Ubuntu based distribution
+    gr.debug "$FUNCNAME: TBD"
+
+
+}
+
+
+mqtt.install_svr_docker () {
+# install MQTT server on in docker container
+# any install tool expects to run Ubuntu based distribution
+    gr.debug "$FUNCNAME: TBD"
+
+
+}
+
+
 mqtt.install () {
-    # install mosquitto mqtt clients
+# install Mosquitto MQTT clients
+
+    local _cmd="$1" ; shift
+
+    case "$_cmd" in
+            server|local|docker|remote)
+                mqtt.install_svr $_cmd $@ || gr.msg -x 14 "error during install $_cmd"
+                gr.ask -t 10 -d no "install also Mosquitto client locally?" || return 0
+                ;;
+    esac
 
     sudo apt update
     sudo apt install mosquitto-clients \
-        && gmsg -c green "guru is now ready to mqtt" \
-        || gmsg -c yellow "error $? during install mosquitto-clients"
+        && gr.msg -c green "guru is now ready to MQTT" \
+        || gr.msg -c yellow "error $? during install mosquitto-clients"
     return 0
 
-    # TBD cartification requirements
+    # TBD certification requirements
     # sudo add-apt-repository ppa:certbot/certbot || return $?
     # sudo apt-get install certbot || return $?
 }
 
 
 mqtt.remove () {
-    # remove mosquitto mqtt clients
+# remove Mosquitto MQTT clients
 
     sudo apt remove mosquitto-clients && return 0
     return 1
 }
 
 
+mqtt.rc
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$GURU_RC"
-    #source common.sh
+    # source $GURU_RC
     mqtt.main "$@"
     exit "$?"
 fi
+
+
+
+
+
+
+
+
+
+
+
 

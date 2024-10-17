@@ -2,7 +2,7 @@
 # guru telegram integration based on telegram-cli casa@ujo.guru 2021
 
 crypto_method="libcrypto"
-#telegram_indicator_key="f$(daemon.poll_order telegram)"
+#telegram_indicator_key="f$(gr.poll telegram)"
 public_server_key="/etc/telegram-cli/tg-server.pub"
 
 telegram.main () {
@@ -12,7 +12,7 @@ telegram.main () {
 
     case "$command" in
 
-            enabled|connect|sub|msg|poll|install)
+            enabled|connect|sub|msg|poll|install|status)
                     telegram.$command "$@"
                     return $?
                     ;;
@@ -21,7 +21,7 @@ telegram.main () {
                     return $?
                     ;;
 
-               *)   gmsg -c yellow "${FUNCNAME[0]}: unknown command: $command"
+               *)   gr.msg -c yellow "${FUNCNAME[0]}: unknown command: $command"
 
                     return 2
         esac
@@ -32,10 +32,10 @@ telegram.enabled () {
     # check is telegram enabled in user.cfg
 
     if [[ $GURU_TELEGRAM_ENABLED ]] ; then
-            gmsg -v1 -c green "enabled"
+            gr.msg -v1 -c green "enabled"
             return 0
         else
-            gmsg -v1 -c yellow "telegram module disabled in user.cfg"
+            gr.msg -v1 -c yellow "telegram module disabled in user.cfg"
             return 1
         fi
 }
@@ -52,7 +52,7 @@ telegram.msg () {
     if telegram-cli -D -W -e "msg $channel $msg" >/dev/null ; then
             return 0
         else
-            gmsg -c yellow "unable to send telegram message"
+            gr.msg -c yellow "unable to send telegram message"
             return 100
         fi
 }
@@ -80,12 +80,12 @@ telegram.poll () {
 
     case $action in
         start )
-            gmsg -v1 -t -c black \
+            gr.msg -v1 -t -c black \
                 -k $telegram_indicator_key \
                 "${FUNCNAME[0]}: telegram status polling started"
             ;;
         end )
-            gmsg -v1 -t -c reset \
+            gr.msg -v1 -t -c reset \
                 -k $telegram_indicator_key \
                 "${FUNCNAME[0]}: telegram status polling ended"
             ;;
@@ -95,6 +95,19 @@ telegram.poll () {
         *)  telegram.help
             ;;
         esac
+}
+
+
+telegram.status () {
+    gr.msg -t -n "${FUNCNAME[0]}: "
+
+    telegram-cli --help >/dev/null
+
+    if [[ $? -lt 100 ]] ; then
+        gr.msg -c green "installed"
+    else
+        gr.msg -c dark_grey "not installed"
+    fi
 }
 
 
@@ -109,9 +122,9 @@ telegram.install () {
                             libreadline-dev libconfig-dev libconfig-dev \
                             lua5.2 liblua5.2-dev libevent-dev libjansson-dev
             then
-                gmsg -c green "installed"
+                gr.msg -c green "installed"
             else
-                gmsg -c yellow "installation error $?"
+                gr.msg -c yellow "installation error $?"
                 return 100
             fi
 
@@ -119,9 +132,9 @@ telegram.install () {
     cd /tmp
     if ! [[ -d /tmp/tg ]] ; then
             if git clone --recursive https://github.com/vysheng/tg.git ; then
-                    gmsg -c green "clone OK"
+                    gr.msg -c green "clone OK"
                 else
-                    gmsg -c yellow "cloning error $?"
+                    gr.msg -c yellow "cloning error $?"
                     return 100
                 fi
             fi
@@ -133,9 +146,9 @@ telegram.install () {
         openssl )
                 sudo apt-get install -y libssl-dev
                 if ./configure ; then
-                        gmsg -c green "OK"
+                        gr.msg -c green "OK"
                     else
-                        gmsg -x 103 -c red "openssl configure error"
+                        gr.msg -x 103 -c red "openssl configure error"
                     fi
                 ;;
 
@@ -143,9 +156,9 @@ telegram.install () {
                 sudo apt-get install -y libgcrypt20 libgcrypt20-dev libssl-dev
                 if ./configure --disable-openssl --prefix=/usr CFLAGS="$CFLAGS -w"
                     then
-                    gmsg -c green "OK"
+                    gr.msg -c green "OK"
                 else
-                    gmsg -x 103 -c red "libcrypto configure error"
+                    gr.msg -x 103 -c red "libcrypto configure error"
                 fi
                 ;;
         esac
@@ -153,9 +166,9 @@ telegram.install () {
     # compile
 
     if make ; then
-            gmsg -N -v1 -c green "$GURU_CALL is ready to telegram messaging"
+            gr.msg -N -v1 -c green "$GURU_CALL is ready to telegram messaging"
         else
-            gmsg -c yellow "error $? during make"
+            gr.msg -c yellow "error $? during make"
         fi
 
     # copy server key
@@ -173,7 +186,7 @@ telegram.install () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    # source "$GURU_RC"
     #source common.sh
     telegram.main "$@"
     exit "$?"

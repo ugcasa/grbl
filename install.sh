@@ -23,54 +23,66 @@ if echo "$TERM" | grep "256" >/dev/null ; then
     fi
 
 
-# use new modules durin installation
+# use new modules during installation
 export GURU_BIN="core"
-#source core/common.sh
+
+# source core/common.sh
 source $GURU_BIN/config.sh
 source $GURU_BIN/keyboard.sh
 source $GURU_BIN/system.sh
+source $GURU_BIN/flag.sh
+
 # set target locations for uninstaller
 export GURU_CFG="$HOME/.config/guru"
 export GURU_BIN="$HOME/bin"
+
 # to where add gururc call
 bash_rc="$HOME/.bashrc"
 core_rc="$HOME/.gururc"    # TODO change name to '.gururc' when cleanup next time
 backup_rc="$HOME/.bashrc.backup-by-guru"
+
 # modules where user have direct access
-core_module_access=(counter install uninstall config mount unmount daemon keyboard system path)
-# modify this when module is ready to publish. flag -d will overwrite this list and install all present modules
-modules_to_install=(mqtt note android print project scan audio ssh stamp tag timer tor trans user vol yle news program tmux tunnel corsair backup convert telegram cal place)
+# modify this when module is ready to publish.
+# argument -d will overwrite this list and install all present modules
+core_module_access=(net counter install uninstall config mount unmount daemon keyboard prompt system user flag os cheatsheet help)
+modules_to_install=(ai radio say game youtube mqtt conda fingrid note print project scan audio display vpn ssh stamp tag timer tor trans vol yle news program tmux tunnel corsair backup convert telegram cal place android dokuwiki)
+
+# TBD
+# client_modules=
+# server_modules=(towsdf)
 
 install.main () {
 
+    date
+
     # Step 1) parse arguments
-    install.arguments $@ || gmsg -x 100 "argumentation error"
+    install.arguments $@ || gr.msg -x 100 "argumentation error"
 
     # store current core rc if not no port install configure
 
     # Step 2) check and uninstall previous version
-    install.check || gmsg -x 110 "check caused exit"
+    install.check || gr.msg -x 110 "check caused exit"
 
     # return
-    gmsg -v1 -c white "installing $(core/core.sh version)"
+    gr.msg -v1 -c white "installing $(core/core.sh version)"
 
     # Step 3) modify and add .rc files
-    install.rcfiles || gmsg -x 120 "rc file modification error"
+    install.rcfiles || gr.msg -x 120 "rc file modification error"
     check.rcfiles
 
     # Step 4) create folder structure
-    install.folders || gmsg -x 140 "error during creating folders"
+    install.folders || gr.msg -x 140 "error during creating folders"
     check.folders
 
     # Step 5) install core
-    install.core || gmsg -x 150 "error during installing core"
+    install.core || gr.msg -x 150 "error during installing core"
     check.core
 
     # Step 6) install options
 
     # development stuff (flag: -d)
     if [[ $install_dev ]] ; then
-            install.dev || gmsg -x 160 "error during installing dev"
+            install.dev || gr.msg -x 160 "error during installing dev"
             #check.dev
         fi
 
@@ -78,16 +90,16 @@ install.main () {
     case $install_platform in
             server|phone|raspi)
                     install.$install_platform \
-                        || gmsg -c yellow "warning: something went wrong while installing $install_platform" ;;
+                        || gr.msg -c yellow "warning: something went wrong while installing $install_platform" ;;
             *)      install.desktop \
-                        || gmsg -c yellow "warning: something went wrong while installing $install_platform" ;;
+                        || gr.msg -c yellow "warning: something went wrong while installing $install_platform" ;;
         esac
 
     # Step 7) install modules
-    install.modules && check.modules || gmsg -x 170 "error when installing modules"
+    install.modules && check.modules || gr.msg -x 170 "error when installing modules"
 
     # Step 8) set up launcher
-    ln -f -s "$TARGET_BIN/core.sh" "$TARGET_BIN/$GURU_CALL" || gmsg -x 180 "core linking error"
+    ln -f -s "$TARGET_BIN/core.sh" "$TARGET_BIN/$GURU_CALL" || gr.msg -x 180 "core linking error"
 
     # Step 9) save information
 
@@ -106,34 +118,36 @@ install.main () {
     echo "${installed_files[@]}" > "$TARGET_CFG/installed.files"
 
     # Step 10) export user configuration
-    install.config || gmsg -x 180 "user configuration error"
+    install.config || gr.msg -x 180 "user configuration error"
 
     # printout pass and statistics if verbose set
-    gmsg -c white "$($TARGET_BIN/core.sh version) installed"
+    gr.msg -c white "guru-cli v$($TARGET_BIN/core.sh version) installed"
 
-    gmsg -v1 -c light_blue "installed ${#installed_core[@]} core modules"
-    gmsg -v2 -c dark_grey "${installed_core[@]}"
+    gr.msg -v1 -c light_blue "installed ${#installed_core[@]} core modules"
+    gr.msg -v2 -c dark_grey "${installed_core[@]}"
 
-    gmsg -v1 -c light_blue "installed ${#installed_modules[@]} modules"
-    gmsg -v2 -c dark_grey "${installed_modules[@]}"
+    gr.msg -v1 -c light_blue "installed ${#installed_modules[@]} modules"
+    gr.msg -v2 -c dark_grey "${installed_modules[@]}"
 
-    gmsg -v1 -c light_blue "modified ${#modified_files[@]} file(s)"
-    gmsg -v2 -c dark_grey "${modified_files[@]}"
+    gr.msg -v1 -c light_blue "modified ${#modified_files[@]} file(s)"
+    gr.msg -v2 -c dark_grey "${modified_files[@]}"
 
-    gmsg -v1 -c light_blue "copied ${#installed_files[@]} files"
-    gmsg -v2 -c dark_grey "${installed_files[@]}"
+    gr.msg -v1 -c light_blue "copied ${#installed_files[@]} files"
+    gr.msg -v2 -c dark_grey "${installed_files[@]}"
 
-    if system.flag running ; then
-            system.flag rm pause
-            sleep 1
-        fi
+    if flag.main running ; then
+        flag.rm pause
+        sleep 1
+    fi
     # pass
+    gr.end caps
     return 0
+
 }
 
 
 install.desktop () {
-    gmsg -v2 -c navy "$FUNCNAME TBD"
+    gr.msg -v2 -c navy "$FUNCNAME TBD"
     return 0
 }
 
@@ -147,51 +161,51 @@ install.server () {
 
 check.server () {
     # check installed server files
-    gmsg -v1 "checking server files"
+    gr.msg -v1 "checking server files"
     local _server_files=($(ls modules/server/*))
 
     for _file in "${_server_files[@]//'modules/'/$TARGET_BIN}" ; do
-            gmsg -n -v2 -c grey  "$_file.. "
-            if [[ $_file ]]; then
-                    gmsg -v2 -c green "ok"
-                else
-                    gmsg -c yellow "warning: server file $_file missing"
-                    # continue anuweay
-            fi
-        done
+        gr.msg -n -v2 -c grey  "$_file.. "
+        if [[ $_file ]]; then
+                gr.msg -v2 -c green "ok"
+            else
+                gr.msg -c yellow "warning: server file $_file missing"
+                # continue anuweay
+        fi
+    done
     # pass
     return 0
 }
 
 
 install.phone () {
-    gmsg -v2 -c navy "$FUNCNAME TBD"
+    gr.msg -v2 -c navy "$FUNCNAME TBD"
     return 0
 }
 
 
 check.phone () {
-    gmsg -v2 -c navy "$FUNCNAME TBD"
+    gr.msg -v2 -c navy "$FUNCNAME TBD"
     return 0
 }
 
 
 install.help () {
-    gmsg -c white "guru-client install help "
-    gmsg
-    gmsg "usage:    ./install.sh -f|-r|-d|-v|-V|-h|-p [desktop|laptop|server|phone] |-u <user>"
-    gmsg
-    gmsg -c white "flags:"
-    gmsg " -f               force re-install "
-    gmsg " -u <user>        set user name "
-    gmsg " -p [platform]    select installation platform: desktop|laptop|server|phone "
-    gmsg " -d               install also dev stuff "
-    gmsg " -r               install all module requirements (experimental)"
-    gmsg " -v 0..3          set verbose level "
-    gmsg " -h               print this help "
-    gmsg
-    gmsg -c white "example:"
-    gmsg "          ./install.sh -dfV -u $USER"
+    gr.msg -c white "guru-client install help "
+    gr.msg
+    gr.msg "usage:    ./install.sh -f|-r|-d|-v|-V|-h|-p [desktop|laptop|server|phone] |-u <user>"
+    gr.msg
+    gr.msg -c white "flags:"
+    gr.msg " -f               force re-install "
+    gr.msg " -u <user>        set user name "
+    gr.msg " -p [platform]    select installation platform: desktop|laptop|server|phone "
+    gr.msg " -d               install also dev stuff "
+    gr.msg " -r               install all module requirements (experimental)"
+    gr.msg " -v 0..3          set verbose level "
+    gr.msg " -h               print this help "
+    gr.msg
+    gr.msg -c white "example:"
+    gr.msg "          ./install.sh -dfV -u $USER"
     return 0
 }
 
@@ -200,7 +214,7 @@ install.arguments () {
     ## Process flags and arguments
     export GURU_VERBOSE=0
 
-    TEMP=`getopt --long -o "dfcrhlv:u:p:" "$@"`
+    TEMP=`getopt --long -o "dfcrhlsv:u:p:" "$@"`
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
@@ -211,6 +225,8 @@ install.arguments () {
             -c) configure_after_install=true
                 shift ;;
             -r) install_requiremets=true
+                shift ;;
+            -s) gr.msg "TBD"
                 shift ;;
             -h) install.help
                 shift ;;
@@ -241,37 +257,38 @@ install.copy () {
     # copy folders witout subfolders from source to target and keep track of copied files
     local _from="$1" ; shift
     local _to="$1" ; shift
-    gmsg -n -v1 "$@ " ; gmsg -v2
+    gr.msg -n -v1 "$@ " ; gr.msg -v2
 
     _file_list=( $(ls $_from/*) )
     for _file_to_copy in "${_file_list[@]}" ; do
             if cp -rf "$_file_to_copy" "$_to" ; then
-                    gmsg -v1 -V2 -n -c grey "."
-                    gmsg -v2 -c grey "${_file_to_copy/$_from/$_to}"
+                    gr.msg -v1 -V2 -n -c grey "."
+                    gr.msg -v2 -c grey "${_file_to_copy/$_from/$_to}"
                     installed_files=( ${installed_files[@]} ${_file_to_copy/$_from/$_to} )
                 else
-                    gmsg -N -c yellow "$_file_to_copy copy failed"
+                    gr.msg -N -c yellow "$_file_to_copy copy failed"
                  fi
         done
-    gmsg -v1 -V2 -c green " done"
+    gr.msg -v1 -V2 -c green " done"
     return 0
 }
 
 
 install.check () {
     ## Check installation, reinstall if -f or user input
-    gmsg -v1 "checking current installation.. "
+    gr.msg -v1 "checking current installation.. "
     if grep -q "gururc" "$bash_rc" ; then
         [[ $force_overwrite ]] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer
 
         if ! [[ "$answer" == "y" ]]; then
-                gmsg -c red -x 2 "aborting.."
+                gr.msg -c red -x 2 "aborting.."
             fi
 
         if [[ $LIGTH_INSTALL ]] ; then
-            install.core || gmsg -x 150 "error during installing core"
+            install.core || gr.msg -x 150 "error during installing core"
             check.core
-            install.modules && check.modules || gmsg -x 170 "error when installing modules"
+            install.modules && check.modules || gr.msg -x 170 "error when installing modules"
+            gr.end caps
             exit 0
         fi
 
@@ -283,7 +300,7 @@ install.check () {
         if [[ -f "$TARGET_BIN/uninstall.sh" ]] ; then
                 $TARGET_BIN/uninstall.sh
             else
-                gmsg "using package uninstaller"
+                gr.msg "using package uninstaller"
                 ./core/uninstall.sh
             fi
     fi
@@ -293,7 +310,7 @@ install.check () {
 
 install.rcfiles () {
 
-    gmsg -n -v1 "setting rcfiles "
+    gr.msg -n -v1 "setting rcfiles "
     #Check is .gururc called in .bashrc, add call if not # /etc/skel/.bashrc
     [[ -f "$backup_rc" ]] || cp -f "$bash_rc" "$backup_rc"
     # make a backup of original .bashrc only if installed first time
@@ -303,28 +320,28 @@ install.rcfiles () {
     # pass
     installed_files=(${installed_files[@]} "$backup_rc")
     modified_files=(${modified_files[@]} "$backup_rc")
-    gmsg -v1 -c green "done"
+    gr.msg -v1 -c green "done"
     return 0
 }
 
 
 check.rcfiles () {
     # check that rc files were installed
-    gmsg -n -v1 "checking rcfiles " ; gmsg -v2
+    gr.msg -n -v1 "checking rcfiles " ; gr.msg -v2
 
-    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -n -c grey "$bash_rc "
+    gr.msg -n -v1 -V2 -c grey "." ; gr.msg -v2 -n -c grey "$bash_rc "
     if grep -q "gururc" "$bash_rc" ; then
             modified_files=(${modified_files[@]} "$bash_rc")
-            gmsg  -v2 -c green "ok"
+            gr.msg  -v2 -c green "ok"
         else
-            gmsg -c red -x 122 ".bashrc modification error"
+            gr.msg -c red -x 122 ".bashrc modification error"
         fi
 
-    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -n -c grey "$backup_rc"
+    gr.msg -n -v1 -V2 -c grey "." ; gr.msg -v2 -n -c grey "$backup_rc"
     if [[ -f "$backup_rc" ]] ; then
-            gmsg -v1 -c green " ok"
+            gr.msg -v1 -c green " ok"
         else
-            gmsg "warning: .bashrc backup file creation failure"
+            gr.msg "warning: .bashrc backup file creation failure"
         fi
 
     return 0
@@ -332,48 +349,48 @@ check.rcfiles () {
 
 
 install.folders () {
-    # create forlders
-    gmsg -n -v1 "setting up folder structure " ; gmsg -v2
+    # create folders
+    gr.msg -n -v1 "setting up folder structure " ; gr.msg -v2
 
     # make bin folder for scripts, configs and and apps
     [[ -d "$TARGET_BIN" ]] || mkdir -p "$TARGET_BIN"
-    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -c grey "$TARGET_BIN"
+    gr.msg -n -v1 -V2 -c grey "." ; gr.msg -v2 -c grey "$TARGET_BIN"
 
 
     # personal configurations
     [[ -d "$TARGET_CFG/$GURU_USER" ]] || mkdir -p "$TARGET_CFG/$GURU_USER"
-    gmsg -n -v1 -V2 -c grey "." ; gmsg -v2 -c grey "$TARGET_CFG/$GURU_USER"
+    gr.msg -n -v1 -V2 -c grey "." ; gr.msg -v2 -c grey "$TARGET_CFG/$GURU_USER"
 
 
 
     # pass
-    gmsg -V2 -v1 -c green " done"
+    gr.msg -V2 -v1 -c green " done"
     return 0
 }
 
 
 check.folders () {
     # check that folders were created
-    gmsg -n -v1 "checking created folders " ; gmsg -v2
+    gr.msg -n -v1 "checking created folders " ; gr.msg -v2
 
-    gmsg -n -v1 -V2 -c grey "." ; gmsg -n -v2 -c grey "$TARGET_BIN"
+    gr.msg -n -v1 -V2 -c grey "." ; gr.msg -n -v2 -c grey "$TARGET_BIN"
     if [[ -d "$TARGET_BIN" ]] ; then
-            gmsg -v2 -c green " ok"
+            gr.msg -v2 -c green " ok"
         else
-            gmsg -x 141 -c red "failed: bin folder creation error"
+            gr.msg -x 141 -c red "failed: bin folder creation error"
         fi
 
 
-    gmsg -n -v1 -V2 -c grey "." ; gmsg -n -v2 -c grey "$TARGET_CFG/$GURU_USER"
+    gr.msg -n -v1 -V2 -c grey "." ; gr.msg -n -v2 -c grey "$TARGET_CFG/$GURU_USER"
     if [[ -d "$TARGET_CFG/$GURU_USER" ]] ; then
 
-            gmsg  -v2 -c green " ok"
+            gr.msg  -v2 -c green " ok"
 
         else
-            gmsg -x 143 -c red "failed: configuration folder creation error"
+            gr.msg -x 143 -c red "failed: configuration folder creation error"
         fi
     # pass
-    gmsg -V2 -v1 -c green " ok"
+    gr.msg -V2 -v1 -c green " ok"
     return 0
 }
 
@@ -392,31 +409,31 @@ install.core () {
 
 check.core () {
     # check core were installed
-    gmsg -n -v1 "checking core modules" ; gmsg -v2
+    gr.msg -n -v1 "checking core modules" ; gr.msg -v2
     for _file in $(ls core) ; do
-            gmsg -v1 -V2 -n -c grey "."
-            gmsg -n -v2 -c grey "$_file"
+            gr.msg -v1 -V2 -n -c grey "."
+            gr.msg -n -v2 -c grey "$_file"
             if [[ -f $TARGET_BIN/$_file ]] ; then
-                gmsg -v2 -c green " ok"
+                gr.msg -v2 -c green " ok"
             else
-                gmsg -c red "warning: core module $_file missing"
+                gr.msg -c red "warning: core module $_file missing"
             fi
         done
-    gmsg -v1 -V2 -c green " ok"
+    gr.msg -v1 -V2 -c green " ok"
 
-    gmsg -n -v1 "checking configuration files " ; gmsg -v2
+    gr.msg -n -v1 "checking configuration files " ; gr.msg -v2
     for _file in $(ls cfg) ; do
-            gmsg -v1 -V2 -n -c grey "."
-            gmsg -n -v2 -c grey "$_file"
+            gr.msg -v1 -V2 -n -c grey "."
+            gr.msg -n -v2 -c grey "$_file"
             if [[ -f $TARGET_CFG/$_file ]] ; then
-                gmsg -v2 -c green " ok"
+                gr.msg -v2 -c green " ok"
 
             else
-                gmsg -c yellow "warning: configuration file $_file missing"
+                gr.msg -c yellow "warning: configuration file $_file missing"
             fi
         done
     # pass
-   gmsg -v1 -V2 -c green " ok"
+   gr.msg -v1 -V2 -c green " ok"
    return 0
 
 }
@@ -426,7 +443,7 @@ install.dev () {
     # install foray, test and all modules
 
     # include all modules to install list, do not copy yet
-    gmsg -v1 "adding development files to copy list "
+    gr.msg -v1 "adding development files to copy list "
     modules_to_install=($(ls modules -p | grep -v / | cut -f1 -d '.'))
 
     # copy foray modules
@@ -437,16 +454,16 @@ install.dev () {
 
 # check.dev () {
 #     # check installed tester files
-#     gmsg -v1 "checking development files"
+#     gr.msg -v1 "checking development files"
 #     local _modules_to_install=($(ls foray -p | grep -v /))
 
 #     for _file in ${_modules_to_install[@]} ; do
 
-#             gmsg -n -v2 -c grey "$_file.. "
+#             gr.msg -n -v2 -c grey "$_file.. "
 #             if [[ -f $TARGET_BIN/$_file ]] ; then
-#                 gmsg -v2 -c green "ok"
+#                 gr.msg -v2 -c green "ok"
 #             else
-#                 gmsg -c yellow "warning: development file $_file missing"
+#                 gr.msg -c yellow "warning: development file $_file missing"
 #             fi
 #         done
 #     # pass
@@ -456,74 +473,82 @@ install.dev () {
 
 install.modules () {
     # install modules
-    gmsg -n -v1 "installing modules " ; gmsg -v2
+    gr.msg -n -v1 "installing modules " ; gr.msg -v2
 
     for _module in ${modules_to_install[@]} ; do
         module_file=$(ls modules/$_module.* 2>&1 |head -1 )
-        gmsg -n -v1 -V2 -c grey "."
-        gmsg -n -v2 -c grey "${module_file#*/} "
+        gr.msg -n -v1 -V2 -c grey "."
+        gr.msg -n -v2 -c grey "${module_file#*/} "
 
         if [[ -f $module_file ]] ; then
                 # copy adapter
                 if cp -f -r $module_file "$TARGET_BIN" ; then
-                        gmsg -v2 -c green "done"
+                        gr.msg -v2 -c green "done"
                     else
-                        gmsg -c yellow "module $_module adapter copy error"
+                        gr.msg -c yellow "module $_module adapter copy error"
                     fi
 
                 # install module requirements
-                [[ $install_requiremets ]] && gask "install module $_module requirements" && $module_file install
+                [[ $install_requiremets ]] && gr.ask "install module $_module requirements" && $module_file install
 
                 # add to file list, replace source folder to target folder
                 installed_files=( ${installed_files[@]} $TARGET_BIN/${module_file#*/} )
                 installed_modules=( ${installed_modules[@]} ${_module} )
-                #gmsg -c deep_pink "${installed_files[@]}"
+                #gr.msg -c deep_pink "${installed_files[@]}"
             else
-                gmsg -n -v2 -c yellow "error "
-                gmsg -v2 "module adapter '$_module.sh' missing or module not exist"
+                gr.msg -n -v2 -c yellow "error "
+                gr.msg -v2 "module adapter '$_module.sh' missing or module not exist"
+                gr.msg -v2 "adding to list anyway, core will build adapter file on first run"
+                installed_files=( ${installed_files[@]} $TARGET_BIN/${module_file#*/} )
+                installed_modules=( ${installed_modules[@]} ${_module} )
             fi
 
 
         # copy workers
         if [[ -d modules/$_module ]] ; then
-                #gmsg -n -v2 -c grey " copying $_module files.. "
+                #gr.msg -n -v2 -c grey " copying $_module files.. "
                 [[ -d $TARGET_BIN/$_module ]] || mkdir "$TARGET_BIN/$_module"
                 local module_files=( $(ls modules/$_module/*) )
 
                 for _file in ${module_files[@]} ; do
                     _target_file=${_file/"modules/"/"$TARGET_BIN/"}
-                    gmsg -n -v2 -c grey "  ${_file#*/} "
+                    gr.msg -n -v2 -c grey "  ${_file#*/} "
                     if cp -f "$_file" "$_target_file" ; then
                             installed_files=( ${installed_files[@]} $_target_file)
-                            #gmsg -c deep_pink "${installed_files[@]}"
-                            gmsg -n -v1 -V2 -c grey "."
-                            gmsg -v2 -c green "done"
+                            #gr.msg -c deep_pink "${installed_files[@]}"
+                            gr.msg -n -v1 -V2 -c grey "."
+                            gr.msg -v2 -c green "done"
                         else
-                            gmsg -c yellow "module $_module folder copying error"
+                            gr.msg -c yellow "module $_module folder copying error"
                         fi
                 done
+
+                # create adapter if not included // RM 20240105 core will make adapters
+                # if ! [[ -f $TARGET_BIN/$_module.sh ]] ; then
+                #         ln -s $TARGET_BIN/$_module/$_module.sh $TARGET_BIN/$_module.sh
+                #      fi
             fi
         done
     # pass
-    gmsg -v1 -V2 -c green " done"
+    gr.msg -v1 -V2 -c green " done"
     return 0
 }
 
 
 check.modules () {
     # check installed modules (foray folder is not monitored)
-    gmsg -n -v1 "checking installed modules " ; gmsg -v2
+    gr.msg -n -v1 "checking installed modules " ; gr.msg -v2
     for _module in  ${modules_to_install[@]} ; do
-            gmsg -n -v2 -c grey "$_module "
-            gmsg -n -v1 -V2 -c grey "."
+            gr.msg -n -v2 -c grey "$_module "
+            gr.msg -n -v1 -V2 -c grey "."
             if ls $TARGET_BIN/$_module* >/dev/null ; then
-                gmsg -v2 -c green "ok"
+                gr.msg -v2 -c green "ok"
             else
-                gmsg -c yellow "warning: module $_module missing"
+                gr.msg -c yellow "warning: module $_module missing"
             fi
         done
     # pass
-    gmsg -v1 -V2 -c green "ok"
+    gr.msg -v1 -V2 -c green "ok"
     return 0
 }
 
@@ -531,21 +556,21 @@ check.modules () {
 install.config () {
     # config
     if ! [[ -f "$TARGET_CFG/$GURU_USER/user.cfg" ]] ; then
-         gmsg -c yellow "user specific configuration not found, using default.."
+         gr.msg -c yellow "user specific configuration not found, using default.."
          cp -f $TARGET_CFG/user-default.cfg "$TARGET_CFG/$GURU_USER/user.cfg" \
-            || gmsg -c red -x 181 "default user configuration failed"
+            || gr.msg -c red -x 181 "default user configuration failed"
     fi
 
     # post install configure
     if [[ $configure_after_install ]] ; then
-            gmsg -c white "configuring $GURU_USER.."
-            config.export "$GURU_USER" || gmsg -c red "user config export error"
-            source "$core_rc" || gmsg -c red "$core_rc error"
-            #config.main pull || gmsg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
+            gr.msg -c white "configuring $GURU_USER.."
+            config.export "$GURU_USER" || gr.msg -c red "user config export error"
+            source "$core_rc" || gr.msg -c red "$core_rc error"
+            #config.main pull || gr.msg -x 182 "remote user configuration failed" Not yet guru.server needs to exist first
 
             # set keyboard shortcuts
-            gmsg -n -v1 "setting keyboard shortcuts "
-            keyboard.main add all || gmsg -c yellow "error by setting keyboard shortcuts"
+            gr.msg -n -v1 "setting keyboard shortcuts "
+            keyboard.main add all || gr.msg -c yellow "error by setting keyboard shortcuts"
             installed_files=( ${installed_files[@]} $TARGET_CFG/kbbind.backup.cfg )
         else
             [[ -f /tmp/temp.rc ]] && mv -f /tmp/temp.rc $core_rc
@@ -559,5 +584,6 @@ install.config () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         install.main $@
         exit "$?"
+        gr.end caps
 fi
 

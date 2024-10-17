@@ -1,0 +1,4 @@
+#!/usr/bin/env guru
+mount system
+# set verbose 1
+# daemon start ISSUE #5

@@ -1,59 +1,77 @@
 #!/bin/bash
-# guru-client single file module template casa@ujo.guru 2022
-##
-## instructions for using this template
-## 1) copy shell-template.sh to ../<your_module_name>.sh remember to chmod +x
-## 2) find all 'module' words in this file and replace with your module name
-## 3) do the same to 'MODULE' by replacing with your module name written in UPCASE
-## 4) try it './module.sh help'
-## 5) read lines with double hashtags
-## 6) cleanup by removing all double hashtags
-## 7) add module to 'modules_to_install' list in ../install.sh
-## 8) contribute by pull requests at github.com/ugcasa/guru-client =)
+# guru-client single file mudule template casa@ujo.guru 2022
 
-## include needed libraries
-source $GURU_BIN/common.sh
+### Instructions to use template if created by make_single_module.sh
+### 1) skim and then remove lines with triple hashtags
+###
+### Instructions to use template manually
+###
+### 1) copy shell-template.sh to ../<your_module_name>.sh remember to chmod +x
+### 2) find all 'module' words in this file and replace with your module name
+### 3) do the same to 'MODULE' by replacing with your module name written in UPCASE
+### 4) rename "mudule" words to module
+### 4) try it './module.sh help'
+### 5) read lines with double hashtags
+### 6) cleanup by removing all double hashtags
+### 7) add module to 'modules_to_install' list in ../install.sh
+### 8) contribute by setting pull requests at github.com/ugcasa/guru-client =)
+### 9) remove triple comments
 
-## declare run wide global variables
-declare -g temp_file="/tmp/guru-module.tmp"
-declare -g module_indicator_key="f$(daemon.poll_order module)"
 
+# include other modules/libraries that are needed
+### guru-cli modules are set to path, name is enough therefore you should  name
+### module way that is not conflict in run environment
+# source nnnn.sh
 
-## functions, keeping help at first position it might be even updated
+# declare global variables for module
+declare -g module_temp_file="$GURU_TEMP/module.tmp"
+declare -g module_rc="/tmp/guru-cli_module.rc"
+declare -g module_data_folder=$GURU_SYSTEM_MOUNT/module
+
+### functions, keeping help at first position it might be even updated
+
 module.help () {
-    # user help
-    export GURU_VERBOSE=0
-    export GURU_COLOR=
-    gmsg -n -v2 -c white "guru-cli module help "
-    gmsg -v1 "few clause description what module exists"
-    gmsg -v2
-    gmsg -c white -n -v0 "usage:    "
-    gmsg -v0 "$GURU_CALL module command variables"
-    gmsg -v2
-    gmsg -v1 -c white "commands: "
-    gmsg -v2 " ls       list something "
-    gmsg -v2 " help     printout this help "
-    gmsg -v2
-    gmsg -n -v1 -c white "example:  "
-    gmsg -v1 "$GURU_CALL module <command>"
-    gmsg -v2
+# user help
+    gr.msg -v1 "guru-cli module help " -c white
+### few clause description what module is doing
+    gr.msg -v2
+    gr.msg -v2 ""
+    gr.msg -v2
+### explain how to use
+    gr.msg -v0 "usage: " -c white
+    gr.msg -v0 "          $GURU_CALL module command variables"
+    gr.msg -v0 "          $GURU_CALL --option --optin_with_value <value>"
+    gr.msg -v2
+    gr.msg -v1 "commands: " -c white
+### add callable commands below
+    gr.msg -v1 " ls         list something "
+    gr.msg -v1 " install    install requirements "
+    gr.msg -v1 " remove     remove installed requirements "
+    gr.msg -v1 " help       printout this help "
+    gr.msg -v2
+### module options are separated from core variables by double lines
+    gr.msg -v1 "options: " -c white
+    gr.msg -v1 " --option   option "
+    gr.msg -v1 " --value    option with value "
+### add few examples callable commands below
+    gr.msg -v1 "example: " -c white
+    gr.msg -v1 "          $GURU_CALL module <command>"
+    gr.msg -v2
 }
 
+### when module is sourced by another script this function is acting as an interface
+### source module.sh and then call
+### core temp to call functions by 'module.main poll variables'
+### rather than 'module.poll variables' both work dough
 
-## when module is sourced by another script this function is acting as an interface
-## source module.sh and then call
-## core temp to call functions by 'module.main poll variables'
-## rather than 'module.poll variables' both work dough
 module.main () {
-    # main command parser
+# main command parser
 
     local function="$1" ; shift
-    ## declare one shot variables here only if really needed
-    ## declare -g bubble_gum=̈́true
 
     case "$function" in
             ## add functions called from outside on this list
-            ls|help|poll)
+            ls|status|poll|install|remove|help)
                 module.$function $@
                 return $?
                 ;;
@@ -64,58 +82,71 @@ module.main () {
         esac
 }
 
+### example function
 
-## example function
 module.ls () {
-    # list something
-    gmsg "nothing to list"
+# list something
+    gr.msg "nothing to list"
     # test and return result
     return 0
 }
 
+### following function should be able to call without passing trough module.main
 
-## following function should be able to call without passing trough module.main
 module.status () {
-    # output module status
+# output module status
 
-    gmsg -n -t -v1 "${FUNCNAME[0]}: "
+    gr.msg -n -t -v1 "${FUNCNAME[0]}: "
+
+    # check module is installed
+    if [[ -f $GURU_BIN/module.sh ]]; then
+        gr.msg -n -v1 -c green "installed, "
+    else
+        gr.msg -v1 -k $module_indicator_key -c reset "not installed "
+        return 1
+    fi
 
     # check module is enabled
     if [[ $GURU_MODULE_ENABLED ]] ; then
-            gmsg -n -v1 \
-            -k $module_indicator_key \
-            -c green "enabled, "
+        gr.msg -n -v1 \
+        -c green "enabled, "
+    else
+        gr.msg -v1 \
+        -c black "disabled" \
+        -k $module_indicator_key
+        return 1
+    fi
 
-        else
-            gmsg -v1 \
-            -c reset "disabled" \
-            -k $module_indicator_key
-            return 1
-        fi
+    # check that module works
+    if module.check ; then
+        gr.msg -v1 \
+        -k $module_indicator_key \
+        -c green "available "
+    else
+        gr.msg -v1 \
+        -c red "non functional" \
+        -k $module_indicator_key
+        return 1
+    fi
 
-    # other tests with output, return errors
+    return 0
+}
 
-    }
+### following function is used as daemon polling interface
+### to include 'module' to poll list in user.cfg in
+### section '[daemon]''
+### variable 'poll_order'
 
-
-## following function is used as daemon polling interface
-## to include 'module' to poll list in user.cfg in
-## section '[daemon]''
-## variable 'poll_order'
 module.poll () {
-    # daemon interface
-
-    # check is indicator set (should be, but wanted to be sure)
-    [[ $module_indicator_key ]] || \
-        module_indicator_key="f$(daemon.poll_order module)"
+# daemon interface
 
     local _cmd="$1" ; shift
     case $_cmd in
         start)
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: module status polling started" -k $module_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: module status polling started" -k $module_indicator_key
             ;;
         end)
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: module status polling ended" -k $module_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: module status polling ended" -k $module_indicator_key
             ;;
         status)
             module.status $@
@@ -125,31 +156,107 @@ module.poll () {
         esac
 }
 
+### if mudule requires tools or libraries to work installation is done here
 
-## if module requires tools or libraries to work installation is done here
 module.install () {
-
-    # sudo apt update || gmsg -c red "not able to update"
+# install requirements
+    # sudo apt update || gr.msg -c red "not able to update"
     # sudo apt install -y ...
     # pip3 install --user ...
-    gmsg "nothing to install"
+    gr.msg "nothing to install"
     return 0
 }
 
-## instructions to remove installed tools.
-## DO NOT remove any tools that might be considered as basic hacker tools even module did those install those install
-module.remove () {
+### instructions to remove installed tools.
+### DO NOT remove any tools that might be considered as basic tools even module did those install
 
+module.remove () {
+# remove requirements
     # sudo apt remove -y ...
     # pip3 remove --user ...
-    gmsg "nothing to remove"
+    gr.msg "nothing to remove"
     return 0
 }
 
-# if called module.sh file configuration is sourced and main module.main called
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
-    module.main "$@"
-    exit "$?"
+
+module.rc () {
+# source configurations
+
+    local mudule_config="$GURU_CFG/$GURU_USER/module.cfg"
+    # check is mudule configuration changed lately, update rc if so
+    if [[ ! -f $module_rc ]] \
+        || [[ $(( $(stat -c %Y $mudule_config) - $(stat -c %Y $module_rc) )) -gt 0 ]] ## \
+        # || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/other_module.cfg) - $(stat -c %Y $module_rc) )) -gt 0 ]]
+        then
+            module.make_rc && gr.msg -v1 -c dark_gray "$module_rc updated"
+        fi
+
+    [[ ! -d $module_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $module_data_folder
+    if [[ -f $module_rc ]] ; then
+        source $module_rc
+    else
+        gr.msg -v2 -c dark_gray "no configuration"
+    fi
+
+    ## check is any mudule or linked mudule configuration changed lately, update rc if so
+    # if [[ ! -f $module_rc ]] \
+    #     || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/module.cfg) - $(stat -c %Y $0000000module_rc) )) -gt 0 ]] \
+    #     || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/module2.cfg) - $(stat -c %Y $module_rc) )) -gt 0 ]]
+    #     then ...
+}
+
+
+module.make_rc () {
+# construct module configuration rc
+
+    source config.sh
+    local mudule_config="$GURU_CFG/$GURU_USER/module.cfg"
+
+    # try to find user configuration
+    if ! [[ -f $mudule_config ]] ; then
+        gr.debug "$mudule_config does not exist"
+        mudule_config="$GURU_CFG/module.cfg"
+
+        # try to find default configuration
+        if ! [[ -f $mudule_config ]] ; then
+            gr.debug "$mudule_config not exist, skipping"
+            return 1
+        fi
+    fi
+
+    # remove existing rc file
+    if [[ -f $module_rc ]] ; then
+            rm -f $module_rc
+        fi
+
+    config.make_rc $mudule_config $module_rc
+    # config.make_rc "$GURU_CFG/$GURU_USER/another_module.cfg" $module_rc append
+    chmod +x $module_rc
+}
+
+# run these functions every time module is called
+module.rc
+
+# global variables that need values from module configuration
+# declare global that need configuration values from rc
+declare -g module_indicator_key="esc"
+[[ $GURU_MODULE_INDICATOR_KEY ]] && module_indicator_key=$GURU_MODULE_INDICATOR_KEY
+
+# check is module.sh run alone, if sourced by core.sh this
+### general guru configuration is sourced, then main module.main called
+if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
+
+    # run without guru-cli installation
+    if [[ -z $GURU_RC ]] ; then
+        ### Add environmental variables below your module need to run without installation
+        export GURU_CALL="guru"
+        export GURU_RC="$HOME/.gururc"
+        export GURU_BIN="$HOME/bin"
+        export GURU_CFG="$HOME/.config/guru"
+        export GURU_TEMP="/tmp/guru"
+    fi
+    source $GURU_RC
+    module.main $@
+    exit $?
 fi
 

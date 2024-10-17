@@ -15,53 +15,98 @@ install.main () {
     case $(uname -m) in
         aarch64|arm64) SYSTEM_ARCHITECTURE="arm64" ;;
         amd64|x86_64) SYSTEM_ARCHITECTURE="amd64" ;;
-        *) gmsg -c red "unknown architecture" -k esc
+        *) gr.msg -c red "unknown architecture" -k caps
     esac
 
     case "$argument" in
-        help|virtualbox|tiv|java|\
-        client|hackrf|fosphor|spectrumanalyzer|\
-        radio|webmin|kaldi|vscode|\
-        django|anaconda|python)
+        steam|status|earth|help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams|fail2ban)
                     install.$argument "$@" ;;
-        status|poll|start|stop)
-                    gmsg -v dark_grey "no polling functions" ;;
-        *)          gmsg -v dark_grey "no installer for '$argument'"; install.help
+        *)          gr.msg -v dark_grey "no installer for '$argument'"; install.help
     esac
+}
+
+install.status () {
+    gr.msg -t "${FUNCNAME[0]}: available "
 }
 
 
 install.help () {
-    gmsg -v1 -c white "guru-client installer help "
-    gmsg -v2
-    gmsg -v0  "usage:    $GURU_CALL install [keyword] "
-    gmsg -v2
-    gmsg -v1 -c white  "keywords:"
-    gmsg -v1 " vscode               ms visual code "
-    gmsg -v1 " virtualbox           virtualbox "
-    gmsg -v1 " kaldi                speech recognize AI "
-    gmsg -v1 " java                 java runtime "
-    gmsg -v1 " python               python3 and venv "
-    gmsg -v1 " anaconda             anaconda dev tool"
-    gmsg -v1 " django               django framework "
-    gmsg -v1 " mqtt-client          mopsquitto MQTT clients "
-    gmsg -v1 " webmin               webmin tools "
-    gmsg -v1 " radio                gnuradio, HackRF, spectrumanalyzer and fosphor "
-    gmsg -v2 " gnuradio             install radio software separately: "
-    gmsg -v2 " hackrf               "
-    gmsg -v2 " spectrumanalyzer     "
-    gmsg -v2 " fosphor              "
-    gmsg -v1 " tiv                  tiv text mode picture viewer "
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client installer help "
+    gr.msg -v2
+    gr.msg -v0  "usage:    $GURU_CALL install application_name "
+    gr.msg -v2
+    gr.msg -v1 -c white  "application list:"
+    gr.msg -v1 " anaconda             anaconda dev tool"
+    gr.msg -v1 " django               django framework "
+    gr.msg -v2 " fosphor              "
+    gr.msg -v2 " hackrf               "
+    gr.msg -v1 " java                 java runtime "
+    gr.msg -v1 " kaldi                speech recognize AI "
+    gr.msg -v1 " python               python3 and venv "
+    gr.msg -v1 " radio                gnuradio, HackRF, spectrumanalyzer and fosphor "
+    gr.msg -v2 " spectrumanalyzer     "
+    gr.msg -v1 " tiv                  tiv text mode picture viewer "
+    gr.msg -v1 " virtualbox           virtualbox "
+    gr.msg -v1 " vscode               ms visual code "
+    gr.msg -v1 " webmin               webmin tools "
+    gr.msg -v1 " minecraft            minecraft block game"
+
+    gr.msg -v2 " unity                TBD unity "
+    gr.msg -v2 " mqtt                 TBD mopsquitto MQTT client "
+    gr.msg -v2 " mqtt-server          TBD mopsquitto MQTT server "
+
+
+    gr.msg -v2
 }
 
 
-install.question () {
-    [[ "$1" ]] || return 2
-    read -p "$1 [y/n]: " answer
-    [[ $answer ]] || return 1
-    [[ $answer == "y" ]]  && return 0
-    return 1
+install.earth () {
+    clear
+    gr.msg -h "Installing Google Earth.. "
+
+    sudo apt install google-earth-pro-stable || return 12
+
+    gr.msg -c green "ok"
+
+    gr.ask "open it?" && google-earth-pro
+}
+
+
+install.minecraft () {
+
+    if [[ "$1" == "uninstall" ]] ; then
+        sudo apt-get --purge remove minecraft-launcher
+        rm -r ~/.minecraf
+        return $?
+    fi
+
+    cd /tmp
+    wget https://launcher.mojang.com/download/Minecraft.deb
+    sudo dpkg -i Minecraft.deb
+    sudo apt-get -f install
+}
+
+
+install.unity () {
+    # install unity 3D
+
+    if [[ "$1" == "uninstall" ]] ; then
+        gr.ask "remove unity?" || return 0
+        sudo apt-get remove unityhub
+        return $?
+    fi
+
+    # if tiv -help >/tmp/tiv.help ; then
+    #     gr.msg "already installed: $(head -n1 /tmp/tiv.help) "
+    #     gr.ask "force reinstall" || return 0
+    # fi
+
+    sudo sh -c 'echo "deb https://hub.unity3d.com/linux/repos/deb stable main" > /etc/apt/sources.list.d/unityhub.list'
+    wget -qO - https://hub.unity3d.com/linux/keys/public | sudo apt-key add - || return 101
+    sudo apt-get update || return 102
+    sudo apt-get install unityhub || return 103
+
+    return 0
 }
 
 
@@ -98,10 +143,24 @@ install.virtualbox () {
 
 install.tiv () {
     #install text mode picture viewer
+
+    if [[ "$1" == "uninstall" ]] ; then
+        gr.ask "remove tiv?" || return 0
+        rm /usr/local/bin/tiv
+
+        gr.ask "remove imagemagick?" || return 0
+        sudo apt-get remove imagemagick
+        return $?
+    fi
+
+    if tiv -help ; then
+        gr.ask "already installed force reinstall?" || return 0
+    fi
+
     [[ -d /tmp/TerminalImageViewer ]] && rm /tmp/TerminalImageViewer -rf
     cd /tmp
-    sudo apt update && OK "update"
-    sudo apt install imagemagick && OK "imagemagick"
+    sudo apt-get update && OK "update"
+    sudo apt-get install imagemagick && OK "imagemagick"
     git clone https://github.com/stefanhaustein/TerminalImageViewer.git && OK "git clone"
     cd TerminalImageViewer/src/main/cpp
     make && OK "compile"
@@ -122,7 +181,7 @@ install.java () {
 
     [ "$action" ] || read -r -p "install or remove?: " action
     printf "need to install $require, ctrl+c or enter local "
-    sudo apt update && eval sudo apt "$action" "$require" && printf "\n guru is now ready to script java\n\n"
+    sudo apt-get update && eval sudo apt-get "$action" "$require" && printf "\n guru is now ready to script java\n\n"
 }
 
 
@@ -130,7 +189,7 @@ install.java () {
 # combined to radio
 install.hackrf () {
     # full
-    # sudo apt install hackrf
+    # sudo apt-get install hackrf
     read -r -p "Connect HacrkRF One and press anykey: " nouse
     hackrf_info && echo "successfully installed" || echo "HackrRF One not found, pls. re-plug or re-install"
     mkdir -p $HOME/git/labtools/radio
@@ -186,9 +245,9 @@ install.radio () {
                 "build-essential python3-dev libqt4-dev gnuradio gqrx-sdr hackrf \
                 gr-osmosdr libusb-dev python-qwt5-qt4"
         fi
-    install.hackrf || gmsg -v yellow "hackrf isntall error"
-    install.spectrumanalyzer || gmsg -v yellow "spectrumanalyzer isntall error"
-    install.fosphor || gmsg -v yellow "fosphor isntall error"
+    install.hackrf || gr.msg -v yellow "hackrf isntall error"
+    install.spectrumanalyzer || gr.msg -v yellow "spectrumanalyzer isntall error"
+    install.fosphor || gr.msg -v yellow "fosphor isntall error"
 
     # launch
     [[ $GURU_FORCE ]] && gnuradio-companion &
@@ -207,8 +266,8 @@ install.webmin () {
 
     cat /etc/apt/sources.list |grep "webmin" >/dev/null
     if ! [[ $? ]] ; then
-        sudo apt update
-        sudo apt install webmin
+        sudo apt-get update
+        sudo apt-get install webmin
         echo "webmin installed, connect http://localhost:10000"
         echo "if using ssh tunnel try http://localhost.localdomain:100000)"
     else
@@ -235,8 +294,8 @@ install.anaconda () {
     chmod +x $anaconda_installer
     bash $anaconda_installer -u && rm $anaconda_installer installer_sum || return 12
     source ~/.bashrc
-    gmsg -c green  "anaconda install done"
-    gmsg -c1 "run setup by typing: '$GURU_CALL anaconda set'"
+    gr.msg -c green  "anaconda install done"
+    gr.msg -c1 "run setup by typing: '$GURU_CALL anaconda set'"
     return 0
 }
 
@@ -245,7 +304,7 @@ install.kaldi (){
 
     local cores=8
     echo "installing kaldi.."
-    sudo apt install g++ subversion
+    sudo apt-get install g++ subversion
     cd git
     mkdir speech
     cd speech
@@ -264,40 +323,40 @@ install.kaldi (){
 
 install.python () {
     # raw install python tools
-    sudo apt update
+    sudo apt-get update
     if python -V ; then
-            gmsg -c green "python2.7 installed"
+            gr.msg -c green "python2.7 installed"
         else
-            sudo apt install python2 || gmsg -c yellow "error $? during python2.7 install"
+            sudo apt-get install python2 || gr.msg -c yellow "error $? during python2.7 install"
         fi
 
     if python3 -V ; then
-            gmsg -c green "python3 installed"
+            gr.msg -c green "python3 installed"
         else
-            sudo apt install -y python3.9 python3-pip python3-venv python3-dev \
-            || gmsg -c yellow "error $? during python3.9 install"
+            sudo apt-get install -y python3.9 python3-pip python3-venv python3-dev \
+            || gr.msg -c yellow "error $? during python3.9 install"
         fi
 
-    sudo apt install build-essential libssl-dev libffi-dev
+    sudo apt-get install build-essential libssl-dev libffi-dev
 }
 
 
 install.vscode () {
     # install ms visual code editor
 
-    gmsg "installing vscode.."
-    sudo apt update
-    sudo apt install software-properties-common apt-transport-https wget
+    gr.msg "installing vscode.."
+    sudo apt-get update
+    sudo apt-get install software-properties-common apt-transport-https wget
 
     wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | sudo apt-key add -
     sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
-    sudo apt update
+    sudo apt-get update
 
-    if sudo apt install code ; then
-            gmsg -c green "installed"
+    if sudo apt-get install code ; then
+            gr.msg -c green "installed"
             return 0
         else
-            gmsg -c yellow "error $? during install"
+            gr.msg -c yellow "error $? during install"
             return $?
         fi
 
@@ -309,6 +368,65 @@ install.vscode () {
     # sudo apt-get update
     # sudo apt-get install code && printf "\n guru is now ready to code \n\n"
 }
+
+
+install.teams () {
+
+    # Step 1 make temp
+    temp_folder='/tmp/teams'
+    mkdir $temp_folder && cd $temp_folder
+
+    # Step 2 get package
+    if wget https://go.microsoft.com/fwlink/p/?LinkID=2112886 -O "$temp_folder/teams.deb" ; then
+        gr.msg -c yellow "unable to download package from https://go.microsoft.com/fwlink/p/?LinkID=2112886"
+        return 102
+    fi
+
+    # Step 3 install package
+    if sudo dpkg -i $temp_folder/teams.deb ; then
+        gr.msg -c yellow "Pachage installation failed"
+        return 103
+    fi
+
+    gr.msg -c green "teams installed"
+    gr.msg "type 'teams' to test installation"
+    return 0
+}
+
+
+install.fail2ban () {
+       # install and setup ssh brute force protection
+       if sudo apt-get update && sudo apt-get -y install fail2ban ; then
+              gr.msg -c green "installation ok"
+       else
+              gr.msg -c red "failed to install"
+              return 100
+       fi
+
+       sudo systemctl enable fail2ban.service
+
+       jail_conf='/etc/fail2ban/jail.local'
+
+       if [[ -f $jail_conf ]] && grep '[sshd]' $jail_conf ; then
+              gr.msg "already configured"
+       else
+              printf "\n[sshd] \nenables = true \nport = ssh \nfilter = sshd \nlogpath = /var/log/auth.log \nmaxretry = 3 \nfindtime = 300 \nbantime = 3600 \n" \
+                     | sudo tee -a $jail_conf
+       fi
+       sudo systemctl start fail2ban.service
+       sudo fail2ban-client status sshd && gr.msg -c green "setup ok" || gr.msg -c red "failed to setup"
+}
+
+install.steam () {
+# install steam (tested once)
+    sudo add-apt-repository multiverse
+    sudo apt update
+    sudo apt install -y wget gdebi-core libgl1-mesa-dri:i386 libgl1-mesa-glx:i386 libc6:amd64 libc6:i386 libegl1:amd64 libegl1:i386 libgbm1:amd64 libgbm1:i386 libgl1-mesa-dri:amd64 libgl1-mesa-dri:i386 libgl1:amd64 libgl1:i386 steam-libs-amd64:amd64 steam-libs-i386:i386
+    cd /tmp
+    wget https://cdn.akamai.steamstatic.com/client/installer/steam.deb
+    sudo gdebi -y steam.deb
+}
+
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

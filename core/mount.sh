@@ -1,90 +1,185 @@
 #!/bin/bash
-# mount tools for guru-client
-#source "$HOME/.gururc"
-source $GURU_BIN/common.sh
+# guru-cli mount core module 2019 - 2022 casa@ujo.guru
 
-all_list=($(\
-        grep "export GURU_MOUNT_" $GURU_RC | \
-        grep -ve "_LIST" -ve "_ENABLED" | \
-        sed 's/^.*MOUNT_//' | \
-        cut -d '=' -f1))
+declare -g mount_rc="/tmp/guru-cli_mount.rc"
 
-all_list=(${all_list[@],,})
+mount.help () {
 
-mount_indicator_key='f'"$(daemon.poll_order mount)"
-
-mount.main () {
-    # mount command parser
-
-    local command="$1" ; shift
-
-    case "$command" in
-
-            defaults|system|all|help|ls|info|check|\
-            poll|status|start|stop|toggle|list)
-
-                            mount.$command $@
-                            return $? ;;
-
-            check-system)   mount.check "$GURU_SYSTEM_MOUNT"
-                            return $? ;;
-
-                      "")   mount.list default
-                            return $? ;;
-                       # TBD this is bullshit
-                       *)   if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$command" ; then
-                                    gmsg -v4 -c pink "found in defauls list"
-                                    mount.known_remote $command $@
-
-                                elif echo ${all_list[@]} | grep -q -w "$command" ; then
-                                    gmsg -v4 -c pink "found in all list"
-                                    mount.known_remote $command $@
-
-                                else
-                                    gmsg -v4 -c pink "not in any list"
-                                    mount.remote $command $@
-                                fi
-                            mount.status >/dev/null
-                            return $? ;;
-        esac
+    gr.msg -v1 -c white "guru-cli mount help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL mount|unount|check|check-system <source> <target>"
+    gr.msg -v2
+    gr.msg -v1 -c white "commands:"
+    gr.msg -v1 " ls                         list of mounted folders "
+    gr.msg -v1 " check mount_name           check that mount point is mounted "
+    gr.msg -v2 " check-system               check that guru system folder is mounted "
+    gr.msg -v1 " mount mount_name           mount folder in file server to local folder "
+    gr.msg -v1 " mount all                  mount all known folders in server "
+    gr.msg -v2 "                            edit $GURU_CFG/$USER/user.cfg or run "
+    gr.msg -v2 "                            '$GURU_CALL config user' to setup default mountpoints "
+    gr.msg -v3 " poll start|end             start or end module status polling "
+    gr.msg -v2
+    gr.msg -v1 -c white "example:"
+    gr.msg -v1 "      $GURU_CALL mount /home/$GURU_CLOUD_USERNAME/share /home/$USER/guru/projects"
+    gr.msg -v1 "      $GURU_CALL umount /home/$USER/guru/projects"
 }
 
 
-mount.help () {
-    # general help
+mount.main () {
+# mount command parser
 
-    gmsg -v1 -c white "guru-client mount help "
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL mount|unount|check|check-system <source> <target>"
-    gmsg -v2
-    gmsg -v1 -c white "commands:"
-    gmsg -v1 " ls                       list of mounted folders "
-    gmsg -v1 " check [target]           check that mount point is mounted "
-    gmsg -v2 " check-system             check that guru system folder is mounted "
-    gmsg -v1 " mount [source] [target]  mount folder in file server to local folder "
-    gmsg -v1 " mount all                mount all known folders in server "
-    gmsg -v2 "                          edit $GURU_CFG/$USER/user.cfg or run "
-    gmsg -v2 "                          '$GURU_CALL config user' to setup default mountpoints "
-    gmsg -v2 "                          more information of adding default mountpoint type: $GURU_CALL mount help-default"
-    gmsg -v3 " poll start|end           start or end module status polling "
-    gmsg -v2
-    gmsg -v1 -c white "example:"
-    gmsg -v1 "      $GURU_CALL mount /home/$GURU_CLOUD_USERNAME/share /home/$USER/guru/projects"
-    gmsg -v1 "      $GURU_CALL umount /home/$USER/guru/projects"
+    local _error=0
+    local command="$1"
+    shift
+
+    case "$command" in
+
+            system|help|ls|info|check|mounted|poll|status|start|stop|uninstall|available|mounted|online|config)
+                mount.$command $@
+                _error=$?
+                ;;
+
+            list)
+                mount.available $@
+                _error=$?
+                ;;
+
+            defaults|all|toggle)
+                mount.$command $@
+                _error=$?
+                mount.status >/dev/null
+                ;;
+
+            check-system)
+                mount.check "$GURU_SYSTEM_MOUNT"
+                _error=$?
+                ;;
+
+            folder|mount)
+                mount.remote $command $@
+                _error=$?
+                ;;
+
+            size)
+                mount.local_size $@
+                _error=$?
+                ;;
+            "")
+                mount.listed default
+                _error=$?
+                mount.status
+                ;;
+
+            *)
+                if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$command" ; then
+                    gr.debug "found in defauls list"
+                    mount.known_remote $command $@
+
+                elif echo ${all_list[@]} | grep -q -w "$command" ; then
+                    gr.debug "found in all list"
+                    mount.known_remote $command $@
+                else
+                    gr.debug "trying to mount location defined in other module configuration"
+                    mount.known_remote $command $@
+                fi
+
+                mount.status >/dev/null
+                error=$?
+                ;;
+        esac
+
+        return $_error
+}
+
+
+mount.rc () {
+# source configurations
+
+    if  [[ ! -f $mount_rc ]] || \
+        [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $mount_rc) )) -gt 0 ]]
+    then
+        mount.make_rc && \
+            gr.msg -v1 -c dark_gray "$mount_rc updated"
+    fi
+
+    source $mount_rc
+
+    declare -g all_list=($(\
+            grep "export GURU_MOUNT_" $mount_rc | \
+            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
+            sed 's/^.*MOUNT_//' | \
+            cut -d '=' -f1))
+            all_list=(${all_list[@],,})
+}
+
+
+mount.make_rc () {
+# make core module rc file out of configuration file
+
+    if ! source config.sh ; then
+        gr.msg -c yellow "unable to load configuration module"
+        return 100
+    fi
+
+    if [[ -f $mount_rc ]] ; then
+        rm -f $mount_rc
+    fi
+
+    if ! config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $mount_rc ; then
+        gr.msg -c yellow "configuration failed"
+        return 101
+    fi
+
+    chmod +x $mount_rc
+
+    if ! source $mount_rc ; then
+        gr.msg -c red "unable to source configuration"
+        return 202
+    fi
+
+    declare -g all_list=($(\
+            grep "export GURU_MOUNT_" $mount_rc | \
+            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
+            sed 's/^.*MOUNT_//' | \
+            cut -d '=' -f1))
+            all_list=(${all_list[@],,})
+}
+
+
+mount.local_size () {
+# check size of files in locally mounted folder
+
+    local _mount_target=$GURU_DATA
+    [[ $1 ]] && _mount_target="$1"
+
+    # check is mount available
+    gr.msg -n -v2 "checking $_mount_target.. "
+    if ! mount.check $_mount_target ; then
+        gr.msg -e1 "$_mount_target not mounted"
+        return 10
+    fi
+
+    # get values
+    local _total_size=$(du -s $_mount_target 2>/dev/null)
+    local _human_total_size=$(echo "$_total_size" | awk '{ byte =$1 /1024**2 ; print byte " GB" }')
+
+    gr.msg -v2 -n "$_mount_target: "
+    gr.msg -v1 "$_human_total_size"
+    gr.msg -v0 -V1 "$_total_size"
 }
 
 
 mount.info () {
-    # detailed list of mounted mountpoints. nice list of information of sshfs mount points
+# detailed list of mounted mountpoints. nice list of information of sshfs mount points
 
     local _error=0
     # header (stdout if verbose rised)
-    gmsg -v2 -c white "user@server remote_folder local_mountpoint  uptime pid"
+    gr.msg -v1 -c white "user@server remote_folder local_mountpoint  uptime pid"
     mount -t fuse.sshfs | grep -oP '^.+?@\S+?:\K.+(?= on /)' |
 
     # get the mount data
     while read mount ; do
-        # iterate over them
+        # iterate over them       / how these work here?   --^
         mount | grep -w "$mount" |
         # Get the details of this mount
         perl -ne '/.+?@(\S+?):(.+)\s+on\s+(.+)\s+type.*user_id=(\d+)/;print "'$GURU_USER'\@$1 $2 $3"'
@@ -102,13 +197,13 @@ mount.info () {
 
     done
 
-    ((_error>0)) && gmsg -c yellow "perl not installed or internal error, pls try to install perl and try again."
+    ((_error>0)) && gr.msg -c yellow "perl not installed or internal error, pls try to install perl and try again."
     return $_error
 }
 
 
 mount.ls () {
-    # simple list of mounted mountpoints
+# simple list of mounted mountpoints
 
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
     return $?
@@ -116,23 +211,23 @@ mount.ls () {
 
 
 mount.system () {
-    # mount system data
+# mount system data
 
-    gmsg -v3 -n "checking system data folder.."
+    gr.msg -v3 -n "checking system data folder.."
     if [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] ; then
-            gmsg -v3 -c green "mounted "
-        else
-            gmsg -v3 -n "mounting.. "
-            # gmsg -v3 -c deep_pink "${GURU_SYSTEM_MOUNT[1]} -> $GURU_SYSTEM_MOUNT"
-            mount.remote "$GURU_SYSTEM_MOUNT" "${GURU_SYSTEM_MOUNT[1]}" \
-                && gmsg -v3 -c green "ok"  \
-                || gmsg -v3 -c yellow "error $?"
-          fi
+            gr.debug "$FUNCNAME: mounted "
+    else
+        gr.msg -v3 -n "mounting.. "
+        # gr.debug "$FUNCNAME: ${GURU_SYSTEM_MOUNT[1]} -> $GURU_SYSTEM_MOUNT"
+        mount.remote "$GURU_SYSTEM_MOUNT" "${GURU_SYSTEM_MOUNT[1]}" \
+            && gr.debug "$FUNCNAME: ok"  \
+            || gr.debug "$FUNCNAME: error $?"
+    fi
 }
 
 
 mount.online () {
-    # check if mountpoint "online", no printout, return code only input: mount point folder. usage: mount.online mount_point && echo "mounted" || echo "not mounted"
+# check is mount point "online", no printout,
 
     local _target_folder="$GURU_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
@@ -145,39 +240,74 @@ mount.online () {
 }
 
 
-mount.check () {
-    # check mountpoint is mounted, output status
 
-    local _err=0
+mount.mounted () {
+# check is givven list name already mounted
+
+    local _mount_list_name=$1
+
+    if ! [[ "$_mount_list_name" ]]; then
+        gr.msg -c error -v2 "please give mount point name"
+        return
+    fi
+
+    local _target_folder=$(eval echo '${GURU_MOUNT_'"${_mount_list_name^^}[0]}")
+    gr.debug "$FUNCNAME: target folder '$_target_folder'"
+
+    if ! [[ $_target_folder ]] ; then
+        gr.msg -c error "unable to solve target folder, check mount list name '$_mount_list_name'"
+        return 2
+    fi
+
+    if [[ -f "$_target_folder/.online" ]] ; then
+        gr.debug "'$_mount_list_name' mounted to '$_target_folder'"
+        return 0
+    else
+        gr.debug "'$_mount_list_name' not mounted '$_target_folder'"
+        return 1
+    fi
+}
+
+
+
+mount.check () {
+# check is mount point mounted, output status
+
     local _target_folder=$GURU_SYSTEM_MOUNT
     [[ "$1" ]] && _target_folder="$1"
 
-    gmsg -n -v1 -V2 -c light_blue "${_target_folder##*/} "
-    gmsg -n -v2 -c light_blue "$_target_folder "
+    local color=grey
+    local _online
 
-    mount.online $_target_folder
-    _err=$?
+    mount.online $_target_folder && _online=1 || _online=
 
-    if [[ $_err -gt 0 ]] ; then
-            gmsg -v2 -c dark_grey "not mounted"
-            return 1
-        fi
-
-    # colors
     case $_target_folder in
-        *'.data'*)  gmsg -v2 -c cadet_blue "system"
+
+        *.data)  [[ $_online ]] \
+                        && color=sky_blue \
+                        || color=dark_grey
                     ;;
-            *'.'*)  gmsg -v2 -c deep_pink "private"
+
+            */.*)  [[ $_online ]] \
+                        && color=hot_pink \
+                        || return 1
+
                     ;;
-                *)  gmsg -v2 -c green "available"
+
+                *)  [[ $_online ]] \
+                        && color=aqua \
+                        || color=dark_cyan
                     ;;
-                esac
-    return 0
+    esac
+    gr.msg -n -v1 -c $color "${_target_folder##*/} "
+
+    [[ $_online ]] && return 0 || return 1
+    # return $_online
 }
 
 
 mount.remote () {
-    # mount any remote location. usage: mount_point remote_folder optional: domain port symlink_to
+# mount any remote location. usage: mount_point remote_folder optional: domain port symlink_to
 
     # set defaults
     local _target_folder=
@@ -198,49 +328,50 @@ mount.remote () {
     [[ "$4" ]] && _source_port="$4"
     [[ "$5" ]] && _symlink="$5"
 
-    gmsg -v1 -n "$_target_folder.. "
-
+    gr.msg -v1 -n "$_target_folder "
 
     # double check is in /etc/mtab  already mounted and .online file exists
-    if [[ -f $_target_folder/.online ]] && grep -qw "$_target_folder" /etc/mtab ; then #>/dev/null
-            gmsg -v1 -c green "mounted"
-            return 0
-        fi
+    if [[ -f $_target_folder/.online ]] && grep -qw "$_target_folder" /etc/mtab ; then
+        gr.msg -v1 -c green "mounted"
+        return 0
+    fi
 
     # check mount point exist, create if not
     if ! [[ -d "$_target_folder" ]] ; then
-            mkdir -p "$_target_folder"
-        fi
+        mkdir -p "$_target_folder"
+    fi
+
+    echo $_target_folder | xclip -i -selection clipboard
 
     # check is target populated and append if is
     if ! [[ -z "$(ls -A $_target_folder)" ]] ; then
-            # Check that targed directory is empty
-            gmsg -c yellow "target folder is not empty!"
+        # Check that target directory is empty
+        gr.msg -c yellow "target folder is not empty!"
 
-            if ! [[ $GURU_FORCE ]] ; then
-                    gmsg -v2 -c white "try '-f' to force or: '$GURU_CALL -f mount $_source_folder $_target_folder"
-                    return 25
-                fi
-
-            # move found files to temp
-            gmsg -c light_blue "$(ls $_target_folder)"
-            read -r -p "append above files to $_target_folder?: " _reply
-
-            case $_reply in
-                y)
-                    [[ -d $_temp_folder ]] && rm -rf "$_temp_folder"
-                    gmsg -c pink -v3 "mv $_target_folder -> $_temp_folder"
-                    mkdir -p "$_temp_folder"
-                    mv "$_target_folder" "$_temp_folder"
-                    ;;
-                *)  gmsg -c red "unable to mount $_target_folder is populated"
-                    return 26
-                esac
+        if ! [[ $GURU_FORCE ]] ; then
+            gr.msg -v2 -c white "try '-f' to force or: '$GURU_CALL -f mount $_source_folder $_target_folder"
+            return 25
         fi
+
+        # move found files to temp
+        gr.msg -c light_blue "$(ls $_target_folder)"
+        read -r -p "append above files to $_target_folder?: " _reply
+
+        case $_reply in
+            y)
+                [[ -d $_temp_folder ]] && rm -rf "$_temp_folder"
+                gr.debug "mv $_target_folder -> $_temp_folder"
+                mkdir -p "$_temp_folder"
+                mv "$_target_folder" "$_temp_folder"
+                ;;
+            *)  gr.msg -c red "unable to mount $_target_folder is populated"
+                return 26
+        esac
+    fi
 
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
 
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks \
           -p "$_source_port" \
           "$GURU_CLOUD_USERNAME@$_source_server:$_source_folder" \
           "$_target_folder"
@@ -249,74 +380,81 @@ mount.remote () {
 
     # copy files from temp if exist
     if [[ -d "$_temp_folder/${_target_folder##*/}" ]] ; then
-            # new fucket up space dot --> if [[ -d "$_temp_folder" ]] ; then
-            gmsg -c pink -v3 "cp $_temp_folder/${_target_folder##*/} > $_target_folder"
+        # new fucked up space dot --> if [[ -d "$_temp_folder" ]] ; then
+        gr.debug "cp $_temp_folder/${_target_folder##*/} > $_target_folder"
 
-            cp -a "$_temp_folder/${_target_folder##*/}/." "$_target_folder" \
-                || gmsg -c yellow "failed to append/return files to $_target_folder, check also $_temp_folder"
+        cp -a "$_temp_folder/${_target_folder##*/}/." "$_target_folder" \
+            || gr.msg -c yellow "failed to append/return files to $_target_folder, check also $_temp_folder"
 
-            rm -rf "$_temp_folder" \
-                || gmsg -c yellow "failed to remote $_temp_folder"
-        fi
+        rm -rf "$_temp_folder" \
+            || gr.msg -c yellow "failed to remote $_temp_folder"
+    fi
 
     # if symlink given check if exist and create if not
     if [[ $_symlink ]] ; then
-            gmsg -n -v1 "symlink "
+        gr.msg -n -v1 "symlink "
 
-            if file -h $_symlink | grep "symbolic" >/dev/null ; then
-                    gmsg -n -v1 "exist "
-                else
-                    gmsg -n -v1 "creating.. "
-                    ln -s $_target_folder $_symlink && error=0 \
-                        || gmsg -x 25 -c yellow "error creating $_symlink"
-                fi
+        if file -h $_symlink | grep "symbolic" >/dev/null ; then
+            gr.msg -n -v1 "exist "
+        else
+            gr.msg -n -v1 "creating.. "
+            ln -s $_target_folder $_symlink && error=0 \
+                || gr.msg -x 25 -c yellow "error creating $_symlink"
         fi
+    fi
 
     # check sshfs error
     if ((error>0)) ; then
-            gmsg -c yellow "error $error when sshf"
-            gmsg -v2 "check user cofiguration '$GURU_CALL config user'"
+        gr.msg -c yellow "error $error when sshf"
+        gr.msg -v2 "check user configuration '$GURU_CALL config user'"
 
-            ## check that is not listed in /etc/mtab
-            if grep -wq $_target_folder /etc/mtab ; then
-                    gmsg -c yellow "listed in mtab, not able to remove $_target_folder"
-                    return 27
-                fi
-
-            # remove folder only if empty
-            [[ -d "$_target_folder" ]] && rmdir "$_target_folder"
-            return $error
-        else
-            [[ -f "$_target_folder/.online" ]] || touch "$_target_folder/.online"
-            gmsg -v1 -c green "ok"
-            return 0
+        ## check that is not listed in /etc/mtab
+        if grep -wq $_target_folder /etc/mtab ; then
+            gr.msg -c yellow "listed in mtab, not able to remove $_target_folder"
+            return 27
         fi
+
+        # remove folder only if empty
+        [[ -d "$_target_folder" ]] && rmdir "$_target_folder"
+        return $error
+    else
+        [[ -f "$_target_folder/.online" ]] || touch "$_target_folder/.online"
+        gr.msg -v1 -c green "ok"
+        return 0
+    fi
 }
 
 
-mount.list () {
-    # mount all GURU_MOUNT_<list_name>_LIST defined in userrc
+mount.available () {
+# printout list of available mount points
+
+    gr.msg -c light_blue "${all_list[@]}"
+    return 0
+}
+
+
+mount.listed () {
+# mount all GURU_MOUNT_<list_name>_LIST defined in user configuration
 
     local _error=0
     local _IFS="$IFS"
     local _symlink=
     local _list_name="default" ; [[ $1 ]] && _list_name=$1
 
-    #local _mount_list=(${GURU_MOUNT_DEFAULT_LIST[@]^^})
+    # get list given of mount points specified in mount.cfg
     local _mount_list=$(eval echo '${GURU_MOUNT_'"${_list_name^^}_LIST[@]^^}")
 
     [[ ${_mount_list[@]} ]] || _mount_list=(${all_list[@]})
 
     if [[ ${_mount_list} ]] ; then
-                gmsg -v3 -c light_blue "${_mount_list[@]}"
+                gr.debug "$FUNCNAME: ${_mount_list[@]}"
             else
-                gmsg -c yellow "default mount list is empty, edit $GURU_CFG/$GURU_USER/user.cfg and then '$GURU_CALL config export'"
+                gr.msg -c yellow "default mount list is empty, edit $GURU_CFG/$GURU_USER/user.cfg and then '$GURU_CALL config export'"
             return 1
         fi
 
-    #gmsg -v2 -c white "mounted: "
+    # go trough of found variables
     for _item in ${_mount_list[@]} ; do
-            # go trough of found variables
             _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
             _source=$(eval echo '${GURU_MOUNT_'"${_item}[1]}")
             _symlink=$(eval echo '${GURU_MOUNT_'"${_item}[2]}")
@@ -328,21 +466,17 @@ mount.list () {
                     _port=
                 fi
 
-            gmsg -v3 -c deep_pink "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
+            gr.debug "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
             mount.remote "$_target" "$_source_folder" "$_server" "$_port" "$_symlink"
         done
-    mount.status >/dev/null
+
     IFS="$_IFS"
-
-    # gmsg -v2 -n -c white "available: "
-    # gmsg -v1 -c light_blue "${all_list[@]}"
-
     return $_error
 }
 
 
 mount.all () {
-    # mount all GURU_CLOUD_* defined in userrc
+# mount all GURU_CLOUD_* defined in userrc
 
     local _error=0
     local _IFS="$IFS"
@@ -350,9 +484,9 @@ mount.all () {
     local _mount_list=(${all_list[@]^^})
 
     if [[ $_mount_list ]] ; then
-                gmsg -v3 -c light_blue "${_mount_list[@]}"
+                gr.debug "$FUNCNAME: ${_mount_list[@]}"
             else
-                gmsg -c yellow "default mount list is empty, edit $GURU_CFG/$GURU_USER/user.cfg and then '$GURU_CALL config export'"
+                gr.msg -c yellow "default mount list is empty, edit $GURU_CFG/$GURU_USER/user.cfg and then '$GURU_CALL config export'"
             return 1
         fi
 
@@ -370,7 +504,7 @@ mount.all () {
                     _port=
                 fi
 
-            gmsg -v3 -c deep_pink "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
+            gr.debug "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
             mount.remote "$_target" "$_source_folder" "$_server" "$_port" "$_symlink"
         done
 
@@ -378,8 +512,9 @@ mount.all () {
     return $_error
 }
 
+
 mount.known_remote () {
-    # mount single GURU_CLOUD_* defined in userrc
+# mount single GURU_CLOUD_* defined in userrc
 
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
     local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
@@ -399,72 +534,74 @@ mount.known_remote () {
 
 
 mount.status () {
-    # daemon status function
+# daemon status function
 
     # printout header for status output
-    gmsg -t -v1 -n "${FUNCNAME[0]}: "
+    gr.msg -t -v1 -n "${FUNCNAME[0]}: "
+    local _target
+    local _private=
 
     # check is enabled
-    if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
-            gmsg -v1 -n -c green "available " -k $mount_indicator_key
-            gmsg -v2
+    if [[ $GURU_MOUNT_ENABLED ]] ; then
+            gr.msg -v1 -n -c green "enabled " -k $GURU_MOUNT_INDICATOR_KEY
         else
-            #gmsg -v1 -c reset "disabled" -k $mount_indicator_key
-            gmsg -v1 -c red "unavailable" -k $mount_indicator_key
+            gr.msg -v1 -c black "disabled" -k $GURU_MOUNT_INDICATOR_KEY
             return 100
         fi
 
-    # printout list of mountponts
-    local mount_list=($(mount.ls))
+    # check is system available
+    # if mount.check ; then
+    #         gr.msg -v1 -n -c green "available "
+    #     else
+    #         gr.msg -v1 -c red "unavailable" -k $GURU_MOUNT_INDICATOR_KEY
+    #         return 101
+    #     fi
 
-    for _mount_point in ${mount_list[@]} ; do
-            mount.check $_mount_point
+    # go trough mount points
+    for _mount_point in ${all_list[@]} ; do
+            _target=$(eval echo '${GURU_MOUNT_'"${_mount_point^^}[0]}")
+            mount.check $_target &&
+                case $_target in \
+                    *'/.'*)  _private=true
+                            ;;
+                    esac
         done
 
-    # serve enter
-    gmsg -v1 -V2
+    # serve enter and key color
+    [[ $_private ]] && [[ $GURU_VERBOSE -gt 0 ]]\
+        && gr.msg -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY \
+        || gr.msg -c aqua -k $GURU_MOUNT_INDICATOR_KEY
 
-    # serve indication
-    if [[ ${#mount_list[@]} -gt 1 ]] ; then
-            gmsg -v4 -c aqua -k $mount_indicator_key
-        fi
-
-    # indicate personal mount locations
-    local sripped=("${mount_list[@]/$GURU_SYSTEM_MOUNT}")
-    for _mount_point in ${sripped[@]} ; do
-            case $_mount_point in
-                *'/.'*)  gmsg -v4 -c deep_pink -k $mount_indicator_key
-                esac
-        done
     return 0
 }
 
 
 mount.toggle () {
-    # unmount all or mount defaults by pressing key
+# unmount all or mount defaults by pressing key
 
-    local _list=($(mount.ls))
+    local _list=($(mount.ls | grep -v '.data'))
 
     if  [[ ${#_list[@]} -gt 1 ]] ; then
-            unmount.all
+            source unmount.sh
+            unmount.main all
         else
-            mount.list default
+            mount.listed default
         fi
     return 0
 }
 
 
 mount.poll () {
-    # daemon poll api
+# daemon poll api
 
     local _cmd="$1" ; shift
 
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: mount status polling started" -k $mount_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $GURU_MOUNT_INDICATOR_KEY
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: mount status polling ended" -k $mount_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $GURU_MOUNT_INDICATOR_KEY
             ;;
         status )
             mount.status $@
@@ -476,136 +613,29 @@ mount.poll () {
 
 
 mount.install () {
-    # install and remove install applications. input "install" or "remove"
+# install and remove install applications. input "install" or "remove"
 
     if sudo apt update && eval sudo apt install "ssh rsync" ; then
-            gmsg -c green "guru is now ready to mount"
+            gr.msg -c green "guru is now ready to mount"
             return 0
         else
-            gmsg -c yellow "error during isntallation $?"
+            gr.msg -c yellow "error during isntallation $?"
             return 100
     fi
 }
 
 
-mount.remove () {
-    # install and remove install applications. input "install" or "remove"
+mount.uninstall () {
+# install and remove install applications. input "install" or "remove"
 
-    gmsg "wont remove 'ssh' or 'rsync', do it manually if really needed"
+    gr.msg "wont remove 'ssh' or 'rsync', do it manually if really needed"
     return 0
 }
 
-
-# unmount.remote () {  # unmount mount point
-
-#     local _mountpoint="$1"
-#     local _numbers='^[0-9]+$'
-#     local _symlink=
-#     local _i=0
-
-#     if ! [[ "$_mountpoint" ]] ; then
-
-#             local _list=($(unmount.ls | grep -v $GURU_SYSTEM_MOUNT))
-#             for item in "${_list[@]}" ; do
-#                 gmsg -n -c white "$_i: "
-#                 gmsg -c light_blue "${_list[_i]}"
-#                 let _i++
-#             done
-#             let _i--
-
-#             (( $_i < 1 )) && return 0
-#             read -p "select mount point (0..$_i) " _ii
-
-#             [[ $_ii ]] || return 0
-
-#             if [[ $_ii =~ $_numbers ]] && (( _ii <= _i )) && (( _ii >= 0 ))  ; then
-#                     _mountpoint=${_list[_ii]}
-#                 else
-#                     gmsg -c yellow "invalid selection"
-#                     return 12
-#                 fi
-#         fi
-
-#     # empty
-#     gmsg -n -v2 "unmounting "
-#     gmsg -n -v1 "$_mountpoint.. "
-
-#     # check is mounted
-#     if ! grep -wq "$_mountpoint" /etc/mtab ; then
-#             gmsg -v1 -c dark_gray "is not mounted"
-#             return 0
-#         fi
-
-#     if ! [[ -f "$_mountpoint/.online" ]] ; then
-#             gmsg -n -v2 -c yellow ".online flag file missing "
-#          fi
-
-#     # unmount (normal)
-#     if ! fusermount -u "$_mountpoint" ; then
-#             gmsg -v2 -c yellow "error $? "
-#         fi
-
-#     if ! mount.online "$_mountpoint" ; then
-#             gmsg -v1 -c green "ok"
-#             rmdir $_mountpoint
-#             return 0
-#         fi
-
-#     gmsg -n -v1 "trying to force unmount.. "
-
-#     if sudo umount -l "$_mountpoint" ; then
-#             gmsg -v1 -c green "ok"
-#             rmdir $_mountpoint
-#             return 0
-#         else
-#             gmsg -c red "failed to force unmount"
-#             gmsg -v1 -c white "seems that some of open program like terminal or editor is blocking unmount, try to close those first"
-#             return 124
-#         fi
-# }
-
-
-
-# unmount.all () {  # unmount all GURU_CLOUD_* defined in userrc
-#     # unmount all local/cloud pairs defined in userrc
-
-#     local _default_list=
-
-#     if [[ "$1" ]] ; then
-#             _default_list=(${1[@]})
-#         else
-#             _default_list=($(\
-#                 cat $GURU_RC | \
-#                 grep 'GURU_MOUNT_' | \
-#                 grep -v '$GURU_' | \
-#                 grep -v "LIST" | \
-#                 sed 's/^.*MOUNT_//' | \
-#                 cut -d '=' -f1))
-#         fi
-
-#     if [[ $_default_list ]] ; then
-#             gmsg -v3 -c light_blue "$_default_list"
-#         else
-#             gmsg -c yellow "default list is empty"
-#             return 1
-#         fi
-
-#     for _item in "${_default_list[@]}" ; do
-#             # go trough of found variables
-#             _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
-#             gmsg -v3 -c pink "$FUNCNAME: ${_item,,} "
-#             source unmount.sh
-#             unmount.remote "$_target" || _error=$?
-#         done
-
-#     mount.status >/dev/null
-
-#     return $_error
-# }
-
+mount.rc
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then
-        source $GURU_RC
+        #source $GURU_RC
         mount.main $@
         exit $?
     fi

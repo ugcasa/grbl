@@ -9,14 +9,14 @@ local_source="$GURU_BIN/modules/programmer/PK2DeviceFile.zip"
 
 pk2.main () {
     # command parser
-    program_indicator_key="f$(daemon.poll_order programmer)"
+    program_indicator_key="f$(gr.poll programmer)"
 
     local _cmd="$1" ; shift
     case "$_cmd" in
                status|help|install|remove)
                     pk2.$_cmd "$@" ; return $? ;;
                *)
-					gmsg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
+					gr.msg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
 					return 127
         esac
 
@@ -25,27 +25,27 @@ pk2.main () {
 
 
 pk2.help () {
-    gmsg -v1 -c white "guru-client pk2 help "
-    gmsg -v2
-    gmsg -v0 "usage:    $GURU_CALL pk2 start|end|status|help|install|remove"
-    gmsg -v2
-    gmsg -v1 -c white "commands: "
-    gmsg -v1 " install                  install pk2 programmer for PIC "
-    gmsg -v1 " remove                   remove installationa and requirements "
-    gmsg -v2 " help                     printout this help "
-    gmsg -v2
-    gmsg -v1 -c white "example: "
-    gmsg -v1 "         $GURU_CALL programmer pk2 status "
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client pk2 help "
+    gr.msg -v2
+    gr.msg -v0 "usage:    $GURU_CALL pk2 start|end|status|help|install|remove"
+    gr.msg -v2
+    gr.msg -v1 -c white "commands: "
+    gr.msg -v1 " install                  install pk2 programmer for PIC "
+    gr.msg -v1 " remove                   remove installationa and requirements "
+    gr.msg -v2 " help                     printout this help "
+    gr.msg -v2
+    gr.msg -v1 -c white "example: "
+    gr.msg -v1 "         $GURU_CALL programmer pk2 status "
+    gr.msg -v2
 }
 
 
 pk2.status () {
     if pk2cmd --version >>/dev/null ; then # TBD check argument
-        gmsg -v1 -c green "pk2 installed" -k $program_indicator_key
+        gr.msg -v1 -c green "pk2 installed" -k $program_indicator_key
         return 0
     else
-        gmsg -v1 -c red "pk2 not installed" -k $program_indicator_key
+        gr.msg -v1 -c red "pk2 not installed" -k $program_indicator_key
         return 1
     fi
 }
@@ -55,8 +55,8 @@ pk2.install () {
 
 	# check installation
 	if pk2cmd -?v ; then
-		gmsg -c green "already installed"
-		gmsg -v2 "to reinstall perform 'remove' first"
+		gr.msg -c green "already installed"
+		gr.msg -v2 "to reinstall perform 'remove' first"
 		return 0
 	fi
 
@@ -74,7 +74,7 @@ pk2.install () {
 
 	# copile
 	cd pk2cmd/pk2cmd
-	make linux || gmsg -c yellow "installation failed" && gmsg -c green "ok"
+	make linux || gr.msg -c yellow "installation failed" && gr.msg -c green "ok"
 	sudo cp pk2cmd /usr/local/bin/
 	sudo chmod u+s /usr/local/bin/pk2cmd
 
@@ -96,7 +96,7 @@ pk2.install () {
 
 	# Testing
 	# export PATH=$PATH:/usr/share/pk2
-	pk2cmd -?v && gmsg -c green "installation OK" || gmsg -c red "installation failed"
+	pk2cmd -?v && gr.msg -c green "installation OK" || gr.msg -c red "installation failed"
 
 }
 
@@ -107,10 +107,10 @@ pk2.poll () {
 
     case $_cmd in
         start )
-            gmsg -v1 -t -c black "${FUNCNAME[0]}: pk2 programmer polling started" -k $program_indicator_key
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: pk2 programmer polling started" -k $program_indicator_key
             ;;
         end )
-            gmsg -v1 -t -c reset "${FUNCNAME[0]}: pk2 programmer polling ended" -k $program_indicator_key
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: pk2 programmer polling ended" -k $program_indicator_key
             ;;
         status )
 			pk2.status

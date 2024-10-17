@@ -35,18 +35,18 @@ mount.clean_test () {
     local error=0
 
     if unmount.defaults ; then
-            gmsg -c green "${FUNCNAME[0]} unmount passed"
+            gr.msg -c green "${FUNCNAME[0]} unmount passed"
             error=0
         else
-            gmsg -c red "${FUNCNAME[0]} unmount failed"
+            gr.msg -c red "${FUNCNAME[0]} unmount failed"
             error=10
         fi
 
     if mount.defaults ; then
-            gmsg -c green "${FUNCNAME[0]} mount passed"
+            gr.msg -c green "${FUNCNAME[0]} mount passed"
             error=$((error))
         else
-            gmsg -c red "${FUNCNAME[0]} mount failed"
+            gr.msg -c red "${FUNCNAME[0]} mount failed"
             error=21
         fi
 
@@ -58,10 +58,10 @@ mount.clean_test () {
 mount.test_mount () {
     # TBD new mountpoints for Hesus Testman
     if mount.remote "/home/$GURU_USER_NAME/usr/test" "$HOME/tmp/test_mount" ; then
-            gmsg -c green "${FUNCNAME[0]} passed"
+            gr.msg -c green "${FUNCNAME[0]} passed"
             return 0
         else
-            gmsg -c red "${FUNCNAME[0]} failed"
+            gr.msg -c red "${FUNCNAME[0]} failed"
             return 22
         fi
 }
@@ -71,11 +71,11 @@ mount.test_unmount () {
     local _mount_point="$HOME/tmp/test_mount"
      # TBD new mountpoints for Hesus Testman
     if unmount.remote "$_mount_point" ; then
-            gmsg -c green "${FUNCNAME[0]} passed"
+            gr.msg -c green "${FUNCNAME[0]} passed"
             rm -rf "$H_mount_point" || WARNING "error when removing $_mount_point "
             return 0
         else
-            gmsg -c red "${FUNCNAME[0]} failed"
+            gr.msg -c red "${FUNCNAME[0]} failed"
             return 23
         fi
 }
@@ -84,32 +84,32 @@ mount.test_unmount () {
 mount.test_default_mount (){
     local _err=0
     # to test online ignore
-    gmsg -n "${FUNCNAME[0]} mount defaults "
+    gr.msg -n "${FUNCNAME[0]} mount defaults "
     if mount.defaults ; then
-            gmsg -c green "passed"
+            gr.msg -c green "passed"
             _err=0
         else
-            gmsg -c red "failed"
+            gr.msg -c red "failed"
             _err=$((_err+10))
         fi
     sleep 1
     # to test unmount
-    gmsg -n "${FUNCNAME[0]} un-mount defaults "
+    gr.msg -n "${FUNCNAME[0]} un-mount defaults "
     if unmount.defaults ; then
-            gmsg -c green " passed"
+            gr.msg -c green " passed"
             _err=$_err
         else
-            gmsg -c red "failed"
+            gr.msg -c red "failed"
             _err=$((_err+10))
         fi
     sleep 1
     # to test re-mount
-    gmsg -n "${FUNCNAME[0]} re-mount defaults "
+    gr.msg -n "${FUNCNAME[0]} re-mount defaults "
     if mount.defaults ; then
-            gmsg -c green "passed"
+            gr.msg -c green "passed"
             _err=$_err
         else
-            gmsg -c red "failed"
+            gr.msg -c red "failed"
             _err=$((_err+10))
         fi
 
@@ -127,12 +127,12 @@ mount.test_default_mount (){
 #     mount.known_remote audio ;   _err=("${_err[@]}" "$?")
 
 #     if [[ ${_err[2]} -gt 0 ]]; then
-#             gmsg -c red "${FUNCNAME[0]} failed"
-#             gmsg -c yellow "error: ${_err[@]}"
+#             gr.msg -c red "${FUNCNAME[0]} failed"
+#             gr.msg -c yellow "error: ${_err[@]}"
 #             # Return error
 #             return ${_err[2]};
 #         else
-#             gmsg -c green "${FUNCNAME[0]} passed"
+#             gr.msg -c green "${FUNCNAME[0]} passed"
 #             return 0
 #         fi
 # }
@@ -142,13 +142,13 @@ mount.test_list () {
 
     # be sure that system is mounted
     mount.system || return 24
-    gmsg -n "sshfs list check.. "
+    gr.msg -n "sshfs list check.. "
     # if "Track" is in output pass
     if mount.list | grep "/.data" >/dev/null ; then
-        gmsg -c green "${FUNCNAME[0]} passed"
+        gr.msg -c green "${FUNCNAME[0]} passed"
         return 0
     else
-        gmsg -c red "${FUNCNAME[0]} failed"
+        gr.msg -c red "${FUNCNAME[0]} failed"
         return 24
     fi
 }
@@ -158,13 +158,13 @@ mount.test_info () {
     # be sure that system is mounted
     mount.system || return 25
 
-    gmsg -n "sshfs list check: "
+    gr.msg -n "sshfs list check: "
     # if "Track" is in output pass
     if mount.info | grep "$GURU_SYSTEM_MOUNT" >/dev/null ; then
-        gmsg -c green "${FUNCNAME[0]} passed"
+        gr.msg -c green "${FUNCNAME[0]} passed"
         return 0
     else
-        gmsg -c red "${FUNCNAME[0]} failed"
+        gr.msg -c red "${FUNCNAME[0]} failed"
         return 25
     fi
 }

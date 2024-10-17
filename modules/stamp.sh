@@ -2,22 +2,25 @@
 # timer for giocon client ujo.guru / juha.palm 2019
 source common.sh
 
-stamp.main () {    # main command parser
+stamp.main () {
+# main command parser
 
     local command=$1 ; shift
     local stamp=""
 
     case $command in
-            date)   stamp=$(date +$GURU_FORMAT_FILE_DATE) ;;
-            time)   stamp=$(date +$GURU_FORMAT_TIME) ;;
-            start)  stamp=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M") ;;
-            end)    stamp=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M") ;;
-            round)  stamp=$(date -d @$(( (($(date +%s) + 450) / 900) * 900)) "+%H:%M") ;;
+            date)       stamp=$(date +$GURU_FORMAT_FILE_DATE) ;;
+            time)       stamp=$(date +$GURU_FORMAT_TIME) ;;
+            nicedate)   stamp=$(date +$GURU_FORMAT_NICE_DATE) ;;
+            datetime)   stamp=$(date +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_TIME) ;;
+            start)      stamp=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M") ;;
+            end)        stamp=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M") ;;
+            round)      stamp=$(date -d @$(( (($(date +%s) + 450) / 900) * 900)) "+%H:%M") ;;
             transaction)
                     stamp="## Transaction\n\tAccount\t\tAmount\t\tVAT\tto/frm\tDescription\n\t" ;;
             signature)
-                    stamp="$GURU_REAL_NAME, $GURU_TEAM_NAME, $GURU_USER_PHONE, $GURU_USER_EMAIL" ;;
-            sweekplan)
+                    stamp="$GURU_USER_FULL_NAME/$GURU_USER_TEAM $GURU_USER_PHONE $GURU_USER_EMAIL" ;;
+            weekplan)
                     stamp.weekplan $@ ; return 0 ;;
             picture-md)
                 [ "$1" ] && file="$GURU_LOCAL_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$1" || file="$GURU_LOCAL_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
@@ -25,31 +28,34 @@ stamp.main () {    # main command parser
                 stamp="![]($file){ width=500px }"
                 ;;
 
-            status)  echo "no status data" ; return 0 ;;
+            status)  gr.msg -v1 -t "${FUNCNAME[0]}: no status information" ; return 0 ;;
             help|*) stamp.help ; return 0 ;;
         esac
 
-    gmsg "$stamp"
-    printf "$stamp" | xclip -i -selection clipboard
-
+    gr.msg "$stamp"
+    # copy output to all clipbards
+    printf "$stamp" | timeout 0.5 xclip -selection primary
+    printf "$stamp" | timeout 0.5 xclip -selection secondary
+    printf "$stamp" | timeout 0.5 xclip -selection clipboard
 }
 
+
 stamp.help () {
-    gmsg -v1 -c white "guru-client stamp help "
-    gmsg -v2
-    gmsg -v0  "usage:    $GURU_CALL stamp [date|time|start|end|round|transaction|signature|picture-md] "
-    gmsg -v2
-    gmsg -v1 -c white  "commands: "
-    gmsg -v1  "date              datestamp "
-    gmsg -v1  "time              timestamp "
-    gmsg -v1  "start             start time stamp in format HH:MM "
-    gmsg -v1  "end               end time stamp in format HH:MM "
-    gmsg -v1  "round             rounded up time stamp "
-    gmsg -v1  "signature         user signature "
-    gmsg -v1  "transaction       stansaction stamp for notes "
-    gmsg -v1  "weekplan          generates week plan (<from> <to> numeral week day) "
-    gmsg -v1  "all stamps is copied to the clipboard"
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client stamp help "
+    gr.msg -v2
+    gr.msg -v0  "usage:    $GURU_CALL stamp [date|time|start|end|round|transaction|signature|picture-md] "
+    gr.msg -v2
+    gr.msg -v1 -c white  "commands: "
+    gr.msg -v1  "date              datestamp "
+    gr.msg -v1  "time              timestamp "
+    gr.msg -v1  "start             start time stamp in format HH:MM "
+    gr.msg -v1  "end               end time stamp in format HH:MM "
+    gr.msg -v1  "round             rounded up time stamp "
+    gr.msg -v1  "signature         user signature "
+    gr.msg -v1  "transaction       stansaction stamp for notes "
+    gr.msg -v1  "weekplan          generates week plan (<from> <to> numeral week day) "
+    gr.msg -v1  "all stamps is copied to the clipboard"
+    gr.msg -v2
 }
 
 
@@ -91,12 +97,13 @@ stamp.weekplan () {
     }
 
     week_plan $1 $2 | xclip -i -selection clipboard
-    note_change "week plan added"
+    source note.sh
+    note.change "week plan added"
 }
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    # source "$GURU_RC"
     #command=$1 ; shift
     stamp.main $@
     exit $?

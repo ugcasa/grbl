@@ -1,25 +1,57 @@
 #!/bin/bash
 # ujo.guru 2019
-source $GURU_BIN/common.sh
 
 trans.main() {
     # command paerser
-    local _cmd="$1" ; shift
+
+    local _cmd="$1"
+    shift
+
     case "$_cmd" in
-            get|help|status)  trans.$_cmd $@     ;;
-                          *)  trans.get "$_cmd"  ;;
-        esac
+        get|help|status)
+            trans.$_cmd $@
+            return $?
+            ;;
+
+        "") trans.looper
+            ;;
+
+        *)
+            trans.get "$_cmd"
+            return $?
+            ;;
+    esac
 }
 
 
 trans.help () {
-    gmsg -v0 "usage:    $GURU_CALL trans source_l:targed_l <text>"
+    gr.msg -c white "usage:    $GURU_CALL trans source_lang:targed_lang <text>"
     return 0
 }
 
 
+trans.looper ()
+# tranlator looper for quick key
+{
+    while true
+    do
+        read -p  "translate: " input
+        [[ $input ]] || continue
+
+        case $input in
+            q) break ;;
+        esac
+
+        echo "-------------------------"
+        trans "$input"
+        echo "-------------------------"
+    done
+}
+
+
 trans.status () {
-    gmsg -v1 "no status information"
+    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
+    gr.msg -v1 -c dark_gray "no status information"
     return 0
 }
 
@@ -64,8 +96,7 @@ trans.get () {
 }
 
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then    # stand alone vs. include. main wont be called if included
-        source "$GURU_RC"
-        trans.main "$@"
-        return $?                                     # otherwise can be non zero even all fine TODO check why, case function feature?
-    fi
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    trans.main "$@"
+    return $?
+fi

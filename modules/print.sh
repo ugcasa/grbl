@@ -9,7 +9,7 @@ print.main() {
     case "$command" in
              label|help)    print.$command "$@"                           ; return $? ;;
                    test)    source $GURU_BIN/test.sh; print.test "$@"     ; return $? ;;
-                 status)    gmsg -c black "printer not connected" ;;
+                 status)    gr.msg -c black "printer not connected" ;;
                       *)    print.help ;;
     esac
     return 0
@@ -17,11 +17,11 @@ print.main() {
 
 
 print.help () {
-    gmsg -v1 -c white "guru-client print help "
-    gmsg -v0  "usage:    $GURU_CALL print [label] "
-    gmsg -v1 -c white "commands:"
-    gmsg -v1  " label                     print label "
-    gmsg -v2
+    gr.msg -v1 -c white "guru-client print help "
+    gr.msg -v0  "usage:    $GURU_CALL print [label] "
+    gr.msg -v1 -c white "commands:"
+    gr.msg -v1  " label                     print label "
+    gr.msg -v2
 }
 
 
