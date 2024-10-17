@@ -105,9 +105,10 @@ youtube.arguments () {
 
         case ${got_args[$i]} in
 
-            --get|--download|--save)
-                export youtube_options="-f b"
-                export save_to_file=true
+            --get|--download|--save|dl)
+                ## TBD why export? sould work without it
+                youtube_options="-f b" # export
+                save_to_file=true # export
                 ;;
 
             --continue|--c|--cont)
@@ -115,26 +116,25 @@ youtube.arguments () {
                 ;;
 
             --repeat|--l|--loop)
-                export mpv_options="$mpv_options --loop"
+                mpv_options="$mpv_options --loop" # export
                 ;;
 
             --fullscreen|--fs|--f)
-                export mpv_options="$mpv_options --fs"
+                mpv_options="$mpv_options --fs" # export
                 ;;
 
             --video|--v)
-                export youtube_options=
-                export save_location=$GURU_MOUNT_VIDEO
+                youtube_options= # export
+                save_location=$GURU_MOUNT_VIDEO # export
                 ;;
-
             --audio|--a)
-                export youtube_options="-f bestaudio --no-resize-buffer --ignore-errors"
-                export mpv_options="$mpv_options --no-video"
-                export save_location=$GURU_MOUNT_AUDIO
+                youtube_options="-f bestaudio --no-resize-buffer --ignore-errors" # export
+                mpv_options="$mpv_options --no-video" # export
+                save_location=$GURU_MOUNT_AUDIO # export
                 ;;
 
             --list-formats)
-                export youtube_options="$youtube_options --list-formats"
+                youtube_options="$youtube_options --list-formats" # export
                 ;;
 
             # --playlist|--pl)        ## TBD search for playlists
@@ -161,7 +161,7 @@ youtube.arguments () {
             #     ;;
 
             *)
-                export module_command+=("${got_args[$i]}")
+                module_command+=("${got_args[$i]}") # export
                 ;;
         esac
     done
@@ -170,10 +170,10 @@ youtube.arguments () {
         if [[ $save_to_file ]] ; then
 
             [[ "$save_location" == "$GURU_MOUNT_AUDIO" ]] \
-                && export youtube_options="$youtube_options -x --audio-format mp3"
+                && youtube_options="$youtube_options -x --audio-format mp3" # export
 
             [[ "$save_location" == "$GURU_MOUNT_VIDEO" ]] \
-                && export youtube_options="$youtube_options --recode-video mp4"
+                && youtube_options="$youtube_options --recode-video mp4" # export
         fi
     #echo ${module_command[@]}
 }
@@ -222,6 +222,8 @@ youtube.search () {
     local last_item=
     local thubnails=
     local search_phrase=
+    local todo="play"
+    local mp4=
     # local youtube_data=$GURU_DATA/youtube
 
     # terminal type
@@ -359,13 +361,13 @@ youtube.search () {
         [[ $items -lt 1 ]] && gr.msg -N -p "search by typing search phrase and press enter"
 
         # help width
-        if [[ $cols -lt 71  ]] ; then
-            _white=('' n p w a s t l e v q 1 $items $'\n')
-            _grey=('[' '|' '|' '|' '|' '|' '|' '|' '|' '|' '|' '..' ']')
+        if [[ $cols -lt 69  ]] ; then
+            _white=('' n p w a s t d l e v q 1 $items $'\n')
+            _grey=('[' '|' '|' '|' '|' '|' '|' '|' '|' '|' '|' '|' '..' ']')
             _space=''
         else
-            _white=(n p w a s t l e v q 1 $'\b'$items $'\n')
-            _grey=(ext revious ait utoplay ingin ype ist rror erbose uit '..')
+            _white=(n p w a s t d l e v q 1 $'\b'$items $'\n')
+            _grey=(ext revious ait utoplay ingin ype onwload ist rror erbose uit '..')
             _space=' '
         fi
 
@@ -378,7 +380,7 @@ youtube.search () {
         if [[ $cols -lt 60  ]] ; then
             _prompt=$'\r'"$last_item${optimization:0:1} search: "
         else
-            _prompt=$'\r'"[$last_item/${#title[@]}] search or select $optimization: "
+            _prompt=$'\r'"[$last_item/${#title[@]}] search or select $todo $optimization: "
         fi
 
         # if user hit caps-clock + esc, cancel continue playing
@@ -421,6 +423,7 @@ youtube.search () {
 
         # limit thumbnail size
         local cols=$(echo "cols"|tput -S)
+        local _error=0
 
         [[ $cols -gt 80 ]] && cols=80
 
@@ -439,7 +442,7 @@ youtube.search () {
         echo "$(date -d now +%Y-%m-%d-%H:%M:%S) ${id[$item]} ${title[$item]}" >>"$youtube_data/played/$(date -d now +%Y-%m-%d).list"
 
         # fetch thumbnail if not done already
-        if [[ $thubnails ]] ; then
+        if [[ $thubnails ]] && [[ $GURU_VERBOSE -ge 1 ]] && [[ ! $save_to_file ]]; then
             [[ -f $youtube_data/cache/${id[$item]}.jpg ]] || curl -s ${thumb[$item]} --output "$youtube_data/cache/${id[$item]}.jpg"
             tiv -w $cols "$youtube_data/cache/${id[$item]}.jpg"
         fi
@@ -448,12 +451,41 @@ youtube.search () {
 
         # indicate playing
         gr.msg -c dark_grey "$media_address"
+
+        if [[ $save_to_file ]] ; then
+
+            youtube_options="--ignore-errors --continue --no-overwrites --restrict-filenames --progress --quiet"
+
+            case $optimization in
+                audio)
+                    youtube_options="$youtube_options -x --audio-format mp3 "
+                    ;;
+
+                video)
+                    youtube_options="$youtube_options --output %(title)s.%(ext)s"
+                    [[ $mp4 ]] && youtube_options="$youtube_options --recode-video mp4"
+                    ;;
+            esac
+
+            # yt-dlp --ignore-errors --continue --no-overwrites --recode-video mp4 --output '%(title)s.%(ext)s' "https://www.youtube.com/watch?v=zQCZCvkbqHk"
+            gr.ind doing -k d
+            [[ $mp4 ]] && gr.msg "converting might take some time, please be patient.."
+            yt-dlp $youtube_options $sing_in_option $media_address 2>$youtube_error
+            _error=$?
+
+            [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+            gr.end d
+            gr.msg -c green "done"
+            #ls *mp4
+            return $_error
+        fi
+
         gr.ind playing -k play
 
         gr.debug "yt-dlp $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -"
 
         yt-dlp $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -
-        local _error=$?
+        _error=$?
 
         # remove playing indications
         gr.end play
@@ -532,6 +564,20 @@ youtube.search () {
                 continue
                 ;;
 
+            d)  if [[ $save_to_file ]] ; then
+                    save_to_file=
+                    todo="to play"
+                else
+                    save_to_file=true
+                    todo="to download"
+                    if [[ $optimization == "video" ]] ; then
+                        gr.ask "convert to webm files to mp4 format?" && mp4=true || mp4=
+                    fi
+                fi
+                gr.msg "selected $todo"
+                continue
+                ;;
+
             t)  # content type selector, video or audio
                 if [[ $optimization == "audio" ]] ; then
                     optimization=video
@@ -542,6 +588,7 @@ youtube.search () {
                     youtube_options=
                     mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-youtube --vo=null --no-video "
                 fi
+                gr.msg "$optimization selected"
                 continue
                 ;;
 
