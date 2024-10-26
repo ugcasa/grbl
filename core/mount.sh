@@ -34,7 +34,7 @@ mount.main () {
 
     case "$command" in
 
-            system|help|ls|info|check|mounted|poll|status|start|stop|uninstall|available|mounted|online|config)
+            system|help|ls|info|check|mounted|poll|status|start|stop|install|uninstall|available|mounted|online|config)
                 mount.$command $@
                 _error=$?
                 ;;
