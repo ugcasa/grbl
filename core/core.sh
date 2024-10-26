@@ -824,7 +824,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         exit 0
     fi
 
-    if [[ GURU_CORSAIR_ENABLED ]] ; then
+    if [[ $GURU_CORSAIR_ENABLED ]] ; then
         source corsair.sh
         corsair.indicate error
         corsair.main type "er$_error_code" >/dev/null
