@@ -615,13 +615,8 @@ mount.poll () {
 mount.install () {
 # install and remove install applications. input "install" or "remove"
 
-    if sudo apt update && eval sudo apt install "ssh rsync" ; then
-            gr.msg -c green "guru is now ready to mount"
-            return 0
-        else
-            gr.msg -c yellow "error during isntallation $?"
-            return 100
-    fi
+    sudo apt update
+    sudo apt install rsync sshfs xclip
 }
 
 
