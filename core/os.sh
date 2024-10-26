@@ -4,6 +4,12 @@ os_indicator_key=f8
 system_indicator_key=caps
 os_rc=/tmp/guru-cli_os.rc
 
+if ! [[ $GURU_CFG/$GURU_USER/os.cfg ]]; then 
+    config_file=$GURU_CFG/$GURU_USER/os.cfg
+else
+    config_file=$GURU_CFG/os.cfg
+fi
+
 source net.sh
 
 os.help () {
@@ -509,7 +515,7 @@ os.capslock() {
 os.rc () {
 # source configurations (to be faster)
 
-    if [[ ! -f $os_rc ]] || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/os.cfg) - $(stat -c %Y $os_rc) )) -gt 0 ]]
+    if [[ ! -f $os_rc ]] || [[ $(( $(stat -c %Y $config_file) - $(stat -c %Y $os_rc) )) -gt 0 ]]
         then
             os.make_rc && \
                 gr.msg -v1 -c dark_gray "$os_rc updated"
@@ -529,8 +535,8 @@ os.make_rc () {
             rm -f $os_rc
         fi
 
-    config.make_rc "$GURU_CFG/$GURU_USER/os.cfg" $os_rc
-    #config.make_rc "$GURU_CFG/$GURU_USER/os.cfg" $os_rc append
+    config.make_rc "$config_file" $os_rc
+    
     chmod +x $os_rc
     source $os_rc
 }
