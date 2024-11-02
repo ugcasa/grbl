@@ -1,16 +1,17 @@
 #!/bin/bash
 # guru client background servicer casa@ujo.guru 2020
 
+__daemon=$(readlink --canonicalize --no-newline $BASH_SOURCE)
+source $GURU_BIN/flag.sh
+
 declare -xg daemon_service_script="$HOME/.config/systemd/user/guru.service"
 declare -xg daemon_pid_file="/tmp/guru.daemon-pid"
 declare -axg GURU_DAEMON_PID=
 declare -xg daemon_arguments=
 
-source $GURU_BIN/flag.sh
-
 daemon.main () {
 # daemon main command parser
-
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
     local command=$1
     shift
 
@@ -32,7 +33,7 @@ daemon.main () {
 
 daemon.help () {
 # general help
-
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
     gr.msg -v1 -c white "guru daemon help "
     gr.msg -v2
     gr.msg -v0 "usage:    $GURU_CALL daemon [start|stop|status|end|kill|poll|pause]"
@@ -57,7 +58,7 @@ daemon.help () {
 
 daemon.ps () {
 # get daemon process list (not solid, more like guessing ;)
-# this function can be used to fill global GURU_DAEMON_PID, use verbose 0
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"# this function can be used to fill global GURU_DAEMON_PID, use verbose 0
 
     local color=aqua
     local verbosity=1
@@ -127,6 +128,7 @@ daemon.ps () {
 daemon.status () {
 # printout status of daemon
 # this function can be used to fill global GURU_DAEMON_PID, use verbose 0 (conflict with pid function)
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
 
     if [[ -f "$daemon_pid_file" ]]; then
             local last_pid="$(cat $daemon_pid_file)"
@@ -168,7 +170,7 @@ daemon.status () {
 
 daemon.start () {
 # start daemon
-
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
     if [[ -f "$daemon_pid_file" ]]; then
             local last_pid=$(cat "$daemon_pid_file")
             gr.msg -v2 "${FUNCNAME[0]}: killing $last_pid"
@@ -213,7 +215,7 @@ daemon.start () {
 
 daemon.stop () {
 # stop daemon
-
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
     flag.rm stop
     gr.msg -N -n -V1 -c white "stopping guru-cli.. "
     # if pid file is not exist
@@ -281,28 +283,28 @@ daemon.stop () {
 
 daemon.pause () {
 # pause daemon polling process
-    source flag.sh
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"    source flag.sh
     flag.toggle pause
 }
 
 
 daemon.fast () {
 # set daemon poll interval to minimal
-    source flag.sh
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"    source flag.sh
     flag.toggle fast
 }
 
 
 daemon.end () {
 # ask daemon to stop polling
-    source flag.sh
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"    source flag.sh
     flag.toggle stop
 }
 
 
 daemon.kill () {
 # force stop daemon
-    daemon.ps
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"    daemon.ps
     local gpid=$1
 
     [[ $gpid ]] || read -p "select process: " gpid
@@ -331,7 +333,7 @@ daemon.kill () {
 
 daemon.day_change () {
 # check is date changed and update pid file datestamp
-
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
     [[ -f /tmp/guru.daemon-pid ]] || return 1
     local now="d$(date +%Y-%m-%d)"
     local was="d$(stat -c '%x' /tmp/guru.daemon-pid | cut -d' ' -f1)"
@@ -345,7 +347,7 @@ daemon.day_change () {
 # # TBD interesting idea, pretty sure this is not in use anywhere, disabled
 # daemon.caps () {
 # # what to do if user presses caps lock when caps channel is connected to module
-#     gr.debug "$FUNCNAME caps channel actived"
+#    gr.msg -v4 -c bluedaemon$__os [$LINENO] $FUNCNAME '$@'"#     gr.debug "$FUNCNAME caps channel actived"
 #     gnome-terminal --hide-menubar --geometry 50x10 --zoom 0.7 --hide-menubar --title "mqtt server feed"  -- $GURU_BIN/guru stop
 #     sleep 3
 #     true
@@ -354,7 +356,7 @@ daemon.day_change () {
 
 daemon.poll () {
 # runs module poll function to printout module status
-
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
     local _seconds=
     source $GURU_RC
     source net.sh
@@ -475,7 +477,7 @@ daemon.poll () {
 
 daemon.systemd () {
 # command parser for systemd methods
-
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
     local cmd=$1 ; shift
     case $cmd in
             install|remove|enable|disable)
@@ -490,7 +492,7 @@ daemon.systemd () {
 
 daemon.systemd_install () {
 # setup systemd service
-
+    gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
     local temp="/tmp/starter.temp"
     gr.msg -v1 -V2 -n "setting starter script.. "
     gr.msg -v2 -n "setting starter script $daemon_service_script.. "

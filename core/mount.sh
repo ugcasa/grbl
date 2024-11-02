@@ -2,8 +2,11 @@
 # guru-cli mount core module 2019 - 2022 casa@ujo.guru
 
 declare -g mount_rc="/tmp/guru-cli_mount.rc"
+__mount=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 mount.help () {
+# mount help
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     gr.msg -v1 -c white "guru-cli mount help "
     gr.msg -v2
@@ -24,9 +27,9 @@ mount.help () {
     gr.msg -v1 "      $GURU_CALL umount /home/$USER/guru/projects"
 }
 
-
 mount.main () {
 # mount command parser
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _error=0
     local command="$1"
@@ -91,9 +94,9 @@ mount.main () {
         return $_error
 }
 
-
 mount.rc () {
 # source configurations
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     if  [[ ! -f $mount_rc ]] || \
         [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $mount_rc) )) -gt 0 ]]
@@ -112,9 +115,9 @@ mount.rc () {
             all_list=(${all_list[@],,})
 }
 
-
 mount.make_rc () {
 # make core module rc file out of configuration file
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     if ! source config.sh ; then
         gr.msg -c yellow "unable to load configuration module"
@@ -145,9 +148,9 @@ mount.make_rc () {
             all_list=(${all_list[@],,})
 }
 
-
 mount.local_size () {
 # check size of files in locally mounted folder
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _mount_target=$GURU_DATA
     [[ $1 ]] && _mount_target="$1"
@@ -168,9 +171,9 @@ mount.local_size () {
     gr.msg -v0 -V1 "$_total_size"
 }
 
-
 mount.info () {
 # detailed list of mounted mountpoints. nice list of information of sshfs mount points
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _error=0
     # header (stdout if verbose rised)
@@ -201,17 +204,17 @@ mount.info () {
     return $_error
 }
 
-
 mount.ls () {
 # simple list of mounted mountpoints
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
     return $?
 }
 
-
 mount.system () {
 # mount system data
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     gr.msg -v3 -n "checking system data folder.."
     if [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] ; then
@@ -225,9 +228,9 @@ mount.system () {
     fi
 }
 
-
 mount.online () {
 # check is mount point "online", no printout,
+    # gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _target_folder="$GURU_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
@@ -239,10 +242,9 @@ mount.online () {
     fi
 }
 
-
-
 mount.mounted () {
 # check is givven list name already mounted
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _mount_list_name=$1
 
@@ -268,10 +270,9 @@ mount.mounted () {
     fi
 }
 
-
-
 mount.check () {
 # check is mount point mounted, output status
+    # gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _target_folder=$GURU_SYSTEM_MOUNT
     [[ "$1" ]] && _target_folder="$1"
@@ -305,9 +306,9 @@ mount.check () {
     # return $_online
 }
 
-
 mount.remote () {
 # mount any remote location. usage: mount_point remote_folder optional: domain port symlink_to
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     # set defaults
     local _target_folder=
@@ -424,17 +425,17 @@ mount.remote () {
     fi
 }
 
-
 mount.available () {
 # printout list of available mount points
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     gr.msg -c light_blue "${all_list[@]}"
     return 0
 }
 
-
 mount.listed () {
 # mount all GURU_MOUNT_<list_name>_LIST defined in user configuration
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _error=0
     local _IFS="$IFS"
@@ -474,9 +475,9 @@ mount.listed () {
     return $_error
 }
 
-
 mount.all () {
 # mount all GURU_CLOUD_* defined in userrc
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _error=0
     local _IFS="$IFS"
@@ -512,9 +513,9 @@ mount.all () {
     return $_error
 }
 
-
 mount.known_remote () {
 # mount single GURU_CLOUD_* defined in userrc
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
     local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
@@ -532,9 +533,9 @@ mount.known_remote () {
     return $?
 }
 
-
 mount.status () {
 # daemon status function
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     # printout header for status output
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
@@ -575,9 +576,9 @@ mount.status () {
     return 0
 }
 
-
 mount.toggle () {
 # unmount all or mount defaults by pressing key
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _list=($(mount.ls | grep -v '.data'))
 
@@ -590,9 +591,9 @@ mount.toggle () {
     return 0
 }
 
-
 mount.poll () {
 # daemon poll api
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _cmd="$1" ; shift
 
@@ -611,17 +612,17 @@ mount.poll () {
         esac
 }
 
-
 mount.install () {
 # install and remove install applications. input "install" or "remove"
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     sudo apt update
     sudo apt install rsync sshfs xclip
 }
 
-
 mount.uninstall () {
 # install and remove install applications. input "install" or "remove"
+    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
 
     gr.msg "wont remove 'ssh' or 'rsync', do it manually if really needed"
     return 0
