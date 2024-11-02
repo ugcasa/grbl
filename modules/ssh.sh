@@ -8,10 +8,21 @@ ssh.main () {
     command="$1"
     shift
     case "$command" in
-      key|keys)     ssh.key "$@"            ;;
-          help)     ssh.help ; return 0     ;;
-        status)     ssh.status              ;;
-        *)          ssh "$@"
+        key|keys)
+            ssh.key "$@"
+            ;;
+        set)
+            ssh.systemd_add
+            ;;
+        help)
+            ssh.help
+            return 0
+            ;;
+        status)
+            ssh.status
+            ;;
+            *)
+            ssh "$@"
     esac
 }
 
@@ -55,13 +66,14 @@ ssh.help () {
     gr.msg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help] <key_file> <host> <port> <user>"
     gr.msg -v2
     gr.msg -v1 -c white "Commands:"
-    gr.msg -v1 " key|keys                 key management tools, try '$GURU_CALL ssh key help' for more info."
-    gr.msg -v1 "   key ps                 list of activekeys "
-    gr.msg -v1 "   key send               send keys to server"
+    gr.msg -v1 " set                    setup and start ssh-agent systed service "
+    gr.msg -v1 " key|keys               key management tools, try '$GURU_CALL ssh key help' for more info."
+    gr.msg -v1 "   key ps               list of activekeys "
+    gr.msg -v1 "   key send             send keys to server"
     gr.msg -v1 "    "
-    gr.msg -v1 "   key rm                 remove from remote server server [user_name@service_host] "
-    gr.msg -v1 "   key add <...>          add keys to server <domain> <port> <user_name> or"
-    gr.msg -v1 "   key add <server>       add keys to known server: ujo.guru, git.ujo.guru, github, bitbucket"
+    gr.msg -v1 "   key rm               remove from remote server server [user_name@service_host] "
+    gr.msg -v1 "   key add <...>        add keys to server <domain> <port> <user_name> or"
+    gr.msg -v1 "   key add <server>     add keys to known server: ujo.guru, git.ujo.guru, github, bitbucket"
     gr.msg -v2
     gr.msg -v1 -c white "Example: "
     gr.msg -v1 "      $GURU_CALL ssh key add $GURU_ACCESS_DOMAIN"
@@ -69,7 +81,6 @@ ssh.help () {
     gr.msg -v1 "Any on known ssh command is passed trough to open-ssh client"
     gr.msg -v2
 }
-
 
 ssh.rm_key () {
     # remove local keyfiles (not from server known hosts) TODO
@@ -85,7 +96,6 @@ ssh.rm_key () {
         fi
     return 0
 }
-
 
 ssh.add_key () {
     # [1] ujo.guru, [2] git.ujo.guru, [3] github, [4] bitbucket
@@ -121,8 +131,6 @@ ssh.add_key () {
     return "$error"
 }
 
-
-
 ssh.generate_key () {
     local server=$1 ; shift
     local user=$1 ; shift
@@ -131,7 +139,6 @@ ssh.generate_key () {
     ssh.add_rule "$key_file" "$server"
     gr.msg -c light_green "new puplic key: $key_file.pub"
 }
-
 
 ssh.keygen () {
     local key_file=$1 ; shift
@@ -146,6 +153,100 @@ ssh.keygen () {
     return 0
 }
 
+ssh.systemd_add() {
+# make systemd service for ssh-agent
+# NOT TESTED this is no-keyring mothod, not sure is it really working
+# https://stackoverflow.com/questions/18880024/start-ssh-agent-on-login
+# https://manpages.ubuntu.com/manpages/xenial/man1/ssh-agent.1.html
+# Main issue now: systemd "Failed to connect to bus: No medium found"
+# TODO To continue test, make ssh.systemd_purge()
+# TODO try keyring method
+
+# NOT WORKING - skipping this shit
+return 0
+
+    local service_file="$HOME/.config/systemd/user"
+    local bash_profile="$HOME/.bash_profile"
+    local ssh_config="$HOME/.ssh/config"
+
+    if ps ax | grep -v grep | grep -q ssh-agent; then
+        gr.msg -c green "agent already running"
+        return 0
+    fi
+
+    if ! [[ -d $service_file ]]; then
+        mkdir -p $service_file
+    fi
+
+    service_file="$service_file/ssh-agent.service"
+
+    function add_servicefile()
+    {
+        echo '
+[Unit]
+Description=SSH key agent
+
+[Service]
+Type=simple
+Environment=SSH_AUTH_SOCK=%t/ssh-agent.socket
+Environment=DISPLAY=:0
+ExecStart=/usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
+ExecStop=kill -15 $MAINPID
+
+[Install]
+WantedBy=default.target' >$service_file
+    }
+
+
+    # check service file already set
+    if ! [[ -f $service_file ]]; then
+        touch $service_file
+    else
+        gr.msg -c green "$service_file exists"
+    fi
+
+    # check is not just empty file (last time something went wrong)
+    if ! grep $service_file -q -e "SSH key agent"; then
+        gr.msg -c white "making $service_file.. "
+        add_servicefile
+    else
+        gr.msg -c green "$service_file set"
+    fi
+
+    gr.msg -n "checking is ssh-agent enabled.. "
+    if ! systemctl is-enabled ssh-agent ; then
+        gr.msg -c white "enabling ssh-agent.. "
+        sudo systemctl --user enable ssh-agent
+    fi
+
+    gr.msg -n "checking is ssh-agent started.. "
+    if ! systemctl is-active ssh-agent ; then
+        gr.msg -c white "starting ssh-agent.. "
+        sudo systemctl --user start ssh-agent
+    fi
+
+    # check is bash_profile already set
+    if ! [[ -f $bash_profile ]]; then
+        touch $bash_profile
+        if ! grep $bash_profile -q -e "SSH_AUTH_SOCK="; then
+            gr.msg -c white "adding line to $bash_profile.. "
+            echo 'export SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ssh-agent.socket' >> $bash_profile
+        fi
+    else
+        gr.msg -c green "$bash_profile exists and set"
+    fi
+
+    # check automatic key adding is set
+    if ! [[ -f $ssh_config ]]; then
+        touch $ssh_config
+        if ! grep $ssh_config -q -e "AddKeysToAgent yes"; then
+            gr.msg -c white "adding line to $ssh_config.. "
+            echo 'AddKeysToAgent yes' >> $ssh_config
+        fi
+    else
+        gr.msg -c green "$ssh_config exists and set"
+    fi
+}
 
 ssh.agent_start () {
     ## start agent
@@ -158,7 +259,6 @@ ssh.agent_start () {
     return 0
 }
 
-
 ssh.agent_add () {
     # add private key to agent
     local key_file=$1
@@ -170,7 +270,6 @@ ssh.agent_add () {
         fi
     return 0
 }
-
 
 ssh.copy-id () {
     # send key to server
@@ -186,7 +285,6 @@ ssh.copy-id () {
         fi
     return 0
 }
-
 
 ssh.add_rule () {
     local key_file=$1
@@ -205,7 +303,6 @@ ssh.add_rule () {
     fi
 }
 
-
 ssh.add_key_accesspoint () {
     # function to add keys to ujo.guru access point server
     local server=$GURU_ACCESS_DOMAIN
@@ -218,7 +315,6 @@ ssh.add_key_accesspoint () {
     ssh.copy-id "$key_file"
     return 0
 }
-
 
 ssh.add_key_github () {
     # function to setup ssh key login with github
@@ -263,7 +359,6 @@ ssh.add_key_github () {
     return 0
 }
 
-
 ssh.add_key_bitbucket () {
     # function to setup ssh key login with bitbucket.
     local server="bitbucket.org"
@@ -305,7 +400,6 @@ ssh.add_key_bitbucket () {
     return 0
 }
 
-
 ssh.add_key_my_git () {
     gr.msg -v1 "TBD"
 }
@@ -341,18 +435,15 @@ ssh.add_key_my_git () {
 #         done
 # }
 
-
 ssh.check_config () {
     gr.msg -c yellow "${FUNCKNAME[0]}: TBD "
     return 0
 }
 
-
 ssh.check_remote_config () {
     gr.msg -c yellow "${FUNCKNAME[0]}: TBD "
     return 0
 }
-
 
 ssh.add_key_other () {
 
@@ -368,7 +459,6 @@ ssh.add_key_other () {
     ssh.add_rule "$key_file" "$server" "$user"
     return 0
 }
-
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
