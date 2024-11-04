@@ -8,12 +8,12 @@ trans.main() {
     shift
 
     case "$_cmd" in
-        get|help|status)
+        get|help|status|install|loop)
             trans.$_cmd $@
             return $?
             ;;
 
-        "") trans.looper
+        "") trans.loop
             ;;
 
         *)
@@ -30,7 +30,7 @@ trans.help () {
 }
 
 
-trans.looper ()
+trans.loop ()
 # tranlator looper for quick key
 {
     while true
@@ -93,6 +93,12 @@ trans.get () {
     fi
 
     $GURU_BIN/trans $argument1 $argument2 $variable "$word"
+}
+
+trans.install () {
+# isntall needed tools
+    sudo update
+    sudo apt install translate-shell gawk
 }
 
 

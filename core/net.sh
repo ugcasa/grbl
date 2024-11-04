@@ -4,6 +4,12 @@
 declare -g net_rc="/tmp/guru-cli_net.rc"
 declare -g tunneled_flag="/tmp/guru-cli_service_tunnel.flag"
 
+if ! [[ $GURU_CFG/$GURU_USER/net.cfg ]]; then 
+    declare -g config_file=$GURU_CFG/$GURU_USER/net.cfg
+else
+    declare -g config_file=$GURU_CFG/net.cfg
+fi
+
 net.help () {
 # network module user help
 
@@ -197,7 +203,7 @@ net.rc () {
 # source configurations
 
     if  [[ ! -f $net_rc ]] || \
-        [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/net.cfg) - $(stat -c %Y $net_rc) )) -gt 0 ]]
+        [[ $(( $(stat -c %Y $config_file) - $(stat -c %Y $net_rc) )) -gt 0 ]]
         then
             net.make_rc && \
                 gr.msg -v1 -c dark_gray "$net_rc updated"
@@ -211,18 +217,18 @@ net.make_rc () {
 # make core module rc file out of configuration file
 
     if ! source config.sh ; then
-            gr.msg -c yellow "unable to load configuration module"
-            return 100
-        fi
+        gr.msg -c yellow "unable to load configuration module"
+        return 100
+    fi
 
     if [[ -f $net_rc ]] ; then
-            rm -f $net_rc
-        fi
+        rm -f $net_rc
+    fi
 
-    if ! config.make_rc "$GURU_CFG/$GURU_USER/net.cfg" $net_rc ; then
-            gr.msg -c yellow "configuration failed"
-            return 101
-        fi
+    if ! config.make_rc "$config_file" $net_rc ; then
+        gr.msg -c yellow "configuration failed"
+        return 101
+    fi
 
     chmod +x $net_rc
 
@@ -493,7 +499,6 @@ net.rc
 
 # if called net.sh file configuration is sourced and main net.main called
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$GURU_RC"
     net.main "$@"
     exit "$?"
 fi

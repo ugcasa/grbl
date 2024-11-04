@@ -1,16 +1,19 @@
 #!/bin/bash
 # note tools for guru-client casa@ujo.guru 2017-2022
-
-# source common.sh
 source mount.sh
+
+__note=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 declare -g note_file
 declare -g note_date
 declare -g note_file_name
 declare -g note_rc=/tmp/guru-cli_note.rc
+declare -g require=(nacal pandoc gnome-terminal)
+
 
 note.help () {
-
+# notes help printout
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
     gr.msg -v1 -c white "guru-client note help "
     gr.msg -v2
     gr.msg -v0 "Usage:    $GURU_CALL note ls|add|open|rm|check|report|locate|tag <date> "
@@ -21,22 +24,26 @@ note.help () {
     gr.msg -v1 " open|edit      open given date notes (use time format $GURU_FORMAT_FILE_DATE "
     gr.msg -v1 "  <yesterday>   literal date pointing available"
     gr.msg -v1 "  <next month>  ... "
+    gr.msg -v1 " install        install required software: ${require[@]}"
+    gr.msg -v2 " uninstall      remove required software: ${require[@]}"
     gr.msg -v1 " tag            read from or add tags to note file "
     gr.msg -v1 " locate         returns file location of note given YYYYMMDD "
-    gr.msg -v1 " office <date>  compile and open note with $GURU_PREFERRED_OFFICE_DOC "
+    gr.msg -v1 " office         compile to .odt format open it"
+    gr.msg -v2 "   <date>       change note date"
+    gr.msg -v2 "   <team_name>  change template file"
     gr.msg -v1 " html <date>    compile and open note with $GURU_PREFERRED_BROWSER "
     gr.msg -v2
 }
 
-
 note.main () {
 # main command parser
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     local command="$1" ; shift
 
     case "$command" in
 
-        status|ls|add|open|rm|check|locate|config|tag)
+        status|ls|add|open|rm|check|locate|config|tag|install|uninstall)
                 note.$command "$@"
                 return $?
                 ;;
@@ -60,15 +67,15 @@ note.main () {
                 return $?
                 ;;
           *)
-                note.open $command $@
+                note.open "$command $@"
                 return $?
                 ;;
     esac
 }
 
-
 note.rc () {
 # source configurations (to be faster)
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     if [[ ! -f $note_rc ]] \
         || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/note.cfg) - $(stat -c %Y $note_rc) )) -gt 0 ]] \
@@ -81,9 +88,9 @@ note.rc () {
     source $note_rc
 }
 
-
 note.make_rc () {
 # configure note module
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     source config.sh
 
@@ -98,39 +105,94 @@ note.make_rc () {
     source $note_rc
 }
 
-
 note.config () {
 # populates global note variables based on given date in format YYYMMDD or literal date like "next month"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$@'"
 
-    local _input="${@}"
+    local _input="$(echo ${@}| xargs)"
     local _year _month _day _datestamp
+    local _re='^[0-9]+$'
+    # gr.debug "date_format: $GURU_FORMAT_FILE_DATE"
 
-    gr.debug "$FUNCNAME: input=$_input, \
-              date_format: $GURU_FORMAT_FILE_DATE"
+    case $_input in
+        *.*)
+            # gr.debug "got date with dots"
+            _day=$(cut -d "." -f1 <<<$_input)
+            _day=$(printf "%02d" "$_day")
+            _month=$(cut -d"." -f2 <<<$_input)
+            _month=$(printf "%02d" "$_month")
+            _year=$(cut -d"." -f3 <<<$_input)
 
-    if ! [[ $_input ]] ; then
-        _year=$(date -d now +%Y)
-        _month=$(date -d now +%m)
-        _day=$(date -d now +%d)
-        _datestamp=$(date -d now +$GURU_FORMAT_FILE_DATE)
-
-    else
-        local _re='^[0-9]+$'
-
-        if [[ $_input =~ $_re ]] ; then
-            gr.debug "got date stamp format"
-            _year=${_input::-4}
-            _month=${_input:4:2}
-            _day=${_input:6:2}
+            if date -d "$_year$_month$_day" >>/dev/null; then
+                true
+                # gr.debug "Finnish date DDMMYYYY $_day.$_month.$_year"
+            elif date -d "$_day$_month$_year">>/dev/null; then
+                gr.debug "UK date YYYYMMDD $_year.$_month.$_day"
+                local temp=$_year
+                _year=$_day
+                _day=$temp
+            elif date -d "$_year$_day$_month">>/dev/null; then
+                # gr.debug "US date MMDDYYYY $_month.$_day.$_year"
+                local temp=$_month
+                _month=$_day
+                _day=$temp
+            fi
             _datestamp="${_year}${_month}${_day}"
-        else
-            gr.debug "got literal date"
-            _year=$(date -d "$_input" +%Y)
-            _month=$(date -d "$_input" +%m)
-            _day=$(date -d "$_input" +%d)
-            _datestamp="$(date +$GURU_FORMAT_FILE_DATE -d "$_input" )"
-        fi
-    fi
+
+            # this cannot be done
+            # # check is four digit year
+            # if [[ ${#_year} -lt 4 ]]; then
+            #     # check is year less than 1000
+            #     if [[ ${#_year} -gt 2 ]] || [[ ${#_year} -lt 2 ]]; then
+            #         gr.msg -e1 "please enter year in two or four digits"
+            #         exit 2
+            #     else
+            #     # two digit year assume all before 50 to be 1950 and mote than that 2050
+            #     if [[ $_year -ge 50 ]]; then
+            #         _year="19$_year"
+            #         else
+            #         _year="20$_year"
+            #         fi
+            #     fi
+            # fi
+
+        ;;
+        "")
+            # gr.debug "got empty input, using today"
+            _datestamp=$(date -d now $GURU_FORMAT_FILE_DATE)
+            _year=$(date -d $_datestamp +%Y)
+            _month=$(date -d $_datestamp +%m)
+            _day=$(date -d $_datestamp +%d)
+        ;;
+        *)
+            # check it contain numbers
+            if [[ $_input =~ $_re ]] ; then
+                # gr.debug "got date stamp format"
+                _year=${_input::-4}
+                _month=${_input:4:2}
+                _day=${_input:6:2}
+                _datestamp="${_year}${_month}${_day}"
+            else
+                # gr.debug "got textual input"
+                _datestamp=$(date -d "${_input[@]}" +%Y%m%d)
+
+                if ! [[ $_datestamp ]]; then
+                    gr.msg -e1 "unknown date '${_input[@]}'"
+                    exit 122
+                fi
+                _year=$(date -d $_datestamp +%Y)
+                _month=$(date -d $_datestamp +%m)
+                _day=$(date -d $_datestamp +%d)
+            fi
+        ;;
+    esac
+
+    # test variables
+    gr.varlist "debug _day _month _year _datestamp"
+    date -d "$_year" +%Y  >/dev/null || exit 1
+    date -d "$_month" +%m >/dev/null || exit 1
+    date -d "$_day" +%d >/dev/null || exit 1
+    date -d "$_datestamp" >/dev/null || exit 1
 
     # fulfill note variables with given date in user config formats TBD bad naming ünd shit
     note_date=$(date -d $_datestamp +$GURU_FORMAT_DATE)
@@ -139,21 +201,15 @@ note.config () {
     note_file="$note_folder/$note_file_name"
     template_file_name="template.$GURU_USER_NAME.$GURU_USER_TEAM.md"
     template="$GURU_MOUNT_TEMPLATES/$template_file_name"
-
-    gr.debug "note_date: $note_date, \
-              note_folder: $note_folder, \
-              note_file_name: $note_file_name, \
-              note_file: $note_file, \
-              template_file_name: $template_file_name, \
-              template: $template"
-
+    gr.varlist "debug note_date note_folder note_file_name note_file template_file_name template"
 }
 
-
 note.check () {
-    # check that given date note file exist
+# check that given date note file exist
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     if ! note.online ; then note.remount ; fi
+
     note.config "$1"
     gr.msg -n -v2 "checking note $note_date.. "
     if [[ -f "$note_file" ]] ; then
@@ -165,12 +221,13 @@ note.check () {
     fi
 }
 
-
 note.locate () {
-    # find notes based on timestamp
+# find notes based on timestamp
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     note.locate_check () {
         # make variables
+        gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
         note.config "$1"
         gr.msg -v1 "$note_file "
@@ -202,17 +259,20 @@ note.locate () {
     esac
 }
 
-
 note.online () {
 # check that needed folders are mounted
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     if ! [[ "$GURU_MOUNT_NOTES" ]] && [[ "$GURU_MOUNT_TEMPLATES" ]] ; then
         gr.msg -e1 "empty variable: '$GURU_MOUNT_NOTES' or '$GURU_MOUNT_TEMPLATES'"
         return 100
     fi
 
+    # if not going to write to server do continue to able coding..
+    [[ $GURU_DEBUG ]] && return 0
+
     if mount.online "$GURU_MOUNT_NOTES" && mount.online "$GURU_MOUNT_TEMPLATES" ; then
-        # gr.msg -v3 -c green "note database mounted"
+        gr.msg -v3 -c green "note database mounted"
         return 0
     else
         gr.msg -v2 -c red "note database not mounted"
@@ -221,18 +281,18 @@ note.online () {
 
 }
 
-
 note.remount () {
 # mount needed folders
-
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    [[ $GURU_DEBUG ]] && return 0
     mount.known_remote notes || return 43
     mount.known_remote templates || return 44
     return 0
 }
 
-
 note.ls () {
 # list of notes given month/year
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -251,9 +311,9 @@ note.ls () {
     fi
 }
 
-
 note.add () {
 # creates notes
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -299,45 +359,18 @@ note.add () {
     fi
 }
 
-
 note.open_obsidian_vault () {
 # open idea gathering environment aka. obsidian vault memos in guru/notes
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
     # gr.msg "${FUNCNAME[0]} TBD"
     # xdg-open obsidian://open?vault=${1}
     local command="xdg-open obsidian://open?vault=${1}" #; while true ; do read -n1 ans ; case $ans in q) break ; esac ; done" # 2>/dev/null
     gnome-terminal --hide-menubar --geometry 130x6 --zoom 0.1 --title "obsidian launcher" -- bash -c "$command ; read "
 }
 
-
-# note.open () {
-# # select note to open and call editor input date in format YYYYMMDD
-
-#     # check is note and template folder mounted, mount if not
-#     note.online || note.remount
-
-#     local _date_list=(${@})
-#     local _note_date=
-
-#     for _note_date in ${_date_list[@]} ; do
-
-#             note.config "$_note_date"
-#             gr.debug "$_note_date"
-
-#             if [[ -f "$note_file" ]]; then
-#                     note.add_change "opened"
-#                 else
-#                     note.add "$_note_date"
-#                 fi
-
-#             gr.debug "opening $_note_date"
-#             note.open_editor "$note_file"
-
-#         done
-# }
-
-
 note.open () {
 # select note to open and call editor input date in format YYYYMMDD
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -345,8 +378,6 @@ note.open () {
     local _note_date="$@"
 
     note.config "$_note_date"
-    gr.debug "date: $_note_date"
-    gr.debug "file: $note_file"
 
     if [[ -f "$note_file" ]]; then
         note.add_change "opened"
@@ -354,14 +385,13 @@ note.open () {
         note.add "$_note_date"
     fi
 
-    gr.debug "opening $_note_date"
     note.open_editor "$note_file"
     return $?
 }
 
-
 note.rm () {
 # remove note of given date. input format YYYYMMDD
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -375,9 +405,9 @@ note.rm () {
     return 0
 }
 
-
 note.tag () {
 # add/read/rm tag from note files
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     source tag.sh
     note.online || note.remount
@@ -399,13 +429,14 @@ note.tag () {
     tag.main add $note_file $user_input
 }
 
-
 note.add_change () {
 # add line to change log
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     [[ ${GURU_NOTE_CHANGE_LOG} ]] || return 0
 
     _line () {
+        gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
         _len=$1
         for ((i=1;i<=_len;i++)); do
             printf '-'
@@ -432,15 +463,18 @@ note.add_change () {
     printf  "%-17s | %-10s | %s \n" "$(date +$GURU_FORMAT_FILE_DATE)-$(date +$GURU_FORMAT_TIME)" "$_author" "$_change" >>$note_file
 }
 
-
-
 note.open_editor () {
 # open note to preferred editor
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+
+    local _options
 
     case "${GURU_NOTE_EDITOR}" in # if was $GURU_PREFERRED_EDITOR
 
         obsidian|obs)
-            xdg-open "obsidian://open?vault=${GURU_NOTE_VAULT }"
+
+            GURU_NOTE_EDITOR="xdg-open"
+            _options="obsidian://open?vault=${GURU_NOTE_VAULT }"
             #return $?
             ;;
         subl|sublime|sublime3|sublime2)
@@ -450,47 +484,72 @@ note.open_editor () {
             [[ -d $project_folder ]] || gr.msg -x 100 -e3 "$project_folder not exist"
             [[ -f $sublime_project_file ]] || gr.msg -e1 "sublime project file missing"
 
-            subl "$note_file" -n --project "$sublime_project_file" -a
-            return $?
+            GURU_NOTE_EDITOR="subl"
+            _options="-n --project "$sublime_project_file" -a"
             ;;
         *)
-            joe "$note_file"
-            return $?
+            GURU_NOTE_EDITOR="joe"
+            ;;
     esac
+
+    # make command as variable for debugging purposes
+    _command="${GURU_NOTE_EDITOR} $note_file $_options"
+    if [[ $GURU_DEBUG ]]; then echo $_command ; exit 0; fi
+    # run command
+    $_command
+    return $?
 }
 
-
 note.office () {
-# create odt from team template out of given day's note
+# create .odt from team template out of given day's note
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
 
     # get date for note
     if [[ "$1" ]] ; then
-        _date=$(date +$GURU_FORMAT_FILE_DATE -d $1)
+        _date="$1"
+        shift
     else
         _date=$(date +$GURU_FORMAT_FILE_DATE)
     fi
 
-    # fullfil note file variables
+    # fulfill note file variables
     note.config "$_date"
 
-    local odt_file="${note_file%%.*}.odt"
-    local odt_template="$GURU_MOUNT_TEMPLATES/$GURU_USER_TEAM-template.odt"
+    # template group name
+    if [[ "$1" ]] ; then
+        local _template=$1
+    else
+        local _template=$GURU_USER_TEAM
+    fi
 
-    if [ -f "$odt_file" ]; then
+    local odt_file="${note_file%%.*}.odt"
+    local odt_template="$GURU_MOUNT_TEMPLATES/template-$_template.ott"
+
+    # make css option only if css. file exist
+    if [[ -f $odt_template ]]; then
+        gr.msg "using $_template template.. "
+        gr.debug "template options: '$template_option'"
+        template_option="--reference-doc=$odt_template " #--data-dir=$GURU_MOUNT_TEMPLATES
+    else
+        gr.msg -e0 "template document does not exist, to avoid this error create $odt_template"
+        template_option=
+    fi
+
+    if [[ -f "$odt_file" ]]; then
         odt_file="${odt_file%%.*}.$RANDOM.odt"
     fi
 
-    # printout variables for debug purpoces
+    # printout variables for debug purposes
     gr.debug "date:'$_date', \
           note_file_name: '$note_file_name', \
           note_file: '$note_file', \
           odt_template: '$odt_template', \
           odt_file: '$odt_file'"
 
-    # output ramdomizer
+    # check file exist
     if ! [ -f "$note_file" ]; then
         gr.msg -e1 "no note for $(date +$GURU_FORMAT_DATE -d $_date)"
         return 123
@@ -499,50 +558,79 @@ note.office () {
     # add change log line
     note.add_change "odt export"
 
-    # compile markdown to open office file format
-    pandoc "$note_file" --reference-doc="" \
-            -f markdown -o  "$odt_file"
+    # make command as variable for debugging purposes
+    _command="pandoc $note_file -f markdown -o $odt_file $template_option"
 
-    #printout output file location
+    if [[ $GURU_DEBUG ]]; then echo $_command ; fi
+
+    # compile markdown to open office file format
+    $_command
+
+    # printout output file location
     gr.msg -v1 "$odt_file"
 
+    # make command as variable for debugging purposes
+    _command="$GURU_PREFERRED_OFFICE_DOC $odt_file"
+    if [[ $GURU_DEBUG ]]; then echo $_command ; exit 0; fi
+
     # open office program
-    $GURU_PREFERRED_OFFICE_DOC "${note_file%%.*}.odt" &
+    $_command &
+
+    # $GURU_PREFERRED_OFFICE_DOC "${note_file%%.*}.odt" &
 
 }
 
-
 note.html () {
 # create html of given day's note
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
 
     # get date for note
     if [[ "$1" ]] ; then
-        _date=$(date +$GURU_FORMAT_FILE_DATE -d $1)
+        _date=$1
+        shift
     else
         _date=$(date +$GURU_FORMAT_FILE_DATE)
     fi
 
-    # fullfil note file variables
+    # fulfill note file variables
     note.config "$_date"
 
-    local html_file="${note_file%%.*}.html"
-    local css_file="$GURU_MOUNT_TEMPLATES/pandoc.$GURU_USER.$GURU_USER_TEAM.css"
+   # template group name
+    if [[ "$1" ]] ; then
+        _template=$1
+    else
+        _template=$GURU_USER_TEAM
+    fi
 
-    if [ -f "$html_file" ]; then
+    local html_file="${note_file%%.*}.html"
+    local css_file="$GURU_MOUNT_TEMPLATES/template-$_template.css"
+
+    # make css option only if css. file exist
+    if [[ -f $css_file ]]; then
+        gr.msg "using $_template template.. "
+        css_option="--css=$css_file"
+        #css_option="-c $css_file"
+        gr.debug "template options: '$css_option'"
+    else
+        gr.msg -e0 "default css does not exist, to avoid this error create default css file to $css_file"
+        css_option=
+    fi
+
+    if [[ -f "$html_file" ]]; then
         html_file="${html_file%%.*}.$RANDOM.html"
     fi
 
-    # printout variables for debug purpoces
+    # printout variables for debug purposes
     gr.debug "date:'$_date', \
               note_file_name: '$note_file_name', \
               note_file: '$note_file', \
               css_file: '$css_file', \
               html_file: '$html_file'"
 
-    # output ramdomizer
+    # check file exist
     if ! [ -f "$note_file" ]; then
         gr.msg -e1 "no note for $(date +$GURU_FORMAT_DATE -d $_date)"
         return 123
@@ -551,22 +639,28 @@ note.html () {
     # add line to change log
     note.add_change "html export"
 
-    # compile markdown to html5 (--toc)
-    pandoc --css=$css_file -s -f markdown+smart --metadata \
-           pagetitle="$GURU_NOTE_HEADER" --to=html5 $note_file \
-           -o $html_file
+    # make command as variable for debugging purposes
+    _command="pandoc -f markdown $note_file -o $html_file --to=html5 $css_option"
+
+    if [[ $GURU_DEBUG ]]; then echo $_command ; exit 0; fi
+
+    # run command
+    $_command
 
     #printout output file location
     gr.msg -v1 "$html_file"
 
     # open browser
-    $GURU_PREFERRED_BROWSER $html_file
+    if [[ -f $html_file ]]; then
+        $GURU_PREFERRED_BROWSER $html_file &
+    else
+        gr.msg -e1 "$html_file not found"
+    fi
 }
-
-
 
 note.status () {
     # make status for daemon
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
     gr.msg -t -n "${FUNCNAME[0]}: "
     # check note is enabled
     if [[ ${GURU_NOTE_ENABLED} ]] ; then
@@ -579,10 +673,31 @@ note.status () {
     return $?
 }
 
+note.install() {
+# Install needed tools
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    local require=(ncal pandoc gnome-terminal libreoffice-java-common default-jre)
+    for install in ${require[@]} ; do
+        hash $install 2>/dev/null && continue
+        gr.ask -h "going to install $install" || continue
+        sudo apt-get -y install $install
+    done
+}
+
+note.uninstall() {
+# Install needed tools
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    local require=(ncal pandoc)
+    for install in ${require[@]} ; do
+        hash $install 2>/dev/null || continue
+        gr.ask -h "going to remove $install" || continue
+        sudo apt-get -y purge $install
+    done
+}
+
 note.rc
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
-    # source $GURU_RC
     note.main $@
     exit $?
 fi

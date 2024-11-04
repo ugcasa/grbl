@@ -258,7 +258,7 @@ gr.msg () {
 }
 
 gr.emsg () {
-
+# sond know what this is, remove
      printf "$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_column_width}"
     $@
 }
@@ -274,7 +274,7 @@ gr.end () {
 }
 
 gr.blink () {
-    #gr.msg -c aqua -k $GURU_MQTT_INDICATOR_KEY
+# bliks corsair keyboard keys
 
     local key="caps"
     [[ $1 ]] && key=$1
@@ -439,21 +439,26 @@ gr.ask () {
     local _box=
 
     # parse arguments
-    TEMP=`getopt --long -o "st:d:" "$@"`
+    TEMP=`getopt --long -o "sht:d:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
         case "$1" in
-            -s )
+
+            -s) # speak question out
                 _read_it=true
                 shift
                 ;;
-            -t )
+            -h) # highlight last word
+                _highlight=true
+                shift
+                ;;
+            -t)
                 _timeout=$2
                 _options="-t $_timeout"
                 shift 2
                 ;;
-            -d )
+            -d)
                 _def_answer=$2
 
                     case $_def_answer in
@@ -463,7 +468,7 @@ gr.ask () {
                 _answer=$2
                 shift 2
                 ;;
-             * )
+             *)
               break
         esac
     done
@@ -490,11 +495,20 @@ gr.ask () {
         n) _box="[${_ano_answer,,}/${_def_answer^^}]: " ;;
     esac
 
-    # ask from user
+    # speak
     [[ $_read_it ]] && espeak "$_message" #& >/dev/null
 
     # colorize message
-    [[ $GURU_COLOR ]] && _message="$(gr.msg -n -c gold $_message)"
+    if [[ $GURU_COLOR ]]; then
+        # highlight last word
+        if [[ $_highlight ]]; then
+            _highlight="${_message##* }"
+            _message="$(sed '1{s/[^ ]\+\s*$//}' <<<$_message)"
+            _message="$(gr.msg -n -c dark_cyan $_message) $(gr.msg -n -c cyan $_highlight)"
+        else
+        _message="$(gr.msg -n -c dark_cyan $_message)"
+        fi
+    fi
 
     # ask the question
     if [[ $GURU_FORCE ]] ; then
@@ -523,6 +537,7 @@ gr.ask () {
 }
 
 # TBD rename following three functions
+
 gr.kv() {
 # print key value pair
 
@@ -559,16 +574,28 @@ gr.kvt () {
 }
 
 
-gr.kvp () {
+gr.varlist(){
 # print key value pairs based list of variable names
-    input=($@)
-    for (( i = 0 ; i < ${#input[@]} ; i++ )); do
+    local input=($@)
+    local _i=0
+
+    # if first argument is debug, print list only if debu mode is on
+    if [[ ${input%% *} == "debug" ]]; then
+        [[ $GURU_DEBUG ]] || return 0
+        _i=1
+    fi
+
+    for (( i = $_i ; i < ${#input[@]} ; i++ )); do
         gr.msg -n -c light_blue "${input[$i]}"
         gr.msg -n -c white " = "
-        gr.msg -c aqua_marine "$(eval echo '$'${input[$i]})"
+        gr.msg -c aqua_marine "'$(eval echo '$'${input[$i]})'"
     done
 }
 
+gr.kvp () {
+# compatibility alias
+  gr.kvp $@
+}
 
 gr.installed () {
 # check is module installed

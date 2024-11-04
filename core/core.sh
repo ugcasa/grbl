@@ -2,11 +2,12 @@
 # guru-client core
 # casa@ujo.guru 2020 - 2023
 
+__core=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 core.parser () {
 # parsing first word of user input, rest words are passed to next level parser
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
-    gr.debug "$FUNCNAME: '$@'"
     local _input="$1" ; shift
 
     case "$_input" in
@@ -58,6 +59,7 @@ core.parser () {
 
 core.list () {
 # printout lists of stuff
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     local list=
 
@@ -88,6 +90,7 @@ core.list () {
 
 core.debug () {
 # some debug stuff, not used too often
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     local wanted=$1
     # local available=($(cat "$GURU_CFG/variable.list"))
@@ -120,6 +123,8 @@ core.debug () {
 
 
 core.active () {
+# start daemon
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     # ask key for server,
     # if key is no open, popup passphase input dialog appears
@@ -153,6 +158,7 @@ process_list=/tmp/guru-cli_ps.list
 
 core.ps () {
 # list of running guru-client processes
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     local ifs=$IFS
     local _pid _int _com _arg
@@ -192,6 +198,8 @@ core.ps () {
 
 
 core.top () {
+# list of guru processes
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
     while true ; do
 
         clear
@@ -218,6 +226,7 @@ core.top () {
 
 core.kill () {
 # list of running guru-client processes
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     local ifs=$IFS
     local gid=$1
@@ -256,18 +265,17 @@ core.kill () {
 
 }
 
-
-
 core.stop () {
 # ask daemon to stop. daemon should get the message after next tick (about a second)
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     flag.set stop
     return $?
 }
 
-
 core.pause () {
 # This function asks the daemon to pause by toggling the pause flag in the system.
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 # The flag is stored using the system.s module.
 # If the flag is already set, it will be removed. If it is not set, it will be set. (chatgpt)
 
@@ -279,9 +287,9 @@ core.pause () {
     return 0
 }
 
-
 core.make_adapter () {
 # make adapter to multi file module
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     local module=$1 ; shift
     local temp_script=$GURU_BIN/$module.sh
@@ -310,6 +318,7 @@ EOL
 
 core.run_module () {
 # check is input in module list and if so, call module main
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     local type_list=(".sh" ".py" "")
     local run_me=
@@ -378,6 +387,7 @@ core.run_module () {
 
 core.print_description () {
 # printout function description for documentation and debugging
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     local module=$1
     shift
@@ -395,8 +405,8 @@ core.print_description () {
 
 core.run_module_function () {
 # run methods (functions) in module
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
-    gr.debug "$FUNCNAME: '$@'"
     # guru add ssh key @ -> guru ssh key add @
     if ! grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
         local module=$1 ; shift # note: there was reason to use shift over $2, $3, may just be cleaner
@@ -411,8 +421,6 @@ core.run_module_function () {
     for _module in ${GURU_MODULES[@]} ; do
 
         if [[ "$_module" == "$module" ]] ; then
-
-            gr.debug "core.sh > $FUNCNAME > $_module.sh > $_module.$command '$function' '$@'"
 
             # check is module folder, create adapter if is not found
             if [[ -f "$GURU_BIN/$_module/$_module.sh" ]] && ! [[ -f "$GURU_BIN/$_module.sh" ]] ; then
@@ -453,8 +461,8 @@ core.run_module_function () {
 
 core.multi_module_function () {
 # run function name of all installed modules
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
-    gr.debug "$FUNCNAME: '$@'"
 
     local function_to_run=$1 ; shift
 
@@ -489,6 +497,7 @@ core.multi_module_function () {
 
 core.change_user () {
 # change guru user temporarily
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     local _input_user=$1
     if [[ "$_input_user" == "$GURU_USER" ]] ; then
@@ -510,6 +519,7 @@ core.change_user () {
 
 core.online () {
 # check is online, set pause for daemon if not
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     declare -g offline_flag="/tmp/guru-offline.flag"
     source net.sh
@@ -533,6 +543,7 @@ core.online () {
 
 core.mount_system_base () {
 # check is access point enabled and mount is not
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
 
     # is access functionality enabled?
     if ! [[ $GURU_ACCESS_ENABLED ]] ; then
@@ -563,6 +574,7 @@ core.process_module_opts () {
 # This function processes command line arguments for a module and core, making sure that each argument is
 # correctly assigned to the appropriate variable. The processed arguments are then exported as environment
 # variables for use in other parts of the program. Comments of this function are generated by chatGPT.
+gr.msg -v4 -n -c blue "$__core [$LINENO] $FUNCNAME " ; [[ $GURU_DEBUG ]] && echo $@
 
     # The function starts by initializing three variables: input_string_list, pass_to_module, and pass_to_core.
     # The input_string_list variable holds all the command line arguments passed to the function, while pass_to_module
@@ -632,8 +644,8 @@ core.process_module_opts () {
 
 core.run_macro () {
 # run macro
+    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME " ; [[ $GURU_DEBUG ]] && echo $@
 
-    #export GURU_VERBOSE=1
     local file_name="${1}"
     gr.msg -c dark_grey -v2 "running macro '$file_name'"
     local words_list=()
@@ -670,20 +682,24 @@ core.run_macro () {
 
 core.is_macro () {
 # check is core called by macro and if so, remove macro name from input string
+    gr.msg -v4 -n -c blue "$__core [$LINENO] $FUNCNAME "
 
     case ${1} in
         *.gm)
+            [[ $GURU_DEBUG ]] && echo "yes $@"
             core.run_macro $@
             return 0
             ;;
         *)
+            [[ $GURU_DEBUG ]] && echo "nope"
             return 1
     esac
 }
 
 
 core.process_core_opts () {
-    # process core level options
+# process core level options
+    gr.msg -v4 -n -c blue "$__core [$LINENO] $FUNCNAME " ; [[ $GURU_DEBUG ]] && echo $@
 
     # default values for global control variables
     declare -gx GURU_FORCE=
@@ -742,14 +758,7 @@ core.process_core_opts () {
         esac
     done
 
-    gr.debug "$FUNCNAME: GURU_DEBUG: $GURU_DEBUG"
-    gr.debug "$FUNCNAME: GURU_COLOR: $GURU_COLOR"
-    gr.debug "$FUNCNAME: GURU_VERBOSE: $GURU_VERBOSE"
-    gr.debug "$FUNCNAME: GURU_SPEAK: $GURU_SPEAK"
-    gr.debug "$FUNCNAME: GURU_COLOR: $GURU_COLOR"
-    gr.debug "$FUNCNAME: GURU_FORCE: $GURU_FORCE"
-    gr.debug "$FUNCNAME: GURU_HOSTNAME: $GURU_HOSTNAME"
-    gr.debug "$FUNCNAME: GURU_LOGGING: $GURU_LOGGING"
+    gr.varlist "debug GURU_DEBUG GURU_COLOR GURU_VERBOSE GURU_SPEAK GURU_COLOR GURU_FORCE GURU_HOSTNAME GURU_LOGGING "
 
 
     # clean rest of user input
@@ -770,6 +779,16 @@ declare -x GURU_VERSION_NAME=$(echo $(tail $GURU_BIN/version -n +2 | head -n 1 )
 
 # early exits
 case $1 in
+    # core debug option
+
+    debug)
+        source $GURU_BIN/common.sh
+        export GURU_VERBOSE=4
+        export GURU_DEBUG=true
+        export GURU_COLOR=true
+        shift
+        ;;
+
     version|--version|--ver)
         echo "$GURU_VERSION $GURU_VERSION_NAME"
         exit 0
@@ -824,7 +843,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
         exit 0
     fi
 
-    if [[ GURU_CORSAIR_ENABLED ]] ; then
+    if [[ $GURU_CORSAIR_ENABLED ]] ; then
         source corsair.sh
         corsair.indicate error
         corsair.main type "er$_error_code" >/dev/null
