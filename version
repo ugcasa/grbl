@@ -1,30 +1,3 @@
-0.6.9.34
-'core review'
-10 long arguments are delivered to module
-11 active module rc functions done for mount, audio and backup
-12 audio module can continue to play listed file position
-12 shortcut key for remove current playlist added
-12 alias for play and listen added to control audio module
-13 audio status prints out "now playing" data, not really tested, might mess up status output in some occasions
-14 indicator key naming harmonized + other minor improvements
-15 declare -l misunderstand issue fixed
-16 search and play function and some clean up
-17 gaming module added, minecraft keybindings
-18 youtube optimized, just fun for xmass
-19 caps lock integration, a lot of minor changes, mainly in audio.sh
-20 getting ready to chatter audio.sh
-21 macro support for list of command, no conditions yet
-22 audio.sh fixes: now playing mpv server socket pointer and playlist almost ready to go audio/playlist.sh
-23 various improvements or audio module and some core minor changes
-24 audio control improvements
-25 audio module is to separated to audio/radio.sh, audio/playlist.sh, audio/tunnel.sh and audio.sh acts like guru-cli adapter for audio/main.sh
-26 system.sh: flagging functions moved to core/flag.sh, as library type
-26 mint keyboard install+config warning message, found missing quotation mark
-27 new flag system implemented, intend changes. a lot of non documented changes :|
-28 simple ai tools implemented
-29 project.sh review ended, bugs fixed, almost functional =P. vpn review still open. some other changes
-30 stonks module for low level finance control, say module fixes, gr.ask starts to speak with option -s
-31 common.sh gr.help function added to server common tool user
-32 documentation and some ideas for speech recognition
-33 changes made without committing past month
-34 daemon and core quick review started
+0.7.0.1
+'focus'
+1 'configs' merged to 'master'

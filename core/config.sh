@@ -263,16 +263,16 @@ config.pull () {
 # pull configuration files from server
 
     gr.debug "$FUNCNAME: rsync -rav --quiet -e ssh -p $GURU_ACCESS_PORT \
-              $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/ \
+              $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/guru/config/$GURU_HOSTNAME/$GURU_USER/ \
               $GURU_CFG/$GURU_USER"
 
     gr.msg -v1 -n -V2 "pulling $GURU_USER@$GURU_HOSTNAME configs.. "
-    gr.msg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
+    gr.msg -v2 -n "pulling configs from $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/guru/config/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
 
 
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
-        "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/" \
+        "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/guru/config/$GURU_HOSTNAME/$GURU_USER/" \
         "$GURU_CFG/$GURU_USER"
     _error=$?
 
@@ -290,25 +290,25 @@ config.push () {
 # save configuration to server
 
     gr.debug "$FUNCNAME: rsync -rav --quiet -e ssh -p $GURU_ACCESS_PORT $GURU_CFG/$GURU_USER/ \
-              $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/"
+              $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/guru/config/$GURU_HOSTNAME/$GURU_USER/"
 
     gr.msg -v1 -n -V2 "pushing $GURU_USER@$GURU_HOSTNAME configs.. "
-    gr.msg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER "
+    gr.msg -v2 -n "pushing configs to $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/guru/config/$GURU_HOSTNAME/$GURU_USER "
     local _error=0
 
     # "if not"
     ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
         -p "$GURU_ACCESS_PORT" \
-        ls "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER" >/dev/null 2>&1 || \
+        ls "/home/$GURU_ACCESS_USERNAME/guru/config/$GURU_HOSTNAME/$GURU_USER" >/dev/null 2>&1 || \
         # "then"
         ssh "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN" \
             -p "$GURU_ACCESS_PORT" \
-            mkdir -p "/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER"
+            mkdir -p "/home/$GURU_ACCESS_USERNAME/guru/config/$GURU_HOSTNAME/$GURU_USER"
         # "fi"
 
     rsync -rav --quiet -e "ssh -p $GURU_ACCESS_PORT" \
         "$GURU_CFG/$GURU_USER/" \
-        "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/usr/$GURU_HOSTNAME/$GURU_USER/"
+        "$GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/guru/config/$GURU_HOSTNAME/$GURU_USER/"
 
     _error=$?
     if ((_error<9)) ; then
