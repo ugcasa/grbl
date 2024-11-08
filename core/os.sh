@@ -75,7 +75,7 @@ os.compatible_with () {
 os.status () {
 # returns least linux distribution name
     gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
-    gr.msg && alias 'gr.msg'='echo'
+    gr.msg -n && alias 'gr.msg'='echo'
     if [[ -f /etc/os-release ]]; then
         source /etc/os-release
         gr.msg -t -v1 -V2 "$FUNCNAME: $NAME $VERSION_ID '$VERSION_CODENAME' Kernel $(uname -r)"
@@ -534,7 +534,7 @@ os.rc () {
 
     local config_file_age_difference=$(( $(stat -c %Y $config_file) - $(stat -c %Y $os_rc) ))
 
-    gr.varlist "debug config_file os_rc config_file_age_difference"
+    # gr.varlist "debug config_file os_rc config_file_age_difference"
 
     if [[ ! -f $os_rc ]] || [[ $config_file_age_difference -gt 1 ]]; then
             os.make_rc &&  gr.msg -v1 -c dark_gray "$os_rc updated"

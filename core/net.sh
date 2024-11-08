@@ -219,7 +219,7 @@ net.rc () {
 
     local config_file_age_difference=$(( $(stat -c %Y $config_file) - $(stat -c %Y $net_rc) ))
 
-    gr.varlist "debug config_file net_rc config_file_age_difference"
+    # gr.varlist "debug config_file net_rc config_file_age_difference"
 
     if [[ ! -f $net_rc ]] || [[ $config_file_age_difference -gt 1 ]]; then
             net.make_rc &&  gr.msg -v1 -c dark_gray "$net_rc updated"
@@ -559,6 +559,7 @@ net.remove () {
     gr.msg "nothing to remove"
     return 0
 }
+gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME"
 
 if [[ $GURU_CFG/$GURU_USER/net.cfg ]]; then
     declare -g config_file=$GURU_CFG/$GURU_USER/net.cfg

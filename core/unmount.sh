@@ -13,6 +13,7 @@ source $temp_rc
 all_list=($(\
         grep "export GURU_MOUNT_" $temp_rc | \
         grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve '_INDICATOR_KEY' | \
+        grep -v "GURU_MOUNT_SYSTEM" | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
 all_list=(${all_list[@],,})
@@ -22,6 +23,7 @@ _default_list=($(\
         grep 'GURU_MOUNT_' | \
         grep -v "PROXY1_" | \
         grep -v "ENABLED" | \
+        grep -v "GURU_MOUNT_SYSTEM" | \
         grep -v "LIST" | \
         grep -v '$GURU_MOUNT' | \
         grep -v 'INDICATOR_KEY' | \
@@ -44,7 +46,7 @@ unmount.main () {
             unmount.all
             ;;
 
-        ls|defaults|status|help|system|status)
+        ls|defaults|status|help|status)
             unmount.$argument $@
             return $?
             ;;
@@ -53,6 +55,7 @@ unmount.main () {
             ;;
        *)
 
+            gr.end $GURU_MOUNT_INDICATOR_KEY
             if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$argument" ; then
                     gr.msg -v3 -c green "found in defauls list"
                     unmount.known_remote $argument $@

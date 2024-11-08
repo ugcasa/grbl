@@ -38,7 +38,7 @@ mount.main () {
 
     case "$command" in
 
-            system|help|ls|info|check|mounted|poll|status|start|stop|install|uninstall|available|mounted|online|config)
+            help|ls|info|check|mounted|poll|status|start|stop|install|uninstall|available|mounted|online|config)
                 mount.$command $@
                 _error=$?
                 ;;
@@ -59,8 +59,10 @@ mount.main () {
                 _error=$?
                 ;;
 
-            folder|mount)
+            mount)
+                gr.end $GURU_MOUNT_INDICATOR_KEY
                 mount.remote $command $@
+                mount.status >/dev/null
                 _error=$?
                 ;;
 
@@ -71,10 +73,11 @@ mount.main () {
             "")
                 mount.listed default
                 _error=$?
-                mount.status
+                mount.status >/dev/null
                 ;;
 
             *)
+                gr.end $GURU_MOUNT_INDICATOR_KEY
                 if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$command" ; then
                     gr.debug "found in defauls list"
                     mount.known_remote $command $@
@@ -284,27 +287,30 @@ mount.check () {
     mount.online $_target_folder && _online=1 || _online=
 
     case $_target_folder in
+        *.data)
+            [[ $_online ]] \
+                && color=sky_blue \
+                || color=black
+            ;;
 
-        *.data)  [[ $_online ]] \
-                        && color=sky_blue \
-                        || color=dark_grey
-                    ;;
+        */.*)
+            [[ $_online ]] \
+                && color=hot_pink \
+                || color=null
+            ;;
 
-            */.*)  [[ $_online ]] \
-                        && color=hot_pink \
-                        || return 1
-
-                    ;;
-
-                *)  [[ $_online ]] \
-                        && color=aqua \
-                        || color=dark_cyan
-                    ;;
+        *)
+            [[ $_online ]] \
+                && color=aqua \
+                || color=dark_cyan
+            ;;
     esac
-    gr.msg -n -v1 -c $color "${_target_folder##*/} "
 
+    [[ $color != null ]] && gr.msg -n -v1 -c $color "${_target_folder##*/} "
+
+    # online comes wrong way around for this purpose
     [[ $_online ]] && return 0 || return 1
-    # return $_online
+
 }
 
 mount.remote () {
@@ -542,6 +548,8 @@ mount.status () {
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
     local _target
     local _private=
+    local _online=
+    local _mounted=
 
     # check is enabled
     if [[ $GURU_MOUNT_ENABLED ]] ; then
@@ -551,6 +559,7 @@ mount.status () {
             return 100
         fi
 
+    gr.end $GURU_MOUNT_INDICATOR_KEY
     # check is system available
     # if mount.check ; then
     #         gr.msg -v1 -n -c green "available "
@@ -561,18 +570,45 @@ mount.status () {
 
     # go trough mount points
     for _mount_point in ${all_list[@]} ; do
-            _target=$(eval echo '${GURU_MOUNT_'"${_mount_point^^}[0]}")
-            mount.check $_target &&
-                case $_target in \
-                    *'/.'*)  _private=true
-                            ;;
-                    esac
-        done
+        _target=$(eval echo '${GURU_MOUNT_'"${_mount_point^^}[0]}")
+        mount.check $_target && _online=1 || _online=
 
-    # serve enter and key color
-    [[ $_private ]] && [[ $GURU_VERBOSE -gt 0 ]]\
-        && gr.msg -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY \
-        || gr.msg -c aqua -k $GURU_MOUNT_INDICATOR_KEY
+
+        # if some of mountpoints are "secred" and online
+        case $_target in
+            $GURU_DATA)
+                [[ $_online ]] && _system=1
+            ;;
+            */.*)
+                [[ $_online ]] && _private=1
+                [[ $_online ]] && _mounted=1
+            ;;
+            *)
+                [[ $_online ]] && _mounted=1
+            ;;
+        esac
+
+    done
+
+    # serve enter and set indicate key color
+
+    if [[ $_private ]]; then
+        gr.msg -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY
+    elif [[ $_mounted ]]; then
+        if [[ $_system ]]; then
+            gr.msg -c aqua -k $GURU_MOUNT_INDICATOR_KEY
+        else
+            gr.blink $GURU_MOUNT_INDICATOR_KEY partly
+        fi
+    else
+        if [[ $_system ]]; then
+            gr.msg -c blue -k $GURU_MOUNT_INDICATOR_KEY
+        else
+            gr.msg -c black -k $GURU_MOUNT_INDICATOR_KEY
+            gr.blink $GURU_MOUNT_INDICATOR_KEY offline
+        fi
+    fi
+
 
     return 0
 }
@@ -599,13 +635,13 @@ mount.poll () {
     local _cmd="$1" ; shift
 
     case $_cmd in
-        start )
+        start)
             gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $GURU_MOUNT_INDICATOR_KEY
             ;;
-        end )
+        end)
             gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $GURU_MOUNT_INDICATOR_KEY
             ;;
-        status )
+        status)
             mount.status $@
             ;;
         *)  mount.help
