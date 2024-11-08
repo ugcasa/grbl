@@ -270,56 +270,17 @@ gr.end () {
     [[ $1 ]] && key=$1 ; shift
 
     [[ -f /tmp/blink_$key ]] && rm /tmp/blink_$key
+    sleep 1
     return 0
 }
 
 gr.blink () {
 # bliks corsair keyboard keys
-
     local key="caps"
-    [[ $1 ]] && key=$1
-    shift
-
-    local mood=$1
-
-    case $mood in
-    # color1 color2 interval timeout leave-color
-        ok)             blink="green slime 0.5 3 green" ;;
-        available)      blink="green aqua_marine 0.2 1 green" ;;
-        yes)            blink="green black 0.75 10 " ;;
-        no)             blink="red black 0.75 10 " ;;
-        cancel)         blink="orange $GURU_CORSAIR_MODE 0.2 3 " ;;
-        init)           blink="blue dark_blue 0.1 5 " ;;
-        pass*)          blink="slime $GURU_CORSAIR_MODE 1 300 green" ;;
-        fail*)          blink="red $GURU_CORSAIR_MODE 1 300 red" ;;
-        done)           blink="green slime 4 $GURU_DAEMON_INTERVAL green" ;;
-        do*)            blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL" ;;
-        work*)          blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL" ;;
-        recovery)       blink="blue black 5 $GURU_DAEMON_INTERVAL blue" ;;
-        grinding)       blink="blue aqua_marine 1 $GURU_DAEMON_INTERVAL" ;;
-        play*)          blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
-        active)         blink="aqua aqua_marine 0.5 5" ;;
-        pause)          blink="black $GURU_CORSAIR_MODE 1 3600";;
-        error)          blink="orange yellow 1 10 orange" ;;
-        message)        blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
-        call)           blink="deep_pink black 0.75 30 deep_pink" ;;
-        customer)       blink="deep_pink white 0.75 30 deep_pink" ;;
-        offline)        blink="blue orange 1.25 $GURU_DAEMON_INTERVAL orange" ;;
-        warn*)          blink="red orange 0.75 3600 orange" ;;
-        alert)          blink="red black 0.5 $GURU_DAEMON_INTERVAL" ;;
-        blue)           blink="blue black 0.5 $GURU_DAEMON_INTERVAL" ;;
-        notice)         blink="orange_red black 0.75 $GURU_DAEMON_INTERVAL " ;;
-        panic)          blink="red white 0.2 $GURU_DAEMON_INTERVAL red" ;;
-        breath|calm)    blink="dark_cyan dark_turquoise 6 600" ;;
-        cops|police)    blink="medium_blue red 0.75 60" ;;
-        hacker)         blink="white black 0.2 3600 red" ;;
-        important)      blink="red yellow 0.75 3600" ;;
-        *)              gr.msg -e1 "no valid mood '$mood'" ; return 0 ;;
-    esac
-
-    source corsair.sh
-    corsair.blink_set $key $blink
-
+    local mood="panic"
+    [[ $1 ]] && key=$1; shift
+    [[ $1 ]] && mood=$1; shift
+    $GURU_CALL corsair indicate $mood $key
 }
 
 gr.ind () {

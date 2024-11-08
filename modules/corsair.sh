@@ -305,7 +305,7 @@ corsair.blink_all () {
 
 corsair.get_key_id () {
 # printout key id number
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    # gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
     local find_list=($@)
     local got_value=
 
@@ -328,24 +328,23 @@ corsair.get_key_id () {
 
 corsair.get_pipefile () {
 # printout pipe file for given key
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    #gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
     [[ $1 ]] || return 124
 
     local id=$(corsair.get_key_id $1)
 
     if (( $? > 0 )) ; then
-            gr.msg -c yellow "key not found"
+            gr.msg -c yellow "key id '$id' not found"
             return 1
         fi
 
     local pipefile="/tmp/ckbpipe$id"
 
-    # gr.msg -c deep_pink $pipefile
     if file $pipefile | grep fifo >/dev/null; then
             echo $pipefile
             return 0
         else
-            gr.msg -c yellow "pipefile not exist"
+            gr.msg -c yellow "pipefile '$pipefile' not exist"
             corsair.blink_stop $1
             return 2
         fi
@@ -691,6 +690,7 @@ corsair.indicate () {
         call)           blink="deep_pink black 0.75 30 deep_pink" ;;
         customer)       blink="deep_pink white 0.75 30 deep_pink" ;;
         offline)        blink="blue orange 1.25 $GURU_DAEMON_INTERVAL orange" ;;
+        partly)         blink="aqua orange 1.25 $GURU_DAEMON_INTERVAL orange" ;;
         warn*)          blink="red orange 0.75 3600 orange" ;;
         alert)          blink="red black 0.5 $GURU_DAEMON_INTERVAL" ;;
         blue)           blink="blue black 0.5 $GURU_DAEMON_INTERVAL" ;;
