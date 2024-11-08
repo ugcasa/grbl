@@ -2,15 +2,20 @@
 # method to commonucate with mpv player for stats
 # audio.rc sould be sourced before soursing this file
 
-mpv.list () {
+__mpv_color="dark_grey"
+__mpv=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
+mpv.list () {
+# list variables of mpv
+    gr.msg -v4 -c $__mpv_color "$__mpv [$LINENO] $FUNCNAME '$1'"
     mpv --list-properties
     # echo '{ "command": ["get_property", "playlist"] }' | socat - $GURU_AUDIO_MPV_SOCKET |jq '.data'
 }
 
 
 mpv.get() {
-
+# get information from mpv process
+    gr.msg -v4 -c $__mpv_color "$__mpv [$LINENO] $FUNCNAME '$1'"
     local key=$1
     local player=$2
     # pass the property as the first argument
@@ -32,7 +37,8 @@ mpv.get() {
 
 
 mpv.set () {
-
+# set variables of mpv process
+    gr.msg -v4 -c $__mpv_color "$__mpv [$LINENO] $FUNCNAME '$1'"
     local key=$1
     local value=$2
     local player=$3
@@ -57,8 +63,8 @@ mpv.set () {
 
 mpv.stat() {
 # get mpv player status information
-
-    ps aufx | grep "mpv " | grep -v grep >/dev/null || return 1
+    gr.msg -v4 -c $__mpv_color "$__mpv [$LINENO] $FUNCNAME '$1'"
+    ps aufx | grep "mpv " | grep -v grep -q || return 1
     [[ -S $GURU_AUDIO_MPV_SOCKET ]] || return 0
 
     position="$(mpv.get percent-pos $1 | cut -d'.' -f1)%"
@@ -74,3 +80,5 @@ mpv.stat() {
     #playlist_count="$(mpv.get "playlist-count")"
     # printf "%s %s [%s/%s]" "$file" "$position" "$playlist_pos" "$playlist_count"
 }
+
+gr.msg -v4 -c $__mpv_color "$__mpv [$LINENO] $FUNCNAME"

@@ -208,12 +208,16 @@ note.check () {
 # check that given date note file exist
     gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
 
+    local input="$@"
+
+    [[ $input ]] || input="today"
     if ! note.online ; then note.remount ; fi
 
-    note.config "$1"
+
+    note.config "$input"
     gr.msg -n -v2 "checking note $note_date.. "
     if [[ -f "$note_file" ]] ; then
-        gr.msg -v1 -c green "ok"
+        gr.msg -v1 -c green "$note_file_name exist"
         return 0
     else
         gr.msg -c dark_gray "$note_file_name not found"
@@ -669,7 +673,7 @@ note.status () {
         gr.msg -v1 -c black "disabled" -k ${GURU_NOTE_INDICATOR_KEY}
         return 1
     fi
-    note.check
+    note.check "$@"
     return $?
 }
 
@@ -682,6 +686,9 @@ note.install() {
         gr.ask -h "going to install $install" || continue
         sudo apt-get -y install $install
     done
+
+    source tag.sh
+    tag.main install
 }
 
 note.uninstall() {
