@@ -1,12 +1,12 @@
 #!/bin/bash
 # guru-client core
 # casa@ujo.guru 2020 - 2023
-
+__core_color="black"
 __core=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 core.parser () {
 # parsing first word of user input, rest words are passed to next level parser
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     local _input="$1" ; shift
 
@@ -59,7 +59,7 @@ core.parser () {
 
 core.list () {
 # printout lists of stuff
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     local list=
 
@@ -90,7 +90,7 @@ core.list () {
 
 core.debug () {
 # some debug stuff, not used too often
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     local wanted=$1
     # local available=($(cat "$GURU_CFG/variable.list"))
@@ -124,7 +124,7 @@ core.debug () {
 
 core.active () {
 # start daemon
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     # ask key for server,
     # if key is no open, popup passphase input dialog appears
@@ -158,7 +158,7 @@ process_list=/tmp/guru-cli_ps.list
 
 core.ps () {
 # list of running guru-client processes
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     local ifs=$IFS
     local _pid _int _com _arg
@@ -199,7 +199,7 @@ core.ps () {
 
 core.top () {
 # list of guru processes
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
     while true ; do
 
         clear
@@ -219,14 +219,14 @@ core.top () {
             ;;
         esac
 
-        sleep 0.5
+        sleep 1
 
     done
 }
 
 core.kill () {
 # list of running guru-client processes
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     local ifs=$IFS
     local gid=$1
@@ -267,7 +267,7 @@ core.kill () {
 
 core.stop () {
 # ask daemon to stop. daemon should get the message after next tick (about a second)
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     flag.set stop
     return $?
@@ -275,7 +275,7 @@ core.stop () {
 
 core.pause () {
 # This function asks the daemon to pause by toggling the pause flag in the system.
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 # The flag is stored using the system.s module.
 # If the flag is already set, it will be removed. If it is not set, it will be set. (chatgpt)
 
@@ -289,7 +289,7 @@ core.pause () {
 
 core.make_adapter () {
 # make adapter to multi file module
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     local module=$1 ; shift
     local temp_script=$GURU_BIN/$module.sh
@@ -318,7 +318,7 @@ EOL
 
 core.run_module () {
 # check is input in module list and if so, call module main
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     local type_list=(".sh" ".py" "")
     local run_me=
@@ -387,7 +387,7 @@ core.run_module () {
 
 core.print_description () {
 # printout function description for documentation and debugging
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     local module=$1
     shift
@@ -399,13 +399,13 @@ core.print_description () {
     #gr.msg -n -h "$command "
     first_line=$(grep -A 2 "$module.$command " $file | grep  -e '() ' -A 1 | tail -n1)
     [[ $first_line ]] || return 100
-    gr.msg -v3 -c olive "function '$module.$command' description: '${first_line//# /}'"
+    gr.msg -v3 -c dark_grey "$module.$command '${first_line//# /}'"
 }
 
 
 core.run_module_function () {
 # run methods (functions) in module
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     # guru add ssh key @ -> guru ssh key add @
     if ! grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
@@ -461,7 +461,7 @@ core.run_module_function () {
 
 core.multi_module_function () {
 # run function name of all installed modules
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
 
     local function_to_run=$1 ; shift
@@ -497,7 +497,7 @@ core.multi_module_function () {
 
 core.change_user () {
 # change guru user temporarily
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     local _input_user=$1
     if [[ "$_input_user" == "$GURU_USER" ]] ; then
@@ -519,7 +519,7 @@ core.change_user () {
 
 core.online () {
 # check is online, set pause for daemon if not
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     declare -g offline_flag="/tmp/guru-offline.flag"
     source net.sh
@@ -543,7 +543,7 @@ core.online () {
 
 core.mount_system_base () {
 # check is access point enabled and mount is not
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
 
     # is access functionality enabled?
     if ! [[ $GURU_ACCESS_ENABLED ]] ; then
@@ -644,7 +644,7 @@ gr.msg -v4 -n -c blue "$__core [$LINENO] $FUNCNAME " ; [[ $GURU_DEBUG ]] && echo
 
 core.run_macro () {
 # run macro
-    gr.msg -v4 -c blue "$__core [$LINENO] $FUNCNAME " ; [[ $GURU_DEBUG ]] && echo $@
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " ; [[ $GURU_DEBUG ]] && echo $@
 
     local file_name="${1}"
     gr.msg -c dark_grey -v2 "running macro '$file_name'"
@@ -812,12 +812,14 @@ if [[ -f $GURU_RC ]] ; then
 
 # determinate how to call guru, I prefer 'guru' or now more often alias 'gr'
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
+gr.msg -v4 -c $__core_color "$__core [$LINENO] run"
 
 # everybody have daemons
 source daemon.sh
 source flag.sh
 source mount.sh
 source config.sh
+
 
 # check is core run or sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then

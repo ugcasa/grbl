@@ -4,19 +4,14 @@ os_indicator_key=f8
 system_indicator_key=caps
 os_rc=/tmp/guru-cli_os.rc
 
+__os_color="cadet_blue"
 __os=$(readlink --canonicalize --no-newline $BASH_SOURCE)
-
-if ! [[ $GURU_CFG/$GURU_USER/os.cfg ]]; then 
-    config_file=$GURU_CFG/$GURU_USER/os.cfg
-else
-    config_file=$GURU_CFG/os.cfg
-fi
 
 source net.sh
 
 os.help () {
 # Operating system functions help
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
 
     gr.msg -v1 -c white "guru-client installer help "
     gr.msg -v2
@@ -46,7 +41,7 @@ os.help () {
 
 os.main () {
 # main command parser
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
     local command=$1 ; shift
     case $command in
         status|info|poll|capslock|upgrade|update|usermerge|help|get)
@@ -60,7 +55,7 @@ os.main () {
 
 os.compatible_with () {
 # check that current os is compatible with input [ID] {VERSION_ID}
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
     source /etc/os-release
     #[ "$ID" == "$1" ] && return 0 || return 255
     if [ "$ID" == "$1" ]; then
@@ -79,7 +74,7 @@ os.compatible_with () {
 
 os.status () {
 # returns least linux distribution name
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
     gr.msg && alias 'gr.msg'='echo'
     if [[ -f /etc/os-release ]]; then
         source /etc/os-release
@@ -91,7 +86,7 @@ os.status () {
 
 os.information () {
 # printout
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
     local variable=$1
     shift
     local dmi_var_list=(bios-vendor bios-version bios-release-date baseboard-manufacturer baseboard-product-name baseboard-version chassis-type processor-family processor-manufacturer processor-version processor-frequency)
@@ -166,7 +161,7 @@ os.information () {
 
 os.variables () {
 # list of os variables
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
     variables=($(cat /etc/os-release | cut -d'=' -f1))
     variables=(${variables[@]} $(cat /etc/upstream-release/lsb-release | cut -d'=' -f1))
     echo ${variables[@]}
@@ -175,7 +170,7 @@ os.variables () {
 
 os.get () {
 # printout os variables
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
 
     local variable="$1"
 
@@ -206,7 +201,7 @@ os.get () {
 
 os.info () {
 # returns least linux distribution name
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
 
     source /etc/os-release
     source /etc/upstream-release/lsb-release
@@ -224,7 +219,7 @@ os.info () {
 
 os.update () {
 # update operating system
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
     aptitude search '%p' '~U' 2>/dev/null
 
     # dpkg --get-selections \
@@ -247,7 +242,7 @@ os.update () {
 
 os.upgrade () {
 # upgrade system
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
 
     local _return=
     source net.sh
@@ -351,7 +346,7 @@ os.upgrade () {
 
 os.usermerge () {
 # merge /bin → /usr/bin, /sbin → /usr/sbin, /lib → /usr/lib, /lib64 → /usr/lib64
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
 # https://wiki.debian.org/UsrMerge
 # https://www.freedesktop.org/wiki/Software/systemd/TheCaseForTheUsrMerge/
 # HOX: not run ever!
@@ -391,7 +386,7 @@ os.usermerge () {
 
 os.poll () {
 # daemon poller interface
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
 
     local _cmd="$1" ; shift
 
@@ -421,7 +416,7 @@ os.poll () {
 
 os.check_distro() {
 # returns least linux distribution name
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
     if [ -f /etc/os-release ]; then
         source /etc/os-release
         echo "$ID"
@@ -459,7 +454,7 @@ os.check_distro() {
 
 os.check_space () {
 # check free space of server disk
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
 
     local mount_point=$GURU_SYSTEM_MOUNT
     [[ $1 ]] && mount_point=$1
@@ -492,11 +487,11 @@ os.check_space () {
 
 os.capslock() {
 # toggle capslock status
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
 
     capslock_state() {
     # return true is capslock is set
-        gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+        gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
         case $(xset -q | sed -n 's/^.*Caps Lock:\s*\(\S*\).*$/\1/p') in
             off) return 1 ;;
             on) return 0 ;;
@@ -532,14 +527,17 @@ os.capslock() {
 
 
 
+
 os.rc () {
 # source configurations (to be faster)
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
 
-    if [[ ! -f $os_rc ]] || [[ $(( $(stat -c %Y $config_file) - $(stat -c %Y $os_rc) )) -gt 0 ]]
-        then
-            os.make_rc && \
-                gr.msg -v1 -c dark_gray "$os_rc updated"
+    local config_file_age_difference=$(( $(stat -c %Y $config_file) - $(stat -c %Y $os_rc) ))
+
+    gr.varlist "debug config_file os_rc config_file_age_difference"
+
+    if [[ ! -f $os_rc ]] || [[ $config_file_age_difference -gt 1 ]]; then
+            os.make_rc &&  gr.msg -v1 -c dark_gray "$os_rc updated"
         fi
 
     source $os_rc
@@ -548,7 +546,7 @@ os.rc () {
 
 os.make_rc () {
 # configure os module
-    gr.msg -v4 -c blue "$__os [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'"
 
     source config.sh
 
@@ -568,8 +566,15 @@ os.make_rc () {
 #    python -c "import $1"
 #    return "$?"
 # }
-os.rc
 
+gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME"
+
+if [[ $GURU_CFG/$GURU_USER/os.cfg ]]; then
+    config_file=$GURU_CFG/$GURU_USER/os.cfg
+else
+    config_file=$GURU_CFG/os.cfg
+fi
+os.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     os.main "$@"

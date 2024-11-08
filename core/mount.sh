@@ -2,11 +2,12 @@
 # guru-cli mount core module 2019 - 2022 casa@ujo.guru
 
 declare -g mount_rc="/tmp/guru-cli_mount.rc"
+__mount_color="navy"
 __mount=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 mount.help () {
 # mount help
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     gr.msg -v1 -c white "guru-cli mount help "
     gr.msg -v2
@@ -29,7 +30,7 @@ mount.help () {
 
 mount.main () {
 # mount command parser
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _error=0
     local command="$1"
@@ -96,7 +97,7 @@ mount.main () {
 
 mount.rc () {
 # source configurations
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     if  [[ ! -f $mount_rc ]] || \
         [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $mount_rc) )) -gt 0 ]]
@@ -117,7 +118,7 @@ mount.rc () {
 
 mount.make_rc () {
 # make core module rc file out of configuration file
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     if ! source config.sh ; then
         gr.msg -c yellow "unable to load configuration module"
@@ -150,7 +151,7 @@ mount.make_rc () {
 
 mount.local_size () {
 # check size of files in locally mounted folder
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _mount_target=$GURU_DATA
     [[ $1 ]] && _mount_target="$1"
@@ -173,7 +174,7 @@ mount.local_size () {
 
 mount.info () {
 # detailed list of mounted mountpoints. nice list of information of sshfs mount points
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _error=0
     # header (stdout if verbose rised)
@@ -206,7 +207,7 @@ mount.info () {
 
 mount.ls () {
 # simple list of mounted mountpoints
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
     return $?
@@ -214,7 +215,7 @@ mount.ls () {
 
 mount.system () {
 # mount system data
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     gr.msg -v3 -n "checking system data folder.."
     if [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] ; then
@@ -230,7 +231,7 @@ mount.system () {
 
 mount.online () {
 # check is mount point "online", no printout,
-    # gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    # gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _target_folder="$GURU_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
@@ -244,7 +245,7 @@ mount.online () {
 
 mount.mounted () {
 # check is givven list name already mounted
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _mount_list_name=$1
 
@@ -272,7 +273,7 @@ mount.mounted () {
 
 mount.check () {
 # check is mount point mounted, output status
-    # gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    # gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _target_folder=$GURU_SYSTEM_MOUNT
     [[ "$1" ]] && _target_folder="$1"
@@ -308,7 +309,7 @@ mount.check () {
 
 mount.remote () {
 # mount any remote location. usage: mount_point remote_folder optional: domain port symlink_to
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     # set defaults
     local _target_folder=
@@ -427,7 +428,7 @@ mount.remote () {
 
 mount.available () {
 # printout list of available mount points
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     gr.msg -c light_blue "${all_list[@]}"
     return 0
@@ -435,7 +436,7 @@ mount.available () {
 
 mount.listed () {
 # mount all GURU_MOUNT_<list_name>_LIST defined in user configuration
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _error=0
     local _IFS="$IFS"
@@ -477,7 +478,7 @@ mount.listed () {
 
 mount.all () {
 # mount all GURU_CLOUD_* defined in userrc
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _error=0
     local _IFS="$IFS"
@@ -515,7 +516,7 @@ mount.all () {
 
 mount.known_remote () {
 # mount single GURU_CLOUD_* defined in userrc
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
     local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
@@ -535,7 +536,7 @@ mount.known_remote () {
 
 mount.status () {
 # daemon status function
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     # printout header for status output
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
@@ -578,7 +579,7 @@ mount.status () {
 
 mount.toggle () {
 # unmount all or mount defaults by pressing key
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _list=($(mount.ls | grep -v '.data'))
 
@@ -593,7 +594,7 @@ mount.toggle () {
 
 mount.poll () {
 # daemon poll api
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     local _cmd="$1" ; shift
 
@@ -614,7 +615,7 @@ mount.poll () {
 
 mount.install () {
 # install and remove install applications. input "install" or "remove"
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     sudo apt update
     sudo apt install rsync sshfs xclip
@@ -622,12 +623,13 @@ mount.install () {
 
 mount.uninstall () {
 # install and remove install applications. input "install" or "remove"
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
     gr.msg "wont remove 'ssh' or 'rsync', do it manually if really needed"
     return 0
 }
 
+gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME"
 mount.rc
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then
