@@ -43,14 +43,19 @@ unmount.main () {
     case "$argument" in
 
         all)
+            gr.end $GURU_MOUNT_INDICATOR_KEY
             unmount.all
+            mount.status quiet
             ;;
 
         ls|defaults|status|help|status)
             unmount.$argument $@
             return $?
             ;;
-       "")  unmount.defaults
+       "")
+            gr.end $GURU_MOUNT_INDICATOR_KEY
+            unmount.defaults
+            mount.status quiet
             return $?
             ;;
        *)
@@ -80,7 +85,7 @@ unmount.main () {
                     unmount.known_remote $argument $@
                 fi
                 source mount.sh
-                mount.status >/dev/null
+                mount.status quiet
     esac
 }
 

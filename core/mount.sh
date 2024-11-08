@@ -5,6 +5,8 @@ declare -g mount_rc="/tmp/guru-cli_mount.rc"
 __mount_color="navy"
 __mount=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
+quiet=
+
 mount.help () {
 # mount help
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
@@ -51,7 +53,7 @@ mount.main () {
             defaults|all|toggle)
                 mount.$command $@
                 _error=$?
-                mount.status >/dev/null
+                mount.status quiet
                 ;;
 
             check-system)
@@ -62,7 +64,7 @@ mount.main () {
             mount)
                 gr.end $GURU_MOUNT_INDICATOR_KEY
                 mount.remote $command $@
-                mount.status >/dev/null
+                mount.status quiet
                 _error=$?
                 ;;
 
@@ -73,7 +75,7 @@ mount.main () {
             "")
                 mount.listed default
                 _error=$?
-                mount.status >/dev/null
+                mount.status quiet
                 ;;
 
             *)
@@ -90,7 +92,7 @@ mount.main () {
                     mount.known_remote $command $@
                 fi
 
-                mount.status >/dev/null
+                mount.status quiet
                 error=$?
                 ;;
         esac
@@ -306,7 +308,9 @@ mount.check () {
             ;;
     esac
 
-    [[ $color != null ]] && gr.msg -n -v1 -c $color "${_target_folder##*/} "
+    if ! [[ $quiet ]] ; then
+        [[ $color != null ]] && gr.msg -n -v1 -c $color "${_target_folder##*/} "
+    fi
 
     # online comes wrong way around for this purpose
     [[ $_online ]] && return 0 || return 1
@@ -544,35 +548,31 @@ mount.status () {
 # daemon status function
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'"
 
+    [[ $1 == "quiet" ]] && quiet=true
+
     # printout header for status output
-    gr.msg -t -v1 -n "${FUNCNAME[0]}: "
     local _target
     local _private=
     local _online=
     local _mounted=
 
-    # check is enabled
-    if [[ $GURU_MOUNT_ENABLED ]] ; then
+    if ! [[ $quiet ]]; then
+        gr.msg -t -v1 -n "${FUNCNAME[0]}: "
+        # check is enabled
+        if [[ $GURU_MOUNT_ENABLED ]] ; then
             gr.msg -v1 -n -c green "enabled " -k $GURU_MOUNT_INDICATOR_KEY
         else
             gr.msg -v1 -c black "disabled" -k $GURU_MOUNT_INDICATOR_KEY
             return 100
         fi
+    fi
 
     gr.end $GURU_MOUNT_INDICATOR_KEY
-    # check is system available
-    # if mount.check ; then
-    #         gr.msg -v1 -n -c green "available "
-    #     else
-    #         gr.msg -v1 -c red "unavailable" -k $GURU_MOUNT_INDICATOR_KEY
-    #         return 101
-    #     fi
 
     # go trough mount points
     for _mount_point in ${all_list[@]} ; do
         _target=$(eval echo '${GURU_MOUNT_'"${_mount_point^^}[0]}")
         mount.check $_target && _online=1 || _online=
-
 
         # if some of mountpoints are "secred" and online
         case $_target in
@@ -587,29 +587,31 @@ mount.status () {
                 [[ $_online ]] && _mounted=1
             ;;
         esac
-
     done
 
-    # serve enter and set indicate key color
-
+    # set indicate key color
     if [[ $_private ]]; then
-        gr.msg -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY
+        if [[ $_system ]]; then
+            gr.msg -n -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY
+        else
+            gr.blink $GURU_MOUNT_INDICATOR_KEY secred
+        fi
     elif [[ $_mounted ]]; then
         if [[ $_system ]]; then
-            gr.msg -c aqua -k $GURU_MOUNT_INDICATOR_KEY
+            gr.msg -n -c aqua -k $GURU_MOUNT_INDICATOR_KEY
         else
             gr.blink $GURU_MOUNT_INDICATOR_KEY partly
         fi
     else
         if [[ $_system ]]; then
-            gr.msg -c blue -k $GURU_MOUNT_INDICATOR_KEY
+            gr.msg -n -c blue -k $GURU_MOUNT_INDICATOR_KEY
         else
-            gr.msg -c black -k $GURU_MOUNT_INDICATOR_KEY
             gr.blink $GURU_MOUNT_INDICATOR_KEY offline
         fi
     fi
 
-
+    # serve enter
+    [[ $quiet ]] || echo
     return 0
 }
 

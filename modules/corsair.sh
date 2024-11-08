@@ -690,7 +690,8 @@ corsair.indicate () {
         call)           blink="deep_pink black 0.75 30 deep_pink" ;;
         customer)       blink="deep_pink white 0.75 30 deep_pink" ;;
         offline)        blink="blue orange 1.25 $GURU_DAEMON_INTERVAL orange" ;;
-        partly)         blink="aqua orange 1.25 $GURU_DAEMON_INTERVAL orange" ;;
+        secred)         blink="deep_pink blue 1.25 $GURU_DAEMON_INTERVAL orange" ;;
+        partly)         blink="aqua blue 1.25 $GURU_DAEMON_INTERVAL orange" ;;
         warn*)          blink="red orange 0.75 3600 orange" ;;
         alert)          blink="red black 0.5 $GURU_DAEMON_INTERVAL" ;;
         blue)           blink="blue black 0.5 $GURU_DAEMON_INTERVAL" ;;
