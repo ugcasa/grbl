@@ -90,7 +90,7 @@ declare -ga corsair_keytable=(\
 
 corsair.main () {
 # command parser
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     # ckb-next last mode data
     if [[ -f $corsair_last_mode ]] ; then
@@ -163,7 +163,7 @@ corsair.main () {
 
 corsair.help-profile () {
 # inform user to set profile manually (should never need)
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.msg -c white "set ckb-next profile manually"
     gr.msg -v1 -n "1) open ckb-next and click profile bar and select "
@@ -182,7 +182,7 @@ corsair.help-profile () {
 
 corsair.help () {
 # general help
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
     gr.msg -v1 "guru-client corsair keyboard indicator help" -c white
     gr.msg -v2
     gr.msg -v0 "usage:           $GURU_CALL corsair start|init|reset|end|status|help|set|blink <key/profile> <color>"
@@ -245,7 +245,7 @@ corsair.help () {
 
 corsair.keytable () {
 # printout key table with numbers when verbose is increased
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
     case $1 in number|numbers) GURU_VERBOSE=2 ;; esac
     gr.msg -v1
     gr.msg -v1 "keyboard indicator pipe file id's"
@@ -285,7 +285,7 @@ corsair.keytable () {
 
 corsair.blink_all () {
 # set blink animation to whole key map
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
     for key in ${corsair_keytable[@]} ; do
             # corsair.set $key $color
             corsair.indicate panic $key
@@ -305,7 +305,7 @@ corsair.blink_all () {
 
 corsair.get_key_id () {
 # printout key id number
-    # gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    # gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
     local find_list=($@)
     local got_value=
 
@@ -328,7 +328,7 @@ corsair.get_key_id () {
 
 corsair.get_pipefile () {
 # printout pipe file for given key
-    #gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    #gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
     [[ $1 ]] || return 124
 
     local id=$(corsair.get_key_id $1)
@@ -353,7 +353,7 @@ corsair.get_pipefile () {
 
 corsair.key-id () {
 # printout key number for key pipe file '/tmp/ckbpipeNNN'
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     local to_find=$1
     # if individual key is asked, print it out and exit
@@ -409,7 +409,7 @@ corsair.enabled () {
     #             return 1
     #         fi
 
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
     gr.debug  "function disabled, if see this during debug run, inform casa "
 
 }
@@ -417,7 +417,7 @@ corsair.enabled () {
 
 corsair.check () {
 # Check keyboard driver is available, app and pipes are started and launch those if needed
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.msg -n -v2 "checking corsair is enabled.. "
     if [[ $GURU_CORSAIR_ENABLED ]] ; then
@@ -510,7 +510,7 @@ corsair.check () {
 
 corsair.init () {
 # load default profile and set wanted mode, default is set in user configuration
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     local _mode=$GURU_CORSAIR_MODE ; [[ $1 ]] && _mode="$1"
 
@@ -529,7 +529,7 @@ corsair.init () {
 
 corsair.set () {
 # write color to key: input <key> <color>  speed test: ~25 ms
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     #corsair.check is too slow to go trough here
     if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
@@ -570,7 +570,7 @@ corsair.set () {
 
 corsair.pipe () {
 # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     local _button=$1
     shift
@@ -588,7 +588,7 @@ corsair.pipe () {
 
 corsair.reset () {
 # application level function, not restarting daemon or application, return normal, if no input reset all
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     if [[ "$1" ]] ; then
             corsair.set $1 $corsair_mode 10 || return 100
@@ -604,7 +604,7 @@ corsair.reset () {
 
 corsair.clear () {
 # set key to black, input <known_key> default is F1 to F12
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     local _keylist=($key_pipe_list)
     [[ "$1" ]] && _keylist=(${@})
@@ -616,7 +616,7 @@ corsair.clear () {
 
 corsair.end () {
 # reserve some keys for future purposes by coloring them now
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 # wtf above means? Anyway, this is not endig shit, just chanching profile twice.
 # what is the point? commenting out extra showcase 20240602
     #corsair.init ftb
@@ -629,7 +629,7 @@ corsair.end () {
 
 corsair.check_pipe () {
 # check that piping is activated.
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 # timeout can be set by first paramater
 
     declare -i timeout=10
@@ -647,7 +647,7 @@ corsair.check_pipe () {
 
 corsair.indicate () {
 # indicate state to given key.
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 # input mode_name and key_name
 
     # corsair.check is too slow to go trough here
@@ -711,7 +711,7 @@ corsair.indicate () {
 
 corsair.blink_set () {
 # start to blink input: key_name base_color high_color delay_sec timeout_sec leave_color
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 # leave color is color what shall be left on key shen stoppend or killed.
 
     # all options are optional but position is critical cause read from left to right default setting below:
@@ -765,7 +765,7 @@ corsair.blink_set () {
 
 corsair.blink_stop () {
 # stop blinking in next cycle
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     local key="esc"
     [[ $1 ]] && key=$1 ; shift
@@ -777,7 +777,7 @@ corsair.blink_stop () {
 
 corsair.blink_kill () {
 # stop blinking process now, input keyname
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     [[ -f /tmp/blink_pid ]] && pids_to_kill=($(cat /tmp/blink_pid))
 
@@ -821,7 +821,7 @@ corsair.blink_kill () {
 
 corsair.blink_test () {
 # quick test that lights up esc and function keys
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
     source flag.sh
 
     list=(working pause cancel error warning alert panic passed failed message call customer)
@@ -868,7 +868,7 @@ corsair.blink_test () {
 
 corsair.type_end () {
 # end current type process
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     if [[ -f /tmp/guru-cli_corsair-typing ]] ; then
             rm /tmp/guru-cli_corsair-typing
@@ -880,7 +880,7 @@ corsair.type_end () {
 
 corsair.type () {
 # blink string characters by key lights
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 # input color of keys and then string
     color=$1
     shift
@@ -950,7 +950,7 @@ corsair.type () {
 
 corsair.systemd_status () {
 # printout systemd service status
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     systemctl --user status corsair.service
 }
@@ -958,7 +958,7 @@ corsair.systemd_status () {
 
 corsair.systemd_start_application () {
 # try to start, if fails, restart and it that failes to run setup again
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     systemctl --user start corsair.service \
          || systemctl --user restart corsair.service\
@@ -978,7 +978,7 @@ corsair.systemd_start_application () {
 
 corsair.systemd_start () {
 # check and start stack based on corsair.check return code
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     if [[ $1 ]] ; then
             local _status="$1"
@@ -1030,7 +1030,7 @@ corsair.systemd_start () {
 
 corsair.systemd_restart () {
 # systemd method restart function
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.msg -h "restarting corsair service.. "
     systemctl --user restart corsair.service
@@ -1044,7 +1044,7 @@ corsair.systemd_restart () {
 
 corsair.systemd_stop () {
 # systemd method stop service function
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.msg -h "stopping corsair service.. "
     systemctl --user stop corsair.service || gr.msg -c yellow "stop failed"
@@ -1058,7 +1058,7 @@ corsair.systemd_stop () {
 
 corsair.make_daemon_service () {
 # ckb-next-daemon service
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
      local temp="/tmp/suspend.temp"
 
@@ -1093,7 +1093,7 @@ EOL
 
 corsair.make_app_service () {
 # ckb-next application service
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     local temp="/tmp/suspend.temp"
 
@@ -1138,7 +1138,7 @@ EOL
 
 corsair.systemd_enable () {
 # set and enable corsair service based on systemd, enable suspend script, load profile and start
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     # make ckb-next-daemon service
     gr.msg -v1 "generating ckb-next-daemon service file.. "
@@ -1171,7 +1171,7 @@ corsair.systemd_enable () {
 
 corsair.systemd_disable () {
 # systemd method disable service function
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     cp -f $corsair_daemon_service $GURU_CFG
 
@@ -1191,7 +1191,7 @@ corsair.systemd_disable () {
 
 corsair.suspend_recovery () {
 # check is system suspended during run and restart ckb-next application to re-connect led pipe files
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     system.flag rm fast
 
@@ -1211,7 +1211,7 @@ corsair.suspend_recovery () {
 
 corsair.clone () {
 # get ckb-next source
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     cd /tmp
     [[ -d ckb-next ]] && rm -rf ckb-next
@@ -1223,7 +1223,7 @@ corsair.clone () {
 
 corsair.patch () {
 # patch corsair k68 to avoid long daemon stop time
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     cd /tmp/ckb-next
 
@@ -1246,7 +1246,7 @@ corsair.patch () {
 
 corsair.compile () {
 # compile ckb-next and ckb-next-daemon
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     [[ -d /tmp/ckb-next ]] || corsair.clone
     cd /tmp/ckb-next
@@ -1258,7 +1258,7 @@ corsair.compile () {
 
 corsair.requirements () {
 # install required libs and apps
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
     # https://github.com/ckb-next/ckb-next/wiki/Linux-Installation#build-from-source
     local _needed="git
                    cmake
@@ -1293,7 +1293,7 @@ corsair.requirements () {
 
 corsair.poll () {
 # guru daemon api functions
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     local _cmd="$1" ; shift
 
@@ -1316,7 +1316,7 @@ corsair.poll () {
 
 corsair.status () {
 # get status for daemon (or user)
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
     if corsair.check ; then
@@ -1331,7 +1331,7 @@ corsair.status () {
 
 corsair.install () {
 # install essentials, driver and application
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     if corsair.check && ! [[ $GURU_FORCE ]] ; then
             gr.msg -v1 "corsair seems to be working. use force flag '-f' to re-install"
@@ -1384,7 +1384,7 @@ corsair.install () {
 
 corsair.remove () {
 # get rid of driver and shit
-    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
     # https://github.com/ckb-next/ckb-next/wiki/Linux-Installation#uninstallation
     gr.ask "really remove corsair" || return 100
 
@@ -1407,7 +1407,7 @@ corsair.remove () {
     return 0
 }
 
-gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME"
+gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME" >&2
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     #source "$GURU_RC"
