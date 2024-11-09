@@ -15,7 +15,7 @@ declare -g station_url
 
 radio.help () {
 # radio help
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.msg -v1 -c white "guru-cli radio help "
     gr.msg -v2
@@ -36,7 +36,7 @@ radio.help () {
 
 radio.main() {
 # simple radio player, number or station name
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.debug "$FUNCNAME got:$@"
 
@@ -80,7 +80,7 @@ radio.main() {
 
 radio.next () {
 # jump to next radio station
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     flag.set skip
 
@@ -98,7 +98,7 @@ radio.next () {
 
 radio.prev () {
 # jump to previous radio station
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     flag.set skip
 
@@ -116,7 +116,7 @@ radio.prev () {
 
 radio.selector () {
 # radio selector
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     audio.stop
     guru flag rm audio_stop
@@ -149,7 +149,7 @@ radio.selector () {
 
 radio.change () {
 # tune in to next or previous radio station
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     local next=
     local value="$1"
@@ -184,7 +184,7 @@ radio.change () {
 
 radio.ls () {
 # gather list of radio stations, printout all stations
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     local all_channels=()
     local favorite_channels=(${GURU_RADIO_FAVORITE_STATIONS[@]})
@@ -217,7 +217,7 @@ radio.ls () {
 
 radio.list () {
 # human readable list own favorite and other radio stations
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     local list=($(radio.ls))
 
@@ -253,7 +253,7 @@ radio.list () {
 
 radio.parse () {
 # check input to ques what user needs
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     local station_str=
     local got=$1
@@ -367,7 +367,7 @@ radio.parse () {
 
 radio.play () {
 # listen radio station by number or name, list of stations
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.debug "station_url: $station_url, station_name: $station_name, station_nro: $station_nro "
 
@@ -408,14 +408,14 @@ radio.play () {
 
 radio.status() {
 # reroute status requests to audio module
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     audio.status
 }
 
 radio.rc () {
 # check is config changed and source configurations
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     if [[ ! -f $radio_rc ]] \
         || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/audio.cfg) - $(stat -c %Y $radio_rc) )) -gt 0 ]] \
@@ -431,7 +431,7 @@ radio.rc () {
 
 radio.make_rc () {
 # configure audio module
-    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     source config.sh
 
@@ -447,7 +447,7 @@ radio.make_rc () {
     source $radio_rc
 }
 
-gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME"
+gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME" >&2
 
 # located here cause rc needs to see some of functions above
 radio.rc

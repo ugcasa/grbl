@@ -19,7 +19,7 @@ declare -g audio_available_sockets=(audio radio uutiset yle youtube)
 
 audio.help () {
 # audio help
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.msg -v1 -c white "guru-cli audio help "
     gr.msg -v2
@@ -52,7 +52,7 @@ audio.help () {
 # CLEAN hmm.. this should work, why not implemented?
 # audio.parse_options () {
 
-#     gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+#     gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 #     local got_args=($@)
 #     for (( i = 0; i < ${#got_args[@]}; i++ )); do
 #         case ${got_args[$i]} in
@@ -70,7 +70,7 @@ audio.help () {
 
 audio.main () {
 # main command parser
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     local _command=$1
     shift
@@ -133,7 +133,7 @@ audio.main () {
 audio.default () {
 # may remove this shit
     gr.debug "$FUNCNAME starting play default shit "
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     source $GURU_BIN/audio/radio.sh
     radio.main
 }
@@ -141,7 +141,7 @@ audio.default () {
 
 audio.mpv () {
 # adapter for mpv
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     local command=$1
     shift
 
@@ -157,7 +157,7 @@ audio.mpv () {
 
 audio.hold () {
 # setting hold flag ans stop audio
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     flag.set audio_hold
     audio.stop
 }
@@ -165,14 +165,14 @@ audio.hold () {
 
 audio.release () {
 # removing hold flag
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     flag.rm audio_hold
 }
 
 
 audio.reload () {
 # rebuild fallen audio tree
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     gr.msg -v2 "reloading audio.. "
     if pulseaudio -k ; then
         if sudo alsa force-reload ; then
@@ -190,7 +190,7 @@ audio.reload () {
 
 audio.next () {
 # jump to next item depending what ever is playing
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.debug "$FUNCNAME np:$GURU_AUDIO_NOW_PLAYING"
 
@@ -233,7 +233,7 @@ audio.next () {
 
 audio.prev () {
 # jump to previous item depending what ever is playing
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.debug "$FUNCNAME np:$GURU_AUDIO_NOW_PLAYING"
 
@@ -268,7 +268,7 @@ audio.prev () {
 
 audio.now_playing () {
 # now playing string
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     local now_playing=
 
     # cols=$(($(echo "cols"|tput -S) -10 ))
@@ -289,14 +289,14 @@ audio.now_playing () {
 
 audio.song_title () {
 # get song title from mpv daemon, to remove separator give argument
-    #gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     local separator="| "
 
     [[ $1 ]] && separator=
 
     for socket in ${audio_available_sockets[@]}; do
-        song_title=$(audio.mpv get media-title $socket 2>/dev/null)
+        song_title=$(audio.mpv get media-title $socket)
         [[ $song_title ]] && break
     done
 
@@ -315,7 +315,7 @@ audio.song_title () {
 
 audio.playing () {
 # now playing loop
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     local now_playing=
     local length
     local cols
@@ -350,7 +350,7 @@ audio.playing () {
 
 audio.np () {
 # open now playing window
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     # Issue: NoScrollbar profile https://github.com/Gogh-Co/Gogh/issues/203
 
@@ -371,7 +371,7 @@ audio.np () {
 
 audio.unmount () {
 # when mount.cfg does not know mount configuration, module should u-mount own mount points
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     source unmount.sh
     unmount.main music
     unmount.main audio
@@ -380,7 +380,7 @@ audio.unmount () {
 
 audio.mount () {
 # when mount.cfg does not know mount configuration, module should be able to mount own mount points
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     source mount.sh
     mount.mounted audio || mount.main audio
     mount.mounted music || mount.main music
@@ -389,7 +389,7 @@ audio.mount () {
 
 audio.play () {
 # play playlist and song/album/artist name given as parameter
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     local _error=
     flag.rm audio_stop
     corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
@@ -418,7 +418,7 @@ audio.play () {
 
 audio.stop () {
 # send stop or brutal kill audio source
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     pkill mpv
     pkill mpv
@@ -430,7 +430,7 @@ audio.stop () {
 
 audio.pause () {
 # pause all audio and video system wide
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     local input=$1
     local me=
@@ -440,7 +440,7 @@ audio.pause () {
     case $input in
 
         # TODO test can this be variable
-        audio|yle|uutiset|youtube)
+        radio|audio|yle|uutiset|youtube)
             if [[ $(mpv.get pause $input) == "false" ]]; then
                 mpv.set pause true $input 2>/dev/null >/dev/null
             else
@@ -509,7 +509,7 @@ audio.pause () {
 
 audio.mute () {
 # mute master audio device
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     amixer -q -D pulse sset Master toggle
     return $?
@@ -518,7 +518,7 @@ audio.mute () {
 
 audio.ls () {
 # list audio devices TBD rename audio.device_list()
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     local _device_list=$(aplay -l | awk -F \: '/,/{print $2}' | awk '{print $1}' | uniq)
     gr.msg -c light_blue "$_device_list"
@@ -527,7 +527,7 @@ audio.ls () {
 
 audio.paused () {
 # check is module set to pause
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     # check master pause status
     if [[ -f $GURU_AUDIO_PAUSE_FLAG ]] ; then
@@ -550,7 +550,7 @@ audio.paused () {
 
 audio.is_playing () {
 # check is something playing
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     mpv.stat || return 1
     [[ -f $GURU_AUDIO_NOW_PLAYING ]] || return 1
@@ -561,7 +561,7 @@ audio.is_playing () {
 
 audio.sort_yle_list () {
 # sort filenames based on yle.areena timestamp in filename
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 # do this to folder before: shopt -s globstar ; rename 's/_/-/g' * ; rename 's/ /-/g' *
 
     local items_to_sort=$(echo $@ | tr " " "\n")
@@ -575,14 +575,14 @@ audio.sort_yle_list () {
 
 audio.find_and_play () {
 # find from known audio locations and play
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 # BROKEN
     update_list=true
     timeout=
 
     print_list () {
 
-        gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+        gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
         [[ ${#_got[@]} -lt 10 ]] && width=3
         [[ ${#_got[@]} -gt 9 ]] && width=4
         [[ ${#_got[@]} -gt 99 ]] && width=5
@@ -597,7 +597,7 @@ audio.find_and_play () {
 
     play () {
 
-        gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+        gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
         # indication
         corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
 
@@ -720,7 +720,7 @@ audio.find_and_play () {
 
 audio.update() {
 # update needed tools
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     # sudo pip install -U youtube-dl
     sudo -H pip install --upgrade youtube-dl
@@ -728,7 +728,7 @@ audio.update() {
 
 audio.install() {
 # Install needed tools
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
     local require=(mpv vlc pulseaudio socat)
     for install in ${require[@]} ; do
@@ -743,7 +743,7 @@ audio.install() {
 
 audio.uninstall() {
 # Install needed tools
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
     gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
     local require=(mpv vlc pulseaudio socat)
     for install in ${require[@]} ; do
@@ -758,7 +758,7 @@ audio.uninstall() {
 
 audio.status () {
 # printout module status
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
@@ -777,7 +777,7 @@ audio.status () {
 
 audio.poll () {
 # daemon poll can access functions start, stop and status trough this
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     local _cmd="$1" ; shift
 
@@ -799,7 +799,7 @@ audio.poll () {
 
 audio.rc () {
 # source configurations (to be faster)
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 #|| [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mpv.cfg) - $(stat -c %Y $audio_rc) )) -gt 0 ]] \
 
     if [[ ! -f $audio_rc ]] \
@@ -819,7 +819,7 @@ audio.rc () {
 
 audio.make_rc () {
 # configure audio module
-    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME '$1'" >&2
 
     source config.sh
 
@@ -838,7 +838,7 @@ audio.make_rc () {
     source $audio_rc
 }
 
-gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME"
+gr.msg -v4 -c $__audio_color "$__audio [$LINENO] $FUNCNAME" >&2
 
 # located here cause rc needs to see some of functions above
 audio.rc
