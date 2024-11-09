@@ -3,15 +3,17 @@
 # collection of functions be sourced every time module needs it
 # casa@ujo.guru 2019 - 2023
 
+__config=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 gr.dump () {
 # dump environmental status to file
     # TBD revisit this
-    echo "core dumped to /tmp/guru_dump"
-    set > "/tmp/guru_dump"
-    echo "environment  lines $(set | wc | xargs)"  >> "/tmp/guru_dump"
-    getconf -a | grep ARG_MAX >> "/tmp/guru_dump"
-    true | xargs --show-limits >> "/tmp/guru_dump"
+    local _dump=/tmp/guru_dump
+    echo "core dumped to $_dump"
+    set > "$_dump"
+    echo "environment  lines $(set | wc | xargs)"  >> "$_dump"
+    getconf -a | grep ARG_MAX >> "$_dump"
+    true | xargs --show-limits >> "$_dump"
     exit 0
 }
 
@@ -222,9 +224,9 @@ gr.msg () {
                 ""|*) _c_var="C_YELLOW" ; _message="undefined error" ; _column_width=${#_message};;
             esac
             _color_code=${!_c_var}
-            >&2 printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message}"
+            printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message}" >&2
         else
-            >&2 printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_column_width}"
+            printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_column_width}" >&2
         fi
         return 0
     fi
@@ -547,9 +549,9 @@ gr.varlist(){
     fi
 
     for (( i = $_i ; i < ${#input[@]} ; i++ )); do
-        gr.msg -n -c light_blue "${input[$i]}"
-        gr.msg -n -c white " = "
-        gr.msg -c aqua_marine "'$(eval echo '$'${input[$i]})'"
+        gr.msg -n -c light_blue "${input[$i]}" >&2
+        gr.msg -n -c white " = " >&2
+        gr.msg -c aqua_marine "'$(eval echo '$'${input[$i]})'" >&2
     done
 }
 
@@ -625,6 +627,14 @@ gr.presence () {
 }
 
 
+gr.contain () {
+# check item is in list
+    # shopt -s nocasematch # Can be useful to disable case-matching
+    local e
+    for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+    return 1
+}
+
 gr.date () {
 # printout date in readable format
     local when="now"
@@ -667,6 +677,7 @@ gr.epoch () {
 
 gr.filedate () {
     echo "$(gr.datestamp)-$(gr.timestamp)"
+
 }
 
 
@@ -676,10 +687,10 @@ gr.debug2 () {
     # local colors=(white red dark_orange orange salmon moccasin)
     local words=(${@})
     if [[ $GURU_DEBUG ]] ; then
-        gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n
+        gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n >&2
         for (( i = 0; i < ${#words[@]}; i++ )); do
             [[ ${colors[$i]} ]] || colors[$i]=${colors[-1]}
-            gr.msg -n -c ${colors[$i]} "${words[$i]} "
+            gr.msg -n -c ${colors[$i]} "${words[$i]} " >&2
         done
         echo
     fi
@@ -689,8 +700,8 @@ gr.debug2 () {
 gr.debug () {
 # printout debug messages
     if [[ $GURU_DEBUG ]] ; then
-        gr.msg -d "${FUNCNAME[0]^^}: "
-        >&2 echo ${@}
+        gr.msg -d "${FUNCNAME[0]^^}: " >&2
+        echo ${@} >&2
     fi
 }
 

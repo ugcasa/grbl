@@ -9,8 +9,8 @@ declare -g tunneled_flag="/tmp/guru-cli_service_tunnel.flag"
 
 net.help () {
 # network module user help
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
     gr.msg -v2 -c white "guru-cli network control module help "
     gr.msg -v2
     gr.msg -v1 -c white -n "usage:  "
@@ -42,7 +42,7 @@ net.help () {
 
 net.main () {
 # main command parser
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     local function="$1" ; shift
     ## declare one shot variables here only if really needed
@@ -81,7 +81,7 @@ net.ip () {
 # tunnel and therefore use of same variable fucks things up lit try to make ssh
 # tunnel to sever domain set to localhost .
 # GURU_SERVICE_DOMAIN allows point service domain to localhost when services are tunneled.
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     local domain=$GURU_SERVICE_DOMAIN
     [[ $1 ]] && domain=$1
@@ -92,7 +92,7 @@ net.ip () {
 
 net.check_service_type () {
 # check is access domain set to /etc/hosts point to localhost
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     if [[ $(net.ip) == $(net.ip localhost) ]] ; then
         gr.debug "$FUNCNAME: services are accessed trough tunnel"
@@ -106,7 +106,7 @@ net.check_service_type () {
 
 net.host () {
 # check and set domain name to /etc/hosts to point url of services globally to right server
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     local command=$1
     local target_file="/tmp/hosts"
@@ -117,7 +117,7 @@ net.host () {
 
     check_direct_rule () {
     # check is ujo.guru pointed directly to server
-        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
         line=$(grep $GURU_ACCESS_LAN_IP $target_file | grep $GURU_SERVICE_DOMAIN | grep -v "#" | head -n1 )
         [[ $line ]] || return 1
         gr.debug "$FUNCNAME: exist $line"
@@ -126,7 +126,7 @@ net.host () {
 
     check_tunnel_rule () {
     # check is ujo.guru and localhost pointed to 127.0.0.1
-        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
         line=$(grep "127.0.0.1" $target_file | grep "localhost" | grep -v $GURU_SERVICE_DOMAIN | grep -v "#" | head -n1 )
         [[ $line ]] || return 1
         gr.debug "$FUNCNAME: exist '$line'"
@@ -135,7 +135,7 @@ net.host () {
 
     check_basic_rule () {
     # check is there localhost without ujo.guru domain point (basic setup)
-        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
         line=$(grep "127.0.0.1" $target_file | grep $GURU_SERVICE_DOMAIN | grep -v "#" | head -n1 )
         [[ $line ]] || return 1
         gr.debug "$FUNCNAME: exist $line"
@@ -144,7 +144,7 @@ net.host () {
 
     check_all () {
 
-        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
         check_basic_rule && gr.msg "${GURU_SERVICE_DOMAIN} points to localhost but tunnel needed to access ${GURU_ACCESS_DOMAIN} services"
 
         if check_direct_rule; then
@@ -158,14 +158,14 @@ net.host () {
 
     set_direct () {
 
-        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
         check_basic_rule && sed -i "/${line}/d" $target_file
         check_tunnel_rule || sed -i '1s/^/127.0.0.1\tlocalhost\n/' $target_file
         check_direct_rule || sed -i "1s/^/${GURU_ACCESS_LAN_IP}\t${GURU_SERVICE_DOMAIN}\n/" $target_file
     }
 
     set_basic () {
-        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
         check_tunnel_rule && sed -i "/${line}/d" $target_file
         check_direct_rule && sed -i "/${line}/d" $target_file
@@ -173,7 +173,7 @@ net.host () {
     }
 
     set_clean () {
-        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
         check_basic_rule && sed -i "/${line}/d" $target_file
         check_direct_rule && sed -i "/${line}/d" $target_file
@@ -181,7 +181,7 @@ net.host () {
     }
 
     set_tunnel () {
-        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+        gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
         source tunnel.sh
         if ! tunnel.check ; then
@@ -215,7 +215,7 @@ net.host () {
 
 net.rc () {
 # source configurations (to be faster)
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     local config_file_age_difference=$(( $(stat -c %Y $config_file) - $(stat -c %Y $net_rc) ))
 
@@ -231,7 +231,7 @@ net.rc () {
 
 net.make_rc () {
 # configure net module
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     source config.sh
 
@@ -249,7 +249,7 @@ net.make_rc () {
 
 # net.rc () {
 # # source configurations
-#     gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+#     gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
 #     if  [[ ! -f $net_rc ]] || \
 #         [[ $(( $(stat -c %Y $config_file) - $(stat -c %Y $net_rc) )) -gt 0 ]]
@@ -264,7 +264,7 @@ net.make_rc () {
 
 # net.make_rc () {
 # # make core module rc file out of configuration file
-#     gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+#     gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
 #     if ! source config.sh ; then
 #         gr.msg -c yellow "unable to load configuration module"
@@ -291,14 +291,14 @@ net.make_rc () {
 
 net.listen () {
 # printout list of used out pond ports
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     netstat -nputwc $@
 }
 
 
 # net.listen () {
-# gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+# gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 # # usage: tcpflow [-aBcCDhIpsvVZ] [-b max_bytes] [-d debug_level]
 # #      [-[eE] scanner] [-f max_fds] [-F[ctTXMkmg]] [-h|--help] [-i iface]
 # #      [-l files...] [-L semlock] [-m min_bytes] [-o outdir] [-r file] [-R file]
@@ -340,7 +340,7 @@ net.listen () {
 
 net.portmap () {
 # check open ports of domain $1
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     return 0
 }
@@ -356,7 +356,7 @@ net.proxy (){
 
 net.check_server () {
 # quick check accesspoint connection, no analysis
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     local _server=$GURU_ACCESS_DOMAIN
     [[ $1 ]] && _server=$1
@@ -378,7 +378,7 @@ net.check_server () {
 
 net.check () {
 # quick check network connection, no analysis
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     gr.debug "ping google.com.. "
     if timeout 4 ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
@@ -396,13 +396,13 @@ net.check () {
 ## call mqtt module to perform checks
 # net.mqtt_check () {
 # # check that mqtt server connection works
-#    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+#    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
 #     source mqtt.sh
 
 #     send_message () {
 #         (sleep 2) ; (mqtt.main pub check hello &)
-#    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+#    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 #     }
 
 #     # check mqtt is enabled
@@ -426,7 +426,7 @@ net.check () {
 net.status_loop () {
 # do loop test till connection gets available.
 # Positional variables: timeout in seconds and optional exit-on-pass flag
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     local interval=10
     local break_set=
@@ -456,7 +456,7 @@ net.status_loop () {
 
 net.status () {
 # output net status
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
     local _return=0
     local _sub_command=$1
     shift
@@ -516,7 +516,7 @@ net.status () {
 
 net.poll () {
 # daemon interface
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     # check is indicator set (should be, but wanted to be sure)
     [[ $GURU_NET_INDICATOR_KEY ]] || \
@@ -541,7 +541,7 @@ net.poll () {
 
 net.install () {
 ## if net requires tools or libraries to work installation is done here
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     # sudo apt update || gr.msg -c red "not able to update"
     sudo apt-get install -y portmap tcpflow
@@ -551,7 +551,7 @@ net.install () {
 
 net.remove () {
 ## instructions to remove installed tools.
-    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME '$@'" >&2
 
     ## DO NOT remove any tools that might be considered as basic hacker tools even net did those install those install
     # sudo apt remove -y ...
@@ -559,7 +559,7 @@ net.remove () {
     gr.msg "nothing to remove"
     return 0
 }
-gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME"
+gr.msg -v4 -c $__net_color "$__net [$LINENO] $FUNCNAME" >&2
 
 if [[ $GURU_CFG/$GURU_USER/net.cfg ]]; then
     declare -g config_file=$GURU_CFG/$GURU_USER/net.cfg
