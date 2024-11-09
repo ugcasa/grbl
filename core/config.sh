@@ -6,7 +6,7 @@ __config=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 config.help () {
 # general help
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
     case $1 in
         format|cfg|files)
             config.help_format
@@ -46,7 +46,7 @@ config.help () {
 
 config.main () {
 # main command parser
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
     local _cmd="$1" ; shift
     case "$_cmd" in
@@ -67,7 +67,7 @@ config.main () {
 
 config.make_rc () {
 # make rc file out of configuration file
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
     local _source_cfg="$1"  # source configuration file
     local _target_rc="$2"   # target rc file
@@ -111,7 +111,7 @@ config.make_rc () {
 
 config.make_style_rc () {
 # export color configuration for shell scripts
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
     local _source_cfg="$1"  # source configuration file
     local _target_rc="$2"   # target rc file
@@ -164,7 +164,7 @@ config.make_style_rc () {
 
 config.export () {
 # export global configuration in use
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
     source flag.sh
 
@@ -175,7 +175,7 @@ config.export () {
     sleep 2
 
     config.export_type_selector () {
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
             local _module_cfg="$1"
             gr.debug "looking configs for $_module_cfg"
@@ -266,7 +266,7 @@ config.export () {
 
 config.pull () {
 # pull configuration files from server
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
     gr.debug "$FUNCNAME: rsync -rav --quiet -e ssh -p $GURU_ACCESS_PORT \
               $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/guru/config/$GURU_HOSTNAME/$GURU_USER/ \
@@ -294,7 +294,7 @@ config.pull () {
 
 config.push () {
 # save configuration to server
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
     gr.debug "$FUNCNAME: rsync -rav --quiet -e ssh -p $GURU_ACCESS_PORT $GURU_CFG/$GURU_USER/ \
               $GURU_ACCESS_USERNAME@$GURU_ACCESS_DOMAIN:/home/$GURU_ACCESS_USERNAME/guru/config/$GURU_HOSTNAME/$GURU_USER/"
@@ -330,7 +330,7 @@ config.push () {
 
 config.edit () {
 # edit user config file with preferred editor
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
     local module_list=($@)
     local file_list=()
@@ -376,7 +376,7 @@ config.edit () {
 
 config.list() {
 
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
     IFS=$'\n'
     local search_term=""
 
@@ -414,7 +414,7 @@ config.list() {
 
 config.dialog () {
 # open user dialog to make changes to configurations
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
     local module=user
     [[ $1 ]] && module=$1
@@ -480,7 +480,7 @@ config.get (){
 
 config.set () {
 # change environment temporary
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable ; shift
     [[ "$1" ]] && _value="$@"
@@ -508,7 +508,7 @@ config.set () {
 
 config.rm () {
 # change environment temporary
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable ; shift
     [[ "$1" ]] && _value="$@"
@@ -529,7 +529,7 @@ config.rm () {
 
 config.change () {
 # change user configuration value to configuration file.
-    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 # GURU_MODULE_KEY='value' Global variables do not include module name.
 # Value are optional, key is needed and module needs placeholder.
 # Target is user configuration in ~/.config/guru/<USER_NAME>
@@ -628,7 +628,7 @@ config.change () {
 
 config.help_format() {
     gr.msg -v1 "guru-client configuration file format information " -h
-        gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'"
+        gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
     cat << EOL
 
     Two different configuration file types are supported.
