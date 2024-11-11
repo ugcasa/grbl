@@ -365,11 +365,13 @@ core.run_module () {
     local run_me=
 
     # check is given command in reserved words, if so change argument order
-    if grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
+    if gr.contain "$1" "${GURU_SYSTEM_RESERVED_CMD[@]}" ; then
+        gr.debug "change order"
         local function=$1 ; shift
         local module=$1 ; shift
         local command=$1 ; shift
     else
+        gr.debug "keep order"
         local module=$1 ; shift
         local command=$1 ; shift
         local function=$1 ; shift
@@ -449,15 +451,20 @@ core.run_module_function () {
     gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
 
     # guru add ssh key @ -> guru ssh key add @
-    if ! grep -q -w "$1" <<<${GURU_SYSTEM_RESERVED_CMD[@]} ; then
+    if gr.contain "$1" "${GURU_SYSTEM_RESERVED_CMD[@]}" ; then
+        gr.debug "change order"
+        local command=$1 ; shift
+        local module=$1 ; shift
+        local function=$1 ; shift
+     else
+        gr.debug "keep order"
         local module=$1 ; shift # note: there was reason to use shift over $2, $3, may just be cleaner
         local command=$1 ; shift
         local function=$1 ; shift
-     else
-        local function=$1 ; shift
-        local module=$1 ; shift
-        local command=$1 ; shift
     fi
+
+    gr.varlist "debug module command function"
+
 
     for _module in ${GURU_MODULES[@]} ; do
 
