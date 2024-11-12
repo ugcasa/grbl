@@ -2,11 +2,14 @@
 # guru-cli mount core module 2019 - 2022 casa@ujo.guru
 
 declare -g mount_rc="/tmp/guru-cli_mount.rc"
+__mount_color="navy"
 __mount=$(readlink --canonicalize --no-newline $BASH_SOURCE)
+
+quiet=
 
 mount.help () {
 # mount help
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     gr.msg -v1 -c white "guru-cli mount help "
     gr.msg -v2
@@ -29,7 +32,7 @@ mount.help () {
 
 mount.main () {
 # mount command parser
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _error=0
     local command="$1"
@@ -37,7 +40,7 @@ mount.main () {
 
     case "$command" in
 
-            system|help|ls|info|check|mounted|poll|status|start|stop|install|uninstall|available|mounted|online|config)
+            help|ls|info|check|mounted|poll|status|start|stop|install|uninstall|available|mounted|online|config)
                 mount.$command $@
                 _error=$?
                 ;;
@@ -50,7 +53,7 @@ mount.main () {
             defaults|all|toggle)
                 mount.$command $@
                 _error=$?
-                mount.status >/dev/null
+                mount.status quiet
                 ;;
 
             check-system)
@@ -58,8 +61,10 @@ mount.main () {
                 _error=$?
                 ;;
 
-            folder|mount)
+            mount)
+                gr.end $GURU_MOUNT_INDICATOR_KEY
                 mount.remote $command $@
+                mount.status quiet
                 _error=$?
                 ;;
 
@@ -67,13 +72,19 @@ mount.main () {
                 mount.local_size $@
                 _error=$?
                 ;;
+            tog)
+                gr.end $GURU_MOUNT_INDICATOR_KEY
+                mount.toggle_single $@ && \
+                    mount.status quiet
+                ;;
             "")
                 mount.listed default
                 _error=$?
-                mount.status
+                mount.status quiet
                 ;;
 
             *)
+                gr.end $GURU_MOUNT_INDICATOR_KEY
                 if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$command" ; then
                     gr.debug "found in defauls list"
                     mount.known_remote $command $@
@@ -86,7 +97,7 @@ mount.main () {
                     mount.known_remote $command $@
                 fi
 
-                mount.status >/dev/null
+                mount.status quiet
                 error=$?
                 ;;
         esac
@@ -96,7 +107,7 @@ mount.main () {
 
 mount.rc () {
 # source configurations
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     if  [[ ! -f $mount_rc ]] || \
         [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $mount_rc) )) -gt 0 ]]
@@ -117,7 +128,7 @@ mount.rc () {
 
 mount.make_rc () {
 # make core module rc file out of configuration file
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     if ! source config.sh ; then
         gr.msg -c yellow "unable to load configuration module"
@@ -150,7 +161,7 @@ mount.make_rc () {
 
 mount.local_size () {
 # check size of files in locally mounted folder
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _mount_target=$GURU_DATA
     [[ $1 ]] && _mount_target="$1"
@@ -173,7 +184,7 @@ mount.local_size () {
 
 mount.info () {
 # detailed list of mounted mountpoints. nice list of information of sshfs mount points
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _error=0
     # header (stdout if verbose rised)
@@ -206,7 +217,7 @@ mount.info () {
 
 mount.ls () {
 # simple list of mounted mountpoints
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
     return $?
@@ -214,7 +225,7 @@ mount.ls () {
 
 mount.system () {
 # mount system data
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     gr.msg -v3 -n "checking system data folder.."
     if [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] ; then
@@ -230,7 +241,7 @@ mount.system () {
 
 mount.online () {
 # check is mount point "online", no printout,
-    # gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    # gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _target_folder="$GURU_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
@@ -244,7 +255,7 @@ mount.online () {
 
 mount.mounted () {
 # check is givven list name already mounted
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _mount_list_name=$1
 
@@ -272,7 +283,7 @@ mount.mounted () {
 
 mount.check () {
 # check is mount point mounted, output status
-    # gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    # gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _target_folder=$GURU_SYSTEM_MOUNT
     [[ "$1" ]] && _target_folder="$1"
@@ -283,32 +294,37 @@ mount.check () {
     mount.online $_target_folder && _online=1 || _online=
 
     case $_target_folder in
+        *.data)
+            [[ $_online ]] \
+                && color=sky_blue \
+                || color=black
+            ;;
 
-        *.data)  [[ $_online ]] \
-                        && color=sky_blue \
-                        || color=dark_grey
-                    ;;
+        */.*)
+            [[ $_online ]] \
+                && color=hot_pink \
+                || color=null
+            ;;
 
-            */.*)  [[ $_online ]] \
-                        && color=hot_pink \
-                        || return 1
-
-                    ;;
-
-                *)  [[ $_online ]] \
-                        && color=aqua \
-                        || color=dark_cyan
-                    ;;
+        *)
+            [[ $_online ]] \
+                && color=aqua \
+                || color=dark_cyan
+            ;;
     esac
-    gr.msg -n -v1 -c $color "${_target_folder##*/} "
 
+    if ! [[ $quiet ]] ; then
+        [[ $color != null ]] && gr.msg -n -v1 -c $color "${_target_folder##*/} "
+    fi
+
+    # online comes wrong way around for this purpose
     [[ $_online ]] && return 0 || return 1
-    # return $_online
+
 }
 
 mount.remote () {
 # mount any remote location. usage: mount_point remote_folder optional: domain port symlink_to
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     # set defaults
     local _target_folder=
@@ -427,7 +443,7 @@ mount.remote () {
 
 mount.available () {
 # printout list of available mount points
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     gr.msg -c light_blue "${all_list[@]}"
     return 0
@@ -435,7 +451,7 @@ mount.available () {
 
 mount.listed () {
 # mount all GURU_MOUNT_<list_name>_LIST defined in user configuration
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _error=0
     local _IFS="$IFS"
@@ -477,7 +493,7 @@ mount.listed () {
 
 mount.all () {
 # mount all GURU_CLOUD_* defined in userrc
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _error=0
     local _IFS="$IFS"
@@ -515,7 +531,7 @@ mount.all () {
 
 mount.known_remote () {
 # mount single GURU_CLOUD_* defined in userrc
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
     local _source=$(eval echo '${GURU_MOUNT_'"${1^^}[1]}")
@@ -535,55 +551,123 @@ mount.known_remote () {
 
 mount.status () {
 # daemon status function
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
+
+    [[ $1 == "quiet" ]] && quiet=true
 
     # printout header for status output
-    gr.msg -t -v1 -n "${FUNCNAME[0]}: "
     local _target
     local _private=
+    local _online=
+    local _mounted=
 
-    # check is enabled
-    if [[ $GURU_MOUNT_ENABLED ]] ; then
+    if ! [[ $quiet ]]; then
+        gr.msg -t -v1 -n "${FUNCNAME[0]}: "
+        # check is enabled
+        if [[ $GURU_MOUNT_ENABLED ]] ; then
             gr.msg -v1 -n -c green "enabled " -k $GURU_MOUNT_INDICATOR_KEY
         else
             gr.msg -v1 -c black "disabled" -k $GURU_MOUNT_INDICATOR_KEY
             return 100
         fi
+    fi
 
-    # check is system available
-    # if mount.check ; then
-    #         gr.msg -v1 -n -c green "available "
-    #     else
-    #         gr.msg -v1 -c red "unavailable" -k $GURU_MOUNT_INDICATOR_KEY
-    #         return 101
-    #     fi
+    gr.end $GURU_MOUNT_INDICATOR_KEY
 
     # go trough mount points
     for _mount_point in ${all_list[@]} ; do
-            _target=$(eval echo '${GURU_MOUNT_'"${_mount_point^^}[0]}")
-            mount.check $_target &&
-                case $_target in \
-                    *'/.'*)  _private=true
-                            ;;
-                    esac
-        done
+        _target=$(eval echo '${GURU_MOUNT_'"${_mount_point^^}[0]}")
+        mount.check $_target && _online=1 || _online=
 
-    # serve enter and key color
-    [[ $_private ]] && [[ $GURU_VERBOSE -gt 0 ]]\
-        && gr.msg -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY \
-        || gr.msg -c aqua -k $GURU_MOUNT_INDICATOR_KEY
+        # if some of mount points are "secret" and online
+        case $_target in
+            $GURU_DATA)
+                [[ $_online ]] && _system=1
+            ;;
+            */.*)
+                [[ $_online ]] && _private=1
+                [[ $_online ]] && _mounted=1
+            ;;
+            *)
+                [[ $_online ]] && _mounted=1
+            ;;
+        esac
+    done
 
+    # set indicate key color
+    if [[ $_private ]]; then
+        if [[ $_system ]]; then
+            gr.msg -n -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY
+        else
+            gr.blink $GURU_MOUNT_INDICATOR_KEY secred
+        fi
+    elif [[ $_mounted ]]; then
+        if [[ $_system ]]; then
+            gr.msg -n -c aqua -k $GURU_MOUNT_INDICATOR_KEY
+        else
+            gr.blink $GURU_MOUNT_INDICATOR_KEY partly
+        fi
+    else
+        if [[ $_system ]]; then
+            gr.msg -n -c blue -k $GURU_MOUNT_INDICATOR_KEY
+        else
+            gr.blink $GURU_MOUNT_INDICATOR_KEY offline
+        fi
+    fi
+
+    # serve enter
+    [[ $quiet ]] || echo
     return 0
 }
 
+mount.toggle_single () {
+# mount or un-mount single given mount point
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
+
+    if ! [[ $1 ]]; then
+        gr.msg -e1 "please give mount point"
+        return 11
+    fi
+
+    local target="$1"
+
+    # check is in all list
+    if ! gr.contain "$target" "${all_list[@]}"; then
+        gr.msg -e1 "'$target' is non valid mount point"
+        return 12
+    fi
+
+    local mounted=()
+    local _list=($(mount.ls | grep -v '.data'))
+
+    # clean path away
+    for (( i = 0; i < ${#_list[@]}; i++ )); do
+        mounted+="${_list[$i]##*/} "
+    done
+
+    gr.debug "mounted: ${mounted[@]}"
+
+    # check is in list
+    if gr.contain "$target" "${mounted[@]}"; then
+        source unmount.sh
+        unmount.main $target
+        return $?
+    else
+        mount.main $target
+        return $?
+    fi
+}
+
 mount.toggle () {
-# unmount all or mount defaults by pressing key
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+# mount defaults vs unmount all for keyboard shortcut usage
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
+
+    source unmount.sh
 
     local _list=($(mount.ls | grep -v '.data'))
 
+    # list mount/unmount
     if  [[ ${#_list[@]} -gt 1 ]] ; then
-            source unmount.sh
             unmount.main all
         else
             mount.listed default
@@ -593,18 +677,18 @@ mount.toggle () {
 
 mount.poll () {
 # daemon poll api
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _cmd="$1" ; shift
 
     case $_cmd in
-        start )
+        start)
             gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $GURU_MOUNT_INDICATOR_KEY
             ;;
-        end )
+        end)
             gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $GURU_MOUNT_INDICATOR_KEY
             ;;
-        status )
+        status)
             mount.status $@
             ;;
         *)  mount.help
@@ -614,7 +698,7 @@ mount.poll () {
 
 mount.install () {
 # install and remove install applications. input "install" or "remove"
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     sudo apt update
     sudo apt install rsync sshfs xclip
@@ -622,12 +706,13 @@ mount.install () {
 
 mount.uninstall () {
 # install and remove install applications. input "install" or "remove"
-    gr.msg -v4 -c blue "$__mount [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     gr.msg "wont remove 'ssh' or 'rsync', do it manually if really needed"
     return 0
 }
 
+gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME" >&2
 mount.rc
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then

@@ -19,6 +19,13 @@ tag.main () {
               tag_file_format: $tag_file_format, \
               string: '$@'"
 
+    case $tag_action in
+        install|status)
+              tag.$tag_action $@
+              return $?
+              ;;
+          esac
+
     case "$tag_file_format" in                                           ### # #
     3G2|3GP2|3GP|3GPP|AAX|AI|AIT|ARQ|ARW|CR2|CR3|CRM|CRW|CIFF|PBM|GIF|GPR|\
     CS1|DCP|DNG|DR4|DVB|EPS|EPSF|PS|ERF|EXIF|EXV|F4A|F4B|F4P|F4V|FFF|FLIF|\
@@ -224,16 +231,13 @@ tag.status () {
 }
 
 tag.install () {
-
-    sudo apt-get install atomicparsley python3-mutagen
+# install neede software
+    sudo apt install libimage-exiftool-perl atomicparsley python3-mutagen
 }
 
 
-
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then                # run if called or act like lib is included
-    case "$1" in
-        install|remove)  sudo apt $1 -y libimage-exiftool-perl easytag atomicparsley python-mutagen ;;
-                     *)  tag.main "$@" ; exit $?
-        esac
+    tag.main "$@"
+    return $?
 fi
 

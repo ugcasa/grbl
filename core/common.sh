@@ -3,15 +3,17 @@
 # collection of functions be sourced every time module needs it
 # casa@ujo.guru 2019 - 2023
 
+__config=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 gr.dump () {
 # dump environmental status to file
     # TBD revisit this
-    echo "core dumped to /tmp/guru_dump"
-    set > "/tmp/guru_dump"
-    echo "environment  lines $(set | wc | xargs)"  >> "/tmp/guru_dump"
-    getconf -a | grep ARG_MAX >> "/tmp/guru_dump"
-    true | xargs --show-limits >> "/tmp/guru_dump"
+    local _dump=/tmp/guru_dump
+    echo "core dumped to $_dump"
+    set > "$_dump"
+    echo "environment  lines $(set | wc | xargs)"  >> "$_dump"
+    getconf -a | grep ARG_MAX >> "$_dump"
+    true | xargs --show-limits >> "$_dump"
     exit 0
 }
 
@@ -222,9 +224,9 @@ gr.msg () {
                 ""|*) _c_var="C_YELLOW" ; _message="undefined error" ; _column_width=${#_message};;
             esac
             _color_code=${!_c_var}
-            >&2 printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message}"
+            printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message}" >&2
         else
-            >&2 printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_column_width}"
+            printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_column_width}" >&2
         fi
         return 0
     fi
@@ -270,56 +272,17 @@ gr.end () {
     [[ $1 ]] && key=$1 ; shift
 
     [[ -f /tmp/blink_$key ]] && rm /tmp/blink_$key
+    sleep 1
     return 0
 }
 
 gr.blink () {
 # bliks corsair keyboard keys
-
     local key="caps"
-    [[ $1 ]] && key=$1
-    shift
-
-    local mood=$1
-
-    case $mood in
-    # color1 color2 interval timeout leave-color
-        ok)             blink="green slime 0.5 3 green" ;;
-        available)      blink="green aqua_marine 0.2 1 green" ;;
-        yes)            blink="green black 0.75 10 " ;;
-        no)             blink="red black 0.75 10 " ;;
-        cancel)         blink="orange $GURU_CORSAIR_MODE 0.2 3 " ;;
-        init)           blink="blue dark_blue 0.1 5 " ;;
-        pass*)          blink="slime $GURU_CORSAIR_MODE 1 300 green" ;;
-        fail*)          blink="red $GURU_CORSAIR_MODE 1 300 red" ;;
-        done)           blink="green slime 4 $GURU_DAEMON_INTERVAL green" ;;
-        do*)            blink="aqua aqua_marine 1 $GURU_DAEMON_INTERVAL" ;;
-        work*)          blink="aqua aqua_marine 5 $GURU_DAEMON_INTERVAL" ;;
-        recovery)       blink="blue black 5 $GURU_DAEMON_INTERVAL blue" ;;
-        grinding)       blink="blue aqua_marine 1 $GURU_DAEMON_INTERVAL" ;;
-        play*)          blink="aqua aqua_marine 2 $GURU_DAEMON_INTERVAL" ;;
-        active)         blink="aqua aqua_marine 0.5 5" ;;
-        pause)          blink="black $GURU_CORSAIR_MODE 1 3600";;
-        error)          blink="orange yellow 1 10 orange" ;;
-        message)        blink="deep_pink dark_orchid 2 1200 dark_orchid" ;;
-        call)           blink="deep_pink black 0.75 30 deep_pink" ;;
-        customer)       blink="deep_pink white 0.75 30 deep_pink" ;;
-        offline)        blink="blue orange 1.25 $GURU_DAEMON_INTERVAL orange" ;;
-        warn*)          blink="red orange 0.75 3600 orange" ;;
-        alert)          blink="red black 0.5 $GURU_DAEMON_INTERVAL" ;;
-        blue)           blink="blue black 0.5 $GURU_DAEMON_INTERVAL" ;;
-        notice)         blink="orange_red black 0.75 $GURU_DAEMON_INTERVAL " ;;
-        panic)          blink="red white 0.2 $GURU_DAEMON_INTERVAL red" ;;
-        breath|calm)    blink="dark_cyan dark_turquoise 6 600" ;;
-        cops|police)    blink="medium_blue red 0.75 60" ;;
-        hacker)         blink="white black 0.2 3600 red" ;;
-        important)      blink="red yellow 0.75 3600" ;;
-        *)              gr.msg -e1 "no valid mood '$mood'" ; return 0 ;;
-    esac
-
-    source corsair.sh
-    corsair.blink_set $key $blink
-
+    local mood="panic"
+    [[ $1 ]] && key=$1; shift
+    [[ $1 ]] && mood=$1; shift
+    $GURU_CALL corsair indicate $mood $key
 }
 
 gr.ind () {
@@ -586,9 +549,9 @@ gr.varlist(){
     fi
 
     for (( i = $_i ; i < ${#input[@]} ; i++ )); do
-        gr.msg -n -c light_blue "${input[$i]}"
-        gr.msg -n -c white " = "
-        gr.msg -c aqua_marine "'$(eval echo '$'${input[$i]})'"
+        gr.msg -n -c light_blue "${input[$i]}" >&2
+        gr.msg -n -c white " = " >&2
+        gr.msg -c aqua_marine "'$(eval echo '$'${input[$i]})'" >&2
     done
 }
 
@@ -664,6 +627,14 @@ gr.presence () {
 }
 
 
+gr.contain () {
+# check item is in list
+    # shopt -s nocasematch # Can be useful to disable case-matching
+    local e
+    for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+    return 1
+}
+
 gr.date () {
 # printout date in readable format
     local when="now"
@@ -706,6 +677,7 @@ gr.epoch () {
 
 gr.filedate () {
     echo "$(gr.datestamp)-$(gr.timestamp)"
+
 }
 
 
@@ -715,10 +687,10 @@ gr.debug2 () {
     # local colors=(white red dark_orange orange salmon moccasin)
     local words=(${@})
     if [[ $GURU_DEBUG ]] ; then
-        gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n
+        gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n >&2
         for (( i = 0; i < ${#words[@]}; i++ )); do
             [[ ${colors[$i]} ]] || colors[$i]=${colors[-1]}
-            gr.msg -n -c ${colors[$i]} "${words[$i]} "
+            gr.msg -n -c ${colors[$i]} "${words[$i]} " >&2
         done
         echo
     fi
@@ -728,8 +700,8 @@ gr.debug2 () {
 gr.debug () {
 # printout debug messages
     if [[ $GURU_DEBUG ]] ; then
-        gr.msg -d "${FUNCNAME[0]^^}: "
-        >&2 echo ${@}
+        gr.msg -d "${FUNCNAME[0]^^}: " >&2
+        echo ${@} >&2
     fi
 }
 

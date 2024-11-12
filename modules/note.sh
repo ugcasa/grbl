@@ -13,7 +13,7 @@ declare -g require=(nacal pandoc gnome-terminal)
 
 note.help () {
 # notes help printout
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
     gr.msg -v1 -c white "guru-client note help "
     gr.msg -v2
     gr.msg -v0 "Usage:    $GURU_CALL note ls|add|open|rm|check|report|locate|tag <date> "
@@ -37,7 +37,7 @@ note.help () {
 
 note.main () {
 # main command parser
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     local command="$1" ; shift
 
@@ -75,7 +75,7 @@ note.main () {
 
 note.rc () {
 # source configurations (to be faster)
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     if [[ ! -f $note_rc ]] \
         || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/note.cfg) - $(stat -c %Y $note_rc) )) -gt 0 ]] \
@@ -90,7 +90,7 @@ note.rc () {
 
 note.make_rc () {
 # configure note module
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     source config.sh
 
@@ -107,7 +107,7 @@ note.make_rc () {
 
 note.config () {
 # populates global note variables based on given date in format YYYMMDD or literal date like "next month"
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$@'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$@'" >&2
 
     local _input="$(echo ${@}| xargs)"
     local _year _month _day _datestamp
@@ -206,14 +206,18 @@ note.config () {
 
 note.check () {
 # check that given date note file exist
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
+    local input="$@"
+
+    [[ $input ]] || input="today"
     if ! note.online ; then note.remount ; fi
 
-    note.config "$1"
+
+    note.config "$input"
     gr.msg -n -v2 "checking note $note_date.. "
     if [[ -f "$note_file" ]] ; then
-        gr.msg -v1 -c green "ok"
+        gr.msg -v1 -c green "$note_file_name exist"
         return 0
     else
         gr.msg -c dark_gray "$note_file_name not found"
@@ -223,11 +227,11 @@ note.check () {
 
 note.locate () {
 # find notes based on timestamp
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     note.locate_check () {
         # make variables
-        gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+        gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
         note.config "$1"
         gr.msg -v1 "$note_file "
@@ -261,7 +265,7 @@ note.locate () {
 
 note.online () {
 # check that needed folders are mounted
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     if ! [[ "$GURU_MOUNT_NOTES" ]] && [[ "$GURU_MOUNT_TEMPLATES" ]] ; then
         gr.msg -e1 "empty variable: '$GURU_MOUNT_NOTES' or '$GURU_MOUNT_TEMPLATES'"
@@ -278,12 +282,11 @@ note.online () {
         gr.msg -v2 -c red "note database not mounted"
         return 1
     fi
-
 }
 
 note.remount () {
 # mount needed folders
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
     [[ $GURU_DEBUG ]] && return 0
     mount.known_remote notes || return 43
     mount.known_remote templates || return 44
@@ -292,7 +295,7 @@ note.remount () {
 
 note.ls () {
 # list of notes given month/year
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -313,7 +316,7 @@ note.ls () {
 
 note.add () {
 # creates notes
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -345,7 +348,7 @@ note.add () {
             fi
 
         # header
-        printf "\n\n# ${GURU_NOTE_HEADER} $note_date\n\n" >>$note_file
+        printf "\n\n# ${GURU_NOTE_HEADER}\n\n" >>$note_file
 
         # template
         [[ -f "$template" ]] && cat "$template"  |tail -n+2 >>$note_file || printf "customize your template to $template" >>$note_file
@@ -353,15 +356,13 @@ note.add () {
         # changes table
         note.add_change "created"
 
-        # tags
-        #tag.main "$note_file" add "note $(date +$GURU_FORMAT_FILE_DATE)"
         return 0
     fi
 }
 
 note.open_obsidian_vault () {
 # open idea gathering environment aka. obsidian vault memos in guru/notes
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
     # gr.msg "${FUNCNAME[0]} TBD"
     # xdg-open obsidian://open?vault=${1}
     local command="xdg-open obsidian://open?vault=${1}" #; while true ; do read -n1 ans ; case $ans in q) break ; esac ; done" # 2>/dev/null
@@ -370,7 +371,7 @@ note.open_obsidian_vault () {
 
 note.open () {
 # select note to open and call editor input date in format YYYYMMDD
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -391,13 +392,16 @@ note.open () {
 
 note.rm () {
 # remove note of given date. input format YYYYMMDD
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
 
     note.config "$1"
-    [[ -f $note_file ]] || gr.msg -x 1 -e2 "no note for date $(gr.datestamp $1)"
+    if ! [[ -f $note_file ]] ; then
+        gr.msg -e1 "no note for date $(gr.datestamp $1)"
+        return 11
+    fi
 
     if gr.ask "remove $note_file" ; then
         rm -rf "$note_file" || gr.msg -e3 "note remove failed"
@@ -407,7 +411,7 @@ note.rm () {
 
 note.tag () {
 # add/read/rm tag from note files
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     source tag.sh
     note.online || note.remount
@@ -431,12 +435,12 @@ note.tag () {
 
 note.add_change () {
 # add line to change log
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     [[ ${GURU_NOTE_CHANGE_LOG} ]] || return 0
 
     _line () {
-        gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+        gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
         _len=$1
         for ((i=1;i<=_len;i++)); do
             printf '-'
@@ -465,7 +469,7 @@ note.add_change () {
 
 note.open_editor () {
 # open note to preferred editor
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     local _options
 
@@ -494,7 +498,7 @@ note.open_editor () {
 
     # make command as variable for debugging purposes
     _command="${GURU_NOTE_EDITOR} $note_file $_options"
-    if [[ $GURU_DEBUG ]]; then echo $_command ; exit 0; fi
+    if [[ $GURU_DEBUG ]]; then echo $_command >&2 ; fi
     # run command
     $_command
     return $?
@@ -502,7 +506,7 @@ note.open_editor () {
 
 note.office () {
 # create .odt from team template out of given day's note
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -571,7 +575,7 @@ note.office () {
 
     # make command as variable for debugging purposes
     _command="$GURU_PREFERRED_OFFICE_DOC $odt_file"
-    if [[ $GURU_DEBUG ]]; then echo $_command ; exit 0; fi
+    if [[ $GURU_DEBUG ]]; then echo $_command >&2; fi
 
     # open office program
     $_command &
@@ -582,7 +586,7 @@ note.office () {
 
 note.html () {
 # create html of given day's note
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
@@ -660,7 +664,7 @@ note.html () {
 
 note.status () {
     # make status for daemon
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
     gr.msg -t -n "${FUNCNAME[0]}: "
     # check note is enabled
     if [[ ${GURU_NOTE_ENABLED} ]] ; then
@@ -669,24 +673,27 @@ note.status () {
         gr.msg -v1 -c black "disabled" -k ${GURU_NOTE_INDICATOR_KEY}
         return 1
     fi
-    note.check
+    note.check "$@"
     return $?
 }
 
 note.install() {
 # Install needed tools
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
     local require=(ncal pandoc gnome-terminal libreoffice-java-common default-jre)
     for install in ${require[@]} ; do
         hash $install 2>/dev/null && continue
         gr.ask -h "going to install $install" || continue
         sudo apt-get -y install $install
     done
+
+    source tag.sh
+    tag.main install
 }
 
 note.uninstall() {
 # Install needed tools
-    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'"
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
     local require=(ncal pandoc)
     for install in ${require[@]} ; do
         hash $install 2>/dev/null || continue
