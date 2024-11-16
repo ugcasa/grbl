@@ -75,7 +75,7 @@ unmount.main () {
                     local val=
                     for val in ${mounted_list[@]}; do
                        if echo $val | grep -q -w $argument ; then
-                            gr.msg -v3 -c yellow "mountpoint: $val"
+                            # gr.msg -v3 -c yellow "mountpoint: $val"
                             unmount.remote $mount_point $val
                         fi
                     done
@@ -147,8 +147,7 @@ unmount.help () {
 
 unmount.ls () {
 # simple list of mounted mountpoints
-    local list=$(mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)')
-    gr.msg -c light_blue "$list"
+    mount -t fuse.sshfs | grep -oP '^.+?@\S+? on \K.+(?= type)'
     return $?
 }
 
@@ -214,18 +213,20 @@ unmount.remote () {
                 fi
         fi
 
+    local _mount_name=${_mountpoint##*/}
+
     # empty
     gr.msg -n -v2 "unmounting "
-    gr.msg -n -v1 "$_mountpoint.. "
+    gr.msg -n -v1 "$_mount_name "
 
     # check is mounted
     if ! grep -wq "$_mountpoint" /etc/mtab ; then
-            gr.msg -v1 -c dark_gray "is not mounted"
+            gr.msg -v1 -c dark_gray "not mounted"
             return 0
         fi
 
     if ! [[ -f "$_mountpoint/.online" ]] ; then
-            gr.msg -n -v2 -c yellow ".online flag file missing "
+            gr.msg -n -v2 -c yellow "online flag file missing "
          fi
 
     # unmount target (normal action)
@@ -235,7 +236,7 @@ unmount.remote () {
 
     # check is target unmounted
     if ! unmount.online "$_mountpoint" ; then
-            gr.msg -v1 -c green "ok"
+            gr.msg -v1 -c green "done"
             rmdir $_mountpoint
             return 0
         fi
@@ -245,15 +246,15 @@ unmount.remote () {
             return 0
         fi
 
-    gr.msg -n -v1 -c white "force unmount.. "
+    gr.msg -n -v1 -c white "force unmount "
 
     # force unmount
     if unmount.kill "$_mountpoint" ; then
-            #gr.msg -v1 -c green "ok"
+            gr.msg -v1 -c green "done"
             rmdir $_mountpoint
             return 0
         else
-            gr.msg -c red "failed to force unmount '$_mountpoint' "
+            gr.msg -c red "failed to force unmount $_mount_name "
             return 124
         fi
 }

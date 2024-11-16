@@ -241,7 +241,7 @@ mount.system () {
 
 mount.online () {
 # check is mount point "online", no printout,
-    # gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _target_folder="$GURU_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
@@ -283,7 +283,9 @@ mount.mounted () {
 
 mount.check () {
 # check is mount point mounted, output status
-    # gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
+# TODO stupid thing this is, re-think whole mount module
+
+    gr.msg -N -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _target_folder=$GURU_SYSTEM_MOUNT
     [[ "$1" ]] && _target_folder="$1"
@@ -345,11 +347,12 @@ mount.remote () {
     [[ "$4" ]] && _source_port="$4"
     [[ "$5" ]] && _symlink="$5"
 
-    gr.msg -v1 -n "$_target_folder "
+    local _mount_name=${_target_folder##*/}
+    gr.msg -v1 -n "$_mount_name "
 
     # double check is in /etc/mtab  already mounted and .online file exists
     if [[ -f $_target_folder/.online ]] && grep -qw "$_target_folder" /etc/mtab ; then
-        gr.msg -v1 -c green "mounted"
+        gr.msg -v1 -c green "already mounted"
         return 0
     fi
 
@@ -409,12 +412,11 @@ mount.remote () {
 
     # if symlink given check if exist and create if not
     if [[ $_symlink ]] ; then
-        gr.msg -n -v1 "symlink "
 
         if file -h $_symlink | grep "symbolic" >/dev/null ; then
-            gr.msg -n -v1 "exist "
+            gr.msg -n -v3 "link exist "
         else
-            gr.msg -n -v1 "creating.. "
+            gr.msg -n -v2 "linking "
             ln -s $_target_folder $_symlink && error=0 \
                 || gr.msg -x 25 -c yellow "error creating $_symlink"
         fi
@@ -436,7 +438,7 @@ mount.remote () {
         return $error
     else
         [[ -f "$_target_folder/.online" ]] || touch "$_target_folder/.online"
-        gr.msg -v1 -c green "ok"
+        gr.msg -v1 -c green "mounted"
         return 0
     fi
 }

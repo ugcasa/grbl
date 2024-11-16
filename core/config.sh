@@ -75,7 +75,7 @@ config.make_rc () {
     local _chapter=
     local _mode=">" ; [[ "$_append_rc" ]] && _mode=">>"
 
-    gr.msg -n -v2 -c gray "$_source_cfg "
+    gr.msg -n -v3 -c gray "$_source_cfg "
 
     if ! [[ -f $_source_cfg ]] ; then
         gr.msg -c yellow "$_source_cfg not found"
@@ -83,11 +83,11 @@ config.make_rc () {
     fi
 
     case $(head -n 1 $_source_cfg) in
-        *"source"*) gr.msg -v2 -c dark_grey "..no need to compile this type of configs"
+        *"source"*) gr.msg -v3 -c dark_grey "..no need to compile this type of configs"
         return 0 ;;
     esac
 
-    gr.msg -v2 -c gray "$_mode $_target_rc"
+    gr.msg -v3 -c gray "$_mode $_target_rc"
 
     # read config file, use chapter name as second part of variable name
     while IFS='= ' read -r lhs rhs ;  do
@@ -105,7 +105,8 @@ config.make_rc () {
             esac
       fi
     done < $_source_cfg >> $_target_rc
-    return 0
+    chmod +x $_target_rc
+    return $?
 }
 
 

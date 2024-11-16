@@ -526,41 +526,51 @@ os.capslock() {
 }
 
 
-
-
 os.rc () {
-# source configurations (to be faster)
+# source module rc file if exist, generate it from configurations if not
+# this could be in core/config.sh but in here soursing of config.sh is not done every time module is run
+    # debug function view
     gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'" >&2
 
-    local config_file_age_difference=$(( $(stat -c %Y $config_file) - $(stat -c %Y $os_rc) ))
+    # files
+    local config_file=$GURU_CFG/$GURU_USER/os.cfg
+    local rc_file="/tmp/guru-cli_os.rc"
 
-    # gr.varlist "debug config_file os_rc config_file_age_difference"
+    if [[ -f $config_file ]]; then
+    # use user configuration
+        gr.msg -v3 -c dark_gray "using user config $config_file"
 
-    if [[ ! -f $os_rc ]] || [[ $config_file_age_difference -gt 1 ]]; then
-            os.make_rc &&  gr.msg -v1 -c dark_gray "$os_rc updated"
+    elif [[ -f $GURU_CFG/os.cfg ]]; then
+    # Use default configuration
+        config_file=$GURU_CFG/os.cfg
+        gr.msg -v3 -c dark_gray "using default config $config_file"
+    else
+    # configuration missing
+        gr.msg -e1 "config file $config_file missing, aborting"
+        return 123
+    fi
+
+    # check module rc file exists
+    if [[ -f $rc_file ]] ; then
+        local config_file_age_difference=$(( $(stat -c %Y $config_file) - $(stat -c %Y $rc_file) ))
+        gr.varlist "debug config_file rc_file config_file_age_difference"
+
+        # check is configuration updated since last time
+        if [[ $config_file_age_difference -gt 1 ]]; then
+            rm -f $rc_file
+            source config.sh
+            config.make_rc "$config_file" $rc_file && gr.msg -v2 -c dark_gray "$rc_file updated"
         fi
 
-    source $os_rc
+    # module rc file does not exist, make it
+    else
+        source config.sh
+        config.make_rc "$config_file" $rc_file && gr.msg -v2 -c dark_gray "$rc_file created"
+    fi
+
+    # source configuration
+    source $rc_file
 }
-
-
-os.make_rc () {
-# configure os module
-    gr.msg -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME '$@'" >&2
-
-    source config.sh
-
-    # make rc out of config file and run it
-    if [[ -f $os_rc ]] ; then
-            rm -f $os_rc
-        fi
-
-    config.make_rc "$config_file" $os_rc
-    
-    chmod +x $os_rc
-    source $os_rc
-}
-
 
 # os.check_python_module () {                                      # Does work, but returns funny (futile: not called from anywhere)
 #    python -c "import $1"
