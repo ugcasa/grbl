@@ -1033,12 +1033,12 @@ corsair.systemd_restart () {
     gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME '$1'" >&2
 
     gr.msg -h "restarting corsair service.. "
-    systemctl --user restart corsair.service
+    systemctl --user restart corsair.service && gr.msg -c green "ok" || gr.msg -e1 "failed"
 
-    if [[ $GURU_FORCE ]] ; then
-            gr.msg -h "restarting daemon service.. "
-            sudo systemctl restart ckb-next-daemon
-        fi
+    gr.msg -h "restarting daemon service.. "
+    sudo systemctl restart ckb-next-daemon && gr.msg -c green "ok" || gr.msg -e1 "failed"
+
+
 }
 
 
