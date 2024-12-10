@@ -694,24 +694,43 @@ note.search_tag1() {
 
 note.search_tag() {
 # get tag from note file and check does it contain given word
-    local search_term=$1
+    local search_terms=($@)
     local matches=()
+    local and=
+    local match_count=
 
     for file in ${files[@]} ; do
 
         # find version 1 tags
         tags=($(note.search_tag1 $file))
 
-        # break to next file if still nothing
+        # jump to next file if no tags found
         [[ $tags ]] || continue
+        match_count=0
 
         # go trough all found tags
         for tag in ${tags[@]} ; do
-            if [[ ${tag,,} == ${search_term,,} ]]; then
-                gr.msg -c white "$file" >&2
-                echo $file
-                break
-            fi
+
+            for term in ${search_terms[@]} ; do
+
+                if [[ ${term,,} == "and" ]]; then
+                    and=true
+                    continue
+                fi
+
+                if [[ ${term,,} == ${tag,,} ]]; then
+                    ((match_count++))
+                    if [[ $and ]] ; then
+                        if [[ $match_count -ge $((${#search_terms[@]} -1)) ]]; then
+                            gr.msg -c white "$file" >&2
+                            echo $file
+                        fi
+                    else
+                        gr.msg -c white "'$term' $file" >&2
+                        echo $file
+                    fi
+                fi
+            done
         done
     done
     gr.msg -w 80 -v1 -n -r " " >&2
@@ -780,10 +799,10 @@ note.find() {
 
     gr.debug "${FUNCNAME[0]} files: ${#files[@]}"
 
-    for term in ${search_terms[@]}; do
-        gr.msg -v1 "searching '${term,,}' from ${year}.."
-        matches+=($(note.search_tag $term))
-    done
+
+    gr.msg -v1 "searching '${search_terms[@],,}' from ${year}.."
+    matches+=($(note.search_tag ${search_terms[@]}))
+
 
     gr.debug "matches: ${#matches[@]}: '${matches[@]}'"
 
