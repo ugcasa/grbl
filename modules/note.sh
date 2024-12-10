@@ -43,7 +43,7 @@ note.main () {
 
     case "$command" in
 
-        status|ls|add|open|rm|check|locate|config|tag|install|uninstall)
+        find|status|ls|add|open|rm|check|locate|config|tag|install|uninstall)
                 note.$command "$@"
                 return $?
                 ;;
@@ -123,15 +123,15 @@ note.config () {
             _month=$(printf "%02d" "$_month")
             _year=$(cut -d"." -f3 <<<$_input)
 
-            if date -d "$_year$_month$_day" >>/dev/null; then
+            if date -d "$_year$_month$_day" >/dev/null; then
                 true
                 # gr.debug "Finnish date DDMMYYYY $_day.$_month.$_year"
-            elif date -d "$_day$_month$_year">>/dev/null; then
+            elif date -d "$_day$_month$_year" >/dev/null; then
                 gr.debug "UK date YYYYMMDD $_year.$_month.$_day"
                 local temp=$_year
                 _year=$_day
                 _day=$temp
-            elif date -d "$_year$_day$_month">>/dev/null; then
+            elif date -d "$_year$_day$_month" >/dev/null; then
                 # gr.debug "US date MMDDYYYY $_month.$_day.$_year"
                 local temp=$_month
                 _month=$_day
@@ -189,10 +189,10 @@ note.config () {
 
     # test variables
     gr.varlist "debug _day _month _year _datestamp"
-    date -d "$_year" +%Y  >/dev/null || exit 1
-    date -d "$_month" +%m >/dev/null || exit 1
-    date -d "$_day" +%d >/dev/null || exit 1
-    date -d "$_datestamp" >/dev/null || exit 1
+    # date -d "$_year" +%Y  >/dev/null || exit 112
+    # date -d "$_month" +%m >/dev/null || exit 113
+    # date -d "$_day" +%d >/dev/null || exit 114
+    # date -d "$_datestamp" >/dev/null || exit 115
 
     # fulfill note variables with given date in user config formats TBD bad naming ünd shit
     note_date=$(date -d $_datestamp +$GURU_FORMAT_DATE)
@@ -662,6 +662,148 @@ note.html () {
     fi
 }
 
+
+note.search_tag2 () {
+# read note file tag line
+
+    local target_file="$1"
+    #[[ -f $target_file ]] || return 1
+    local target_file=
+    [[ -f $target_file ]] && tagline=$(grep '{{tag>' "$target_file")
+
+    # first remove '}}' at the end and cut out before '>'
+    local tags=$(cut -d '>' -f2 <<<${tagline//'}'/})
+    echo "$tags"
+}
+
+
+note.search_tag1() {
+# read note file tag line
+
+    local target_file="$1"
+    #[[ -f $target_file ]] || return 1
+    local tagline=
+    #grep 'tag:' "$target_file" >> tagi
+    [[ -f $target_file ]] && tagline=$(grep 'tag:' "$target_file")
+    #echo "$target_file:$tagline" >> tagi
+    gr.msg -w 80 -v1 -n -r -c dark_gray "$target_file" >&2
+    local tags=$(cut -d ':' -f2 <<<$tagline)
+    echo "$tags"
+}
+
+
+note.search_tag() {
+# get tag from note file and check does it contain given word
+    local search_term=$1
+    local matches=()
+
+    for file in ${files[@]} ; do
+
+        # find version 1 tags
+        tags=($(note.search_tag1 $file))
+
+        # break to next file if still nothing
+        [[ $tags ]] || continue
+
+        # go trough all found tags
+        for tag in ${tags[@]} ; do
+            if [[ ${tag,,} == ${search_term,,} ]]; then
+                gr.msg -c white "$file" >&2
+                echo $file
+                break
+            fi
+        done
+    done
+    gr.msg -w 80 -v1 -n -r " " >&2
+}
+
+
+note.find() {
+# find keywords from tags in notes
+
+    files=()
+    local year="all"
+    local file_pattern="${GURU_USER_NAME}_notes_????????.md"
+    local file_list="/tmp/note_search.list"
+    # will be empty if no database exist
+    local last_index=$(cat "${file_list}_year" 2>/dev/null)
+    local location=$GURU_MOUNT_NOTES/$GURU_USER_NAME
+    local matches=()
+
+    # check is year given (1000 - 9999)
+    case $1 in
+        [1-9][0-9][0-9][0-9])
+            year=$1
+            shift
+            file_pattern="${GURU_USER_NAME}_notes_${year}????.md"
+    esac
+
+    local search_terms=($@)
+
+    # force re-index
+    [[ $GURU_FORCE ]] && [[ -f $file_list ]] && rm $file_list
+
+    if [[ $last_index == $year ]] || [[ $last_index == "all" ]] then
+
+        files=($(cat $file_list))
+
+        # remove other years for speed up search
+        if [[ $year != "all" ]] ; then
+            for _file in ${files[@]}; do
+                [[ $_file =~ $year ]] && _files+=($_file)
+            done
+            files=(${_files[@]})
+        fi
+
+    else
+        gr.msg -v1 "indexing ${year}.."
+        files=($(find "$location" -type f -iname $file_pattern 2>/dev/null | grep -v '#'))
+
+        if [[ ${#files[@]} -lt 1 ]] ; then
+            gr.msg -e1 "note files not found"
+            return 100
+        fi
+
+        # write index to file
+        [[ -f $file_list ]] && rm $file_list
+        for filename in ${files[@]}; do
+            echo ${filename} >> $file_list
+        done
+        # write index meta to file
+        echo $year > "${file_list}_year"
+
+        # sort file list by age
+        sort -r -o $file_list $file_list
+        files=($(cat $file_list))
+
+    fi
+
+    gr.debug "${FUNCNAME[0]} files: ${#files[@]}"
+
+    for term in ${search_terms[@]}; do
+        gr.msg -v1 "searching '${term,,}' from ${year}.."
+        matches+=($(note.search_tag $term))
+    done
+
+    gr.debug "matches: ${#matches[@]}: '${matches[@]}'"
+
+    # silent mode
+    [[ $GURU_VERBOSE -lt 1 ]] && return 0
+
+    # verbose and question
+    if [[ ${#matches[@]} -gt 0 ]]; then
+        if gr.ask "open found files with $GURU_PREFERRED_EDITOR?" ; then
+            $GURU_PREFERRED_EDITOR ${matches[@]}
+        # else
+        #     for filename in ${matches[@]}; do
+        #         gr.msg -v-c list "$filename"
+        #     done
+        fi
+    else
+        gr.msg -v1 "no matches found"
+    fi
+}
+
 note.status () {
     # make status for daemon
     gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
@@ -680,7 +822,7 @@ note.status () {
 note.install() {
 # Install needed tools
     gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$1'" >&2
-    local require=(ncal pandoc gnome-terminal libreoffice-java-common default-jre)
+    local require=(ncal pandoc gnome-terminal libreoffice-java-common default-jre moreutils)
     for install in ${require[@]} ; do
         hash $install 2>/dev/null && continue
         gr.ask -h "going to install $install" || continue
