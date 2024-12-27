@@ -349,11 +349,11 @@ mount.remote () {
     [[ "$5" ]] && _symlink="$5"
 
     local _mount_name=${_target_folder##*/}
-    gr.msg -v1 -n "$_mount_name "
+    gr.msg -v1 -n "${_mount_name//./} "
 
-    # double check is in /etc/mtab  already mounted and .online file exists
-    if [[ -f $_target_folder/.online ]] && grep -qw "$_target_folder" /etc/mtab ; then
-        gr.msg -v1 -c green "already mounted"
+    # double check is in /etc/mtab already mounted (connected) and .online file exists
+    if grep -qw "$_target_folder" /etc/mtab && [[ -f $_target_folder/.online ]]; then
+        gr.msg -v1 -c green "connected"
         return 0
     fi
 
