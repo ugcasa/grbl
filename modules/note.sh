@@ -762,7 +762,7 @@ note.find() {
     # force re-index
     [[ $GURU_FORCE ]] && [[ -f $file_list ]] && rm $file_list
 
-    if [[ $last_index == $year ]] || [[ $last_index == "all" ]] then
+    if [[ $last_index == $year ]] || [[ $last_index == "all" ]] ; then
 
         files=($(cat $file_list))
 
