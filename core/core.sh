@@ -854,13 +854,14 @@ if [[ -f $GURU_RC ]] ; then
         gr.debug "sourcing $GURU_RC.. "
     else
         # run user configuration if not exist
+        source common.sh
+        source config.sh
         config.main export $USER
         source $GURU_RC
     fi
 
 # determinate how to call guru, I prefer 'guru' or now more often alias 'gr'
 [[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
-gr.msg -v4 -c $__core_color "$__core [$LINENO] run" >&2
 
 # everybody have daemons
 source daemon.sh
@@ -868,19 +869,24 @@ source flag.sh
 source mount.sh
 source config.sh
 
+gr.msg -v4 -c $__core_color "$__core [$LINENO] 'base modules loaded'" >&2
 
 # check is core run or sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     #\\ process arguments and return cleaned command
     # import needed modules
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] core runned" >&2
+    
     source $GURU_BIN/common.sh
 
     # check is core called as interrupter by macro
     core.is_macro $@ && exit $?
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] 'no macro'" >&2
 
     # core.process_opts $@
     core.process_module_opts $@
     core.process_core_opts $GURU_CORE_ARGUMENTS
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] 'arguments processed'" >&2
 
     # export global variables for sub processes
     export GURU_COMMAND=($GURU_MODULE_COMMAND $GURU_MODULE_ARGUMENTS)
@@ -890,6 +896,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 
     # all fine
     if (( _error_code < 1 )) ; then
+        gr.msg -v4 -c $__core_color "$__core [$LINENO] 'no errors'" >&2
         exit 0
     fi
 
@@ -905,7 +912,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     else
         gr.msg -v2 -c red  "error: $_error_code $GURU_LAST_ERROR"
     fi
-
     exit $_error_code
+else
+    gr.msg -v4 -c $__core_color "$__core [$LINENO] 'core sourced, why?'" >&2
 fi
 

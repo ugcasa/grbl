@@ -116,14 +116,15 @@ mount.rc () {
             gr.msg -v1 -c dark_gray "$mount_rc updated"
     fi
 
+    gr.debug "mount_rc:'$mount_rc'"
     source $mount_rc
-
     declare -g all_list=($(\
             grep "export GURU_MOUNT_" $mount_rc | \
             grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
             all_list=(${all_list[@],,})
+    gr.debug "all_list:(${all_list[@]})"
 }
 
 mount.make_rc () {
@@ -348,11 +349,11 @@ mount.remote () {
     [[ "$5" ]] && _symlink="$5"
 
     local _mount_name=${_target_folder##*/}
-    gr.msg -v1 -n "$_mount_name "
+    gr.msg -v1 -n "${_mount_name//./} "
 
-    # double check is in /etc/mtab  already mounted and .online file exists
-    if [[ -f $_target_folder/.online ]] && grep -qw "$_target_folder" /etc/mtab ; then
-        gr.msg -v1 -c green "already mounted"
+    # double check is in /etc/mtab already mounted (connected) and .online file exists
+    if grep -qw "$_target_folder" /etc/mtab && [[ -f $_target_folder/.online ]]; then
+        gr.msg -v1 -c green "connected"
         return 0
     fi
 
@@ -714,11 +715,13 @@ mount.uninstall () {
     return 0
 }
 
-gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME" >&2
 mount.rc
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then
         #source $GURU_RC
+        gr.msg -v4 -c $__mount_color "$__mount [$LINENO] run" >&2
         mount.main $@
         exit $?
+    else
+        gr.msg -v4 -c $__mount_color "$__mount [$LINENO] sourced" >&2
     fi

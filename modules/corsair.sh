@@ -423,7 +423,7 @@ corsair.check () {
     if [[ $GURU_CORSAIR_ENABLED ]] ; then
             gr.msg -v2 -c green "enabled"
         else
-            gr.msg  -c dark_grey "disabled"
+            gr.msg -v2 -c dark_grey "disabled"
             return 1
         fi
 
@@ -652,7 +652,7 @@ corsair.indicate () {
 
     # corsair.check is too slow to go trough here
     if ! [[ $GURU_CORSAIR_ENABLED ]] ; then
-            gr.msg -k1 -c dark_grey "corsair disabled"
+            gr.msg -v2 -c dark_grey "corsair disabled"
             return 1
         fi
 

@@ -2,6 +2,34 @@
 # phone bridge voip tunnel POC
 # assuming /git/trx is place for trx stuff
 
+# https://www.pogo.org.uk/~mark/trx/
+# trx is a simple toolset for broadcasting live audio. It is based on
+# the Opus codec <http://www.opus-codec.org/> and sends and receives
+# encoded audio over IP networks.
+# 
+# It can be used for point-to-point audio links or multicast,
+# eg. private transmitter links or audio distribution. In contrast to
+# traditional streaming, high quality wideband audio (such as music) can
+# be sent with low-latency and fast recovery from dropouts.
+# 
+# With quality audio hardware and wired ethernet, a total latency of no
+# more than a few milliseconds is possible.
+
+# tx -h 192.168.0.32         # send audio from default soundcard to the given host
+# rx                         # receive audio and play it
+
+# tx -h 192.168.0.32 -b 32   # send audio as above, with a lower 32kbps data rate
+# tx -h 192.168.0.32 -m 128  # larger buffer for a non-professional soundcard
+
+# tx -h 192.168.0.32 -f 480  # smaller frames for decreased latency
+# rx -j 4                    # smaller jitter buffer for decreased latency
+
+# tx -h 239.0.0.1            # send audio over multicast
+# rx -h 239.0.0.1            # recieve audio from the above
+
+# tx -?                      # full list of transmitter parameters
+# rx -?                      # full list of receiver parameters
+
 # host variables
 app_udb_port=1350
 remote_tcp_port=10001
@@ -134,7 +162,7 @@ voipt.install () {
     cd /tmp
     git clone http://www.pogo.org.uk/~mark/trx.git || return $?
     cd trx
-    sed -i 's/ortp_set_log_level_mask(NULL, ORTP_WARNING|ORTP_ERROR);/ortp_set_log_level_mask(ORTP_WARNING|ORTP_ERROR);/g' tx.c
+    # sed -i 's/ortp_set_log_level_mask(NULL, ORTP_WARNING|ORTP_ERROR);/ortp_set_log_level_mask(ORTP_WARNING|ORTP_ERROR);/g' tx.c
     make && [[ $verbose ]] && echo "success" || return $?
     return 0
 }
