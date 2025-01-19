@@ -699,6 +699,15 @@ note.search_tag() {
     local and=
     local match_count=
 
+    # check is and term given
+    for term in ${search_terms[@]} ; do
+
+        if [[ ${term,,} == "and" ]]; then
+            and=true
+            continue
+        fi
+    done
+
     for file in ${files[@]} ; do
 
         # find version 1 tags
@@ -708,11 +717,13 @@ note.search_tag() {
         [[ $tags ]] || continue
         match_count=0
 
+
         # go trough all found tags
         for tag in ${tags[@]} ; do
 
             for term in ${search_terms[@]} ; do
 
+                # skip control words
                 if [[ ${term,,} == "and" ]]; then
                     and=true
                     continue
@@ -732,6 +743,8 @@ note.search_tag() {
                 fi
             done
         done
+        # exit search loop
+        read -rsn1 -t0.00001 ans; case $ans in q) break; esac
     done
     gr.msg -w 80 -v1 -n -r " " >&2
 }
@@ -739,6 +752,10 @@ note.search_tag() {
 
 note.find() {
 # find keywords from tags in notes
+
+# known issues: loop stops for no raeson
+#               can produce false matches
+#               slow, mainly cause tag are not indexed
 
     files=()
     local year="all"
@@ -759,10 +776,7 @@ note.find() {
 
     local search_terms=($@)
 
-    # force re-index
-    [[ $GURU_FORCE ]] && [[ -f $file_list ]] && rm $file_list
-
-    if [[ $last_index == $year ]] || [[ $last_index == "all" ]] ; then
+    if [[ $last_index == $year ]] || [[ $last_index == "all" ]] && [[ -f $file_list ]] ; then
 
         files=($(cat $file_list))
 
@@ -775,7 +789,7 @@ note.find() {
         fi
 
     else
-        gr.msg -v1 "indexing ${year}.."
+        gr.msg -v1 "building file list ${year}.."
         files=($(find "$location" -type f -iname $file_pattern 2>/dev/null | grep -v '#'))
 
         if [[ ${#files[@]} -lt 1 ]] ; then
