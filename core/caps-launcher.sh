@@ -21,6 +21,17 @@ read -s -n1 -t 0.2 key3
 all="$key1$key2$key3"
 
 case $all in
+    # parental scripts THESE DOES NOT WORK on other systems than mine computer. Quick implementation, sorry -casa@ujo.guru
+    sf)     gnome-terminal --hide-menubar --geometry 80x20 --zoom 1 --hide-menubar --title \
+            "firefox parental" -- ssh santeri -t '~/.parental/firefox.sh'
+            ;;
+    sk)     ssh santeri -t pkill firefox
+            ;;
+    sq)     ssh santeri -t systemctl suspend
+            ;;
+    st)     gnome-terminal --hide-menubar --geometry 80x20 --zoom 1 --hide-menubar --title \
+            "santeri's computer" -- ssh santeri
+            ;;
     # hosts changes
     da)     gnome-terminal --hide-menubar --geometry 40x1 --zoom 0.7 --hide-menubar --title \
             "connection tests" -- \
