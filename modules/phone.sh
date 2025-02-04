@@ -23,6 +23,8 @@ phone.help () {
     gr.msg -v1 " check          check connection with phone "
     gr.msg -v1 " pair <name>    pair device (optional name)"
     gr.msg -v1 " ping <msg>     ping phone with optional message "
+    gr.msg -v1 " ring           make phone to ring "
+    gr.msg -v1 " find           alias for above "
     gr.msg -v1 " install        install needed software"
     gr.msg -v1 " uninstall      remove installed software"
     gr.msg -v2
@@ -36,8 +38,8 @@ phone.main () {
 
     case "$command" in
 
-        ping|pair|unpair|check|config|install|uninstall|help)
-        # share|ls|find|sms|msg|id|unpair|
+        ring|find|ping|pair|unpair|check|config|install|uninstall|help)
+        # share|ls|sms|msg|id
                 phone.$command "$@"
                 return $?
                 ;;
@@ -246,10 +248,26 @@ phone.ping () {
     [[ $GURU_PHONE_PAIRED ]] || phone.check_pair
 
     if [[ $GURU_PHONE_PAIRED == "yes" ]]; then
-        kdeconnect-cli -n "horror" --ping-msg "$_message"
+        kdeconnect-cli -n $GURU_PHONE_NAME --ping-msg "$_message"
     else
         gr.msg -e1 "phone not paired"
     fi
+}
+
+phone.ring () {
+
+    [[ $GURU_PHONE_PAIRED ]] || phone.check_pair
+
+    if [[ $GURU_PHONE_PAIRED == "yes" ]]; then
+        kdeconnect-cli -n $GURU_PHONE_NAME --ring
+    else
+        gr.msg -e1 "phone not paired"
+    fi
+}
+
+phone.find(){
+    phone.ring
+    return $?
 }
 
 phone.install() {
