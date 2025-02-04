@@ -50,7 +50,7 @@ config.main () {
 
     local _cmd="$1" ; shift
     case "$_cmd" in
-            dialog|export|help|edit|get|set|rm|pull|push|list|change)
+            dialog|export|help|edit|get|set|save|rm|pull|push|list|change)
                     config.$_cmd $@
                     return $?
                     ;;
@@ -483,29 +483,46 @@ config.set () {
 # change environment temporary
     gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
 
+    [[ "$1" ]] && _config_file="$1" || read -r -p "cfg file: " _config_file ; shift
     [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable ; shift
     [[ "$1" ]] && _value="$@"
 
     #if ! cat $GURU_RC | grep "GURU_${_variable^^}=" >/dev/null; then
-    if ! grep "GURU_${_variable^^}=" -q $GURU_RC ; then
-            gr.msg -v2 -c yellow "variable 'GURU_${_variable^^}' not found"
-            if gr.ask "add new temporary key value pair 'GURU_${_variable^^}=${_value}' ? " ; then
-                gr.msg -v2 "setting GURU_${_variable^^} to '$_value'"
-                echo "GURU_${_variable^^}=${_value}" >>$GURU_RC
-                return 0
-            else
-                return 1
-            fi
-        fi
+    if ! grep "GURU_${_variable^^}=" -q  $_config_file ; then
+        gr.msg -v4 -c yellow "variable 'GURU_${_variable^^}' not found"
+        gr.msg -v4 "setting GURU_${_variable^^} to '$_value'"
+        echo "GURU_${_variable^^}=${_value}" >> $_config_file
+    fi
 
-    local _found=$(grep "GURU_${_variable^^}=" $GURU_RC | cut -d '=' -f 2)
-    sed -i "s/GURU_${_variable^^}=.*/GURU_${_variable^^}='${_value}'/" $GURU_RC
+    local _found=$(grep "GURU_${_variable^^}="  $_config_file | cut -d '=' -f 2)
+    sed -i "s/GURU_${_variable^^}=.*/GURU_${_variable^^}='${_value}'/"  $_config_file
 
     gr.msg -v2 "changing GURU_${_variable^^} from $_found to '$_value'"
-    source $GURU_RC
+    source  $_config_file
     return 0
 }
 
+config.save () {
+# change or add permanent configuration
+    gr.msg -v4 -c $__config_color "$__config [$LINENO] $FUNCNAME '$@'" >&2
+
+    [[ "$1" ]] && _config_file="$1" || read -r -p "cfg file: " _config_file ; shift
+    [[ "$1" ]] && _variable="$1" || read -r -p "variable: " _variable ; shift
+    [[ "$1" ]] && _value="$@" # value can be set empty in bash '' is "false"
+
+    # check is key in configuration
+    if grep "${_variable}=" -q $_config_file ; then
+    # exist, change value
+        local _found=$(grep "${_variable}=" $_config_file | cut -d '=' -f 2)
+        gr.msg -v2 "changing ${_variable} from ${_found} to '${_value}'"
+        sed -i "s/${_variable}=.*/${_variable}='${_value}'/" $_config_file || return 100
+    else
+    # non exist, add key/value pair
+        gr.msg -v2 -c yellow "variable '$_variable' not found, adding new key/value pair"
+        echo "${_variable}=${_value}" >>$_config_file || return 100
+    fi
+    return 0
+}
 
 config.rm () {
 # change environment temporary
