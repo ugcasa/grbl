@@ -365,13 +365,19 @@ core.run_module () {
     local run_me=
 
     # check is given command in reserved words, if so change argument order
-    if gr.contain "$1" "${GURU_SYSTEM_RESERVED_CMD[@]}" ; then
-        gr.debug "change order"
+    #if gr.contain "$1" "${GURU_SYSTEM_RESERVED_CMD[@]}" ; then
+    if [[ "${GURU_SYSTEM_RESERVED_CMD[@]}" =~ $1 ]] ; then
+        gr.debug "fmc"
         local function=$1 ; shift
         local module=$1 ; shift
         local command=$1 ; shift
+    elif [[ "${GURU_SYSTEM_RESERVED_CMD[@]}" =~ $1 ]] && [[ "${GURU_MODULES[@]}" =~ $2 ]]; then
+        gr.debug "mcf"
+        local command=$1 ; shift
+        local module=$1 ; shift
+        local function=$1 ; shift
     else
-        gr.debug "keep order"
+        gr.debug "mcf"
         local module=$1 ; shift
         local command=$1 ; shift
         local function=$1 ; shift
