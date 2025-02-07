@@ -1,8 +1,8 @@
 #!/bin/bash
 # system tools for guru-client
-source os.sh
-source flag.sh
 
+__system_color="light_blue"
+__system=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 system_suspend_flag="/tmp/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
 system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh" # ubuntu 18.04 > like mint 20.0
@@ -10,6 +10,7 @@ system_indicator_key="caps"
 
 system.help () {
 # system help printout
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     gr.msg -v1 "guru-client system help" -h
     gr.msg -v2
@@ -36,6 +37,7 @@ system.help () {
 
 system.suspend_help () {
 # suspend help
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     gr.msg -v1 -c white "guru-client system suspend help"
     gr.msg -v2
@@ -55,6 +57,7 @@ system.suspend_help () {
 
 system.env_help () {
 # system environment help printout
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     gr.msg -v1 -c white "guru-client system flag help"
     gr.msg -v2
@@ -72,6 +75,7 @@ system.env_help () {
 
 system.main () {
 # system command parser
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local tool="$1" ; shift
     #system_indicator_key="f$(gr.poll system)"
@@ -152,6 +156,7 @@ system.main () {
 
 system.status () {
 # system status
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     gr.msg -v1 -t -n "${FUNCNAME[0]}: "
     if [[ -f ${GURU_SYSTEM_MOUNT[0]}/.online ]] ; then
@@ -167,6 +172,8 @@ system.status () {
 
 system.upgrade () {
 # upgrade system
+    source os.shgr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+
     os.upgrade
     return $?
 }
@@ -177,7 +184,8 @@ system.upgrade () {
 # TBD move flag system to flag.sh THEN remove this and need for it
 system.flag () {
 # set flags
-    gr.debug "some routine seems to call system.flag, pls use flag.sh instead!"
+    gr.debug "sogr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    me routine seems to call system.flag, pls use flag.sh instead!"
     source flag.sh
     flag.main $@
 }
@@ -185,6 +193,7 @@ system.flag () {
 
 system.get_env () {
 # get running process variable values by pid
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _pid=$1
     [[ $_pid ]] || gr.msg -x 127 -c yellow "pid name required "
@@ -250,6 +259,7 @@ system.get_env () {
 
 system.get_pid_by_name () {
 # get process pid by name
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _process="$1"
     [[ $_process ]] || read -p "process name: " _process
@@ -284,7 +294,8 @@ system.get_pid_by_name () {
 
 
 system.get_env_by_name () {
-    # get running process variable values by process name
+# get running process variable values by process name
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _process=$1
     local _pattern=$2
@@ -319,6 +330,7 @@ system.get_env_by_name () {
 
 system.get_window_id () {
 # input process id, output window id to std
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local findpid=$1
     local known_windows=$(xwininfo -root -children | sed -e 's/^ *//' | grep -E "^0x" | awk '{ print $1 }')
@@ -339,6 +351,7 @@ system.get_window_id () {
 
 system.update () {
  # update guru-client
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local temp_dir="/tmp/guru"
     local source="https://github.com/ugcasa/guru-client.git"
@@ -361,6 +374,9 @@ system.update () {
 
 
 system.cpu_usage_check () {
+# cpu usage nnn..
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+
 
     local high_cpu_flag="/tmp/high.cpu.flag"
 
@@ -419,6 +435,8 @@ system.cpu_usage_check () {
 
 system.get_usage() {
 # get process that uses most resources of 'cpu' or 'mem'
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+
 # return first process usage, pid and command
 # list of three most memory hungry pids: system_most_usage mem --lines 3 --return pid
 
@@ -491,6 +509,7 @@ system.get_usage() {
 
 system.rollback () {
 # rollback to version
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local temp_dir="/tmp/guru"
     local source="git@github.com:ugcasa/guru-client.git"
@@ -512,7 +531,8 @@ system.rollback () {
 
 system.init_system_check () {
 # check init system, return 0 if match with input sysv-init|systemd|upstart
-# see issue #62
+# see issue #62gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+
     local user_input=
 
     [[ "$1" ]] && user_input=$1
@@ -549,6 +569,7 @@ system.init_system_check () {
 
 system.suspend_script () {
 # launch stuff on suspend
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     temp="/tmp/suspend.temp"
     gr.msg -v1 "updating $system_suspend_script.. "
@@ -588,7 +609,9 @@ EOL
 
 system.suspend () {
 # suspend control
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
+    source flag.sh
     case "$1" in
 
         now )
@@ -641,6 +664,7 @@ system.suspend () {
 
 system.poll () {
 # daemon poller interface
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _cmd="$1" ; shift
 
@@ -670,7 +694,8 @@ system.poll () {
 
 system.check_fs_access_flag_enabled () {
 # check is system recording file access
-# often when SSD drive is used the accessed timestamp function is disabled
+# often when SSD drive is used the accesgr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+sed timestamp function is disabled
 # TBD fix typo
 
     echo "acccess flag is" >/tmp/test_access
@@ -694,4 +719,6 @@ system.check_fs_access_flag_enabled () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     system.main "$@"
     exit $?
+else
+    gr.msg -v4 -c $__system_color "$__system [$LINENO] sourced "
 fi

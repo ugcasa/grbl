@@ -3,10 +3,12 @@
 
 declare -g mqtt_rc="/tmp/guru-cli_mqtt.rc"
 [[ $GURU_DEBUG ]] && mqtt_client_options='-d '
-
+__mqtt_color="light_blue"
+__mqtt=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 mqtt.main () {
 # MQTT main command parser
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _cmd="$1" ; shift
 
@@ -27,11 +29,12 @@ mqtt.main () {
 
 mqtt.help () {
 
-    gr.msg -v1 -c white "guru-client MQTT help "
+    gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -v1 "guru-client MQTT help " -c white
     gr.msg -v2
     gr.msg -v0 "usage:    $GURU_CALL MQTT status|sub|pub|start|end|single|help|install|remove "
     gr.msg -v2
-    gr.msg -v1 -c white "commands: "
+    gr.msg -v1 "commands: " -c white
     gr.msg -v1 " status                   show status of default MQTT server "
     gr.msg -v1 " sub <topic>              subscribe to topic on local MQTT server "
     gr.msg -v1 " pub <topic> <message>    printout MQTT service status "
@@ -42,16 +45,17 @@ mqtt.help () {
     gr.msg -v3 " poll start|end           start or end module status polling "
     gr.msg -v2 " help                     printout this help "
     gr.msg -v2
-    gr.msg -v1 -c white "examples: "
-    gr.msg -v2 "         $GURU_CALL mqtt status "
-    gr.msg -v1 "         $GURU_CALL mqtt sub '#' "
-    gr.msg -v1 "         $GURU_CALL mqtt pub '/msg Hello!' "
+    gr.msg -v1 "examples: " -c white
+    gr.msg -v2 "  $GURU_CALL mqtt status "
+    gr.msg -v1 "  $GURU_CALL mqtt sub '#' "
+    gr.msg -v1 "  $GURU_CALL mqtt pub '/msg Hello!' "
     gr.msg -v2
 }
 
 
 mqtt.rc () {
 # source configurations
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     if  [[ ! -f $mqtt_rc ]] || \
         [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mqtt.cfg) - $(stat -c %Y $mqtt_rc) )) -gt 0 ]]
@@ -66,6 +70,7 @@ mqtt.rc () {
 
 mqtt.make_rc () {
 # make core module rc file out of configuration file
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     if ! source config.sh ; then
         gr.msg -c yellow "unable to load configuration module"
@@ -92,6 +97,7 @@ mqtt.make_rc () {
 
 mqtt.enabled () {
 # check is function activated and output instructions to enable function on user configuration
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     if [[ $GURU_MQTT_ENABLED ]] ; then
         # gr.msg -v2 -c green "MQTT enabled"
@@ -106,9 +112,11 @@ mqtt.enabled () {
 
 mqtt.online () {
 # check MQTT is functional, no printout
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     mqtt.online_send () {
         # if MQTT message takes more than 2 seconds to return from closest MQTT server there is something wrong
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
         sleep 2
         gr.msg -v4 -c aqua -k $GURU_MQTT_INDICATOR_KEY
@@ -145,6 +153,7 @@ mqtt.online () {
 
 mqtt.sub () {
 # subscribe to channel, stay listening
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _topic="$1" ; shift
     case $_topic in *#*|root|all) mqtt_client_options="$mqtt_client_options -v " ; _topic='#';; esac
@@ -170,6 +179,7 @@ mqtt.sub () {
 
 mqtt.pub () {
 # publish to MQTT server
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _topic="$1" ; shift
     local _message="$@"
@@ -215,6 +225,7 @@ mqtt.pub () {
 
 mqtt.single () {
 # Subscribe to channel, stay listening until one message received. Timeout is minute.
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 #
 # ## Best variables to just get message it self and mayby find way to get some VALID exit code
 #
@@ -259,6 +270,7 @@ mqtt.single () {
 
 mqtt.log () {
 # start topic log to file
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _topic="$1" ; shift
     local _log_file=$GURU_LOG ; [[ $1 ]] && _log_file="$1"
@@ -276,6 +288,7 @@ mqtt.log () {
 
 mqtt.status () {
 # check MQTT broker is reachable
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
@@ -303,6 +316,7 @@ mqtt.status () {
 
 mqtt.poll () {
 # daemon required polling functions
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _cmd="$1" ; shift
 
@@ -328,6 +342,7 @@ mqtt.poll () {
 
 mqtt.install_svr () {
 # install MQTT server 'local', over ssh to 'remote' or in 'docker' container
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
 
     local command="$1"
@@ -357,6 +372,7 @@ mqtt.install_svr () {
 
 mqtt.install_svr_local () {
 # install MQTT server on local computer
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 # any install tool expects to run Ubuntu based distribution
     gr.debug "$FUNCNAME: TBD"
 
@@ -366,6 +382,7 @@ mqtt.install_svr_local () {
 
 mqtt.install_svr_remote () {
 # install MQTT server on remote computer
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 # any install tool expects to run Ubuntu based distribution
     gr.debug "$FUNCNAME: TBD"
 
@@ -375,6 +392,7 @@ mqtt.install_svr_remote () {
 
 mqtt.install_svr_docker () {
 # install MQTT server on in docker container
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 # any install tool expects to run Ubuntu based distribution
     gr.debug "$FUNCNAME: TBD"
 
@@ -384,6 +402,7 @@ mqtt.install_svr_docker () {
 
 mqtt.install () {
 # install Mosquitto MQTT clients
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _cmd="$1" ; shift
 
@@ -408,18 +427,20 @@ mqtt.install () {
 
 mqtt.remove () {
 # remove Mosquitto MQTT clients
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     sudo apt remove mosquitto-clients && return 0
     return 1
 }
 
-
-mqtt.rc
-
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # source $GURU_RC
+    # module settings to environment
+    mqtt.rc
     mqtt.main "$@"
     exit "$?"
+else
+    gr.msg -v4 -c $__mqtt_color "$__mqtt [$LINENO] sourced " >&2
+    mqtt.rc
 fi
 
 
