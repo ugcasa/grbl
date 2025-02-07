@@ -90,6 +90,9 @@ case $all in
     pt)     guru audio pause youtube ;;
     pu)     guru audio pause uutiset ;;
     pa)     guru audio pause audio ;;
+    pp)     guru phone pair ;;
+    upp)    guru phone unpair ;;
+    pf)     guru phone find ;;
     np)     guru audio np ;;
     # note shortcuts
     n)      guru note ;;
