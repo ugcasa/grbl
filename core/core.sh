@@ -1,14 +1,69 @@
 #!/bin/bash
-# guru-client core
-# casa@ujo.guru 2020 - 2023
+# grbl core
+# casa@ujo.guru 2020-2025
+
+# Do not let run guru as root
+case $USER in root|admin|sudo) echo "too dangerous to run guru-cli as root!" ; return 100; esac
+
+# debug visualiser variables
 __core_color="black"
 __core=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
+# global variables for core
 process_list=/tmp/guru-cli_ps.list
+core_command=
+pass_to_core=()
+pass_to_module=()
+module_options=()
 
-core.parser () {
+# export variables for modules
+declare -x GURU_RC="$HOME/.gururc"
+declare -x GURU_BIN="$HOME/bin"
+declare -x GURU_VERSION=$(echo $(head -n1 $GURU_BIN/version) | tr -d '\n')
+declare -x GURU_VERSION_NAME=$(echo $(tail $GURU_BIN/version -n +2 | head -n 1 ) | tr -d '\n')
+
+# early exits
+case $1 in
+    # core debug option
+
+    debug)
+        source $GURU_BIN/common.sh
+        export GURU_VERBOSE=4
+        export GURU_DEBUG=true
+        export GURU_COLOR=true
+        shift
+        ;;
+
+    version|--version|--ver)
+        echo "$GURU_VERSION $GURU_VERSION_NAME"
+        exit 0
+        ;;
+    --help)
+        shift
+        core.help $@
+        exit 0
+        ;;
+esac
+
+# check that config rc file exits
+if [[ -f $GURU_RC ]] ; then
+        source $GURU_RC
+        gr.debug "sourcing $GURU_RC.. "
+    else
+        # run user configuration if not exist
+        source common.sh
+        source config.sh
+        config.main export $USER
+        source $GURU_RC
+    fi
+
+# determinate how to call guru
+[[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
+
+
+core.main () {
 # parsing first word of user input, rest words are passed to next level parser
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _input="$1" ; shift
 
@@ -61,7 +116,7 @@ core.parser () {
 
 core.list () {
 # printout lists of stuff
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local list=
 
@@ -92,7 +147,7 @@ core.list () {
 
 core.debug () {
 # some debug stuff, not used too often
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local wanted=$1
     # local available=($(cat "$GURU_CFG/variable.list"))
@@ -126,7 +181,7 @@ core.debug () {
 
 core.active () {
 # start daemon
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     # ask key for server,
     # if key is no open, popup passphase input dialog appears
@@ -163,7 +218,7 @@ core.active () {
 
 core.ps () {
 # list of running guru-client processes
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
     local ifs=$IFS
     local _pid _int _com _arg
     local data_string=()
@@ -218,7 +273,7 @@ core.ps () {
 
 core.top () {
 # list of guru processes
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
     option=1
     while true ; do
 
@@ -268,7 +323,7 @@ core.top () {
 
 core.kill () {
 # list of running guru-client processes
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local ifs=$IFS
     local gid=$1
@@ -308,18 +363,18 @@ core.kill () {
 
 core.stop () {
 # ask daemon to stop. daemon should get the message after next tick (about a second)
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
-
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    source flag.sh
     flag.set stop
     return $?
 }
 
 core.pause () {
 # This function asks the daemon to pause by toggling the pause flag in the system.
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 # The flag is stored using the system.s module.
 # If the flag is already set, it will be removed. If it is not set, it will be set. (chatgpt)
-
+    source flag.sh
     if flag.check pause ; then
         flag.rm pause
     else
@@ -330,7 +385,7 @@ core.pause () {
 
 core.make_adapter () {
 # make adapter to multi file module
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local module=$1 ; shift
     local temp_script=$GURU_BIN/$module.sh
@@ -359,7 +414,7 @@ EOL
 
 core.run_module () {
 # check is input in module list and if so, call module main
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local type_list=(".sh" ".py" "")
     local run_me=
@@ -448,7 +503,7 @@ core.run_module () {
 
 core.print_description () {
 # printout function description for documentation and debugging
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local module=$1
     shift
@@ -466,16 +521,16 @@ core.print_description () {
 
 core.run_module_function () {
 # run methods (functions) in module
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     # guru add ssh key @ -> guru ssh key add @
     if gr.contain "$1" "${GURU_SYSTEM_RESERVED_CMD[@]}" ; then
-        gr.debug "change order"
+        gr.debug "order: cmf"
         local command=$1 ; shift
         local module=$1 ; shift
         local function=$1 ; shift
      else
-        gr.debug "keep order"
+        gr.debug "order: mcf"
         local module=$1 ; shift # note: there was reason to use shift over $2, $3, may just be cleaner
         local command=$1 ; shift
         local function=$1 ; shift
@@ -499,7 +554,7 @@ core.run_module_function () {
     #     local function=$1 ; shift
     # fi
 
-    gr.varlist "debug module command function"
+    gr.varlist "debug module command function module_options"
 
 
     for _module in ${GURU_MODULES[@]} ; do
@@ -545,7 +600,7 @@ core.run_module_function () {
 
 core.multi_module_function () {
 # run function name of all installed modules
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
 
     local function_to_run=$1 ; shift
@@ -581,7 +636,7 @@ core.multi_module_function () {
 
 core.change_user () {
 # change guru user temporarily
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local _input_user=$1
     if [[ "$_input_user" == "$GURU_USER" ]] ; then
@@ -603,10 +658,11 @@ core.change_user () {
 
 core.online () {
 # check is online, set pause for daemon if not
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     declare -g offline_flag="/tmp/guru-offline.flag"
     source net.sh
+    source flag.sh
 
     if net.check_server ; then
         if [[ -f $offline_flag ]] ; then
@@ -627,8 +683,9 @@ core.online () {
 
 core.mount_system_base () {
 # check is access point enabled and mount is not
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
+    source mount.sh
     # is access functionality enabled?
     if ! [[ $GURU_ACCESS_ENABLED ]] ; then
         gr.msg -c error "access not enabled"
@@ -653,82 +710,9 @@ core.mount_system_base () {
     fi
 }
 
-
-core.process_module_opts () {
-# This function processes command line arguments for a module and core, making sure that each argument is
-# correctly assigned to the appropriate variable. The processed arguments are then exported as environment
-# variables for use in other parts of the program. Comments of this function are generated by chatGPT.
-gr.msg -v4 -n -c blue "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GURU_DEBUG ]] && echo $@ >&2
-
-    # The function starts by initializing three variables: input_string_list, pass_to_module, and pass_to_core.
-    # The input_string_list variable holds all the command line arguments passed to the function, while pass_to_module
-    # and pass_to_core will hold the processed arguments that will be passed to the module and core, respectively.
-    local input_string_list=($@)
-    local pass_to_module=()
-    local pass_to_core=()
-
-    # The function then loops over each element of input_string_list using a for loop.
-    # Inside the loop, it uses a case statement to determine what to do with each argument.
-    for (( i = 0; i < ${#input_string_list[@]}; i++ )); do
-        #gr.debug "$i:${input_string_list[$i]}" #$((i + 1)):${input_string_list[$((i + 1))]}
-
-        case ${input_string_list[$i]} in
-
-        '--'*)  # If an argument starts with --, it is considered a module argument. The function checks the
-                # next argument to see if it is a flag or an argument that requires a value. If it is a flag,
-                # the current argument is added to pass_to_module. If it requires a value, the current and next
-                # arguments are added to pass_to_module. The let i++ statement skips over the argument's value
-                # since it has already been added to pass_to_module.
-                case ${input_string_list[$((i + 1))]} in
-                '-'*|""|" ")
-                    gr.debug "module arguments '${input_string_list[$i]}'"
-                    pass_to_module="$pass_to_module ${input_string_list[$i]}"
-                    ;;
-                 *)
-                    gr.debug "module option with arguments '${input_string_list[$i]}=${input_string_list[$((i + 1))]}'"
-                    pass_to_module="$pass_to_module ${input_string_list[$i]}"
-                    let i++
-                    pass_to_module="$pass_to_module ${input_string_list[$i]}"
-                    ;;
-                esac
-                ;;
-
-        '-'*)   # If an argument starts with -, it is considered a core argument. Like module arguments, the function
-                # checks the next argument to see if it is a flag or an argument that requires a value. If it is a flag,
-                # the current argument is added to the beginning of pass_to_core. If it requires a value, the current and
-                # next arguments are added to pass_to_core. The let i++ statement skips over the argument's value since it
-                # has already been added to pass_to_core.
-                case ${input_string_list[$((i + 1))]} in
-                '-'*|""|" ")
-                    gr.debug "core arguments '${input_string_list[$i]}'"
-                    pass_to_core="${input_string_list[$i]} $pass_to_core"
-                    ;;
-                 *)
-                    # echo "core option with arguments '${input_string_list[$i]}=${input_string_list[$((i + 1))]}'"
-                    pass_to_core="$pass_to_core ${input_string_list[$i]}"
-                    let i++
-                    pass_to_core="$pass_to_core ${input_string_list[$i]}"
-                esac
-                ;;
-
-            *)  # If the argument does not start with - or --, it is considered a module name and command,
-                # and it is added to pass_to_core.
-                gr.debug "command '${input_string_list[$i]}'"
-                pass_to_core="$pass_to_core ${input_string_list[$i]}"
-        esac
-    done
-
-    # Finally, the processed pass_to_module and pass_to_core arguments are exported to environment variables
-    # GURU_MODULE_ARGUMENTS and GURU_CORE_ARGUMENTS, respectively. The tr command is used to remove any redundant
-    # spaces in the processed arguments before exporting them. (tr is fastest method stack overflow 50259869)
-    export GURU_MODULE_ARGUMENTS=$(echo ${pass_to_module[@]} | tr -s ' ')
-    export GURU_CORE_ARGUMENTS=$(echo ${pass_to_core[@]} | tr -s ' ')
-}
-
-
 core.run_macro () {
 # run macro
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GURU_DEBUG ]] && echo $@ >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local file_name="${1}"
     gr.msg -c dark_grey -v2 "running macro '$file_name'"
@@ -766,7 +750,7 @@ core.run_macro () {
 
 core.is_macro () {
 # check is core called by macro and if so, remove macro name from input string
-    gr.msg -v4 -n -c blue "$__core [$LINENO] $FUNCNAME " >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     case ${1} in
         *.gm)
@@ -781,9 +765,82 @@ core.is_macro () {
 }
 
 
+
+core.process_module_opts () {
+# This function processes command line arguments for a module and core, making sure that each argument is
+# correctly assigned to the appropriate variable. The processed arguments are then exported as environment
+# variables for use in other parts of the program. Comments of this function are generated by chatGPT.
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+
+    # The function starts by initializing three variables: input_string_list, pass_to_module, and pass_to_core.
+    # The input_string_list variable holds all the command line arguments passed to the function, while pass_to_module
+    # and pass_to_core will hold the processed arguments that will be passed to the module and core, respectively.
+    local input_string_list=($@)
+    # local pass_to_module=()
+    # local pass_to_core=()
+
+    # The function then loops over each element of input_string_list using a for loop.
+    # Inside the loop, it uses a case statement to determine what to do with each argument.
+    for (( i = 0; i < ${#input_string_list[@]}; i++ )); do
+        #gr.debug "$i:${input_string_list[$i]}" #$((i + 1)):${input_string_list[$((i + 1))]}
+
+        case ${input_string_list[$i]} in
+
+        '--'*)  # If an argument starts with --, it is considered a module argument. The function checks the
+                # next argument to see if it is a flag or an argument that requires a value. If it is a flag,
+                # the current argument is added to pass_to_module. If it requires a value, the current and next
+                # arguments are added to pass_to_module. The let i++ statement skips over the argument's value
+                # since it has already been added to pass_to_module.
+                case ${input_string_list[$((i + 1))]} in
+                    '-'*|""|" ")
+                        gr.debug "module options: '${input_string_list[$i]}'"
+                        pass_to_module+=("${input_string_list[$i]}")
+                        ;;
+                    *)
+                        gr.debug "module option with arguments: '${input_string_list[$i]}=${input_string_list[$((i + 1))]}'"
+                        pass_to_module+=("${input_string_list[$i]}")
+                        let i++
+                        pass_to_module+=("${input_string_list[$i]}")
+                        ;;
+                esac
+                ;;
+
+        '-'*)   # If an argument starts with -, it is considered a core argument. Like module arguments, the function
+                # checks the next argument to see if it is a flag or an argument that requires a value. If it is a flag,
+                # the current argument is added to the beginning of pass_to_core. If it requires a value, the current and
+                # next arguments are added to pass_to_core. The let i++ statement skips over the argument's value since it
+                # has already been added to pass_to_core.
+                case ${input_string_list[$((i + 1))]} in
+                    '-'*|""|" ")
+                        gr.debug "core options: '${input_string_list[$i]}'"
+                        pass_to_core+=("${input_string_list[$i]}")
+                        ;;
+                    *)
+                        # echo "core option with arguments '${input_string_list[$i]}=${input_string_list[$((i + 1))]}'"
+                        pass_to_core+=("${input_string_list[$i]}")
+                        let i++
+                        pass_to_core+=("${input_string_list[$i]}")
+                esac
+                ;;
+
+            *)  # If the argument does not start with - or --, it is considered a module name and command,
+                # and it is added to pass_to_core.
+                gr.debug "module command: '${input_string_list[$i]}'"
+                pass_to_core="$pass_to_core ${input_string_list[$i]}"
+        esac
+    done
+
+    gr.debug "pass_to_core: '${pass_to_core[@]}'"
+    gr.debug "pass_to_module: '${pass_to_module[@]}'"
+    # Finally, the processed pass_to_module and pass_to_core arguments are exported to environment variables
+    # ${pass_to_module[@]} and ${pass_to_core[@]}, respectively. The tr command is used to remove any redundant
+    # spaces in the processed arguments before exporting them. (tr is fastest method stack overflow 50259869)
+}
+
+
 core.process_core_opts () {
 # process core level options
-    gr.msg -v4 -n -c blue "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GURU_DEBUG ]] && echo $@ >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     # default values for global control variables
     declare -gx GURU_FORCE=
@@ -844,112 +901,56 @@ core.process_core_opts () {
 
     gr.varlist "debug GURU_DEBUG GURU_COLOR GURU_VERBOSE GURU_SPEAK GURU_COLOR GURU_FORCE GURU_HOSTNAME GURU_LOGGING "
 
-
     # clean rest of user input
     local left_overs="$@"
     if [[ "$left_overs" != "--" ]] ; then
-        GURU_MODULE_COMMAND="${left_overs#* }"
+        core_command="${left_overs#* }"
     fi
+    gr.varlist "debug core_command"
 }
-
-# Do not let run guru as root
-case $USER in root|admin|sudo) echo "too dangerous to run guru-cli as root!" ; return 100; esac
-
-# global variables
-declare -x GURU_RC="$HOME/.gururc"
-declare -x GURU_BIN="$HOME/bin"
-declare -x GURU_VERSION=$(echo $(head -n1 $GURU_BIN/version) | tr -d '\n')
-declare -x GURU_VERSION_NAME=$(echo $(tail $GURU_BIN/version -n +2 | head -n 1 ) | tr -d '\n')
-
-# early exits
-case $1 in
-    # core debug option
-
-    debug)
-        source $GURU_BIN/common.sh
-        export GURU_VERBOSE=4
-        export GURU_DEBUG=true
-        export GURU_COLOR=true
-        shift
-        ;;
-
-    version|--version|--ver)
-        echo "$GURU_VERSION $GURU_VERSION_NAME"
-        exit 0
-        ;;
-    --help)
-        shift
-        core.help $@
-        exit 0
-        ;;
-esac
-
-# check that config rc file exits
-if [[ -f $GURU_RC ]] ; then
-        source $GURU_RC
-        gr.debug "sourcing $GURU_RC.. "
-    else
-        # run user configuration if not exist
-        source common.sh
-        source config.sh
-        config.main export $USER
-        source $GURU_RC
-    fi
-
-# determinate how to call guru, I prefer 'guru' or now more often alias 'gr'
-[[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
-
-# everybody have daemons
-source daemon.sh
-source flag.sh
-source mount.sh
-source config.sh
-
-gr.msg -v4 -c $__core_color "$__core [$LINENO] 'base modules loaded'" >&2
 
 # check is core run or sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    #\\ process arguments and return cleaned command
+
     # import needed modules
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] core runned" >&2
-    
     source $GURU_BIN/common.sh
 
     # check is core called as interrupter by macro
     core.is_macro $@ && exit $?
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] 'no macro'" >&2
 
-    # core.process_opts $@
+    # process mmodule options first, return to pass_to* list variables
     core.process_module_opts $@
-    core.process_core_opts $GURU_CORE_ARGUMENTS
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] 'arguments processed'" >&2
+    # process core options separated by previos function
+    core.process_core_opts ${pass_to_core[@]}
 
-    # export global variables for sub processes
-    export GURU_COMMAND=($GURU_MODULE_COMMAND $GURU_MODULE_ARGUMENTS)
-
-    core.parser ${GURU_COMMAND[@]}
+    # core main command parser
+    core.main $core_command ${pass_to_module[@]}
+    # collect return code
     _error_code=$?
-
-    # all fine
+    # check errors, exit if none
     if (( _error_code < 1 )) ; then
         gr.msg -v4 -c $__core_color "$__core [$LINENO] 'no errors'" >&2
         exit 0
     fi
 
+    # error handler
+    if (( _error_code < 100 )) ; then
+    # # less than 100 are warnings
+        gr.msg -v3 -c yellow "warning: $_error_code $GURU_LAST_ERROR"
+    else
+    # real errors
+        gr.msg -v2 -c red  "error: $_error_code $GURU_LAST_ERROR"
+    fi
+
+    # corsair indication
     if [[ $GURU_CORSAIR_ENABLED ]] ; then
         source corsair.sh
         corsair.indicate error
         corsair.main type "er$_error_code" >/dev/null
     fi
 
-    # less than 100 are warnings
-    if (( _error_code < 100 )) ; then
-        gr.msg -v3 -c yellow "warning: $_error_code $GURU_LAST_ERROR"
-    else
-        gr.msg -v2 -c red  "error: $_error_code $GURU_LAST_ERROR"
-    fi
+    # return error code
     exit $_error_code
-else
-    gr.msg -v4 -c $__core_color "$__core [$LINENO] 'core sourced, why?'" >&2
+
 fi
 
