@@ -57,7 +57,7 @@ backup.main () {
     case $command in
 
         # command is module command
-        ls|restore|status|help|install|poll|at|debug|config)
+        check|ls|restore|status|help|install|poll|at|debug|config)
             backup.$command "$@"
             return $? ;;
 
@@ -72,7 +72,7 @@ backup.main () {
             backup.plan daily
             return $? ;;
         *)
-            gr.msg -e1 "non reqognized command '$command'"
+            gr.msg -e1 "non recognized command '$command'"
             return 1
             # # command i
 
@@ -137,6 +137,149 @@ backup.variables () {
         gr.msg -v3 -c light_blue "active_list: '${active_list[@]}'"
 }
 
+backup.cloud_consistensy () {
+# check what cloud folders are in backup program
+
+    gr.msg -h "checking consistency of backup entries and cloud folders"
+
+    local _server="$GURU_CLOUD_USERNAME@$GURU_CLOUD_DOMAIN -p $GURU_CLOUD_PORT"
+    local _folder_list=($(ssh $_server -- "ls $GURU_CLOUD_FILE_BASE"))
+    local _entry_var local _entry_val local _cloud_str local _cloud_flr local _entry_flr
+
+    # go trough folder names found cloud location given in mount.cfg
+    for (( i = 0; i < ${#_folder_list[@]}; i++ )); do
+
+        gr.msg -n -w 15 -c light_blue "${_folder_list[$i]}"
+        # add location to folder name
+        _cloud_flr=$GURU_CLOUD_FILE_BASE/${_folder_list[$i]}
+
+        # make backup entry variable name out of listed folder
+        _entry_var="GURU_BACKUP_${_folder_list[$i]^^}[@]"
+        # evaluate variable
+        _entry_val=($(eval echo ${!_entry_var}))
+        # if empty no entry dounf
+        if ! [[ $_entry_val ]]; then
+            gr.msg -c dark_grey "no backup entry"
+            continue
+        fi
+        # get location string from backup configuration line
+        _entry_str=${_entry_val[2]}
+        # separate folder name from server information
+        _entry_flr=$(echo $_entry_str | rev | cut -d ":" -f1 | rev )
+        # remove folder separator (rsync make difference with these)
+        _entry_flr=${_entry_flr%/*}
+
+        # printout result, do they match
+        gr.msg -n "$_entry_flr"
+        if [[ "$_entry_flr" == "$_cloud_flr" ]]; then
+            gr.msg -n -c green " ok"
+        else
+            gr.msg -n -c red " != "
+            gr.msg -n "$_cloud_flr"
+        fi
+        echo
+    done
+
+}
+
+backup.mount_consistensy () {
+# check what mount points are in backup program
+
+    gr.msg -h "checking consistency of backup entries and mountpoints"
+
+    local _folder_list=($(\
+        grep "export GURU_MOUNT_" $mount_rc | \
+        grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
+        sed 's/^.*MOUNT_//' | \
+        cut -d '=' -f1))
+        _folder_list=(${all_list[@],,})
+
+    local _entry_var local _entry_val local _cloud_str local _cloud_flr local _entry_flr
+
+    # go trough folder names found cloud location given in mount.cfg
+    for (( i = 0; i < ${#_folder_list[@]}; i++ )); do
+        gr.msg -n -w 15 -c light_blue "${_folder_list[$i]}"
+
+        # make mount entry variable name out of listed folder
+        _mount_var="GURU_MOUNT_${_folder_list[$i]^^}[@]"
+        # evaluate variable
+        _mount_val=($(eval echo ${!_mount_var}))
+        # add location to folder name
+        _mount_flr=${_mount_val[1]}
+
+        # make backup entry variable name out of listed folder
+        _entry_var="GURU_BACKUP_${_folder_list[$i]^^}[@]"
+        # evaluate variable
+        _entry_val=($(eval echo ${!_entry_var}))
+        # if empty no entry dounf
+        if ! [[ $_entry_val ]]; then
+            gr.msg -c dark_grey "no backup entry"
+            continue
+        fi
+        # get location string from backup configuration line
+        _entry_str=${_entry_val[2]}
+        # separate folder name from server information
+        _entry_flr=$(echo $_entry_str | rev | cut -d ":" -f1 | rev )
+        # remove folder separator (rsync make difference with these)
+        _entry_flr=${_entry_flr%/*}
+
+        # printout result, do they match
+        gr.msg -n "$_entry_flr"
+        if [[ "$_entry_flr" == "$_mount_flr" ]]; then
+            gr.msg -n -c green " ok"
+        else
+            gr.msg -n -c red " != "
+            gr.msg -n "$_mount_flr"
+        fi
+        echo
+    done
+
+}
+
+backup.check_consistency () {
+# check are all mountable
+    local _entity="cloud"
+
+    if [[ $1 ]] ; then
+        _entity=$1
+        shift
+    fi
+
+    source mount.sh
+    source backup.sh
+
+    case $_entity in
+        cloud|mount)
+            backup.${_entity}_consistensy
+            return $?
+            ;;
+        "")
+            backup.cloud_consistensy
+            backup.mount_consistensy
+            return $?
+            ;;
+    esac
+}
+
+
+backup.check () {
+# check things
+
+    local _what="consistency"
+
+    if [[ $1 ]]; then
+        _what=$1
+        shift
+    fi
+
+    case $_what in
+        consistency)
+            backup.check_${_what} $@
+            return $?
+        ;;
+    esac
+}
+
 
 backup.entry_exist() {
     # Input entry name, return true if it exist in conefiguration.
@@ -149,9 +292,9 @@ backup.entry_exist() {
     local value=($(eval echo ${!variable_name}))
 
     if ! [[ $value ]] ; then
-            gr.msg -v2 -e1 "unknown entry '$entry'"
-            return 122
-        fi
+        gr.msg -v2 -e1 "unknown entry '$entry'"
+        return 122
+    fi
     return 0
 }
 
