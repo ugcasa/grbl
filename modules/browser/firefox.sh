@@ -1,5 +1,7 @@
 
 profile_location="$HOME/.config/guru/mozilla"
+__firefox_color="light_blue"
+__firefox=$__onedrive
 
 firefox.add_profile () {
 	local profile_name=$GURU_USER ; [[ $1 ]] && profile_name="$1"
@@ -94,6 +96,92 @@ firefox.foray () {
 
 	# echo URL of active tab of active browser
 	echo $clipboard
+
+}
+
+
+firefox.main () {
+# backup cookies and cache
+
+	local ff_folder="$HOME/.mozilla/firefox"
+	local ff_profiles=($(grep -e "Path" $ff_folder/ff_profiles.ini | grep -v $ff_folder | cut -d"=" -f2-))
+	local ff_profile=
+	local ff_config_file=/tmp/grbl_firefox.cfg
+
+	gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+	gr.varlist "debug ff_folder ff_profiles ff_profile ff_config_file"
+
+	firefox.profile() {
+	# check available profiles and make user to select if many
+
+		# debug shit
+		gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+
+		# select profile if mote than one
+		if [[ ${#ff_profiles[@]} -gt 1 ]]; then
+		      echo "found more than one ff_profiles"
+
+		      i=0
+		      for _profile in ${ff_profiles[@]}; do
+		            echo "$i: $_profile"
+		            ((i++))
+		      done
+
+		      read -p "select one: " answer
+
+		      if ! [[ ${ff_profiles[$answer]} ]]; then
+		            echo "no match '$answer'"
+		            exit 1
+		      fi
+
+		      ff_profile=${ff_profiles[$answer]}
+
+		else
+		      ff_profile=$ff_profiles
+		fi
+	}
+
+	firefox_backup () {
+	# make backup out of sessions, cookies and cache
+		local ff_backup=$ff_folder/backup
+		local ff_cache=$HOME/.cache/mozilla/firefox/backup
+
+		# debug shit
+		gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+		gr.varlist "debug ff_folder ff_profiles ff_profile ff_config_file ff_backup ff_cache"
+
+		[[ -d $ff_backup ]] || mkdir -p $ff_backup
+		[[ -d $ff_cache ]] || mkdir -p $ff_cache
+		cp $ff_folder/$ff_profile/sessionstore.js $ff_backup
+		cp ~/.cache/mozilla/firefox/$ff_profile/* $ff_cache
+	}
+
+	firefox_rm () {
+	# remove backup out of sessions, cookies and cache
+
+		# debug shit
+		gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+
+		rm $ff_folder/$ff_profile/cookies.sqlite
+		rm ~/.cache/mozilla/firefox/$ff_profile/*
+	}
+
+	# check is config saved for firefox
+	if [[ -f $ff_config_file ]]; then
+		source $ff_config_file
+	else
+	# solve, ask and save
+		source config.sh
+		firefox.profile
+		config.save ff_profile $ff_profile $ff_config_file
+	fi
+
+	case $1 in
+		backup|rm) firefox_$1
+		;;
+		*) gr.msg -e1 "unknown action"
+		;;
+	esac
 
 }
 
