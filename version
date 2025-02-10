@@ -1,6 +1,7 @@
-0.7.3
-'gerbil'
+0.7.5
+'grbl tst'
 1 'configs' merged to 'master'
 2 Target is to get installable version. Last sub version removed, jump form 0.7.0.1 to 0.7.2
 3 Rename to 'gerbil client', gb-client, alias gb
 4 core review
+5 parental and onedrive added
