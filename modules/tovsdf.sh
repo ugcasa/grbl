@@ -224,7 +224,7 @@ dokuwiki.backup () {
 
     # default values
     local container_name="dokuwiki"
-    local server="roima"
+    local server=$GURU_ACCESS_DOMAIN
     local include_folders=(data conf)
     local _date=$(date +%Y%m%d)
     local to_where="${GURU_BACKUP_SERVER_BASE[2]}/${GURU_BACKUP_SERVER_BASE[3]}"
