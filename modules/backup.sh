@@ -1,13 +1,14 @@
 #!/bin/bash
-# guru-client backup system module
+# guru-client backup system module casa@ujo.guru 2021 - 2025
 # automated backups from server to local, local to local or server to server based on rsync archiving functionalities.
 # launching is based on guru daemon.sh poll request, not on crond mainly to avoid permission issues and shit.
 # can be run individually but needs specific set of environment variables (~/.gururc).
-# more of bash shit github.com/ugcasa/guru-client casa@ujo.guru 2021
+# more of bash shit github.com/ugcasa/guru-client
 
 
 declare -g backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
 declare -g backup_rc="/tmp/guru-cli_backup.rc"
+declare -g backup_config="$GURU_CFG/$GURU_USER/backup.cfg"
 ! [[ -d $backup_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
 
 
@@ -149,7 +150,7 @@ backup.cloud_consistensy () {
     # go trough folder names found cloud location given in mount.cfg
     for (( i = 0; i < ${#_folder_list[@]}; i++ )); do
 
-        gr.msg -n -w 15 -c light_blue "${_folder_list[$i]}"
+        gr.msg -n -w 13 -c light_blue "${_folder_list[$i]}"
         # add location to folder name
         _cloud_flr=$GURU_CLOUD_FILE_BASE/${_folder_list[$i]}
 
@@ -159,7 +160,7 @@ backup.cloud_consistensy () {
         _entry_val=($(eval echo ${!_entry_var}))
         # if empty no entry dounf
         if ! [[ $_entry_val ]]; then
-            gr.msg -c dark_grey "no backup entry"
+            gr.msg -c dark_grey "   no backup entry"
             continue
         fi
         # get location string from backup configuration line
@@ -168,6 +169,18 @@ backup.cloud_consistensy () {
         _entry_flr=$(echo $_entry_str | rev | cut -d ":" -f1 | rev )
         # remove folder separator (rsync make difference with these)
         _entry_flr=${_entry_flr%/*}
+
+        if [[ "${GURU_BACKUP_SCHEDULE_DAILY[*]}" =~ ${_folder_list[$i]} ]]; then
+            gr.msg -n -w 3 -h "d "
+        elif [[ "${GURU_BACKUP_SCHEDULE_WEEKLY[*]}" =~ ${_folder_list[$i]} ]]; then
+            gr.msg -n -w 3 -c white "w "
+        elif [[ "${GURU_BACKUP_SCHEDULE_MONTHLY[*]}" =~ ${_folder_list[$i]} ]]; then
+            gr.msg -n -w 3 -c grey "m "
+        elif [[ "${GURU_BACKUP_SCHEDULE_YEARLY[*]}" =~ ${_folder_list[$i]} ]]; then
+            gr.msg -n -w 3 -c dark_grey "y "
+        else
+            gr.msg -n -w 3 -c black "  "
+        fi
 
         # printout result, do they match
         gr.msg -n "$_entry_flr"
@@ -185,20 +198,20 @@ backup.cloud_consistensy () {
 backup.mount_consistensy () {
 # check what mount points are in backup program
 
-    gr.msg -h "checking consistency of backup entries and mountpoints"
+    gr.msg -h "checking consistency of backup entries and mount points"
 
     local _folder_list=($(\
         grep "export GURU_MOUNT_" $mount_rc | \
         grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
-        _folder_list=(${all_list[@],,})
+        _folder_list=(${_folder_list[@],,}) ## NOT TESTED
 
     local _entry_var local _entry_val local _cloud_str local _cloud_flr local _entry_flr
 
     # go trough folder names found cloud location given in mount.cfg
     for (( i = 0; i < ${#_folder_list[@]}; i++ )); do
-        gr.msg -n -w 15 -c light_blue "${_folder_list[$i]}"
+        gr.msg -n -w 13 -c light_blue "${_folder_list[$i]}"
 
         # make mount entry variable name out of listed folder
         _mount_var="GURU_MOUNT_${_folder_list[$i]^^}[@]"
@@ -213,9 +226,10 @@ backup.mount_consistensy () {
         _entry_val=($(eval echo ${!_entry_var}))
         # if empty no entry dounf
         if ! [[ $_entry_val ]]; then
-            gr.msg -c dark_grey "no backup entry"
+            gr.msg -c dark_grey "   no backup entry"
             continue
         fi
+
         # get location string from backup configuration line
         _entry_str=${_entry_val[2]}
         # separate folder name from server information
@@ -223,8 +237,25 @@ backup.mount_consistensy () {
         # remove folder separator (rsync make difference with these)
         _entry_flr=${_entry_flr%/*}
 
+        if [[ "${GURU_BACKUP_SCHEDULE_DAILY[*]}" =~ ${_folder_list[$i]} ]]; then
+            gr.msg -n -w 3 -h "d "
+        elif [[ "${GURU_BACKUP_SCHEDULE_WEEKLY[*]}" =~ ${_folder_list[$i]} ]]; then
+            gr.msg -n -w 3 -c white "w "
+        elif [[ "${GURU_BACKUP_SCHEDULE_MONTHLY[*]}" =~ ${_folder_list[$i]} ]]; then
+            gr.msg -n -w 3 -c grey "m "
+        elif [[ "${GURU_BACKUP_SCHEDULE_YEARLY[*]}" =~ ${_folder_list[$i]} ]]; then
+            gr.msg -n -w 3 -c dark_grey "y "
+        else
+            gr.msg -n -w 3 -c black "  "
+        fi
+
         # printout result, do they match
-        gr.msg -n "$_entry_flr"
+        if mount.online ${_mount_val[0]}; then
+            gr.msg -n -h "$_entry_flr"
+        else
+            gr.msg -n "$_entry_flr"
+        fi
+
         if [[ "$_entry_flr" == "$_mount_flr" ]]; then
             gr.msg -n -c green " ok"
         else
@@ -238,7 +269,7 @@ backup.mount_consistensy () {
 
 backup.check_consistency () {
 # check are all mountable
-    local _entity="cloud"
+    local _entity="mount"
 
     if [[ $1 ]] ; then
         _entity=$1
@@ -282,7 +313,7 @@ backup.check () {
 
 
 backup.entry_exist() {
-    # Input entry name, return true if it exist in conefiguration.
+    # Input entry name, return true if it exist in configuration.
 
     local entry=$1
     shift
@@ -337,7 +368,7 @@ backup.config () {
 
     # exit if not in active list
     if ! echo "${active_list[@]}" | grep -q $backup_name ; then
-            gr.msg -e1 "no '$backup_name' in active backup list"
+            gr.msg -e0 "no '$backup_name' in active backup list"
             return 2
         fi
 
@@ -827,7 +858,7 @@ backup.now () {
 ### 5) check size
 
     if [[ $from_size -gt $store_size ]] ; then
-        gr.msg -e1 "not enought space in target device"
+        gr.msg -e1 "not enough space in target device"
         return 105
     fi
 
@@ -894,7 +925,7 @@ backup.plan () {
 
     for (( i = 0; i < ${#entries[@]}; i++ )); do
             entry=${entries[$i]}
-            gr.msg -n -c dark_golden_rod "backing up $entry $(( $i + 1 ))/${#entries[@]}.. "
+            gr.msg -n "backing up $entry $(( $i + 1 ))/${#entries[@]}.. "
 
             backup.config $entry
 
@@ -1020,7 +1051,7 @@ backup.poll () {
 backup.rc () {
 # source configurations
 
-    if ! [[ -f $backup_rc ]] || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/backup.cfg) - $(stat -c %Y $backup_rc) )) -gt 0 ]] ; then
+    if ! [[ -f $backup_rc ]] || [[ $(( $(stat -c %Y $backup_config) - $(stat -c %Y $backup_rc) )) -gt 0 ]] ; then
             backup.make_rc && \
             gr.msg -v1 -c dark_gray "$backup_rc updated"
         fi
@@ -1041,7 +1072,7 @@ backup.make_rc () {
             rm -f $backup_rc
         fi
 
-    if ! config.make_rc "$GURU_CFG/$GURU_USER/backup.cfg" $backup_rc ; then
+    if ! config.make_rc "$backup_config" $backup_rc ; then
             gr.msg -e1 "configuration failed"
             return 101
         fi
