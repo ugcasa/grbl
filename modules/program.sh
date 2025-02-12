@@ -1,6 +1,8 @@
 #!/bin/bash
 # guru client program functions
 # casa@ujo.guru 2020-2021
+# TODO: https://www.instructables.com/How-to-Setup-AVR-Programming-Environment-on-Linux/
+# TODO: https://developerhelp.microchip.com/xwiki/bin/view/software-tools/ides/x/archive/linux/
 
 source $GURU_BIN/common.sh
 program_indicator_key="f8"
@@ -145,9 +147,12 @@ program.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # source "$GURU_RC"
-    #source common.sh
+    #source "$GURU_RC"
     program.main "$@"
     exit "$?"
+else
+    gr.msg -v4 -c $__corsair_color "$__corsair [$LINENO] sourced " >&2
 fi
+
+
 
