@@ -82,7 +82,7 @@ core.main () {
             return $?
             ;;
 
-        kill|top|ps|debug|pause|version|online|list|active)
+        status|kill|top|ps|debug|pause|version|online|list|active)
         # core control functions
             core.$_input $@
             return $?
@@ -211,10 +211,24 @@ core.active () {
     gr.msg -c gold "bye!"
 }
 
-# file log
 
-# gr.msg -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME '$@'"
+core.status () {
+# simple status check
 
+    gr.msg -t -n "${FUNCNAME[0]}: "
+    gr.msg -n -c white "v$GURU_VERSION $GURU_VERSION_NAME installed "
+
+    if gr.msg -c dark_gold -k 'g' >/dev/null ; then
+        gr.msg -n -v1 -c dark_gold "responsive " -k 'g'
+    fi
+    gr.msg -c dark_gold -k 'r' >/dev/null
+
+    if core.online ; then
+        gr.msg -c aqua "connected "
+    else
+        gr.msg -v1 -c black "offline " -k $GURU_MPLAB_INDICATOR_KEY
+    fi
+}
 
 core.ps () {
 # list of running guru-client processes
@@ -503,7 +517,7 @@ core.run_module () {
 
 core.print_description () {
 # printout function description for documentation and debugging
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    #gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local module=$1
     shift
@@ -556,40 +570,47 @@ core.run_module_function () {
 
     gr.varlist "debug module command function module_options"
 
-
-    for _module in ${GURU_MODULES[@]} ; do
-
-        if [[ "$_module" == "$module" ]] ; then
-
+        # check is module on that name installed
+        if [[ "${GURU_MODULES[@]}" =~ "$module" ]] ; then
             # check is module folder, create adapter if is not found
-            if [[ -f "$GURU_BIN/$_module/$_module.sh" ]] && ! [[ -f "$GURU_BIN/$_module.sh" ]] ; then
-                core.make_adapter $_module
+            if [[ -f "$GURU_BIN/$module/$module.sh" ]] && ! [[ -f "$GURU_BIN/$module.sh" ]] ; then
+                core.make_adapter $module
             fi
 
-            gr.msg -v3 -c white "documentation: $GURU_DOCUMENTATION:module:$_module"
+            # printout module documentation link
+            gr.msg -v3 -c white "documentation: $GURU_DOCUMENTATION:module:$module"
 
-            # include all module functions and run called
-            if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
-                core.print_description $_module "$command" "$GURU_BIN/$_module.sh"
-                source $GURU_BIN/$_module.sh
-                $_module.main "$command" "$function" "$@"
+            # check if module is shell script
+            if [[ -f "$GURU_BIN/$module.sh" ]] ; then
+
+                # printout function description
+                core.print_description $module "$command" "$GURU_BIN/$module.sh"
+
+                # source module as function collection
+                source $GURU_BIN/$module.sh
+                # check if module contains options function
+                if grep $GURU_BIN/$module.sh -e "$module.option" -q; then
+                    # if module do parse it's onw options, it needs to be done here
+                    $module.option "$function" "$@"
+                fi
+                # call main function of module
+                $module.main "$command" "$function" "$@"
                 return $?
             fi
 
             # run one function in python script
-            if [[ -f "$GURU_BIN/$_module.py" ]] ; then
+            if [[ -f "$GURU_BIN/$module.py" ]] ; then
                 # TBD add environment
-                $_module.py "$command" "$function" "$@"
+                $module.py "$command" "$function" "$@"
                 return $?
             fi
 
             # run binaries
-            if [[ -f "$GURU_BIN/$_module" ]] ; then
-                $_module "$command" "$function" "$@"
+            if [[ -f "$GURU_BIN/$module" ]] ; then
+                $module "$command" "$function" "$@"
                 return $?
             fi
         fi
-    done
 
     # if here something went wrong, raise warning
     gr.msg -v1 -V2 -c error "$GURU_CALL see no sense in your request '$module'"
@@ -603,7 +624,8 @@ core.multi_module_function () {
     gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
 
-    local function_to_run=$1 ; shift
+    local function_to_run=$1
+    shift
 
     for (( mod_count = 0; mod_count < ${#GURU_MODULES[@]}; mod_count++ )); do
     # for _module in ${GURU_MODULES[@]} ; do
@@ -791,14 +813,19 @@ core.process_module_opts () {
                 # the current argument is added to pass_to_module. If it requires a value, the current and next
                 # arguments are added to pass_to_module. The let i++ statement skips over the argument's value
                 # since it has already been added to pass_to_module.
+
+
+
                 case ${input_string_list[$((i + 1))]} in
                     '-'*|""|" ")
+
+                        pass_to_module+=("${input_string_list[$i]/'-'}")
                         gr.debug "module options: '${input_string_list[$i]}'"
-                        pass_to_module+=("${input_string_list[$i]}")
                         ;;
                     *)
                         gr.debug "module option with arguments: '${input_string_list[$i]}=${input_string_list[$((i + 1))]}'"
-                        pass_to_module+=("${input_string_list[$i]}")
+                        # remove another hyphen
+                        pass_to_module+=("${input_string_list[$i]/'-'}")
                         let i++
                         pass_to_module+=("${input_string_list[$i]}")
                         ;;
