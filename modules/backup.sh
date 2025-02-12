@@ -5,12 +5,14 @@
 # can be run individually but needs specific set of environment variables (~/.gururc).
 # more of bash shit github.com/ugcasa/guru-client
 
-
 declare -g backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
 declare -g backup_rc="/tmp/guru-cli_backup.rc"
 declare -g backup_config="$GURU_CFG/$GURU_USER/backup.cfg"
-! [[ -d $backup_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
+declare -g backup_log_file="$GURU_DATA/backup/backup.log"
+declare -g backup_schedule="direct"
+declare -g backup_running="/tmp/backup.running"
 
+! [[ -d $backup_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
 
 backup.help () {
     # general help
@@ -42,38 +44,53 @@ backup.help () {
     gr.msg -v2
 }
 
-
-
 backup.main () {
     # command parser
 
     local command=$1 ; shift
-
-    # if given command is entry name
-    if backup.entry_exist $command ; then
-        backup.now $command
-        return $?
-    fi
+    local _error=0
 
     case $command in
 
-        # command is module command
         check|ls|restore|status|help|install|poll|at|debug|config)
-            backup.$command "$@"
-            return $? ;;
+        # something else than really backup
+            backup.$command $@
+            return $?
+            ;;
 
-        # command ponts to cshedule
-        hourly|daily|weekly|monthly|yearly|all)
+        hourly|daily|weekly|monthly|yearly)
+        # scheduled
             backup.plan $command
-            return $? ;;
+            backup.log_write $?
+            return $?
+            ;;
 
+        all)
+            backup.all $@
+            backup.log_write $?
+            return $?
+            ;;
+
+        log)
+            backup.log_read
+            ;;
         "")
-
-            # default is dialy backup
+        # default is daily backup
             backup.plan daily
-            return $? ;;
+            backup.log_write $?
+            return $?
+            ;;
         *)
-            gr.msg -e1 "non recognized command '$command'"
+            # if given command is entry name
+            if backup.entry_exist $command ; then
+                backup_schedule="now"
+                backup.now $command
+                backup.log_write $?
+                return $?
+            fi
+
+            gr.msg -e1 "unknown '$command'"
+            backup.help
             return 1
             # # command i
 
@@ -112,6 +129,7 @@ backup.variables () {
         gr.msg -v3 -c light_pink "from_user (o): '$from_user'"
         gr.msg -v3 -c light_pink "from_domain (o): '$from_domain'"
         gr.msg -v3 -c light_pink "from_port (o): '$from_port'"
+        gr.msg -v3 -c light_pink "from_size: '$from_size' ($(numfmt $from_size --to=iec))"
 
         gr.msg -v3 -c light_blue "store_config: '${store_config[@]}'"
         gr.msg -v3 -c light_green "store_device_file: '$store_device_file'"
@@ -122,6 +140,8 @@ backup.variables () {
         gr.msg -v3 -c light_green "store_user (o): '$store_user'"
         gr.msg -v3 -c light_green "store_domain (o): '$store_domain'"
         gr.msg -v3 -c light_green "store_port (o): '$store_port'"
+        gr.msg -v3 -c light_green "store_size: '$store_size' ($(numfmt $store_size --to=iec))"
+
 
         gr.msg -v3 -c grey "backup_ignore: '$backup_ignore'"
         gr.msg -v3 -c grey "backup_method: '$backup_method'"
@@ -136,6 +156,91 @@ backup.variables () {
         gr.msg -v3 -c grey "last_backup_error: '$last_backup_error'"
 
         gr.msg -v3 -c light_blue "active_list: '${active_list[@]}'"
+}
+
+
+backup.log_write () {
+# write log to file (multi exit cituation) bypass return value
+    if [[ $backup_log ]]; then
+        echo $backup_log >> $backup_log_file
+        backup_log=
+    fi
+    return $1
+}
+
+backup.log_get_event () {
+
+    if ! [[ -f $backup_log_file ]]; then
+        return 1
+    fi
+
+    local event_name=$1
+    shift
+    local column=$1
+
+    local event_line=$(grep $backup_log_file -e "$event_name;" | tail -1)
+    IFS=';'
+    read -r -a list <<< "$event_line"
+    ifs=$IFS
+
+    case $column in
+        time)
+            echo "${list[0]}"
+            ;;
+        error)
+            echo "${list[8]}"
+
+        #what else is needed?
+    esac
+}
+
+backup.log_read () {
+# list log events
+
+    if ! [[ -f $backup_log_file ]]; then
+        gr.msg "no log events"
+        return 0
+    fi
+
+    ifs=$IFS
+
+    while read -r line; do
+        #echo ":$line"
+
+        # cut to parts
+        IFS=';'
+        read -r -a list <<< "$line"
+        ifs=$IFS
+
+        _epic=${list[0]}
+        _name=${list[1]}
+        _sche=${list[2]}
+        _from=${list[3]}
+        _size=${list[4]}
+        _to=${list[5]}
+        _space=${list[6]}
+        _cmd=${list[7]}
+        _er=${list[8]}
+
+        gr.msg -v4 -n -w 11 "$_epic "
+        gr.msg -n -w 10 "$_name " -c light_blue
+        gr.msg -n -w 2 "${_sche:0:1} " -c white
+        gr.msg -V3 -n -w 11 "$(date -d @$_epic +%Y.%m.%d) "
+        gr.msg -n -w 6 "$(date -d @$_epic +%H:%M) "
+        gr.msg -v1 -n -w 5 "$_size " -c light_blue
+        gr.msg -n -w 45 "$_from " -c aqua_marine
+        gr.msg -v2 -V3 -n -w 5 "$_space " -c light_blue
+        gr.msg -v2 -V3 -n -w 45 "$_to " -c aqua_marine
+
+        if [[ "${_er:0:1}" == "0" ]]; then
+            gr.msg -n -w 27 "$_er " -c green
+        else
+            gr.msg -n -w 27 "$_er " -c yellow
+        fi
+        gr.msg -v3 -n "$_cmd " -c dark_grey
+        echo
+
+    done < $backup_log_file
 }
 
 backup.cloud_consistensy () {
@@ -158,7 +263,7 @@ backup.cloud_consistensy () {
         _entry_var="GURU_BACKUP_${_folder_list[$i]^^}[@]"
         # evaluate variable
         _entry_val=($(eval echo ${!_entry_var}))
-        # if empty no entry dounf
+        # if empty no entry
         if ! [[ $_entry_val ]]; then
             gr.msg -c dark_grey "   no backup entry"
             continue
@@ -182,18 +287,69 @@ backup.cloud_consistensy () {
             gr.msg -n -w 3 -c black "  "
         fi
 
-        # printout result, do they match
-        gr.msg -n "$_entry_flr"
-        if [[ "$_entry_flr" == "$_cloud_flr" ]]; then
-            gr.msg -n -c green " ok"
+        # printout last time backup done
+        last_time=$(backup.log_get_event ${_folder_list[$i]} time)
+        if [[ $last_time ]]; then
+
+            if [[ $last_time -gt $(date -d 'today 00:00:00' +%s) ]]; then
+                gr.msg -n -w 7 "$(date -d @$last_time +%H:%M) " -c white
+            elif [[ $last_time -gt $(date -d 'last week' +%s) ]]; then
+                gr.msg -n -w 7 "$(date -d @$last_time +%d.%m.) "
+            elif [[ $last_time -gt $(date -d 'last month' +%s) ]]; then
+                gr.msg -n -w 7 "$(date -d @$last_time +%d.%m.) " -c dark_grey
+            else
+                if  [[ $last_time -gt $(date -d "Jan 1 00:00:00" +%s) ]]; then
+                    gr.msg -n -w 7 "$(date -d @$last_time +%d.%m.) " -c yellow
+                else
+                    gr.msg -n -w 7 "$(date -d @$last_time +%y/%m) " -c red
+                fi
+            fi
         else
+            gr.msg -n -w 7 "never" -c black
+        fi
+
+        # printout folder patch
+        # if mount.online ${_mount_val[0]}; then
+        #     gr.msg -n -h "$_entry_flr"
+        # else
+            gr.msg -n "$_entry_flr"
+        # fi
+
+        # check that folders match, printout mismatch if not
+        if ! [[ "$_entry_flr" == "$_cloud_flr" ]]; then
             gr.msg -n -c red " != "
             gr.msg -n "$_cloud_flr"
         fi
+
+        # check last error for status
+        _error=$(backup.log_get_event ${_folder_list[$i]} error)
+
+        # printout status
+        if [[ -f $backup_running ]]; then
+            # backup is running right now
+            if [[ ${_folder_list[$i]} == $(cat $backup_running) ]]; then
+                gr.msg -n -c aqua " running!"
+            fi
+        # no errors last time
+        elif [[ ${_error:0:1} == "0" ]]; then
+            gr.msg -n -c green " success"
+        # some errors last time
+        elif [[ $_error ]]; then
+            gr.msg -n -e2 " $(cut -d':' -f2 <<<$_error)"
+        # no clue
+        else
+            gr.msg -n -c dark_gray " unknown"
+        fi
         echo
     done
-
 }
+
+
+
+
+
+
+
 
 backup.mount_consistensy () {
 # check what mount points are in backup program
@@ -224,9 +380,9 @@ backup.mount_consistensy () {
         _entry_var="GURU_BACKUP_${_folder_list[$i]^^}[@]"
         # evaluate variable
         _entry_val=($(eval echo ${!_entry_var}))
-        # if empty no entry dounf
+        # if empty no entry
         if ! [[ $_entry_val ]]; then
-            gr.msg -c dark_grey "   no backup entry"
+            gr.msg -c dark_grey "no backup entry"
             continue
         fi
 
@@ -249,18 +405,58 @@ backup.mount_consistensy () {
             gr.msg -n -w 3 -c black "  "
         fi
 
-        # printout result, do they match
+       # printout last time backup done
+        last_time=$(backup.log_get_event ${_folder_list[$i]} time)
+        if [[ $last_time ]]; then
+
+            if [[ $last_time -gt $(date -d 'today 00:00:00' +%s) ]]; then
+                gr.msg -n -w 7 "$(date -d @$last_time +%H:%M) " -c white
+            elif [[ $last_time -gt $(date -d 'last week' +%s) ]]; then
+                gr.msg -n -w 7 "$(date -d @$last_time +%d.%m.) "
+            elif [[ $last_time -gt $(date -d 'last month' +%s) ]]; then
+                gr.msg -n -w 7 "$(date -d @$last_time +%d.%m.) " -c dark_grey
+            else
+                if  [[ $last_time -gt $(date -d "Jan 1 00:00:00" +%s) ]]; then
+                    gr.msg -n -w 7 "$(date -d @$last_time +%d.%m.) " -c yellow
+                else
+                    gr.msg -n -w 7 "$(date -d @$last_time +%y/%m) " -c red
+                fi
+            fi
+        else
+            gr.msg -n -w 7 "never" -c black
+        fi
+
+        # printout folder patch
         if mount.online ${_mount_val[0]}; then
             gr.msg -n -h "$_entry_flr"
         else
             gr.msg -n "$_entry_flr"
         fi
 
-        if [[ "$_entry_flr" == "$_mount_flr" ]]; then
-            gr.msg -n -c green " ok"
-        else
+        # check that folders match, printout mismatch if not
+        if ! [[ "$_entry_flr" == "$_mount_flr" ]]; then
             gr.msg -n -c red " != "
             gr.msg -n "$_mount_flr"
+        fi
+
+        # check last error for status
+        _error=$(backup.log_get_event ${_folder_list[$i]} error)
+
+        # printout status
+        if [[ -f $backup_running ]]; then
+            # backup is running right now
+            if [[ ${_folder_list[$i]} == $(cat $backup_running) ]]; then
+                gr.msg -n -c aqua " running!"
+            fi
+        # no errors last time
+        elif [[ ${_error:0:1} == "0" ]]; then
+            gr.msg -n -c green " success"
+        # some errors last time
+        elif [[ $_error ]]; then
+            gr.msg -n -e2 " $(cut -d':' -f2 <<<$_error)"
+        # no clue
+        else
+            gr.msg -n -c dark_gray " unknown"
         fi
         echo
     done
@@ -330,33 +526,27 @@ backup.entry_exist() {
 }
 
 
-backup.does_it_fit () {
-# check is there space in target file system, return true if there is
-
-    echo "---------------"
-    gr.kvp "from_size store_size"
-    echo "---------------"
-
-    # backup.folder_size
-
-}
-
-
 backup.debug () {
 
     export GURU_VERBOSE=3
     local name=${GURU_BACKUP_ACTIVE[0]}
     [[ $1 ]] && name=$1
     backup.config $name
-    backup.does_it_fit
+
 }
+
 
 backup.config () {
     # get tunnel configuration an populate common variables
 
+    # start to collect log for possible early exits
+    local _epicdate=$(date +%s)
+    backup_log="$_epicdate"
+
     # check is enabled
     if ! [[ $GURU_BACKUP_ENABLED ]] ; then
             gr.msg -c black "backup module disabled"
+            backup_log="$backup_log;;;;;;;exited before execution;1:module disabled"
             return 1
         fi
 
@@ -365,10 +555,12 @@ backup.config () {
     declare -ga backup_name=$1
     declare -ga active_list=(${GURU_BACKUP_ACTIVE[@]})
     local header=(store method from ignore)
+    backup_log="$_epicdate;$backup_name"
 
     # exit if not in active list
     if ! echo "${active_list[@]}" | grep -q $backup_name ; then
             gr.msg -e0 "no '$backup_name' in active backup list"
+            backup_log="$backup_log;;;;;;exited before execution;2:not in active list"
             return 2
         fi
 
@@ -412,7 +604,8 @@ backup.config () {
             declare -g store_domain=$(echo ${store_config[1]} | cut -d ":" -f2)
             declare -g store_port=$(echo ${store_config[1]} | cut -d ":" -f3)
             declare -g store_location=$(echo ${store_config[1]} | cut -d ":" -f4)
-            declare -g store_size=$(ssh ${store_user}@${store_domain} -p ${store_port} -- stat -f -c '%f' $store_location 2>/dev/null)
+            #declare -g store_size=$(ssh ${store_user}@${store_domain} -p ${store_port} -- stat -f -c '%f' $store_location 2>/dev/null)
+            declare -g store_size=$(ssh ${store_user}@${store_domain} -p ${store_port} -- df --output=avail -B 1 $store_location | tail -n 1)
         else
             # store is local drive
             store_is_local=true
@@ -420,11 +613,14 @@ backup.config () {
             declare -g store_file_system=${store_config[1]}
             declare -g store_mount_point=${store_config[2]}
             declare -g store_folder=${store_config[3]}
-            declare -g store_size=$(stat -f -c '%f' $store_mount_point/$store_folder)
+            # declare -g store_size=$(stat -f -c '%f' $store_mount_point) # gives wrong amount
+            declare -g store_size=$(df --output=avail -B 1 $store_mount_point | tail -n 1 )
 
-            [[ ${store_mount_point: -1} == '/' ]] \
-                && declare -g store_location="$store_mount_point$store_folder" \
-                || declare -g store_location="$store_mount_point/$store_folder"
+            if [[ ${store_mount_point: -1} == '/' ]]; then
+                declare -g store_location="$store_mount_point$store_folder"
+            else
+                declare -g store_location="$store_mount_point/$store_folder"
+            fi
         fi
 
         [[ $store_is_local ]] \
@@ -440,10 +636,16 @@ backup.config () {
 
         backup.variables
 
+        # just for logging, this if filled in backup.now for rsync
+        if [[ ${store_location: -1} == '/' ]] ; then
+            local for_log="$store_location$backup_name"
+        else
+            local for_log="$store_location/$backup_name"
+        fi
+        backup_log="$backup_log;$backup_schedule;$from_domain:$from_location;$(numfmt $from_size --to=iec);$for_log;$(numfmt $store_size --to=iec)"
+
     return 0
 }
-
-
 
 
 backup.status () {
@@ -529,6 +731,7 @@ backup.at () {
         return 1
     fi
 
+    ## CHANGE
     echo $epic_backup > "$backup_data_folder/next"
 
     # if daemon is not running (computer sleeping) backup is not run
@@ -539,7 +742,6 @@ backup.at () {
 
 backup.restore_wekan () {
 # TBD
-
     gr.msg -c light_blue "docker stop wekan"
     gr.msg -c light_blue "docker exec wekan-db rm -rf /data/dump"
     gr.msg -c light_blue "docker cp dump wekan-db:/data/"
@@ -648,6 +850,8 @@ backup.now () {
 
     server_to_local () {
 
+            # start log
+            #backup_log="$_epicdate;$backup_name;$backup_schedule;"
 
             # build remote to local command variables
             command_param="-a -e 'ssh -p $from_port' --progress --update"
@@ -670,6 +874,7 @@ backup.now () {
                             gr.msg -v1 -c green "ok"
                     else
                         gr.msg -v1 -e1 "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
+                        backup_log="$backup_log;exited before execution;32:unable to mount store"
                         # echo "last_backup_error=32" >>$backup_stat_file
                         return 32
                     fi
@@ -688,9 +893,11 @@ backup.now () {
             from_param="$from_user@$from_domain:$from_location"
 
             # TBD remove these local variables and use global store_location. yes, messed me up again..
-            [[ ${store_location: -1} == '/' ]] \
-                && store_param="$store_location$backup_name" \
-                || store_param="$store_location/$backup_name"
+            if [[ ${store_location: -1} == '/' ]] ; then
+                store_param="$store_location$backup_name"
+            else
+                store_param="$store_location/$backup_name"
+            fi
 
             gr.debug "location: $store_location folder: $store_folder param: $store_param "
     }
@@ -741,6 +948,8 @@ backup.now () {
         gr.ask "server to server NEVER TESTED!! continue? " || return 1
         from_param="$from_user@$from_domain 'rsync -ave ssh $from_location $store_user@$store_domain:$from_port:$store_location'"
         store_param=
+
+
     }
 
 
@@ -751,7 +960,7 @@ backup.now () {
     local command_param="-a --progress --update"
     gr.msg -v3 "backup active" -c aqua_marine -k $GURU_BACKUP_INDICATOR_KEY
 
-### 2) check and plase variables for rsynck based on user.cfg
+### 2) check and place variables for rsynck based on user.cfg
 
     if [[ $from_domain ]] && [[ $store_domain ]] ; then
         server_to_server
@@ -766,7 +975,14 @@ backup.now () {
     # make dir if not exist (like when year changes)
     if ! [[ $store_domain ]] && [[ $store_location ]] ; then
         gr.msg -v3 -c deep_pink "mkdir -p $store_location"
-        [[ -d $store_location ]] || mkdir -p $store_location || return 111
+
+        if ! [[ -d $store_location ]]; then
+            if mkdir -p $store_location; then
+                gr.msg -e1 "unable create store location folder"
+                backup_log="$backup_log;exited before execution;111:unable create folder"
+                return 111
+            fi
+        fi
     fi
 
 ### 3) check backup method get files out of service containers based settings in user.cfg
@@ -775,6 +991,7 @@ backup.now () {
 
                 if ! [[ $from_domain ]] ; then
                     gr.msg -e1 "empty server variables"
+                    backup_log="$backup_log;exited before execution;113:empty server variables"
                     return 113
                 fi
 
@@ -804,14 +1021,14 @@ backup.now () {
                                 "POTENTIAL VIRUS: wannacry tracks detected!"
                             gr.msg -c light_blue "$file"
                             gr.msg -e1 "backup of $from_location canceled"
-                            # echo "last_backup_error=101" >>$backup_stat_file
-                            # echo "### POTENTIAL VIRUS: wannacry tracks detected!" >>$backup_stat_file
+                            backup_log="$backup_log;exited before execution;101:wannacry detected"
                             return 101
                             ;;
 
                      *WORM*)
                             gr.msg "TBD other virus track marks here"
                             # echo "last_backup_error=102" >>$backup_stat_file
+                            backup_log="$backup_log;exited before execution;102:virus track marks"
                             return 102
                             ;;
                     esac
@@ -850,15 +1067,16 @@ backup.now () {
 
                     # echo "last_backup_error=104" >>$backup_stat_file
                     # echo "### backup canceled cause of potential crypto virus action detected!" >>$backup_stat_file
+                    backup_log="$backup_log;exited before execution;104:potential crypto virus"
                     return 104
                 fi
             gr.msg -v2 -c green "ok"
         fi
 
 ### 5) check size
-
     if [[ $from_size -gt $store_size ]] ; then
-        gr.msg -e1 "not enough space in target device"
+        gr.msg -e1 "not enough space in target device. ($(numfmt $store_size --to=iec) < $(numfmt $from_size --to=iec))"
+        backup_log="$backup_log;exited before execution;105:no space on store"
         return 105
     fi
 
@@ -867,14 +1085,28 @@ backup.now () {
 ### 6) perform copy
 
     local _error=$?
-    gr.debug "$FUNCNAME: eval rsync $command_param $from_param $store_param"
+    #gr.debug "$FUNCNAME: eval rsync $command_param $from_param $store_param"
 
-    eval rsync $command_param $from_param $store_param
+    # make command
+    local _command="rsync $command_param $from_param $store_param"
+
+    # re-fill log
+    #local _epicdate=$(date +%s)
+    backup_log="$backup_log;$_command"
+
+    # do the thing
+    echo $backup_name>$backup_running
+    eval $_command
+    rm $backup_running
 
     if [[ $_error -gt 0 ]] ; then
             gr.msg "$from_location error: $backup_method $_error" \
                  -c red -k $GURU_BACKUP_INDICATOR_KEY
+
                  echo "last_backup_error=120" >>$backup_stat_file
+                 # add error to log
+                 backup_log="$backup_log;$_error:backup failed"
+
             return 120
         else
             echo "### $backup_name $(date '+%d.%m.%Y %H:%M')" >$backup_stat_file
@@ -883,9 +1115,16 @@ backup.now () {
             echo "last_backup_time=$(date +%s)" >>$backup_stat_file
             echo "last_backup_error=$_error" >>$backup_stat_file
             gr.msg -v3 "$from_location ok" -c green -k $GURU_BACKUP_INDICATOR_KEY
+
+            # add error to log
+            backup_log="$backup_log;$_error:ok"
+
             return 0
         fi
+
 }
+
+
 
 
 backup.plan () {
@@ -898,8 +1137,11 @@ backup.plan () {
     local entries=()
     local entry=
 
+    # make it global to get schedule to log
+
     case $schedule in
-            hourly|daily|weekly|monthly|yearly|all|panic)
+            hourly|daily|weekly|monthly|yearly)
+                    backup_schedule=$schedule
                     entries=($(eval echo '${GURU_BACKUP_SCHEDULE_'"${schedule^^}[@]}"))
                     ;;
             "")
@@ -937,7 +1179,7 @@ backup.plan () {
                              hourly)
                                 add_seconds=3600
                                 ;;
-                             panic|all|daily)
+                             daily)
                                 add_seconds=86400
                                 ;;
                              weekly)
@@ -961,6 +1203,7 @@ backup.plan () {
                 fi
 
             backup.now $entry || (( _error++ ))
+            backup.log_write $?
         done
 
     if [[ $_error -gt 0 ]] ; then
