@@ -21,36 +21,6 @@ read -s -n1 -t 0.2 key3
 all="$key1$key2$key3"
 
 case $all in
-    # parental scripts THESE DOES NOT WORK on other systems than mine computer. Quick implementation, sorry -casa@ujo.guru
-    sf)     gnome-terminal --hide-menubar --geometry 80x20 --zoom 1 --hide-menubar --title \
-            "firefox parental" -- ssh santeri -t '~/.parental/firefox.sh'
-            ;;
-    sk)     ssh santeri -t pkill firefox
-            ;;
-    sq)     ssh santeri -t systemctl suspend
-            ;;
-    st)     gnome-terminal --hide-menubar --geometry 80x20 --zoom 1 --hide-menubar --title \
-            "santeri's computer" -- ssh santeri
-            ;;
-    # hosts changes
-    da)     gnome-terminal --hide-menubar --geometry 40x1 --zoom 0.7 --hide-menubar --title \
-            "connection tests" -- \
-            $GURU_BIN/guru net host direct -v2
-            ;;
-    ta)     gnome-terminal --hide-menubar --geometry 40x1 --zoom 0.7 --hide-menubar --title \
-            "connection tests" -- $GURU_BIN/guru net host tunnel -v2
-            ;;
-    ba)     gnome-terminal --hide-menubar --geometry 40x1 --zoom 0.7 --hide-menubar --title \
-            "connection tests" -- $GURU_BIN/guru net host basic -v2
-            ;;
-    # mqtt controls
-    qq)     gnome-terminal --hide-menubar --geometry 50x10 --zoom 0.7 --hide-menubar --title \
-            "mqtt server feed" -- $GURU_BIN/guru mqtt sub all
-            ;;
-    # net tests
-    nn)     gnome-terminal --hide-menubar --geometry 50x10 --zoom 0.7 --hide-menubar --title \
-            "connection tests" -- $GURU_BIN/guru net status loop
-            ;;
     # stamps
     sdd)    guru stamp datetime | timeout 0.5 xclip ;;
     sd)     guru stamp time | timeout 0.5 xclip ;;
@@ -59,16 +29,6 @@ case $all in
     ss)     guru stamp signature | timeout 0.5 xclip ;;
     # caps lock enabler
     ca)     os.capslock toggle ;;
-    # cheatsheets
-    cs)     gnome-terminal --hide-menubar --geometry 200x60 --zoom 0.7 --hide-menubar --title \
-            "guru-cli cheatsheet" -- $GURU_BIN/guru cheatsheet
-            ;;
-    cc)     gnome-terminal --hide-menubar --geometry 50x35 --zoom 1.2 --hide-menubar --title \
-            "guru-cli cheatsheet" -- $GURU_BIN/guru help capslauncher
-            ;;
-    t)      gnome-terminal --hide-menubar --geometry 60x20 --zoom 1.0 --hide-menubar --title \
-            "google translator" -- $GURU_BIN/guru trans
-            ;;
     # timer controls
     tt)     guru say "timer start"
             guru timer start ;;
