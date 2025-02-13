@@ -202,7 +202,7 @@ install.check () {
         fi
 
         if ! [[ $configure_after_install ]] && [[ -f $core_rc ]]; then
-            cp $core_rc /tmp/temp.rc
+            cp $core_rc /tmp/$USER/temp.rc
         fi
 
         if [[ -f "$TARGET_BIN/uninstall.sh" ]] ; then
@@ -467,7 +467,7 @@ install.config () {
         keyboard.main add all || gr.msg -c yellow "error by setting keyboard shortcuts"
         installed_files+=($TARGET_CFG/kbbind.backup.cfg )
     else
-        [[ -f /tmp/temp.rc ]] && mv -f /tmp/temp.rc $core_rc
+        [[ -f /tmp/$USER/temp.rc ]] && mv -f /tmp/$USER/temp.rc $core_rc
     fi
     return 0
 }

@@ -43,14 +43,14 @@ op.import () {
 	local account_csv=$1
     local account_name=
     local account_number=
-    local database="/tmp/account_database"
+    local database="/tmp/$USER/account_database"
     [[ $account_csv ]] || read -p "account data file to import: " account_csv
 
-    sed 's/"//g' $account_csv | sed 's/[ ][ ]*/ /g' | sed 's/Ä/A/g'| sed 's/ä/a/g'| sed 's/Ö/O/g' | sed 's/ö/o/g' >/tmp/account_data
+    sed 's/"//g' $account_csv | sed 's/[ ][ ]*/ /g' | sed 's/Ä/A/g'| sed 's/ä/a/g'| sed 's/Ö/O/g' | sed 's/ö/o/g' >/tmp/$USER/account_data
 
-    account_csv="/tmp/account_data"
+    account_csv="/tmp/$USER/account_data"
 
-    [[ -f "/tmp/account_id" ]] && id=$(head -n1 "/tmp/account_id") || id=1000000
+    [[ -f "/tmp/$USER/account_id" ]] && id=$(head -n1 "/tmp/$USER/account_id") || id=1000000
     while IFS=';' read -r date1 date2 amount type description got_paid account bic viite message shit
     do
         let id++
@@ -62,7 +62,7 @@ op.import () {
         # gr.msg -n -w80 "$account$message"
     done < $account_csv >> $database
 
-    echo $id>/tmp/account_id
+    echo $id>/tmp/$USER/account_id
     echo $database
 
     return $?

@@ -1,7 +1,7 @@
 #!/bin/bash
 # play and get from youtube casa@ujo.guru 2022
 
-declare -g youtube_rc="/tmp/guru-cli_youtube.rc"
+declare -g youtube_rc="/tmp/$USER/guru-cli_youtube.rc"
 # more global variables downstairs (after sourcing rc file)
 
 youtube.help () {
@@ -257,13 +257,13 @@ youtube.search_n_play () {
     echo $title >$GURU_AUDIO_NOW_PLAYING
 
     # start stream and play
-    yt-dlp $youtube_options $media_address -o - 2>/tmp/youtube.error \
-        | mpv $mpv_options - >/tmp/mpv.error
+    yt-dlp $youtube_options $media_address -o - 2>/tmp/$USER/youtube.error \
+        | mpv $mpv_options - >/tmp/$USER/mpv.error
 
     # in some cases there is word fuck or exposed tits in video, therefore:
-    if grep 'Sign in to' /tmp/youtube.error; then
-        [[ -f /tmp/mpv.error ]] && rm /tmp/mpv.error
-        [[ -f /tmp/youtube.error ]] && rm /tmp/youtube.error
+    if grep 'Sign in to' /tmp/$USER/youtube.error; then
+        [[ -f /tmp/$USER/mpv.error ]] && rm /tmp/$USER/mpv.error
+        [[ -f /tmp/$USER/youtube.error ]] && rm /tmp/$USER/youtube.error
 
         # if user willing to save password in configs (who would?) serve him/her anyway
         [[ $GURU_YOUTUBE_PASSWORD ]] \
@@ -273,21 +273,21 @@ youtube.search_n_play () {
             gr.msg -v2 "signing in as $GURU_YOUTUBE_USER"
 
             # then perform re-try
-            yt-dlp -v $youtube_options $sing_in $media_address -o - 2>/tmp/youtube.error \
-                | mpv $mpv_options - >/tmp/mpv.error
+            yt-dlp -v $youtube_options $sing_in $media_address -o - 2>/tmp/$USER/youtube.error \
+                | mpv $mpv_options - >/tmp/$USER/mpv.error
     fi
 
     # lacy error printout
-    if [[ -f /tmp/mpv.error ]]; then
-        _error=$(grep 'ERROR:' /tmp/youtube.error)
+    if [[ -f /tmp/$USER/mpv.error ]]; then
+        _error=$(grep 'ERROR:' /tmp/$USER/youtube.error)
         [[ $_error ]] && gr.msg -v2 -c red $_error
-        [[ -f /tmp/mpv.error ]] && rm /tmp/mpv.error
+        [[ -f /tmp/$USER/mpv.error ]] && rm /tmp/$USER/mpv.error
     fi
 
-    if [[ -f /tmp/youtube.error ]]; then
-        _error=$(grep 'Failed' /tmp/mpv.error)
+    if [[ -f /tmp/$USER/youtube.error ]]; then
+        _error=$(grep 'Failed' /tmp/$USER/mpv.error)
         [[ $_error ]] && gr.msg -v2 -c yellow $_error
-        [[ -f /tmp/youtube.error ]] && rm /tmp/youtube.error
+        [[ -f /tmp/$USER/youtube.error ]] && rm /tmp/$USER/youtube.error
     fi
     # remove now playing and error data
     [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
@@ -330,7 +330,7 @@ youtube.search_list () {
         echo $_url >$GURU_AUDIO_NOW_PLAYING
 
         # start stream and play
-        yt-dlp $youtube_options "$_url" -o - 2>/dev/null| mpv $mpv_options --no-video - >/tmp/mpv.error
+        yt-dlp $youtube_options "$_url" -o - 2>/dev/null| mpv $mpv_options --no-video - >/tmp/$USER/mpv.error
 
         #remove now playing data
         rm $GURU_AUDIO_NOW_PLAYING
@@ -403,7 +403,7 @@ youtube.play () {
     echo $media_address >$GURU_AUDIO_NOW_PLAYING
 
     # get staream and play
-    yt-dlp -v $youtube_options $media_address -o - 2>/tmp/youtube.error \
+    yt-dlp -v $youtube_options $media_address -o - 2>/tmp/$USER/youtube.error \
         | mpv $mpv_options - >/dev/null
     local _error=$?
 
@@ -466,7 +466,7 @@ youtube.uninstall(){
 youtube.rc
 declare -g module_options=()
 declare -g save_location=$GURU_MOUNT_DOWNLOADS
-declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_SOCKET --stream-record=/tmp/mpv_audio.cache"
+declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_SOCKET --stream-record=/tmp/$USER/mpv_audio.cache"
 declare -g youtube_options="-f worst"
 declare -g save_to_file=
 

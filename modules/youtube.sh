@@ -4,10 +4,10 @@
 source flag.sh
 source audio.sh
 
-declare -g youtube_rc="/tmp/guru-cli_youtube.rc"
+declare -g youtube_rc="/tmp/$USER/guru-cli_youtube.rc"
 declare -g youtube_data=$GURU_DATA/youtube
-declare -g youtube_error=/tmp/youtube.error
-declare -g mpv_error=/tmp/mpv.error
+declare -g youtube_error=/tmp/$USER/youtube.error
+declare -g mpv_error=/tmp/$USER/mpv.error
 declare -g continue_to_play=
 # more global variables downstairs (after sourcing rc file)
 
@@ -261,7 +261,7 @@ youtube.search () {
         [[ $search_phrase == "" ]] && return 0
 
         # search from youtube.com, i think youtube limits results to 20 items
-        local _json="/tmp/youtube_results.json"
+        local _json="/tmp/$USER/youtube_results.json"
         youtube.find $GURU_YOUTUBE_RESULT_LIMIT json "$search_phrase" >$_json
 
         # fulfill list variables from data got from youtube search
@@ -726,7 +726,7 @@ EOF
 
 youtube.firefox_cookies () {
 
-    local cookie_db="/tmp/fox-cookies.sqlite"
+    local cookie_db="/tmp/$USER/fox-cookies.sqlite"
 
     get_database () {
 
@@ -738,10 +738,10 @@ youtube.firefox_cookies () {
         fi
 
         # fast way to get default profile
-        head -n 3 $profiles | grep "Default" >/tmp/fox-profile
-        source /tmp/fox-profile
+        head -n 3 $profiles | grep "Default" >/tmp/$USER/fox-profile
+        source /tmp/$USER/fox-profile
         profile=$Default
-        rm /tmp/fox-profile
+        rm /tmp/$USER/fox-profile
         gr.debug "$FUNCNAME profile:'$profile'"
         [[ $profile ]] || return 113
 
@@ -1031,8 +1031,8 @@ youtube.rc
 # fix missing user configuration
 [[ $GURU_YOUTUBE_RESULT_LIMIT ]] || GURU_YOUTUBE_RESULT_LIMIT=20
 [[ $GURU_YOUTUBE_THUMBNAIL_SIZE ]] || GURU_YOUTUBE_THUMBNAIL_SIZE=60
-[[ $GURU_AUDIO_NOW_PLAYING ]] || GURU_AUDIO_NOW_PLAYING=/tmp/now_playing
-[[ $GURU_AUDIO_MPV_SOCKET ]] || GURU_AUDIO_MPV_SOCKET=/tmp/youtube
+[[ $GURU_AUDIO_NOW_PLAYING ]] || GURU_AUDIO_NOW_PLAYING=/tmp/$USER/now_playing
+[[ $GURU_AUDIO_MPV_SOCKET ]] || GURU_AUDIO_MPV_SOCKET=/tmp/$USER/youtube
 [[ $GURU_AUDIO_INDICATOR_KEY ]] || GURU_AUDIO_INDICATOR_KEY=f5
  # $GURU_MOUNT_AUDIO
  # $GURU_MOUNT_VIDEO

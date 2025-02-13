@@ -7,7 +7,7 @@
 
 # source $GURU_BIN/common.sh # CLEAN old way to call commons
 
-declare -g temp_file="/tmp/cal.tmp"
+declare -g temp_file="/tmp/$USER/cal.tmp"
 
 # placeholder for user configurations
 declare -gA google
@@ -302,7 +302,7 @@ cal.sync_google () {
 
     local method="keep-remote" ## hmm.. google is just output? REVIEW
     [[ $1 ]] && method=$1
-    #local backup_location="/tmp/calcurse-backup"
+    #local backup_location="/tmp/$USER/calcurse-backup"
     #local local_folder="/home/casa/.calcurse"
     # local files=(apts todo)
     # local did_mount=

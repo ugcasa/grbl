@@ -8,7 +8,7 @@ __note_color="light_blue"
 declare -g note_file
 declare -g note_date
 declare -g note_file_name
-declare -g note_rc=/tmp/guru-cli_note.rc
+declare -g note_rc=/tmp/$USER/guru-cli_note.rc
 declare -g require=(nacal pandoc gnome-terminal)
 
 
@@ -782,7 +782,7 @@ note.find() {
     files=()
     local year="all"
     local file_pattern="${GURU_USER_NAME}_notes_????????.md"
-    local file_list="/tmp/note_search.list"
+    local file_list="/tmp/$USER/note_search.list"
     # will be empty if no database exist
     local last_index=$(cat "${file_list}_year" 2>/dev/null)
     local location=$GURU_MOUNT_NOTES/$GURU_USER_NAME

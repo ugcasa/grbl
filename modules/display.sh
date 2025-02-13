@@ -4,9 +4,9 @@
 
 #source common.sh
 
-redshift_flag="/tmp/guru-redshift.flag"
-last_brigh="/tmp/guru-display.bright"
-toggle_flag="/tmp/guru-display.toggle.flag"
+redshift_flag="/tmp/$USER/guru-redshift.flag"
+last_brigh="/tmp/$USER/guru-display.bright"
+toggle_flag="/tmp/$USER/guru-display.toggle.flag"
 
 
 display.help () {

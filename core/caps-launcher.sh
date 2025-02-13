@@ -107,8 +107,8 @@ case $all in
     clo)    guru project close ;;
     sto)    guru project stonks ;;
    # general skip and confirm
-    *$'\x1b'*)  guru flag rm ok ; guru flag set cancel ; mpv /tmp/cancel.wav ;;
-    *§*)   guru flag rm cancel ; guru flag set ok ; mpv /tmp/ok.wav ;;
+    *$'\x1b'*)  guru flag rm ok ; guru flag set cancel ; mpv /tmp/$USER/cancel.wav ;;
+    *§*)   guru flag rm cancel ; guru flag set ok ; mpv /tmp/$USER/ok.wav ;;
       #*)    guru say "no hit"
 esac
 

@@ -7,8 +7,8 @@ __radio=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 source corsair.sh
 source flag.sh
 
-declare -g radio_rc="/tmp/guru-cli_radio.rc"
-declare -g radio_number_file="/tmp/guru-cli_radio.nr"
+declare -g radio_rc="/tmp/$USER/guru-cli_radio.rc"
+declare -g radio_number_file="/tmp/$USER/guru-cli_radio.nr"
 declare -g station_nro
 declare -g station_name
 declare -g station_url

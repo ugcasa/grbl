@@ -6,7 +6,7 @@ source common.sh
 ## declare, ai.sh global variables. remove/comment out not needed ones
 declare -g ai_temp_file="$GURU_TEMP/ai.tmp"
 
-declare -g ai_rc="/tmp/guru-cli_ai.rc"
+declare -g ai_rc="/tmp/$USER/guru-cli_ai.rc"
 declare -g ai_data_folder=$GURU_SYSTEM_MOUNT/ai
 
 gr.debug "ai_temp_file: $ai_temp_file"

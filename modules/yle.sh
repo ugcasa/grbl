@@ -4,11 +4,11 @@
 source audio.sh
 source flag.sh
 
-declare -g yle_rc="/tmp/guru-cli_yle.rc"
+declare -g yle_rc="/tmp/$USER/guru-cli_yle.rc"
 declare -g yle_run_folder="$(pwd)"
 declare -g yle_date_folder="$GURU_DATA/yle"
 declare -g yle_playlist_folder="$GURU_DATA/yle/playlists"
-declare -g yle_temp_folder="$HOME/tmp/yle"
+declare -g yle_temp_folder="$HOME/tmp/$USER/yle"
 declare -g yle_episodes=()
 declare -g yle_media_address=
 declare -g yle_media_filename=
@@ -79,7 +79,7 @@ yle.main () {
             # echo "$1" | grep "https://" && $GURU_YLE_BASE_URL="" || $GURU_YLE_BASE_URL="https://areena.yle.fi/" >/dev/null
             # gr.msg "getting from url ${GURU_YLE_BASE_URL%/}$1"
             echo "yle ${GURU_YLE_BASE_URL%/}$1" >$GURU_AUDIO_NOW_PLAYING
-            yle-dl --pipe "${GURU_YLE_BASE_URL%/}$1" 2>/dev/null 2>/tmp/yle.error | mpv $mpv_options -
+            yle-dl --pipe "${GURU_YLE_BASE_URL%/}$1" 2>/dev/null 2>/tmp/$USER/yle.error | mpv $mpv_options -
             [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
             return $?
             ;;
@@ -137,7 +137,7 @@ yle.main () {
             yle.get_metadata "$command" || return 127
             echo "osoite: $yle_media_address"
             echo "yle $yle_media_address" >$GURU_AUDIO_NOW_PLAYING
-            yle-dl --pipe "$yle_media_address" 2>/dev/null 2>/tmp/yle.error | mpv $mpv_options -
+            yle-dl --pipe "$yle_media_address" 2>/dev/null 2>/tmp/$USER/yle.error | mpv $mpv_options -
             [[ -f $GURU_AUDIO_NOW_PLAYING ]] && mr $GURU_AUDIO_NOW_PLAYING
             ;;
 
@@ -349,7 +349,7 @@ yle.podcast () {
 
         # play item
 
-        mpv $mpv_options $(yle-dl "${webpage[$item]}" --showurl 2>/tmp/yle.error)
+        mpv $mpv_options $(yle-dl "${webpage[$item]}" --showurl 2>/tmp/$USER/yle.error)
         _error=$?
         gr.debug "$FUNCNAME _error:$_error"
 
@@ -374,15 +374,15 @@ yle.podcast () {
     #     fi
 
     #     output_filename=
-    #     episode_list=($(yle-dl --showepisodepage $areena_url 2>/tmp/yle.error))
+    #     episode_list=($(yle-dl --showepisodepage $areena_url 2>/tmp/$USER/yle.error))
 
     #     for (( i = 0; i < ${#episode_list[@]}; i++ )); do
-    #         metadata=$(yle-dl --showmetadata ${episode_list[$i]} 2>/tmp/yle.error | jq -s 'flatten' )
+    #         metadata=$(yle-dl --showmetadata ${episode_list[$i]} 2>/tmp/$USER/yle.error | jq -s 'flatten' )
     #         title="$(jq '.[] | .episode_title' <<<$metadata | head -n1 | cut -d':' -f1 )"
 
     #         output_filename=title_${episode_list[$i]}
 
-    #         yle-dl "${episode_list[$i]}" --showurl -o "$output_filename" 2>/tmp/yle.error
+    #         yle-dl "${episode_list[$i]}" --showurl -o "$output_filename" 2>/tmp/$USER/yle.error
     #     done
     # }
 
@@ -411,7 +411,7 @@ yle.podcast () {
             return 101
         fi
 
-        episode_list=($(yle-dl --showepisodepage $areena_url 2>/tmp/yle.error))
+        episode_list=($(yle-dl --showepisodepage $areena_url 2>/tmp/$USER/yle.error))
 
         # check is program_id valid (yle-dl crashes if not)
         _error=$?
@@ -454,7 +454,7 @@ yle.podcast () {
         gr.msg -V2 -n "building database for ${#episode_list[@]} episodes "
         for (( i = 0; i < ${#episode_list[@]}; i++ )); do
             gr.msg -v2 -c dark_grey "$(($i+1)) ${episode_list[$i]}"
-            yle-dl --showmetadata ${episode_list[$i]} 2>/tmp/yle.error | jq -s 'flatten' >>$selected_podcast_file
+            yle-dl --showmetadata ${episode_list[$i]} 2>/tmp/$USER/yle.error | jq -s 'flatten' >>$selected_podcast_file
             gr.msg -V2 -n -c dark_grey "."
         done
         gr.msg -c green "ok"
@@ -1010,7 +1010,7 @@ yle.get_metadata () {
     [[ ${yle_episodes[0]} ]] && media_url=${yle_episodes[0]}
 
     # Get metadata
-    yle-dl $media_url --showmetadata 2>/tmp/yle.error > $meta_data
+    yle-dl $media_url --showmetadata 2>/tmp/$USER/yle.error > $meta_data
 
     grep "error" $meta_data && error=$(cat $meta_data | jq '.[].flavors[].error')
 
@@ -1053,7 +1053,7 @@ yle.get_media () {
         fi
 
     # download stuff
-    yle-dl "$media_url" -o "$output_filename" --sublang all 2>/tmp/yle.error
+    yle-dl "$media_url" -o "$output_filename" --sublang all 2>/tmp/$USER/yle.error
 
     # to check did yle-dl change format
     local got_filename=$(echo ${output_filename%.*}*)
@@ -1078,7 +1078,7 @@ yle.get_subtitles () {
     [ -d "$yle_temp_folder" ] && rm -rf "$yle_temp_folder"
     mkdir -p "$yle_temp_folder"
     cd "$yle_temp_folder"
-    yle-dl "$media_url" --subtitlesonly 2>/tmp/yle.error
+    yle-dl "$media_url" --subtitlesonly 2>/tmp/$USER/yle.error
     #yle_media_filename=$(detox -v * | grep -v "Scanning")
     #yle_media_filename=${yle_media_filename#*"-> "}
 }

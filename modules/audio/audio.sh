@@ -8,10 +8,10 @@ source $GURU_BIN/audio/mpv.sh
 __audio_color="firebrick"
 __audio=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
-declare -g audio_rc="/tmp/guru-cli_audio.rc"
+declare -g audio_rc="/tmp/$USER/guru-cli_audio.rc"
 declare -g audio_data_folder="$GURU_SYSTEM_MOUNT/audio"
 declare -g audio_playlist_folder="$audio_data_folder/playlists"
-declare -g audio_temp_file="/tmp/guru-cli_audio.playlist"
+declare -g audio_temp_file="/tmp/$USER/guru-cli_audio.playlist"
 declare -g audio_playing_pid=$(ps x | grep mpv | grep -v grep | cut -f1 -d" ")
 declare -g audio_modules=(yle youtube audio uutiset)
 declare -g audio_available_sockets=(audio radio uutiset yle youtube)
@@ -485,7 +485,7 @@ audio.pause () {
     esac
 
     # 'superpause' pause all, even browser based stuff
-    [[ -d "/tmp/guru" ]] || mkdir "/tmp/guru"
+    [[ -d "/tmp/$USER/guru" ]] || mkdir -p "/tmp/$USER/guru"
 
     if ! [[ -f $GURU_AUDIO_PAUSE_FLAG ]] || [[ "$input" == "set" ]] ; then
         gr.end $GURU_AUDIO_INDICATOR_KEY

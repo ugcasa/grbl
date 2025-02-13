@@ -92,7 +92,7 @@ pk2.install () {
 	sudo mv PK2DeviceFile.dat /usr/share/pk2
 
 	# cleaning up
-	rm -rf cd /tmp/pk2
+	rm -rf cd /tmp/$USER/pk2
 
 	# Testing
 	# export PATH=$PATH:/usr/share/pk2

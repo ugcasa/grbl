@@ -96,8 +96,8 @@ install.unity () {
         return $?
     fi
 
-    # if tiv -help >/tmp/tiv.help ; then
-    #     gr.msg "already installed: $(head -n1 /tmp/tiv.help) "
+    # if tiv -help >/tmp/$USER/tiv.help ; then
+    #     gr.msg "already installed: $(head -n1 /tmp/$USER/tiv.help) "
     #     gr.ask "force reinstall" || return 0
     # fi
 
@@ -157,7 +157,7 @@ install.tiv () {
         gr.ask "already installed force reinstall?" || return 0
     fi
 
-    [[ -d /tmp/TerminalImageViewer ]] && rm /tmp/TerminalImageViewer -rf
+    [[ -d /tmp/$USER/TerminalImageViewer ]] && rm /tmp/$USER/TerminalImageViewer -rf
     cd /tmp
     sudo apt-get update && OK "update"
     sudo apt-get install imagemagick && OK "imagemagick"
@@ -165,7 +165,7 @@ install.tiv () {
     cd TerminalImageViewer/src/main/cpp
     make && OK "compile"
     sudo make install && OK "install"
-    rm /tmp/TerminalImageViewer -rf && OK "clean"
+    rm /tmp/$USER/TerminalImageViewer -rf && OK "clean"
 }
 
 
@@ -373,8 +373,8 @@ install.vscode () {
 install.teams () {
 
     # Step 1 make temp
-    temp_folder='/tmp/teams'
-    mkdir $temp_folder && cd $temp_folder
+    temp_folder="/tmp/$USER/teams"
+    mkdir -p $temp_folder && cd $temp_folder
 
     # Step 2 get package
     if wget https://go.microsoft.com/fwlink/p/?LinkID=2112886 -O "$temp_folder/teams.deb" ; then

@@ -4,14 +4,14 @@ playlist.main () {
 # play playlist file
 
     local user_input=$1
-    #local audio_last_played_pointer="/tmp/guru-cli_audio.last"
+    #local audio_last_played_pointer="/tmp/$USER/guru-cli_audio.last"
     #local item_search_string=
     #[[ $2 ]] && item_search_string=$2
 
     case $user_input in
 
         continue|last)
-            playlist.play /tmp/guru-cli_audio.playlist
+            playlist.play /tmp/$USER/guru-cli_audio.playlist
             ;;
 
         list|ls)
@@ -46,7 +46,7 @@ playlist.play () {
     local user_input=$1
     local item_search_string=
     local list_to_play=
-    local audio_last_played_pointer="/tmp/guru-cli_audio.last"
+    local audio_last_played_pointer="/tmp/$USER/guru-cli_audio.last"
     [[ $2 ]] && item_search_string=$2
 
     gr.debug "$audio_playlist_folder/$user_input.list"

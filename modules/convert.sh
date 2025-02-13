@@ -193,17 +193,17 @@ convert.from_webp () {
             gr.msg -v1 -n "$file_base_name.${dest_format} exists, "
 
             # convert webp to temp
-            dwebp -quiet "$file_base_name.webp" -o "/tmp/$file_base_name.${dest_format}"
+            dwebp -quiet "$file_base_name.webp" -o "/tmp/$USER/$file_base_name.${dest_format}"
 
             # check file size
             local orig_size=$(wc -c "$file_base_name.${dest_format}" | awk '{print $1}')
-            local new_size=$(wc -c "/tmp/$file_base_name.${dest_format}" | awk '{print $1}')
+            local new_size=$(wc -c "/tmp/$USER/$file_base_name.${dest_format}" | awk '{print $1}')
 
             if [[ $orig_size -eq $new_size ]] ; then
 
                 # check does pictures have same content
                 local orig=$(identify -quiet -format "%#" "$file_base_name.${dest_format}" )
-                local new=$(identify -quiet -format "%#" "/tmp/$file_base_name.${dest_format}")
+                local new=$(identify -quiet -format "%#" "/tmp/$USER/$file_base_name.${dest_format}")
 
                 # check file contains same data, rename if not
                 if [[ "$orig" == "$new" ]] ; then
@@ -228,8 +228,8 @@ convert.from_webp () {
         # convert
         gr.msg -v1 -n "$file_base_name$rand.${dest_format}.. "
 
-        if [[ -f "/tmp/$file_base_name.${dest_format}" ]] ; then
-            mv "/tmp/$file_base_name.${dest_format}" "$file_base_name$rand.${dest_format}" \
+        if [[ -f "/tmp/$USER/$file_base_name.${dest_format}" ]] ; then
+            mv "/tmp/$USER/$file_base_name.${dest_format}" "$file_base_name$rand.${dest_format}" \
                 && gr.msg -v1 -c green "ok" \
                 || gr.msg -c yellow "move failed $?"
         else
@@ -242,7 +242,7 @@ convert.from_webp () {
         [[ $GURU_FORCE ]] && [[ -f "$file_base_name$rand.${dest_format}" ]] && rm "$file_base_name.webp"
 
         # clean up
-        [[ -f "/tmp/$file_base_name.${dest_format}" ]] && rm "/tmp/$file_base_name.${dest_format}"
+        [[ -f "/tmp/$USER/$file_base_name.${dest_format}" ]] && rm "/tmp/$USER/$file_base_name.${dest_format}"
 
     done
     return 0
@@ -628,7 +628,7 @@ convert.md_to_pdf () {
 
 #     convert.make_test_json () {
 
-#         cat > "/tmp/test.json" <<EOL
+#         cat > "/tmp/$USER/test.json" <<EOL
 # {
 #   "$path": {
 #     "url": "example.com",
@@ -639,7 +639,7 @@ convert.md_to_pdf () {
 # EOL
 
 
-#     #cat /tmp/test.json
+#     #cat /tmp/$USER/test.json
 
 #     }
 
@@ -667,7 +667,7 @@ convert.md_to_pdf () {
 #         # constants="$(cat ${1} | jq ".$path" | jq -r "to_entries|map(\(.key)=\(.value|tostring))|.[]")"
 #         # echo -e $constants
 
-#         # for keyval in $(grep -E '": [^\{]' /tmp/test.json | sed -e 's/: /=/' -e "s/\(\,\)$//"); do
+#         # for keyval in $(grep -E '": [^\{]' /tmp/$USER/test.json | sed -e 's/: /=/' -e "s/\(\,\)$//"); do
 #         #     echo "export $keyval"
 #         #     eval export $keyval
 #         # done
@@ -677,7 +677,7 @@ convert.md_to_pdf () {
 #     }
 
 #     convert.make_test_json
-#     convert.json_bashvar /tmp/test.json
+#     convert.json_bashvar /tmp/$USER/test.json
 
 # }
 
@@ -699,8 +699,8 @@ convert.check_format() {
         return 0
     else
 
-        if dwebp -version >/tmp/dweb_version ; then
-            gr.msg -v2 -c green "using dwebp v.$(< /tmp/dweb_version) for webp support"
+        if dwebp -version >/tmp/$USER/dweb_version ; then
+            gr.msg -v2 -c green "using dwebp v.$(< /tmp/$USER/dweb_version) for webp support"
             return 0
         else
             gr.msg -v2 -c yellow "format $1 is not supported"

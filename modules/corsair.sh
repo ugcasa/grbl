@@ -53,10 +53,10 @@ __corsair=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 source common.sh
 
 # active key list
-key_pipe_list=$(file /tmp/ckbpipe0* | grep fifo | cut -f1 -d ":")
+key_pipe_list=$(file /tmp/$USER/ckbpipe0* | grep fifo | cut -f1 -d ":")
 # modes with status bar function set. if add on this list, add name=<rgb color> to rgb-color.cfg
 status_modes=(olive fullpipe, halfpipe, blue, eq)
-corsair_last_mode="/tmp/corsair.mode"
+corsair_last_mode="/tmp/$USER/corsair.mode"
 # service configurations for ckb-next application
 corsair_service="$HOME/.config/systemd/user/corsair.service"
 corsair_daemon_service="/usr/lib/systemd/system/ckb-next-daemon.service"
@@ -274,7 +274,7 @@ corsair.keytable () {
     gr.msg -v3 -c white "thumb  wheel logo "
     gr.msg -v3 -c dark  " 201    202   200 "
     gr.msg -v1
-    gr.msg -v2 " use thee digits to indicate id in file name example: 'F12' pipe is '/tmp/ckbpipe012'"
+    gr.msg -v2 " use thee digits to indicate id in file name example: 'F12' pipe is '/tmp/$USER/ckbpipe012'"
     gr.msg -v3
     gr.msg -v3 "corsair_key_table list: "
     gr.msg -v3 "$(corsair.key-id)}"
@@ -337,7 +337,7 @@ corsair.get_pipefile () {
             return 1
         fi
 
-    local pipefile="/tmp/ckbpipe$id"
+    local pipefile="/tmp/$USER/ckbpipe$id"
 
     if file $pipefile | grep fifo >/dev/null; then
             echo $pipefile
@@ -351,7 +351,7 @@ corsair.get_pipefile () {
 
 
 corsair.key-id () {
-# printout key number for key pipe file '/tmp/ckbpipeNNN'
+# printout key number for key pipe file '/tmp/$USER/ckbpipeNNN'
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local to_find=$1
@@ -481,12 +481,12 @@ corsair.check () {
         *"$corsair_mode"*)
 
             # check pipes exists
-            ps x | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/tmp/result
-            amount=$(wc -l < /tmp/result)
+            ps x | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/tmp/$USER/result
+            amount=$(wc -l < /tmp/$USER/result)
 
             if [[ $amount -gt 0 ]] ; then
                     gr.msg -v2 -c green "found $amount pipe(s)"
-                    rm /tmp/result
+                    rm /tmp/$USER/result
                 else
                     gr.msg -c red "no pipes found"
                     corsair.help-profile
@@ -731,11 +731,11 @@ corsair.blink_set () {
     [[ $1 ]] && leave_color=$1 ; shift
 
     # TBD slow method, do better
-    if [[ -f /tmp/blink_pid ]] && cat /tmp/blink_pid | grep "\b$key\b" 2>/dev/null ; then
+    if [[ -f /tmp/$USER/blink_pid ]] && cat /tmp/$USER/blink_pid | grep "\b$key\b" 2>/dev/null ; then
             corsair.blink_kill $key 2>/dev/null
         fi
 
-    touch /tmp/blink_$key
+    touch /tmp/$USER/blink_$key
     time_out=$(date +%s)
     time_out=$(( time_out + timeout ))
 
@@ -744,10 +744,10 @@ corsair.blink_set () {
 
             time_now=$(date +%s)
 
-            if ! [[ -f /tmp/blink_$key ]] || (( time_now > time_out )) ; then
+            if ! [[ -f /tmp/$USER/blink_$key ]] || (( time_now > time_out )) ; then
                 corsair.set $key $leave_color
-                grep -v "\b$key\b" /tmp/blink_pid >/tmp/tmp_blink_pid
-                mv -f /tmp/tmp_blink_pid /tmp/blink_pid
+                grep -v "\b$key\b" /tmp/$USER/blink_pid >/tmp/$USER/tmp_blink_pid
+                mv -f /tmp/$USER/tmp_blink_pid /tmp/$USER/blink_pid
                 break
             else
                 corsair.set $key $base_c
@@ -759,7 +759,7 @@ corsair.blink_set () {
 
         done & )
     pid=$!
-    echo "$pid;$key" >>/tmp/blink_pid
+    echo "$pid;$key" >>/tmp/$USER/blink_pid
     return 0
 }
 
@@ -771,7 +771,7 @@ corsair.blink_stop () {
     local key="esc"
     [[ $1 ]] && key=$1 ; shift
 
-    [[ -f /tmp/blink_$key ]] && rm /tmp/blink_$key
+    [[ -f /tmp/$USER/blink_$key ]] && rm /tmp/$USER/blink_$key
     return 0
 }
 
@@ -780,7 +780,7 @@ corsair.blink_kill () {
 # stop blinking process now, input keyname
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-    [[ -f /tmp/blink_pid ]] && pids_to_kill=($(cat /tmp/blink_pid))
+    [[ -f /tmp/$USER/blink_pid ]] && pids_to_kill=($(cat /tmp/$USER/blink_pid))
 
     local pid=""
     local key=""
@@ -791,7 +791,7 @@ corsair.blink_kill () {
 
         if [[ $1 ]] ; then
                 key=$1
-                _pid=$(cat /tmp/blink_pid | grep "\b$key\b")
+                _pid=$(cat /tmp/$USER/blink_pid | grep "\b$key\b")
                 pid=$(echo ${_pid} | cut -d ';' -f1)
             else
                 key=$(echo ${_to_kill[@]} | cut -d ';' -f2)
@@ -800,14 +800,14 @@ corsair.blink_kill () {
 
         [[ $pid ]] || return 0
 
-        [[ -f "/tmp/blink_$key" ]] && rm "/tmp/blink_$key"
+        [[ -f "/tmp/$USER/blink_$key" ]] && rm "/tmp/$USER/blink_$key"
 
         if kill -15 $pid 2>/dev/null ; then
                 # gr.msg -n -c reset -k $key
                 corsair.set $key $leave_color
-                #echo "$pid;$key" >>/tmp/blink_pid
-                grep -v "\b$key\b" /tmp/blink_pid >/tmp/tmp_blink_pid
-                mv -f /tmp/tmp_blink_pid /tmp/blink_pid
+                #echo "$pid;$key" >>/tmp/$USER/blink_pid
+                grep -v "\b$key\b" /tmp/$USER/blink_pid >/tmp/$USER/tmp_blink_pid
+                mv -f /tmp/$USER/tmp_blink_pid /tmp/$USER/blink_pid
                 [[ $1 ]] && return 0
 
             else
@@ -858,7 +858,7 @@ corsair.blink_test () {
 
     gr.msg -c white -n "testing corsair.blink_kill.. "
     corsair.blink_kill 2>/dev/null
-    file /tmp/blink_pid | grep "empty" >/dev/null \
+    file /tmp/$USER/blink_pid | grep "empty" >/dev/null \
         && gr.msg -c green "passed" \
         || gr.msg -c red "failed $?"
     #gr corsair end
@@ -871,10 +871,10 @@ corsair.type_end () {
 # end current type process
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-    if [[ -f /tmp/guru-cli_corsair-typing ]] ; then
-            rm /tmp/guru-cli_corsair-typing
-            #kill /tmp/guru-cli_corsair.pid
-            #rm /tmp/guru-cli_corsair.pid
+    if [[ -f /tmp/$USER/guru-cli_corsair-typing ]] ; then
+            rm /tmp/$USER/guru-cli_corsair-typing
+            #kill /tmp/$USER/guru-cli_corsair.pid
+            #rm /tmp/$USER/guru-cli_corsair.pid
         fi
 }
 
@@ -887,12 +887,12 @@ corsair.type () {
     shift
     string=${@,,}
 
-    touch /tmp/guru-cli_corsair-typing
+    touch /tmp/$USER/guru-cli_corsair-typing
 
     for (( i=0 ; i < ${#string} ; i++ )) ; do
 
             # TBD following does not work when called from script, dunno why
-            [[ -f /tmp/guru-cli_corsair-typing ]] || break
+            [[ -f /tmp/$USER/guru-cli_corsair-typing ]] || break
 
             key="${string:$i:1}"
 
@@ -941,7 +941,7 @@ corsair.type () {
             corsair.main reset $key
 
         done & 2>/dev/null
-        #echo $! >/tmp/guru-cli_corsair.pid
+        #echo $! >/tmp/$USER/guru-cli_corsair.pid
     gr.msg -v3
 }
 
@@ -1061,7 +1061,7 @@ corsair.make_daemon_service () {
 # ckb-next-daemon service
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-     local temp="/tmp/suspend.temp"
+     local temp="/tmp/$USER/suspend.temp"
 
     [[ -d  ${temp%/*} ]] || sudo mkdir -p ${temp%/*}
     [[ -f $temp ]] && rm $temp
@@ -1096,7 +1096,7 @@ corsair.make_app_service () {
 # ckb-next application service
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-    local temp="/tmp/suspend.temp"
+    local temp="/tmp/$USER/suspend.temp"
 
     if ! [[ -d  ${corsair_service%/*} ]] ; then
         mkdir -p ${corsair_service%/*} \
@@ -1228,7 +1228,7 @@ corsair.patch () {
 # patch corsair k68 to avoid long daemon stop time
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-    cd /tmp/ckb-next
+    cd /tmp/$USER/ckb-next
 
     case $1 in
             K68|k68|keyboard)
@@ -1251,8 +1251,8 @@ corsair.compile () {
 # compile ckb-next and ckb-next-daemon
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-    [[ -d /tmp/ckb-next ]] || corsair.clone
-    cd /tmp/ckb-next
+    [[ -d /tmp/$USER/ckb-next ]] || corsair.clone
+    cd /tmp/$USER/ckb-next
     gr.msg -c white "running installer.."
     ./quickinstall && gr.msg -c green "ok" || gr.msg -x 103 -c yellow "quick installer error"
     return 0
@@ -1391,8 +1391,8 @@ corsair.remove () {
     # https://github.com/ckb-next/ckb-next/wiki/Linux-Installation#uninstallation
     gr.ask "really remove corsair" || return 100
 
-    if [[ /tmp/ckb-next ]] ; then
-        cd /tmp/ckb-next
+    if [[ /tmp/$USER/ckb-next ]] ; then
+        cd /tmp/$USER/ckb-next
         sudo cmake --build build --target uninstall
     else
         # if source is not available anymore re clone it to build uninstall method

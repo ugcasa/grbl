@@ -5,12 +5,15 @@
 # Do not let run guru as root
 case $USER in root|admin|sudo) echo "too dangerous to run guru-cli as root!" ; return 100; esac
 
+## BUGFIX
+[[ -d /tmp/$USER/ ]] || mkdir -p "/tmp/$USER/"
+
 # debug visualiser variables
 __core_color="black"
 __core=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 # global variables for core
-process_list=/tmp/guru-cli_ps.list
+process_list=/tmp/$USER/guru-cli_ps.list
 core_command=
 pass_to_core=()
 pass_to_module=()
@@ -243,7 +246,7 @@ core.ps () {
     # get list of processes
     # local raw_list=($(ps -eo %cpu,pid,args | grep -v grep | grep -e $GURU_BIN/$GURU_CALL))
     local raw_list=($(ps -eo %cpu,pid,args | grep -v grep | grep -v $$ | grep -e $GURU_BIN/$GURU_CALL))
-    local raw_list+=($(ps -eo %cpu,pid,args | grep -v grep | grep -v $$ | grep -e "/tmp/mpvsocket-radio"))
+    local raw_list+=($(ps -eo %cpu,pid,args | grep -v grep | grep -v $$ | grep -e "/tmp/$USER/mpvsocket-radio"))
     local raw_list+=($(ps -eo %cpu,pid,args | grep -v grep | grep -v $$ | grep -e "sshfs"))
 
     [[ -f $process_list ]] && rm $process_list
@@ -682,7 +685,7 @@ core.online () {
 # check is online, set pause for daemon if not
     gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-    declare -g offline_flag="/tmp/guru-offline.flag"
+    declare -g offline_flag="/tmp/$USER/guru-offline.flag"
     source net.sh
     source flag.sh
 

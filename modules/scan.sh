@@ -198,7 +198,7 @@ scan.fix () {
 
 scan.receipt() {
     # scan receipt size archive material
-    local _temp=/tmp/guru
+    local _temp=/tmp/$USER/guru
     local _name="scan"
     local _stamp=$(date +%s)
     local _target_folder="$GURU_LOCAL_ACCOUNTING/$(date +%Y)/$GURU_LOCAL_RECEIPTS"

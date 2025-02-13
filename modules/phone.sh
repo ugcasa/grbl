@@ -5,7 +5,7 @@ source config.sh
 
 __phone=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
-declare -g phone_rc=/tmp/guru-cli_phone.rc
+declare -g phone_rc=/tmp/$USER/guru-cli_phone.rc
 declare -g phone_config="$GURU_CFG/$GURU_USER/phone.cfg"
 declare -g require=(kdeclient-cli)
 declare -g phone_name="unknown"

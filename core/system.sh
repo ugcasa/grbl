@@ -3,7 +3,7 @@
 
 __system_color="light_blue"
 __system=$(readlink --canonicalize --no-newline $BASH_SOURCE)
-system_suspend_flag="/tmp/guru-suspend.flag"
+system_suspend_flag="/tmp/$USER/guru-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
 system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh" # ubuntu 18.04 > like mint 20.0
 system_indicator_key="caps"
@@ -353,7 +353,7 @@ system.update () {
  # update guru-client
 gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-    local temp_dir="/tmp/guru"
+    local temp_dir="/tmp/$USER/guru"
     local source="https://github.com/ugcasa/guru-client.git"
     local branch="dev"
 
@@ -378,7 +378,7 @@ system.cpu_usage_check () {
 gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
 
-    local high_cpu_flag="/tmp/high.cpu.flag"
+    local high_cpu_flag="/tmp/$USER/high.cpu.flag"
 
     # get highest usage of cpu
     high_usage=$(system.get_usage cpu --ret usage)
@@ -511,7 +511,7 @@ system.rollback () {
 # rollback to version
 gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-    local temp_dir="/tmp/guru"
+    local temp_dir="/tmp/$USER/guru"
     local source="git@github.com:ugcasa/guru-client.git"
     local _roll_to="1"
     [ "$1" ] && _roll_to="$1"
@@ -571,7 +571,7 @@ system.suspend_script () {
 # launch stuff on suspend
 gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-    temp="/tmp/suspend.temp"
+    temp="/tmp/$USER/suspend.temp"
     gr.msg -v1 "updating $system_suspend_script.. "
 
     [[ -d  ${system_suspend_script%/*} ]] || sudo mkdir -p ${system_suspend_script%/*}
@@ -698,13 +698,13 @@ system.check_fs_access_flag_enabled () {
 sed timestamp function is disabled
 # TBD fix typo
 
-    echo "acccess flag is" >/tmp/test_access
+    echo "acccess flag is" >/tmp/$USER/test_access
 
-    local orig=$(stat -c '%X' /tmp/test_access)
+    local orig=$(stat -c '%X' /tmp/$USER/test_access)
     sleep 1
-    gr.msg -n -v1 "$(cat /tmp/test_access) "
-    local edit=$(stat -c '%X' /tmp/test_access)
-    rm -f /tmp/test_access
+    gr.msg -n -v1 "$(cat /tmp/$USER/test_access) "
+    local edit=$(stat -c '%X' /tmp/$USER/test_access)
+    rm -f /tmp/$USER/test_access
 
     if [[ "$orig" -eq "$edit" ]] ; then
         gr.msg -v1 -c red "disabled"

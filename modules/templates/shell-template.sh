@@ -25,7 +25,7 @@
 
 # declare global variables for module
 declare -g module_temp_file="$GURU_TEMP/module.tmp"
-declare -g module_rc="/tmp/guru-cli_module.rc"
+declare -g module_rc="/tmp/$USER/guru-cli_module.rc"
 declare -g module_data_folder=$GURU_SYSTEM_MOUNT/module
 
 ### functions, keeping help at first position it might be even updated
@@ -253,7 +253,7 @@ if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
         export GURU_RC="$HOME/.gururc"
         export GURU_BIN="$HOME/bin"
         export GURU_CFG="$HOME/.config/guru"
-        export GURU_TEMP="/tmp/guru"
+        export GURU_TEMP="/tmp/$USER/guru"
     fi
     source $GURU_RC
     module.main $@

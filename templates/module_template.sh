@@ -31,7 +31,7 @@ GURU_COLOR=true # DEBUG
 #:
 declare -g __modulename=$(readlink --canonicalize --no-newline $BASH_SOURCE) # DEBUG
 declare -g __modulename_color="light_blue" # DEBUG
-declare -g modulename_rc=/tmp/gtbl_modulename.rc
+declare -g modulename_rc=/tmp/$USER/gtbl_modulename.rc
 declare -g modulename_config="$GURU_CFG/$GURU_USER/modulename.cfg"
 declare -g modulename_require=()
 

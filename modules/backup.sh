@@ -6,11 +6,11 @@
 # more of bash shit github.com/ugcasa/guru-client
 
 declare -g backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
-declare -g backup_rc="/tmp/guru-cli_backup.rc"
+declare -g backup_rc="/tmp/$USER/guru-cli_backup.rc"
 declare -g backup_config="$GURU_CFG/$GURU_USER/backup.cfg"
 declare -g backup_log_file="$GURU_DATA/backup/backup.log"
 declare -g backup_schedule="direct"
-declare -g backup_running="/tmp/backup.running"
+declare -g backup_running="/tmp/$USER/backup.running"
 
 ! [[ -d $backup_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
 
@@ -1036,7 +1036,7 @@ backup.now () {
 
             # check if honeypot file exists
             if ssh $from_user@$from_domain "test -e $honeypot_file" ; then
-                [[ -f /tmp/honeypot.txt ]] && rm -f /tmp/honeypot.txt
+                [[ -f /tmp/$USER/honeypot.txt ]] && rm -f /tmp/$USER/honeypot.txt
                 gr.msg -v2 -n "getting honeypot file.. "
                 # get honeypot file
 
@@ -1050,10 +1050,10 @@ backup.now () {
         fi
 
     # check is text in honeypot.txt file changed
-    if [[ -f /tmp/honeypot.txt ]] ; then
+    if [[ -f /tmp/$USER/honeypot.txt ]] ; then
             gr.msg -v2 -n "checking honeypot file.. "
-            local contain=($(cat /tmp/honeypot.txt))
-            rm -f /tmp/honeypot.txt
+            local contain=($(cat /tmp/$USER/honeypot.txt))
+            rm -f /tmp/$USER/honeypot.txt
 
             gr.msg -n -v3 "expecting 'honeypot' got '${contain[3]}' "
 
