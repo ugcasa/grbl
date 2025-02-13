@@ -1,18 +1,20 @@
-# GRBL - easy to use terminal interface for Debian/Ubuntu based Linux.
+# GRBL - easy to use terminal tool kit for Debian/Ubuntu Linux.
 
-Welcome to the **GRBL** project! This project aims to simplify and streamline various terminal commands and operations through a modular, user-friendly structure. Below is an overview of the functionalities provided by **GRBL**:
+Welcome to the **GRBL** project! This project aims to simplify and streamline various terminal commands and operations through a modular, user-friendly structure. 
 
 ![Flowchart](flowchart.png)
 *Basic principal who GRBL works*
 
+Below is an overview of the functionalities provided by **GRBL**:
+
 ## Features
 
 - **Simplified Terminal Commands**: Streamline and rationalize terminal commands using `core.sh`.
-- **Modular Structure**: Each module is designed to run independently but can leverage `guru-cli` environmental variables for enhanced functionality.
+- **Modular Structure**: Each module is designed to run independently but can leverage grbl environmental variables for enhanced functionality.
 - **User-Level Daemon**: Control timed operations without needing root privileges using `daemon.sh`.
 - **File Sharing**: Utilize SSHFS for secure file sharing within a local network with `mount.sh`.
 - **Key and Configuration Management**: Store critical personal keys, tokens, and configurations for future projects, both locally and on the server.
-- **Backup Solutions**: Take backups of files, configurations, and containerd services from the server to a local encrypted hard drive using `backup.sh`.
+- **Backup Solutions**: Take backups of files, configurations, and container services from the server to a local encrypted hard drive using `backup.sh`.
 
 ### Network and Communication
 
@@ -73,6 +75,40 @@ To get started with **GRBL**, follow these steps:
 
 Contributions are welcome! Please open an issue or submit a pull request.
 
-## Lisence
+## License
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+
+
+## Flow chart (mermaind test)
+
+```mermaid
+
+flowchart TD
+    Macros("Macros & Templates"):::block
+    Install("Installers & Versioning"):::block
+    User("User"):::block
+    CLI("CLI Interface"):::block
+    Core("Guru Core"):::block
+    Config("Configuration"):::block
+    Modules("Module Framework"):::block
+    Daemon("Daemon Service"):::block
+    External("External Services"):::block
+
+    %% Command invocation flow
+    User -->|"Command"| CLI
+    CLI -->|"SendsCommand"| Core
+    Core -->|"DispatchesModules"| Modules
+    Core -->|"TriggersService"| Daemon
+
+    %% Configuration propagation
+    Config -->|"ProvidesConfig"| Core
+    Config -->|"ProvidesConfig"| Modules
+
+    %% External integration from modules
+    Modules -->|"Calls"| External
+
+        %% Styles
+    classDef block fill:#FFFFFF,stroke:#333,stroke-width:2px;
+
+ ```
