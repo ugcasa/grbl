@@ -1,7 +1,7 @@
 # don't run, let teset.sh handle shit
-# guru toolkit config.sh tester
+# grbl toolkit config.sh tester
 
-source $GURU_BIN/config.sh
+source $GRBL_BIN/config.sh
 
 config.test() {
     local test_case="$1"

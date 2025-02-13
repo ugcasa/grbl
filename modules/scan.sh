@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru shell scanner wrappers
+# grbl shell scanner wrappers
 
 # TBD get this working again.. epson says that sthey do not support device anymore on linux, mfs.
 
@@ -14,16 +14,16 @@ scan.main () {
 
 
 scan.help () {
-    gr.msg -v1 -c white "guru-client scan help "
+    gr.msg -v1 -c white "grbl scan help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL scan [receipt|invoice|install] "
+    gr.msg -v0 "usage:    $GRBL_CALL scan [receipt|invoice|install] "
     gr.msg -v2
     gr.msg -v1 "receipt   scan receipt size grayscale                 "
     gr.msg -v1 "invoice   scan receipt A4 size optimized grayscale    "
     gr.msg -v1 "install   install Epson DS30 driver and applications  "
     gr.msg -v1 "fix       to to fix access limitation problem         "
     gr.msg -v1
-    gr.msg -v1 "example:  $GURU_CALL scan receipt motonet-tools "
+    gr.msg -v1 "example:  $GRBL_CALL scan receipt motonet-tools "
 }
 
 
@@ -110,7 +110,7 @@ scan.install () {
                 ;;
 
             *)
-                gr.msg -c yellow "unknown distro '$$ID'. pls refer $GURU_BIN/install.sh function scan.install :~50"
+                gr.msg -c yellow "unknown distro '$$ID'. pls refer $GRBL_BIN/install.sh function scan.install :~50"
                 return 106
                 ;;
         esac
@@ -198,12 +198,12 @@ scan.fix () {
 
 scan.receipt() {
     # scan receipt size archive material
-    local _temp=/tmp/$USER/guru
+    local _temp=/tmp/$USER/grbl
     local _name="scan"
     local _stamp=$(date +%s)
-    local _target_folder="$GURU_LOCAL_ACCOUNTING/$(date +%Y)/$GURU_LOCAL_RECEIPTS"
+    local _target_folder="$GRBL_LOCAL_ACCOUNTING/$(date +%Y)/$GRBL_LOCAL_RECEIPTS"
     [[ "$1" ]] && _name=$1 || read -p "_name for receipt: " _name
-    local _target_file=$_name-$(date -d now +$GURU_FORMAT_FILE_DATE).pdf
+    local _target_file=$_name-$(date -d now +$GRBL_FORMAT_FILE_DATE).pdf
 
     # scan file
     gr.msg "place the receipt to scanner feeder and press push-button when green LED lights up"

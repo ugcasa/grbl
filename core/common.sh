@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-client common functions
+# grbl common functions
 # collection of functions be sourced every time module needs it
 # casa@ujo.guru 2019 - 2023
 
@@ -8,7 +8,7 @@ __config=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 gr.dump () {
 # dump environmental status to file
     # TBD revisit this
-    local _dump=/tmp/$USER/guru_dump
+    local _dump=/tmp/$USER/GRBL_dump
     echo "core dumped to $_dump"
     set > "$_dump"
     echo "environment  lines $(set | wc | xargs)"  >> "$_dump"
@@ -23,10 +23,10 @@ gr.ts () {
     local _timestamp
     case $1 in
         epoch|-e) _timestamp="$(date -d now +"%s")" ;;
-         file|-f) _timestamp="$(date -d now +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_FILE_TIME)" ;;
-        human|-h) _timestamp=$(date -d now +"$GURU_FORMAT_DATE $GURU_FORMAT_TIME") ;;
-         nice|-n) _timestamp=$(date -d now +"$GURU_FORMAT_NICE") ;;
-               *) _timestamp="$(date -d now +$GURU_FORMAT_TIMESTAMP)" ;;
+         file|-f) _timestamp="$(date -d now +$GRBL_FORMAT_FILE_DATE-$GRBL_FORMAT_FILE_TIME)" ;;
+        human|-h) _timestamp=$(date -d now +"$GRBL_FORMAT_DATE $GRBL_FORMAT_TIME") ;;
+         nice|-n) _timestamp=$(date -d now +"$GRBL_FORMAT_NICE") ;;
+               *) _timestamp="$(date -d now +$GRBL_FORMAT_TIMESTAMP)" ;;
     esac
     printf "$_timestamp"
 }
@@ -37,15 +37,15 @@ gr.poll () {
 
     local _to_find="$1"
     local i=0
-    #source "$HOME/.gururc"
+    #source "$HOME/.grblrc"
 
-    for val in ${GURU_DAEMON_POLL_ORDER[@]} ; do
+    for val in ${GRBL_DAEMON_POLL_ORDER[@]} ; do
         ((i++))
         #echo "$i: $val"
         if [[ "$val" == "$_to_find" ]] ; then break ; fi
     done
 
-    if [[ "$i" -gt "${#GURU_DAEMON_POLL_ORDER[@]}" ]] ; then
+    if [[ "$i" -gt "${#GRBL_DAEMON_POLL_ORDER[@]}" ]] ; then
         echo "NA"
         return 1
     else
@@ -66,17 +66,17 @@ gr.source () {
 
     # # use ram disk as a temp to avoid ssd wear out and might be little faster?
     # if df -T | grep /dev/shm >/dev/null; then
-    #     gtemp=/dev/shm/guru
+    #     gtemp=/dev/shm/grbl
     # else
-    #     gtemp=/tmp/$USER/guru
+    #     gtemp=/tmp/$USER/grbl
     # fi
 
     # if ! [[ -d $gtemp ]] ; then
     #     mkdir -p $gtemp
     # fi
-    # echo "script: $GURU_BIN/$file, temp_folder: $gtemp"
+    # echo "script: $GRBL_BIN/$file, temp_folder: $gtemp"
     # for function in ${functions[@]} ; do
-    #     sed -n "/$function ()/,/$'\n'    }/p" $GURU_BIN/$file >> $gtemp/functions.sh
+    #     sed -n "/$function ()/,/$'\n'    }/p" $GRBL_BIN/$file >> $gtemp/functions.sh
     # done
 
     # source $gtemp/functions.sh
@@ -85,12 +85,12 @@ gr.source () {
 
 gr.ok () {
 # printout ok sing defined in system.cfg chapter [sing]
-    gr.msg -c green "$GURU_SING_OK"
+    gr.msg -c green "$GRBL_SING_OK"
 }
 
 gr.error () {
 # printout ok sing defined in system.cfg chapter [sing]
-    gr.msg -c yellow "$GURU_SING_ERROR"
+    gr.msg -c yellow "$GRBL_SING_ERROR"
 }
 
 
@@ -125,7 +125,7 @@ gr.msg () {
     while true ; do
         case "$1" in
             #-r ) _repeat="$2 "                              ; shift ;;
-            -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
+            -t ) _timestamp="$(date +$GRBL_FORMAT_TIME) "   ; shift ;;
             -l ) _logging=true                              ; shift ;;
             -s ) _say=true                                  ; shift ;;
             -h ) _color_code="$C_HEADER"                    ; shift ;;
@@ -140,7 +140,7 @@ gr.msg () {
             -V ) verbose_limiter=$2                         ; shift 2 ;;
             -v ) verbose_trigger=$2                         ; shift 2 ;;
             -m ) _mqtt_topic="$2"                           ; shift 2 ;;
-            -q ) _mqtt_topic="$GURU_HOSTNAME/$2"            ; shift 2 ;;
+            -q ) _mqtt_topic="$GRBL_HOSTNAME/$2"            ; shift 2 ;;
             -k ) _indicator_key=$2                          ; shift 2 ;;
             -C ) _color=$2
                  _color_only=true
@@ -171,7 +171,7 @@ gr.msg () {
     [[ $_exit -gt 0 ]] && _message="$_exit: $_message"
 
     # -k) set corsair key is '-k <key>' used
-    if [[ $_indicator_key ]] && [[ $GURU_CORSAIR_ENABLED ]]; then
+    if [[ $_indicator_key ]] && [[ $GRBL_CORSAIR_ENABLED ]]; then
         # TBD: check corsair (or other kb led) module installed
         #      now in corsair is part of core what it should not to be
         source corsair.sh
@@ -183,7 +183,7 @@ gr.msg () {
     fi
 
     # -m) publish to mqtt if '-q|-m <topic>' used
-    if [[ $_mqtt_topic ]] && [[ $GURU_MQTT_ENABLED ]]; then
+    if [[ $_mqtt_topic ]] && [[ $GRBL_MQTT_ENABLED ]]; then
         source mqtt.sh
         # mqtt.enabled || return 0
         mqtt.pub "$_mqtt_topic" "$_message"
@@ -197,13 +197,13 @@ gr.msg () {
 
     # -v) given verbose level is lower than trigger level, do not print
     # "print only if higher verbose level than this"
-    if [[ $verbose_trigger -gt $GURU_VERBOSE ]]; then
+    if [[ $verbose_trigger -gt $GRBL_VERBOSE ]]; then
         return 0
     fi
 
     # -V) given verbose level is higher than high limiter, do not print
     # "do not print after this verbose level"
-    if [[ $verbose_limiter -le $GURU_VERBOSE ]]; then
+    if [[ $verbose_limiter -le $GRBL_VERBOSE ]]; then
         return 0
     fi
 
@@ -214,7 +214,7 @@ gr.msg () {
 
     # -e) error messages to stderr
     if [[ $_error ]] ; then
-        if [[ $GURU_COLOR ]] && ! [[ $GURU_VERBOSE -eq 0 ]]; then
+        if [[ $GRBL_COLOR ]] && ! [[ $GRBL_VERBOSE -eq 0 ]]; then
             case $_error in
                 0) _c_var="C_WHITE" ;;
                 1) _c_var="C_YELLOW" ;;
@@ -232,14 +232,14 @@ gr.msg () {
     fi
 
     # -c) color printout
-    if [[ $GURU_COLOR ]] && ! [[ $GURU_VERBOSE -eq 0 ]]; then
+    if [[ $GRBL_COLOR ]] && ! [[ $GRBL_VERBOSE -eq 0 ]]; then
         printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_column_width}"
     else
         # *) normal printout without formatting
         printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_column_width}"
     fi
 
-    if [[ $_say ]] && [[ $GURU_SOUND_ENABLED ]] && [[ $GURU_SPEECH_ENABLED ]] || [[ $GURU_SPEAK ]]; then
+    if [[ $_say ]] && [[ $GRBL_SOUND_ENABLED ]] && [[ $GRBL_SPEECH_ENABLED ]] || [[ $GRBL_SPEAK ]]; then
 
         # remove colors and stuff
         local say_message=$(echo ${_message[@]} | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' )
@@ -248,8 +248,8 @@ gr.msg () {
         # add pauses if more spaces than two.. not working
         #say_message="$(echo $say_message | sed -r 's/ {2,}/, /g')"
 
-        #[[ $GURU_VERBOSE -gt 0 ]] && printf "%s\n" "$_message"
-        [[ $GURU_DEBUG ]] || espeak "${say_message//-}"  #-p $GURU_SPEAK_PITCH -s $GURU_SPEAK_SPEED -v $GURU_SPEAK_LANG "$_message"
+        #[[ $GRBL_VERBOSE -gt 0 ]] && printf "%s\n" "$_message"
+        [[ $GRBL_DEBUG ]] || espeak "${say_message//-}"  #-p $GRBL_SPEAK_PITCH -s $GRBL_SPEAK_SPEED -v $GRBL_SPEAK_LANG "$_message"
         #return 0
     fi
 
@@ -282,7 +282,7 @@ gr.blink () {
     local mood="panic"
     [[ $1 ]] && key=$1; shift
     [[ $1 ]] && mood=$1; shift
-    $GURU_CALL corsair indicate $mood $key
+    $GRBL_CALL corsair indicate $mood $key
 }
 
 gr.ind () {
@@ -301,7 +301,7 @@ gr.ind () {
 
     while true ; do
         case "$1" in
-            -t ) _timestamp="$(date +$GURU_FORMAT_TIME) "   ; shift ;;
+            -t ) _timestamp="$(date +$GRBL_FORMAT_TIME) "   ; shift ;;
             -m ) _message="$2 "                             ; shift 2 ;;
             -k ) _indicator_key=$2                          ; shift 2 ;;
             -c ) _color=$2                                  ; shift 2 ;;
@@ -323,7 +323,7 @@ gr.ind () {
         return 0
     fi
 
-    if [[ $GURU_CORSAIR_ENABLED ]] && [[ $_indicator_key ]] ; then
+    if [[ $GRBL_CORSAIR_ENABLED ]] && [[ $_indicator_key ]] ; then
         source corsair.sh
         corsair.main indicate $_status $_indicator_key
     fi
@@ -336,14 +336,14 @@ gr.ind () {
             gr.msg -v3 "$timestamp$_status: $_message"
         fi
 
-        if [[ $GURU_MQTT_ENABLED ]] && [[ $_mqtt_topic ]] ; then
+        if [[ $GRBL_MQTT_ENABLED ]] && [[ $_mqtt_topic ]] ; then
             source mqtt.sh
             #mqtt.pub $_mqtt_topic $_message
             mqtt.pub $_mqtt_topic "$timestamp$_status $_message"
         fi
     fi
 
-    if [[ $GURU_SOUND_ENABLED ]] ; then
+    if [[ $GRBL_SOUND_ENABLED ]] ; then
 
         # TBD source sound.sh
         # TBD sound.main nnn
@@ -445,7 +445,7 @@ gr.ask () {
      fi
 
     # make y and n blink on keyboard
-    if [[ $GURU_CORSAIR_ENABLED ]] ; then
+    if [[ $GRBL_CORSAIR_ENABLED ]] ; then
         source corsair.sh
         corsair.indicate yes y 2>/dev/null >/dev/null
         sleep 0.75
@@ -462,7 +462,7 @@ gr.ask () {
     [[ $_read_it ]] && espeak "$_message" #& >/dev/null
 
     # colorize message
-    if [[ $GURU_COLOR ]]; then
+    if [[ $GRBL_COLOR ]]; then
         # highlight last word
         if [[ $_highlight ]]; then
             _highlight="${_message##* }"
@@ -474,7 +474,7 @@ gr.ask () {
     fi
 
     # ask the question
-    if [[ $GURU_FORCE ]] ; then
+    if [[ $GRBL_FORCE ]] ; then
         _answer=y
     else
         read $_options -n 1 -p "${_message} $_box" _answer
@@ -485,7 +485,7 @@ gr.ask () {
     _answer="${_answer:-$_def_answer}"
 
     # stop blinking the keys
-    if [[ $GURU_CORSAIR_ENABLED ]] ; then
+    if [[ $GRBL_CORSAIR_ENABLED ]] ; then
         corsair.blink_stop y
         corsair.blink_stop n
     fi
@@ -544,7 +544,7 @@ gr.varlist(){
 
     # if first argument is debug, print list only if debu mode is on
     if [[ ${input%% *} == "debug" ]]; then
-        [[ $GURU_DEBUG ]] || return 0
+        [[ $GRBL_DEBUG ]] || return 0
         _i=1
     fi
 
@@ -566,9 +566,9 @@ gr.installed () {
     local i=0
     local _to_find=$1
 
-    while [[ "$i" -lt "${#GURU_MODULES[@]}" ]] ; do
+    while [[ "$i" -lt "${#GRBL_MODULES[@]}" ]] ; do
 
-        if [[ "${GURU_MODULES[$i]}" == "$_to_find" ]] ; then
+        if [[ "${GRBL_MODULES[$i]}" == "$_to_find" ]] ; then
             return 0
         fi
         ((i++))
@@ -591,7 +591,7 @@ gr.presence () {
     source android.sh
     local _interv=5
 
-    gr.msg "checking $GURU_ANDROID_NAME wifi every $_interv seconds.."
+    gr.msg "checking $GRBL_ANDROID_NAME wifi every $_interv seconds.."
 
     while true ; do
 
@@ -604,9 +604,9 @@ gr.presence () {
         if android.connected ; then
 
             if [[ -f /tmp/$USER/hello.indicator ]] ; then
-                guru start
-                gr.ind available -m "$GURU_USER seems to be active"
-                guru mount
+                grbl start
+                gr.ind available -m "$GRBL_USER seems to be active"
+                grbl mount
                 rm /tmp/$USER/hello.indicator
             fi
 
@@ -614,12 +614,12 @@ gr.presence () {
             # me leaving
             if ! [[ -f /tmp/$USER/hello.indicator ]] ; then
                 touch /tmp/$USER/hello.indicator
-                gr.ind available -m "$GURU_USER has left the building"
-                guru unmount all
-                guru daemon stop
+                gr.ind available -m "$GRBL_USER has left the building"
+                grbl unmount all
+                grbl daemon stop
                 cinnamon-screensaver-command --lock
                 # sleep 10
-                # guru system suspend now
+                # grbl system suspend now
             fi
         fi
         sleep $_interv
@@ -639,7 +639,7 @@ gr.date () {
 # printout date in readable format
     local when="now"
     [[ $1 ]] && when="$@"
-    echo $(date -d "$when" +$GURU_FORMAT_DATE)
+    echo $(date -d "$when" +$GRBL_FORMAT_DATE)
 }
 
 
@@ -647,7 +647,7 @@ gr.time () {
 # printout time in readable format
     local when="now"
     [[ $1 ]] && when="$@"
-    echo $(date -d "$when" +$GURU_FORMAT_TIME)
+    echo $(date -d "$when" +$GRBL_FORMAT_TIME)
 }
 
 
@@ -655,7 +655,7 @@ gr.datestamp () {
 # printout date stamp
     local when="now"
     [[ $1 ]] && when="$@"
-    echo $(date -d "$when" +$GURU_FORMAT_FILE_DATE)
+    echo $(date -d "$when" +$GRBL_FORMAT_FILE_DATE)
 }
 
 
@@ -663,7 +663,7 @@ gr.timestamp () {
 # printout date
     local when="now"
     [[ $1 ]] && when="$@"
-    echo $(date -d "$when" +$GURU_FORMAT_FILE_TIME)
+    echo $(date -d "$when" +$GRBL_FORMAT_FILE_TIME)
 }
 
 
@@ -686,7 +686,7 @@ gr.debug2 () {
     local colors=(white fuchsia deep_pink hot_pink orchid dark_orchid dark_violet)
     # local colors=(white red dark_orange orange salmon moccasin)
     local words=(${@})
-    if [[ $GURU_DEBUG ]] ; then
+    if [[ $GRBL_DEBUG ]] ; then
         gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n >&2
         for (( i = 0; i < ${#words[@]}; i++ )); do
             [[ ${colors[$i]} ]] || colors[$i]=${colors[-1]}
@@ -699,7 +699,7 @@ gr.debug2 () {
 
 gr.debug () {
 # printout debug messages
-    if [[ $GURU_DEBUG ]] ; then
+    if [[ $GRBL_DEBUG ]] ; then
         gr.msg -d "${FUNCNAME[0]^^}: " >&2
         echo ${@} >&2
     fi
@@ -708,17 +708,17 @@ gr.debug () {
 
 gr.colors () {
 # printout available colors
-    export GURU_COLOR=true
-    export GURU_VERBOSE=2
+    export GRBL_COLOR=true
+    export GRBL_VERBOSE=2
 
     case $1 in
         "")
-            for color in ${GURU_COLOR_LIST[@]} ; do
+            for color in ${GRBL_COLOR_LIST[@]} ; do
                 gr.msg -n -c $color "$color "
             done
             ;;
         *)
-            for color in ${GURU_COLOR_LIST[@]} ; do
+            for color in ${GRBL_COLOR_LIST[@]} ; do
                 gr.msg -n -c $color "$1"
             done
 

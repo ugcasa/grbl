@@ -1,5 +1,5 @@
 #!/bin/bash module
-# guru-client yle media player configuration file
+# grbl yle media player configuration file
 
 [yle]
 enabled=true

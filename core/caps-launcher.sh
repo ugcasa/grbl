@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-cli caps-launcher
+# grbl caps-launcher
 
 source common.sh
 source corsair.sh
@@ -22,54 +22,54 @@ all="$key1$key2$key3"
 
 case $all in
     # stamps
-    sdd)    guru stamp datetime | timeout 0.5 xclip ;;
-    sd)     guru stamp time | timeout 0.5 xclip ;;
-    ds)     guru stamp date | timeout 0.5 xclip ;;
-    ws)     guru stamp weekplan | timeout 0.5 xclip ;;
-    ss)     guru stamp signature | timeout 0.5 xclip ;;
+    sdd)    grbl stamp datetime | timeout 0.5 xclip ;;
+    sd)     grbl stamp time | timeout 0.5 xclip ;;
+    ds)     grbl stamp date | timeout 0.5 xclip ;;
+    ws)     grbl stamp weekplan | timeout 0.5 xclip ;;
+    ss)     grbl stamp signature | timeout 0.5 xclip ;;
     # caps lock enabler
     ca)     os.capslock toggle ;;
     # timer controls
-    tt)     guru say "timer start"
-            guru timer start ;;
-    to)     guru say "timer stop"
-            guru timer stop ;;
-    tc)     guru say "timer canceled"
-            guru timer cancel ;;
+    tt)     grbl say "timer start"
+            grbl timer start ;;
+    to)     grbl say "timer stop"
+            grbl timer stop ;;
+    tc)     grbl say "timer canceled"
+            grbl timer cancel ;;
     # audio controls kill all audio and lights
     r*)     gnome-terminal --hide-menubar --geometry 100x26 --zoom 0.7 --hide-menubar --title \
-            "radio player" -- $GURU_BIN/guru radio player $key2$key3
+            "radio player" -- $GRBL_BIN/grbl radio player $key2$key3
             ;;
     # kill all audio and lights
-    as)     guru audio stop ;;
+    as)     grbl audio stop ;;
     ts)     printf "%s\n" "$(gr.ts -f)" | xclip -selection clipboard ;;
     tn)     printf "%s\n" "$(gr.ts -n)" | xclip -selection clipboard ;;
     # reserved for notes module
-    po)     guru audio pause other ;;
-    py)     guru audio pause yle ;;
-    pt)     guru audio pause youtube ;;
-    pu)     guru audio pause uutiset ;;
-    pa)     guru audio pause audio ;;
-    pp)     guru phone pair ;;
-    upp)    guru phone unpair ;;
-    pf)     guru phone find ;;
-    np)     guru audio np ;;
+    po)     grbl audio pause other ;;
+    py)     grbl audio pause yle ;;
+    pt)     grbl audio pause youtube ;;
+    pu)     grbl audio pause uutiset ;;
+    pa)     grbl audio pause audio ;;
+    pp)     grbl phone pair ;;
+    upp)    grbl phone unpair ;;
+    pf)     grbl phone find ;;
+    np)     grbl audio np ;;
     # note shortcuts
-    n)      guru note ;;
-    ni)     guru note idea ;;
-    nm)     guru note memo ;;
-    nw)     guru note write ;;
-    ny*)    guru note yesterday;;
-    nt*)    guru note tomorrow;;
+    n)      grbl note ;;
+    ni)     grbl note idea ;;
+    nm)     grbl note memo ;;
+    nw)     grbl note write ;;
+    ny*)    grbl note yesterday;;
+    nt*)    grbl note tomorrow;;
     # games
-    mm)     guru game start minecraft ;;
+    mm)     grbl game start minecraft ;;
     # project module
-    clo)    guru project close ;;
-    sto)    guru project stonks ;;
+    clo)    grbl project close ;;
+    sto)    grbl project stonks ;;
    # general skip and confirm
-    *$'\x1b'*)  guru flag rm ok ; guru flag set cancel ; mpv /tmp/$USER/cancel.wav ;;
-    *§*)   guru flag rm cancel ; guru flag set ok ; mpv /tmp/$USER/ok.wav ;;
-      #*)    guru say "no hit"
+    *$'\x1b'*)  grbl flag rm ok ; grbl flag set cancel ; mpv /tmp/$USER/cancel.wav ;;
+    *§*)   grbl flag rm cancel ; grbl flag set ok ; mpv /tmp/$USER/ok.wav ;;
+      #*)    grbl say "no hit"
 esac
 
-guru corsair reset caps
+grbl corsair reset caps

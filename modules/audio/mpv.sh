@@ -9,7 +9,7 @@ mpv.list () {
 # list variables of mpv
     gr.msg -v4 -c $__mpv_color "$__mpv [$LINENO] $FUNCNAME '$1'" >&2
     mpv --list-properties
-    # echo '{ "command": ["get_property", "playlist"] }' | socat - $GURU_AUDIO_MPV_SOCKET |jq '.data'
+    # echo '{ "command": ["get_property", "playlist"] }' | socat - $GRBL_AUDIO_MPV_SOCKET |jq '.data'
 }
 
 
@@ -21,13 +21,13 @@ mpv.get() {
     # pass the property as the first argument
 
     if [[ $player ]] ; then
-        gr.varlist "debug player key GURU_AUDIO_MPV_SOCKET-$player"
-        printf '{ "command": ["get_property", "%s"] }\n' "$key" | socat - "$GURU_AUDIO_MPV_SOCKET-$player" | jq -r ".data"
+        gr.varlist "debug player key GRBL_AUDIO_MPV_SOCKET-$player"
+        printf '{ "command": ["get_property", "%s"] }\n' "$key" | socat - "$GRBL_AUDIO_MPV_SOCKET-$player" | jq -r ".data"
         return 0
     fi
 
     local _return
-    local socket_list=($(ls $GURU_AUDIO_MPV_SOCKET*))
+    local socket_list=($(ls $GRBL_AUDIO_MPV_SOCKET*))
     for socket in ${socket_list[@]} ; do
             gr.varlist "debug get player key socket"
             _return=$(printf '{ "command": ["get_property", "%s"] }\n' "$key" | socat - "$socket" | jq -r ".data")
@@ -45,13 +45,13 @@ mpv.set () {
 
     if [[ $player ]] ; then
         gr.msg -v2 "set $player $key=$value "
-        gr.varlist "debug GURU_AUDIO_MPV_SOCKET-$player"
-        echo '{ "command": ["set_property", "'$key'", '$value'] }' | socat - $GURU_AUDIO_MPV_SOCKET-$player
+        gr.varlist "debug GRBL_AUDIO_MPV_SOCKET-$player"
+        echo '{ "command": ["set_property", "'$key'", '$value'] }' | socat - $GRBL_AUDIO_MPV_SOCKET-$player
         return 0
     fi
 
     local _return
-    local socket_list=($(ls $GURU_AUDIO_MPV_SOCKET*))
+    local socket_list=($(ls $GRBL_AUDIO_MPV_SOCKET*))
     for socket in ${socket_list[@]} ; do
         gr.msg -v2 "set player key value socket"
         gr.varlist "debug $socket"
@@ -65,7 +65,7 @@ mpv.stat() {
 # get mpv player status information
     gr.msg -v4 -c $__mpv_color "$__mpv [$LINENO] $FUNCNAME '$1'" >&2
     ps aufx | grep "mpv " | grep -v grep -q || return 1
-    [[ -S $GURU_AUDIO_MPV_SOCKET ]] || return 0
+    [[ -S $GRBL_AUDIO_MPV_SOCKET ]] || return 0
 
     position="$(mpv.get percent-pos $1 | cut -d'.' -f1)%"
     file="$(mpv.get filename $1)"

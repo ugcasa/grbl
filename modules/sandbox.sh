@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-cli sandbox
+# grbl sandbox
 # casa@ujo.guru 2023
 
 gr.kvt () {

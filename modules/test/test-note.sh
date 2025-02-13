@@ -1,8 +1,8 @@
 # don't run, let teset.sh handle shit
-# guru toolkit note tester
+# grbl toolkit note tester
 
-source $GURU_BIN/note.sh
-source $GURU_BIN/mount.sh
+source $GRBL_BIN/note.sh
+source $GRBL_BIN/mount.sh
 
 test_note=20200518
 exist_note=20200517
@@ -47,7 +47,7 @@ note.test_online() {
 
 note.test_list () {
     printf "note list test.. "
-    local _should_contain=$(date -d $exist_note +$GURU_FORMAT_FILE_DATE)
+    local _should_contain=$(date -d $exist_note +$GRBL_FORMAT_FILE_DATE)
     echo $_should_contain
     if note.check $_should_contain ; then
       gr.msg -c green "passed" ; return 0
@@ -60,12 +60,12 @@ note.test_list () {
 note.test_check () {
     local _err=("$0")
 
-    printf "date %s (exist) " "$(date -d $exist_note +$GURU_FORMAT_FILE_DATE)"
+    printf "date %s (exist) " "$(date -d $exist_note +$GRBL_FORMAT_FILE_DATE)"
     if ! note.main check $exist_note ; then
             _err=("${_err[@]}" "100")
         fi
 
-    printf "date %s (non exist) " "$(date -d $nonexist_note +$GURU_FORMAT_FILE_DATE)"
+    printf "date %s (non exist) " "$(date -d $nonexist_note +$GRBL_FORMAT_FILE_DATE)"
     if note.main check $nonexist_note ; then
             _err=("${_err[@]}" "101")
         fi
@@ -88,7 +88,7 @@ note.test_add () {
 
 note.test_open () {
     printf "opening note %s.. " $test_note
-    export GURU_PREFERRED_EDITOR="cat"
+    export GRBL_PREFERRED_EDITOR="cat"
     if note.open $test_note | grep "18.5.2020" >/dev/null ; then
           gr.msg -c green "passed"
           return 0

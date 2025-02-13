@@ -1,34 +1,34 @@
 #!/bin/bash
 
-## guru-client place for aliases
-# GURU_* environmental values are in available.
+## grbl place for aliases
+# GRBL_* environmental values are in available.
 
 # examples:
-# alias work='guru timer start'
-# alias lunch='guru timer end'
+# alias work='grbl timer start'
+# alias lunch='grbl timer end'
 
-alias $GURU_SYSTEM_ALIAS="$GURU_CALL"
-alias tube="$GURU_CALL youtube"
-alias tubes="$GURU_CALL youtube search"
-alias stopwatch="$GURU_CALL timer stopwatch"
-alias countdown="$GURU_CALL timer countdown"
-alias vartti="$GURU_CALL timer countdown 15 m"
-alias puolituntia="$GURU_CALL timer countdown 30 m"
-alias tunti="$GURU_CALL timer countdown 60 m"
+alias $GRBL_SYSTEM_ALIAS="$GRBL_CALL"
+alias tube="$GRBL_CALL youtube"
+alias tubes="$GRBL_CALL youtube search"
+alias stopwatch="$GRBL_CALL timer stopwatch"
+alias countdown="$GRBL_CALL timer countdown"
+alias vartti="$GRBL_CALL timer countdown 15 m"
+alias puolituntia="$GRBL_CALL timer countdown 30 m"
+alias tunti="$GRBL_CALL timer countdown 60 m"
 
 
 ## place for simple functions used as aliases
-# freedom from 'guru' or 'gr.' prefixes
+# freedom from 'grbl' or 'gr.' prefixes
 
 google () {
     # open google search in browser, query as argument
     local url=https://www.google.com/search?q="$(sed 's/ /%20/g' <<< ${@})"
-    case $GURU_PREFERRED_BROWSER in
+    case $GRBL_PREFERRED_BROWSER in
         firefox|chromium)
-            $GURU_PREFERRED_BROWSER --new-window $url
+            $GRBL_PREFERRED_BROWSER --new-window $url
             ;;
         lynx|curl|wget)
-            $GURU_PREFERRED_BROWSER $url
+            $GRBL_PREFERRED_BROWSER $url
             ;;
         *)
             gr.msg -c -v2 -c yellow "non supported browser, here's link: "
@@ -39,7 +39,7 @@ google () {
 
 
 backup () {
-	guru backup daily
+	grbl backup daily
 }
 
 
@@ -47,16 +47,16 @@ play () {
 
     case $1 in
             perttu)
-                guru audio play list perttu
+                grbl audio play list perttu
             ;;
             pasila)
-                guru audio play list pasila
+                grbl audio play list pasila
             ;;
             "")
-                guru audio play list liimatta
+                grbl audio play list liimatta
             ;;
             *)
-                guru audio play list $@
+                grbl audio play list $@
         esac
 
 }
@@ -66,16 +66,16 @@ listen () {
 
     case $1 in
             rock)
-                guru audio listen rock
+                grbl audio listen rock
             ;;
             puhe)
-                guru audio listen yle puhe
+                grbl audio listen yle puhe
             ;;
             "")
-                guru audio listen yle puhe
+                grbl audio listen yle puhe
             ;;
             *)
-                guru audio listen $@
+                grbl audio listen $@
         esac
 }
 

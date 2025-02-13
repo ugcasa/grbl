@@ -1,7 +1,7 @@
 #!/bin/bash
-# automatically generated tester for guru-client mqtt.sh Sun 01 Aug 2021 02:46:03 PM EEST casa@ujo.guru 2020
+# automatically generated tester for grbl mqtt.sh Sun 01 Aug 2021 02:46:03 PM EEST casa@ujo.guru 2020
 
-source $GURU_BIN/common.sh
+source $GRBL_BIN/common.sh
 source ../../modules/mqtt.sh 
 
 ## TODO add test initial conditions here
@@ -286,8 +286,8 @@ mqtt.test_remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then 
-    source "$GURU_RC" 
-    GURU_VERBOSE=2
+    source "$GRBL_RC"
+    GRBL_VERBOSE=2
     mqtt.test $@
 fi
 

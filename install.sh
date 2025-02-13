@@ -1,28 +1,28 @@
 #!/bin/bash
-# installer for guru-client. ujo.guru casa@ujo.guru 2017-2024
+# installer for grbl. ujo.guru casa@ujo.guru 2017-2024
 
 modules_to_install=(onedrive parental phone ai android audio backup cal conda convert corsair display dokuwiki fingrid game mqtt note place print program project radio say scan ssh stamp tag telegram timer tmux tor trans tunnel vol vpn yle youtube)
 code_modules=(cheatsheet config counter daemon flag help install keyboard mount net os prompt system uninstall unmount user )
 
-[[ -f $HOME/.gururc ]] && installed=true || installed=
+[[ -f $HOME/.grblrc ]] && installed=true || installed=
 TARGET_BIN="$HOME/bin"
-TARGET_CFG="$HOME/.config/guru"
+TARGET_CFG="$HOME/.config/grbl"
 bash_rc="$HOME/.bashrc"
-core_rc="$HOME/.gururc"    
-backup_rc="$HOME/.bashrc.backup-by-guru"
+core_rc="$HOME/.grblrc"
+backup_rc="$HOME/.bashrc.backup-by-grbl"
 
-export GURU_CALL="guru"
-export GURU_USER="$USER"
-export GURU_BIN="$TARGET_BIN"
-export GURU_CORE_FOLDER="`pwd`/core"
-export GURU_CFG="$HOME/.config/guru"
+export GRBL_CALL="grbl"
+export GRBL_USER="$USER"
+export GRBL_BIN="$TARGET_BIN"
+export GRBL_CORE_FOLDER="`pwd`/core"
+export GRBL_CFG="$HOME/.config/grbl"
 
-source $GURU_CORE_FOLDER/common.sh
+source $GRBL_CORE_FOLDER/common.sh
 
 # check if colors possible
 if echo "$TERM" | grep "256" >/dev/null ; then
     if echo "$COLORTERM" | grep "true" >/dev/null ; then
-        GURU_FLAG_COLOR=true
+        GRBL_FLAG_COLOR=true
             # set only needed colors
             C_NORMAL='\033[0m'
             C_GRAY='\033[38;2;169;169;169m'
@@ -34,7 +34,7 @@ if echo "$TERM" | grep "256" >/dev/null ; then
             C_LIGHT_BLUE='\033[38;2;173;216;230m'
             C_WHITE='\033[38;2;255;255;255m'
     fi
-    export GURU_COLOR=true
+    export GRBL_COLOR=true
 fi
 
 install.main () {
@@ -70,7 +70,7 @@ install.main () {
     install.modules && check.modules || gr.msg -x 170 "error when installing modules"
 
     # Step 8) set up launcher
-    ln -f -s "$TARGET_BIN/core.sh" "$TARGET_BIN/$GURU_CALL" || gr.msg -x 180 "core linking error"
+    ln -f -s "$TARGET_BIN/core.sh" "$TARGET_BIN/$GRBL_CALL" || gr.msg -x 180 "core linking error"
 
     # Step 9) save statistics
     echo "${code_modules[@]}" > "$TARGET_CFG/installed.core"
@@ -82,7 +82,7 @@ install.main () {
     install.config || gr.msg -x 180 "user configuration error"
 
     # Step 11) printout pass and statistics if verbose set
-    gr.msg -c white "guru-cli v$($TARGET_BIN/core.sh version) installed"
+    gr.msg -c white "grbl v$($TARGET_BIN/core.sh version) installed"
     gr.msg -v1 -c light_blue "installed ${#installed_core[@]} core modules"
     gr.msg -v2 -c dark_grey "${installed_core[@]}"
     gr.msg -v1 -c light_blue "installed ${#installed_modules[@]} modules"
@@ -105,7 +105,7 @@ install.main () {
 }
 
 install.help () {
-    gr.msg -c white "guru-client install help "
+    gr.msg -c white "grbl install help "
     gr.msg
     gr.msg "usage:    ./install.sh -f|-r|-d|-v|-V|-h|-p [desktop|laptop|server|phone] |-u <user>"
     gr.msg
@@ -125,7 +125,7 @@ install.help () {
 
 install.arguments () {
 # Process flags and arguments
-    export GURU_VERBOSE=0
+    export GRBL_VERBOSE=0
 
     TEMP=`getopt --long -o "dfcrhlsv:u:p:" "$@"`
     eval set -- "$TEMP"
@@ -145,9 +145,9 @@ install.arguments () {
                 shift ;;
             -l) export LIGTH_INSTALL=true
                 shift ;;
-            -v) export GURU_VERBOSE=$2
+            -v) export GRBL_VERBOSE=$2
                 shift 2 ;;
-            -u) export GURU_USER=$2
+            -u) export GRBL_USER=$2
                 shift 2 ;;
              *) break
         esac
@@ -186,7 +186,7 @@ install.copy () {
 install.check () {
 # Check installation, reinstall if -f or user input
     gr.msg -v1 "checking current installation.. "
-    if grep -q "gururc" "$bash_rc" ; then
+    if grep -q "grblrc" "$bash_rc" ; then
         [[ $force_overwrite ]] && answer="y" ||read -p "already installed, force re-install [y/n] : " answer
 
         if ! [[ "$answer" == "y" ]]; then
@@ -216,14 +216,14 @@ install.check () {
 }
 
 install.rcfiles () {
-# take .bashrc backup and make .gururc 
+# take .bashrc backup and make .grblrc
     gr.msg -n -v1 "setting rcfiles "
     
     # make a backup of original .bashrc only if installed first time
     [[ -f "$backup_rc" ]] || cp -f "$bash_rc" "$backup_rc"
 
-    if ! grep -q ".gururc" "$bash_rc" >/dev/null ; then
-        printf "# guru-client launcher to bashrc \n\nif [[ -f ~/.gururc ]] ; then \n    source ~/.gururc\nfi\n" >>"$bash_rc"
+    if ! grep -q ".grblrc" "$bash_rc" >/dev/null ; then
+        printf "# grbl launcher to bashrc \n\nif [[ -f ~/.grblrc ]] ; then \n    source ~/.grblrc\nfi\n" >>"$bash_rc"
     fi
 
     installed_files+=("$backup_rc")
@@ -237,7 +237,7 @@ check.rcfiles () {
     gr.msg -n -v1 "checking rcfiles " ; gr.msg -v2
 
     gr.msg -n -v1 -V2 -c grey "." ; gr.msg -v2 -n -c grey "$bash_rc "
-    if grep -q "gururc" "$bash_rc" ; then
+    if grep -q "grblrc" "$bash_rc" ; then
         modified_files=(${modified_files[@]} "$bash_rc")
         gr.msg  -v2 -c green "ok"
     else
@@ -263,8 +263,8 @@ install.folders () {
     gr.msg -n -v1 -V2 -c grey "." ; gr.msg -v2 -c grey "$TARGET_BIN"
 
     # personal configurations
-    [[ -d "$TARGET_CFG/$GURU_USER" ]] || mkdir -p "$TARGET_CFG/$GURU_USER"
-    gr.msg -n -v1 -V2 -c grey "." ; gr.msg -v2 -c grey "$TARGET_CFG/$GURU_USER"
+    [[ -d "$TARGET_CFG/$GRBL_USER" ]] || mkdir -p "$TARGET_CFG/$GRBL_USER"
+    gr.msg -n -v1 -V2 -c grey "." ; gr.msg -v2 -c grey "$TARGET_CFG/$GRBL_USER"
 
     gr.msg -V2 -v1 -c green " done"
     return 0
@@ -282,8 +282,8 @@ check.folders () {
         fi
 
 
-    gr.msg -n -v1 -V2 -c grey "." ; gr.msg -n -v2 -c grey "$TARGET_CFG/$GURU_USER"
-    if [[ -d "$TARGET_CFG/$GURU_USER" ]] ; then
+    gr.msg -n -v1 -V2 -c grey "." ; gr.msg -n -v2 -c grey "$TARGET_CFG/$GRBL_USER"
+    if [[ -d "$TARGET_CFG/$GRBL_USER" ]] ; then
 
             gr.msg  -v2 -c green " ok"
 
@@ -448,22 +448,22 @@ check.modules () {
 install.config () {
 # copy default config files. Does not overwrite user settings 
 
-    if ! [[ -f "$TARGET_CFG/$GURU_USER/user.cfg" ]] ; then
+    if ! [[ -f "$TARGET_CFG/$GRBL_USER/user.cfg" ]] ; then
          gr.msg -c yellow "user specific configuration not found, using default.."
-         cp -f $TARGET_CFG/user-default.cfg "$TARGET_CFG/$GURU_USER/user.cfg" \
+         cp -f $TARGET_CFG/user-default.cfg "$TARGET_CFG/$GRBL_USER/user.cfg" \
             || gr.msg -c red -x 181 "default user configuration failed"
     fi
 
     # export default configuration if -c were used
     if [[ $configure_after_install ]] ; then
-        gr.msg -c white "configuring $GURU_USER.."
+        gr.msg -c white "configuring $GRBL_USER.."
 
-        source $GURU_CORE_FOLDER/config.sh
-        config.export "$GURU_USER" || gr.msg -c red "user config export error"
+        source $GRBL_CORE_FOLDER/config.sh
+        config.export "$GRBL_USER" || gr.msg -c red "user config export error"
         source "$core_rc" || gr.msg -c red "$core_rc error"
 
         gr.msg -n -v1 "setting keyboard shortcuts "
-        source $GURU_CORE_FOLDER/keyboard.sh
+        source $GRBL_CORE_FOLDER/keyboard.sh
         keyboard.main add all || gr.msg -c yellow "error by setting keyboard shortcuts"
         installed_files+=($TARGET_CFG/kbbind.backup.cfg )
     else

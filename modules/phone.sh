@@ -1,12 +1,12 @@
 #!/bin/bash
-# phone tools for guru-client casa@ujo.guru 2017-2022
+# phone tools for grbl casa@ujo.guru 2017-2022
 source mount.sh
 source config.sh
 
 __phone=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
-declare -g phone_rc=/tmp/$USER/guru-cli_phone.rc
-declare -g phone_config="$GURU_CFG/$GURU_USER/phone.cfg"
+declare -g phone_rc=/tmp/$USER/grbl_phone.rc
+declare -g phone_config="$GRBL_CFG/$GRBL_USER/phone.cfg"
 declare -g require=(kdeclient-cli)
 declare -g phone_name="unknown"
 
@@ -14,9 +14,9 @@ declare -g phone_name="unknown"
 phone.help () {
 # phones help printout
     gr.msg -v4 -c blue "$__phone [$LINENO] $FUNCNAME '$1'" >&2
-    gr.msg -v1 -c white "guru-client phone help "
+    gr.msg -v1 -c white "grbl phone help "
     gr.msg -v2
-    gr.msg -v0 "Usage:    $GURU_CALL phone ping|pair|check|config|install|uninstall|help "
+    gr.msg -v0 "Usage:    $GRBL_CALL phone ping|pair|check|config|install|uninstall|help "
     gr.msg -v1 -c white "Commands:"
     gr.msg -v2
     gr.msg -v1 " config         add firewall rule etc "
@@ -58,20 +58,20 @@ phone.main () {
 phone.config() {
 # config firewall to able kdeclient to connect to phone
 
-    if ! [[ $GURU_PHONE_PORT_RANGE ]] || ! [[ $GURU_PHONE_LAN_IP ]]; then
+    if ! [[ $GRBL_PHONE_PORT_RANGE ]] || ! [[ $GRBL_PHONE_LAN_IP ]]; then
         gr.msg -e1 "please set values to 'port_range' and 'lan_ip' to '$phone_config'"
         return 100
     fi
 
     # add firewall rule
     gr.msg -h "need sudo rights to check firewall status"
-    if  sudo ufw status | grep $GURU_PHONE_LAN_IP -q ; then
+    if  sudo ufw status | grep $GRBL_PHONE_LAN_IP -q ; then
         gr.msg -c green "phone rule already added"
         return 0
     else
         gr.msg -n "adding firewall rule to able kdeconnect to communicate with phone.. "
-        sudo ufw allow from $GURU_PHONE_LAN_IP to any port $GURU_PHONE_PORT_RANGE proto tcp >/dev/null && \
-        sudo ufw allow from $GURU_PHONE_LAN_IP to any port $GURU_PHONE_PORT_RANGE proto udp >/dev/null && \
+        sudo ufw allow from $GRBL_PHONE_LAN_IP to any port $GRBL_PHONE_PORT_RANGE proto tcp >/dev/null && \
+        sudo ufw allow from $GRBL_PHONE_LAN_IP to any port $GRBL_PHONE_PORT_RANGE proto udp >/dev/null && \
             gr.msg -c green "ok" || gr.msg -e2 "failed"
     fi
 }
@@ -101,11 +101,11 @@ phone.make_rc () {
 
     # check user configuration file exist
     if ! [[ -f $phone_config ]]; then
-        if [[ -f $GURU_CFG/phone.cfg ]]; then
+        if [[ -f $GRBL_CFG/phone.cfg ]]; then
             gr.msg -e1 "copying default configuration to $phone_config.."
-            cp $GURU_CFG/phone.cfg $phone_config
+            cp $GRBL_CFG/phone.cfg $phone_config
         else
-            gr.msg -e2 "no default configurations found from $GURU_CFG/phone.cfg, fatal"
+            gr.msg -e2 "no default configurations found from $GRBL_CFG/phone.cfg, fatal"
             return 100
         fi
     fi
@@ -149,7 +149,7 @@ phone.pair() {
     fi
 
     gr.msg -n "pairing.. "
-    kdeconnect-cli --pair -d $GURU_PHONE_ID 2>/dev/null >/dev/null
+    kdeconnect-cli --pair -d $GRBL_PHONE_ID 2>/dev/null >/dev/null
 
     gr.msg -nh "please accept.. "
     for (( i = 0; i < 25; i++ )); do
@@ -171,7 +171,7 @@ phone.pair() {
 phone.unpair() {
 
     gr.msg -n "un-pairing.. "
-    if kdeconnect-cli -n $GURU_PHONE_NAME --unpair 2>/dev/null >/dev/null; then
+    if kdeconnect-cli -n $GRBL_PHONE_NAME --unpair 2>/dev/null >/dev/null; then
         gr.msg -c green "ok"
         config.set $phone_rc phone_paired no
     else
@@ -191,12 +191,12 @@ phone.check () {
     if hash kdeconnect-cli 2>/dev/null ; then
         gr.msg -c green "ok"
     else
-        gr.msg -e1 "kdeconnect needed, please '$GURU_CALL phone install'"
+        gr.msg -e1 "kdeconnect needed, please '$GRBL_CALL phone install'"
         return 101
     fi
 
     # check basic configuration
-    if ! [[ $GURU_PHONE_PORT_RANGE ]] || ! [[ $GURU_PHONE_LAN_IP ]]; then
+    if ! [[ $GRBL_PHONE_PORT_RANGE ]] || ! [[ $GRBL_PHONE_LAN_IP ]]; then
         gr.msg -e1 "please set values to 'port_range' and 'lan_ip' to '$phone_config'"
         return 102
     fi
@@ -216,10 +216,10 @@ phone.check () {
     fi
 
     gr.msg -n "checking phone id.. "
-    if [[ $GURU_PHONE_ID ]]; then
-        gr.msg -c aqua "$GURU_PHONE_ID"
+    if [[ $GRBL_PHONE_ID ]]; then
+        gr.msg -c aqua "$GRBL_PHONE_ID"
     else
-        gr.msg -e2 "missing id '$GURU_PHONE_ID'"
+        gr.msg -e2 "missing id '$GRBL_PHONE_ID'"
         return 106
     fi
 
@@ -242,13 +242,13 @@ phone.check () {
 
 phone.ping () {
 
-    local _message="$GURU_CALL says hello!"
+    local _message="$GRBL_CALL says hello!"
     [[ $1 ]] && _message="$@"
 
-    [[ $GURU_PHONE_PAIRED ]] || phone.check_pair
+    [[ $GRBL_PHONE_PAIRED ]] || phone.check_pair
 
-    if [[ $GURU_PHONE_PAIRED == "yes" ]]; then
-        kdeconnect-cli -n $GURU_PHONE_NAME --ping-msg "$_message"
+    if [[ $GRBL_PHONE_PAIRED == "yes" ]]; then
+        kdeconnect-cli -n $GRBL_PHONE_NAME --ping-msg "$_message"
     else
         gr.msg -e1 "phone not paired"
     fi
@@ -256,10 +256,10 @@ phone.ping () {
 
 phone.ring () {
 
-    [[ $GURU_PHONE_PAIRED ]] || phone.check_pair
+    [[ $GRBL_PHONE_PAIRED ]] || phone.check_pair
 
-    if [[ $GURU_PHONE_PAIRED == "yes" ]]; then
-        kdeconnect-cli -n $GURU_PHONE_NAME --ring
+    if [[ $GRBL_PHONE_PAIRED == "yes" ]]; then
+        kdeconnect-cli -n $GRBL_PHONE_NAME --ring
     else
         gr.msg -e1 "phone not paired"
     fi
@@ -303,8 +303,8 @@ fi
 
 
 # metodi tallentaa pysyviä asetuksia listätty config.sh
-# if [[ $_id != $GURU_PHONE_ID ]] ; then
-#     gr.msg -e1 "phone id mismatch: $_id != $GURU_PHONE_ID"
+# if [[ $_id != $GRBL_PHONE_ID ]] ; then
+#     gr.msg -e1 "phone id mismatch: $_id != $GRBL_PHONE_ID"
 #     source config.sh
 #     if config.save $phone_config id $_id; then
 #         gr.msg -c dark_gray "setting updated"

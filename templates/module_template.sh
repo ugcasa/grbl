@@ -23,16 +23,16 @@
 #: - [ ] you might like to remove lines with '# DEBUG' comment
 #:
 #: if you run 'modulename.sh' alone without GRBL (code.sh), following variables will active coloring and set high level (remove comment #)
-GURU_COLOR=true # DEBUG
-#GURU_VERBOSE=2 # DEBUG
-#GURU_DEBUG=true # DEBUG
+GRBL_COLOR=true # DEBUG
+#GRBL_VERBOSE=2 # DEBUG
+#GRBL_DEBUG=true # DEBUG
 #: if like to highlight module debug output change '__modulename_color' variable to "deep_pink" or color you like
 #: list of colors can be listed by function call 'gr.colors' (if not working 'source common.sh' first)
 #:
 declare -g __modulename=$(readlink --canonicalize --no-newline $BASH_SOURCE) # DEBUG
 declare -g __modulename_color="light_blue" # DEBUG
 declare -g modulename_rc=/tmp/$USER/gtbl_modulename.rc
-declare -g modulename_config="$GURU_CFG/$GURU_USER/modulename.cfg"
+declare -g modulename_config="$GRBL_CFG/$GRBL_USER/modulename.cfg"
 declare -g modulename_require=()
 
 modulename.help () {
@@ -49,7 +49,7 @@ modulename.help () {
     #: header and usage section
     gr.msg -v1 "GRBL modulename help " -h
     gr.msg -v2
-    gr.msg -v0 "Usage:    $GURU_CALL modulename check|status|help|poll|start|end|install|uninstall" -c white
+    gr.msg -v0 "Usage:    $GRBL_CALL modulename check|status|help|poll|start|end|install|uninstall" -c white
     #: command section (mostly -v1)
     gr.msg -v2
     gr.msg -v1 "Commands:" -c white
@@ -57,7 +57,7 @@ modulename.help () {
     gr.msg -v1 " status             one line status information of module "
     gr.msg -v1 " install            install required software: ${modulename_require[@]}"
     gr.msg -v1 " uninstall          remove required software: ${modulename_require[@]}"
-    gr.msg -v1 " help               get more detailed help by increasing verbose level '$GURU_CALL modulename -v2' "
+    gr.msg -v1 " help               get more detailed help by increasing verbose level '$GRBL_CALL modulename -v2' "
     gr.msg -v2
     #: options section
     #: avoid using '-' character in first letter with gr.msg, otherwise it is read as gr.msg option'
@@ -78,8 +78,8 @@ modulename.help () {
     gr.msg -v3 " modulename.rc           lift environmental variables for module functions "
     gr.msg -v3 "                    check changes in user config and update RC file if needed "
     gr.msg -v3 "                    this enables fast user configuration and keep everything up to date "
-    gr.msg -v3 " modulename.make_rc      generate RC file to /tmp out of $GURU_CFG/$GURU_USER/modulename.cfg "
-    gr.msg -v3 "                    or if not exist $GURU_CFG/modulename.cfg"
+    gr.msg -v3 " modulename.make_rc      generate RC file to /tmp out of $GRBL_CFG/$GRBL_USER/modulename.cfg "
+    gr.msg -v3 "                    or if not exist $GRBL_CFG/modulename.cfg"
     gr.msg -v3 " modulename.install      install all needed software"
     gr.msg -v3 "                    stuff that can be installed by apt-get package manager are listed in  "
     gr.msg -v3 "                    'modulename_require' list variable, add them there. Other software that is not "
@@ -96,8 +96,8 @@ modulename.help () {
     gr.msg -v2
     #: some examples of usage
     gr.msg -v2 "Examples:" -c white
-    gr.msg -v2 "  $GURU_CALL modulename install   # install required software "
-    gr.msg -v2 "  $GURU_CALL modulename status    # print status of this module  "
+    gr.msg -v2 "  $GRBL_CALL modulename install   # install required software "
+    gr.msg -v2 "  $GRBL_CALL modulename status    # print status of this module  "
     gr.msg -v3 "  modulename.main status    # print status of modulename  "
     gr.msg -v2
 }
@@ -108,7 +108,7 @@ modulename.main () {
     #: it indicated file and function name, line number and bypassed arguments function gets
     #: by default this line is included to first line of all module functions
     #: following line is only for debug use and are often removed from published version
-    [[ $GURU_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GURU_DEBUG ]] && echo "'$@'" >&2 # DEBUG
+    [[ $GRBL_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # DEBUG
 
     #: remember to shift command out of argument list '$@' after reading it to variable
     local _first="$1"
@@ -134,25 +134,25 @@ modulename.main () {
 
 modulename.rc () {
 # source configurations (to be faster)
-    [[ $GURU_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GURU_DEBUG ]] && echo "'$@'" >&2 # DEBUG
+    [[ $GRBL_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # DEBUG
 
     # check is user config changed
     if [[ ! -f $modulename_rc ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/modulename.cfg) - $(stat -c %Y $modulename_rc) )) -gt 0 ]]
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/modulename.cfg) - $(stat -c %Y $modulename_rc) )) -gt 0 ]]
     # if module needs more than one config file here it can be done here
-    #     || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/modulename.cfg) - $(stat -c %Y $modulename_rc) )) -gt 0 ]] \
-    #     || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $modulename_rc) )) -gt 0 ]]
+    #     || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/modulename.cfg) - $(stat -c %Y $modulename_rc) )) -gt 0 ]] \
+    #     || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/mount.cfg) - $(stat -c %Y $modulename_rc) )) -gt 0 ]]
     then
         modulename.make_rc && \
             gr.msg -v2 -c dark_gray "$modulename_rc updated"
     fi
 
     #: user configuration variable names are generated following
-    #: GURU_ <- old name of environment variable og RGBL
+    #: GRBL_ <- old name of environment variable og RGBL
     #: MODULE_ that comes from modulename.cfg ḥeader '[modulename]' therefore module variables should be below it
     #: VARIABLE_NAME name of variable given in cfg 'variable_name=' under [modulename]
     #: value follows bash ways, use '' or "" for strings and () for lists
-    #: example: 'GURU_MQTT_ENABLED=true' tells mqtt module to be active, in config it is given in following way
+    #: example: 'GRBL_MQTT_ENABLED=true' tells mqtt module to be active, in config it is given in following way
     #: [mqtt]
     #: enabled=true
 
@@ -162,7 +162,7 @@ modulename.rc () {
 
 modulename.make_rc () {
 # make RC file out of config file
-    [[ $GURU_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GURU_DEBUG ]] && echo "'$@'" >&2 # DEBUG
+    [[ $GRBL_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # DEBUG
 
     # remove old RC file
     if [[ -f $modulename_rc ]] ; then
@@ -171,11 +171,11 @@ modulename.make_rc () {
 
     #: code module 'config.sh' is made to handle configurations
     source config.sh
-    config.make_rc "$GURU_CFG/$GURU_USER/modulename.cfg" $modulename_rc
+    config.make_rc "$GRBL_CFG/$GRBL_USER/modulename.cfg" $modulename_rc
 
     #: to add another module configuration to modulename RC change to following
-    # config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $modulename_rc
-    # config.make_rc "$GURU_CFG/$GURU_USER/modulename.cfg" $modulename_rc append
+    # config.make_rc "$GRBL_CFG/$GRBL_USER/mount.cfg" $modulename_rc
+    # config.make_rc "$GRBL_CFG/$GRBL_USER/modulename.cfg" $modulename_rc append
 
     # make RC executable
     chmod +x $modulename_rc
@@ -183,16 +183,16 @@ modulename.make_rc () {
 
 modulename.status () {
 # module status one liner
-    [[ $GURU_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GURU_DEBUG ]] && echo "'$@'" >&2 # DEBUG
+    [[ $GRBL_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # DEBUG
 
     # printout timestamp without newline
     gr.msg -t -n "${FUNCNAME[0]}: "
 
     # check modulename is enabled and printout status
-    if [[ $GURU_MODULENAME_ENABLED ]] ; then
-        gr.msg -n -v1 -c lime "enabled, " -k $GURU_MODULENAME_INDICATOR_KEY
+    if [[ $GRBL_MODULENAME_ENABLED ]] ; then
+        gr.msg -n -v1 -c lime "enabled, " -k $GRBL_MODULENAME_INDICATOR_KEY
     else
-        gr.msg -v1 -c black "disabled" -k $GURU_MODULENAME_INDICATOR_KEY
+        gr.msg -v1 -c black "disabled" -k $GRBL_MODULENAME_INDICATOR_KEY
         return 1
     fi
 
@@ -205,7 +205,7 @@ modulename.status () {
 
 modulename.install() {
 # install required software
-    [[ $GURU_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GURU_DEBUG ]] && echo "'$@'" >&2 # DEBUG
+    [[ $GRBL_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # DEBUG
 
     #: list of errors
     local _errors=()
@@ -230,7 +230,7 @@ modulename.install() {
 
 modulename.uninstall() {
 # uninstall required software
-    [[ $GURU_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GURU_DEBUG ]] && echo "'$@'" >&2 # DEBUG
+    [[ $GRBL_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # DEBUG
 
     #: list of errors
     local _errors=()
@@ -255,7 +255,7 @@ modulename.uninstall() {
 
 modulename.option() {
     # process module options
-    [[ $GURU_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GURU_DEBUG ]] && echo "'$@'" >&2 # DEBUG
+    [[ $GRBL_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # DEBUG
 
     local options=$(getopt -l "open;auto:;debug;verbose:" -o "doa:v:" -a -- "$@")
 
@@ -269,11 +269,11 @@ modulename.option() {
     while true; do
         case "$1" in
             -d|debug)
-                GURU_DEBUG=true
+                GRBL_DEBUG=true
                 shift
                 ;;
             -v|verbose)
-                GURU_VERBOSE=$2
+                GRBL_VERBOSE=$2
                 shift 2
                 ;;
             -o|open)
@@ -296,19 +296,19 @@ modulename.option() {
 
 modulename.poll () {
 # daemon required polling functions
-    [[ $GURU_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GURU_DEBUG ]] && echo "'$@'" >&2 # DEBUG
+    [[ $GRBL_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # DEBUG
 
     local _cmd="$1" ; shift
 
     case $_cmd in
         start )
             gr.msg -v1 -t -c black \
-                -k $GURU_MODULENAME_INDICATOR_KEY \
+                -k $GRBL_MODULENAME_INDICATOR_KEY \
                 "${FUNCNAME[0]}: modulename status polling started"
             ;;
         end )
             gr.msg -v1 -t -c reset \
-                -k $GURU_MODULENAME_INDICATOR_KEY \
+                -k $GRBL_MODULENAME_INDICATOR_KEY \
                 "${FUNCNAME[0]}: modulename status polling ended"
             ;;
         status )
@@ -328,6 +328,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     exit "$?"
 else
     #: indicated that this file is sourced, not run
-    [[ $GURU_DEBUG ]] && gr.msg -c $__modulename_color "$__modulename [$LINENO] sourced " >&2
+    [[ $GRBL_DEBUG ]] && gr.msg -c $__modulename_color "$__modulename [$LINENO] sourced " >&2
 fi
 

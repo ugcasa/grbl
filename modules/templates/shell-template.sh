@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-client single file mudule template casa@ujo.guru 2022
+# grbl single file mudule template casa@ujo.guru 2022
 
 ### Instructions to use template if created by make_single_module.sh
 ### 1) skim and then remove lines with triple hashtags
@@ -14,33 +14,33 @@
 ### 5) read lines with double hashtags
 ### 6) cleanup by removing all double hashtags
 ### 7) add module to 'modules_to_install' list in ../install.sh
-### 8) contribute by setting pull requests at github.com/ugcasa/guru-client =)
+### 8) contribute by setting pull requests at github.com/ugcasa/grbl =)
 ### 9) remove triple comments
 
 
 # include other modules/libraries that are needed
-### guru-cli modules are set to path, name is enough therefore you should  name
+### grbl modules are set to path, name is enough therefore you should  name
 ### module way that is not conflict in run environment
 # source nnnn.sh
 
 # declare global variables for module
-declare -g module_temp_file="$GURU_TEMP/module.tmp"
-declare -g module_rc="/tmp/$USER/guru-cli_module.rc"
-declare -g module_data_folder=$GURU_SYSTEM_MOUNT/module
+declare -g module_temp_file="$GRBL_TEMP/module.tmp"
+declare -g module_rc="/tmp/$USER/grbl_module.rc"
+declare -g module_data_folder=$GRBL_SYSTEM_MOUNT/module
 
 ### functions, keeping help at first position it might be even updated
 
 module.help () {
 # user help
-    gr.msg -v1 "guru-cli module help " -c white
+    gr.msg -v1 "grbl module help " -c white
 ### few clause description what module is doing
     gr.msg -v2
     gr.msg -v2 ""
     gr.msg -v2
 ### explain how to use
     gr.msg -v0 "usage: " -c white
-    gr.msg -v0 "          $GURU_CALL module command variables"
-    gr.msg -v0 "          $GURU_CALL --option --optin_with_value <value>"
+    gr.msg -v0 "          $GRBL_CALL module command variables"
+    gr.msg -v0 "          $GRBL_CALL --option --optin_with_value <value>"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
 ### add callable commands below
@@ -55,7 +55,7 @@ module.help () {
     gr.msg -v1 " --value    option with value "
 ### add few examples callable commands below
     gr.msg -v1 "example: " -c white
-    gr.msg -v1 "          $GURU_CALL module <command>"
+    gr.msg -v1 "          $GRBL_CALL module <command>"
     gr.msg -v2
 }
 
@@ -99,7 +99,7 @@ module.status () {
     gr.msg -n -t -v1 "${FUNCNAME[0]}: "
 
     # check module is installed
-    if [[ -f $GURU_BIN/module.sh ]]; then
+    if [[ -f $GRBL_BIN/module.sh ]]; then
         gr.msg -n -v1 -c green "installed, "
     else
         gr.msg -v1 -k $module_indicator_key -c reset "not installed "
@@ -107,7 +107,7 @@ module.status () {
     fi
 
     # check module is enabled
-    if [[ $GURU_MODULE_ENABLED ]] ; then
+    if [[ $GRBL_MODULE_ENABLED ]] ; then
         gr.msg -n -v1 \
         -c green "enabled, "
     else
@@ -182,16 +182,16 @@ module.remove () {
 module.rc () {
 # source configurations
 
-    local mudule_config="$GURU_CFG/$GURU_USER/module.cfg"
+    local mudule_config="$GRBL_CFG/$GRBL_USER/module.cfg"
     # check is mudule configuration changed lately, update rc if so
     if [[ ! -f $module_rc ]] \
         || [[ $(( $(stat -c %Y $mudule_config) - $(stat -c %Y $module_rc) )) -gt 0 ]] ## \
-        # || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/other_module.cfg) - $(stat -c %Y $module_rc) )) -gt 0 ]]
+        # || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/other_module.cfg) - $(stat -c %Y $module_rc) )) -gt 0 ]]
         then
             module.make_rc && gr.msg -v1 -c dark_gray "$module_rc updated"
         fi
 
-    [[ ! -d $module_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $module_data_folder
+    [[ ! -d $module_data_folder ]] && [[ -f $GRBL_SYSTEM_MOUNT/.online ]] && mkdir -p $module_data_folder
     if [[ -f $module_rc ]] ; then
         source $module_rc
     else
@@ -200,8 +200,8 @@ module.rc () {
 
     ## check is any mudule or linked mudule configuration changed lately, update rc if so
     # if [[ ! -f $module_rc ]] \
-    #     || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/module.cfg) - $(stat -c %Y $0000000module_rc) )) -gt 0 ]] \
-    #     || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/module2.cfg) - $(stat -c %Y $module_rc) )) -gt 0 ]]
+    #     || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/module.cfg) - $(stat -c %Y $0000000module_rc) )) -gt 0 ]] \
+    #     || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/module2.cfg) - $(stat -c %Y $module_rc) )) -gt 0 ]]
     #     then ...
 }
 
@@ -210,12 +210,12 @@ module.make_rc () {
 # construct module configuration rc
 
     source config.sh
-    local mudule_config="$GURU_CFG/$GURU_USER/module.cfg"
+    local mudule_config="$GRBL_CFG/$GRBL_USER/module.cfg"
 
     # try to find user configuration
     if ! [[ -f $mudule_config ]] ; then
         gr.debug "$mudule_config does not exist"
-        mudule_config="$GURU_CFG/module.cfg"
+        mudule_config="$GRBL_CFG/module.cfg"
 
         # try to find default configuration
         if ! [[ -f $mudule_config ]] ; then
@@ -230,7 +230,7 @@ module.make_rc () {
         fi
 
     config.make_rc $mudule_config $module_rc
-    # config.make_rc "$GURU_CFG/$GURU_USER/another_module.cfg" $module_rc append
+    # config.make_rc "$GRBL_CFG/$GRBL_USER/another_module.cfg" $module_rc append
     chmod +x $module_rc
 }
 
@@ -240,22 +240,22 @@ module.rc
 # global variables that need values from module configuration
 # declare global that need configuration values from rc
 declare -g module_indicator_key="esc"
-[[ $GURU_MODULE_INDICATOR_KEY ]] && module_indicator_key=$GURU_MODULE_INDICATOR_KEY
+[[ $GRBL_MODULE_INDICATOR_KEY ]] && module_indicator_key=$GRBL_MODULE_INDICATOR_KEY
 
 # check is module.sh run alone, if sourced by core.sh this
-### general guru configuration is sourced, then main module.main called
+### general grbl configuration is sourced, then main module.main called
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
 
-    # run without guru-cli installation
-    if [[ -z $GURU_RC ]] ; then
+    # run without grbl installation
+    if [[ -z $GRBL_RC ]] ; then
         ### Add environmental variables below your module need to run without installation
-        export GURU_CALL="guru"
-        export GURU_RC="$HOME/.gururc"
-        export GURU_BIN="$HOME/bin"
-        export GURU_CFG="$HOME/.config/guru"
-        export GURU_TEMP="/tmp/$USER/guru"
+        export GRBL_CALL="grbl"
+        export GRBL_RC="$HOME/.grblrc"
+        export GRBL_BIN="$HOME/bin"
+        export GRBL_CFG="$HOME/.config/grbl"
+        export GRBL_TEMP="/tmp/$USER/grbl"
     fi
-    source $GURU_RC
+    source $GRBL_RC
     module.main $@
     exit $?
 fi

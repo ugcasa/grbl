@@ -1,7 +1,7 @@
 #!/bin/bash
 # anaconda installer
 
-source $GURU_BIN/common.sh
+source $GRBL_BIN/common.sh
 conda_folder="$HOME/anaconda3"
 conda_bin="$conda_folder/bin/conda"
 
@@ -58,7 +58,7 @@ conda.install () {  # install anaconda
     chmod +x $conda_installer
     bash $conda_installer -u && rm $conda_installer && gr.msg -c green "ok" || gr.msg -c red "failed"
     source ~/.bashrc
-    printf "conda install done, next run by typing: '%s conda launch'\n" "$GURU_CALL"
+    printf "conda install done, next run by typing: '%s conda launch'\n" "$GRBL_CALL"
     return 0
 }
 
@@ -127,7 +127,7 @@ conda.update () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then    # if sourced only import functions
         if [[ "$1" == "test" ]] ; then shift ; bash /test/test.sh conda $1 ; fi
-        #source "$GURU_RC"
+        #source "$GRBL_RC"
         conda.main "$@"
         exit "$?"
     fi

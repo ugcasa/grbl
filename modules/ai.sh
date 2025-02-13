@@ -1,13 +1,13 @@
 #!/bin/bash
-# guru-cli chatGPT implementation casa@ujo.guru 2023
+# grbl chatGPT implementation casa@ujo.guru 2023
 
 source common.sh
 
 ## declare, ai.sh global variables. remove/comment out not needed ones
-declare -g ai_temp_file="$GURU_TEMP/ai.tmp"
+declare -g ai_temp_file="$GRBL_TEMP/ai.tmp"
 
-declare -g ai_rc="/tmp/$USER/guru-cli_ai.rc"
-declare -g ai_data_folder=$GURU_SYSTEM_MOUNT/ai
+declare -g ai_rc="/tmp/$USER/grbl_ai.rc"
+declare -g ai_data_folder=$GRBL_SYSTEM_MOUNT/ai
 
 gr.debug "ai_temp_file: $ai_temp_file"
 gr.debug "ai_rc: $ai_rc"
@@ -16,11 +16,11 @@ gr.debug "ai_data_folder: $ai_data_folder"
 
 ai.help () {
 # user help
-    gr.msg -v1 "guru-cli ai help " -c white
-    gr.msg -v2 "chatgpt interface for guru.cli"
+    gr.msg -v1 "grbl ai help " -c white
+    gr.msg -v2 "chatgpt interface for grbl.cli"
     gr.msg -v2
-    gr.msg -v0  "usage:  $GURU_CALL ai ask|image|status|list|install|remove|help" -c white
-    gr.msg -v0  "        $GURU_CALL ai 'question sting'" -c white
+    gr.msg -v0  "usage:  $GRBL_CALL ai ask|image|status|list|install|remove|help" -c white
+    gr.msg -v0  "        $GRBL_CALL ai 'question sting'" -c white
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v1 " ask <question>     ask something from chatGPT"
@@ -32,14 +32,14 @@ ai.help () {
     gr.msg -v2 " help               printout this help "
     gr.msg -v2
     gr.msg -v1 "examples:  " -c white
-    gr.msg -v1 "         $GURU_CALL ai tell me something about digital assistants"
+    gr.msg -v1 "         $GRBL_CALL ai tell me something about digital assistants"
     gr.msg -v2
 }
 
 
 ai.check () {
 
-    if [[ -f $GURU_BIN/chatgpt.sh ]]; then
+    if [[ -f $GRBL_BIN/chatgpt.sh ]]; then
         return 0
     else
         return 1
@@ -70,15 +70,15 @@ ai.main () {
 ai.image () {
 
     local prompt="${@}"
-    local out_file="$GURU_AI_IMAGE_FOLDER/ai-${prompt//' '/'_'}.png"
+    local out_file="$GRBL_AI_IMAGE_FOLDER/ai-${prompt//' '/'_'}.png"
     local SIZE="512x512"
 
-    if [[ -z $GURU_AI_IMAGE_FOLDER ]] && ! [[ -d $GURU_AI_IMAGE_FOLDER ]] ; then
-        gr.msg "non valid folder '$GURU_AI_IMAGE_FOLDER'"
+    if [[ -z $GRBL_AI_IMAGE_FOLDER ]] && ! [[ -d $GRBL_AI_IMAGE_FOLDER ]] ; then
+        gr.msg "non valid folder '$GRBL_AI_IMAGE_FOLDER'"
         return 101
     fi
 
-    source $GURU_BIN/ailib.sh
+    source $GRBL_BIN/ailib.sh
     # generate image
     ailib.request_to_image "$prompt"
     ailib.handle_error "$image_response"
@@ -97,7 +97,7 @@ ai.image () {
 
 ai.list () {
 
-    $GURU_BIN/chatgpt.sh --list
+    $GRBL_BIN/chatgpt.sh --list
 }
 
 
@@ -106,9 +106,9 @@ ai.ask () {
     local question="$@"
     ai.check || ai.status
 
-    if [[ $GURU_CHATGPT_RUN_AS == 'lib' ]] ; then
+    if [[ $GRBL_CHATGPT_RUN_AS == 'lib' ]] ; then
         ## use modified version of chatGPT-shell-cli
-        source $GURU_BIN/ailib.sh
+        source $GRBL_BIN/ailib.sh
         ailib.parse_arguments -c -p "$question"
         ailib.main
 
@@ -118,7 +118,7 @@ ai.ask () {
         # gr.msg -c white "$answer"
     else
         ## use original script
-        answer=$(echo $question | $GURU_BIN/chatgpt.sh -c | tr -d '\n')
+        answer=$(echo $question | $GRBL_BIN/chatgpt.sh -c | tr -d '\n')
         gr.msg -c white "$answer"
     fi
 
@@ -132,14 +132,14 @@ ai.status () {
     gr.msg -n -t -v1 "${FUNCNAME[0]}: "
 
     # check ai is enabled
-    if [[ -f $GURU_BIN/chatgpt.sh ]]; then
+    if [[ -f $GRBL_BIN/chatgpt.sh ]]; then
         gr.msg -n -v1 -c green "installed, "
     else
         gr.msg -v1 -k $ai_indicator_key -c reset "not installed "
         return 1
     fi
 
-    if [[ $GURU_AI_ENABLED ]] ; then
+    if [[ $GRBL_AI_ENABLED ]] ; then
         gr.msg -n -v1 \
         -c green "enabled, "
     else
@@ -194,13 +194,13 @@ ai.install () {
 
 
 
-    if [[ -f $GURU_BIN/chatgpt.sh ]]; then
+    if [[ -f $GRBL_BIN/chatgpt.sh ]]; then
         gr.msg "already installed, removing current installation"
         ai.remove
     fi
 
     gr.msg "getting latest version from github.."
-    [[ -d $GURU_APP ]] && cd $GURU_APP || cd /tmp
+    [[ -d $GRBL_APP ]] && cd $GRBL_APP || cd /tmp
 
     if [[ -d chatGPT-shell-cli ]]; then
         rm -rf chatGPT-shell-cli
@@ -208,7 +208,7 @@ ai.install () {
 
     git clone https://github.com/0xacx/chatGPT-shell-cli.git
     cd chatGPT-shell-cli
-    if cp chatgpt.sh $GURU_BIN ; then
+    if cp chatgpt.sh $GRBL_BIN ; then
         gr.msg -c green "installation succeeded"
         return 0
     else
@@ -221,8 +221,8 @@ ai.install () {
 ai.remove () {
 # remove installation and requirements
 
-    if [[ -f $GURU_BIN/chatgpt.sh ]]; then
-        rm $GURU_BIN/chatgpt.sh && gr.msg -c green "removed " || gr.msg -c red "failed to remove installation "
+    if [[ -f $GRBL_BIN/chatgpt.sh ]]; then
+        rm $GRBL_BIN/chatgpt.sh && gr.msg -c green "removed " || gr.msg -c red "failed to remove installation "
     else
         gr.msg -c yellow "installation not found"
     fi
@@ -235,14 +235,14 @@ ai.rc () {
 
     ## check is module configuration changed lately, update rc if so
     if [[ ! -f $ai_rc ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/ai.cfg) - $(stat -c %Y $ai_rc) )) -gt 0 ]] ## \
-        # || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/ai.cfg) - $(stat -c %Y $ai_rc) )) -gt 0 ]]
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/ai.cfg) - $(stat -c %Y $ai_rc) )) -gt 0 ]] ## \
+        # || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/ai.cfg) - $(stat -c %Y $ai_rc) )) -gt 0 ]]
         then
             ai.make_rc && \
                 gr.msg -v1 -c dark_gray "$ai_rc updated"
         fi
 
-    [[ ! -d $ai_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $ai_data_folder
+    [[ ! -d $ai_data_folder ]] && [[ -f $GRBL_SYSTEM_MOUNT/.online ]] && mkdir -p $ai_data_folder
     source $ai_rc
 
 }
@@ -257,8 +257,8 @@ ai.make_rc () {
             rm -f $ai_rc
         fi
 
-    config.make_rc "$GURU_CFG/$GURU_USER/ai.cfg" $ai_rc
-    # config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $ai_rc append
+    config.make_rc "$GRBL_CFG/$GRBL_USER/ai.cfg" $ai_rc
+    # config.make_rc "$GRBL_CFG/$GRBL_USER/mount.cfg" $ai_rc append
     chmod +x $ai_rc
     # source $ai_rc
 }
@@ -266,16 +266,16 @@ ai.make_rc () {
 # located here cause rc needs to see some of functions above
 ai.rc
 
-declare -g ai_indicator_key=$GURU_AI_INDICATOR_KEY
+declare -g ai_indicator_key=$GRBL_AI_INDICATOR_KEY
 gr.debug "ai_indicator_key: $ai_indicator_key"
-gr.debug "enabled: $GURU_AI_ENABLED"
-gr.debug "image location: $GURU_AI_IMAGE_FOLDER"
-export OPENAI_KEY=$GURU_CHATGPT_TOKEN
+gr.debug "enabled: $GRBL_AI_ENABLED"
+gr.debug "image location: $GRBL_AI_IMAGE_FOLDER"
+export OPENAI_KEY=$GRBL_CHATGPT_TOKEN
 
-## if called ai.sh file general guru configuration is sourced, then main ai.main called
+## if called ai.sh file general grbl configuration is sourced, then main ai.main called
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
-    #source $GURU_RC
+    #source $GRBL_RC
     ai.main $@
     exit $?
 fi

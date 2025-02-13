@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-client core
+# grbl core
 # casa@ujo.guru 2020 - 2023
 
 
@@ -21,17 +21,17 @@ help.main() {
             ;;
     esac
 
-    gr.msg -v2 "documentation: $GURU_DOCUMENTATION:$chapter:start" -c white
+    gr.msg -v2 "documentation: $GRBL_DOCUMENTATION:$chapter:start" -c white
     gr.msg -v2
 
 }
 
 
 help.usage () {
-    gr.msg -v1 "guru-cli main help $GURU_VERSION_NAME v$GURU_VERSION " -h
+    gr.msg -v1 "grbl main help $GRBL_VERSION_NAME v$GRBL_VERSION " -h
     gr.msg -v2
-    gr.msg -v0 "usage:  $GURU_CALL -arguments --module_arguments <module_name> <command> "-c white
-    gr.msg -v1 "        $GURU_CALL -arguments core_command" -c white
+    gr.msg -v0 "usage:  $GRBL_CALL -arguments --module_arguments <module_name> <command> "-c white
+    gr.msg -v1 "        $GRBL_CALL -arguments core_command" -c white
     gr.msg -v2 "        '-' and '--' arguments are not place oriented"
 }
 
@@ -41,57 +41,57 @@ help.arguments () {
     gr.msg -v1 " -q               be quiet as possible, no audio or text output "
     gr.msg -v1 " -s               speak out command return messages and data "
     gr.msg -v1 " -v 1..4          verbose level, adds headers and some details"
-    gr.msg -v1 " -u <user_name>   change guru user name temporary  "
+    gr.msg -v1 " -u <user_name>   change grbl user name temporary  "
     gr.msg -v1 " -h <host_name>   change computer host name name temporary "
     gr.msg -v1 " -f               set force mode on to be bit more aggressive "
     gr.msg -v1 " -c               disable colors in terminal "
     gr.msg -v3 " -d               run in debug mode, lot of colorful text (TBD!) "
     gr.msg -v1
-    gr.msg -v1 "to refer module help, type '$GURU_CALL <module_name> help'"
+    gr.msg -v1 "to refer module help, type '$GRBL_CALL <module_name> help'"
     gr.msg -v2
 }
 
 help.system () {
     gr.msg -v2 "system tools:" -c white
     gr.msg -v2 "  install         install tools "
-    gr.msg -v2 "  uninstall       remove guru toolkit "
+    gr.msg -v2 "  uninstall       remove grbl toolkit "
     gr.msg -v1 "  list            list of stuff "
     gr.msg -v1 "    core          core modules "
     gr.msg -v1 "    modules       installed modules "
     gr.msg -v1 "    available     all modules "
     gr.msg -v1 "    commands      list of available commands "
     gr.msg -v2 " all <command>    run command with all avalable modules"
-    gr.msg -v2 "  upgrade         upgrade guru toolkit "
+    gr.msg -v2 "  upgrade         upgrade grbl toolkit "
     # gr.msg -v3 "  status          status of stuff (TBD return this function) "
-    # gr.msg -v3 "  shell           start guru shell (TBD return this function )"
+    # gr.msg -v3 "  shell           start grbl shell (TBD return this function )"
     gr.msg -v2 "  --ver           printout version "
     gr.msg -v2 "  --help          printout help "
 }
 
 help.examples () {
     gr.msg -v2 "examples:" -c white
-    gr.msg -v2 "  $GURU_CALL ssh key add github       add ssh keys to github server"
-    gr.msg -v2 "  $GURU_CALL timer start at 12:00     start work time timer"
-    gr.msg -v2 "  $GURU_CALL note yesterday           open yesterdays notes"
-    gr.msg -v2 "  $GURU_CALL install mqtt-server      install mqtt server"
-    gr.msg -v2 "  $GURU_CALL radio radiorock          listen radio station"
-    gr.msg -v2 "  $GURU_CALL active                   active guru-cli"
-    gr.msg -v2 "  $GURU_CALL start                    start daemon"
+    gr.msg -v2 "  $GRBL_CALL ssh key add github       add ssh keys to github server"
+    gr.msg -v2 "  $GRBL_CALL timer start at 12:00     start work time timer"
+    gr.msg -v2 "  $GRBL_CALL note yesterday           open yesterdays notes"
+    gr.msg -v2 "  $GRBL_CALL install mqtt-server      install mqtt server"
+    gr.msg -v2 "  $GRBL_CALL radio radiorock          listen radio station"
+    gr.msg -v2 "  $GRBL_CALL active                   active grbl"
+    gr.msg -v2 "  $GRBL_CALL start                    start daemon"
 
     gr.msg
 }
 
 help.newbie () {
-    if [[ -f $HOME/guru/.data/.newbie ]] ; then
+    if [[ -f $HOME/grbl/.data/.newbie ]] ; then
         gr.msg -v0 "if problems after installation" -c white
         gr.msg -v0 "  1) logout and login to set path by .profiles or set path:"
         gr.msg -v0 '       PATH=$PATH:$HOME/bin'
         gr.msg -v0 "  2) if no access to ujo.guru access point, create fake data mount"
-        gr.msg -v0 '      mkdir $HOME/guru/.data ; touch $HOME/guru/.data/.online'
+        gr.msg -v0 '      mkdir $HOME/grbl/.data ; touch $HOME/grbl/.data/.online'
         gr.msg -v0 "  3) to edit user configurations run:"
-        gr.msg -v0 "      $GURU_CALL config user"
+        gr.msg -v0 "      $GRBL_CALL config user"
         gr.msg -v0 "  4) remove newbie help view by: "
-        gr.msg -v0 "       rm $HOME/guru/.data/.newbie"
+        gr.msg -v0 "       rm $HOME/grbl/.data/.newbie"
         gr.msg -v1
     fi
 }
@@ -218,7 +218,7 @@ help.common() {
         gr.msg -v2
         gr.msg -v0 'usage   gr.dump ' -c white
         gr.msg -v2
-        gr.msg -v1 "export current environment to file '$GURU_CORE_DUMP' and exit"
+        gr.msg -v1 "export current environment to file '$GRBL_CORE_DUMP' and exit"
         gr.msg -v2
     }
 
@@ -240,10 +240,10 @@ help.common() {
         gr.msg -v1 "Another way to produce timestamps is to use stamp.sh."
         gr.msg -v2
         gr.msg -v1 "    epoch|-e    epoch format: $(date -d now +"%s")"
-        gr.msg -v1 "    file|-f     file name compatible: $(date -d now +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_FILE_TIME)"
-        gr.msg -v1 "    human|-h    human readable: $(date -d now +$GURU_FORMAT_DATE $GURU_FORMAT_TIME)"
-        gr.msg -v1 "    nice|-n     nice TBD: $(date -d now +$GURU_FORMAT_NICE)"
-        gr.msg -v1 "                default is: $(date -d now +$GURU_FORMAT_TIMESTAMP)"
+        gr.msg -v1 "    file|-f     file name compatible: $(date -d now +$GRBL_FORMAT_FILE_DATE-$GRBL_FORMAT_FILE_TIME)"
+        gr.msg -v1 "    human|-h    human readable: $(date -d now +$GRBL_FORMAT_DATE $GRBL_FORMAT_TIME)"
+        gr.msg -v1 "    nice|-n     nice TBD: $(date -d now +$GRBL_FORMAT_NICE)"
+        gr.msg -v1 "                default is: $(date -d now +$GRBL_FORMAT_TIMESTAMP)"
         gr.msg -v2
     }
 
@@ -336,7 +336,7 @@ gr.kvp () {
             common.debug
             ;;
         *)
-            gr.msg -v1 "guru-cli common.sh help" -h
+            gr.msg -v1 "grbl common.sh help" -h
             gr.msg -v1
             gr.msg -v1 "'common.sh' contains group of functions for modules to use. Some functions are "
             gr.msg -v1 "available all time. To get all function in use common.sh needs to be sourced:"
@@ -349,7 +349,7 @@ gr.kvp () {
             gr.msg -v1
             gr.msg -v1 "for more information try: "
             gr.msg -v1
-            gr.msg -v0 "  $GURU_CALL help common <function> " -c white
+            gr.msg -v0 "  $GRBL_CALL help common <function> " -c white
             gr.msg -v1
             gr.msg -v1 "available functions are: "
             gr.msg -v1 "    msg, ask, dump, ts, poll, source, end, ind, installed, presence and debug"

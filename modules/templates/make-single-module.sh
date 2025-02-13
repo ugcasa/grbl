@@ -6,11 +6,11 @@ set -e
 source common.sh
 
 module_name=$1
-existing_modules=$(< $GURU_CFG/installed.modules)
+existing_modules=$(< $GRBL_CFG/installed.modules)
 
 # input module name is not given as parameter
 if [[ -z $1 ]] ; then
-	gr.msg "Note that guru-cli modules are set to path therefore you should name module way that is not conflict in run environment."
+	gr.msg "Note that grbl modules are set to path therefore you should name module way that is not conflict in run environment."
 	gr.msg "Module name should not contain dots or spaces. Give only name, file extension is not needed."
 	gr.msg
 	gr.msg -n "module name: "

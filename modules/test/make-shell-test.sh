@@ -2,7 +2,7 @@
 # make test
 # TODO omg how old ways to do shit, review pls.
 
-source $GURU_BIN/common.sh
+source $GRBL_BIN/common.sh
 
 process_opts () {
 
@@ -10,10 +10,10 @@ process_opts () {
     eval set -- "$TEMP"
     while true ; do
         case "$1" in
-            -v ) export GURU_VERBOSE=1      ; shift     ;;
-            -V ) export GURU_VERBOSE=2      ; shift     ;;
-            -f ) export GURU_FORCE=true     ; shift     ;;
-            -l ) export GURU_LOGGING=true   ; shift     ;;
+            -v ) export GRBL_VERBOSE=1      ; shift     ;;
+            -V ) export GRBL_VERBOSE=2      ; shift     ;;
+            -f ) export GRBL_FORCE=true     ; shift     ;;
+            -l ) export GRBL_LOGGING=true   ; shift     ;;
              * ) break                                  ;;
         esac
     done;
@@ -33,8 +33,8 @@ if [[ -f "../../core/$module.sh" ]] ; then
     elif [[ -f "../../modules/$module.sh" ]] ; then
         module_to_test="../../modules/$module.sh"
 
-    elif [[ -f "$GURU_BIN/$module.sh" ]] ; then
-        module_to_test="$GURU_BIN/$module.sh"
+    elif [[ -f "$GRBL_BIN/$module.sh" ]] ; then
+        module_to_test="$GRBL_BIN/$module.sh"
     else
         gr.msg -c yellow "no module '$module' found in any location"
         return 12
@@ -60,11 +60,11 @@ if [[ -f $tester_file_name ]] && gr.ask "tester '$tester_file_name' exist, overw
 
 # start file manipulating
 echo "#!/bin/bash "  > $tester_file_name
-echo "# automatically generated tester for guru-client $module.sh $(date) casa@ujo.guru 2020"  >> $tester_file_name
+echo "# automatically generated tester for grbl $module.sh $(date) casa@ujo.guru 2020"  >> $tester_file_name
 echo                                                                        >> $tester_file_name
 
 # sourcing and test variable space
-echo 'source $GURU_BIN'"/common.sh"                                         >> $tester_file_name
+echo 'source $GRBL_BIN'"/common.sh"                                         >> $tester_file_name
 echo "source $module_to_test "                                              >> $tester_file_name
 echo                                                                        >> $tester_file_name
 echo "## TODO add test initial conditions here"                             >> $tester_file_name
@@ -128,8 +128,8 @@ for _function in "${functions_to_test[@]}" ; do
 # add lonely runner check
 echo                                                                        >> $tester_file_name
 echo 'if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then '                        >> $tester_file_name
-echo '    source "$GURU_RC" '                                               >> $tester_file_name
-echo '    GURU_VERBOSE=2'                                                   >> $tester_file_name
+echo '    source "$GRBL_RC" '                                               >> $tester_file_name
+echo '    GRBL_VERBOSE=2'                                                   >> $tester_file_name
 echo "    $module.test "'$@'                                                >> $tester_file_name
 echo 'fi'                                                                   >> $tester_file_name
 echo                                                                        >> $tester_file_name
@@ -137,4 +137,4 @@ echo                                                                        >> $
 # make runnable
 chmod +x "$tester_file_name"
 # open for edit
-$GURU_PREFERRED_EDITOR $tester_file_name
+$GRBL_PREFERRED_EDITOR $tester_file_name

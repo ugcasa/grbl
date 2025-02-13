@@ -23,7 +23,7 @@ cp $template_config $config
 sed -i -e "s/modulename/$module_name/g" $script
 sed -i -e "s/MODULENAME/${module_name^^}/g" $script
 sed -i -e "s/YEAR/$(date -d today +%Y)/g" $script
-sed -i -e "s/EMAIL/$GURU_USER_EMAIL/g" $script
+sed -i -e "s/EMAIL/$GRBL_USER_EMAIL/g" $script
 
 sed -i -e "s/modulename/$module_name/g" $config
 sed -i -e "s/MODULENAME/${module_name^^}/g" $config
@@ -42,10 +42,10 @@ case $ans in
 		sed -i '/# DEBUG/d' $config
 esac
 
-read -p "copy config to '$GURU_CFG/$GURU_USER' ? " ans
+read -p "copy config to '$GRBL_CFG/$GRBL_USER' ? " ans
 case $ans in
 	y|Y)
-		cp $config $GURU_CFG/$GURU_USER
+		cp $config $GRBL_CFG/$GRBL_USER
 esac
 
 echo $script

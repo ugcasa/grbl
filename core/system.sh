@@ -1,26 +1,26 @@
 #!/bin/bash
-# system tools for guru-client
+# system tools for grbl
 
 __system_color="light_blue"
 __system=$(readlink --canonicalize --no-newline $BASH_SOURCE)
-system_suspend_flag="/tmp/$USER/guru-suspend.flag"
+system_suspend_flag="/tmp/$USER/grbl-suspend.flag"
 # system_suspend_script="/etc/pm/sleep.d/system-suspend.sh" # before ubuntu 16.04
-system_suspend_script="/lib/systemd/system-sleep/guru-client-suspend.sh" # ubuntu 18.04 > like mint 20.0
+system_suspend_script="/lib/systemd/system-sleep/grbl-suspend.sh" # ubuntu 18.04 > like mint 20.0
 system_indicator_key="caps"
 
 system.help () {
 # system help printout
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    gr.msg -v1 "guru-client system help" -h
+    gr.msg -v1 "grbl system help" -h
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL system [core-dump|update|rollback|status|suspend|env] " -c white
+    gr.msg -v0 "usage:    $GRBL_CALL system [core-dump|update|rollback|status|suspend|env] " -c white
     gr.msg -v2
     gr.msg -v1 " core-dump            dump data for development "
-    gr.msg -v1 " env get <pid>        get environmental value running process (default is guru-daemon)"
+    gr.msg -v1 " env get <pid>        get environmental value running process (default is grbl-daemon)"
     gr.msg -v1 " env set <pid>        set environmental value of running process"
     gr.msg -v1 " update               update and upgrade os"
-    gr.msg -v1 " client-update        upgrade and reinstall guru-client"
+    gr.msg -v1 " client-update        upgrade and reinstall grbl"
     gr.msg -v1 " client-rollback      rollback to last known working version "
     gr.msg -v1 " status               system status output "
     gr.msg -v1 " top <cpu|mem>        memory and cpu usage view "
@@ -37,11 +37,11 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.suspend_help () {
 # suspend help
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    gr.msg -v1 -c white "guru-client system suspend help"
+    gr.msg -v1 -c white "grbl system suspend help"
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL system suspend [flag|set_flag|rm_flag|install|remove]"
+    gr.msg -v0 "usage:    $GRBL_CALL system suspend [flag|set_flag|rm_flag|install|remove]"
     gr.msg -v2
     gr.msg -v1 -c white "commands:"
     gr.msg -v2
@@ -57,17 +57,17 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.env_help () {
 # system environment help printout
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    gr.msg -v1 -c white "guru-client system flag help"
+    gr.msg -v1 -c white "grbl system flag help"
     gr.msg -v2
     gr.msg -v1 "get or set environmental variable values (or list) of running process"
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL system env [get|set] <pid|process> <variable>"
+    gr.msg -v0 "usage:    $GRBL_CALL system env [get|set] <pid|process> <variable>"
     gr.msg -v2
     gr.msg -v2 " env get|set <pid|process_name>  <variable_name>"
     gr.msg -v2 -N -c white "example:"
-    gr.msg -v1 "      $GURU_CALL system env get mosquitto_sub TERM"
+    gr.msg -v1 "      $GRBL_CALL system env get mosquitto_sub TERM"
     gr.msg -v2
     gr.msg -v2 "if variable name is not given all variables will be printed out."
 }
@@ -75,7 +75,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.main () {
 # system command parser
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local tool="$1" ; shift
     #system_indicator_key="f$(gr.poll system)"
@@ -133,7 +133,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
                     ;;
                 *)
                     gr.msg -c yellow "get or set please"
-                    GURU_VERBOSE=2
+                    GRBL_VERBOSE=2
                     system.help
             esac
             ;;
@@ -156,10 +156,10 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.status () {
 # system status
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     gr.msg -v1 -t -n "${FUNCNAME[0]}: "
-    if [[ -f ${GURU_SYSTEM_MOUNT[0]}/.online ]] ; then
+    if [[ -f ${GRBL_SYSTEM_MOUNT[0]}/.online ]] ; then
         gr.msg -n -v1 -c green "ok "
     else
         gr.msg -n -v1 -c yellow ".data is unmounted " #-k $system_indicator_key
@@ -172,7 +172,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.upgrade () {
 # upgrade system
-    source os.shgr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    source os.shgr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     os.upgrade
     return $?
@@ -184,7 +184,7 @@ system.upgrade () {
 # TBD move flag system to flag.sh THEN remove this and need for it
 system.flag () {
 # set flags
-    gr.debug "sogr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.debug "sogr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     me routine seems to call system.flag, pls use flag.sh instead!"
     source flag.sh
     flag.main $@
@@ -193,7 +193,7 @@ system.flag () {
 
 system.get_env () {
 # get running process variable values by pid
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _pid=$1
     [[ $_pid ]] || gr.msg -x 127 -c yellow "pid name required "
@@ -259,7 +259,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.get_pid_by_name () {
 # get process pid by name
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _process="$1"
     [[ $_process ]] || read -p "process name: " _process
@@ -295,7 +295,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.get_env_by_name () {
 # get running process variable values by process name
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _process=$1
     local _pattern=$2
@@ -330,14 +330,14 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.get_window_id () {
 # input process id, output window id to std
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local findpid=$1
     local known_windows=$(xwininfo -root -children | sed -e 's/^ *//' | grep -E "^0x" | awk '{ print $1 }')
 
     for id in ${known_windows} ;  do
 
-        # echo "${id}|${pid}|${findpid}" >>/home/casa/git/guru-client/modules/log.log
+        # echo "${id}|${pid}|${findpid}" >>/home/casa/git/grbl/modules/log.log
         local xx=$(xprop -id $id _NET_WM_PID)
         if test $? -eq 0; then
             pid=$(xprop -id $id _NET_WM_PID | cut -d '=' -f2 | tr -d ' ')
@@ -350,14 +350,14 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 
 system.update () {
- # update guru-client
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+ # update grbl
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    local temp_dir="/tmp/$USER/guru"
-    local source="https://github.com/ugcasa/guru-client.git"
+    local temp_dir="/tmp/$USER/grbl"
+    local source="https://github.com/ugcasa/grbl.git"
     local branch="dev"
 
-    # [[ "$GURU_USE_VERSION" ]] && branch="$GURU_USE_VERSION"
+    # [[ "$GRBL_USE_VERSION" ]] && branch="$GRBL_USE_VERSION"
     [[ "$1" ]] && branch="$1"
 
     [ -d "$temp_dir" ] && rm -rf "$temp_dir"
@@ -365,8 +365,8 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
     cd "$temp_dir"
 
     git clone -b "$branch" "$source" || return 100
-    # bash $GURU_BIN/uninstall.sh -f
-    cd "$temp_dir/guru-client"
+    # bash $GRBL_BIN/uninstall.sh -f
+    cd "$temp_dir/grbl"
     bash install.sh -fc $@
     cd
     rm -fr $temp_dir
@@ -375,7 +375,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.cpu_usage_check () {
 # cpu usage nnn..
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
 
     local high_cpu_flag="/tmp/$USER/high.cpu.flag"
@@ -386,9 +386,9 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
     # make integer
     case $high_usage in *.*) high_usage=$(echo $high_usage | cut -d "." -f 1) ;; esac
     [[ $high_usage ]] || gr.debug "$FUNCNAME: usage get failed '$high_usage'"
-    gr.debug "$FUNCNAME: cpu usage: $high_usage: trigger: $GURU_SYSTEM_CPU_USAGE_TRIGGER"
+    gr.debug "$FUNCNAME: cpu usage: $high_usage: trigger: $GRBL_SYSTEM_CPU_USAGE_TRIGGER"
 
-    if [[ $high_usage -ge $GURU_SYSTEM_CPU_USAGE_TRIGGER ]] ; then
+    if [[ $high_usage -ge $GRBL_SYSTEM_CPU_USAGE_TRIGGER ]] ; then
 
         # get highest pid of process of usage of cpu
         local new_pid=$(system.get_usage cpu --ret pid)
@@ -415,7 +415,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
             gr.msg -n -c red "high cpu usage ($high_usage) '$program' ($new_pid) "
 
-            key=$(( ($high_usage - $GURU_SYSTEM_CPU_USAGE_TRIGGER) + 1 ))
+            key=$(( ($high_usage - $GRBL_SYSTEM_CPU_USAGE_TRIGGER) + 1 ))
             [[ $key -gt 9 ]] && key=0
             gr.debug "$FUNCNAME: key is: $key"
 
@@ -435,7 +435,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.get_usage() {
 # get process that uses most resources of 'cpu' or 'mem'
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
 # return first process usage, pid and command
 # list of three most memory hungry pids: system_most_usage mem --lines 3 --return pid
@@ -509,10 +509,10 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.rollback () {
 # rollback to version
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    local temp_dir="/tmp/$USER/guru"
-    local source="git@github.com:ugcasa/guru-client.git"
+    local temp_dir="/tmp/$USER/grbl"
+    local source="git@github.com:ugcasa/grbl.git"
     local _roll_to="1"
     [ "$1" ] && _roll_to="$1"
 
@@ -520,18 +520,18 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
     mkdir "$temp_dir"
     cd "$temp_dir"
     git clone -b "rollback$_roll_to" "$source" || return 100
-    bash $GURU_BIN/uninstall.sh
-    cd "$temp_dir/guru-client"
+    bash $GRBL_BIN/uninstall.sh
+    cd "$temp_dir/grbl"
     bash install.sh "$@"
     cd
-    # bash $GURU_BIN/$GURU_CALL version
+    # bash $GRBL_BIN/$GRBL_CALL version
     [ "$temp_dir" ] && [ -d "$temp_dir" ] && rm -rf "$temp_dir"
 }
 
 
 system.init_system_check () {
 # check init system, return 0 if match with input sysv-init|systemd|upstart
-# see issue #62gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+# see issue #62gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local user_input=
 
@@ -569,7 +569,7 @@ system.init_system_check () {
 
 system.suspend_script () {
 # launch stuff on suspend
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     temp="/tmp/$USER/suspend.temp"
     gr.msg -v1 "updating $system_suspend_script.. "
@@ -589,7 +589,7 @@ case \${1} in
   post|resume|thaw)
         systemctl restart ckb-next-daemon
         systemctl --user restart corsair.service
-        # systemctl restart guru-daemon
+        # systemctl restart grbl-daemon
     ;;
 esac
 EOL
@@ -609,7 +609,7 @@ EOL
 
 system.suspend () {
 # suspend control
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     source flag.sh
     case "$1" in
@@ -617,7 +617,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
         now )
             gr.msg -v1 "suspending.."
             #system.flag set suspend
-            [[ $GURU_FORCE ]] || sleep 3
+            [[ $GRBL_FORCE ]] || sleep 3
             systemctl suspend
             ;;
 
@@ -664,7 +664,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.poll () {
 # daemon poller interface
-gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _cmd="$1" ; shift
 
@@ -694,7 +694,7 @@ gr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GUR
 
 system.check_fs_access_flag_enabled () {
 # check is system recording file access
-# often when SSD drive is used the accesgr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+# often when SSD drive is used the accesgr.msg -v4 -n -c $__system_color "$__system [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 sed timestamp function is disabled
 # TBD fix typo
 

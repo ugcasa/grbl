@@ -1,15 +1,15 @@
 #!/bin/bash
-# guru-cli listener
+# grbl listener
 # casa@ujo.guru 2023
 
 
 
 
 
-# wait user to say "$GURU_CALL"
+# wait user to say "$GRBL_CALL"
 
 call_sing=
-[[ $GURU_CALL ]] && call_sing="$GURU_CALL"
+[[ $GRBL_CALL ]] && call_sing="$GRBL_CALL"
 
 
 listen.install () {
@@ -59,7 +59,7 @@ listen.training() {
 
 # server  https://www.digikey.com/en/maker/projects/how-to-run-custom-speechtotext-stt-and-texttospeech-tts-servers/90ec03ef27854b9b83b6e27090b767b3
 
-deepspeech --hot_words $GURU_CALL:1 --model deepspeech-0.9.3-models.pbmm --scorer deepspeech-0.9.3-models.scorer --audio audio/2830-3980-0043.wav
+deepspeech --hot_words $GRBL_CALL:1 --model deepspeech-0.9.3-models.pbmm --scorer deepspeech-0.9.3-models.scorer --audio audio/2830-3980-0043.wav
 
 
 mic_vad_streaming.py  -v 2 -m ~/deepspeech-0.9.3-models.pbmm -s ~/deepspeech-0.9.3-models.scorer -d 10

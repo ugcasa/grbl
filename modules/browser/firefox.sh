@@ -1,10 +1,10 @@
 
-profile_location="$HOME/.config/guru/mozilla"
+profile_location="$HOME/.config/grbl/mozilla"
 __firefox_color="light_blue"
 __firefox=$__onedrive
 
 firefox.add_profile () {
-	local profile_name=$GURU_USER ; [[ $1 ]] && profile_name="$1"
+	local profile_name=$GRBL_USER ; [[ $1 ]] && profile_name="$1"
 	local profile="$profile_location/$profile_name"	
 	gr.msg -v3 "$profile"
 
@@ -51,7 +51,7 @@ firefox.play_stream () {
 
 
 firefox.launch () {
-	local profile_name="$GURU_USER"
+	local profile_name="$GRBL_USER"
 	local profile="$profile_location/$profile_name"
 	gr.msg -v3 "$profile"
 	firefox --profile $profile  &
@@ -65,7 +65,7 @@ firefox.foray () {
 
 	firefox https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options
 
-	firefox --screenshot $GURU_MOUNT_PICTURES -new-window https://yle.fi/uutiset/tuoreimmat
+	firefox --screenshot $GRBL_MOUNT_PICTURES -new-window https://yle.fi/uutiset/tuoreimmat
 	# thiss rolls
 	alias rollfm='firefox --profile rollfm --new-instance --window-size 100,20 stream.rollfm.fi'
 	# this headless shit is
@@ -108,14 +108,14 @@ firefox.main () {
 	local ff_profile=
 	local ff_config_file=/tmp/$USER/grbl_firefox.cfg
 
-	gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+	gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 	gr.varlist "debug ff_folder ff_profiles ff_profile ff_config_file"
 
 	firefox.profile() {
 	# check available profiles and make user to select if many
 
 		# debug shit
-		gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+		gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
 		# select profile if mote than one
 		if [[ ${#ff_profiles[@]} -gt 1 ]]; then
@@ -147,7 +147,7 @@ firefox.main () {
 		local ff_cache=$HOME/.cache/mozilla/firefox/backup
 
 		# debug shit
-		gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+		gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 		gr.varlist "debug ff_folder ff_profiles ff_profile ff_config_file ff_backup ff_cache"
 
 		[[ -d $ff_backup ]] || mkdir -p $ff_backup
@@ -160,7 +160,7 @@ firefox.main () {
 	# remove backup out of sessions, cookies and cache
 
 		# debug shit
-		gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+		gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
 		rm $ff_folder/$ff_profile/cookies.sqlite
 		rm ~/.cache/mozilla/firefox/$ff_profile/*

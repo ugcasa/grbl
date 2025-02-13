@@ -1,26 +1,26 @@
 #!/bin/bash
-# guru-client backup system module casa@ujo.guru 2021 - 2025
+# grbl backup system module casa@ujo.guru 2021 - 2025
 # automated backups from server to local, local to local or server to server based on rsync archiving functionalities.
-# launching is based on guru daemon.sh poll request, not on crond mainly to avoid permission issues and shit.
-# can be run individually but needs specific set of environment variables (~/.gururc).
-# more of bash shit github.com/ugcasa/guru-client
+# launching is based on grbl daemon.sh poll request, not on crond mainly to avoid permission issues and shit.
+# can be run individually but needs specific set of environment variables (~/.grblrc).
+# more of bash shit github.com/ugcasa/grbl
 
-declare -g backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
-declare -g backup_rc="/tmp/$USER/guru-cli_backup.rc"
-declare -g backup_config="$GURU_CFG/$GURU_USER/backup.cfg"
-declare -g backup_log_file="$GURU_DATA/backup/backup.log"
+declare -g backup_data_folder="$GRBL_SYSTEM_MOUNT/backup"
+declare -g backup_rc="/tmp/$USER/grbl_backup.rc"
+declare -g backup_config="$GRBL_CFG/$GRBL_USER/backup.cfg"
+declare -g backup_log_file="$GRBL_DATA/backup/backup.log"
 declare -g backup_schedule="direct"
 declare -g backup_running="/tmp/$USER/backup.running"
 
-! [[ -d $backup_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
+! [[ -d $backup_data_folder ]] && [[ -f $GRBL_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
 
 backup.help () {
     # general help
 
-    gr.msg -v1 -c white "guru-cli backup help "
+    gr.msg -v1 -c white "grbl backup help "
     gr.msg -v2
-    gr.msg -v0 "usage:  $GURU_CALL backup <entry_name> at <YYYYMMDD> <HH:MM> "
-    gr.msg -v1 "        $GURU_CALL backup status|ls|restore|poll|install|remove  "
+    gr.msg -v0 "usage:  $GRBL_CALL backup <entry_name> at <YYYYMMDD> <HH:MM> "
+    gr.msg -v1 "        $GRBL_CALL backup status|ls|restore|poll|install|remove  "
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " <empty>                  make daily backup now "
@@ -37,10 +37,10 @@ backup.help () {
     gr.msg -v3 " poll start|end           start or end module status polling "
     gr.msg -v2
     gr.msg -v1 -c white "example: "
-    gr.msg -v1 " $GURU_CALL backup status           # printout current backup status"
-    gr.msg -v1 " $GURU_CALL backup git              # backup entry_name 'git' now"
-    gr.msg -v2 " $GURU_CALL backup family at 21:00  # backup family stuff at evening "
-    gr.msg -v2 " $GURU_CALL backup photos at Monday # backup family stuff next Monday"
+    gr.msg -v1 " $GRBL_CALL backup status           # printout current backup status"
+    gr.msg -v1 " $GRBL_CALL backup git              # backup entry_name 'git' now"
+    gr.msg -v2 " $GRBL_CALL backup family at 21:00  # backup family stuff at evening "
+    gr.msg -v2 " $GRBL_CALL backup photos at Monday # backup family stuff next Monday"
     gr.msg -v2
 }
 
@@ -101,7 +101,7 @@ backup.main () {
             # for given_entry in ${given_entrys[@]} ; do
 
             #         # .. then trough active entry name list..
-            #         for enabled_entry in ${GURU_BACKUP_ACTIVE[@]} ; do
+            #         for enabled_entry in ${GRBL_BACKUP_ACTIVE[@]} ; do
 
             #                 # ..and check that given item is the requested item
             #                 if [[ $given_entry == $enabled_entry ]]; then
@@ -146,7 +146,7 @@ backup.variables () {
         gr.msg -v3 -c grey "backup_ignore: '$backup_ignore'"
         gr.msg -v3 -c grey "backup_method: '$backup_method'"
         gr.msg -v3 -c grey "honeypot_file: '$honeypot_file'"
-        gr.msg -v3 -c grey "GURU_BACKUP_INDICATOR_KEY: '$GURU_BACKUP_INDICATOR_KEY'"
+        gr.msg -v3 -c grey "GRBL_BACKUP_INDICATOR_KEY: '$GRBL_BACKUP_INDICATOR_KEY'"
 
         gr.msg -v3 -c grey "backup_stat_file: '$backup_stat_file'"
         [[ -f $backup_stat_file ]] && source $backup_stat_file
@@ -248,8 +248,8 @@ backup.cloud_consistensy () {
 
     gr.msg -h "checking consistency of backup entries and cloud folders"
 
-    local _server="$GURU_CLOUD_USERNAME@$GURU_CLOUD_DOMAIN -p $GURU_CLOUD_PORT"
-    local _folder_list=($(ssh $_server -- "ls $GURU_CLOUD_FILE_BASE"))
+    local _server="$GRBL_CLOUD_USERNAME@$GRBL_CLOUD_DOMAIN -p $GRBL_CLOUD_PORT"
+    local _folder_list=($(ssh $_server -- "ls $GRBL_CLOUD_FILE_BASE"))
     local _entry_var local _entry_val local _cloud_str local _cloud_flr local _entry_flr
 
     # go trough folder names found cloud location given in mount.cfg
@@ -257,10 +257,10 @@ backup.cloud_consistensy () {
 
         gr.msg -n -w 13 -c light_blue "${_folder_list[$i]}"
         # add location to folder name
-        _cloud_flr=$GURU_CLOUD_FILE_BASE/${_folder_list[$i]}
+        _cloud_flr=$GRBL_CLOUD_FILE_BASE/${_folder_list[$i]}
 
         # make backup entry variable name out of listed folder
-        _entry_var="GURU_BACKUP_${_folder_list[$i]^^}[@]"
+        _entry_var="GRBL_BACKUP_${_folder_list[$i]^^}[@]"
         # evaluate variable
         _entry_val=($(eval echo ${!_entry_var}))
         # if empty no entry
@@ -275,13 +275,13 @@ backup.cloud_consistensy () {
         # remove folder separator (rsync make difference with these)
         _entry_flr=${_entry_flr%/*}
 
-        if [[ "${GURU_BACKUP_SCHEDULE_DAILY[*]}" =~ ${_folder_list[$i]} ]]; then
+        if [[ "${GRBL_BACKUP_SCHEDULE_DAILY[*]}" =~ ${_folder_list[$i]} ]]; then
             gr.msg -n -w 3 -h "d "
-        elif [[ "${GURU_BACKUP_SCHEDULE_WEEKLY[*]}" =~ ${_folder_list[$i]} ]]; then
+        elif [[ "${GRBL_BACKUP_SCHEDULE_WEEKLY[*]}" =~ ${_folder_list[$i]} ]]; then
             gr.msg -n -w 3 -c white "w "
-        elif [[ "${GURU_BACKUP_SCHEDULE_MONTHLY[*]}" =~ ${_folder_list[$i]} ]]; then
+        elif [[ "${GRBL_BACKUP_SCHEDULE_MONTHLY[*]}" =~ ${_folder_list[$i]} ]]; then
             gr.msg -n -w 3 -c grey "m "
-        elif [[ "${GURU_BACKUP_SCHEDULE_YEARLY[*]}" =~ ${_folder_list[$i]} ]]; then
+        elif [[ "${GRBL_BACKUP_SCHEDULE_YEARLY[*]}" =~ ${_folder_list[$i]} ]]; then
             gr.msg -n -w 3 -c dark_grey "y "
         else
             gr.msg -n -w 3 -c black "  "
@@ -357,7 +357,7 @@ backup.mount_consistensy () {
     gr.msg -h "checking consistency of backup entries and mount points"
 
     local _folder_list=($(\
-        grep "export GURU_MOUNT_" $mount_rc | \
+        grep "export GRBL_MOUNT_" $mount_rc | \
         grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
@@ -370,14 +370,14 @@ backup.mount_consistensy () {
         gr.msg -n -w 13 -c light_blue "${_folder_list[$i]}"
 
         # make mount entry variable name out of listed folder
-        _mount_var="GURU_MOUNT_${_folder_list[$i]^^}[@]"
+        _mount_var="GRBL_MOUNT_${_folder_list[$i]^^}[@]"
         # evaluate variable
         _mount_val=($(eval echo ${!_mount_var}))
         # add location to folder name
         _mount_flr=${_mount_val[1]}
 
         # make backup entry variable name out of listed folder
-        _entry_var="GURU_BACKUP_${_folder_list[$i]^^}[@]"
+        _entry_var="GRBL_BACKUP_${_folder_list[$i]^^}[@]"
         # evaluate variable
         _entry_val=($(eval echo ${!_entry_var}))
         # if empty no entry
@@ -393,13 +393,13 @@ backup.mount_consistensy () {
         # remove folder separator (rsync make difference with these)
         _entry_flr=${_entry_flr%/*}
 
-        if [[ "${GURU_BACKUP_SCHEDULE_DAILY[*]}" =~ ${_folder_list[$i]} ]]; then
+        if [[ "${GRBL_BACKUP_SCHEDULE_DAILY[*]}" =~ ${_folder_list[$i]} ]]; then
             gr.msg -n -w 3 -h "d "
-        elif [[ "${GURU_BACKUP_SCHEDULE_WEEKLY[*]}" =~ ${_folder_list[$i]} ]]; then
+        elif [[ "${GRBL_BACKUP_SCHEDULE_WEEKLY[*]}" =~ ${_folder_list[$i]} ]]; then
             gr.msg -n -w 3 -c white "w "
-        elif [[ "${GURU_BACKUP_SCHEDULE_MONTHLY[*]}" =~ ${_folder_list[$i]} ]]; then
+        elif [[ "${GRBL_BACKUP_SCHEDULE_MONTHLY[*]}" =~ ${_folder_list[$i]} ]]; then
             gr.msg -n -w 3 -c grey "m "
-        elif [[ "${GURU_BACKUP_SCHEDULE_YEARLY[*]}" =~ ${_folder_list[$i]} ]]; then
+        elif [[ "${GRBL_BACKUP_SCHEDULE_YEARLY[*]}" =~ ${_folder_list[$i]} ]]; then
             gr.msg -n -w 3 -c dark_grey "y "
         else
             gr.msg -n -w 3 -c black "  "
@@ -515,7 +515,7 @@ backup.entry_exist() {
     shift
 
 
-    local variable_name="GURU_BACKUP_${entry^^}[@]"
+    local variable_name="GRBL_BACKUP_${entry^^}[@]"
     local value=($(eval echo ${!variable_name}))
 
     if ! [[ $value ]] ; then
@@ -528,8 +528,8 @@ backup.entry_exist() {
 
 backup.debug () {
 
-    export GURU_VERBOSE=3
-    local name=${GURU_BACKUP_ACTIVE[0]}
+    export GRBL_VERBOSE=3
+    local name=${GRBL_BACKUP_ACTIVE[0]}
     [[ $1 ]] && name=$1
     backup.config $name
 
@@ -544,7 +544,7 @@ backup.config () {
     backup_log="$_epicdate"
 
     # check is enabled
-    if ! [[ $GURU_BACKUP_ENABLED ]] ; then
+    if ! [[ $GRBL_BACKUP_ENABLED ]] ; then
             gr.msg -c black "backup module disabled"
             backup_log="$backup_log;;;;;;;exited before execution;1:module disabled"
             return 1
@@ -553,7 +553,7 @@ backup.config () {
     # declare of global variables
     local store_is_local=
     declare -ga backup_name=$1
-    declare -ga active_list=(${GURU_BACKUP_ACTIVE[@]})
+    declare -ga active_list=(${GRBL_BACKUP_ACTIVE[@]})
     local header=(store method from ignore)
     backup_log="$_epicdate;$backup_name"
 
@@ -567,7 +567,7 @@ backup.config () {
     # go trough active backups and find match
     for bu_name in ${active_list[@]} ; do
             if [[ "$bu_name" == "$backup_name" ]] ; then
-                    local from_config="GURU_BACKUP_${bu_name^^}[@]"
+                    local from_config="GRBL_BACKUP_${bu_name^^}[@]"
 
                     from_config=(${!from_config})
                     declare -g store_device=${from_config[0]}
@@ -575,7 +575,7 @@ backup.config () {
                     local from_string=${from_config[2]}
                     local ignore="${from_config[3]//:/' '}"
 
-                    declare -g store_config="GURU_BACKUP_${store_device^^}[@]"
+                    declare -g store_config="GRBL_BACKUP_${store_device^^}[@]"
                     store_config=(${!store_config})
                     break
                 fi
@@ -625,7 +625,7 @@ backup.config () {
 
         [[ $store_is_local ]] \
             && declare -g backup_stat_file="$store_mount_point/$store_folder/$backup_name/backup.stat" \
-            || declare -g backup_stat_file="$GURU_SYSTEM_MOUNT/backup/$backup_name.stat"
+            || declare -g backup_stat_file="$GRBL_SYSTEM_MOUNT/backup/$backup_name.stat"
 
         declare -ga backup_ignore=($ignore)
         declare -g backup_method=$method
@@ -651,19 +651,19 @@ backup.config () {
 backup.status () {
     # check latest backup is reachable and returnable.
 
-    local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
+    local backup_data_folder=$GRBL_SYSTEM_MOUNT/backup
 
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
-    if [[ $GURU_BACKUP_ENABLED ]] ; then
-            gr.msg -n -v1 -c green -k $GURU_BACKUP_INDICATOR_KEY "enabled, "
+    if [[ $GRBL_BACKUP_ENABLED ]] ; then
+            gr.msg -n -v1 -c green -k $GRBL_BACKUP_INDICATOR_KEY "enabled, "
         else
-            gr.msg -v1 -c black -k $GURU_BACKUP_INDICATOR_KEY "disabled"
+            gr.msg -v1 -c black -k $GRBL_BACKUP_INDICATOR_KEY "disabled"
             return 1
         fi
 
     if ! [[ -f $backup_data_folder/next ]] ; then
-            gr.msg -v1 -c green -k $GURU_BACKUP_INDICATOR_KEY \
+            gr.msg -v1 -c green -k $GRBL_BACKUP_INDICATOR_KEY \
                 "no scheduled backups"
             return 0
         fi
@@ -674,15 +674,15 @@ backup.status () {
     # indicate backup time
     if [[ $diff -lt 7200 ]] ; then
         # indicate that backup will be done soon
-        gr.msg -n -v1 -c aqua_marine -k $GURU_BACKUP_INDICATOR_KEY \
+        gr.msg -n -v1 -c aqua_marine -k $GRBL_BACKUP_INDICATOR_KEY \
             "scheduled backup at $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
         # indicate that that backup is very soon, ~minutes
-        [[ $diff -lt $GURU_DAEMON_INTERVAL ]] && gr.msg -n -v1 -c deep_pink -k $GURU_BACKUP_INDICATOR_KEY \ "($diff seconds)"
+        [[ $diff -lt $GRBL_DAEMON_INTERVAL ]] && gr.msg -n -v1 -c deep_pink -k $GRBL_BACKUP_INDICATOR_KEY \ "($diff seconds)"
         echo
         return 0
     else
         # all fine, no scheduled backup in few hours
-        gr.msg -n -v1 -c green -k $GURU_BACKUP_INDICATOR_KEY "on service "
+        gr.msg -n -v1 -c green -k $GRBL_BACKUP_INDICATOR_KEY "on service "
         gr.msg -v1 "next backup $(date -d @$epic_backup '+%d.%m.%Y %H:%M')"
         return 0
     fi
@@ -697,13 +697,13 @@ backup.ls () {
 
     gr.msg -v2 "schedule"
     gr.msg -n -c white "daily: "
-    gr.msg -c light_blue "${GURU_BACKUP_SCHEDULE_DAILY[@]}"
+    gr.msg -c light_blue "${GRBL_BACKUP_SCHEDULE_DAILY[@]}"
 
     gr.msg -n -c white "weekly: "
-    gr.msg -c light_blue "${GURU_BACKUP_SCHEDULE_WEEKLY[@]}"
+    gr.msg -c light_blue "${GRBL_BACKUP_SCHEDULE_WEEKLY[@]}"
 
     gr.msg -n -c white "monthly: "
-    gr.msg -c light_blue "${GURU_BACKUP_SCHEDULE_MONTHLY[@]}"
+    gr.msg -c light_blue "${GRBL_BACKUP_SCHEDULE_MONTHLY[@]}"
 
     return 0
 }
@@ -717,7 +717,7 @@ backup.at () {
     [[ $1 ]] && local backup_time=$1 || read -p "backup time (H:M): " backup_time
     shift
 
-    local backup_data_folder="$GURU_SYSTEM_MOUNT/backup"
+    local backup_data_folder="$GRBL_SYSTEM_MOUNT/backup"
 
     [[ -d $backup_data_folder ]] || mkdir -p $backup_data_folder
 
@@ -864,7 +864,7 @@ backup.now () {
                     gr.msg -v3 -N -c deep_pink "gio mount -d $store_device_file"
                     gio mount -d $store_device_file \
                         && gr.msg -v1 -c green "ok" \
-                        || gr.msg -v1 -e1 "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
+                        || gr.msg -v1 -e1 "error: $?" -k $GRBL_BACKUP_INDICATOR_KEY
                 else
                     gr.msg -c white "to mount -t $store_file_system $store_device_file $store_mount_point sudo needed"
                     [[ -d $store_mount_point ]] || sudo mkdir -p $store_mount_point
@@ -873,7 +873,7 @@ backup.now () {
                     if sudo mount -t $store_file_system $store_device_file $store_mount_point ; then
                             gr.msg -v1 -c green "ok"
                     else
-                        gr.msg -v1 -e1 "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
+                        gr.msg -v1 -e1 "error: $?" -k $GRBL_BACKUP_INDICATOR_KEY
                         backup_log="$backup_log;exited before execution;32:unable to mount store"
                         # echo "last_backup_error=32" >>$backup_stat_file
                         return 32
@@ -911,7 +911,7 @@ backup.now () {
                 gr.debug "gio mount -d $store_device_file"
                 gio mount -d $store_device_file \
                     && gr.msg -v1 -c green "ok" \
-                    || gr.msg -v1 -e1 "error: $?" -k $GURU_BACKUP_INDICATOR_KEY
+                    || gr.msg -v1 -e1 "error: $?" -k $GRBL_BACKUP_INDICATOR_KEY
             fi
         fi
         command_param="-a --progress --update"
@@ -958,7 +958,7 @@ backup.now () {
     local from_param="$from_location"
     local store_param="$store_location"
     local command_param="-a --progress --update"
-    gr.msg -v3 "backup active" -c aqua_marine -k $GURU_BACKUP_INDICATOR_KEY
+    gr.msg -v3 "backup active" -c aqua_marine -k $GRBL_BACKUP_INDICATOR_KEY
 
 ### 2) check and place variables for rsynck based on user.cfg
 
@@ -1017,7 +1017,7 @@ backup.now () {
 
                 case $file in
                     *.WNCRY*)
-                            gr.msg -c red -k $GURU_BACKUP_INDICATOR_KEY \
+                            gr.msg -c red -k $GRBL_BACKUP_INDICATOR_KEY \
                                 "POTENTIAL VIRUS: wannacry tracks detected!"
                             gr.msg -c light_blue "$file"
                             gr.msg -e1 "backup of $from_location canceled"
@@ -1061,9 +1061,9 @@ backup.now () {
                     gr.msg -e1 \
                          "honeypot file changed! got '${contain[3]}' when 'honeypot' expected."
                     gr.msg -c light_blue "${contain[@]}"
-                    gr.msg -c red -k $GURU_BACKUP_INDICATOR_KEY \
+                    gr.msg -c red -k $GRBL_BACKUP_INDICATOR_KEY \
                          "backup canceled cause of potential crypto virus action detected in source destination!"
-                    export GURU_BACKUP_ENABLED=
+                    export GRBL_BACKUP_ENABLED=
 
                     # echo "last_backup_error=104" >>$backup_stat_file
                     # echo "### backup canceled cause of potential crypto virus action detected!" >>$backup_stat_file
@@ -1101,7 +1101,7 @@ backup.now () {
 
     if [[ $_error -gt 0 ]] ; then
             gr.msg "$from_location error: $backup_method $_error" \
-                 -c red -k $GURU_BACKUP_INDICATOR_KEY
+                 -c red -k $GRBL_BACKUP_INDICATOR_KEY
 
                  echo "last_backup_error=120" >>$backup_stat_file
                  # add error to log
@@ -1110,11 +1110,11 @@ backup.now () {
             return 120
         else
             echo "### $backup_name $(date '+%d.%m.%Y %H:%M')" >$backup_stat_file
-            echo "last_backup_version='$(head -n1 $GURU_BIN/version)'" >>$backup_stat_file
+            echo "last_backup_version='$(head -n1 $GRBL_BIN/version)'" >>$backup_stat_file
             echo "last_backup_name=$backup_name" >>$backup_stat_file
             echo "last_backup_time=$(date +%s)" >>$backup_stat_file
             echo "last_backup_error=$_error" >>$backup_stat_file
-            gr.msg -v3 "$from_location ok" -c green -k $GURU_BACKUP_INDICATOR_KEY
+            gr.msg -v3 "$from_location ok" -c green -k $GRBL_BACKUP_INDICATOR_KEY
 
             # add error to log
             backup_log="$backup_log;$_error:ok"
@@ -1142,14 +1142,14 @@ backup.plan () {
     case $schedule in
             hourly|daily|weekly|monthly|yearly)
                     backup_schedule=$schedule
-                    entries=($(eval echo '${GURU_BACKUP_SCHEDULE_'"${schedule^^}[@]}"))
+                    entries=($(eval echo '${GRBL_BACKUP_SCHEDULE_'"${schedule^^}[@]}"))
                     ;;
             "")
                     gr.msg -e1 "unknown schedule '$schedule'"
                     return 11
                     ;;
             *)      # try if its set in user.cfg
-                    variable="GURU_BACKUP_SCHEDULE_${schedule^^}[@]"
+                    variable="GRBL_BACKUP_SCHEDULE_${schedule^^}[@]"
                     entries=($(eval echo ${!variable}))
                     if ! [[ $entries ]] ; then
                             gr.msg -e1 "unknown schedule '$schedule'"
@@ -1196,7 +1196,7 @@ backup.plan () {
                     next_backup=$(( last_backup_time + add_seconds ))
                     # gr.msg "next_backup: $next_backup last_backup_time: $last_backup_time add_seconds: $add_seconds"
 
-                    if [[ $(date +%s) -lt $next_backup ]] && ! [[ $GURU_FORCE ]]; then
+                    if [[ $(date +%s) -lt $next_backup ]] && ! [[ $GRBL_FORCE ]]; then
                             gr.msg -c dark_grey "waiting $(date -d @$next_backup '+%d.%m.%Y %H:%M')"
                             continue
                         fi
@@ -1207,12 +1207,12 @@ backup.plan () {
         done
 
     if [[ $_error -gt 0 ]] ; then
-            gr.msg "$_error warnings, check log above" -e1 -k $GURU_BACKUP_INDICATOR_KEY
-            [[ $GURU_BACKUP_VERBOSE ]] && gr.ind say -m "$_error warnings during $schedule backup"
+            gr.msg "$_error warnings, check log above" -e1 -k $GRBL_BACKUP_INDICATOR_KEY
+            [[ $GRBL_BACKUP_VERBOSE ]] && gr.ind say -m "$_error warnings during $schedule backup"
             return 12
         else
             #gr.msg -v3 -c green "$schedule done"
-            [[ $GURU_BACKUP_VERBOSE ]] && gr.ind done -m "$schedule backup" -k $GURU_BACKUP_INDICATOR_KEY
+            [[ $GRBL_BACKUP_VERBOSE ]] && gr.ind done -m "$schedule backup" -k $GRBL_BACKUP_INDICATOR_KEY
             return 0
         fi
     }
@@ -1224,7 +1224,7 @@ backup.scheduled () {
     local schedule='daily'
     [[ $1 ]] && schedule=$1
 
-    local backup_data_folder=$GURU_SYSTEM_MOUNT/backup
+    local backup_data_folder=$GRBL_SYSTEM_MOUNT/backup
     local epic_backup=$(cat $backup_data_folder/next)
 
     if [[ $(date '+%s') -lt $epic_backup ]] ; then
@@ -1254,7 +1254,7 @@ backup.scheduled () {
         echo $(( $(date +%s) + 86400 )) > $backup_data_folder/next
         #next_time=$(( now + till_next ))
 
-        # $GURU_SYSTEM_MOUNT/<entry_name>.stat
+        # $GRBL_SYSTEM_MOUNT/<entry_name>.stat
         # $next_time > $backup_data_folder/next
         #echo "next_time=$next_time" > $backup_stat_file
         #last_time=1645715582
@@ -1262,7 +1262,7 @@ backup.scheduled () {
 
         local rechedule="next backup scheduled to $(date -d @$(cat $backup_data_folder/next) '+%d.%m.%Y %H:%M')"
         gr.msg -c white $rechedule
-        [[ $GURU_BACKUP_VERBOSE ]] && gr.ind say -m "next backup scheduled for tomorrow"
+        [[ $GRBL_BACKUP_VERBOSE ]] && gr.ind say -m "next backup scheduled for tomorrow"
 
         return $_error
     fi
@@ -1276,10 +1276,10 @@ backup.poll () {
 
     case $_cmd in
             start )
-                gr.msg -v1 -t -c black "${FUNCNAME[0]}: backup status polling started" -k $GURU_BACKUP_INDICATOR_KEY
+                gr.msg -v1 -t -c black "${FUNCNAME[0]}: backup status polling started" -k $GRBL_BACKUP_INDICATOR_KEY
                 ;;
             end )
-                gr.msg -v1 -t -c reset "${FUNCNAME[0]}: backup status polling ended" -k $GURU_BACKUP_INDICATOR_KEY
+                gr.msg -v1 -t -c reset "${FUNCNAME[0]}: backup status polling ended" -k $GRBL_BACKUP_INDICATOR_KEY
                 ;;
             status )
                 backup.status
@@ -1350,7 +1350,7 @@ backup.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # backup.debug
-    # [[ -f ~/.gururc ]] && source ~/.gururc
+    # [[ -f ~/.grblrc ]] && source ~/.grblrc
     backup.main "$@"
     exit "$?"
 fi

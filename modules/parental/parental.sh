@@ -7,7 +7,7 @@ parental.poll() {
     printf "waiting $_host to answer"
     while true; do
         if ping -c1 -w1 $_host >/dev/null; then             
-            #ge.msg -v1 "$(date $GURU_FORMAT_TIMESTAMP)"
+            #ge.msg -v1 "$(date $GRBL_FORMAT_TIMESTAMP)"
             ge.msg -v1 "$(date +'%Y-%m-%d %H:%M')"
             return 0
         fi
@@ -39,7 +39,7 @@ parental.infect_firefox() {
         ssh $_host -- mkdir ~/.parental
     fi
 
-    scp $GURU_BIN/parental/firefox_remote.sh $_host:~/.parental \
+    scp $GRBL_BIN/parental/firefox_remote.sh $_host:~/.parental \
         && echo "successfully infected" \
         && echo "something went wrong"
 }

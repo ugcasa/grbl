@@ -3,7 +3,7 @@
 # module or module adapter scripts should have install and remove functions called by <module>.main install/remove
 # these are stand alone installers for application no worth to make module (or adapter script)
 
-source $GURU_BIN/common.sh
+source $GRBL_BIN/common.sh
 
 install.main () {
     if [[ "$1" ]] ; then
@@ -31,9 +31,9 @@ install.status () {
 
 
 install.help () {
-    gr.msg -v1 -c white "guru-client installer help "
+    gr.msg -v1 -c white "grbl installer help "
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL install application_name "
+    gr.msg -v0  "usage:    $GRBL_CALL install application_name "
     gr.msg -v2
     gr.msg -v1 -c white  "application list:"
     gr.msg -v1 " anaconda             anaconda dev tool"
@@ -136,7 +136,7 @@ install.virtualbox () {
 
     # install usb support
     echo "file > preferences > extencions > [+]"
-    $GURU_PREFERRED_BROWSER https://download.virtualbox.org/virtualbox/6.1.16/VirtualBoxSDK-6.1.16-140961.zip
+    $GRBL_PREFERRED_BROWSER https://download.virtualbox.org/virtualbox/6.1.16/VirtualBoxSDK-6.1.16-140961.zip
     sudo usermod -aG vboxusers $USER
 }
 
@@ -181,7 +181,7 @@ install.java () {
 
     [ "$action" ] || read -r -p "install or remove?: " action
     printf "need to install $require, ctrl+c or enter local "
-    sudo apt-get update && eval sudo apt-get "$action" "$require" && printf "\n guru is now ready to script java\n\n"
+    sudo apt-get update && eval sudo apt-get "$action" "$require" && printf "\n grbl is now ready to script java\n\n"
 }
 
 
@@ -196,9 +196,9 @@ install.hackrf () {
     cd $HOME/git/labtools/radio
     git clone https://github.com/mossmann/hackrf.git
     git clone https://github.com/mossmann/hackrf.wiki.git
-    git clone https://ujoguru@bitbucket.org/ugdev/radlab.git
+    git clone https://ujogrbl@bitbucket.org/ugdev/radlab.git
     echo "Documentation file://$HOME/git/labtools/radio/hackrf.wiki"
-    printf "\n guru is now ready to radio\n\n"
+    printf "\n grbl is now ready to radio\n\n"
     read -r -p "to start GNU radio press anykey (or CTRL+C to exit): " nouse
     return 0
 }
@@ -213,7 +213,7 @@ install.fosphor () {
     mkdir build
     cd build
     cmake ../ -DBUILD_SHARED_LIBS=true
-    make && printf "\n guru is now ready to analyze some radio\n\n"
+    make && printf "\n grbl is now ready to analyze some radio\n\n"
     sudo make install
     sudo ldconfig
     #rm -fr glfw
@@ -233,7 +233,7 @@ install.spectrumanalyzer () {
     git clone https://github.com/xmikos/qspectrumanalyzer.git
     cd qspectrumanalyzer
     pip3 install --user .
-    qspectrumanalyzer && printf "\n guru is now ready to analyze some radio\n\n"
+    qspectrumanalyzer && printf "\n grbl is now ready to analyze some radio\n\n"
     return 0
 }
 
@@ -250,7 +250,7 @@ install.radio () {
     install.fosphor || gr.msg -v yellow "fosphor isntall error"
 
     # launch
-    [[ $GURU_FORCE ]] && gnuradio-companion &
+    [[ $GRBL_FORCE ]] && gnuradio-companion &
 }
 
 
@@ -295,7 +295,7 @@ install.anaconda () {
     bash $anaconda_installer -u && rm $anaconda_installer installer_sum || return 12
     source ~/.bashrc
     gr.msg -c green  "anaconda install done"
-    gr.msg -c1 "run setup by typing: '$GURU_CALL anaconda set'"
+    gr.msg -c1 "run setup by typing: '$GRBL_CALL anaconda set'"
     return 0
 }
 
@@ -316,7 +316,7 @@ install.kaldi (){
     cd ../src/
     ./configure --shared
     make depend -j $cores
-    make -j $cores && printf "\n guru is now ready to analyze some audio\n\n"
+    make -j $cores && printf "\n grbl is now ready to analyze some audio\n\n"
     return $?
 }
 
@@ -366,7 +366,7 @@ install.vscode () {
     # sudo sh -c 'echo "deb [arch=$SYSTEM_ARCHITECTURE signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
     # sudo apt-get install apt-transport-https                    # https://whydoesaptnotusehttps.com/
     # sudo apt-get update
-    # sudo apt-get install code && printf "\n guru is now ready to code \n\n"
+    # sudo apt-get install code && printf "\n grbl is now ready to code \n\n"
 }
 
 
@@ -430,7 +430,7 @@ install.steam () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    source "$GRBL_RC"
     install.main "$@"
     exit $?
 fi

@@ -1,7 +1,7 @@
-#!/usr/bin/env guru
+#!/usr/bin/env grbl
 
-## step 2 without prefix run guru commands
-## runs only lists of guru commands, no conditions etc
+## step 2 without prefix run grbl commands
+## runs only lists of grbl commands, no conditions etc
 	set flag connected
 	rm flag connected
 	mount ls

@@ -1,7 +1,7 @@
 #!/bin/bash 
 # tovsdf - Tools to Orchestrate Very Small Docker Farm
 
-# include guru-cli common functions if exists
+# include grbl common functions if exists
 source common.sh 2>/dev/null || gr.msg () { echo "${@##-*}" | sed 's/^[[:space:]]*//' ; }
 
 tovsdf.main () {
@@ -28,7 +28,7 @@ tovsdf.main () {
 tovsdf.help () {
     gr.msg -v1 -c white "Tools to Orchestrate Very Small Docker Farm - Help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL tovsdf install|start|restart|stop|update|uninstall service"
+    gr.msg -v0 "usage:    $GRBL_CALL tovsdf install|start|restart|stop|update|uninstall service"
     gr.msg -v2
     gr.msg -v1 -c white  "commands:"
     gr.msg -v1 " start <service>    Start service or platform"
@@ -44,7 +44,7 @@ tovsdf.help () {
     gr.msg -v3 " wekan              can ban ticket board"
     gr.msg -v2
     gr.msg -v1 -c white  "example:"
-    gr.msg -v1 "    $GURU_CALL tovsdf install docker"
+    gr.msg -v1 "    $GRBL_CALL tovsdf install docker"
     gr.msg -v2
 }
 
@@ -192,8 +192,8 @@ dokuwiki.update_container () {
     # default container name
     local container_name="dokuwiki"
 
-    # overwrite if guru-cli variable set
-    [[ $GURU_WIKI_CONTAINER_NAME ]] && container_name=$GURU_WIKI_CONTAINER_NAME
+    # overwrite if grbl variable set
+    [[ $GRBL_WIKI_CONTAINER_NAME ]] && container_name=$GRBL_WIKI_CONTAINER_NAME
 
     # process user input
     [[ $1 ]] && container_name=$1
@@ -224,13 +224,13 @@ dokuwiki.backup () {
 
     # default values
     local container_name="dokuwiki"
-    local server=$GURU_ACCESS_DOMAIN
+    local server=$GRBL_ACCESS_DOMAIN
     local include_folders=(data conf)
     local _date=$(date +%Y%m%d)
-    local to_where="${GURU_BACKUP_SERVER_BASE[2]}/${GURU_BACKUP_SERVER_BASE[3]}"
+    local to_where="${GRBL_BACKUP_SERVER_BASE[2]}/${GRBL_BACKUP_SERVER_BASE[3]}"
 
-    # overwrite default values if guru-cli variable set
-    [[ $GURU_WIKI_CONTAINER_NAME ]] && container_name=$GURU_WIKI_CONTAINER_NAME
+    # overwrite default values if grbl variable set
+    [[ $GRBL_WIKI_CONTAINER_NAME ]] && container_name=$GRBL_WIKI_CONTAINER_NAME
 
     # overwrite if user input
     [[ $1 ]] && container_name=$1
@@ -342,14 +342,14 @@ dokuwiki.backup () {
 
 tovsdf.debug () {
     gr.msg  "${FUNCNAME[0]^^}: tovsdf.sh" -c white
-    gr.msg "GURU_WIKI_CONTAINER_NAME:$GURU_WIKI_CONTAINER_NAME"
-    gr.msg "GURU_BACKUP_SERVER_BASE:$GURU_BACKUP_SERVER_BASE"
+    gr.msg "GRBL_WIKI_CONTAINER_NAME:$GRBL_WIKI_CONTAINER_NAME"
+    gr.msg "GRBL_BACKUP_SERVER_BASE:$GRBL_BACKUP_SERVER_BASE"
 }
 
-[[ $GURU_DEBUG ]] && tovsdf.debug
+[[ $GRBL_DEBUG ]] && tovsdf.debug
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # [[ -f $GURU_RC ]] && source $GURU_RC
+    # [[ -f $GRBL_RC ]] && source $GRBL_RC
     tovsdf.main $@
     exit $?
 fi

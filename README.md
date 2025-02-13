@@ -89,7 +89,7 @@ flowchart TD
     Install("Installers & Versioning"):::block
     User("User"):::block
     CLI("CLI Interface"):::block
-    Core("Guru Core"):::block
+    Core("grbl Core"):::block
     Config("Configuration"):::block
     Modules("Module Framework"):::block
     Daemon("Daemon Service"):::block

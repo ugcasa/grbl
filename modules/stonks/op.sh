@@ -1,8 +1,8 @@
 #!/bin/bash
-# guru-cli OP bank csv importer (and later bank api client)
+# grbl OP bank csv importer (and later bank api client)
 # casa@ujo.guru 2023
 
-export GURU_OP_DATA=$GURU_DATA/stonks/op/
+export GRBL_OP_DATA=$GRBL_DATA/stonks/op/
 
 op.main () {
 # main command parser
@@ -14,7 +14,7 @@ op.main () {
 
         import)
             # TBD just for proto fix
-            source $HOME/guru/env/hr/bin/activate
+            source $HOME/grbl/env/hr/bin/activate
             python3 op-csv2str.py $@
 
             #op.$_cmd "$@"

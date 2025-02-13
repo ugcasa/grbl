@@ -1,6 +1,6 @@
 #!/bin/bash 
 # convert file to another formats. Wrap around for good known stand stone: pandoc, imagemagic, dwebp, ffmpeg ..
-# guru preferred archive formats TBD config what to want from user.cfg
+# grbl preferred archive formats TBD config what to want from user.cfg
 # for now hard written as following:
 #  all images -> png
 #  all video  -> mp4
@@ -8,7 +8,7 @@
 
 #source common.sh
 convert_indicator_key=f7
-[[ $GURU_CONVERT_INDICATOR ]] && convert_indicator_key=$GURU_CONVERT_INDICATOR
+[[ $GRBL_CONVERT_INDICATOR ]] && convert_indicator_key=$GRBL_CONVERT_INDICATOR
 
 convert.main () {
     # convert format parser
@@ -64,23 +64,23 @@ convert.main () {
 convert.help () {
 # general help
 
-    gr.msg -v1 -c white "guru convert help "
+    gr.msg -v1 -c white "grbl convert help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL convert <dest_format> file list"
+    gr.msg -v0 "usage:    $GRBL_CALL convert <dest_format> file list"
     gr.msg -v2
     gr.msg -v1 " install       install imagemagic and other needed tools from api ropository "
     gr.msg -v1 " remove        remove os distributor version of imagemagic (may be very old) "
     gr.msg -v1 " compile       remove current imagemagic installation, then download and compile from github "
-    gr.msg -v1 " <format>      specify from format and all pictures are converted to $GURU_FORMAT_PICTURE"
-    gr.msg -v1 "               specify from format and all videos are converted to $GURU_FORMAT_VIDEO"
+    gr.msg -v1 " <format>      specify from format and all pictures are converted to $GRBL_FORMAT_PICTURE"
+    gr.msg -v1 "               specify from format and all videos are converted to $GRBL_FORMAT_VIDEO"
     gr.msg -v1 "               supported formats: webp webm mkv avif"
     gr.msg -v1 " <target>      specify target format to convert to it (experimental)"
     gr.msg -v1 "               supported formats: dokuwiki, png, ods"
     gr.msg -v2
     gr.msg -v1 -c white "example:"
-    gr.msg -v1 "      $GURU_CALL convert webp                # converts all webp in folder to $GURU_FORMAT_PICTURE "
-    gr.msg -v1 "      $GURU_CALL convert dokuwiki            # converts specified markdown files to dokuwiki format "
-    gr.msg -v1 "      $GURU_CALL convert ods <filename.md>   # converts markdown file to Libre Office Writer format "
+    gr.msg -v1 "      $GRBL_CALL convert webp                # converts all webp in folder to $GRBL_FORMAT_PICTURE "
+    gr.msg -v1 "      $GRBL_CALL convert dokuwiki            # converts specified markdown files to dokuwiki format "
+    gr.msg -v1 "      $GRBL_CALL convert ods <filename.md>   # converts markdown file to Libre Office Writer format "
     gr.msg -v2
     gr.msg -v1 "avif support is still issue 2018 to 2023 >:/ https://github.com/ImageMagick/ImageMagick/issues/1432"
     return 0
@@ -91,7 +91,7 @@ convert.to () {
 ## TODO wanted command example 'gr convert hello.jpg to png'
 ## accept file lists until 'to' is found, after that is target format
 ## skip if files do not match mimetype of file ending
-## global GURU_FORCE flag "-f" overwrites existing and deletes original files
+## global GRBL_FORCE flag "-f" overwrites existing and deletes original files
 ## will accept list of different file (*.*/*/.) types but check if convert possible first, this disables force flag to avoid catastrophes
 ## lists of files that share same, known file ending, and mime type (*.webp) can be forced
 ## following prototype functions below might be useful
@@ -171,7 +171,7 @@ convert.from_webp () {
     fi
 
     local rand=""
-    local dest_format=$GURU_FORMAT_PICTURE
+    local dest_format=$GRBL_FORMAT_PICTURE
     #[[ $2 ]] && dest_format=$2
 
     for file in ${find_files[@]} ; do
@@ -209,7 +209,7 @@ convert.from_webp () {
                 if [[ "$orig" == "$new" ]] ; then
                     gr.msg -v2 -n "identical content "
                 # skip
-                    if ! [[ $GURU_FORCE ]] ; then
+                    if ! [[ $GRBL_FORCE ]] ; then
                         gr.msg -v1 -c dark_grey "skipping "
                         continue
                     fi
@@ -239,7 +239,7 @@ convert.from_webp () {
         fi
 
         # force remove original if convert success
-        [[ $GURU_FORCE ]] && [[ -f "$file_base_name$rand.${dest_format}" ]] && rm "$file_base_name.webp"
+        [[ $GRBL_FORCE ]] && [[ -f "$file_base_name$rand.${dest_format}" ]] && rm "$file_base_name.webp"
 
         # clean up
         [[ -f "/tmp/$USER/$file_base_name.${dest_format}" ]] && rm "/tmp/$USER/$file_base_name.${dest_format}"
@@ -265,7 +265,7 @@ convert.from_webm () {
     fi
 
     local rand=""
-    local dest_format=$GURU_FORMAT_VIDEO
+    local dest_format=$GRBL_FORMAT_VIDEO
     #[[ $2 ]] && dest_format=$2
 
     for file in ${find_files[@]} ; do
@@ -296,7 +296,7 @@ convert.from_webm () {
         fi
 
         # force remove original if convert success
-        [[ $GURU_FORCE ]] && [[ -f $file_base_name$rand.${dest_format} ]] && rm $file_base_name.webm
+        [[ $GRBL_FORCE ]] && [[ -f $file_base_name$rand.${dest_format} ]] && rm $file_base_name.webm
 
     done
     return 0
@@ -319,7 +319,7 @@ convert.from_mkv () {
     fi
 
     local rand=""
-    local dest_format=$GURU_FORMAT_VIDEO
+    local dest_format=$GRBL_FORMAT_VIDEO
     #[[ $2 ]] && dest_format=$2
 
     for file in ${find_files[@]} ; do
@@ -350,7 +350,7 @@ convert.from_mkv () {
         fi
 
         # force remove original if convert success
-        [[ $GURU_FORCE ]] && [[ -f $file_base_name$rand.${dest_format} ]] && rm $file_base_name.mkv
+        [[ $GRBL_FORCE ]] && [[ -f $file_base_name$rand.${dest_format} ]] && rm $file_base_name.mkv
 
     done
     return 0
@@ -366,8 +366,8 @@ convert.to_dokuwiki () {
 
     if ! md2doku -h >/dev/null; then
         sudo apt update
-        [[ $GURU_GIT_TRIALS ]] || GURU_GIT_TRIALS="$HOME/git"
-        cd $GURU_GIT_TRIALS
+        [[ $GRBL_GIT_TRIALS ]] || GRBL_GIT_TRIALS="$HOME/git"
+        cd $GRBL_GIT_TRIALS
         git clone https://github.com/mostekcm/markdown-to-dokuwiki.git
         cd markdown-to-dokuwiki
         npm --version || sudo apt install npm -y
@@ -444,10 +444,10 @@ convert.to_dokuwiki () {
     fi
 
     # force remove original if convert success
-    # [[ $GURU_FORCE ]] && [[ $file_base_name$rand.${dest_format} ]] && rm $file_base_name.mkv
-    if ! [[ -d $GURU_MOUNT_WIKIPAGES ]] ; then
+    # [[ $GRBL_FORCE ]] && [[ $file_base_name$rand.${dest_format} ]] && rm $file_base_name.mkv
+    if ! [[ -d $GRBL_MOUNT_WIKIPAGES ]] ; then
         source mount.sh
-        cd $GURU_BIN
+        cd $GRBL_BIN
         if ! timeout -k 10 10 ./mount.sh wikipages ; then
             gr.msg -c red "mount failed: $?" -k $convert_indicator_key
             return 122
@@ -457,18 +457,18 @@ convert.to_dokuwiki () {
     local option="-a --ignore-existing "
     local message="up tp date "
 
-    if [[ $GURU_FORCE ]] ; then
+    if [[ $GRBL_FORCE ]] ; then
         option="--recursive --delete "
         message="updated (force)"
     fi
 
-    (( $GURU_VERBOSE >= 1)) && option="--progress $option "
+    (( $GRBL_VERBOSE >= 1)) && option="--progress $option "
 
     gr.msg -n -v1 "${#files_done[@]} file(s) "
     gr.msg -n -v2 -c light_blue "${files_done[@]} "
-    gr.msg -n -v2 "to $GURU_MOUNT_WIKIPAGES/notes.. "
+    gr.msg -n -v2 "to $GRBL_MOUNT_WIKIPAGES/notes.. "
 
-    rsync $option ${files_done[@]} $GURU_MOUNT_WIKIPAGES/notes
+    rsync $option ${files_done[@]} $GRBL_MOUNT_WIKIPAGES/notes
 
     gr.msg -v2 -c green "$message" -k $convert_indicator_key
     rm ${files_done[@]}
@@ -495,10 +495,10 @@ convert.to_ods () {
     fi
 
     # get date for note
-    _date=$(date +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_FILE_TIME)
+    _date=$(date +$GRBL_FORMAT_FILE_DATE-$GRBL_FORMAT_FILE_TIME)
 
     local odt_file="${input_file%%.*}_${_date}.odt"
-    local odt_template="$GURU_MOUNT_TEMPLATES/$_template_name-template.odt"
+    local odt_template="$GRBL_MOUNT_TEMPLATES/$_template_name-template.odt"
 
     # sub second filename ramdomizer
     if [ -f "$odt_file" ]; then
@@ -534,7 +534,7 @@ convert.to_ods () {
     gr.msg -v1 "$odt_file"
 
     # open office program
-    $GURU_PREFERRED_OFFICE_DOC "$odt_file" 2>/dev/null &
+    $GRBL_PREFERRED_OFFICE_DOC "$odt_file" 2>/dev/null &
 }
 
 
@@ -573,7 +573,7 @@ convert.md_to_pdf () {
     fi
 
     # get date for note
-    _date=$(date +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_FILE_TIME)
+    _date=$(date +$GRBL_FORMAT_FILE_DATE-$GRBL_FORMAT_FILE_TIME)
 
     local target_file="${input_file%%.*}_${_date}.pdf"
 
@@ -610,7 +610,7 @@ convert.md_to_pdf () {
     gr.msg -v1 "$target_file"
 
     # open office program
-    $GURU_PREFERRED_OFFICE_DOC "$target_file" 2>/dev/null &
+    $GRBL_PREFERRED_OFFICE_DOC "$target_file" 2>/dev/null &
 }
 
 # covert_bash_2_json () {
@@ -922,7 +922,7 @@ convert.status () {
 
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
-    if [[ $GURU_CONVERT_ENABLED ]] ; then
+    if [[ $GRBL_CONVERT_ENABLED ]] ; then
         gr.msg -v1 -c green -k $convert_indicator_key \
             "enabled"
     else
@@ -961,7 +961,7 @@ convert.poll () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-    #source "$GURU_RC"
+    #source "$GRBL_RC"
     convert.main $@
     exit $?
 fi

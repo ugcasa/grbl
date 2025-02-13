@@ -1,25 +1,25 @@
 #!/bin/bash
-# guru-client calendar playground casa@ujo.guru 2022
+# grbl calendar playground casa@ujo.guru 2022
 # based on ncal and calcurse  # TBD add links to team wab pages
 # primary target is to two way sync calendar data least from Google and Microsoft account for
-# guru-cli platform automation needs.
+# grbl platform automation needs.
 # secondarily simplify and mundane terminal calendar commands
 
-# source $GURU_BIN/common.sh # CLEAN old way to call commons
+# source $GRBL_BIN/common.sh # CLEAN old way to call commons
 
 declare -g temp_file="/tmp/$USER/cal.tmp"
 
 # placeholder for user configurations
 declare -gA google
 
-[[ -f $GURU_CFG/$GURU_USER/google.cfg ]] && source $GURU_CFG/$GURU_USER/google.cfg
+[[ -f $GRBL_CFG/$GRBL_USER/google.cfg ]] && source $GRBL_CFG/$GRBL_USER/google.cfg
 
 
 cal.help () {
-    gr.msg -v1 -c white "guru-client calendar help "
+    gr.msg -v1 -c white "grbl calendar help "
     gr.msg -v2
     gr.msg -v1  "printout month date numbers to std and clipboard"
-    gr.msg -v0 "usage:    $GURU_CALL cal months|days|year <wide|single> <year> <month_list> <year> <month_list> "
+    gr.msg -v0 "usage:    $GRBL_CALL cal months|days|year <wide|single> <year> <month_list> <year> <month_list> "
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " year         printout year full of month date numbers "
@@ -39,8 +39,8 @@ cal.help () {
     # gr.msg -v1 " sync ms        sync with Microsoft calendar"
     # gr.msg -v2
     gr.msg -v1 -c white "example: "
-    gr.msg -v1 "   $GURU_CALL cal months 1 2 2005 2 3 1917 3 4"
-    gr.msg -v1 "   $GURU_CALL cal days wide "
+    gr.msg -v1 "   $GRBL_CALL cal months 1 2 2005 2 3 1917 3 4"
+    gr.msg -v1 "   $GRBL_CALL cal days wide "
     gr.msg -v2
 }
 
@@ -259,11 +259,11 @@ cal.setup_google () {
     gr.msg -c light_blue "https://console.cloud.google.com/projectselector2/projectselector/apis/credentials"
     [[ $open_fox ]] && firefox "https://console.cloud.google.com/projectselector2/projectselector/apis/credentials"
 
-    gr.msg -c white "5) get the 'OAuth 2.0 Client ID and place it to guru-cli user.cfg"
+    gr.msg -c white "5) get the 'OAuth 2.0 Client ID and place it to grbl user.cfg"
     # CALCURSE_CALDAV_PASSWORD=$(pass show calcurse) calcurse-caldav
     # TBD secrets.cfg
 
-    if gr.ask "let guru to write config files" ; then
+    if gr.ask "let grbl to write config files" ; then
 
             read -p "your new client clientID please: " tha_id
 
@@ -272,7 +272,7 @@ cal.setup_google () {
                 read -p "please re enter: " tha_id
             done
 
-            local user_conf="$GURU_CFG/$GURU_USER/user.cfg"
+            local user_conf="$GRBL_CFG/$GRBL_USER/user.cfg"
 
             cat $user_conf | grep "google[caldav_id]=" \
                 && gr.msg -c yellow "already set, change manually from $user_conf" \
@@ -285,7 +285,7 @@ cal.setup_google () {
 
         gr.msg -c pink "config file location: $user_conf"
         gr.msg "go or add '[google]' chapter and fill variable 'caldav_id=with_your_ID'"
-        gr.msg "then save and run '$GURU_CALL export config'"
+        gr.msg "then save and run '$GRBL_CALL export config'"
     fi
 
     gr.msg -c white "6) ready to download stuff from server, all local data will be overwritten. (press ctrl+c if not sure)"
@@ -309,22 +309,22 @@ cal.sync_google () {
 
     # check is configuration made
     if ! [[ ${google[caldav_id]} ]] ; then
-            gr.msg -c yellow "google[caldav_id] variable is empty, fill it to '$GURU_CFG/$GURU_USER/google.cfg'"
+            gr.msg -c yellow "google[caldav_id] variable is empty, fill it to '$GRBL_CFG/$GRBL_USER/google.cfg'"
             return 111
         fi
 
     # if keep local method in use, why to bother to backup local? REVIEW
     # # check that mount location exist
-    # if [[ -d ${GURU_BACKUP_FILES[2]} ]] ; then
+    # if [[ -d ${GRBL_BACKUP_FILES[2]} ]] ; then
 
-    #     backup_location="${GURU_BACKUP_FILES[2]}/${GURU_BACKUP_FILES[3]}"
+    #     backup_location="${GRBL_BACKUP_FILES[2]}/${GRBL_BACKUP_FILES[3]}"
 
     # else
 
-    #     if gio mount -d ${GURU_BACKUP_FILES[0]} ${GURU_BACKUP_FILES[2]} ; then
-    #             gr.msg -c green "mounted to ${GURU_BACKUP_FILES[2]}"
+    #     if gio mount -d ${GRBL_BACKUP_FILES[0]} ${GRBL_BACKUP_FILES[2]} ; then
+    #             gr.msg -c green "mounted to ${GRBL_BACKUP_FILES[2]}"
     #             did_mount=true
-    #             backup_location="${GURU_BACKUP_FILES[2]}/${GURU_BACKUP_FILES[3]}"
+    #             backup_location="${GRBL_BACKUP_FILES[2]}/${GRBL_BACKUP_FILES[3]}"
     #         else
     #             mkdir -p "$backup_location"
     #         fi
@@ -350,7 +350,7 @@ cal.sync_google () {
     calcurse-caldav --init $method --authcode ${google[caldav_id]}
 
     # if [[ $did_mount ]] ; then
-    #         gio mount -u ${GURU_BACKUP_FILES[2]}
+    #         gio mount -u ${GRBL_BACKUP_FILES[2]}
     #     fi
     #return $?
 }
@@ -475,7 +475,7 @@ EOL
 cal.upgrade() {
 # upgrade needed tools, ofter youtube changes shit causing weird errors
 
-    sudo apt update && guru system upgrade
+    sudo apt update && grbl system upgrade
     # get new version of
     pip3 install --upgrade pip
     pip3 install --user --upgrade yt-dlp
@@ -493,7 +493,7 @@ cal.install () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # source "$GURU_RC"
+    # source "$GRBL_RC"
     cal.main "$@"
     exit "$?"
 fi

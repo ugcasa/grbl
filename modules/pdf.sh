@@ -1,5 +1,5 @@
 #!/bin/bash
-# pdf tools for guru-cli
+# pdf tools for grbl
 
 
 pdf.install () {

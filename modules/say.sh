@@ -1,18 +1,18 @@
 #!/bin/bash
-# simple voice for guru casa@ujo.guru 2023
+# simple voice for grbl casa@ujo.guru 2023
 
 # configuration placeholder
 declare -A say_cfg=()
-declare -g say_cfg_file="$GURU_CFG/say.cfg"
-declare -g say_cfg_usr_file="$GURU_CFG/$GURU_USER/say.cfg"
+declare -g say_cfg_file="$GRBL_CFG/say.cfg"
+declare -g say_cfg_usr_file="$GRBL_CFG/$GRBL_USER/say.cfg"
 declare -g module_command=()
 
 
 say.help () {
 
-    gr.msg -v1 -c white "guru-cli say help "
+    gr.msg -v1 -c white "grbl say help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL say file|help"
+    gr.msg -v0 "usage:    $GRBL_CALL say file|help"
     gr.msg -v2
     gr.msg -v1 "  file <filename>       read file "
     gr.msg -v1 '  string "string"       read sting '

@@ -1,17 +1,17 @@
 #!/bin/bash
-# guru-cli gaming functions casa@ujo.guru 2022
+# grbl gaming functions casa@ujo.guru 2022
 #
 # change log
 # - 20221222 module started, bedrock installer
 #
 
-declare -g game_rc="/tmp/$USER/guru-cli_game.rc"
-declare -g game_folder="~/guru/games"
+declare -g game_rc="/tmp/$USER/grbl_game.rc"
+declare -g game_folder="~/grbl/games"
 declare -g list_of_games=(duke3d bedrock doom2 minecraft)
 
 game.rc () {
-    export GURU_GAME_ENABLED=true
-    export GURU_GAME_INDICATOR_KEY=
+    export GRBL_GAME_ENABLED=true
+    export GRBL_GAME_INDICATOR_KEY=
 }
 
 
@@ -41,9 +41,9 @@ game.main () {
 game.help () {
 # general help
 
-    gr.msg -v1 -c white "guru-client game help "
+    gr.msg -v1 -c white "grbl game help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL game install|set|start|remove|help "
+    gr.msg -v0 "usage:    $GRBL_CALL game install|set|start|remove|help "
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " install <game>           install game and requirements "
@@ -55,8 +55,8 @@ game.help () {
     gr.msg -v2 " help                     printout this help "
     gr.msg -v2
     gr.msg -v1 -c white "examples: "
-    gr.msg -v1 "         $GURU_CALL game start minecraft"
-    gr.msg -v1 "         $GURU_CALL game set minecraft pre"
+    gr.msg -v1 "         $GRBL_CALL game start minecraft"
+    gr.msg -v1 "         $GRBL_CALL game set minecraft pre"
     gr.msg -v2
     return 0
 }
@@ -67,10 +67,10 @@ game.status () {
 
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
-    if [[ $GURU_GAME_ENABLED ]] ; then
-            gr.msg -v1 -n -c green "enabled, " #-k $GURU_GAME_INDICATOR_KEY
+    if [[ $GRBL_GAME_ENABLED ]] ; then
+            gr.msg -v1 -n -c green "enabled, " #-k $GRBL_GAME_INDICATOR_KEY
         else
-            gr.msg -v1 -c black "disabled " #-k $GURU_GAME_INDICATOR_KEY
+            gr.msg -v1 -c black "disabled " #-k $GRBL_GAME_INDICATOR_KEY
             return 1
         fi
 
@@ -98,12 +98,12 @@ game.poll () {
     case $_cmd in
         start )
             gr.msg -v1 -t -c black \
-                -k $GURU_GAME_INDICATOR_KEY \
+                -k $GRBL_GAME_INDICATOR_KEY \
                 "${FUNCNAME[0]}: game status polling started"
             ;;
         end )
             gr.msg -v1 -t -c reset \
-                -k $GURU_GAME_INDICATOR_KEY \
+                -k $GRBL_GAME_INDICATOR_KEY \
                 "${FUNCNAME[0]}: game status polling ended"
             ;;
         status )
@@ -118,7 +118,7 @@ game.poll () {
 
 game.minecraft_status () {
 # install minecraft bedrock
-    [[ $GURU_GAME_FOLDER/menicraft ]] && return 0 || return 1
+    [[ $GRBL_GAME_FOLDER/menicraft ]] && return 0 || return 1
 }
 
 
@@ -135,7 +135,7 @@ game.minecraft_set () {
 # setup minecraft bedrock
     source corsair.sh
     pkill mpv
-    guru stop
+    grbl stop
 
     case $1 in
         pre|"")
@@ -179,7 +179,7 @@ game.minecraft_set () {
             for keys in a d s w l c z x v b n m q f e 1 2 3 4 5 6 7 8 9 0 'shiftl' 'lctrl' 'f2' 'f3' 'space' 'scroll' 'half' 'plus' 'query' 'backscape' 'tab' r t y u i o p å 'tilde' 'enter' 'caps' f g h j k ö ä 'asterix' 'shiftl' 'less' 'comma' 'perioid' 'minus' 'shiftr' 'func' 'alt' 'altgr' 'fn' 'set' 'rctrl'  ; do
                 corsair.main reset $keys
             done
-            #guru start
+            #grbl start
             ;;
     esac
 }
@@ -192,7 +192,7 @@ game.bedrock_start () {
 
     game.minecraft_set pre
 
-    cd $GURU_GAME_FOLDER/bedrock
+    cd $GRBL_GAME_FOLDER/bedrock
     ./Minecraft_Bedrock_Launcher.AppImage
 
     game.minecraft_set post
@@ -207,17 +207,17 @@ game.bedrock_set () {
 
 game.bedrock_status () {
 # install minecraft bedrock
-    [[ $GURU_GAME_FOLDER/bedrock ]] && return 0 || return 1
+    [[ $GRBL_GAME_FOLDER/bedrock ]] && return 0 || return 1
 }
 
 
 game.bedrock_install () {
 # install minecraft bedrock
 
-    mkdir -p $GURU_GAME_FOLDER/bedrock
-    wget https://mcpelauncher.mrarm.io/appimage/Minecraft_Bedrock_Launcher.AppImage -O $GURU_GAME_FOLDER/Minecraft_Bedrock_Launcher.AppImage
-    chmod +x $GURU_GAME_FOLDER/Minecraft_Bedrock_Launcher.AppImage
-    cd $GURU_GAME_FOLDER
+    mkdir -p $GRBL_GAME_FOLDER/bedrock
+    wget https://mcpelauncher.mrarm.io/appimage/Minecraft_Bedrock_Launcher.AppImage -O $GRBL_GAME_FOLDER/Minecraft_Bedrock_Launcher.AppImage
+    chmod +x $GRBL_GAME_FOLDER/Minecraft_Bedrock_Launcher.AppImage
+    cd $GRBL_GAME_FOLDER
     ./Minecraft_Bedrock_Launcher.AppImage
 }
 
@@ -225,13 +225,13 @@ game.bedrock_install () {
 game.bedrock_remove () {
 # remove minecraft bedrock
 
-    if [[ -d $GURU_GAME_FOLDER/bedrock ]] ; then
-            rm -r $GURU_GAME_FOLDER/bedrock
+    if [[ -d $GRBL_GAME_FOLDER/bedrock ]] ; then
+            rm -r $GRBL_GAME_FOLDER/bedrock
         fi
 
-    if [[ $GURU_FORCE ]] && [[ -d $GURU_GAME_FOLDER/bedrock ]] ; then
+    if [[ $GRBL_FORCE ]] && [[ -d $GRBL_GAME_FOLDER/bedrock ]] ; then
         gr.ask "remove bedrock saves and configurations?" || return 0
-        echo rm -r $GURU_GAME_FOLDER/bedrock
+        echo rm -r $GRBL_GAME_FOLDER/bedrock
         fi
 }
 
@@ -239,7 +239,7 @@ game.bedrock_remove () {
 game.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # source $GURU_RC
+    # source $GRBL_RC
     game.main "$@"
     exit "$?"
 fi

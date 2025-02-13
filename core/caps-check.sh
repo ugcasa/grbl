@@ -1,6 +1,6 @@
 #!/bin/bash
-#guru-cli caps-launcher.sh
-source $HOME/.gururc
+#grbl caps-launcher.sh
+source $HOME/.grblrc
 source os.sh
 
 # set capslock off if its on. user can active capsloc by pressin 'capslock+ca' of 'gr os capslock on'
@@ -9,4 +9,4 @@ if os.capslock state ; then
 	exit 0
 fi
 
-gnome-terminal --hide-menubar --geometry 1x1 --zoom 3 --hide-menubar --title "caps-launcher"  -- $GURU_BIN/caps-launcher.sh
+gnome-terminal --hide-menubar --geometry 1x1 --zoom 3 --hide-menubar --title "caps-launcher"  -- $GRBL_BIN/caps-launcher.sh

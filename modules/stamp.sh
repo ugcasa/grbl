@@ -9,21 +9,21 @@ stamp.main () {
     local stamp=""
 
     case $command in
-            date)       stamp=$(date +$GURU_FORMAT_FILE_DATE) ;;
-            time)       stamp=$(date +$GURU_FORMAT_TIME) ;;
-            nicedate)   stamp=$(date +$GURU_FORMAT_NICE_DATE) ;;
-            datetime)   stamp=$(date +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_TIME) ;;
+            date)       stamp=$(date +$GRBL_FORMAT_FILE_DATE) ;;
+            time)       stamp=$(date +$GRBL_FORMAT_TIME) ;;
+            nicedate)   stamp=$(date +$GRBL_FORMAT_NICE_DATE) ;;
+            datetime)   stamp=$(date +$GRBL_FORMAT_FILE_DATE-$GRBL_FORMAT_TIME) ;;
             start)      stamp=$(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M") ;;
             end)        stamp=$(date -d @$(( (($(date +%s) + 900) / 900) * 900)) "+%H:%M") ;;
             round)      stamp=$(date -d @$(( (($(date +%s) + 450) / 900) * 900)) "+%H:%M") ;;
             transaction)
                     stamp="## Transaction\n\tAccount\t\tAmount\t\tVAT\tto/frm\tDescription\n\t" ;;
             signature)
-                    stamp="$GURU_USER_FULL_NAME/$GURU_USER_TEAM $GURU_USER_PHONE $GURU_USER_EMAIL" ;;
+                    stamp="$GRBL_USER_FULL_NAME/$GRBL_USER_TEAM $GRBL_USER_PHONE $GRBL_USER_EMAIL" ;;
             weekplan)
                     stamp.weekplan $@ ; return 0 ;;
             picture-md)
-                [ "$1" ] && file="$GURU_LOCAL_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$1" || file="$GURU_LOCAL_NOTES/$GURU_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
+                [ "$1" ] && file="$GRBL_LOCAL_NOTES/$GRBL_USER/$(date +%Y)/$(date +%m)/pictures/$1" || file="$GRBL_LOCAL_NOTES/$GRBL_USER/$(date +%Y)/$(date +%m)/pictures/$(xclip -o)"
                 [[ -f "$file" ]] || exit 234
                 stamp="![]($file){ width=500px }"
                 ;;
@@ -41,9 +41,9 @@ stamp.main () {
 
 
 stamp.help () {
-    gr.msg -v1 -c white "guru-client stamp help "
+    gr.msg -v1 -c white "grbl stamp help "
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL stamp [date|time|start|end|round|transaction|signature|picture-md] "
+    gr.msg -v0  "usage:    $GRBL_CALL stamp [date|time|start|end|round|transaction|signature|picture-md] "
     gr.msg -v2
     gr.msg -v1 -c white  "commands: "
     gr.msg -v1  "date              datestamp "
@@ -64,13 +64,13 @@ stamp.weekplan () {
     declare -a day_dates day_names_en day_names_fi
     day_names_en=("Week" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
     day_names_fi=("Viikko" "Maanantai" "Tiistai" "Keskiviikko" "Torstai" "Perjantai" "Lauvantai" "Sunnuntai")
-    target_file=$(guru note location $(date +$GURU_FORMAT_FILE_DATE))                                               #;echo "notefile $target_file"
-    # [ "$1" ] && target_file="$1" || target_file=$(guru note location $(date +$GURU_FORMAT_FILE_DATE))                                               #;echo "notefile $target_file"
+    target_file=$(grbl note location $(date +$GRBL_FORMAT_FILE_DATE))                                               #;echo "notefile $target_file"
+    # [ "$1" ] && target_file="$1" || target_file=$(grbl note location $(date +$GRBL_FORMAT_FILE_DATE))                                               #;echo "notefile $target_file"
     # [ -f "$target_file" ] || exit 123
 
     get_dates() {
         for i in {1..7} ; do
-            day_dates[$i]=$(date --date="this ${day_names_en[$i]}" +$GURU_FORMAT_FILE_DATE)                 #;echo "day_dates[$i] : $i"
+            day_dates[$i]=$(date --date="this ${day_names_en[$i]}" +$GRBL_FORMAT_FILE_DATE)                 #;echo "day_dates[$i] : $i"
         done
     }
 
@@ -80,7 +80,7 @@ stamp.weekplan () {
     }
 
     note_change() {
-        printf " $(date +$GURU_FORMAT_FILE_DATE)-$(date +$GURU_FORMAT_TIME) | $GURU_USER | $1\n" >>$target_file
+        printf " $(date +$GRBL_FORMAT_FILE_DATE)-$(date +$GRBL_FORMAT_TIME) | $GRBL_USER | $1\n" >>$target_file
     }
 
     week_plan () {
@@ -103,7 +103,7 @@ stamp.weekplan () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # source "$GURU_RC"
+    # source "$GRBL_RC"
     #command=$1 ; shift
     stamp.main $@
     exit $?

@@ -1,11 +1,11 @@
 #!/bin/bash
-# guru-cli play and get from youtube casa@ujo.guru 2022
+# grbl play and get from youtube casa@ujo.guru 2022
 
 source flag.sh
 source audio.sh
 
-declare -g youtube_rc="/tmp/$USER/guru-cli_youtube.rc"
-declare -g youtube_data=$GURU_DATA/youtube
+declare -g youtube_rc="/tmp/$USER/grbl_youtube.rc"
+declare -g youtube_data=$GRBL_DATA/youtube
 declare -g youtube_error=/tmp/$USER/youtube.error
 declare -g mpv_error=/tmp/$USER/mpv.error
 declare -g continue_to_play=
@@ -13,9 +13,9 @@ declare -g continue_to_play=
 
 youtube.help () {
 
-    gr.msg -v1 "guru-cli youtube help " -h
+    gr.msg -v1 "grbl youtube help " -h
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL youtube play|get|list|song|search|install|uninstall|help"
+    gr.msg -v0  "usage:    $GRBL_CALL youtube play|get|list|song|search|install|uninstall|help"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v2
@@ -39,12 +39,12 @@ youtube.help () {
     gr.msg -v2
     gr.msg -v1 "examples: " -c white
     gr.msg -v2
-    gr.msg -v1 "  $GURU_CALL youtube search nyan cat"
-    gr.msg -v1 "  $GURU_CALL youtube juna kulkee taas"
-    gr.msg -v1 "  $GURU_CALL youtube play eF1D-W27Wzg"
-    gr.msg -v1 "  $GURU_CALL youtube get https://www.youtube.com/watch?v=eF1D-W27Wzg"
+    gr.msg -v1 "  $GRBL_CALL youtube search nyan cat"
+    gr.msg -v1 "  $GRBL_CALL youtube juna kulkee taas"
+    gr.msg -v1 "  $GRBL_CALL youtube play eF1D-W27Wzg"
+    gr.msg -v1 "  $GRBL_CALL youtube get https://www.youtube.com/watch?v=eF1D-W27Wzg"
     gr.msg -v2
-    gr.msg -v2 "aliases 'tube' and 'tubes' are present to to replace '$GURU_CALL youtube' and 'search'"
+    gr.msg -v2 "aliases 'tube' and 'tubes' are present to to replace '$GRBL_CALL youtube' and 'search'"
 }
 
 
@@ -125,12 +125,12 @@ youtube.arguments () {
 
             --video|--v)
                 youtube_options= # export
-                save_location=$GURU_MOUNT_VIDEO # export
+                save_location=$GRBL_MOUNT_VIDEO # export
                 ;;
             --audio|--a)
                 youtube_options="-f bestaudio --no-resize-buffer --ignore-errors" # export
                 mpv_options="$mpv_options --no-video" # export
-                save_location=$GURU_MOUNT_AUDIO # export
+                save_location=$GRBL_MOUNT_AUDIO # export
                 ;;
 
             --list-formats)
@@ -169,10 +169,10 @@ youtube.arguments () {
         # media format options given based on media saving location, yes not the best i konw
         if [[ $save_to_file ]] ; then
 
-            [[ "$save_location" == "$GURU_MOUNT_AUDIO" ]] \
+            [[ "$save_location" == "$GRBL_MOUNT_AUDIO" ]] \
                 && youtube_options="$youtube_options -x --audio-format mp3" # export
 
-            [[ "$save_location" == "$GURU_MOUNT_VIDEO" ]] \
+            [[ "$save_location" == "$GRBL_MOUNT_VIDEO" ]] \
                 && youtube_options="$youtube_options --recode-video mp4" # export
         fi
     #echo ${module_command[@]}
@@ -183,9 +183,9 @@ youtube.rc () {
 # source configurations (to be faster)
 
     if [[ ! -f $youtube_rc ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/youtube.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/audio.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]]
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/youtube.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]] \
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/audio.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]] \
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/mount.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]]
         then
         youtube.make_rc && \
             gr.msg -v1 -c dark_gray "$youtube_rc updated"
@@ -203,9 +203,9 @@ youtube.make_rc () {
         rm -f $youtube_rc
     fi
 
-    config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $youtube_rc
-    config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $youtube_rc append
-    config.make_rc "$GURU_CFG/$GURU_USER/youtube.cfg" $youtube_rc append
+    config.make_rc "$GRBL_CFG/$GRBL_USER/mount.cfg" $youtube_rc
+    config.make_rc "$GRBL_CFG/$GRBL_USER/audio.cfg" $youtube_rc append
+    config.make_rc "$GRBL_CFG/$GRBL_USER/youtube.cfg" $youtube_rc append
     chmod +x $youtube_rc
 }
 
@@ -224,7 +224,7 @@ youtube.search () {
     local search_phrase=
     local todo="play"
     local mp4=
-    # local youtube_data=$GURU_DATA/youtube
+    # local youtube_data=$GRBL_DATA/youtube
 
     # terminal type
     case $TERM in
@@ -233,9 +233,9 @@ youtube.search () {
             ;;
         linux|*)
             optimization="audio"
-            [[ $GURU_VERBOSE -gt 2 ]] && export GURU_VERBOSE=2
+            [[ $GRBL_VERBOSE -gt 2 ]] && export GRBL_VERBOSE=2
             export youtube_options=
-            export mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-youtube --vo=null --no-video "
+            export mpv_options="--input-ipc-server=$GRBL_AUDIO_MPV_SOCKET-youtube --vo=null --no-video "
     esac
 
     # make needed folders
@@ -262,7 +262,7 @@ youtube.search () {
 
         # search from youtube.com, i think youtube limits results to 20 items
         local _json="/tmp/$USER/youtube_results.json"
-        youtube.find $GURU_YOUTUBE_RESULT_LIMIT json "$search_phrase" >$_json
+        youtube.find $GRBL_YOUTUBE_RESULT_LIMIT json "$search_phrase" >$_json
 
         # fulfill list variables from data got from youtube search
         ifs=$IFS ; IFS=$'\n'
@@ -297,7 +297,7 @@ youtube.search () {
             thumb[$i]=${thumb[$i]//'"'}
             views[$i]=${views[$i]//'"'}
             channel[$i]="${channel[$i]//'"'}"
-            [[ $GURU_VERBOSE -gt 2 ]] && ! [[ -f $youtube_data/cache/${id[$i]}.jpg ]] \
+            [[ $GRBL_VERBOSE -gt 2 ]] && ! [[ -f $youtube_data/cache/${id[$i]}.jpg ]] \
                 && curl -s ${thumb[$i]} --output "$youtube_data/cache/${id[$i]}.jpg"
         done
         items=${#title[@]}
@@ -311,13 +311,13 @@ youtube.search () {
         gr.msg -h "youtube search '$(sed -e "s/\b\(.\)/\u\1/g" <<<$([[ $search_phrase ]] && echo $search_phrase || echo $@))'"
 
         # limit thumbnail size to whatever specified in user conf
-        [[ $cols -gt $GURU_YOUTUBE_THUMBNAIL_SIZE ]] && thumb_cols=$GURU_YOUTUBE_THUMBNAIL_SIZE || thumb_cols=$cols
+        [[ $cols -gt $GRBL_YOUTUBE_THUMBNAIL_SIZE ]] && thumb_cols=$GRBL_YOUTUBE_THUMBNAIL_SIZE || thumb_cols=$cols
 
         # go trough found list items
         for (( i = 0; i < ${#title[@]}; i++ )); do
 
             # print list without thumbnails, and try to optimize to column width
-            if [[ $GURU_VERBOSE -lt 3 ]] ; then
+            if [[ $GRBL_VERBOSE -lt 3 ]] ; then
 
                 # printout only number add title
                 if [[ $cols -lt 80 ]] ; then
@@ -434,15 +434,15 @@ youtube.search () {
         local np="youtube [$1/$items] ${title[$item]} ${duration[$item]}"
 
         # place formatted headers, sleep one second cause last player might delete updated file
-        echo "$np" >$GURU_AUDIO_NOW_PLAYING
-        create_time=$(stat -c %Y $GURU_AUDIO_NOW_PLAYING)
+        echo "$np" >$GRBL_AUDIO_NOW_PLAYING
+        create_time=$(stat -c %Y $GRBL_AUDIO_NOW_PLAYING)
         gr.msg -N -h "$np"
 
         # log what played today
         echo "$(date -d now +%Y-%m-%d-%H:%M:%S) ${id[$item]} ${title[$item]}" >>"$youtube_data/played/$(date -d now +%Y-%m-%d).list"
 
         # fetch thumbnail if not done already
-        if [[ $thubnails ]] && [[ $GURU_VERBOSE -ge 1 ]] && [[ ! $save_to_file ]]; then
+        if [[ $thubnails ]] && [[ $GRBL_VERBOSE -ge 1 ]] && [[ ! $save_to_file ]]; then
             [[ -f $youtube_data/cache/${id[$item]}.jpg ]] || curl -s ${thumb[$item]} --output "$youtube_data/cache/${id[$item]}.jpg"
             tiv -w $cols "$youtube_data/cache/${id[$item]}.jpg"
         fi
@@ -473,7 +473,7 @@ youtube.search () {
             yt-dlp $youtube_options $sing_in_option $media_address 2>$youtube_error
             _error=$?
 
-            [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+            [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && rm $GRBL_AUDIO_NOW_PLAYING
             gr.end d
             gr.msg -c green "done"
             #ls *mp4
@@ -489,14 +489,14 @@ youtube.search () {
 
         # remove playing indications
         gr.end play
-        #gr.msg -c reset -k $GURU_AUDIO_INDICATOR_KEY
+        #gr.msg -c reset -k $GRBL_AUDIO_INDICATOR_KEY
 
         # transfer errors for future processing in main loop
         gr.debug "$FUNCNAME _error:$_error"
 
         # remove now playing only if it's created by current me. made by checking creation time
-        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && [[ $(($(stat -c %Y $GURU_AUDIO_NOW_PLAYING) - $create_time)) -lt 1 ]] \
-            && rm $GURU_AUDIO_NOW_PLAYING
+        [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && [[ $(($(stat -c %Y $GRBL_AUDIO_NOW_PLAYING) - $create_time)) -lt 1 ]] \
+            && rm $GRBL_AUDIO_NOW_PLAYING
 
         (( $_error > 0 )) && gr.msg -c yellow "${FUNCNAME[0]} returned $_error"
         return $_error
@@ -507,18 +507,18 @@ youtube.search () {
     # NOTE: this might not work anymore: https://github.com/yt-dlp/yt-dlp/issues/8079
 
         if ! [[ -f $youtube_data/cookies.txt ]] ; then
-            yt-dlp --cookies-from-browser $GURU_PREFERRED_BROWSER --cookies $youtube_data/cookies.txt --skip-download 2>$youtube_error
+            yt-dlp --cookies-from-browser $GRBL_PREFERRED_BROWSER --cookies $youtube_data/cookies.txt --skip-download 2>$youtube_error
             gr.msg -c white "cookies saved to $youtube_data/cookies.txt"
             gr.ask "file contains all your cookies, so you might like to delete it on exit? " && delete_cookies=true
         fi
-        if ! [[ $GURU_YOUTUBE_USER ]] ; then
+        if ! [[ $GRBL_YOUTUBE_USER ]] ; then
             gr.msg -e1 "no youtube user set in configuration "
             return 122
         fi
 
-        [[ $GURU_YOUTUBE_PASSWORD ]] \
-            && sing_in_option="-u $GURU_YOUTUBE_USER -p $GURU_YOUTUBE_PASSWORD" \
-            || sing_in_option="-u $GURU_YOUTUBE_USER"
+        [[ $GRBL_YOUTUBE_PASSWORD ]] \
+            && sing_in_option="-u $GRBL_YOUTUBE_USER -p $GRBL_YOUTUBE_PASSWORD" \
+            || sing_in_option="-u $GRBL_YOUTUBE_USER"
 
         sing_in_option="$sing_in_option --cookies $youtube_data/cookies.txt"
     }
@@ -558,8 +558,8 @@ youtube.search () {
                 [[ "${#ans}" -ge 3 ]] && ans=${ans#* }
                 gr.debug "VERBOSE:'$ans"
                 [[ ! $thubnails ]] && [[ $ans -gt 2 ]] && ans=2
-                export GURU_VERBOSE=$ans
-                [[ $GURU_VERBOSE -gt 2 ]] && compose_list
+                export GRBL_VERBOSE=$ans
+                [[ $GRBL_VERBOSE -gt 2 ]] && compose_list
                 print_list
                 continue
                 ;;
@@ -582,11 +582,11 @@ youtube.search () {
                 if [[ $optimization == "audio" ]] ; then
                     optimization=video
                     youtube_options="-f best"
-                    mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-youtube"
+                    mpv_options="--input-ipc-server=$GRBL_AUDIO_MPV_SOCKET-youtube"
                 else
                     optimization=audio
                     youtube_options=
-                    mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-youtube --vo=null --no-video "
+                    mpv_options="--input-ipc-server=$GRBL_AUDIO_MPV_SOCKET-youtube --vo=null --no-video "
                 fi
                 gr.msg "$optimization selected"
                 continue
@@ -632,7 +632,7 @@ youtube.search () {
                 item=$(( $last_item - 1 ))
                 sleep 1
                 gr.msg -n "waiting [$last_item/$items] ${title[$item]} ${duration[$item]} (press any key to play now)"
-                while [[ -f $GURU_AUDIO_NOW_PLAYING ]] ; do
+                while [[ -f $GRBL_AUDIO_NOW_PLAYING ]] ; do
                     read -s -n1 -t1 && break
                 done
                 ;;
@@ -641,7 +641,7 @@ youtube.search () {
                     gr.msg -c dark_grey "removing login options"
                     sing_in_option=
                 else
-                    gr.msg -c white "setting $GURU_YOUTUBE_USER login options"
+                    gr.msg -c white "setting $GRBL_YOUTUBE_USER login options"
                     set_sing_in
                 fi
                 continue
@@ -754,7 +754,7 @@ youtube.firefox_cookies () {
     }
 
     [[ -f $cookie_db ]] || get_database
-    python3 "$GURU_BIN/audio/get_cookie.py" youtube.com $cookie_db >$youtube_data/youtube_cookie.txt
+    python3 "$GRBL_BIN/audio/get_cookie.py" youtube.com $cookie_db >$youtube_data/youtube_cookie.txt
     rm $cookie_db
 }
 
@@ -794,12 +794,12 @@ youtube.search_n_play () {
         detox -v *mp3 *mp4 $save_location 2>/dev/null
 
         #source tag.sh
-        #tag.main add $new_name "guru-cli youtube.sh $title"
+        #tag.main add $new_name "grbl youtube.sh $title"
         return $?
     fi
 
     # make now playing info available for audio module
-    echo "youtube $title" >$GURU_AUDIO_NOW_PLAYING
+    echo "youtube $title" >$GRBL_AUDIO_NOW_PLAYING
 
     # start stream and play
     yt-dlp $youtube_options $media_address -o - 2>$youtube_error \
@@ -811,11 +811,11 @@ youtube.search_n_play () {
         [[ -f $youtube_error ]] && rm $youtube_error
 
         # if user willing to save password in configs (who would?) serve him/her anyway
-        [[ $GURU_YOUTUBE_PASSWORD ]] \
-            && sing_in="-u $GURU_YOUTUBE_USER -p $GURU_YOUTUBE_PASSWORD --cookies-from-browser" \
-            || sing_in="-u $GURU_YOUTUBE_USER --cookies-from-browser"
+        [[ $GRBL_YOUTUBE_PASSWORD ]] \
+            && sing_in="-u $GRBL_YOUTUBE_USER -p $GRBL_YOUTUBE_PASSWORD --cookies-from-browser" \
+            || sing_in="-u $GRBL_YOUTUBE_USER --cookies-from-browser"
 
-            gr.msg -v2 "signing in as $GURU_YOUTUBE_USER"
+            gr.msg -v2 "signing in as $GRBL_YOUTUBE_USER"
 
             # then perform re-try
             yt-dlp -v $youtube_options $sing_in $media_address -o - 2>$youtube_error \
@@ -835,7 +835,7 @@ youtube.search_n_play () {
         rm "$youtube_error"
     fi
     # remove now playing and error data
-    [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+    [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && rm $GRBL_AUDIO_NOW_PLAYING
 
     return 0
 }
@@ -872,13 +872,13 @@ youtube.search_list () {
         echo "${id_list[$i]} [$(($i+1))/${#id_list[@]}]"
 
         # make now playing info available for audio module
-        echo "youtube $_url" >$GURU_AUDIO_NOW_PLAYING
+        echo "youtube $_url" >$GRBL_AUDIO_NOW_PLAYING
 
         # start stream and play
         yt-dlp $youtube_options "$_url" -o - 2>/dev/null| mpv $mpv_options --no-video - >$mpv_error
 
         #remove now playing data
-        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+        [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && rm $GRBL_AUDIO_NOW_PLAYING
 
         if flag.get audio_stop ; then
             flag.rm audio_stop
@@ -902,11 +902,11 @@ youtube.get_media () {
     source mount.sh
     mount.main video
 
-    [[ -d $data_location ]] || mkdir -p $GURU_MOUNT_VIDEO
+    [[ -d $data_location ]] || mkdir -p $GRBL_MOUNT_VIDEO
 
-    gr.msg -c white "downloading $url_base=$id to $GURU_MOUNT_VIDEO.. "
+    gr.msg -c white "downloading $url_base=$id to $GRBL_MOUNT_VIDEO.. "
     yt-dlp --ignore-errors --continue --no-overwrites \
-           --output "$GURU_MOUNT_VIDEO/%(title)s.%(ext)s" \
+           --output "$GRBL_MOUNT_VIDEO/%(title)s.%(ext)s" \
            "$url_base=$id"
     return $?
 }
@@ -922,17 +922,17 @@ youtube.get_audio () {
     source mount.sh
     mount.main audio
 
-    [[ -d $GURU_MOUNT_AUDIO/new ]] || mkdir -p $GURU_MOUNT_AUDIO/new
+    [[ -d $GRBL_MOUNT_AUDIO/new ]] || mkdir -p $GRBL_MOUNT_AUDIO/new
 
     # check is installed
     yt-dlp --version || youtube.install
 
     # inform user
-    gr.msg -c white "downloading $url_base=$id to $GURU_MOUNT_AUDIO.. "
+    gr.msg -c white "downloading $url_base=$id to $GRBL_MOUNT_AUDIO.. "
 
     # download and convert to mp3 format, then save to audio base location named by title
     yt-dlp -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
-           --output "$GURU_MOUNT_AUDIO/%(title)s.%(ext)s" \
+           --output "$GRBL_MOUNT_AUDIO/%(title)s.%(ext)s" \
            "$url_base=$id"
     return $?
 }
@@ -955,7 +955,7 @@ youtube.play () {
     local media_address="$base_url$1"
 
     # indicate playing
-    gr.msg -c dark_grey "$media_address" -k $GURU_AUDIO_INDICATOR_KEY
+    gr.msg -c dark_grey "$media_address" -k $GRBL_AUDIO_INDICATOR_KEY
 
     # get steam and play
     gr.debug "$FUNCNAME yt-dlp $youtube_options $media_address -o - | mpv $mpv_options -"
@@ -971,7 +971,7 @@ youtube.play () {
 
 
     # remove playing indications
-    gr.msg -c reset -k $GURU_AUDIO_INDICATOR_KEY
+    gr.msg -c reset -k $GRBL_AUDIO_INDICATOR_KEY
 
     (( $_error > 0 )) && gr.msg -c yellow "${FUNCNAME[0]} returned $_error"
     return $_error
@@ -1029,19 +1029,19 @@ youtube.uninstall(){
 youtube.rc
 
 # fix missing user configuration
-[[ $GURU_YOUTUBE_RESULT_LIMIT ]] || GURU_YOUTUBE_RESULT_LIMIT=20
-[[ $GURU_YOUTUBE_THUMBNAIL_SIZE ]] || GURU_YOUTUBE_THUMBNAIL_SIZE=60
-[[ $GURU_AUDIO_NOW_PLAYING ]] || GURU_AUDIO_NOW_PLAYING=/tmp/$USER/now_playing
-[[ $GURU_AUDIO_MPV_SOCKET ]] || GURU_AUDIO_MPV_SOCKET=/tmp/$USER/youtube
-[[ $GURU_AUDIO_INDICATOR_KEY ]] || GURU_AUDIO_INDICATOR_KEY=f5
- # $GURU_MOUNT_AUDIO
- # $GURU_MOUNT_VIDEO
+[[ $GRBL_YOUTUBE_RESULT_LIMIT ]] || GRBL_YOUTUBE_RESULT_LIMIT=20
+[[ $GRBL_YOUTUBE_THUMBNAIL_SIZE ]] || GRBL_YOUTUBE_THUMBNAIL_SIZE=60
+[[ $GRBL_AUDIO_NOW_PLAYING ]] || GRBL_AUDIO_NOW_PLAYING=/tmp/$USER/now_playing
+[[ $GRBL_AUDIO_MPV_SOCKET ]] || GRBL_AUDIO_MPV_SOCKET=/tmp/$USER/youtube
+[[ $GRBL_AUDIO_INDICATOR_KEY ]] || GRBL_AUDIO_INDICATOR_KEY=f5
+ # $GRBL_MOUNT_AUDIO
+ # $GRBL_MOUNT_VIDEO
 
-source $GURU_BIN/audio.sh
+source $GRBL_BIN/audio.sh
 declare -g module_command=()
-declare -g save_location=$GURU_MOUNT_DOWNLOADS
-declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-youtube"
-[[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
+declare -g save_location=$GRBL_MOUNT_DOWNLOADS
+declare -g mpv_options="--input-ipc-server=$GRBL_AUDIO_MPV_SOCKET-youtube"
+[[ $GRBL_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 declare -g youtube_options= #"-f worst"
 declare -g save_to_file=
 

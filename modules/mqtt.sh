@@ -1,14 +1,14 @@
 #!/bin/bash
-# guru client MQTT functions casa@ujo.guru 2020
+# grbl client MQTT functions casa@ujo.guru 2020
 
-declare -g mqtt_rc="/tmp/$USER/guru-cli_mqtt.rc"
-[[ $GURU_DEBUG ]] && mqtt_client_options='-d '
+declare -g mqtt_rc="/tmp/$USER/grbl_mqtt.rc"
+[[ $GRBL_DEBUG ]] && mqtt_client_options='-d '
 __mqtt_color="light_blue"
 __mqtt=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 mqtt.main () {
 # MQTT main command parser
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _cmd="$1" ; shift
 
@@ -29,10 +29,10 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.help () {
 
-    gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
-    gr.msg -v1 "guru-client MQTT help " -c white
+    gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -v1 "grbl MQTT help " -c white
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL MQTT status|sub|pub|start|end|single|help|install|remove "
+    gr.msg -v0 "usage:    $GRBL_CALL MQTT status|sub|pub|start|end|single|help|install|remove "
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v1 " status                   show status of default MQTT server "
@@ -46,19 +46,19 @@ mqtt.help () {
     gr.msg -v2 " help                     printout this help "
     gr.msg -v2
     gr.msg -v1 "examples: " -c white
-    gr.msg -v2 "  $GURU_CALL mqtt status "
-    gr.msg -v1 "  $GURU_CALL mqtt sub '#' "
-    gr.msg -v1 "  $GURU_CALL mqtt pub '/msg Hello!' "
+    gr.msg -v2 "  $GRBL_CALL mqtt status "
+    gr.msg -v1 "  $GRBL_CALL mqtt sub '#' "
+    gr.msg -v1 "  $GRBL_CALL mqtt pub '/msg Hello!' "
     gr.msg -v2
 }
 
 
 mqtt.rc () {
 # source configurations
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     if  [[ ! -f $mqtt_rc ]] || \
-        [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mqtt.cfg) - $(stat -c %Y $mqtt_rc) )) -gt 0 ]]
+        [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/mqtt.cfg) - $(stat -c %Y $mqtt_rc) )) -gt 0 ]]
     then
         mqtt.make_rc && \
             gr.msg -v1 -c dark_gray "$mqtt_rc updated"
@@ -70,7 +70,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.make_rc () {
 # make core module rc file out of configuration file
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     if ! source config.sh ; then
         gr.msg -c yellow "unable to load configuration module"
@@ -81,7 +81,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
         rm -f $mqtt_rc
     fi
 
-    if ! config.make_rc "$GURU_CFG/$GURU_USER/mqtt.cfg" $mqtt_rc ; then
+    if ! config.make_rc "$GRBL_CFG/$GRBL_USER/mqtt.cfg" $mqtt_rc ; then
         gr.msg -c yellow "configuration failed"
         return 101
     fi
@@ -97,14 +97,14 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.enabled () {
 # check is function activated and output instructions to enable function on user configuration
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    if [[ $GURU_MQTT_ENABLED ]] ; then
+    if [[ $GRBL_MQTT_ENABLED ]] ; then
         # gr.msg -v2 -c green "MQTT enabled"
         return 0
     else
         gr.msg -v2 -c black "MQTT disabled in user config"
-        gr.msg -v3 "type '$GURU_CALL config user' to change configurations"
+        gr.msg -v3 "type '$GRBL_CALL config user' to change configurations"
         return 1
     fi
 }
@@ -112,40 +112,40 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.online () {
 # check MQTT is functional, no printout
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     mqtt.online_send () {
         # if MQTT message takes more than 2 seconds to return from closest MQTT server there is something wrong
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
         sleep 2
-        gr.msg -v4 -c aqua -k $GURU_MQTT_INDICATOR_KEY
+        gr.msg -v4 -c aqua -k $GRBL_MQTT_INDICATOR_KEY
         timeout 1 mosquitto_pub $mqtt_client_options \
-            -u "$GURU_MQTT_USER" \
-            -h "$GURU_MQTT_BROKER" \
-            -p "$GURU_MQTT_PORT" \
-            -t "$GURU_HOSTNAME/online" \
-            -m "$(date +$GURU_FORMAT_DATE) $(date +$GURU_FORMAT_TIME)" \
+            -u "$GRBL_MQTT_USER" \
+            -h "$GRBL_MQTT_BROKER" \
+            -p "$GRBL_MQTT_PORT" \
+            -t "$GRBL_HOSTNAME/online" \
+            -m "$(date +$GRBL_FORMAT_DATE) $(date +$GRBL_FORMAT_TIME)" \
              >/dev/null 2>&1 \
-                || gr.msg -v2 -c yellow "timeout or MQTT publish issue: $?" -k $GURU_MQTT_INDICATOR_KEY
+                || gr.msg -v2 -c yellow "timeout or MQTT publish issue: $?" -k $GRBL_MQTT_INDICATOR_KEY
     }
 
     # delayed publish
     (mqtt.online_send &)
 
     # subscribe to channel no output
-    gr.msg -v4 -c aqua_marine -k $GURU_MQTT_INDICATOR_KEY
+    gr.msg -v4 -c aqua_marine -k $GRBL_MQTT_INDICATOR_KEY
     if timeout 3 mosquitto_sub -C 1 $mqtt_client_options \
-                    -u "$GURU_MQTT_USER" \
-                    -h "$GURU_MQTT_BROKER" \
-                    -p "$GURU_MQTT_PORT" \
-                    -t "$GURU_HOSTNAME/online" \
+                    -u "$GRBL_MQTT_USER" \
+                    -h "$GRBL_MQTT_BROKER" \
+                    -p "$GRBL_MQTT_PORT" \
+                    -t "$GRBL_HOSTNAME/online" \
                     $_options >/dev/null
         then
-            gr.msg -v4 -c green -k $GURU_MQTT_INDICATOR_KEY
+            gr.msg -v4 -c green -k $GRBL_MQTT_INDICATOR_KEY
             return 0
         else
-            gr.msg -v2 -c yellow "MQTT subscribe issue: $?" -k $GURU_MQTT_INDICATOR_KEY
+            gr.msg -v2 -c yellow "MQTT subscribe issue: $?" -k $GRBL_MQTT_INDICATOR_KEY
             return 1
     fi
 }
@@ -153,24 +153,24 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.sub () {
 # subscribe to channel, stay listening
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _topic="$1" ; shift
     case $_topic in *#*|root|all) mqtt_client_options="$mqtt_client_options -v " ; _topic='#';; esac
 
-    gr.msg -v4 -c white -k $GURU_MQTT_INDICATOR_KEY
+    gr.msg -v4 -c white -k $GRBL_MQTT_INDICATOR_KEY
 
     # lazy way to deliver arguments
     [[ $1 ]] && local _options="-$@"
 
     # subscribe
     if mosquitto_sub $mqtt_client_options -R --quiet \
-            -h $GURU_MQTT_BROKER \
-            -p $GURU_MQTT_PORT \
+            -h $GRBL_MQTT_BROKER \
+            -p $GRBL_MQTT_PORT \
             -t "$_topic" $_options ; then
-            gr.msg -v4 -c green -k $GURU_MQTT_INDICATOR_KEY
+            gr.msg -v4 -c green -k $GRBL_MQTT_INDICATOR_KEY
         else
-            gr.msg -v4 -c red -k $GURU_MQTT_INDICATOR_KEY
+            gr.msg -v4 -c red -k $GRBL_MQTT_INDICATOR_KEY
         fi
 
     return $?
@@ -179,7 +179,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.pub () {
 # publish to MQTT server
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _topic="$1" ; shift
     local _message="$@"
@@ -195,26 +195,26 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
             return 128
         fi
 
-    gr.msg -v4 -c aqua -k $GURU_MQTT_INDICATOR_KEY
+    gr.msg -v4 -c aqua -k $GRBL_MQTT_INDICATOR_KEY
 
     local _i=
 
     for _i in {1..5} ; do
 
         mosquitto_pub $mqtt_client_options \
-            -u $GURU_MQTT_USER \
-            -h $GURU_MQTT_BROKER \
-            -p $GURU_MQTT_PORT \
+            -u $GRBL_MQTT_USER \
+            -h $GRBL_MQTT_BROKER \
+            -p $GRBL_MQTT_PORT \
             -t "$_topic" \
             -m "$_message" >/dev/null 2>&1
             _error=$?
 
         if (( $_error )) ; then
               gr.msg -v2 -c red \
-                -k $GURU_MQTT_INDICATOR_KEY \
+                -k $GRBL_MQTT_INDICATOR_KEY \
                 "MQTT connection $_i error $_error"
           else
-              gr.msg -v4 -c green -k $GURU_MQTT_INDICATOR_KEY
+              gr.msg -v4 -c green -k $GRBL_MQTT_INDICATOR_KEY
               break
           fi
     done
@@ -225,7 +225,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.single () {
 # Subscribe to channel, stay listening until one message received. Timeout is minute.
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 #
 # ## Best variables to just get message it self and mayby find way to get some VALID exit code
 #
@@ -241,28 +241,28 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 # ## Test string
 #
 # source mqtt.sh
-# mosquitto_sub -C 1 -R -W 60 --quiet --remove-retained -h "$GURU_MQTT_BROKER" -p "$GURU_MQTT_PORT" -t "check"
+# mosquitto_sub -C 1 -R -W 60 --quiet --remove-retained -h "$GRBL_MQTT_BROKER" -p "$GRBL_MQTT_PORT" -t "check"
 #
 
     local _topic="$1" ; shift
     local _timeout=5
 
-    gr.blink $GURU_MQTT_INDICATOR_KEY "active"
+    gr.blink $GRBL_MQTT_INDICATOR_KEY "active"
 
     local answer=$(mosquitto_sub -C 1 -R -W $_timeout --quiet --remove-retained \
-        -h "$GURU_MQTT_BROKER" \
-        -p "$GURU_MQTT_PORT" \
+        -h "$GRBL_MQTT_BROKER" \
+        -p "$GRBL_MQTT_PORT" \
         -t "$_topic" )
-        # -u $GURU_MQTT_USER
+        # -u $GRBL_MQTT_USER
 
     if ! [[ $answer ]]; then
-        gr.msg -c yellow "timeout no message to '$_topic' on $GURU_MQTT_BROKER:$GURU_MQTT_PORT "
-        gr.blink $GURU_MQTT_INDICATOR_KEY "error"
+        gr.msg -c yellow "timeout no message to '$_topic' on $GRBL_MQTT_BROKER:$GRBL_MQTT_PORT "
+        gr.blink $GRBL_MQTT_INDICATOR_KEY "error"
         return 100
     fi
 
-    #gr.msg -v4 -c green -k $GURU_MQTT_INDICATOR_KEY
-    gr.blink $GURU_MQTT_INDICATOR_KEY "ok"
+    #gr.msg -v4 -c green -k $GRBL_MQTT_INDICATOR_KEY
+    gr.blink $GRBL_MQTT_INDICATOR_KEY "ok"
     echo "$answer"
     return 0
 }
@@ -270,14 +270,14 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.log () {
 # start topic log to file
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _topic="$1" ; shift
-    local _log_file=$GURU_LOG ; [[ $1 ]] && _log_file="$1"
+    local _log_file=$GRBL_LOG ; [[ $1 ]] && _log_file="$1"
     mosquitto_sub $mqtt_client_options \
-        -u "$GURU_MQTT_USER" \
-        -h "$GURU_MQTT_BROKER" \
-        -p "$GURU_MQTT_PORT" \
+        -u "$GRBL_MQTT_USER" \
+        -h "$GRBL_MQTT_BROKER" \
+        -p "$GRBL_MQTT_PORT" \
         -t "$_topic" >> $_log_file
     return $?
 }
@@ -288,25 +288,25 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.status () {
 # check MQTT broker is reachable
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
-    if [[ $GURU_MQTT_ENABLED ]] ; then
-            gr.msg -v1 -n -c green "enabled, " -k $GURU_MQTT_INDICATOR_KEY
+    if [[ $GRBL_MQTT_ENABLED ]] ; then
+            gr.msg -v1 -n -c green "enabled, " -k $GRBL_MQTT_INDICATOR_KEY
         else
-            gr.msg -v1 -c black "disabled " -k $GURU_MQTT_INDICATOR_KEY
+            gr.msg -v1 -c black "disabled " -k $GRBL_MQTT_INDICATOR_KEY
             return 1
         fi
 
     # printout and signal by corsair keyboard indicator led
     if mqtt.online ; then
             gr.msg -v1 -c aqua "on service " \
-                 -k $GURU_MQTT_INDICATOR_KEY
+                 -k $GRBL_MQTT_INDICATOR_KEY
             return 0
         else
             gr.msg -v1 -c red "unreachable " \
-                 -k $GURU_MQTT_INDICATOR_KEY
+                 -k $GRBL_MQTT_INDICATOR_KEY
             return 1
         fi
     #try to keep possible error messages in module segment by waiting mqtt.sub reply after timeout
@@ -316,19 +316,19 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.poll () {
 # daemon required polling functions
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _cmd="$1" ; shift
 
     case $_cmd in
         start )
             gr.msg -v1 -t -c black \
-                -k $GURU_MQTT_INDICATOR_KEY \
+                -k $GRBL_MQTT_INDICATOR_KEY \
                 "${FUNCNAME[0]}: MQTT status polling started"
             ;;
         end )
             gr.msg -v1 -t -c reset \
-                -k $GURU_MQTT_INDICATOR_KEY \
+                -k $GRBL_MQTT_INDICATOR_KEY \
                 "${FUNCNAME[0]}: MQTT status polling ended"
             ;;
         status )
@@ -342,7 +342,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.install_svr () {
 # install MQTT server 'local', over ssh to 'remote' or in 'docker' container
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
 
     local command="$1"
@@ -372,7 +372,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.install_svr_local () {
 # install MQTT server on local computer
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 # any install tool expects to run Ubuntu based distribution
     gr.debug "$FUNCNAME: TBD"
 
@@ -382,7 +382,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.install_svr_remote () {
 # install MQTT server on remote computer
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 # any install tool expects to run Ubuntu based distribution
     gr.debug "$FUNCNAME: TBD"
 
@@ -392,7 +392,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.install_svr_docker () {
 # install MQTT server on in docker container
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 # any install tool expects to run Ubuntu based distribution
     gr.debug "$FUNCNAME: TBD"
 
@@ -402,7 +402,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.install () {
 # install Mosquitto MQTT clients
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _cmd="$1" ; shift
 
@@ -415,7 +415,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
     sudo apt update
     sudo apt install mosquitto-clients \
-        && gr.msg -c green "guru is now ready to MQTT" \
+        && gr.msg -c green "grbl is now ready to MQTT" \
         || gr.msg -c yellow "error $? during install mosquitto-clients"
     return 0
 
@@ -427,7 +427,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DE
 
 mqtt.remove () {
 # remove Mosquitto MQTT clients
-gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     sudo apt remove mosquitto-clients && return 0
     return 1

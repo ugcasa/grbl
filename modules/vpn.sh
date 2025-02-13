@@ -1,31 +1,31 @@
 #!/bin/bash
-# guru-client vpn functions
+# grbl vpn functions
 
 # load module configuration
 declare -g original_ip_file="/tmp/$USER/vpn-original-ip"
 declare -g tunneled_ip_file="/tmp/$USER/vpn-tunneled-ip"
 declare -A vpn
 
-if [[ -f $GURU_CFG/vpn.cfg ]] ; then
-        source $GURU_CFG/vpn.cfg \
-        && gr.debug "sourcing $GURU_CFG/vpn.cfg" \
-        || gr.msg -c yellow "failed to source $GURU_CFG/vpn.cfg"
+if [[ -f $GRBL_CFG/vpn.cfg ]] ; then
+        source $GRBL_CFG/vpn.cfg \
+        && gr.debug "sourcing $GRBL_CFG/vpn.cfg" \
+        || gr.msg -c yellow "failed to source $GRBL_CFG/vpn.cfg"
     fi
 
-if [[ -f $GURU_CFG/$GURU_USER/vpn.cfg ]] ; then
-        source $GURU_CFG/$GURU_USER/vpn.cfg \
-        && gr.debug "sourcing $GURU_CFG/$GURU_USER/vpn.cfg" \
-        || gr.msg -c yellow "failed to source $GURU_CFG/$GURU_USER/vpn.cfg"
+if [[ -f $GRBL_CFG/$GRBL_USER/vpn.cfg ]] ; then
+        source $GRBL_CFG/$GRBL_USER/vpn.cfg \
+        && gr.debug "sourcing $GRBL_CFG/$GRBL_USER/vpn.cfg" \
+        || gr.msg -c yellow "failed to source $GRBL_CFG/$GRBL_USER/vpn.cfg"
     fi
 
 
 vpn.help () {
 # general help
 
-    gr.msg -v1 "guru-cli vpn help " -h
+    gr.msg -v1 "grbl vpn help " -h
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL vpn status|poll|close|install|uninstall|toggle|check|ip|help|kill|update "
-    gr.msg -v1 "          $GURU_CALL vpn open <city>|<country_code> "
+    gr.msg -v0 "usage:    $GRBL_CALL vpn status|poll|close|install|uninstall|toggle|check|ip|help|kill|update "
+    gr.msg -v1 "          $GRBL_CALL vpn open <city>|<country_code> "
     gr.msg -v2
     gr.msg -v1 "commands:" -c white
     gr.msg -v1 "  status               vpn status "
@@ -41,8 +41,8 @@ vpn.help () {
     gr.msg -v1 "  uninstall            remove installed requirements "
     gr.msg -v2
     gr.msg -v1 "example:" -c white
-    gr.msg -v1 "  $GURU_CALL vpn open jp                # open connection to first server in Japan"
-    gr.msg -v1 "  $GURU_CALL vpn open new orleans -f    # close previous connection and open connection to Louisiana"
+    gr.msg -v1 "  $GRBL_CALL vpn open jp                # open connection to first server in Japan"
+    gr.msg -v1 "  $GRBL_CALL vpn open new orleans -f    # close previous connection and open connection to Louisiana"
     gr.msg -v2
 }
 
@@ -151,7 +151,7 @@ vpn.status () {
         gr.msg -n -v1 -c green "installed, "
     else
         gr.msg -c red "application not installed"
-        gr.msg -v2 -c white "try to '$GURU_CALL vpn install'"
+        gr.msg -v2 -c white "try to '$GRBL_CALL vpn install'"
         return 100
     fi
 
@@ -218,7 +218,7 @@ vpn.open () {
     # check software is installed and contains config folder
     if ! [[ -d /etc/openvpn/tcp ]] ; then
             gr.msg -c yellow "no open vpn configuration found" -k ${vpn[indicator_key]}
-            gr.msg -v2 "run '$GURU_CALL vpn install' first"
+            gr.msg -v2 "run '$GRBL_CALL vpn install' first"
             return 101
         fi
 
@@ -308,7 +308,7 @@ vpn.open () {
         fi
     fi
 
-    [[ $GURU_FORCE ]] && vpn.kill
+    [[ $GRBL_FORCE ]] && vpn.kill
 
     # get current connection details
     local current_ip=$(curl -s https://ipinfo.io/ip)
@@ -321,11 +321,11 @@ vpn.open () {
     if vpn.check && [[ "$original_ip" != "$current_ip" ]] ; then
         gr.msg -v1 -n "already connected to "
         gr.msg -c aqua "$current_ip, $current_city, $current_country " -k ${vpn[indicator_key]}
-        gr.msg -v2 "close connection first to change server by '$GURU_CALL vpn close' or 'kill"
+        gr.msg -v2 "close connection first to change server by '$GRBL_CALL vpn close' or 'kill"
         return 0
     fi
 
-    # place credentials to clipboard (yes, but guru trust local)
+    # place credentials to clipboard (yes, but grbl trust local)
     gr.msg -c white -v2 "vpn username and password copied to clipboard, paste it to 'Enter Auth Username:' field"
     printf "%s\n%s\n" "${vpn[username]}" "${vpn[password]}" | xclip -i -selection clipboard
 
@@ -468,7 +468,7 @@ vpn.install () {
 
     gr.msg -Nh "update account details"
     gr.msg "1) get providers vpn username and password"
-    gr.msg "2) edit file '$GURU_CFG/$GURU_USER/vpn.cfg'"
+    gr.msg "2) edit file '$GRBL_CFG/$GRBL_USER/vpn.cfg'"
     gr.msg "3) change provider to protonvpn 'vpn[provider]=protonvpn'"
     gr.msg "4) copy username to 'vpn[username]=' and passwod to 'vpn[password]='"
     gr.msg "5) save file"
@@ -504,17 +504,17 @@ vpn.change () {
     [[ -d /etc/openvpn ]] || sudo mkdir -p /etc/openvpn
     [[ -d /etc/openvpn/tcp ]] || sudo mkdir -p /etc/openvpn/tcp
     [[ -d /etc/openvpn/udp ]] || sudo mkdir -p /etc/openvpn/udp
-    [[ -f $GURU_CFG/$GURU_USER/vpn.cfg ]] || cp $GURU_CFG/vpn.cfg $GURU_CFG/$GURU_USER/vpn.cfg
+    [[ -f $GRBL_CFG/$GRBL_USER/vpn.cfg ]] || cp $GRBL_CFG/vpn.cfg $GRBL_CFG/$GRBL_USER/vpn.cfg
 
     case $provider in
 
         protonvpn|protonmail)
 
-            $GURU_PREFERRED_EDITOR "$GURU_CFG/$GURU_USER/vpn.cfg"
+            $GRBL_PREFERRED_EDITOR "$GRBL_CFG/$GRBL_USER/vpn.cfg"
 
             gr.msg -Nh "update account details"
             gr.msg "1) go to https://account.protonvpn.com/account#openvpn"
-            gr.msg "2) edit file '$GURU_CFG/$GURU_USER/vpn.cfg' (opened) "
+            gr.msg "2) edit file '$GRBL_CFG/$GRBL_USER/vpn.cfg' (opened) "
             gr.msg "3) change provider to protonvpn 'vpn[provider]=protonvpn'"
             gr.msg "4) copy username to 'vpn[username]=' and passwod to 'vpn[password]='"
             gr.msg "5) save file"
@@ -543,25 +543,25 @@ vpn.change () {
             fi
 
             if gr.ask "update newly updated credentials to openvpn config (optional) "; then
-                source $GURU_CFG/$GURU_USER/vpn.cfg
+                source $GRBL_CFG/$GRBL_USER/vpn.cfg
                 echo "${vpn[username]}" | sudo tee /etc/openvpn/credentials
                 echo "${vpn[password]}" | sudo tee -a /etc/openvpn/credentials
             fi
 
             gr.msg -Nh "test"
             gr.msg "try to connect by 'gr vpn open jp' (or other downloaded country code"
-            gr.msg "if fails, check configs in $GURU_CFG/$GURU_USER/vpn.cfg "
+            gr.msg "if fails, check configs in $GRBL_CFG/$GRBL_USER/vpn.cfg "
             gr.msg "          check files in /etc/openvpn/tcp/ "
             ;;
 
         namecheap|fastvpn)
 
-            $GURU_PREFERRED_EDITOR "$GURU_CFG/$GURU_USER/vpn.cfg"
+            $GRBL_PREFERRED_EDITOR "$GRBL_CFG/$GRBL_USER/vpn.cfg"
 
             gr.msg -Nh "update account details"
             gr.msg "1) go to https://account.fastvpn.com/login/ and log in and "
             gr.msg "   navigate to page where credentials are shown"
-            gr.msg "2) edit file '$GURU_CFG/$GURU_USER/vpn.cfg'"
+            gr.msg "2) edit file '$GRBL_CFG/$GRBL_USER/vpn.cfg'"
             gr.msg "3) change provider to fastvpn 'vpn[provider]=fastvpn'"
             gr.msg "4) copy username to 'vpn[username]=' and passwod to 'vpn[password]='"
             gr.msg "5) save file"
@@ -582,7 +582,7 @@ vpn.change () {
             ;;
 
         *)
-            gr.msg -e1 "'${vpn[provider]}' is not proper provider, please fill 'vpn[provider]=' to $GURU_CFG/$GURU_USER/vpn.cfg."
+            gr.msg -e1 "'${vpn[provider]}' is not proper provider, please fill 'vpn[provider]=' to $GRBL_CFG/$GRBL_USER/vpn.cfg."
             return 100
             ;;
     esac

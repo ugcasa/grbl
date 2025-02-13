@@ -1,7 +1,7 @@
 # don't run, let teset.sh handle shit
-# guru toolkit mount tester
+# grbl toolkit mount tester
 
-source $GURU_BIN/mount.sh
+source $GRBL_BIN/mount.sh
 
 mount.test () {
     mount.system
@@ -57,7 +57,7 @@ mount.clean_test () {
 
 mount.test_mount () {
     # TBD new mountpoints for Hesus Testman
-    if mount.remote "/home/$GURU_USER_NAME/usr/test" "$HOME/tmp/$USER/test_mount" ; then
+    if mount.remote "/home/$GRBL_USER_NAME/usr/test" "$HOME/tmp/$USER/test_mount" ; then
             gr.msg -c green "${FUNCNAME[0]} passed"
             return 0
         else
@@ -160,7 +160,7 @@ mount.test_info () {
 
     gr.msg -n "sshfs list check: "
     # if "Track" is in output pass
-    if mount.info | grep "$GURU_SYSTEM_MOUNT" >/dev/null ; then
+    if mount.info | grep "$GRBL_SYSTEM_MOUNT" >/dev/null ; then
         gr.msg -c green "${FUNCNAME[0]} passed"
         return 0
     else

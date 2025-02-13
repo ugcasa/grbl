@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-cli cad software installer and configurator
+# grbl cad software installer and configurator
 
 
 cad.main () {
@@ -9,7 +9,7 @@ cad.main () {
 
 cad.run_rc () {
 
-    export blender_folder="$GURU_APP/blender"
+    export blender_folder="$GRBL_APP/blender"
 
 }
 

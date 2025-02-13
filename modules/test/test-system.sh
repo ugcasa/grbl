@@ -1,8 +1,8 @@
 # don't run, let teset.sh handle shit
-# guru toolkit system.sh tester
+# grbl toolkit system.sh tester
 
-source $GURU_BIN/mount.sh
-source $GURU_BIN/system.sh      # TODO: meaby double not sure, check late
+source $GRBL_BIN/mount.sh
+source $GRBL_BIN/system.sh      # TODO: meaby double not sure, check late
 
 
 system.test() {
@@ -30,7 +30,7 @@ system.test() {
 }
 
 system.get_version () {
-  $GURU_CALL version && gr.msg -c green "${FUNCNAME[0]} passed" || gr.msg -c red "${FUNCNAME[0]} failed"
+  $GRBL_CALL version && gr.msg -c green "${FUNCNAME[0]} passed" || gr.msg -c red "${FUNCNAME[0]} failed"
   return $?
 }
 
@@ -56,7 +56,7 @@ system.rollback_test () {
     local _error=0
 
     system.rollback || return $?
-    grep "$_target_version" <<< "$(bash $GURU_BIN/$GURU_CALL version)"; _error=$?
+    grep "$_target_version" <<< "$(bash $GRBL_BIN/$GRBL_CALL version)"; _error=$?
 
     if ((_error<1)) ; then
         gr.msg -c green "passed"

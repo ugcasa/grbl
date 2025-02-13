@@ -4,7 +4,7 @@
 source common.sh
 
 url_source="http://www.microchip.com/forums/download.axd?file=0;749972"
-local_source="$GURU_BIN/modules/programmer/PK2DeviceFile.zip"
+local_source="$GRBL_BIN/modules/programmer/PK2DeviceFile.zip"
 
 
 pk2.main () {
@@ -25,9 +25,9 @@ pk2.main () {
 
 
 pk2.help () {
-    gr.msg -v1 -c white "guru-client pk2 help "
+    gr.msg -v1 -c white "grbl pk2 help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL pk2 start|end|status|help|install|remove"
+    gr.msg -v0 "usage:    $GRBL_CALL pk2 start|end|status|help|install|remove"
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " install                  install pk2 programmer for PIC "
@@ -35,7 +35,7 @@ pk2.help () {
     gr.msg -v2 " help                     printout this help "
     gr.msg -v2
     gr.msg -v1 -c white "example: "
-    gr.msg -v1 "         $GURU_CALL programmer pk2 status "
+    gr.msg -v1 "         $GRBL_CALL programmer pk2 status "
     gr.msg -v2
 }
 
@@ -120,7 +120,7 @@ pk2.poll () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$GURU_RC"
+    #source "$GRBL_RC"
     ok2.main "$@"
     exit $?
 fi

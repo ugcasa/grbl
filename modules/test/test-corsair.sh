@@ -1,8 +1,8 @@
 #!/bin/bash
-# automatically generated tester for guru-client corsair.sh Sat Oct 10 02:42:19 EEST 2020 casa@ujo.guru 2020
+# automatically generated tester for grbl corsair.sh Sat Oct 10 02:42:19 EEST 2020 casa@ujo.guru 2020
 
-source $GURU_BIN/common.sh
-source $GURU_BIN/corsair.sh
+source $GRBL_BIN/common.sh
+source $GRBL_BIN/corsair.sh
 
 ## TODO add test initial conditions here
 
@@ -323,8 +323,8 @@ corsair.test_remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
-    GURU_VERBOSE=2
+    source "$GRBL_RC"
+    GRBL_VERBOSE=2
     corsair.test $@
 fi
 

@@ -30,7 +30,7 @@ if args.lines:
 if args.file:
     file = args.file
 else:
-    file = os.environ["GURU_HR_DATA"]+"/"+args.database_name+".csv"
+    file = os.environ["GRBL_HR_DATA"]+"/"+args.database_name+".csv"
 
 
 print("name: "+args.database_name)

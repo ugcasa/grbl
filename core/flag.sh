@@ -4,12 +4,12 @@ declare -g flag_list=(running fast pause cancel ok stop next prev skip suspend a
 flag.help () {
 # flag help
 
-    gr.msg -v1 "guru-cli flag help" -h
+    gr.msg -v1 "grbl flag help" -h
     gr.msg -v2
-    gr.msg -v1 "way to setup and control non inteface processes (like guru daemon)"
+    gr.msg -v1 "way to setup and control non inteface processes (like grbl daemon)"
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL system flag set|rm|ls|toggle|check|status|help"
-    gr.msg -v1 "          $GURU_CALL <flag_name>         return flag status"
+    gr.msg -v0 "usage:    $GRBL_CALL system flag set|rm|ls|toggle|check|status|help"
+    gr.msg -v1 "          $GRBL_CALL <flag_name>         return flag status"
     gr.msg -v2
     gr.msg -v1 "commands:" -c white
     gr.msg -v2
@@ -53,7 +53,7 @@ flag.main () {
 flag.check () {
 # returen true if flag is set, no printout
 
-    if [[ -f /tmp/$USER/guru-$1.flag ]] ; then
+    if [[ -f /tmp/$USER/grbl-$1.flag ]] ; then
         return 0
     else
         return 1
@@ -95,7 +95,7 @@ flag.ls () {
 flag.status () {
 # list of flags
 
-    gr.msg -v2 -c white "guru-cli flag status:"
+    gr.msg -v2 -c white "grbl flag status:"
     local flag=
 
     for flag in ${flag_list[@]} ; do
@@ -121,11 +121,11 @@ flag.set () {
         return 0
     fi
 
-    if [[ -f /tmp/$USER/guru-$flag.flag ]] ; then
+    if [[ -f /tmp/$USER/grbl-$flag.flag ]] ; then
         gr.msg -t -v3 "$flag flag already set"
         return 0
     else
-        touch /tmp/$USER/guru-$flag.flag && gr.msg -v3 -t "$flag flag set"
+        touch /tmp/$USER/grbl-$flag.flag && gr.msg -v3 -t "$flag flag set"
     fi
 }
 
@@ -140,8 +140,8 @@ flag.rm () {
         return 0
     fi
 
-    if [[ -f /tmp/$USER/guru-$flag.flag ]] ; then
-        rm -f /tmp/$USER/guru-$flag.flag && gr.msg -v3 -t "$flag flag removed"
+    if [[ -f /tmp/$USER/grbl-$flag.flag ]] ; then
+        rm -f /tmp/$USER/grbl-$flag.flag && gr.msg -v3 -t "$flag flag removed"
         return 0
     else
         gr.msg -t -v3 "$flag flag not set"
@@ -159,10 +159,10 @@ flag.toggle () {
         return 0
     fi
 
-    if [[ -f /tmp/$USER/guru-$flag.flag ]] ; then
-        rm -f /tmp/$USER/guru-$flag.flag && gr.msg -v3 -t "$flag flag disabled"
+    if [[ -f /tmp/$USER/grbl-$flag.flag ]] ; then
+        rm -f /tmp/$USER/grbl-$flag.flag && gr.msg -v3 -t "$flag flag disabled"
         return 0
     else
-        touch /tmp/$USER/guru-$flag.flag && gr.msg -v3 -t "$flag flag set"
+        touch /tmp/$USER/grbl-$flag.flag && gr.msg -v3 -t "$flag flag set"
     fi
 }

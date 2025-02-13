@@ -1,14 +1,14 @@
-# guru-client test documentation for developers
+# grbl test documentation for developers
 
 ## Integration tests
 
-To run test for all modules guru-client needs to be installed with ```-d``` argument to include developing modules.
+To run test for all modules grbl needs to be installed with ```-d``` argument to include developing modules.
 
-Run ```guru test all```
+Run ```grbl test all```
 
-See ```guru test help``` for more options.
+See ```grbl test help``` for more options.
 
-TODO: Reports can be found at http://guru-client.ujo.guru/test/reports
+TODO: Reports can be found at http://grbl.ujo.guru/test/reports
 
 
 ## Automated unit tests

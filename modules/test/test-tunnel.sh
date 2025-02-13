@@ -1,8 +1,8 @@
 #!/bin/bash 
-# automatically generated tester for guru-client tunnel.sh Sun 08 Aug 2021 11:57:59 PM EEST casa@ujo.guru 2020
+# automatically generated tester for grbl tunnel.sh Sun 08 Aug 2021 11:57:59 PM EEST casa@ujo.guru 2020
 
-source $GURU_BIN/common.sh
-source $GURU_BIN/tunnel.sh
+source $GRBL_BIN/common.sh
+source $GRBL_BIN/tunnel.sh
 
 ## TODO add test initial conditions here
 
@@ -298,9 +298,9 @@ tunnel.test_poll () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then 
-    source "$GURU_RC" 
+    source "$GRBL_RC"
     source ../../modules/tunnel.sh
-    GURU_VERBOSE=2
+    GRBL_VERBOSE=2
     tunnel.test $@
 fi
 

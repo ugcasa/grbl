@@ -1,9 +1,9 @@
 #!/bin/bash
-# automatically generated tester for guru-client project.sh Tue 03 Aug 2021 09:53:07 AM EEST casa@ujo.guru 2020
+# automatically generated tester for grbl project.sh Tue 03 Aug 2021 09:53:07 AM EEST casa@ujo.guru 2020
 
-source $GURU_BIN/common.sh
-source $GURU_BIN/project.sh
-GURU_VERBOSE=2
+source $GRBL_BIN/common.sh
+source $GRBL_BIN/project.sh
+GRBL_VERBOSE=2
 ## TODO add test initial conditions here
 
 project.test() {
@@ -343,9 +343,9 @@ project.test_poll () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    source "$GRBL_RC"
     source ../../modules/project.sh
-    GURU_VERBOSE=2
+    GRBL_VERBOSE=2
     project.test $@
 fi
 

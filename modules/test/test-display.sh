@@ -1,7 +1,7 @@
 #!/bin/bash 
-# automatically generated tester for guru-client display.sh Sun 25 Sep 2022 03:13:33 PM EEST casa@ujo.guru 2020
+# automatically generated tester for grbl display.sh Sun 25 Sep 2022 03:13:33 PM EEST casa@ujo.guru 2020
 
-source $GURU_BIN/common.sh
+source $GRBL_BIN/common.sh
 source ../../modules/display.sh 
 
 ## TODO add test initial conditions here
@@ -153,8 +153,8 @@ display.test_reset () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then 
-    source "$GURU_RC" 
-    GURU_VERBOSE=2
+    source "$GRBL_RC"
+    GRBL_VERBOSE=2
     display.test $@
 fi
 

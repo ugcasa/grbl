@@ -5,9 +5,9 @@
 corsair.raw.help () {
     # general help
 
-    gr.msg -v1 -c white "guru-client help for corsair raw method"
+    gr.msg -v1 -c white "grbl help for corsair raw method"
     gr.msg -v2
-    gr.msg -v0 "usage:           $GURU_CALL corsair raw help|status|restart|start|set|clear|stop|disable| <key/profile> <color>"
+    gr.msg -v0 "usage:           $GRBL_CALL corsair raw help|status|restart|start|set|clear|stop|disable| <key/profile> <color>"
     gr.msg -v2
     gr.msg -v1 -c white "commands:"
     gr.msg -v1 " status                   printout status "
@@ -41,7 +41,7 @@ corsair.raw.status () {
 corsair.raw.restart () {
     # start full stack, daemon and application
 
-    if ! [[ $GURU_VERBOSE ]] ; then
+    if ! [[ $GRBL_VERBOSE ]] ; then
             ckb-next -b 2>/dev/null &
         else
             ckb-next -b &
@@ -64,7 +64,7 @@ corsair.raw.start () {
             local _status="$?"
         fi
 
-    [[ $GURU_FORCE ]] && _status="7"
+    [[ $GRBL_FORCE ]] && _status="7"
 
     gr.msg -v3 "status/given: $_status"
     case $_status in
@@ -136,7 +136,7 @@ corsair.raw.clear () {
 corsair.raw.stop () {
     # stop application
 
-    if ps auxf | grep "ckb-next" |  grep -v "ckb-next-" | grep -v grep >/dev/null || [[ $GURU_FORCE ]] ; then
+    if ps auxf | grep "ckb-next" |  grep -v "ckb-next-" | grep -v grep >/dev/null || [[ $GRBL_FORCE ]] ; then
             gr.msg -v1 "stopping ckb-next application.. "
             ckb-next -c || kill $(pidof ckb-next)
             sleep 2
@@ -154,13 +154,13 @@ corsair.raw.disable () {
     # stop corsair daemon
 
     # stop daemon first
-    if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null || [[ $GURU_FORCE ]] ; then
+    if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null || [[ $GRBL_FORCE ]] ; then
             gr.msg -v1 "stopping ckb-next-daemon.. "
             systemctl stop ckb-next-daemon
         fi
 
     # stop application
-    if ps auxf | grep "ckb-next" |  grep -v "ckb-next-" | grep -v grep >/dev/null || [[ $GURU_FORCE ]] ; then
+    if ps auxf | grep "ckb-next" |  grep -v "ckb-next-" | grep -v grep >/dev/null || [[ $GRBL_FORCE ]] ; then
             gr.msg -v1 "stopping ckb-next application.. "
             ckb-next -c || kill $(pidof ckb-next)
             sleep 2

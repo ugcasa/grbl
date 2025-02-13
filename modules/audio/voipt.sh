@@ -199,7 +199,7 @@ voipt.start_sender () {
 voipt.help () {
     echo  "voipt help "
     echo
-    echo   "usage:    $GURU_CALL voipt [ls|open|close|help|install]"
+    echo   "usage:    $GRBL_CALL voipt [ls|open|close|help|install]"
     echo  "commands:"
     echo
     echo  " ls           list of active tunnels "

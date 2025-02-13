@@ -1,4 +1,4 @@
-# Suunnitelma `guru-cli 0.7.5` final ja nimenvaihto `grbl` "gerbil" 
+# Suunnitelma `grbl 0.7.5` final ja nimenvaihto `grbl` "gerbil" 
 
 - `feature/modulin_nimi` Pyritään pitämään eteneminen selkeänä, moduli kerrallaan 
 
@@ -83,9 +83,9 @@ git push origin dev
 
 ```sh
 git checkout -b feature/name-change
-git commit -m "GURU_ -> GRBL_ "
-git commit -m "koodissa guru-cli nimi grbl:si"
-git commit -m "config tiedostoissa guru-cli nimi grbl:si"
+git commit -m "GRBL_ -> GRBL_ "
+git commit -m "koodissa grbl nimi grbl:si"
+git commit -m "config tiedostoissa grbl nimi grbl:si"
 git push origin feature/name-change
 git checkout dev
 git merge feature/name-change
@@ -98,7 +98,7 @@ git branch -d feature/name-change # dellii remoten
 
 - [ ] käydään rankenne läpi jos muutettavaa
   - [ ] tehdään symlinkit, mutta ei kosketa originaaleihin
-  - kaiken pitäisi toimia, guru nimi siellä täällä, mutta user konfiguraatiot pysyy kuitenkin samoina
+  - kaiken pitäisi toimia, grbl nimi siellä täällä, mutta user konfiguraatiot pysyy kuitenkin samoina
   - muutetaan myöhemmin mikäli tarpeelliseksi nähdään
 
 ```sh
@@ -116,7 +116,7 @@ ssh roima
 - [ ] tätä ei tarvitse testata, massamuutokset riitää
 
 ```sh
-cp guru-cli gr-0.7.5
+cp grbl gr-0.7.5
 git checkout release/0.7.5
 ```
 - Kun tämä vaihe valmis voidaan aloitaa vanhojen modulien tuonti uudelle puolelle

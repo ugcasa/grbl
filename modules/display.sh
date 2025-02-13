@@ -1,19 +1,19 @@
 #!/bin/bash
-# guru-client display control commands
+# grbl display control commands
 # casa@ujo.guru 2022
 
 #source common.sh
 
-redshift_flag="/tmp/$USER/guru-redshift.flag"
-last_brigh="/tmp/$USER/guru-display.bright"
-toggle_flag="/tmp/$USER/guru-display.toggle.flag"
+redshift_flag="/tmp/$USER/grbl-redshift.flag"
+last_brigh="/tmp/$USER/grbl-display.bright"
+toggle_flag="/tmp/$USER/grbl-display.toggle.flag"
 
 
 display.help () {
     # help print depending of verbose level
-    gr.msg -v1 "guru-client display help " -c white
+    gr.msg -v1 "grbl display help " -c white
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL display ls|set|reset] "
+    gr.msg -v0 "usage:    $GRBL_CALL display ls|set|reset] "
     gr.msg -v2
     gr.msg -v1 -c white  "commands:"
     gr.msg -v1 " ls                      list of connected monitors"
@@ -27,9 +27,9 @@ display.help () {
     gr.msg -v2 " help                    printout this help"
     gr.msg -v2
     gr.msg -v1 "example:" -c white
-    gr.msg -v1 "    $GURU_CALL display set 0.75 "
-    gr.msg -v1 "    $GURU_CALL display set brightness 0.8 "
-    gr.msg -v1 "    $GURU_CALL display set co 1.5 "
+    gr.msg -v1 "    $GRBL_CALL display set 0.75 "
+    gr.msg -v1 "    $GRBL_CALL display set brightness 0.8 "
+    gr.msg -v1 "    $GRBL_CALL display set co 1.5 "
     gr.msg -v2
     gr.msg -v2 "WARNING: values below 0.2 are almost black" -c white
 }
@@ -173,7 +173,7 @@ display.ls () {
         primary="monitor_$i[primary]"
 
         # do verbose
-        case $GURU_VERBOSE in
+        case $GRBL_VERBOSE in
 
             0)  printf "%s " "${!name}"
                 (( i >= (monitors - 1) )) && echo
@@ -195,7 +195,7 @@ display.set_contrast () {
     local value=1
     [[ $1 ]] && value=$1
 
-    if [[ $GURU_VERBOSE -gt 1 ]] ; then
+    if [[ $GRBL_VERBOSE -gt 1 ]] ; then
         xgamma -gamma $value
     else
         xgamma -gamma $value 2>/dev/null
@@ -275,7 +275,7 @@ display.reset () {
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source $GURU_RC
+    #source $GRBL_RC
     display.main "$@"
     exit $?
 fi

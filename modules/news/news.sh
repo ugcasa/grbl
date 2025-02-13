@@ -1,23 +1,23 @@
 #!/bin/bash
-# guru-client single file module template casa@ujo.guru 2022
+# grbl single file module template casa@ujo.guru 2022
 # include other newss/libraries that are needed
 # source nnnn.sh
 
 # declare global variables for news
-declare -g news_temp_file="$GURU_TEMP/news.tmp"
-declare -g news_rc="/tmp/$USER/guru-cli_news.rc"
-declare -g news_data_folder=$GURU_SYSTEM_MOUNT/news
+declare -g news_temp_file="$GRBL_TEMP/news.tmp"
+declare -g news_rc="/tmp/$USER/grbl_news.rc"
+declare -g news_data_folder=$GRBL_SYSTEM_MOUNT/news
 
 
 news.help () {
 # user help
-    gr.msg -v1 "guru-cli news help " -c white
+    gr.msg -v1 "grbl news help " -c white
     gr.msg -v2
     gr.msg -v2 "news reader and timed new features for debian terminal "
     gr.msg -v2
     gr.msg -v0 "usage: " -c white
-    gr.msg -v0 "          $GURU_CALL news command variables"
-    gr.msg -v0 "          $GURU_CALL --option --optin_with_value <value>"
+    gr.msg -v0 "          $GRBL_CALL news command variables"
+    gr.msg -v0 "          $GRBL_CALL --option --optin_with_value <value>"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v1 " ls         list something "
@@ -29,7 +29,7 @@ news.help () {
     gr.msg -v1 " --option   option "
     gr.msg -v1 " --value    option with value "
     gr.msg -v1 "example: " -c white
-    gr.msg -v1 "          $GURU_CALL news <command>"
+    gr.msg -v1 "          $GRBL_CALL news <command>"
     gr.msg -v2
 }
 
@@ -47,7 +47,7 @@ news.main () {
                 ;;
 
             read|rss)
-                python3 $GURU_BIN/news/rss-news.py "$@"
+                python3 $GRBL_BIN/news/rss-news.py "$@"
                 ;;
             *)
                 news.help
@@ -71,7 +71,7 @@ news.status () {
     gr.msg -n -t -v1 "${FUNCNAME[0]}: "
 
     # check news is installed
-    if [[ -f $GURU_BIN/news.sh ]]; then
+    if [[ -f $GRBL_BIN/news.sh ]]; then
         gr.msg -n -v1 -c green "installed, "
     else
         gr.msg -v1 -k $news_indicator_key -c reset "not installed "
@@ -79,7 +79,7 @@ news.status () {
     fi
 
     # check news is enabled
-    if [[ $GURU_NEWS_ENABLED ]] ; then
+    if [[ $GRBL_NEWS_ENABLED ]] ; then
         gr.msg -n -v1 \
         -c green "enabled, "
     else
@@ -147,17 +147,17 @@ news.remove () {
 news.rc () {
 # source configurations
 
-    local module_config="$GURU_CFG/$GURU_USER/news.cfg"
+    local module_config="$GRBL_CFG/$GRBL_USER/news.cfg"
 
     # use defaults if not exist
-    [[ -f $module_config ]] || module_config="$GURU_CFG/news.cfg"
+    [[ -f $module_config ]] || module_config="$GRBL_CFG/news.cfg"
 
     # check is module configuration changed lately, update rc if so
     if [[ ! -f $news_rc ]] || [[ $(( $(stat -c %Y $module_config) - $(stat -c %Y $news_rc) )) -gt 0 ]] ; then
             news.make_rc && gr.msg -v1 -c dark_gray "$news_rc updated"
         fi
 
-    [[ ! -d $news_data_folder ]] && [[ -f $GURU_SYSTEM_MOUNT/.online ]] && mkdir -p $news_data_folder
+    [[ ! -d $news_data_folder ]] && [[ -f $GRBL_SYSTEM_MOUNT/.online ]] && mkdir -p $news_data_folder
     if [[ -f $news_rc ]] ; then
         source $news_rc
     else
@@ -170,12 +170,12 @@ news.make_rc () {
 # construct news configuration rc
 
     source config.sh
-    local module_config="$GURU_CFG/$GURU_USER/news.cfg"
+    local module_config="$GRBL_CFG/$GRBL_USER/news.cfg"
 
     # try to find user configuration
     if ! [[ -f $module_config ]] ; then
         gr.debug "$module_config does not exist"
-        module_config="$GURU_CFG/news.cfg"
+        module_config="$GRBL_CFG/news.cfg"
 
         # try to find default configuration
         if ! [[ -f $module_config ]] ; then
@@ -190,7 +190,7 @@ news.make_rc () {
         fi
 
     config.make_rc $module_config $news_rc
-    # config.make_rc "$GURU_CFG/$GURU_USER/another_news.cfg" $news_rc append
+    # config.make_rc "$GRBL_CFG/$GRBL_USER/another_news.cfg" $news_rc append
     chmod +x $news_rc
 }
 
@@ -200,20 +200,20 @@ news.rc
 # global variables that need values from news configuration
 # declare global that need configuration values from rc
 declare -g news_indicator_key="esc"
-[[ $GURU_NEWS_INDICATOR_KEY ]] && news_indicator_key=$GURU_NEWS_INDICATOR_KEY
+[[ $GRBL_NEWS_INDICATOR_KEY ]] && news_indicator_key=$GRBL_NEWS_INDICATOR_KEY
 
 # check is news.sh run alone, if sourced by core.sh this
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
 
-    # run without guru-cli installation
-    if [[ -z $GURU_RC ]] ; then
-        export GURU_CALL="guru"
-        export GURU_RC="$HOME/.gururc"
-        export GURU_BIN="$HOME/bin"
-        export GURU_CFG="$HOME/.config/guru"
-        export GURU_TEMP="/tmp/$USER/guru"
+    # run without grbl installation
+    if [[ -z $GRBL_RC ]] ; then
+        export GRBL_CALL="grbl"
+        export GRBL_RC="$HOME/.grblrc"
+        export GRBL_BIN="$HOME/bin"
+        export GRBL_CFG="$HOME/.config/grbl"
+        export GRBL_TEMP="/tmp/$USER/grbl"
     fi
-    source $GURU_RC
+    source $GRBL_RC
     news.main $@
     exit $?
 fi

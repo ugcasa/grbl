@@ -1,10 +1,10 @@
 #!/bin/bash
-# guru shell work time tracker
+# grbl shell work time tracker
 # casa@ujo.guru 2019, 2023
 # TODO timer module neewds to be write again.. this is useless, still partly working and in use. yes useless.. rotten
 # python might be better than bash for mathematics
 
-declare -g timer_rc="/tmp/$USER/guru-cli_timer.rc"
+declare -g timer_rc="/tmp/$USER/grbl_timer.rc"
 
 timer.main () {
 # main command parser
@@ -25,9 +25,9 @@ timer.main () {
 timer.help () {
 # general help
 
-    gr.msg -v1 "guru-client timer help " -h
+    gr.msg -v1 "grbl timer help " -h
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL timer [start|end|cancel|log|edit|report] <task> <project> <customer> "
+    gr.msg -v0 "usage:    $GRBL_CALL timer [start|end|cancel|log|edit|report] <task> <project> <customer> "
     gr.msg -v2
     # gr.msg -v2 "options" -c white
     # gr.msg -v4 "  --format <'%<FORMAT'>  TBD: format output "
@@ -49,11 +49,11 @@ timer.help () {
     gr.msg -v1 "  end at [TIME]         end current task at given time in format HH:MM"
     gr.msg -v1 "  cancel                cancel the current task"
     gr.msg -v1 "  log                   print out 10 last records"
-    gr.msg -v1 "  edit                  open work time log with $GURU_EDITOR"
-    gr.msg -v1 "  report                create report in .csv format and open it with $GURU_OFFICE_DOC"
+    gr.msg -v1 "  edit                  open work time log with $GRBL_EDITOR"
+    gr.msg -v1 "  report                create report in .csv format and open it with $GRBL_OFFICE_DOC"
     gr.msg -v3 "  poll start|end        start or end module status polling "
     gr.msg -v2
-    gr.msg -v1 "example:  $GURU_CALL timer start config_stuff projectA customerB "
+    gr.msg -v1 "example:  $GRBL_CALL timer start config_stuff projectA customerB "
 }
 
 
@@ -62,7 +62,7 @@ timer.rc () {
 # source configurations
 
     if  [[ ! -f $timer_rc ]] || \
-        [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/timer.cfg) - $(stat -c %Y $timer_rc) )) -gt 0 ]]
+        [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/timer.cfg) - $(stat -c %Y $timer_rc) )) -gt 0 ]]
         then
             timer.make_rc && \
                 gr.msg -v1 -c dark_gray "$timer_rc updated"
@@ -84,7 +84,7 @@ timer.make_rc () {
             rm -f $timer_rc
         fi
 
-    if ! config.make_rc "$GURU_CFG/$GURU_USER/timer.cfg" $timer_rc ; then
+    if ! config.make_rc "$GRBL_CFG/$GRBL_USER/timer.cfg" $timer_rc ; then
             gr.msg -c yellow "configuration failed"
             return 101
         fi
@@ -124,21 +124,21 @@ timer.status () {
     gr.msg -n -t -v1 "${FUNCNAME[0]}: "
 
     # enabled?
-    if [[ $GURU_TIMER_ENABLED ]] ; then
-            gr.msg -n -v1 -c green "enabled, " -k $GURU_TIMER_INDICATOR_KEY
+    if [[ $GRBL_TIMER_ENABLED ]] ; then
+            gr.msg -n -v1 -c green "enabled, " -k $GRBL_TIMER_INDICATOR_KEY
         else
-            gr.msg -v1 -c black "disabled" -k $GURU_TIMER_INDICATOR_KEY
+            gr.msg -v1 -c black "disabled" -k $GRBL_TIMER_INDICATOR_KEY
             return 1
         fi
 
     # check is timer set
-    if [[ ! -f "$GURU_TIMER_TRACKSTATUS" ]] ; then
-        gr.msg -v1 -c reset "no timer tasks" -k $GURU_TIMER_INDICATOR_KEY
+    if [[ ! -f "$GRBL_TIMER_TRACKSTATUS" ]] ; then
+        gr.msg -v1 -c reset "no timer tasks" -k $GRBL_TIMER_INDICATOR_KEY
         return 2
     fi
 
     # get timer variables
-    source "$GURU_TIMER_TRACKSTATUS"
+    source "$GRBL_TIMER_TRACKSTATUS"
 
     # fill variables
     timer_now=$(date +%s)
@@ -177,7 +177,7 @@ timer.status () {
             ;;
 
         simple|*)
-            gr.msg -v1 -c aqua "$customer $project $task spend: $hours:$minutes" -k $GURU_TIMER_INDICATOR_KEY
+            gr.msg -v1 -c aqua "$customer $project $task spend: $hours:$minutes" -k $GRBL_TIMER_INDICATOR_KEY
             ;;
     esac
 
@@ -188,8 +188,8 @@ timer.status () {
 timer.last () {
 # get last timer state
 
-    if [[ -f $GURU_TIMER_TRACKLAST ]] ; then
-            gr.msg -c light_blue "$(cat $GURU_TIMER_TRACKLAST)"
+    if [[ -f $GRBL_TIMER_TRACKLAST ]] ; then
+            gr.msg -c light_blue "$(cat $GRBL_TIMER_TRACKLAST)"
         else
             gr.msg -c yellow "no last tasks"
         fi
@@ -199,10 +199,10 @@ timer.last () {
 timer.start () {
 # Start timer TBD rewrite this thole module
 
-    GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
+    GRBL_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
 
     # check is timer alredy set
-    if [[ -f "$GURU_TIMER_TRACKSTATUS" ]] ; then
+    if [[ -f "$GRBL_TIMER_TRACKSTATUS" ]] ; then
         timer.main end at $(date -d @$(( (($(date +%s)) / 900) * 900)) "+%H:%M")
     fi
 
@@ -242,19 +242,19 @@ timer.start () {
     nice_date=$(date -d $start_date '+%d.%m.%Y')
     timer_start=$(date -d "$start_date $start_time" '+%s')
 
-    [[ -f $GURU_TIMER_TRACKLAST ]] && source $GURU_TIMER_TRACKLAST
+    [[ -f $GRBL_TIMER_TRACKLAST ]] && source $GRBL_TIMER_TRACKLAST
     [[ "$1" ]] && task="$1" || task="$last_task"
     [[ "$2" ]] && project="$2" || project="$last_project"
     [[ "$3" ]] && customer="$3" || customer="$last_customer"
 
     # update work files TODO some other method, soon please
-    printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GURU_TIMER_TRACKSTATUS
-    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GURU_TIMER_TRACKSTATUS
+    printf "timer_start=$timer_start\nstart_date=$start_date\nstart_time=$start_time\n" >$GRBL_TIMER_TRACKSTATUS
+    printf "customer=$customer\nproject=$project\ntask=$task\n" >>$GRBL_TIMER_TRACKSTATUS
 
     # signal user and others
-    gr.msg -v1 -c aqua -k $GURU_TIMER_INDICATOR_KEY "$start_time $customer $project $task"
-    gr.msg -v3 -m $GURU_USER/message $GURU_TIMER_START_MESSAGE
-    gr.msg -v3 -m $GURU_USER/status $GURU_TIMER_START_STATUS
+    gr.msg -v1 -c aqua -k $GRBL_TIMER_INDICATOR_KEY "$start_time $customer $project $task"
+    gr.msg -v3 -m $GRBL_USER/message $GRBL_TIMER_START_MESSAGE
+    gr.msg -v3 -m $GRBL_USER/status $GRBL_TIMER_START_STATUS
     return 0
 }
 
@@ -262,14 +262,14 @@ timer.start () {
 timer.end () {
 # end timer and save to database (file)
 
-    if [ -f $GURU_TIMER_TRACKSTATUS ]; then
-        source $GURU_TIMER_TRACKSTATUS
+    if [ -f $GRBL_TIMER_TRACKSTATUS ]; then
+        source $GRBL_TIMER_TRACKSTATUS
     else
         gr.msg -v1 "timer not started"
         return 13
     fi
 
-    GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
+    GRBL_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
     local command=$1 ; shift
 
     case "$command" in
@@ -324,23 +324,23 @@ timer.end () {
     fi
 
     # close track file
-    if ! [[ -f $GURU_TIMER_TRACKDATA ]] ; then
-            printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n" >$GURU_TIMER_TRACKDATA
+    if ! [[ -f $GRBL_TIMER_TRACKDATA ]] ; then
+            printf "Start date  ;Start time ;End date ;End time ;Hours ;Customer ;Project ;Task \n" >$GRBL_TIMER_TRACKDATA
         fi
 
     hours="$spend_hour.$spend_min_dec"
     #if (( spend_min_dec > 11 )) ; then
-            printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n" >>$GURU_TIMER_TRACKDATA
+            printf "$dot_start_date;$start_time;$dot_end_date;$end_time;$hours;$customer;$project;$task\n" >>$GRBL_TIMER_TRACKDATA
     #    fi
 
-    printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GURU_TIMER_TRACKLAST
+    printf "last_customer=$customer\nlast_project=$project\nlast_task=$task\n" >$GRBL_TIMER_TRACKLAST
 
-    rm $GURU_TIMER_TRACKSTATUS
+    rm $GRBL_TIMER_TRACKSTATUS
 
     # inform
-    gr.msg -v1 -c reset -k $GURU_TIMER_INDICATOR_KEY "$start_time - $end_time$option_end_date $customer $project $task spend $hours"
-    gr.msg -v4 -m $GURU_USER/message $GURU_TIMER_END_MESSAGE
-    gr.msg -v4 -m $GURU_USER/status $GURU_TIMER_END_STATUS
+    gr.msg -v1 -c reset -k $GRBL_TIMER_INDICATOR_KEY "$start_time - $end_time$option_end_date $customer $project $task spend $hours"
+    gr.msg -v4 -m $GRBL_USER/message $GRBL_TIMER_END_MESSAGE
+    gr.msg -v4 -m $GRBL_USER/status $GRBL_TIMER_END_STATUS
     return 0
 }
 
@@ -389,9 +389,9 @@ timer.countdown() {
 
     gr.msg -s "$message"
 
-    if [[ $GURU_CORSAIR_ENABLED ]] ; then
+    if [[ $GRBL_CORSAIR_ENABLED ]] ; then
         source corsair.sh
-        corsair.indicate done $GURU_TIMER_INDICATOR_KEY
+        corsair.indicate done $GRBL_TIMER_INDICATOR_KEY
     fi
 
     return 0
@@ -452,7 +452,7 @@ timer.cook () {
 
     while [[ $(date +%s) -lt $end ]]; do
         local time="$(( $end - $(date '+%s') ))"
-        [[ $GURU_VERBOSE -ge 1 ]] && printf '%s\r' "$(date -u -d "@$time" +%H:%M:%S)"
+        [[ $GRBL_VERBOSE -ge 1 ]] && printf '%s\r' "$(date -u -d "@$time" +%H:%M:%S)"
         read -t1 -n2 -s key
         case $key in qq) gr.msg -v1 -s "$(date -u -d @$time '+%H:%M:%S') canceled"; return 1 ;; esac
     done
@@ -487,13 +487,13 @@ timer.change () {
 timer.cancel () {
 # cancel exits timer
 
-    GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
+    GRBL_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
 
-    if [[ -f $GURU_TIMER_TRACKSTATUS ]]; then
-            rm $GURU_TIMER_TRACKSTATUS
-            gr.msg -v1 -t -c reset -k $GURU_TIMER_INDICATOR_KEY "work canceled"
-            gr.msg -v4 -m $GURU_USER/message "glitch in the matrix, something changed"
-            gr.msg -v4 -m $GURU_USER/status "available"
+    if [[ -f $GRBL_TIMER_TRACKSTATUS ]]; then
+            rm $GRBL_TIMER_TRACKSTATUS
+            gr.msg -v1 -t -c reset -k $GRBL_TIMER_INDICATOR_KEY "work canceled"
+            gr.msg -v4 -m $GRBL_USER/message "glitch in the matrix, something changed"
+            gr.msg -v4 -m $GRBL_USER/status "available"
         else
             gr.msg -v1 "not active timer"
         fi
@@ -504,7 +504,7 @@ timer.cancel () {
 timer.log () {
 # printout short list of recent records
 
-    printf "last logged records:\n$(tail $GURU_TIMER_TRACKDATA | tr ";" "  ")\n"
+    printf "last logged records:\n$(tail $GRBL_TIMER_TRACKDATA | tr ";" "  ")\n"
     return 0
 }
 
@@ -512,7 +512,7 @@ timer.log () {
 timer.edit () {
 # edit data csv file
 
-    $GURU_PREFERRED_EDITOR "$GURU_TIMER_TRACKDATA" &
+    $GRBL_PREFERRED_EDITOR "$GRBL_TIMER_TRACKDATA" &
     return 0
 }
 
@@ -520,14 +520,14 @@ timer.edit () {
 timer.report() {
 # make a report
 
-    [[ "$1" ]] && team="$1" || team="$GURU_TEAM"
+    [[ "$1" ]] && team="$1" || team="$GRBL_TEAM"
     report_file="work-track-report-$(date +%Y%m%d)-$team.csv"
     output_folder=$HOME/Documents
     [[ "$team" == "all" ]] && team=""
-    [[ -f $GURU_TIMER_TRACKDATA ]] || return 13
+    [[ -f $GRBL_TIMER_TRACKDATA ]] || return 13
 
-    cat $GURU_TIMER_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
-    $GURU_PREFERRED_OFFICE_DOC $output_folder/$report_file &
+    cat $GRBL_TIMER_TRACKDATA |grep "$team" |grep -v "invoiced" >"$output_folder/$report_file"
+    $GRBL_PREFERRED_OFFICE_DOC $output_folder/$report_file &
     timer.end $""
 }
 
@@ -535,15 +535,15 @@ timer.report() {
 timer.poll () {
 # daemon interface
 
-    GURU_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
+    GRBL_TIMER_INDICATOR_KEY="f$(gr.poll timer)"
 
     local _cmd="$1" ; shift
     case $_cmd in
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: timer status polling started" -k $GURU_TIMER_INDICATOR_KEY
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: timer status polling started" -k $GRBL_TIMER_INDICATOR_KEY
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: timer status polling ended" -k $GURU_TIMER_INDICATOR_KEY
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: timer status polling ended" -k $GRBL_TIMER_INDICATOR_KEY
             ;;
         status )
             timer.status $@
@@ -556,7 +556,7 @@ timer.poll () {
 timer.rc
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
-    # source $GURU_RC
+    # source $GRBL_RC
     timer.main $@
     exit $?
 fi
