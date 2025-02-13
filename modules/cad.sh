@@ -61,7 +61,7 @@ cad.install_blender () {
     # # list=$(echo ${page[@]} | sed -e 's/<\/b>/-/g' -e 's/<[^>]*>//g')
     # for line in $(echo ${page[@]} | sed -e 's/<\/b>/-/g' -e 's/<[^>]*>//g'blen) ;do
 
-    #         echo $line | grep -v 'md5' | cut -d' ' -f1 >>/tmp/list
+    #         echo $line | grep -v 'md5' | cut -d' ' -f1 >>/tmp/$USER/list
     #         zips+=("$(echo $line | grep -v 'md5' | cut -d' ' -f1 )" )
 
 

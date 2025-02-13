@@ -2,7 +2,7 @@
 # query results before 30.11.2022 is test date
 # source common.sh
 
-fingrid_rc="/tmp/guru-cli_fingrid.rc"
+fingrid_rc="/tmp/$USER/guru-cli_fingrid.rc"
 
 
 fingrid.main () {

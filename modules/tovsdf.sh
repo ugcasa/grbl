@@ -237,7 +237,7 @@ dokuwiki.backup () {
     [[ $2 ]] && server=$2
 
     local data_folder="$to_where/$container_name-$_date"
-    local temp_folder="/tmp/$container_name"
+    local temp_folder="/tmp/$USER/$container_name"
 
     gr.msg "making backup.. "
     ssh $server -- "[[ -d $temp_folder ]] || mkdir $temp_folder"
@@ -247,7 +247,7 @@ dokuwiki.backup () {
             ssh $server -- "docker cp $container_name:/config/dokuwiki/$_inc_folder $temp_folder"
         done
 
-    if ssh $server -- "tar -cjf /tmp/$container_name.tar.bz2 $temp_folder" ; then
+    if ssh $server -- "tar -cjf /tmp/$USER/$container_name.tar.bz2 $temp_folder" ; then
             gr.msg -v2 -c green "ok"
         fi
 
@@ -259,8 +259,8 @@ dokuwiki.backup () {
         fi
 
     gr.msg -n "copying.. "
-    if scp "$server:/tmp/$container_name.tar.bz2" "$data_folder/" ; then
-            ssh $server -- "rm /tmp/$container_name.tar.bz2 ; rm -rf /tmp/$container_name"
+    if scp "$server:/tmp/$USER/$container_name.tar.bz2" "$data_folder/" ; then
+            ssh $server -- "rm /tmp/$USER/$container_name.tar.bz2 ; rm -rf /tmp/$USER/$container_name"
             gr.msg -v2 -c green "ok"
         else
             gr.msg -c yellow "error when copying $container_name.tar.bz2"

@@ -53,7 +53,7 @@ flag.main () {
 flag.check () {
 # returen true if flag is set, no printout
 
-    if [[ -f /tmp/guru-$1.flag ]] ; then
+    if [[ -f /tmp/$USER/guru-$1.flag ]] ; then
         return 0
     else
         return 1
@@ -121,11 +121,11 @@ flag.set () {
         return 0
     fi
 
-    if [[ -f /tmp/guru-$flag.flag ]] ; then
+    if [[ -f /tmp/$USER/guru-$flag.flag ]] ; then
         gr.msg -t -v3 "$flag flag already set"
         return 0
     else
-        touch /tmp/guru-$flag.flag && gr.msg -v3 -t "$flag flag set"
+        touch /tmp/$USER/guru-$flag.flag && gr.msg -v3 -t "$flag flag set"
     fi
 }
 
@@ -140,8 +140,8 @@ flag.rm () {
         return 0
     fi
 
-    if [[ -f /tmp/guru-$flag.flag ]] ; then
-        rm -f /tmp/guru-$flag.flag && gr.msg -v3 -t "$flag flag removed"
+    if [[ -f /tmp/$USER/guru-$flag.flag ]] ; then
+        rm -f /tmp/$USER/guru-$flag.flag && gr.msg -v3 -t "$flag flag removed"
         return 0
     else
         gr.msg -t -v3 "$flag flag not set"
@@ -159,10 +159,10 @@ flag.toggle () {
         return 0
     fi
 
-    if [[ -f /tmp/guru-$flag.flag ]] ; then
-        rm -f /tmp/guru-$flag.flag && gr.msg -v3 -t "$flag flag disabled"
+    if [[ -f /tmp/$USER/guru-$flag.flag ]] ; then
+        rm -f /tmp/$USER/guru-$flag.flag && gr.msg -v3 -t "$flag flag disabled"
         return 0
     else
-        touch /tmp/guru-$flag.flag && gr.msg -v3 -t "$flag flag set"
+        touch /tmp/$USER/guru-$flag.flag && gr.msg -v3 -t "$flag flag set"
     fi
 }

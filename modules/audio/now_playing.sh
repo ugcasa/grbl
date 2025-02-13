@@ -4,14 +4,14 @@ source common.sh
 
 mpv_stat() {
 
-    local _socket='/tmp/mpvsocket'
+    local _socket='/tmp/$USER/mpvsocket'
 
     mpv_communicate() {
     # pass the property as the first argument
       printf '{ "command": ["get_property", "%s"] }\n' "$1" | socat - "${_socket}" | jq -r ".data"
     }
 
-    [[ -f /tmp/mpvsocket ]] || return 0
+    [[ -f /tmp/$USER/mpvsocket ]] || return 0
 
     position="$(mpv_communicate "percent-pos" | cut -d'.' -f1)%"
     file="$(mpv_communicate "filename")"

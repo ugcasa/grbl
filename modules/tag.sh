@@ -53,7 +53,7 @@ tag.help () {
 
 tag.text () {
     # If file has more than two lines it's taggable
-    local temp_file=/tmp/tag_temp
+    local temp_file=/tmp/$USER/tag_temp
 
     _get_tags () {
         current_tags=$(sed -n '2p' $tag_file_name)

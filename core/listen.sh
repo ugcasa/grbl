@@ -24,8 +24,8 @@ listen.install () {
     # https://github.com/mozilla/DeepSpeech/releases/tag/v0.9.3
 
     # Create and activate a virtualenv
-    virtualenv -p python3 $HOME/tmp/deepspeech-venv/
-    source $HOME/tmp/deepspeech-venv/bin/activate
+    virtualenv -p python3 $HOME/tmp/$USER/deepspeech-venv/
+    source $HOME/tmp/$USER/deepspeech-venv/bin/activate
     # Install DeepSpeech
     pip3 install deepspeech
 
@@ -46,8 +46,8 @@ listen.install () {
 listen.training() {
     # https://deepspeech.readthedocs.io/en/r0.9/TRAINING.html
     # git clone --branch v0.9.3 https://github.com/mozilla/DeepSpeech
-    # python3 -m venv $HOME/tmp/deepspeech-train-venv/
-    # source $HOME/tmp/deepspeech-train-venv/bin/activate
+    # python3 -m venv $HOME/tmp/$USER/deepspeech-train-venv/
+    # source $HOME/tmp/$USER/deepspeech-train-venv/bin/activate
     # pip3 install --upgrade pip==20.2.2 wheel==0.34.2 setuptools==49.6.0
     # pip3 install --upgrade -e .
     # sudo apt-get install python3-dev

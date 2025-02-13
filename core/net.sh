@@ -4,7 +4,7 @@
 __net_color="light_blue"
 __net=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
-declare -g tunneled_flag="/tmp/guru-cli_service_tunnel.flag"
+declare -g tunneled_flag="/tmp/$USER/guru-cli_service_tunnel.flag"
 
 net.help () {
 # network module user help
@@ -107,7 +107,7 @@ net.host () {
     gr.msg -v4 -n -c $__net_color "$__net [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
     local command=$1
-    local target_file="/tmp/hosts"
+    local target_file="/tmp/$USER/hosts"
     local line=
 
     # Copy original file for modifications
@@ -219,7 +219,7 @@ net.rc () {
 
     # files
     local config_file=$GURU_CFG/$GURU_USER/net.cfg
-    local rc_file="/tmp/guru-cli_net.rc"
+    local rc_file="/tmp/$USER/guru-cli_net.rc"
 
     if [[ -f $config_file ]]; then
     # use user configuration

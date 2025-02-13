@@ -5,7 +5,7 @@
 # - 20221222 module started, bedrock installer
 #
 
-declare -g game_rc="/tmp/guru-cli_game.rc"
+declare -g game_rc="/tmp/$USER/guru-cli_game.rc"
 declare -g game_folder="~/guru/games"
 declare -g list_of_games=(duke3d bedrock doom2 minecraft)
 

@@ -162,7 +162,7 @@ voipt.start_sender () {
             # sterting is not running
             gnome-terminal -t "sender tx $sender_address" \
                 --geometry=40x4 --hide-menubar -- \
-                /tmp/trx/tx -h $sender_address -p $app_udb_port
+                /tmp/$USER/trx/tx -h $sender_address -p $app_udb_port
 
             # test
             if ps auxf | grep trx/tx >/dev/null ; then

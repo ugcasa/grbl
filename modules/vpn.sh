@@ -2,8 +2,8 @@
 # guru-client vpn functions
 
 # load module configuration
-declare -g original_ip_file='/tmp/vpn-original-ip'
-declare -g tunneled_ip_file='/tmp/vpn-tunneled-ip'
+declare -g original_ip_file='/tmp/$USER/vpn-original-ip'
+declare -g tunneled_ip_file='/tmp/$USER/vpn-tunneled-ip'
 declare -A vpn
 
 if [[ -f $GURU_CFG/vpn.cfg ]] ; then
@@ -497,9 +497,9 @@ vpn.change () {
         read -p "please input vpn provider name, 'fastvpn' or 'protonvpn': " provider
     fi
 
-    [[ -d /tmp/vpn ]] && rm -r /tmp/vpn
-    mkdir -p /tmp/vpn
-    cd /tmp/vpn
+    [[ -d /tmp/$USER/vpn ]] && rm -r /tmp/$USER/vpn
+    mkdir -p /tmp/$USER/vpn
+    cd /tmp/$USER/vpn
 
     [[ -d /etc/openvpn ]] || sudo mkdir -p /etc/openvpn
     [[ -d /etc/openvpn/tcp ]] || sudo mkdir -p /etc/openvpn/tcp

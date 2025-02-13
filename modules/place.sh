@@ -1,10 +1,10 @@
 #!/bin/bash
 # guru-client single file place template casa@ujo.guru 2022
 
-declare -g temp_file="/tmp/guru-place.tmp"
+declare -g temp_file="/tmp/$USER/guru-place.tmp"
 declare -g place_indicator_key="f5"
-declare -g place_rc="/tmp/guru-cli_place.rc"
-declare -g undo_script=/tmp/guru-place-undo.rc
+declare -g place_rc="/tmp/$USER/guru-cli_place.rc"
+declare -g undo_script=/tmp/$USER/guru-place-undo.rc
 
 place.help () {
     # user help
@@ -393,7 +393,7 @@ place.photos () {
 
     #source mount.sh
 
-    local phone_temp_folder="/tmp/guru/android"
+    local phone_temp_folder="/tmp/$USER/guru/android"
     local _photo_format="jpg"
     [[ $1 ]] && _photo_format=$1
 
@@ -456,7 +456,7 @@ place.photos () {
 place.videos () {
     # analyze, tag and relocate video files
 
-    local phone_temp_folder="/tmp/guru/android"
+    local phone_temp_folder="/tmp/$USER/guru/android"
     local _video_format="mp4"
     [[ $1 ]] && _video_format=$1
 
@@ -514,7 +514,7 @@ place.media () {
     place.photos "jpg"
     place.videos "mp4"
 
-    local phone_temp_folder="/tmp/guru/android"
+    local phone_temp_folder="/tmp/$USER/guru/android"
     local _left_over=$(ls $phone_temp_folder)
 
     if [[ "$_left_over" ]] ; then

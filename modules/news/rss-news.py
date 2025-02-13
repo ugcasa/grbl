@@ -338,15 +338,15 @@ class menu:
         #os.environ['foo'] = 'bar'
 
         subprocess.run('''
-        wget $link -O /tmp/page.html -q
-        line=$(grep "og:image" /tmp/page.html)
+        wget $link -O /tmp/$USER/page.html -q
+        line=$(grep "og:image" /tmp/$USER/page.html)
         url=$(echo $line | cut -f3 -d "=" | cut -d " " -f1)
-        wget ${url//'"'/''} -O /tmp/news.jpg -q
+        wget ${url//'"'/''} -O /tmp/$USER/news.jpg -q
         ''',
         shell=True, check=True,env={'link': link},
         executable='/bin/bash')
         image_link = "os.environ['url']"
-        #image_link = "/tmp/news.jpg"
+        #image_link = "/tmp/$USER/news.jpg"
 
         # id 1 above
         if int( news_id ) < 0 or int( news_id ) > self.list_length :
@@ -381,7 +381,7 @@ class menu:
             print("Error")
 
         # parse entry.image.link
-        image_link = '/tmp/news.jpg'
+        image_link = '/tmp/$USER/news.jpg'
 
         os.system( 'clear' )                                                                            # clear terminal
         #self.clear()

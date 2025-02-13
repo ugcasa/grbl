@@ -11,7 +11,7 @@ if ((GURU_VERBOSE>2)) ; then android_verb="-v" ; fi
     # TBD other way around
 android_first_time="$HOME/.data/android-suveren"
     # TBD to ram
-android_temp_folder="/tmp/guru/android"
+android_temp_folder="/tmp/$USER/guru/android"
 android_server_url="https://play.google.com/store/apps/details?id=com.theolivetree.sshserver"
 
     # TBD user.cfg based shit

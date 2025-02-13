@@ -1,7 +1,7 @@
 #!/bin/bash
 # guru client MQTT functions casa@ujo.guru 2020
 
-declare -g mqtt_rc="/tmp/guru-cli_mqtt.rc"
+declare -g mqtt_rc="/tmp/$USER/guru-cli_mqtt.rc"
 [[ $GURU_DEBUG ]] && mqtt_client_options='-d '
 __mqtt_color="light_blue"
 __mqtt=$(readlink --canonicalize --no-newline $BASH_SOURCE)

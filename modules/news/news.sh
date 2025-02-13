@@ -5,7 +5,7 @@
 
 # declare global variables for news
 declare -g news_temp_file="$GURU_TEMP/news.tmp"
-declare -g news_rc="/tmp/guru-cli_news.rc"
+declare -g news_rc="/tmp/$USER/guru-cli_news.rc"
 declare -g news_data_folder=$GURU_SYSTEM_MOUNT/news
 
 
@@ -211,7 +211,7 @@ if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
         export GURU_RC="$HOME/.gururc"
         export GURU_BIN="$HOME/bin"
         export GURU_CFG="$HOME/.config/guru"
-        export GURU_TEMP="/tmp/guru"
+        export GURU_TEMP="/tmp/$USER/guru"
     fi
     source $GURU_RC
     news.main $@

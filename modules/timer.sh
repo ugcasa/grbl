@@ -4,7 +4,7 @@
 # TODO timer module neewds to be write again.. this is useless, still partly working and in use. yes useless.. rotten
 # python might be better than bash for mathematics
 
-declare -g timer_rc="/tmp/guru-cli_timer.rc"
+declare -g timer_rc="/tmp/$USER/guru-cli_timer.rc"
 
 timer.main () {
 # main command parser

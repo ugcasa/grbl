@@ -8,7 +8,7 @@ __config=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 gr.dump () {
 # dump environmental status to file
     # TBD revisit this
-    local _dump=/tmp/guru_dump
+    local _dump=/tmp/$USER/guru_dump
     echo "core dumped to $_dump"
     set > "$_dump"
     echo "environment  lines $(set | wc | xargs)"  >> "$_dump"
@@ -68,7 +68,7 @@ gr.source () {
     # if df -T | grep /dev/shm >/dev/null; then
     #     gtemp=/dev/shm/guru
     # else
-    #     gtemp=/tmp/guru
+    #     gtemp=/tmp/$USER/guru
     # fi
 
     # if ! [[ -d $gtemp ]] ; then
@@ -271,7 +271,7 @@ gr.end () {
     local key="caps"
     [[ $1 ]] && key=$1 ; shift
 
-    [[ -f /tmp/blink_$key ]] && rm /tmp/blink_$key
+    [[ -f /tmp/$USER/blink_$key ]] && rm /tmp/$USER/blink_$key
     sleep 1
     return 0
 }
@@ -375,13 +375,13 @@ gr.ind () {
             # china)          espeak -p 10 -s 180 -v cantonese "Warning! An Chinese hacker activity detected. please disconnect mainframe from internetz" ;;
             call)           for i in {0..5} ; do
                                 espeak -p 60 -s 80 -v en-sc "Incoming call from number $(echo $_message | sed 's/./& /g')"
-                                [[ -f /tmp/blink_$_indicator_key ]] || break
+                                [[ -f /tmp/$USER/blink_$_indicator_key ]] || break
                                 sleep 2
                             done ;;
             customer)       for i in {0..5} ; do
                                 espeak -p 75 -s 90 -v finnish "$_message,"
                                 espeak -p 75 -s 90 -v en-us  "is calling! "
-                                [[ -f /tmp/blink_$_indicator_key ]] || break
+                                [[ -f /tmp/$USER/blink_$_indicator_key ]] || break
                                 sleep 2
                             done ;;
         esac
@@ -581,12 +581,12 @@ gr.presence () {
 # poll is phone in wifi network, and sleep computer if it leaves
     case $1 in
         stop|end)
-            touch /tmp/hello.killer
+            touch /tmp/$USER/hello.killer
             return 0
         ;;
     esac
 
-    [[ -f /tmp/hello.killer ]] && rm /tmp/hello.killer
+    [[ -f /tmp/$USER/hello.killer ]] && rm /tmp/$USER/hello.killer
 
     source android.sh
     local _interv=5
@@ -595,25 +595,25 @@ gr.presence () {
 
     while true ; do
 
-        if [[ -f /tmp/hello.killer ]] ; then
-            rm /tmp/hello.killer
+        if [[ -f /tmp/$USER/hello.killer ]] ; then
+            rm /tmp/$USER/hello.killer
             gr.msg "stopping.."
             return 0
         fi
 
         if android.connected ; then
 
-            if [[ -f /tmp/hello.indicator ]] ; then
+            if [[ -f /tmp/$USER/hello.indicator ]] ; then
                 guru start
                 gr.ind available -m "$GURU_USER seems to be active"
                 guru mount
-                rm /tmp/hello.indicator
+                rm /tmp/$USER/hello.indicator
             fi
 
         else
             # me leaving
-            if ! [[ -f /tmp/hello.indicator ]] ; then
-                touch /tmp/hello.indicator
+            if ! [[ -f /tmp/$USER/hello.indicator ]] ; then
+                touch /tmp/$USER/hello.indicator
                 gr.ind available -m "$GURU_USER has left the building"
                 guru unmount all
                 guru daemon stop

@@ -1,7 +1,7 @@
 #!/bin/bash
 # guru-client tunneling functions 2021
 
-declare -g tunnel_rc="/tmp/guru-cli_tunnel.rc"
+declare -g tunnel_rc="/tmp/$USER/guru-cli_tunnel.rc"
 
 
 tunnel.help () {
@@ -185,7 +185,7 @@ tunnel.check () {
 tunnel.toggle () {
 # open default tunnel list and closes
 
-    local state="/tmp/tunnel.toggle"
+    local state="/tmp/$USER/tunnel.toggle"
 
     if [[ -f $state ]] && tunnel.check >/dev/null; then
             tunnel.close && rm $state

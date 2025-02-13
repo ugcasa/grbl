@@ -1,7 +1,7 @@
 #!/bin/bash
 # guru-cli project tools 2023 casa@ujo.guru
 
-declare -g project_rc="/tmp/guru-cli_project.rc"
+declare -g project_rc="/tmp/$USER/guru-cli_project.rc"
 
 project.main () {
 # main command parser

@@ -55,10 +55,10 @@ cheatsheet.modules() {
 cheatsheet.files () {
 
     gr.msg -N -h "Temp files"
-    ls /tmp/guru* | grep -v .rc
+    ls /tmp/$USER/guru* | grep -v .rc
 
     gr.msg -N -h "RC files"
-    ls /tmp/guru* | grep .rc
+    ls /tmp/$USER/guru* | grep .rc
 }
 
 

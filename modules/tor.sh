@@ -72,7 +72,7 @@ tor.install () {
     local _form=".tar.xz"
     local _lang="_${LANGUAGE//_/-}" ; [[ "$1" ]] && _lang="_$1"     # using system language
     local _location="$GURU_APP/tor-browser""$_lang"
-    local _dir="/tmp/guru/tor"
+    local _dir="/tmp/$USER/guru/tor"
 
     [[ -d $_location ]] && rm -rf $_location
 

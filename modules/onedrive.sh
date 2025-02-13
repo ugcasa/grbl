@@ -17,7 +17,7 @@ onedrive_sync_dir=("$HOME/onedrive" "$HOME/skuledrive")
 onedrive_config_file="$HOME/.config/onedriver/config.yml"
 onedrive_select=0
 
-grbl_config=/tmp/grbl_onedrive.rc
+grbl_config=/tmp/$USER/grbl_onedrive.rc
 
 [[ -f $grbl_config ]] && source $grbl_config
 export SERVICE_NAME=$(systemd-escape --template onedriver@.service --path ${onedrive_sync_dir[$onedrive_select]})

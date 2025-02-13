@@ -57,7 +57,7 @@ mount.clean_test () {
 
 mount.test_mount () {
     # TBD new mountpoints for Hesus Testman
-    if mount.remote "/home/$GURU_USER_NAME/usr/test" "$HOME/tmp/test_mount" ; then
+    if mount.remote "/home/$GURU_USER_NAME/usr/test" "$HOME/tmp/$USER/test_mount" ; then
             gr.msg -c green "${FUNCNAME[0]} passed"
             return 0
         else
@@ -68,7 +68,7 @@ mount.test_mount () {
 
 
 mount.test_unmount () {
-    local _mount_point="$HOME/tmp/test_mount"
+    local _mount_point="$HOME/tmp/$USER/test_mount"
      # TBD new mountpoints for Hesus Testman
     if unmount.remote "$_mount_point" ; then
             gr.msg -c green "${FUNCNAME[0]} passed"

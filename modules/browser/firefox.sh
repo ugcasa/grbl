@@ -71,8 +71,8 @@ firefox.foray () {
 	# this headless shit is
 	firefox --profile rollfm --new-instance stream.rollfm.fi --headless & pid=$! ; read -p "keypress to kill $pid" ; kill -9 $pid
 
-	firefox --profile rollfm --new-instance stream.rollfm.fi --headless & echo $! >/tmp/rollfm.pid
-	kill -9 $(tail /tmp/rollfm.pid) 
+	firefox --profile rollfm --new-instance stream.rollfm.fi --headless & echo $! >/tmp/$USER/rollfm.pid
+	kill -9 $(tail /tmp/$USER/rollfm.pid)
 
 	## other noice 
 	# --search <term>   
@@ -106,7 +106,7 @@ firefox.main () {
 	local ff_folder="$HOME/.mozilla/firefox"
 	local ff_profiles=($(grep -e "Path" $ff_folder/ff_profiles.ini | grep -v $ff_folder | cut -d"=" -f2-))
 	local ff_profile=
-	local ff_config_file=/tmp/grbl_firefox.cfg
+	local ff_config_file=/tmp/$USER/grbl_firefox.cfg
 
 	gr.msg -v4 -n -c $__firefox_color "$__firefox [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 	gr.varlist "debug ff_folder ff_profiles ff_profile ff_config_file"

@@ -5,7 +5,7 @@ __daemon=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 source $GURU_BIN/flag.sh
 
 declare -xg daemon_service_script="$HOME/.config/systemd/user/guru.service"
-declare -xg daemon_pid_file="/tmp/guru.daemon-pid"
+declare -xg daemon_pid_file="/tmp/$USER/guru.daemon-pid"
 declare -axg GURU_DAEMON_PID=
 declare -xg daemon_arguments=
 
@@ -334,12 +334,12 @@ daemon.kill () {
 daemon.day_change () {
 # check is date changed and update pid file datestamp
     gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
-    [[ -f /tmp/guru.daemon-pid ]] || return 1
+    [[ -f /tmp/$USER/guru.daemon-pid ]] || return 1
     local now="d$(date +%Y-%m-%d)"
-    local was="d$(stat -c '%x' /tmp/guru.daemon-pid | cut -d' ' -f1)"
+    local was="d$(stat -c '%x' /tmp/$USER/guru.daemon-pid | cut -d' ' -f1)"
     [[ "$now" == "$was" ]] && return 0
     gr.msg -v1 -t -c white "${FUNCNAME[0]}: $(date +%-d.%-m.%Y)"
-    touch /tmp/guru.daemon-pid
+    touch /tmp/$USER/guru.daemon-pid
     return 0
 }
 
@@ -362,7 +362,7 @@ daemon.poll () {
     source net.sh
     source os.sh
     [[ $GURU_CORSAIR_ENABLED ]] && source $GURU_BIN/corsair.sh
-    #[[ -f "/tmp/guru-stop.flag" ]] && rm -f "/tmp/guru-stop.flag"
+    #[[ -f "/tmp/$USER/guru-stop.flag" ]] && rm -f "/tmp/$USER/guru-stop.flag"
     echo "$(sh -c 'echo "$PPID"')" > "$daemon_pid_file"
     flag.rm fast
     flag.rm stop
@@ -443,7 +443,7 @@ daemon.poll () {
 
                     if [[ -f "$GURU_BIN/$module.sh" ]]; then
                             source "$GURU_BIN/$module.sh"
-                            $module.main poll status 2>/tmp/daemon.error
+                            $module.main poll status 2>/tmp/$USER/daemon.error
                         else
                             gr.msg -v1 -c dark_gray "${FUNCNAME[0]}: module '$module' not installed"
                         fi
@@ -493,7 +493,7 @@ daemon.systemd () {
 daemon.systemd_install () {
 # setup systemd service
     gr.msg -v4 -c blue "$__daemon [$LINENO] $FUNCNAME '$@'"
-    local temp="/tmp/starter.temp"
+    local temp="/tmp/$USER/starter.temp"
     gr.msg -v1 -V2 -n "setting starter script.. "
     gr.msg -v2 -n "setting starter script $daemon_service_script.. "
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # guru-cli mount core module 2019 - 2022 casa@ujo.guru
 
-declare -g mount_rc="/tmp/guru-cli_mount.rc"
+declare -g mount_rc="/tmp/$USER/guru-cli_mount.rc"
 __mount_color="navy"
 __mount=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
@@ -337,7 +337,7 @@ mount.remote () {
     local _symlink=
 
     # temporary
-    local _temp_folder="/tmp/guru/mount"
+    local _temp_folder="/tmp/$USER/guru/mount"
     local _reply=
     # to avoid read function to pass without input set force mode off
     unset FORCE

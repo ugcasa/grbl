@@ -130,7 +130,7 @@ telegram.install () {
 
     # clone source to temp
     cd /tmp
-    if ! [[ -d /tmp/tg ]] ; then
+    if ! [[ -d /tmp/$USER/tg ]] ; then
             if git clone --recursive https://github.com/vysheng/tg.git ; then
                     gr.msg -c green "clone OK"
                 else

@@ -4,7 +4,7 @@
 source common.sh
 
 # TBD fix this
-temp_rc="/tmp/mount.rc"
+temp_rc="/tmp/$USER/mount.rc"
 source config.sh
 config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $temp_rc
 chmod +x $temp_rc

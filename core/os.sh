@@ -2,7 +2,7 @@
 # echo "common.sh: included by: $0"
 os_indicator_key=f8
 system_indicator_key=caps
-os_rc=/tmp/guru-cli_os.rc
+os_rc=/tmp/$USER/guru-cli_os.rc
 
 __os_color="light_blue"
 __os=$(readlink --canonicalize --no-newline $BASH_SOURCE)
@@ -533,7 +533,7 @@ os.rc () {
 
     # files
     local config_file=$GURU_CFG/$GURU_USER/os.cfg
-    local rc_file="/tmp/guru-cli_os.rc"
+    local rc_file="/tmp/$USER/guru-cli_os.rc"
 
     if [[ -f $config_file ]]; then
     # use user configuration

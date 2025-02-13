@@ -92,17 +92,17 @@ say.test () {
 # quck test cases
 
     local sting="one two tree four"
-    echo "$sting" >/tmp/test.say
+    echo "$sting" >/tmp/$USER/test.say
 
     say.main string "string test: $sting"
     gr.ask -s "did you hear numbers from one to four?" || let error++
 
     say.main "file test:"
-    say.main file /tmp/test.say
+    say.main file /tmp/$USER/test.say
     gr.ask -s "did you hear numbers from one to four?" || let error++
 
     say.main "stdin test:"
-    cat /tmp/test.say |say.main stdin
+    cat /tmp/$USER/test.say |say.main stdin
     gr.ask -s "did you hear numbers from one to four?" || let error++
 
     gr.msg -n -h "test result is " -s
