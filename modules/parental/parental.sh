@@ -4,26 +4,28 @@ parental.poll() {
 # Wait till     
     local _host=$1
     #gr.msg -v2 "waiting $_host to answer"
-    printf "waiting $_host to answer"
+    printf "waiting $_host to answer.. "
     while true; do
+        printf "."
         if ping -c1 -w1 $_host >/dev/null; then             
             #ge.msg -v1 "$(date $GURU_FORMAT_TIMESTAMP)"
-            ge.msg -v1 "$(date +'%Y-%m-%d %H:%M')"
+            echo "$(date +'%Y-%m-%d %H:%M')"
             return 0
         fi
         #gr.msg -v2 "."
-        printf "."
         sleep 60
     done 
-    return 1 
+    return 1
 }
 
 parental.monitor_firefox() {
 
-    if parental.poll || return 0
+    local _host=$1
+    parental.poll $_host || return $?
 
     gnome-terminal --hide-menubar --geometry 80x20 --zoom 1 --hide-menubar --title \
             "firefox parental" -- ssh $_host -t '~/.parental/firefox.sh'
+
 }
 
 parental.infect_firefox() {

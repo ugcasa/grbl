@@ -73,10 +73,11 @@ onedrive.install() {
 onedrive.rm_confs() {
 # remove config file for re-configure
 
-	if [[ -f  $onedrive_config_file ]]; then
-	rm -rf $onedrive_config_file 	
-		firefox.main backup
-		firefox.main rm
+	if [[ -f $onedrive_config_file ]]; then
+		rm -rf $onedrive_config_file
+		touch $onedrive_config_file
+		#firefox.main backup
+		#firefox.main rm
 	else 
 		gr.msg "no config file found"
 	fi
@@ -95,6 +96,15 @@ onedrive.save_config () {
 onedrive.mount() {
 # mount drive
 	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+
+
+	fi [[ ${onedrive_sync_dir[$onedrive_select]} ]]; then
+		fusermount -uz ${onedrive_sync_dir[$onedrive_select]}
+		[[ -d ${onedrive_sync_dir[$onedrive_select]} ]] || mkdir -p ${onedrive_sync_dir[$onedrive_select]}
+	else
+		gr.msg "pls select drive '$GURU_CALL onedrive select' "
+		return 0
+	fi
 
 	export SERVICE_NAME=$(systemd-escape --template onedriver@.service --path ${onedrive_sync_dir[$onedrive_select]})
 	systemctl --user stop $SERVICE_NAME
@@ -119,7 +129,8 @@ onedrive.check () {
 ## TODO: for now just tail of service status
 	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
-	systemctl --user status $SERVICE_NAME | tail
+	export SERVICE_NAME=$(systemd-escape --template onedriver@.service --path ${onedrive_sync_dir[$onedrive_select]})
+	systemctl --user status $SERVICE_NAME | tail -n 30
 }
 
 onedrive.stop () {
@@ -129,6 +140,7 @@ onedrive.stop () {
 
 	systemctl --user stop $SERVICE_NAME
 	systemctl --user daemon-reload
+	fusermount -uz ${onedrive_sync_dir[$onedrive_select]}
 }
 
 onedrive.test () {
@@ -137,6 +149,21 @@ onedrive.test () {
 
 	journalctl --user -u $SERVICE_NAME
 }
+
+
+onedrive.reload() {
+# reload drive
+	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+
+	export SERVICE_NAME=$(systemd-escape --template onedriver@.service --path ${onedrive_sync_dir[$onedrive_select]})
+	systemctl --user stop $SERVICE_NAME
+	systemctl --user daemon-reload
+	fusermount -uz ${onedrive_sync_dir[$onedrive_select]}
+
+	systemctl --user start $SERVICE_NAME
+}
+
+
 
 onedrive.select () {
 # select drive
@@ -187,7 +214,7 @@ onedrive.main () {
 
 	case $_first in
 		# commands
-		install|config|test|test|mount|select|check|stop)
+		restart|reload|install|config|test|test|mount|select|check|stop)
 			onedrive.$_first $@
 			return $?
 		;;
