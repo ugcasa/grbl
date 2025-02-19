@@ -98,7 +98,7 @@ onedrive.mount() {
 	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
 
 
-	fi [[ ${onedrive_sync_dir[$onedrive_select]} ]]; then
+	if [[ ${onedrive_sync_dir[$onedrive_select]} ]]; then
 		fusermount -uz ${onedrive_sync_dir[$onedrive_select]}
 		[[ -d ${onedrive_sync_dir[$onedrive_select]} ]] || mkdir -p ${onedrive_sync_dir[$onedrive_select]}
 	else
