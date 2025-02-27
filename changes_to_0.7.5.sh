@@ -8,18 +8,17 @@ gr.ask "Continue" || exit 0
 module_file=$(readlink -f $1)
 shift
 
+if ! [[ $module_file ]]; then
+	gr.msg "no such file"
+	exit 0
+fi
+
 branch="release/0.7.5"
 [[ $1 ]] && branch=$1
-
 if ! git branch | grep -q $branch; then
 	gr.msg "available branches:"
 	git branch
 	exit 1
-fi
-
-if ! [[ $module_file ]]; then
-	gr.msg "no such file"
-	exit 0
 fi
 
 temp="/tmp/${module_file##*/}"
