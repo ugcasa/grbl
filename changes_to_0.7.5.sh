@@ -8,9 +8,18 @@ gr.ask "Continue" || exit 0
 module_file=$(readlink -f $1)
 shift
 
+branch="release/0.7.5"
+[[ $1 ]] && branch=$1
+
+if ! git branch | grep -q $branch; then
+	gr.msg "available branches:"
+	git branch
+	exit 1
+fi
+
 if ! [[ $module_file ]]; then
 	gr.msg "no such file"
-	return 0
+	exit 0
 fi
 
 temp="/tmp/${module_file##*/}"
@@ -23,9 +32,9 @@ cp $module_file $temp
 sed -i -e 's/grbl/guru/g' $temp
 sed -i -e 's/GRBL_/GURU_/g' $temp
 
-git checkout release/0.7.5 || exit 2
+git checkout $branch || exit 2
 
-gr.msg "saving original release/0.7.5 branch file to to '${temp}_original'.."
+gr.msg "saving original $branch branch file to to '${temp}_original'.."
 cp $module_file "${temp}_original" || exit 1
 
 gr.msg "please go trough all 'guru' words manually and check that changes are valid'. "
