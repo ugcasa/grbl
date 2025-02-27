@@ -10,7 +10,7 @@ _moduleType="modules"
 [[ $_moduleName ]] || return 0
 
 temp="/tmp/$_moduleName.sh"
-orig=$_moduleType/$_moduleName.sh
+orig=$(pwd)/$_moduleType/$_moduleName.sh
 
 [[ -f $temp ]] && rm $temp
 [[ -f $orig ]] || exit 1
