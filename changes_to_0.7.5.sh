@@ -24,7 +24,7 @@ cp $orig $temp
 
 #sed -i -e 's/guru-client/grbl/g' $temp
 #sed -i -e 's/guru-cli/grbl/g' $temp
-sed -i -e 's/guru/grbl/g' $temp
+sed -i -e 's/grbl/guru/g' $temp
 sed -i -e 's/GRBL_/GURU_/g' $temp
 #sed -i -e 's/ujo.grbl/ujo.guru/g' $temp
 
@@ -32,10 +32,10 @@ git checkout release/0.7.5 || exit 2
 
 gr.msg "saving original release/0.7.5 branch file to to ${temp}_original.."
 cp $orig "${temp}_original" || exit 1
+subl $temp
 
-if gr.ask "replace $orig with $temp"; then
-	subl $temp
-	gr.ask "make changes and when ready, OVERWRITE $orig" \
+if gr.ask "make changes and when ready, replace $orig with $temp"; then
+	gr.ask "really OVERWRITE $orig" \
 		&& cp $temp $orig \
 		|| gr.msg -e1 "not performed"
 else
