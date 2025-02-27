@@ -11,7 +11,16 @@ shift
 
 if ! [[ $module_file ]]; then
 	gr.msg "no such file"
-	return 0
+	exit 0
+fi
+
+branch="dev"
+[[ $1 ]] && branch=$1
+
+if ! git branch | grep -q $branch; then
+	gr.msg "available branches:"
+	git branch
+	exit 1
 fi
 
 temp="/tmp/${module_file##*/}"
@@ -27,9 +36,9 @@ sed -i -e 's/guru/grbl/g' $temp
 sed -i -e 's/GURU/GRBL/g' $temp
 sed -i -e 's/ujo.grbl/ujo.guru/g' $temp
 
-git checkout dev || exit 2
+git checkout $branch || exit 2
 
-gr.msg "saving original dev branch file to to '${temp}_original'.."
+gr.msg "saving original $branch branch file to to '${temp}_original'.."
 cp $module_file "${temp}_original" || exit 1
 
 gr.msg "please go trough all 'guru' words manually and check that changes are valid'. "
