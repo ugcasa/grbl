@@ -29,7 +29,7 @@ if gr.ask "replase $orig with $temp"; then
 	gr.msg "original saved to $temp_orig"
 	cp $orig $temp_original || exit 1
 	gr.ask "OVERWRITE $orig" \
-		&& cp $temp_original $orig \
+		&& cp $temp $orig \
 		|| gr.msg -e1 "not performed"
 else
 	gr.msg "canceling.."
