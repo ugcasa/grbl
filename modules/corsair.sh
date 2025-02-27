@@ -49,6 +49,8 @@
 
 __corsair_color="light_blue"
 __corsair=$(readlink --canonicalize --no-newline $BASH_SOURCE)
+corsair_rc=/tmp/$USER/corsair.rc
+corsair_config="$GRBL_CFG/$GRBL_USER/corsair.cfg"
 
 source common.sh
 
@@ -274,7 +276,7 @@ corsair.keytable () {
     gr.msg -v3 -c white "thumb  wheel logo "
     gr.msg -v3 -c dark  " 201    202   200 "
     gr.msg -v1
-    gr.msg -v2 " use thee digits to indicate id in file name example: 'F12' pipe is '/tmp/ckbpipe012'"
+    gr.msg -v2 " use thee digits to indicate id in file name example: 'F12' pipe is '/tmp/$USER/ckbpipe012'"
     gr.msg -v3
     gr.msg -v3 "corsair_key_table list: "
     gr.msg -v3 "$(corsair.key-id)}"
@@ -428,23 +430,35 @@ corsair.check () {
         fi
 
     gr.msg -n -v2 "checking ${GRBL_CORSAIR_KEYBOARD}.. "
-    if lsusb | grep "CORSAIR ${GRBL_CORSAIR_KEYBOARD^^}" >/dev/null ; then
+    #TODO: save device ID during config
+    if [[ ${GRBL_CORSAIR_KEYBOARD_ID} ]]; then
+            gr.msg -v2 -n -c green "configured, "
+        if lsusb | grep -q ${GRBL_CORSAIR_KEYBOARD_ID}; then
             gr.msg -v2 -c green "connected"
         else
             gr.msg -c dark_grey "disconnected"
             return 2
         fi
+    else
+        gr.msg -c black "not configured"
+    fi
 
     gr.msg -n -v2 "checking ${GRBL_CORSAIR_MOUSE}.. "
-    if lsusb | grep "CORSAIR ${GRBL_CORSAIR_MOUSE^^}" >/dev/null ; then
+    #TODO: save device ID during config
+    if [[ ${GRBL_CORSAIR_KEYBOARD_ID} ]]; then
+        gr.msg -v2 -n -c green "configured, "
+        if lsusb | grep -q ${GRBL_CORSAIR_MOUSE_ID}; then
             gr.msg -v2 -c green "connected"
         else
             gr.msg -c dark_grey "disconnected"
-            # not show stopper
         fi
+    else
+        gr.msg -c black "not configured"
+    fi
+
 
     gr.msg -n -v2 "checking ckb-next-daemon.. "
-    if ps auxf | grep "ckb-next-daemon" | grep -v grep >/dev/null ; then
+    if ps auxf | grep "ckb-next-daemon" | grep -q -v grep; then
             gr.msg -v2 -c green "running"
         else
             gr.msg -c dark_grey "ckb-next-daemon not running"
@@ -453,7 +467,7 @@ corsair.check () {
         fi
 
     gr.msg -n -v2 "checking ckb-next.. "
-    if ps auxf | grep "ckb-next" | grep -v "daemon" | grep -v grep >/dev/null ; then
+    if ps auxf | grep "ckb-next" | grep -v "daemon" | grep -q -v grep; then
             gr.msg -v2 -c green "running"
 
         else
@@ -498,10 +512,26 @@ corsair.check () {
             gr.msg -c yellow "not available in '$corsair_mode' mode"
             gr.msg -c white "select one of following modes to plumber: " -v3 -n
             gr.msg -c list "${status_modes[@]}" -v3
-            return 0
             ;;
         esac
 
+    # check daemon warnings
+    gr.msg -n -v2 "checking daemon service.. "
+    if systemctl status ckb-next-daemon.service |grep -q -e Timeout -e Unable; then
+        gr.msg -v2 -e1 "warnings found:"
+        systemctl status ckb-next-daemon.service |grep -e Timeout -e Unable;
+        return 0
+    fi
+
+    # check daemon is responsive
+    # TODO how to figure out is all fine when:
+    #   - device is connected
+    #   - service is running
+    #   - app is running
+    #   - pipes working..
+    # but, default animation is running and no connection between device and app?
+    # this happens after sleep, every time, but following fixes it:
+    gr.msg -v1 -c white "If not responsive try to restart daemon by '$GRBL_CALL corsair restart' "
 
     # all fine
     return 0
@@ -969,7 +999,7 @@ corsair.systemd_start_application () {
     corsair.init
     local _error=$?
 
-    # # is non clean way to start daemon, but for now enought
+    # # is non clean way to start daemon, but for now enough
     # source daemon.sh
     # daemon.start &
 
@@ -991,9 +1021,12 @@ corsair.systemd_start () {
 
     [[ $GRBL_FORCE ]] && _status="7"
 
-    gr.msg -v3 "status/given: $_status"
+    gr.msg -v1 "trying to fix.. $_status"
     case $_status in
-        1 )     gr.msg -v1 -c black "corsair disabled by user configuration" ;;
+        1 )     gr.msg -v1 -c black "corsair disabled by user configuration"
+                source config.sh
+                config.save $corsair_config enabled "true" && gr.msg -v1 -c green "enabled"
+                ;;
         2 )     gr.msg -v1 -c black "no corsair devices connected" ;;
 
         3 )     gr.msg -v1 "corsair daemon not running, starting.. "
@@ -1020,8 +1053,7 @@ corsair.systemd_start () {
         7 )     gr.msg -v1 "force re-start full corsair stack.. "
                 sudo systemctl restart ckb-next-daemon
                 systemctl --user restart corsair.service
-
-                corsair.systemd_start_application
+                # corsair.systemd_start_application
                 ;;
         * )     gr.msg -v1 -t -c green "corsair on service"
                 return 0
@@ -1038,8 +1070,6 @@ corsair.systemd_restart () {
 
     gr.msg -h "restarting daemon service.. "
     sudo systemctl restart ckb-next-daemon && gr.msg -c green "ok" || gr.msg -e1 "failed"
-
-
 }
 
 
@@ -1411,8 +1441,54 @@ corsair.remove () {
 }
 
 
+corsair.rc () {
+# source configurations
+
+    # check is corsair configuration changed lately, update rc if so
+    if [[ ! -f $corsair_rc ]] \
+        || [[ $(( $(stat -c %Y $corsair_config) - $(stat -c %Y $corsair_rc) )) -gt 0 ]]; then
+            corsair.make_rc && gr.msg -v1 -c dark_gray "$corsair_rc updated"
+        fi
+
+    if [[ -f $corsair_rc ]] ; then
+        source $corsair_rc
+    else
+        gr.msg -v2 -c dark_gray "no configuration"
+    fi
+}
+
+
+corsair.make_rc () {
+# construct corsair configuration rc
+
+    source config.sh
+
+    # try to find user configuration
+    if ! [[ -f $corsair_config ]] ; then
+        gr.debug "$corsair_config does not exist"
+        corsair_config="$GRBL_CFG/corsair.cfg"
+
+        # try to find default configuration
+        if ! [[ -f $corsair_config ]] ; then
+            gr.debug "$corsair_config not exist, skipping"
+            return 1
+        fi
+    fi
+
+    # remove existing rc file
+    if [[ -f $corsair_rc ]] ; then
+            rm -f $corsair_rc
+        fi
+
+    config.make_rc $corsair_config $corsair_rc
+    chmod +x $corsair_rc
+}
+
+# run these functions every time corsair is called
+corsair.rc
+
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$GRBL_RC"
     corsair.main "$@"
     exit "$?"
 else
