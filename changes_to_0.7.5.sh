@@ -9,11 +9,11 @@ module_file=$(readlink -f $1)
 shift
 
 if ! [[ $module_file ]]; then
-	ge.msg -e1 "no such file"
+	gr.msg "no such file"
 	return 0
 fi
 
-temp="/tmp/$module_file.sh"
+temp="/tmp/${module_file##*/}"
 
 [[ -f $temp ]] && rm $temp
 [[ -f $module_file ]] || exit 1
