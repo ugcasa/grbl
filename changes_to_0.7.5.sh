@@ -1,42 +1,39 @@
 #!/bin/bash
 source common.sh
 
-gr.msg "This will change GRBL_ to GURU_ but not grbl to guru*, not clean but should produce functional output"
-gr.msg "please go trough all 'grlb' words manually and change them to 'guru' or 'guru-client'. No automation cause"
-gr.msg "of obvious risk if files or folders contains 'grbl' words, specially when cross module file names are used."
+gr.msg "This will change GRBL_ to GURU_ and 'grbl' to 'guru, not clean but should produce functional output."
+gr.msg "There is obvious risk if files or folders contains 'grbl/guru' word, specially when cross module file names are used."
 gr.ask "Continue" || exit 0
 
-_moduleName=$1 
+module_file=$(readlink -f $1)
 shift
 
-_moduleType="modules"
-[[ $1 ]] && _moduleType=$1 
+if ! [[ $module_file ]]; then
+	ge.msg -e1 "no such file"
+	return 0
+fi
 
-[[ $_moduleName ]] || return 0
-
-temp="/tmp/$_moduleName.sh"
-orig=$(pwd)/$_moduleType/$_moduleName.sh
+temp="/tmp/$module_file.sh"
 
 [[ -f $temp ]] && rm $temp
-[[ -f $orig ]] || exit 1
+[[ -f $module_file ]] || exit 1
 
-cp $orig $temp
+cp $module_file $temp
 
-#sed -i -e 's/guru-client/grbl/g' $temp
-#sed -i -e 's/guru-cli/grbl/g' $temp
 sed -i -e 's/grbl/guru/g' $temp
 sed -i -e 's/GRBL_/GURU_/g' $temp
-#sed -i -e 's/ujo.grbl/ujo.guru/g' $temp
 
 git checkout release/0.7.5 || exit 2
 
-gr.msg "saving original release/0.7.5 branch file to to ${temp}_original.."
-cp $orig "${temp}_original" || exit 1
+gr.msg "saving original release/0.7.5 branch file to to '${temp}_original'.."
+cp $module_file "${temp}_original" || exit 1
+
+gr.msg "please go trough all 'guru' words manually and check that changes are valid'. "
 subl $temp
 
-if gr.ask "make changes and when ready, replace $orig with $temp"; then
-	gr.ask "really OVERWRITE $orig" \
-		&& cp $temp $orig \
+if gr.ask "make changes and when ready, replace $module_file with $temp"; then
+	gr.ask "really OVERWRITE $module_file" \
+		&& cp $temp $module_file \
 		|| gr.msg -e1 "not performed"
 else
 	gr.msg "canceling.."
