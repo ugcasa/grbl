@@ -34,7 +34,8 @@ gr.msg "saving original release/0.7.5 branch file to to ${temp}_original.."
 cp $orig "${temp}_original" || exit 1
 
 if gr.ask "replace $orig with $temp"; then
-	gr.ask "OVERWRITE $orig" \
+	subl $temp
+	gr.ask "make changes and when ready, OVERWRITE $orig" \
 		&& cp $temp $orig \
 		|| gr.msg -e1 "not performed"
 else
