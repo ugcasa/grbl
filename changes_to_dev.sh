@@ -1,21 +1,25 @@
 #!/bin/bash
 source common.sh
 
-_moduleName=$1 
+gr.msg "This will change 'GURU_' to 'GRBL_' and 'guru-client' 'guru-cli', 'guru' to 'grl'"
+gr.msg "not clean but should produce functional output. There is obvious risk if files or "
+gr.msg "folders contains 'grbl/guru', specially when cross module file names are used."
+gr.ask "Continue" || exit 0
+
+module_file=$(readlink -f $1)
 shift
 
-_moduleType="modules"
-[[ $1 ]] && _moduleType=$1 
+if ! [[ $module_file ]]; then
+	gr.msg "no such file"
+	return 0
+fi
 
-[[ $_moduleName ]] || return 0
-
-temp="/tmp/$_moduleName.sh"
-orig=$(pwd)/$_moduleType/$_moduleName.sh
+temp="/tmp/${module_file##*/}"
 
 [[ -f $temp ]] && rm $temp
-[[ -f $orig ]] || exit 1
+[[ -f $module_file ]] || exit 1
 
-cp $orig $temp
+cp $module_file $temp
 
 sed -i -e 's/guru-client/grbl/g' $temp
 sed -i -e 's/guru-cli/grbl/g' $temp
@@ -25,14 +29,16 @@ sed -i -e 's/ujo.grbl/ujo.guru/g' $temp
 
 git checkout dev || exit 2
 
-gr.msg "saving original dev branh file to to ${temp}_original.."
-cp $orig "${temp}_original" || exit 1
+gr.msg "saving original dev branch file to to '${temp}_original'.."
+cp $module_file "${temp}_original" || exit 1
 
-if gr.ask "replace $orig with $temp"; then
-	gr.ask "OVERWRITE $orig" \
-		&& cp $temp $orig \
+gr.msg "please go trough all 'guru' words manually and check that changes are valid'. "
+subl $temp
+
+if gr.ask "make changes and when ready, replace $module_file with $temp"; then
+	gr.ask "really OVERWRITE $module_file" \
+		&& cp $temp $module_file \
 		|| gr.msg -e1 "not performed"
 else
 	gr.msg "canceling.."
 fi
-
