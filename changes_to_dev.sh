@@ -25,9 +25,10 @@ sed -i -e 's/ujo.grbl/ujo.guru/g' $temp
 
 git checkout dev || exit 2
 
-if gr.ask "replase $orig with $temp"; then
-	gr.msg "original saved to $temp_orig"
-	cp $orig $temp_original || exit 1
+gr.msg "saving original dev branh file to to ${temp}_original.."
+cp $orig "${temp}_original" || exit 1
+
+if gr.ask "replace $orig with $temp"; then
 	gr.ask "OVERWRITE $orig" \
 		&& cp $temp $orig \
 		|| gr.msg -e1 "not performed"
