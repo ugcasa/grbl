@@ -1,8 +1,9 @@
-0.7.6
+0.7.7
 'grbl'
 1 'configs' merged to 'master'
 2 Target is to get installable version. Last sub version removed, jump form 0.7.0.1 to 0.7.2
 3 Rename to 'gerbil client', gb-client, alias gb
 4 core review
 5 parental and onedrive added, backup checks, module template and make_module script
-6 grbl tests
+6 namechange
+7 corsair fix
