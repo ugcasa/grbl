@@ -177,7 +177,7 @@ corsair.main () {
 
         # blink functions
         blink|b)
-            [[ $GRBL_CORSAIR_ENABLED ]] || return 0
+            [[ $GRBL_CORSAIR_ENABLED ]] || return 2
             local tool=$1 ; shift
             case $tool in
                 set|stop|kill|test)
@@ -212,7 +212,7 @@ corsair.main () {
             ;;
 
         '--')
-            return 0
+            return 3
             ;;
 
         help)
@@ -221,11 +221,12 @@ corsair.main () {
             esac
             ;;
         *)
-                gr.msg -c yellow "corsair: unknown command: $cmd"
+            gr.msg -c yellow "corsair: unknown command: $cmd"
+            return 2
     esac
 }
 
-corsair.systemd_main() {
+corsair.systemd_main () {
 # systemd control command parser
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
@@ -512,8 +513,8 @@ corsair.check () {
     # check daemon warnings
     gr.msg -n -v2 "checking daemon service.. "
     if systemctl status ckb-next-daemon.service |grep -q -e Timeout -e Unable; then
-        gr.msg -v2 -e1 "warnings found:"
-        systemctl status ckb-next-daemon.service |grep -e Timeout -e Unable;
+        gr.msg -v3 -e1 "warnings found:"
+        [[ $GRBL_VERBOSE -gt 2 ]] && systemctl status ckb-next-daemon.service |grep -e Timeout -e Unable;
     fi
 
     # check daemon is responsive
@@ -524,7 +525,7 @@ corsair.check () {
     #   - pipes working..
     # but, default animation is running and no connection between device and app?
     # this happens after sleep, every time, but following fixes it:
-    gr.msg -v1 -c white "If not responsive try to restart daemon by '$GRBL_CALL corsair restart' "
+    gr.msg -v3 -c white "If not responsive try to restart daemon by '$GRBL_CALL corsair restart' "
 
     # all fine
     return 0
@@ -1479,7 +1480,7 @@ corsair.rc () {
         return 0
     else
         gr.msg -v2 -c dark_gray "no configuration"
-        return 0
+        return 100
     fi
 }
 
