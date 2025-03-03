@@ -283,6 +283,7 @@ corsair.systemd_main () {
             ;;
         *)
             gr.msg -e1 "corsair systemd: unknown sub command '$_first'"
+            return 2
     esac
     return 0
 }

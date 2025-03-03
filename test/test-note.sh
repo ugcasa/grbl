@@ -1,5 +1,5 @@
 #!/bin/bash
-# automatically generated tester for grbl note.sh Sun 02 Mar 2025 04:16:29 PM EET
+# automatically generated tester for grbl note.sh Mon 03 Mar 2025 03:52:16 AM EET
 
 # sourcing and test variable space
 source $GRBL_BIN/common.sh
@@ -10,59 +10,80 @@ export GRBL_COLOR=true
 export GRBL_VERBOSE=2
 
 # add test initial conditions here
-ge.msg -v3 -e1 "initial conditions not written"
+gr.msg -v3 -e1 "initial conditions not written"
 
-testNr=0
+testNr=1
 results=()
+results[0]="result:return:note"
 
 runf () {
 # result pass/fail handler
 
-    local manualMsg passCond
+    local arguments=()
+    local manualMsg=()
+    local passCond=0
+    local function=
 
-    # parse options
-    TEMP=$(getopt --long -o "p:m:" "$@")
-    eval set -- "$TEMP"
-
-    while true ; do
-        case "$1" in
-            # Manual validation message
-            -m )
-                manualMsg="$2"
-                shift 2
+    # getop or getops cannot get string arguments for options, therefore following..
+    local m=
+    local p=
+    for arg in $@; do
+        case $arg in
+            -m) m=true
+                p=
+                continue
                 ;;
-            # pass condition
-            -c )
-                passCond="$2"
-                shift 2
+            -p) p=true
+                m=
+                continue
                 ;;
-
-             * ) break
         esac
+
+        if [[ $m ]]; then
+            manualMsg+=("$arg")
+        elif [[ $p ]]; then
+            passCond=$arg
+        else
+            if [[ $function ]]; then
+                arguments+=("$arg")
+            else
+                function=$arg
+            fi
+        fi
     done
 
-    # --) check message for long parameters (don't remember why like this)
-    local _arg="$@"
-    [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
-    echo "note.$1 $@"
-    echo "tet: $_message"
-    return 0
+    gr.msg -N -n -h "Test: $testNr - "
+    gr.msg -c white "note.$function ${arguments[@]}"
+
+    note.$function ${arguments[@]}
 
     returnValue=$?
 
-    local reason=$@
+    if [[ $manualMsg ]]; then
+        if gr.ask "${manualMsg[@]}"; then
+            reurnValue=0
+        else
+            returnValue=255
+        fi
+    fi
 
-    if [[ $returnValue -eq 0 ]]; then
-        result[$testNr]="p:$returnValue:clean result"
-    elif [[ $returnValue -eq 1 ]]; then
-        result[$testNr]="p:$returnValue:retuned false"
+    gr.msg -n -h "Result of test $testNr: "
+    if [[ $returnValue -eq $passCond ]]; then
+        gr.msg -c pass "PASSED"
+        results[$testNr]="p:$returnValue:clean result"
     elif [[ $returnValue -gt 1 ]] && [[ $returnValue -lt 9 ]]; then
-        result[$testNr]="w:$returnValue:warning $reason"
+        gr.msg -e1 "WARNING"
+        results[$testNr]="w:$returnValue:warning"
+    elif [[ $returnValue -eq 127 ]] && [[ $returnValue -lt 255 ]]; then
+        gr.msg -e2 "NO RESULT"
+        results[$testNr]="e:$returnValue:non existing, can be test case issue"
     elif [[ $returnValue -gt 99 ]] && [[ $returnValue -lt 255 ]]; then
-        result[$testNr]="f:$returnValue:$reason"
+        gr.msg -c fail "FAILED"
+        results[$testNr]="f:$returnValue:non zero result"
     else
-        result[$testNr]="e:$returnValue:error in test case"
+        gr.msg -e1 "NO RESULT"
+        results[$testNr]="e:$returnValue:error in test case"
     fi
 
     let testNr++
@@ -71,19 +92,71 @@ runf () {
 runc () {
 # run list of cases
 
-    local case=$1
+    local cases=($@)
 
-    case $case in
-        all)
-            while read case; do
-                runf "$case"
-            done <note.tc
-            ;;
-        [1-9]|[1-9][0-9]|[1-9][0-9][0-9])
-            runf $(sed -n "'${case}p'" file.txt)
-            ;;
-    esac
+    for case in ${cases[@]}; do
 
+        case $case in
+            all)
+                while read case; do
+                    runf "$case"
+                done <note.tc
+                ;;
+            [1-9]|[1-9][0-9]|[1-9][0-9][0-9])
+
+                runf $(head -$case note.tc | tail +$case)
+                ;;
+        esac
+
+    done
+
+    print_results
+}
+
+print_results () {
+
+    local warnings=0
+    local passes=0
+    local fails=0
+    local errors=0
+
+    # echo "${#results[@]}:${results[@]}"
+
+    gr.msg -N -h "Results $(date -d today +${GRBL_FORMAT_DATE}_${GRBL_FORMAT_TIME})"
+    for (( i = 1; i < ${#results[@]}; i++ )); do
+
+        gr.msg -n -h -w 4 "$i: "
+        case $(cut -d ':' -f 1 <<<${results[$i]}) in
+            p)
+                gr.msg -w 10 -n -c pass "PASSED "
+                gr.msg -w 4 -n -c gray "$(cut -d ':' -f 2 <<<${results[$i]}) "
+                gr.msg -w 60 -c dark_grey "$(cut -d ':' -f 3 <<<${results[$i]}) "
+                let passes++
+                ;;
+            f)
+                gr.msg -w 10 -n -c fail "FAILED "
+                gr.msg -w 4 -n -c grey "$(cut -d ':' -f 2 <<<${results[$i]}) "
+                gr.msg -w 60 -c dark_grey "$(cut -d ':' -f 3 <<<${results[$i]}) "
+                let fails++
+                ;;
+            w)
+                gr.msg -w 10 -n -e1 "PASSED "
+                gr.msg -w 4 -n -c grey "$(cut -d ':' -f 2 <<<${results[$i]}) "
+                gr.msg -w 60 -c dark_grey "$(cut -d ':' -f 3 <<<${results[$i]}) "
+                let warnings++
+                let passes++
+                ;;
+            e|*)
+                gr.msg -w 10 -n -e2 "NO RESULT "
+                gr.msg -w 4 -n -c grey "$(cut -d ':' -f 2 <<<${results[$i]}) "
+                gr.msg -w 60 -c dark_grey "$(cut -d ':' -f 3 <<<${results[$i]}) "
+                let errors++
+                ;;
+        esac
+
+
+    done
+    gr.msg -h "Summary: $passes passed, $fails fails, $warnings warnings and $errors with no result"
 
 }
 
@@ -127,49 +200,33 @@ case_parcer () {
 note.test() {
     local batch=$1
     shift
-    local results=()
+    local _results=()
+    local _cases=()
     case $batch in
         1)
-            # manual validation
-            runf main status -m "should output module status oneliner"
-
-            ## pass conditions
-
-            # return value is (default is 0)
-            runf main status -p <9
-
-            # should return string no more than one \n
-            runf main status -p string
-
-            # should return one or more lines
-            runf main status -p lines
-
-            # should return "ok" string
-            runf main status -p "ok"
-
-            ## do we really need fail conditions?
-
-            runf main nonvalidinput
-            runf help ; result $?
-            runf rc
-            runf makerc -f \tmp$USER$module.rc
-            runf status
-            runf help
+            runf main non-valid-input -p 2
+            runf corsair.systemd_main non-valid-input -p 2
+            runf main help -p 0
+            runf rc -p 0
+            runf make_rc -p 0
+            runf check -p 0
+            runf main status -p 0 -m Should output module status information
             ;;
         9)
             # these tests install and remove module requirements
             # be sure that installer/uninstallers do not harm hot environment
+
             gr.ask "run install/remove tests?" || return 0
-            note.install && || p:91 || results+=(f:91)
-            note.remove || results+=(f:92)
+            runf install -p 0
+            runf remove -p 0
             gr.ask "install module requirements to be able to continue tests?" || return 0
-            note.install || results+=(f:93)
+            runf install -p 0
             ;;
 
         case|c)
-            # run cases. input '1 2 3' or '4-8' = .tc file line number
-            local cases=$(case_parcer $@)
-            runc ${cases[@]}
+            # run _cases. input '1 2 3' or '4-8' = .tc file line number
+            _cases=($(case_parcer $@))
+            runc ${_cases[@]}
             ;;
 
         cases|tc)
@@ -202,17 +259,19 @@ note.test() {
 			echo ; note.test_office || _err=("${_err[@]}" "119") 
 			echo ; note.test_html || _err=("${_err[@]}" "120") 
 			echo ; note.test_search_tag2 || _err=("${_err[@]}" "121") 
-			echo ; note.test_search_tag1() || _err=("${_err[@]}" "122") 
-			echo ; note.test_search_tag() || _err=("${_err[@]}" "123") 
-			echo ; note.test_find() || _err=("${_err[@]}" "124") 
+			echo ; note.test_search_tag1 || _err=("${_err[@]}" "122") 
+			echo ; note.test_search_tag || _err=("${_err[@]}" "123") 
+			echo ; note.test_find || _err=("${_err[@]}" "124") 
 			echo ; note.test_status || _err=("${_err[@]}" "125") 
-			echo ; note.test_install() || _err=("${_err[@]}" "126") 
-			echo ; note.test_uninstall() || _err=("${_err[@]}" "127") 
+			echo ; note.test_install || _err=("${_err[@]}" "126") 
+			echo ; note.test_uninstall || _err=("${_err[@]}" "127") 
+            ;;
         # no case and close function
         *) gr.msg "test case  not written"
             return 1
     esac
 }
+
 note.test_help () {
 # function to test note module function note.help
 
@@ -654,65 +713,65 @@ note.test_search_tag2 () {
     fi
 }
 
-note.test_search_tag1() () {
-# function to test note module function note.search_tag1()
+note.test_search_tag1 () {
+# function to test note module function note.search_tag1
 
     local _error=0
-    gr.msg -v0 -c white testing note.search_tag1()
+    gr.msg -v0 -c white testing note.search_tag1
 
     ## TODO: add pre-conditions here
 
-    note.search_tag1() ; _error=$?
+    note.search_tag1 ; _error=$?
 
     ## TODO: add analysis here and manipulate 
 
     if  ((_error<1)) ; then
-        gr.msg -v0 -c green note.search_tag1() passed
+        gr.msg -v0 -c green note.search_tag1 passed
         return 0
     else
-        gr.msg -v0 -c red note.search_tag1() failed
+        gr.msg -v0 -c red note.search_tag1 failed
         return 
     fi
 }
 
-note.test_search_tag() () {
-# function to test note module function note.search_tag()
+note.test_search_tag () {
+# function to test note module function note.search_tag
 
     local _error=0
-    gr.msg -v0 -c white testing note.search_tag()
+    gr.msg -v0 -c white testing note.search_tag
 
     ## TODO: add pre-conditions here
 
-    note.search_tag() ; _error=$?
+    note.search_tag ; _error=$?
 
     ## TODO: add analysis here and manipulate 
 
     if  ((_error<1)) ; then
-        gr.msg -v0 -c green note.search_tag() passed
+        gr.msg -v0 -c green note.search_tag passed
         return 0
     else
-        gr.msg -v0 -c red note.search_tag() failed
+        gr.msg -v0 -c red note.search_tag failed
         return 
     fi
 }
 
-note.test_find() () {
-# function to test note module function note.find()
+note.test_find () {
+# function to test note module function note.find
 
     local _error=0
-    gr.msg -v0 -c white testing note.find()
+    gr.msg -v0 -c white testing note.find
 
     ## TODO: add pre-conditions here
 
-    note.find() ; _error=$?
+    note.find ; _error=$?
 
     ## TODO: add analysis here and manipulate 
 
     if  ((_error<1)) ; then
-        gr.msg -v0 -c green note.find() passed
+        gr.msg -v0 -c green note.find passed
         return 0
     else
-        gr.msg -v0 -c red note.find() failed
+        gr.msg -v0 -c red note.find failed
         return 
     fi
 }
@@ -738,44 +797,44 @@ note.test_status () {
     fi
 }
 
-note.test_install() () {
-# function to test note module function note.install()
+note.test_install () {
+# function to test note module function note.install
 
     local _error=0
-    gr.msg -v0 -c white testing note.install()
+    gr.msg -v0 -c white testing note.install
 
     ## TODO: add pre-conditions here
 
-    note.install() ; _error=$?
+    note.install ; _error=$?
 
     ## TODO: add analysis here and manipulate 
 
     if  ((_error<1)) ; then
-        gr.msg -v0 -c green note.install() passed
+        gr.msg -v0 -c green note.install passed
         return 0
     else
-        gr.msg -v0 -c red note.install() failed
+        gr.msg -v0 -c red note.install failed
         return 
     fi
 }
 
-note.test_uninstall() () {
-# function to test note module function note.uninstall()
+note.test_uninstall () {
+# function to test note module function note.uninstall
 
     local _error=0
-    gr.msg -v0 -c white testing note.uninstall()
+    gr.msg -v0 -c white testing note.uninstall
 
     ## TODO: add pre-conditions here
 
-    note.uninstall() ; _error=$?
+    note.uninstall ; _error=$?
 
     ## TODO: add analysis here and manipulate 
 
     if  ((_error<1)) ; then
-        gr.msg -v0 -c green note.uninstall() passed
+        gr.msg -v0 -c green note.uninstall passed
         return 0
     else
-        gr.msg -v0 -c red note.uninstall() failed
+        gr.msg -v0 -c red note.uninstall failed
         return 
     fi
 }

@@ -1,5 +1,5 @@
 #!/bin/bash
-# automatically generated tester for grbl corsair.sh Mon 03 Mar 2025 01:54:51 AM EET
+# automatically generated tester for grbl corsair.sh Mon 03 Mar 2025 03:25:10 AM EET
 
 # sourcing and test variable space
 source $GRBL_BIN/common.sh
@@ -71,7 +71,7 @@ runf () {
     gr.msg -n -h "Result of test $testNr: "
     if [[ $returnValue -eq $passCond ]]; then
         gr.msg -c pass "PASSED"
-        results[$testNr]="p:$returnValue:'$passCond, clean result'"
+        results[$testNr]="p:$returnValue:'($passCond) clean result'"
     elif [[ $returnValue -gt 1 ]] && [[ $returnValue -lt 9 ]]; then
         gr.msg -e1 "WARNING"
         results[$testNr]="w:$returnValue:'warning'"
@@ -204,40 +204,23 @@ corsair.test() {
     local _cases=()
     case $batch in
         1)
-            # manual validation
-            runf main status -m "should output module status oneliner"
-
-            ## pass conditions
-
-            # return value is (default is 0)
-            runf main status -p <9
-
-            # should return string no more than one \n
-            runf main status -p string
-
-            # should return one or more lines
-            runf main status -p lines
-
-            # should return "ok" string
-            runf main status -p "ok"
-
-            ## do we really need fail conditions?
-
-            runf main nonvalidinput
-            runf help ; result $?
-            runf rc
-            runf makerc -f \tmp$USER$module.rc
-            runf status
-            runf help
+            runf main non-valid-input -p 2
+            runf corsair.systemd_main non-valid-input -p 2
+            runf main help -p 0
+            runf rc -p 0
+            runf make_rc -p 0
+            runf check -p 0
+            runf main status -p 0 -m Should output module status information
             ;;
         9)
             # these tests install and remove module requirements
             # be sure that installer/uninstallers do not harm hot environment
+
             gr.ask "run install/remove tests?" || return 0
-            corsair.install &&  _results+=(f:91) || _results+=(f:91)
-            corsair.remove || _results+=(f:92)
+            runf install -p 0
+            runf remove -p 0
             gr.ask "install module requirements to be able to continue tests?" || return 0
-            corsair.install || _results+=(f:93)
+            runf install -p 0
             ;;
 
         case|c)
@@ -254,6 +237,7 @@ corsair.test() {
         all)
         # all tests = all functions in introduction order
         # TODO: remove non wanted functions and check run order.
+
 			echo ; corsair.test_help-profile || _err=("${_err[@]}" "101") 
 			echo ; corsair.test_help || _err=("${_err[@]}" "102") 
 			echo ; corsair.test_keytable || _err=("${_err[@]}" "103") 

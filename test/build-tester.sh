@@ -109,16 +109,16 @@ runf () {
     gr.msg -n -h "Result of test \$testNr: "
     if [[ \$returnValue -eq \$passCond ]]; then
         gr.msg -c pass "PASSED"
-        results[\$testNr]="p:\$returnValue:'\$passCond, clean result'"
+        results[\$testNr]="p:\$returnValue:clean result"
     elif [[ \$returnValue -gt 1 ]] && [[ \$returnValue -lt 9 ]]; then
         gr.msg -e1 "WARNING"
-        results[\$testNr]="w:\$returnValue:'warning'"
+        results[\$testNr]="w:\$returnValue:warning"
     elif [[ \$returnValue -eq 127 ]] && [[ \$returnValue -lt 255 ]]; then
         gr.msg -e2 "NO RESULT"
-        results[\$testNr]="e:\$returnValue:'non existing, can be test case issue'"
+        results[\$testNr]="e:\$returnValue:non existing, can be test case issue"
     elif [[ \$returnValue -gt 99 ]] && [[ \$returnValue -lt 255 ]]; then
         gr.msg -c fail "FAILED"
-        results[\$testNr]="f:\$returnValue:'non zero result'"
+        results[\$testNr]="f:\$returnValue:non zero result"
     else
         gr.msg -e1 "NO RESULT"
         results[\$testNr]="e:\$returnValue:error in test case"
@@ -167,26 +167,26 @@ print_results () {
         case \$(cut -d ':' -f 1 <<<\${results[\$i]}) in
             p)
                 gr.msg -w 10 -n -c pass "PASSED "
-                gr.msg -w 6 -n -c gray "(\$(cut -d ':' -f 2 <<<\${results[\$i]})) "
+                gr.msg -w 4 -n -c gray "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
                 gr.msg -w 60 -c dark_grey "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
                 let passes++
                 ;;
             f)
                 gr.msg -w 10 -n -c fail "FAILED "
-                gr.msg -w 6 -n -c grey "(\$(cut -d ':' -f 2 <<<\${results[\$i]})) "
+                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
                 gr.msg -w 60 -c dark_grey "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
                 let fails++
                 ;;
             w)
                 gr.msg -w 10 -n -e1 "PASSED "
-                gr.msg -w 6 -n -c grey "(\$(cut -d ':' -f 2 <<<\${results[\$i]})) "
+                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
                 gr.msg -w 60 -c dark_grey "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
                 let warnings++
                 let passes++
                 ;;
             e|*)
                 gr.msg -w 10 -n -e2 "NO RESULT "
-                gr.msg -w 6 -n -c grey "(\$(cut -d ':' -f 2 <<<\${results[\$i]})) "
+                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
                 gr.msg -w 60 -c dark_grey "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
                 let errors++
                 ;;
@@ -242,40 +242,23 @@ $module.test() {
     local _cases=()
     case \$batch in
         1)
-            # manual validation
-            runf main status -m "should output module status oneliner"
-
-            ## pass conditions
-
-            # return value is (default is 0)
-            runf main status -p <9
-
-            # should return string no more than one \n
-            runf main status -p string
-
-            # should return one or more lines
-            runf main status -p lines
-
-            # should return "ok" string
-            runf main status -p "ok"
-
-            ## do we really need fail conditions?
-
-            runf main nonvalidinput
-            runf help ; result \$?
-            runf rc
-            runf makerc -f \tmp\$USER\$module.rc
-            runf status
-            runf help
+            runf main non-valid-input -p 2
+            runf corsair.systemd_main non-valid-input -p 2
+            runf main help -p 0
+            runf rc -p 0
+            runf make_rc -p 0
+            runf check -p 0
+            runf main status -p 0 -m Should output module status information
             ;;
         9)
             # these tests install and remove module requirements
             # be sure that installer/uninstallers do not harm hot environment
+
             gr.ask "run install/remove tests?" || return 0
-            $module.install &&  _results+=(f:91) || _results+=(f:91)
-            $module.remove || _results+=(f:92)
+            runf install -p 0
+            runf remove -p 0
             gr.ask "install module requirements to be able to continue tests?" || return 0
-            $module.install || _results+=(f:93)
+            runf install -p 0
             ;;
 
         case|c)
@@ -292,8 +275,10 @@ $module.test() {
         all)
         # all tests = all functions in introduction order
         # TODO: remove non wanted functions and check run order.
+
 EOL
 
+# TODO change following to use common error delivery result print
 _i=100
 for _function in "${functions_to_test[@]}" ; do
     test_function_name=${_function//"$module."/"$module.test_"}

@@ -522,8 +522,11 @@ note.open_editor () {
     _command="${GRBL_NOTE_EDITOR} $note_file $_options"
     if [[ $GRBL_DEBUG ]]; then echo $_command >&2 ; fi
     # run command
-    $_command
-    return $?
+    if $_command; then
+        return 0
+    else
+        return 123
+    fi
 }
 
 note.office () {
@@ -699,7 +702,7 @@ note.search_tag2 () {
 }
 
 
-note.search_tag1() {
+note.search_tag1 () {
 # read note file tag line
 
     local target_file="$1"
@@ -714,7 +717,7 @@ note.search_tag1() {
 }
 
 
-note.search_tag() {
+note.search_tag () {
 # get tag from note file and check does it contain given word
     local search_terms=($@)
     local matches=()
@@ -772,7 +775,7 @@ note.search_tag() {
 }
 
 
-note.find() {
+note.find () {
 # find keywords from tags in notes
 
 # known issues: loop stops for no raeson
@@ -882,7 +885,7 @@ note.status () {
     return $?
 }
 
-note.install() {
+note.install () {
 # Install needed tools
     gr.msg -v4 -n -c $__note_color "$__note [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     local require=(ncal pandoc gnome-terminal libreoffice-java-common default-jre moreutils)
@@ -896,7 +899,7 @@ note.install() {
     tag.main install
 }
 
-note.uninstall() {
+note.uninstall () {
 # Install needed tools
     gr.msg -v4 -n -c $__note_color "$__note [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     local require=(ncal pandoc)

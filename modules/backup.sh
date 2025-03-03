@@ -1066,16 +1066,21 @@ backup.now () {
 
     # do the thing
     if [[ $backup_dryrun ]]
-        echo $backup_name>$backup_running
-        echo eval $_command
-        echo rm $backup_running
+        gr.msg -h "$backup_name>$backup_running"
+        gr.msg -h "eval $_command"
+        _error=4
+        gr.msg -h "rm $backup_running"
     else
         echo $backup_name>$backup_running
         eval $_command
+        _error=$?
         rm $backup_running
     fi
 
-    if [[ $_error -gt 0 ]] ; then
+    if [[ $_error -eq 4 ]] ; then
+        gr.msg "dryrun, no changes made"
+        return 4
+    elif [[ $_error -gt 0 ]] ; then
         gr.msg "$from_location error: $backup_method $_error" \
         -c red -k $GRBL_BACKUP_INDICATOR_KEY
         echo "last_backup_error=120" >>$backup_stat_file
