@@ -1,5 +1,5 @@
 #!/bin/bash
-# automatically generated tester for grbl corsair.sh Mon 03 Mar 2025 03:25:10 AM EET
+# automatically generated tester for grbl corsair.sh Mon 03 Mar 2025 01:44:35 PM EET
 
 # sourcing and test variable space
 source $GRBL_BIN/common.sh
@@ -60,27 +60,42 @@ runf () {
 
     returnValue=$?
 
+    [[ -f /tmp/$USER/ask.comment ]] && rm /tmp/$USER/ask.comment
     if [[ $manualMsg ]]; then
         if gr.ask "${manualMsg[@]}"; then
             reurnValue=0
         else
-            returnValue=255
+            local comment=$(cat /tmp/$USER/ask.comment)
+            if [[ $comment ]]; then
+                returnValue=254
+            else
+                returnValue=255
+            fi
         fi
     fi
 
     gr.msg -n -h "Result of test $testNr: "
     if [[ $returnValue -eq $passCond ]]; then
         gr.msg -c pass "PASSED"
-        results[$testNr]="p:$returnValue:'($passCond) clean result'"
+        results[$testNr]="p:$returnValue:clean result"
+
     elif [[ $returnValue -gt 1 ]] && [[ $returnValue -lt 9 ]]; then
         gr.msg -e1 "WARNING"
-        results[$testNr]="w:$returnValue:'warning'"
-    elif [[ $returnValue -eq 127 ]] && [[ $returnValue -lt 255 ]]; then
+        results[$testNr]="w:$returnValue:warning"
+
+    elif [[ $returnValue -eq 127 ]]; then
         gr.msg -e2 "NO RESULT"
-        results[$testNr]="e:$returnValue:'non existing, can be test case issue'"
-    elif [[ $returnValue -gt 99 ]] && [[ $returnValue -lt 255 ]]; then
+        results[$testNr]="e:$returnValue:non existing, can be test case issue"
+
+    elif [[ $returnValue -eq 254 ]]; then
+        gr.msg -n -c fail "FAILED"
+        gr.msg -e1 " with comment"
+        results[$testNr]="c:$returnValue:$comment"
+
+    elif [[ $returnValue -gt 99 ]] && [[ $returnValue -lt 256 ]]; then
         gr.msg -c fail "FAILED"
-        results[$testNr]="f:$returnValue:'non zero result'"
+        results[$testNr]="f:$returnValue:non zero result"
+
     else
         gr.msg -e1 "NO RESULT"
         results[$testNr]="e:$returnValue:error in test case"
@@ -129,26 +144,33 @@ print_results () {
         case $(cut -d ':' -f 1 <<<${results[$i]}) in
             p)
                 gr.msg -w 10 -n -c pass "PASSED "
-                gr.msg -w 6 -n -c gray "($(cut -d ':' -f 2 <<<${results[$i]})) "
+                gr.msg -w 4 -n -c gray "$(cut -d ':' -f 2 <<<${results[$i]}) "
                 gr.msg -w 60 -c dark_grey "$(cut -d ':' -f 3 <<<${results[$i]}) "
                 let passes++
                 ;;
             f)
                 gr.msg -w 10 -n -c fail "FAILED "
-                gr.msg -w 6 -n -c grey "($(cut -d ':' -f 2 <<<${results[$i]})) "
+                gr.msg -w 4 -n -c grey "$(cut -d ':' -f 2 <<<${results[$i]}) "
                 gr.msg -w 60 -c dark_grey "$(cut -d ':' -f 3 <<<${results[$i]}) "
                 let fails++
                 ;;
             w)
                 gr.msg -w 10 -n -e1 "PASSED "
-                gr.msg -w 6 -n -c grey "($(cut -d ':' -f 2 <<<${results[$i]})) "
+                gr.msg -w 4 -n -c grey "$(cut -d ':' -f 2 <<<${results[$i]}) "
                 gr.msg -w 60 -c dark_grey "$(cut -d ':' -f 3 <<<${results[$i]}) "
                 let warnings++
                 let passes++
                 ;;
+            c)
+                gr.msg -w 10 -n -c fail "FAILED "
+                gr.msg -w 4 -n -c grey "$(cut -d ':' -f 2 <<<${results[$i]}) "
+                gr.msg -w 60 -e1 "$(cut -d ':' -f 3 <<<${results[$i]}) "
+                let warnings++
+                let failes++
+                ;;
             e|*)
                 gr.msg -w 10 -n -e2 "NO RESULT "
-                gr.msg -w 6 -n -c grey "($(cut -d ':' -f 2 <<<${results[$i]})) "
+                gr.msg -w 4 -n -c grey "$(cut -d ':' -f 2 <<<${results[$i]}) "
                 gr.msg -w 60 -c dark_grey "$(cut -d ':' -f 3 <<<${results[$i]}) "
                 let errors++
                 ;;
@@ -249,44 +271,45 @@ corsair.test() {
 			echo ; corsair.test_key-id || _err=("${_err[@]}" "109") 
 			echo ; corsair.test_enabled || _err=("${_err[@]}" "110") 
 			echo ; corsair.test_check || _err=("${_err[@]}" "111") 
-			echo ; corsair.test_init || _err=("${_err[@]}" "112") 
-			echo ; corsair.test_set || _err=("${_err[@]}" "113") 
-			echo ; corsair.test_reset || _err=("${_err[@]}" "114") 
-			echo ; corsair.test_clear || _err=("${_err[@]}" "115") 
-			echo ; corsair.test_end || _err=("${_err[@]}" "116") 
-			echo ; corsair.test_check_pipe || _err=("${_err[@]}" "117") 
-			echo ; corsair.test_indicate || _err=("${_err[@]}" "118") 
-			echo ; corsair.test_blink_set || _err=("${_err[@]}" "119") 
-			echo ; corsair.test_blink_stop || _err=("${_err[@]}" "120") 
-			echo ; corsair.test_blink_kill || _err=("${_err[@]}" "121") 
-			echo ; corsair.test_type_end || _err=("${_err[@]}" "122") 
-			echo ; corsair.test_type || _err=("${_err[@]}" "123") 
-			echo ; corsair.test_systemd_status || _err=("${_err[@]}" "124") 
-			echo ; corsair.test_systemd_fix || _err=("${_err[@]}" "125") 
-			echo ; corsair.test_systemd_start || _err=("${_err[@]}" "126") 
-			echo ; corsair.test_systemd_stop || _err=("${_err[@]}" "127") 
-			echo ; corsair.test_systemd_restart || _err=("${_err[@]}" "128") 
-			echo ; corsair.test_systemd_restart_daemon || _err=("${_err[@]}" "129") 
-			echo ; corsair.test_systemd_start_daemon || _err=("${_err[@]}" "130") 
-			echo ; corsair.test_systemd_stop_daemon || _err=("${_err[@]}" "131") 
-			echo ; corsair.test_systemd_restart_app || _err=("${_err[@]}" "132") 
-			echo ; corsair.test_systemd_start_app || _err=("${_err[@]}" "133") 
-			echo ; corsair.test_systemd_stop_app || _err=("${_err[@]}" "134") 
-			echo ; corsair.test_systemd_make_daemon_service || _err=("${_err[@]}" "135") 
-			echo ; corsair.test_systemd_make_app_service || _err=("${_err[@]}" "136") 
-			echo ; corsair.test_systemd_setup || _err=("${_err[@]}" "137") 
-			echo ; corsair.test_systemd_disable || _err=("${_err[@]}" "138") 
-			echo ; corsair.test_suspend_recovery || _err=("${_err[@]}" "139") 
-			echo ; corsair.test_clone || _err=("${_err[@]}" "140") 
-			echo ; corsair.test_patch || _err=("${_err[@]}" "141") 
-			echo ; corsair.test_compile || _err=("${_err[@]}" "142") 
-			echo ; corsair.test_requirements || _err=("${_err[@]}" "143") 
-			echo ; corsair.test_poll || _err=("${_err[@]}" "144") 
-			echo ; corsair.test_status || _err=("${_err[@]}" "145") 
-			echo ; corsair.test_install || _err=("${_err[@]}" "146") 
-			echo ; corsair.test_remove || _err=("${_err[@]}" "147") 
-			echo ; corsair.test_rc || _err=("${_err[@]}" "148") 
-			echo ; corsair.test_make_rc || _err=("${_err[@]}" "149") 
+			echo ; corsair.test_pipe || _err=("${_err[@]}" "112") 
+			echo ; corsair.test_init || _err=("${_err[@]}" "113") 
+			echo ; corsair.test_set || _err=("${_err[@]}" "114") 
+			echo ; corsair.test_reset || _err=("${_err[@]}" "115") 
+			echo ; corsair.test_clear || _err=("${_err[@]}" "116") 
+			echo ; corsair.test_end || _err=("${_err[@]}" "117") 
+			echo ; corsair.test_check_pipe || _err=("${_err[@]}" "118") 
+			echo ; corsair.test_indicate || _err=("${_err[@]}" "119") 
+			echo ; corsair.test_blink_set || _err=("${_err[@]}" "120") 
+			echo ; corsair.test_blink_stop || _err=("${_err[@]}" "121") 
+			echo ; corsair.test_blink_kill || _err=("${_err[@]}" "122") 
+			echo ; corsair.test_type_end || _err=("${_err[@]}" "123") 
+			echo ; corsair.test_type || _err=("${_err[@]}" "124") 
+			echo ; corsair.test_systemd_status || _err=("${_err[@]}" "125") 
+			echo ; corsair.test_systemd_fix || _err=("${_err[@]}" "126") 
+			echo ; corsair.test_systemd_start || _err=("${_err[@]}" "127") 
+			echo ; corsair.test_systemd_stop || _err=("${_err[@]}" "128") 
+			echo ; corsair.test_systemd_restart || _err=("${_err[@]}" "129") 
+			echo ; corsair.test_systemd_restart_daemon || _err=("${_err[@]}" "130") 
+			echo ; corsair.test_systemd_start_daemon || _err=("${_err[@]}" "131") 
+			echo ; corsair.test_systemd_stop_daemon || _err=("${_err[@]}" "132") 
+			echo ; corsair.test_systemd_restart_app || _err=("${_err[@]}" "133") 
+			echo ; corsair.test_systemd_start_app || _err=("${_err[@]}" "134") 
+			echo ; corsair.test_systemd_stop_app || _err=("${_err[@]}" "135") 
+			echo ; corsair.test_systemd_make_daemon_service || _err=("${_err[@]}" "136") 
+			echo ; corsair.test_systemd_make_app_service || _err=("${_err[@]}" "137") 
+			echo ; corsair.test_systemd_setup || _err=("${_err[@]}" "138") 
+			echo ; corsair.test_systemd_disable || _err=("${_err[@]}" "139") 
+			echo ; corsair.test_suspend_recovery || _err=("${_err[@]}" "140") 
+			echo ; corsair.test_clone || _err=("${_err[@]}" "141") 
+			echo ; corsair.test_patch || _err=("${_err[@]}" "142") 
+			echo ; corsair.test_compile || _err=("${_err[@]}" "143") 
+			echo ; corsair.test_requirements || _err=("${_err[@]}" "144") 
+			echo ; corsair.test_poll || _err=("${_err[@]}" "145") 
+			echo ; corsair.test_status || _err=("${_err[@]}" "146") 
+			echo ; corsair.test_install || _err=("${_err[@]}" "147") 
+			echo ; corsair.test_remove || _err=("${_err[@]}" "148") 
+			echo ; corsair.test_rc || _err=("${_err[@]}" "149") 
+			echo ; corsair.test_make_rc || _err=("${_err[@]}" "150") 
             ;;
         # no case and close function
         *) gr.msg "test case  not written"
@@ -521,6 +544,27 @@ corsair.test_check () {
         return 0
     else
         gr.msg -v0 -c red corsair.check failed
+        return 
+    fi
+}
+
+corsair.test_pipe () {
+# function to test corsair module function corsair.pipe
+
+    local _error=0
+    gr.msg -v0 -c white testing corsair.pipe
+
+    ## TODO: add pre-conditions here
+
+    corsair.pipe ; _error=$?
+
+    ## TODO: add analysis here and manipulate 
+
+    if  ((_error<1)) ; then
+        gr.msg -v0 -c green corsair.pipe passed
+        return 0
+    else
+        gr.msg -v0 -c red corsair.pipe failed
         return 
     fi
 }
