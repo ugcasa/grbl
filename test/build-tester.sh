@@ -98,11 +98,17 @@ runf () {
 
     returnValue=\$?
 
+    [[ -f /tmp/\$USER/ask.comment ]] && rm /tmp/\$USER/ask.comment
     if [[ \$manualMsg ]]; then
         if gr.ask "\${manualMsg[@]}"; then
             reurnValue=0
         else
-            returnValue=255
+            local comment=\$(cat /tmp/\$USER/ask.comment)
+            if [[ \$comment ]]; then
+                returnValue=254
+            else
+                returnValue=255
+            fi
         fi
     fi
 
@@ -110,15 +116,24 @@ runf () {
     if [[ \$returnValue -eq \$passCond ]]; then
         gr.msg -c pass "PASSED"
         results[\$testNr]="p:\$returnValue:clean result"
+
     elif [[ \$returnValue -gt 1 ]] && [[ \$returnValue -lt 9 ]]; then
         gr.msg -e1 "WARNING"
         results[\$testNr]="w:\$returnValue:warning"
-    elif [[ \$returnValue -eq 127 ]] && [[ \$returnValue -lt 255 ]]; then
+
+    elif [[ \$returnValue -eq 127 ]]; then
         gr.msg -e2 "NO RESULT"
         results[\$testNr]="e:\$returnValue:non existing, can be test case issue"
-    elif [[ \$returnValue -gt 99 ]] && [[ \$returnValue -lt 255 ]]; then
+
+    elif [[ \$returnValue -eq 254 ]]; then
+        gr.msg -n -c fail "FAILED"
+        gr.msg -e1 " with comment"
+        results[\$testNr]="c:\$returnValue:\$comment"
+
+    elif [[ \$returnValue -gt 99 ]] && [[ \$returnValue -lt 256 ]]; then
         gr.msg -c fail "FAILED"
         results[\$testNr]="f:\$returnValue:non zero result"
+
     else
         gr.msg -e1 "NO RESULT"
         results[\$testNr]="e:\$returnValue:error in test case"
@@ -183,6 +198,13 @@ print_results () {
                 gr.msg -w 60 -c dark_grey "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
                 let warnings++
                 let passes++
+                ;;
+            c)
+                gr.msg -w 10 -n -c fail "FAILED "
+                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
+                gr.msg -w 60 -e1 "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                let warnings++
+                let failes++
                 ;;
             e|*)
                 gr.msg -w 10 -n -e2 "NO RESULT "
