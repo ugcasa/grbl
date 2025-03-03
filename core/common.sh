@@ -400,9 +400,11 @@ gr.ask () {
     local _read_it=
     local _message=
     local _box=
+    local _comment=
+    local _comment_box=
 
     # parse arguments
-    TEMP=`getopt --long -o "sht:d:" "$@"`
+    TEMP=`getopt --long -o "csht:d:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
@@ -420,6 +422,10 @@ gr.ask () {
                 _timeout=$2
                 _options="-t $_timeout"
                 shift 2
+                ;;
+            -c) # ask comment
+                _comment=true
+                shift
                 ;;
             -d)
                 _def_answer=$2
@@ -453,9 +459,13 @@ gr.ask () {
     fi
 
     # format [Y/n]: box
+    if [[ $_comment ]]; then
+        _comment_box='/c'
+    fi
+
     case $_def_answer in
-        y) _box="[${_def_answer^^}/${_ano_answer,,}]: " ;;
-        n) _box="[${_ano_answer,,}/${_def_answer^^}]: " ;;
+        y) _box="[${_def_answer^^}/${_ano_answer,,}$_comment_box]: " ;;
+        n) _box="[${_ano_answer,,}/${_def_answer^^}$_comment_box]: " ;;
     esac
 
     # speak
@@ -481,13 +491,19 @@ gr.ask () {
         echo
     fi
 
+    if [[ $_comment ]] || [[ $_answer == c ]]; then
+        read -p "comment: " _comment_ans
+        gr.msg -v3 -c white "$_comment_ans"
+        echo $_comment_ans >/tmp/$USER/ask.comment
+    fi
+
     # fulfill default answer
     _answer="${_answer:-$_def_answer}"
 
     # stop blinking the keys
     if [[ $GRBL_CORSAIR_ENABLED ]] ; then
-        corsair.blink_stop y
-        corsair.blink_stop n
+        corsair.blink_stop y >/dev/null 2>/dev/null
+        corsair.blink_stop n >/dev/null 2>/dev/null
     fi
 
     # return for callers if statement
