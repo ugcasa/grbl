@@ -1,7 +1,7 @@
 #!/bin/bash
 # make test
 # TODO omg how old ways to do shit, review pls.
-
+source $GRBL_RC
 source $GRBL_BIN/common.sh
 
 [[ "$1" ]] && module=$1 || read -p "module name to create test for (no file ending): " module
@@ -148,11 +148,18 @@ runc () {
 
     done
 
+    print_results
+}
+
+print_results () {
+
     local warnings=0
     local passes=0
     local fails=0
     local errors=0
+
     # echo "\${#results[@]}:\${results[@]}"
+
     gr.msg -N -h "Results \$(date -d today +\${GRBL_FORMAT_DATE}_\${GRBL_FORMAT_TIME})"
     for (( i = 1; i < \${#results[@]}; i++ )); do
 
@@ -188,6 +195,7 @@ runc () {
 
     done
     gr.msg -h "Summary: \$passes passed, \$fails fails, \$warnings warnings and \$errors with no result"
+
 }
 
 case_parcer () {
@@ -300,6 +308,7 @@ cat >>$tester_file_name <<EOL
             return 1
     esac
 }
+
 EOL
 
 # test function processor

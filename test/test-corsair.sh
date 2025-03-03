@@ -1,5 +1,5 @@
 #!/bin/bash
-# automatically generated tester for grbl corsair.sh Sun 02 Mar 2025 08:56:34 PM EET
+# automatically generated tester for grbl corsair.sh Mon 03 Mar 2025 01:54:51 AM EET
 
 # sourcing and test variable space
 source $GRBL_BIN/common.sh
@@ -110,11 +110,18 @@ runc () {
 
     done
 
+    print_results
+}
+
+print_results () {
+
     local warnings=0
     local passes=0
     local fails=0
     local errors=0
+
     # echo "${#results[@]}:${results[@]}"
+
     gr.msg -N -h "Results $(date -d today +${GRBL_FORMAT_DATE}_${GRBL_FORMAT_TIME})"
     for (( i = 1; i < ${#results[@]}; i++ )); do
 
@@ -150,6 +157,7 @@ runc () {
 
     done
     gr.msg -h "Summary: $passes passed, $fails fails, $warnings warnings and $errors with no result"
+
 }
 
 case_parcer () {
@@ -267,41 +275,41 @@ corsair.test() {
 			echo ; corsair.test_blink_set || _err=("${_err[@]}" "119") 
 			echo ; corsair.test_blink_stop || _err=("${_err[@]}" "120") 
 			echo ; corsair.test_blink_kill || _err=("${_err[@]}" "121") 
-			echo ; corsair.test_blink_test || _err=("${_err[@]}" "122") 
-			echo ; corsair.test_type_end || _err=("${_err[@]}" "123") 
-			echo ; corsair.test_type || _err=("${_err[@]}" "124") 
-			echo ; corsair.test_systemd_status || _err=("${_err[@]}" "125") 
-			echo ; corsair.test_systemd_fix || _err=("${_err[@]}" "126") 
-			echo ; corsair.test_systemd_start || _err=("${_err[@]}" "127") 
-			echo ; corsair.test_systemd_stop || _err=("${_err[@]}" "128") 
-			echo ; corsair.test_systemd_restart || _err=("${_err[@]}" "129") 
-			echo ; corsair.test_systemd_restart_daemon || _err=("${_err[@]}" "130") 
-			echo ; corsair.test_systemd_start_daemon || _err=("${_err[@]}" "131") 
-			echo ; corsair.test_systemd_stop_daemon || _err=("${_err[@]}" "132") 
-			echo ; corsair.test_systemd_restart_app || _err=("${_err[@]}" "133") 
-			echo ; corsair.test_systemd_start_app || _err=("${_err[@]}" "134") 
-			echo ; corsair.test_systemd_stop_app || _err=("${_err[@]}" "135") 
-			echo ; corsair.test_systemd_make_daemon_service || _err=("${_err[@]}" "136") 
-			echo ; corsair.test_systemd_make_app_service || _err=("${_err[@]}" "137") 
-			echo ; corsair.test_systemd_setup || _err=("${_err[@]}" "138") 
-			echo ; corsair.test_systemd_disable || _err=("${_err[@]}" "139") 
-			echo ; corsair.test_suspend_recovery || _err=("${_err[@]}" "140") 
-			echo ; corsair.test_clone || _err=("${_err[@]}" "141") 
-			echo ; corsair.test_patch || _err=("${_err[@]}" "142") 
-			echo ; corsair.test_compile || _err=("${_err[@]}" "143") 
-			echo ; corsair.test_requirements || _err=("${_err[@]}" "144") 
-			echo ; corsair.test_poll || _err=("${_err[@]}" "145") 
-			echo ; corsair.test_status || _err=("${_err[@]}" "146") 
-			echo ; corsair.test_install || _err=("${_err[@]}" "147") 
-			echo ; corsair.test_remove || _err=("${_err[@]}" "148") 
-			echo ; corsair.test_rc || _err=("${_err[@]}" "149") 
-			echo ; corsair.test_make_rc || _err=("${_err[@]}" "150") 
+			echo ; corsair.test_type_end || _err=("${_err[@]}" "122") 
+			echo ; corsair.test_type || _err=("${_err[@]}" "123") 
+			echo ; corsair.test_systemd_status || _err=("${_err[@]}" "124") 
+			echo ; corsair.test_systemd_fix || _err=("${_err[@]}" "125") 
+			echo ; corsair.test_systemd_start || _err=("${_err[@]}" "126") 
+			echo ; corsair.test_systemd_stop || _err=("${_err[@]}" "127") 
+			echo ; corsair.test_systemd_restart || _err=("${_err[@]}" "128") 
+			echo ; corsair.test_systemd_restart_daemon || _err=("${_err[@]}" "129") 
+			echo ; corsair.test_systemd_start_daemon || _err=("${_err[@]}" "130") 
+			echo ; corsair.test_systemd_stop_daemon || _err=("${_err[@]}" "131") 
+			echo ; corsair.test_systemd_restart_app || _err=("${_err[@]}" "132") 
+			echo ; corsair.test_systemd_start_app || _err=("${_err[@]}" "133") 
+			echo ; corsair.test_systemd_stop_app || _err=("${_err[@]}" "134") 
+			echo ; corsair.test_systemd_make_daemon_service || _err=("${_err[@]}" "135") 
+			echo ; corsair.test_systemd_make_app_service || _err=("${_err[@]}" "136") 
+			echo ; corsair.test_systemd_setup || _err=("${_err[@]}" "137") 
+			echo ; corsair.test_systemd_disable || _err=("${_err[@]}" "138") 
+			echo ; corsair.test_suspend_recovery || _err=("${_err[@]}" "139") 
+			echo ; corsair.test_clone || _err=("${_err[@]}" "140") 
+			echo ; corsair.test_patch || _err=("${_err[@]}" "141") 
+			echo ; corsair.test_compile || _err=("${_err[@]}" "142") 
+			echo ; corsair.test_requirements || _err=("${_err[@]}" "143") 
+			echo ; corsair.test_poll || _err=("${_err[@]}" "144") 
+			echo ; corsair.test_status || _err=("${_err[@]}" "145") 
+			echo ; corsair.test_install || _err=("${_err[@]}" "146") 
+			echo ; corsair.test_remove || _err=("${_err[@]}" "147") 
+			echo ; corsair.test_rc || _err=("${_err[@]}" "148") 
+			echo ; corsair.test_make_rc || _err=("${_err[@]}" "149") 
             ;;
         # no case and close function
         *) gr.msg "test case  not written"
             return 1
     esac
 }
+
 corsair.test_help-profile () {
 # function to test corsair module function corsair.help-profile
 
@@ -739,27 +747,6 @@ corsair.test_blink_kill () {
         return 0
     else
         gr.msg -v0 -c red corsair.blink_kill failed
-        return 
-    fi
-}
-
-corsair.test_blink_test () {
-# function to test corsair module function corsair.blink_test
-
-    local _error=0
-    gr.msg -v0 -c white testing corsair.blink_test
-
-    ## TODO: add pre-conditions here
-
-    corsair.blink_test ; _error=$?
-
-    ## TODO: add analysis here and manipulate 
-
-    if  ((_error<1)) ; then
-        gr.msg -v0 -c green corsair.blink_test passed
-        return 0
-    else
-        gr.msg -v0 -c red corsair.blink_test failed
         return 
     fi
 }
