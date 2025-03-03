@@ -4,6 +4,8 @@
 # launching is based on grbl daemon.sh poll request, not on crond mainly to avoid permission issues and shit.
 # can be run individually but needs specific set of environment variables (~/.grblrc).
 # more of bash shit github.com/ugcasa/grbl
+__backup_color="light_blue"
+__backup=$(readlink --canonicalize --no-newline $BASH_SOURCE) # debug
 
 declare -g backup_data_folder="$GRBL_SYSTEM_MOUNT/backup"
 declare -g backup_rc="/tmp/$USER/grbl_backup.rc"
@@ -15,7 +17,7 @@ declare -g backup_running="/tmp/$USER/backup.running"
 ! [[ -d $backup_data_folder ]] && [[ -f $GRBL_SYSTEM_MOUNT/.online ]] && mkdir -p $backup_data_folder
 
 backup.help () {
-    # general help
+# general help
 
     gr.msg -v1 -c white "grbl backup help "
     gr.msg -v2
@@ -23,13 +25,16 @@ backup.help () {
     gr.msg -v1 "        $GRBL_CALL backup status|ls|restore|poll|install|remove  "
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
-    gr.msg -v1 " <empty>                  make daily backup now "
+    gr.msg -v1 "                          make daily backup now "
     gr.msg -v1 " <schelude>               backup events in shedule list right away "
-    gr.msg -v2 "     at <YYMMDD> <H:M>    make backup at date and time    "
+    gr.msg -v2 "    at <YYMMDD> <H:M>     make backup at date and time    "
     gr.msg -v1 " <event>                  backup given event right away "
-    gr.msg -v2 "     at <YYMMDD> [<H:M>]  make backup at date and time  hours and minutes optinal  "
+    gr.msg -v2 "    at <YYMMDD> [<H:M>]   make backup at date and time  hours and minutes optinal  "
+    gr.msg -v1 " check                    check varies status information"
+    gr.msg -v1 "    status mount          check what mountponts are backuped "
+    gr.msg -v1 "    status cloud          check what cloud folders are backuped "
     gr.msg -v1 " ls                       list of backups "
-    gr.msg -v1 " status                   printout status string"
+    gr.msg -v1 " status                   printout module status "
     gr.msg -v2 " restore                  not clear hot to be done  "
     gr.msg -v2 " install                  install client requirements "
     gr.msg -v2 " remove                   remove installed requirements "
@@ -45,7 +50,8 @@ backup.help () {
 }
 
 backup.main () {
-    # command parser
+# command parser
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     local command=$1 ; shift
     local _error=0
@@ -92,75 +98,50 @@ backup.main () {
             gr.msg -e1 "unknown '$command'"
             backup.help
             return 1
-            # # command i
-
-            # # go trough given items
-            # local given_entrys=("$command" "$@")
-
-            # # go trough given entries..
-            # for given_entry in ${given_entrys[@]} ; do
-
-            #         # .. then trough active entry name list..
-            #         for enabled_entry in ${GRBL_BACKUP_ACTIVE[@]} ; do
-
-            #                 # ..and check that given item is the requested item
-            #                 if [[ $given_entry == $enabled_entry ]]; then
-            #                         gr.msg -n -c dark_golden_rod "backing up $given_entry.. "
-
-            #                         backup.now $given_entry \
-            #                             && gr.msg -v2 -c green "$given_entry backup done" \
-            #                             || gr.msg -e1 "$given_entry backup failed"
-            #                         break
-            #                     fi
-            #             done
-            #     done
             ;;
         esac
     return 0
 }
 
 backup.variables () {
+# backup variable printout
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-        gr.msg -N -v3 -c white "backup_name: '$backup_name'"
-
-        gr.msg -v3 -c light_blue "from_config: '${from_config[@]}'"
-        gr.msg -v3 -c light_green "store_device: '$store_device'"
-        gr.msg -v3 -c light_pink "from_location: '$from_location'"
-        gr.msg -v3 -c light_pink "from_user (o): '$from_user'"
-        gr.msg -v3 -c light_pink "from_domain (o): '$from_domain'"
-        gr.msg -v3 -c light_pink "from_port (o): '$from_port'"
-        gr.msg -v3 -c light_pink "from_size: '$from_size' ($(numfmt $from_size --to=iec))"
-
-        gr.msg -v3 -c light_blue "store_config: '${store_config[@]}'"
-        gr.msg -v3 -c light_green "store_device_file: '$store_device_file'"
-        gr.msg -v3 -c light_green "store_mount_point: '$store_mount_point'"
-        gr.msg -v3 -c light_green "store_file_system: '$store_file_system'"
-        gr.msg -v3 -c light_green "store_folder: '$store_folder'"
-        gr.msg -v3 -c light_green "store_location (o): '$store_location'"
-        gr.msg -v3 -c light_green "store_user (o): '$store_user'"
-        gr.msg -v3 -c light_green "store_domain (o): '$store_domain'"
-        gr.msg -v3 -c light_green "store_port (o): '$store_port'"
-        gr.msg -v3 -c light_green "store_size: '$store_size' ($(numfmt $store_size --to=iec))"
-
-
-        gr.msg -v3 -c grey "backup_ignore: '$backup_ignore'"
-        gr.msg -v3 -c grey "backup_method: '$backup_method'"
-        gr.msg -v3 -c grey "honeypot_file: '$honeypot_file'"
-        gr.msg -v3 -c grey "GRBL_BACKUP_INDICATOR_KEY: '$GRBL_BACKUP_INDICATOR_KEY'"
-
-        gr.msg -v3 -c grey "backup_stat_file: '$backup_stat_file'"
-        [[ -f $backup_stat_file ]] && source $backup_stat_file
-        gr.msg -v3 -c grey "last_backup_name: '$last_backup_type'"
-        gr.msg -v3 -c grey "last_backup_time: '$last_backup_time'"
-        gr.msg -v3 -c grey "last_backup_version: '$last_backup_version'"
-        gr.msg -v3 -c grey "last_backup_error: '$last_backup_error'"
-
-        gr.msg -v3 -c light_blue "active_list: '${active_list[@]}'"
+    gr.msg -N -v3 -c white "backup_name: '$backup_name'"
+    gr.msg -v3 -c light_blue "from_config: '${from_config[@]}'"
+    gr.msg -v3 -c light_green "store_device: '$store_device'"
+    gr.msg -v3 -c light_pink "from_location: '$from_location'"
+    gr.msg -v3 -c light_pink "from_user (o): '$from_user'"
+    gr.msg -v3 -c light_pink "from_domain (o): '$from_domain'"
+    gr.msg -v3 -c light_pink "from_port (o): '$from_port'"
+    gr.msg -v3 -c light_pink "from_size: '$from_size' ($(numfmt $from_size --to=iec))"
+    gr.msg -v3 -c light_blue "store_config: '${store_config[@]}'"
+    gr.msg -v3 -c light_green "store_device_file: '$store_device_file'"
+    gr.msg -v3 -c light_green "store_mount_point: '$store_mount_point'"
+    gr.msg -v3 -c light_green "store_file_system: '$store_file_system'"
+    gr.msg -v3 -c light_green "store_folder: '$store_folder'"
+    gr.msg -v3 -c light_green "store_location (o): '$store_location'"
+    gr.msg -v3 -c light_green "store_user (o): '$store_user'"
+    gr.msg -v3 -c light_green "store_domain (o): '$store_domain'"
+    gr.msg -v3 -c light_green "store_port (o): '$store_port'"
+    gr.msg -v3 -c light_green "store_size: '$store_size' ($(numfmt $store_size --to=iec))"
+    gr.msg -v3 -c grey "backup_ignore: '$backup_ignore'"
+    gr.msg -v3 -c grey "backup_method: '$backup_method'"
+    gr.msg -v3 -c grey "honeypot_file: '$honeypot_file'"
+    gr.msg -v3 -c grey "GRBL_BACKUP_INDICATOR_KEY: '$GRBL_BACKUP_INDICATOR_KEY'"
+    gr.msg -v3 -c grey "backup_stat_file: '$backup_stat_file'"
+    [[ -f $backup_stat_file ]] && source $backup_stat_file
+    gr.msg -v3 -c grey "last_backup_name: '$last_backup_type'"
+    gr.msg -v3 -c grey "last_backup_time: '$last_backup_time'"
+    gr.msg -v3 -c grey "last_backup_version: '$last_backup_version'"
+    gr.msg -v3 -c grey "last_backup_error: '$last_backup_error'"
+    gr.msg -v3 -c light_blue "active_list: '${active_list[@]}'"
 }
-
 
 backup.log_write () {
 # write log to file (multi exit cituation) bypass return value
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
     if [[ $backup_log ]]; then
         echo $backup_log >> $backup_log_file
         backup_log=
@@ -169,6 +150,8 @@ backup.log_write () {
 }
 
 backup.log_get_event () {
+# log what?
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     if ! [[ -f $backup_log_file ]]; then
         return 1
@@ -196,6 +179,7 @@ backup.log_get_event () {
 
 backup.log_read () {
 # list log events
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     if ! [[ -f $backup_log_file ]]; then
         gr.msg "no log events"
@@ -205,8 +189,6 @@ backup.log_read () {
     ifs=$IFS
 
     while read -r line; do
-        #echo ":$line"
-
         # cut to parts
         IFS=';'
         read -r -a list <<< "$line"
@@ -243,10 +225,11 @@ backup.log_read () {
     done < $backup_log_file
 }
 
-backup.cloud_consistensy () {
+backup.cloud_status () {
 # check what cloud folders are in backup program
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    gr.msg -h "checking consistency of backup entries and cloud folders"
+    gr.msg -h "checking status of backup entries and cloud folders"
 
     local _server="$GRBL_CLOUD_USERNAME@$GRBL_CLOUD_DOMAIN -p $GRBL_CLOUD_PORT"
     local _folder_list=($(ssh $_server -- "ls $GRBL_CLOUD_FILE_BASE"))
@@ -344,17 +327,11 @@ backup.cloud_consistensy () {
     done
 }
 
-
-
-
-
-
-
-
-backup.mount_consistensy () {
+backup.mount_status () {
 # check what mount points are in backup program
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    gr.msg -h "checking consistency of backup entries and mount points"
+    gr.msg -h "checking status of backup entries and mount points"
 
     local _folder_list=($(\
         grep "export GRBL_MOUNT_" $mount_rc | \
@@ -463,8 +440,10 @@ backup.mount_consistensy () {
 
 }
 
-backup.check_consistency () {
+backup.check_status () {
 # check are all mountable
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
     local _entity="mount"
 
     if [[ $1 ]] ; then
@@ -477,22 +456,22 @@ backup.check_consistency () {
 
     case $_entity in
         cloud|mount)
-            backup.${_entity}_consistensy
+            backup.${_entity}_status
             return $?
             ;;
         "")
-            backup.cloud_consistensy
-            backup.mount_consistensy
+            backup.cloud_status
+            backup.mount_status
             return $?
             ;;
     esac
 }
 
-
 backup.check () {
 # check things
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    local _what="consistency"
+    local _what="status"
 
     if [[ $1 ]]; then
         _what=$1
@@ -500,16 +479,16 @@ backup.check () {
     fi
 
     case $_what in
-        consistency)
+        status)
             backup.check_${_what} $@
             return $?
         ;;
     esac
 }
 
-
 backup.entry_exist() {
-    # Input entry name, return true if it exist in configuration.
+# Input entry name, return true if it exist in configuration.
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     local entry=$1
     shift
@@ -525,19 +504,19 @@ backup.entry_exist() {
     return 0
 }
 
-
 backup.debug () {
+# debug entrypoint
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     export GRBL_VERBOSE=3
     local name=${GRBL_BACKUP_ACTIVE[0]}
     [[ $1 ]] && name=$1
     backup.config $name
-
 }
 
-
 backup.config () {
-    # get tunnel configuration an populate common variables
+# get tunnel configuration an populate common variables
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     # start to collect log for possible early exits
     local _epicdate=$(date +%s)
@@ -545,10 +524,10 @@ backup.config () {
 
     # check is enabled
     if ! [[ $GRBL_BACKUP_ENABLED ]] ; then
-            gr.msg -c black "backup module disabled"
-            backup_log="$backup_log;;;;;;;exited before execution;1:module disabled"
-            return 1
-        fi
+        gr.msg -c black "backup module disabled"
+        backup_log="$backup_log;;;;;;;exited before execution;1:module disabled"
+        return 1
+    fi
 
     # declare of global variables
     local store_is_local=
@@ -559,70 +538,69 @@ backup.config () {
 
     # exit if not in active list
     if ! echo "${active_list[@]}" | grep -q $backup_name ; then
-            gr.msg -e0 "no '$backup_name' in active backup list"
-            backup_log="$backup_log;;;;;;exited before execution;2:not in active list"
-            return 2
-        fi
+        gr.msg -e0 "no '$backup_name' in active backup list"
+        backup_log="$backup_log;;;;;;exited before execution;2:not in active list"
+        return 2
+    fi
 
     # go trough active backups and find match
     for bu_name in ${active_list[@]} ; do
-            if [[ "$bu_name" == "$backup_name" ]] ; then
-                    local from_config="GRBL_BACKUP_${bu_name^^}[@]"
+        if [[ "$bu_name" == "$backup_name" ]] ; then
+                local from_config="GRBL_BACKUP_${bu_name^^}[@]"
 
-                    from_config=(${!from_config})
-                    declare -g store_device=${from_config[0]}
-                    local method=${from_config[1]}
-                    local from_string=${from_config[2]}
-                    local ignore="${from_config[3]//:/' '}"
+                from_config=(${!from_config})
+                declare -g store_device=${from_config[0]}
+                local method=${from_config[1]}
+                local from_string=${from_config[2]}
+                local ignore="${from_config[3]//:/' '}"
 
-                    declare -g store_config="GRBL_BACKUP_${store_device^^}[@]"
-                    store_config=(${!store_config})
-                    break
-                fi
-        done
+                declare -g store_config="GRBL_BACKUP_${store_device^^}[@]"
+                store_config=(${!store_config})
+                break
+            fi
+    done
 
     # fill source location variables
     if echo $from_string | grep -q ":" ; then
-            # source is remote location
-            declare -g from_user=$(echo $from_string | cut -d ":" -f1)
-            declare -g from_domain=$(echo $from_string | cut -d ":" -f2)
-            declare -g from_port=$(echo $from_string | cut -d ":" -f3)
-            declare -g from_location=$(echo $from_string | cut -d ":" -f4)
-            declare -g from_size=$(ssh ${from_user}@${from_domain} -p ${from_port} -- du -hsb $from_location 2>/dev/null)
-            from_size=$(cut -f1 <<<$from_size)
+        # source is remote location
+        declare -g from_user=$(echo $from_string | cut -d ":" -f1)
+        declare -g from_domain=$(echo $from_string | cut -d ":" -f2)
+        declare -g from_port=$(echo $from_string | cut -d ":" -f3)
+        declare -g from_location=$(echo $from_string | cut -d ":" -f4)
+        declare -g from_size=$(ssh ${from_user}@${from_domain} -p ${from_port} -- du -hsb $from_location 2>/dev/null)
+        from_size=$(cut -f1 <<<$from_size)
 
-        else
-            # source is local drive
-            declare -g from_location=$(echo $from_string | cut -d ":" -f3)
-            declare -g from_size=$(du -hsb $from_location)
-        fi
+    else
+        # source is local drive
+        declare -g from_location=$(echo $from_string | cut -d ":" -f3)
+        declare -g from_size=$(du -hsb $from_location)
+    fi
 
     # fill store location variables
     if echo ${store[@]} | grep -q ":" ; then
-            # store is remote drive
-            declare -g store_user=$(echo ${store_config[1]} | cut -d ":" -f1)
-            declare -g store_domain=$(echo ${store_config[1]} | cut -d ":" -f2)
-            declare -g store_port=$(echo ${store_config[1]} | cut -d ":" -f3)
-            declare -g store_location=$(echo ${store_config[1]} | cut -d ":" -f4)
-            #declare -g store_size=$(ssh ${store_user}@${store_domain} -p ${store_port} -- stat -f -c '%f' $store_location 2>/dev/null)
-            declare -g store_size=$(ssh ${store_user}@${store_domain} -p ${store_port} -- df --output=avail -B 1 $store_location | tail -n 1)
+        # store is remote drive
+        declare -g store_user=$(echo ${store_config[1]} | cut -d ":" -f1)
+        declare -g store_domain=$(echo ${store_config[1]} | cut -d ":" -f2)
+        declare -g store_port=$(echo ${store_config[1]} | cut -d ":" -f3)
+        declare -g store_location=$(echo ${store_config[1]} | cut -d ":" -f4)
+        #declare -g store_size=$(ssh ${store_user}@${store_domain} -p ${store_port} -- stat -f -c '%f' $store_location 2>/dev/null)
+        declare -g store_size=$(ssh ${store_user}@${store_domain} -p ${store_port} -- df --output=avail -B 1 $store_location | tail -n 1)
+    else
+        # store is local drive
+        store_is_local=true
+        declare -g store_device_file=${store_config[0]}
+        declare -g store_file_system=${store_config[1]}
+        declare -g store_mount_point=${store_config[2]}
+        declare -g store_folder=${store_config[3]}
+        # declare -g store_size=$(stat -f -c '%f' $store_mount_point) # gives wrong amount
+        declare -g store_size=$(df --output=avail -B 1 $store_mount_point | tail -n 1 )
+
+        if [[ ${store_mount_point: -1} == '/' ]]; then
+            declare -g store_location="$store_mount_point$store_folder"
         else
-            # store is local drive
-            store_is_local=true
-            declare -g store_device_file=${store_config[0]}
-            declare -g store_file_system=${store_config[1]}
-            declare -g store_mount_point=${store_config[2]}
-            declare -g store_folder=${store_config[3]}
-            # declare -g store_size=$(stat -f -c '%f' $store_mount_point) # gives wrong amount
-            declare -g store_size=$(df --output=avail -B 1 $store_mount_point | tail -n 1 )
-
-            if [[ ${store_mount_point: -1} == '/' ]]; then
-                declare -g store_location="$store_mount_point$store_folder"
-            else
-                declare -g store_location="$store_mount_point/$store_folder"
-            fi
+            declare -g store_location="$store_mount_point/$store_folder"
         fi
-
+    fi
         [[ $store_is_local ]] \
             && declare -g backup_stat_file="$store_mount_point/$store_folder/$backup_name/backup.stat" \
             || declare -g backup_stat_file="$GRBL_SYSTEM_MOUNT/backup/$backup_name.stat"
@@ -647,9 +625,9 @@ backup.config () {
     return 0
 }
 
-
 backup.status () {
-    # check latest backup is reachable and returnable.
+# check latest backup is reachable and returnable.
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     local backup_data_folder=$GRBL_SYSTEM_MOUNT/backup
 
@@ -688,9 +666,9 @@ backup.status () {
     fi
 }
 
-
 backup.ls () {
-    # list available backups and its status
+# list available backups and its status
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     gr.msg -v2 "last run time"
     gr.msg -v3 -c todo "TBD last time backed up per entry table"
@@ -708,9 +686,9 @@ backup.ls () {
     return 0
 }
 
-
 backup.at () {
 # set date and time for next backup
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     [[ $1 ]] && local backup_date=$1 || read -p "backup date (YYMMDD): " backup_date
     shift
@@ -739,9 +717,10 @@ backup.at () {
     return 0
 }
 
-
 backup.restore_wekan () {
-# TBD
+# docker restore instructions
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
     gr.msg -c light_blue "docker stop wekan"
     gr.msg -c light_blue "docker exec wekan-db rm -rf /data/dump"
     gr.msg -c light_blue "docker cp dump wekan-db:/data/"
@@ -750,9 +729,9 @@ backup.restore_wekan () {
     return 127
 }
 
-
 backup.restore () {
-    # TBD
+# restore entry point
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     backup_method=$1
 
@@ -769,12 +748,11 @@ backup.restore () {
         *)      gr.msg -e1 "unknown method '$backup_method'"
                 return 127
     esac
-
 }
 
-
 backup.wekan () {
-    # take a database dump and copy it to location set in user.cfg where normal process can copy it to local
+# take a database dump and copy it to location set in user.cfg where normal process can copy it to local
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     local _domain=$1
     local _port=$2
@@ -839,71 +817,70 @@ backup.wekan () {
     return 0
 }
 
-
 backup.now () {
 # check things and if pass then make backup
-# 1) get config for backup name
-# 2) check and place variables for rsynck
-# 3) check backup method get files out of service containers
-# 4) file checks to avoid broken/infected copy over good files
-# 5) perform copy
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
+    # 1) get config for backup name
+    # 2) check and place variables for rsynck
+    # 3) check backup method get files out of service containers
+    # 4) file checks to avoid broken/infected copy over good files
+    # 5) perform copy
 
     server_to_local () {
+    # build remote to local command variables
 
-            # start log
-            #backup_log="$_epicdate;$backup_name;$backup_schedule;"
+        command_param="-a -e 'ssh -p $from_port' --progress --update"
 
-            # build remote to local command variables
-            command_param="-a -e 'ssh -p $from_port' --progress --update"
+        # check is target location mounted and try to mount if not
+        if ! mount | grep $store_mount_point >/dev/null ; then
 
-            # check is target location mounted and try to mount if not
-            if ! mount | grep $store_mount_point >/dev/null ; then
-
-                if [[ $DISPLAY ]] && [[ $store_device_file ]] ; then
-                    gr.msg -v2 -n "mounting store media $store_device_file.. "
-                    gr.msg -v3 -N -c deep_pink "gio mount -d $store_device_file"
-                    gio mount -d $store_device_file \
-                        && gr.msg -v1 -c green "ok" \
-                        || gr.msg -v1 -e1 "error: $?" -k $GRBL_BACKUP_INDICATOR_KEY
-                else
-                    gr.msg -c white "to mount -t $store_file_system $store_device_file $store_mount_point sudo needed"
-                    [[ -d $store_mount_point ]] || sudo mkdir -p $store_mount_point
-                    gr.msg -v3 -N -c deep_pink "sudo mount -t $store_file_system $store_device_file $store_mount_point"
-
-                    if sudo mount -t $store_file_system $store_device_file $store_mount_point ; then
-                            gr.msg -v1 -c green "ok"
-                    else
-                        gr.msg -v1 -e1 "error: $?" -k $GRBL_BACKUP_INDICATOR_KEY
-                        backup_log="$backup_log;exited before execution;32:unable to mount store"
-                        # echo "last_backup_error=32" >>$backup_stat_file
-                        return 32
-                    fi
-                fi
-                    # no rush my friend
-                    sleep 3
-            fi
-
-            # if ignores set add arguments
-            if [[ $backup_ignore ]] ; then
-                for _ignore in  ${backup_ignore[@]} ; do
-                    command_param="$command_param --exclude '*$_ignore'"
-                done
-            fi
-
-            from_param="$from_user@$from_domain:$from_location"
-
-            # TBD remove these local variables and use global store_location. yes, messed me up again..
-            if [[ ${store_location: -1} == '/' ]] ; then
-                store_param="$store_location$backup_name"
+            if [[ $DISPLAY ]] && [[ $store_device_file ]] ; then
+                gr.msg -v2 -n "mounting store media $store_device_file.. "
+                gr.msg -v3 -N -c deep_pink "gio mount -d $store_device_file"
+                gio mount -d $store_device_file \
+                    && gr.msg -v1 -c green "ok" \
+                    || gr.msg -v1 -e1 "error: $?" -k $GRBL_BACKUP_INDICATOR_KEY
             else
-                store_param="$store_location/$backup_name"
-            fi
+                gr.msg -c white "to mount -t $store_file_system $store_device_file $store_mount_point sudo needed"
+                [[ -d $store_mount_point ]] || sudo mkdir -p $store_mount_point
+                gr.msg -v3 -N -c deep_pink "sudo mount -t $store_file_system $store_device_file $store_mount_point"
 
-            gr.debug "location: $store_location folder: $store_folder param: $store_param "
+                if sudo mount -t $store_file_system $store_device_file $store_mount_point ; then
+                        gr.msg -v1 -c green "ok"
+                else
+                    gr.msg -v1 -e1 "error: $?" -k $GRBL_BACKUP_INDICATOR_KEY
+                    backup_log="$backup_log;exited before execution;32:unable to mount store"
+                    # echo "last_backup_error=32" >>$backup_stat_file
+                    return 32
+                fi
+            fi
+            # no rush my friend
+            sleep 3
+        fi
+
+        # if ignores set add arguments
+        if [[ $backup_ignore ]] ; then
+            for _ignore in  ${backup_ignore[@]} ; do
+                command_param="$command_param --exclude '*$_ignore'"
+            done
+        fi
+
+        from_param="$from_user@$from_domain:$from_location"
+
+        # TBD remove these local variables and use global store_location. yes, messed me up again..
+        if [[ ${store_location: -1} == '/' ]] ; then
+            store_param="$store_location$backup_name"
+        else
+            store_param="$store_location/$backup_name"
+        fi
+
+        gr.debug "location: $store_location folder: $store_folder param: $store_param "
     }
 
 
     local_to_local () {
+    # make fonfigure for local to local backup
 
         if ! mount | grep $store_mount_point >/dev/null ; then
             if [[ $DISPLAY ]] && [[ $store_device_file ]] ; then
@@ -923,15 +900,17 @@ backup.now () {
             done
         fi
 
-        [[ ${store_location: -1} == '/' ]] \
-            && store_param="$store_location$backup_name" \
-            || store_param="$store_location/$backup_name"
-
+        if [[ ${store_location: -1} == '/' ]]; then
+            store_param="$store_location$backup_name"
+        else
+            store_param="$store_location/$backup_name"
+        fi
     }
 
 
     local_to_server () {
-        # build local to remote command variables
+    # build local to remote command variables
+
         gr.ask "local to server NEVER TESTED!! continue? " || return 1
         command_param="-a -e 'ssh -p $store_port'"
         store_param="$store_user@$store_domain:$store_location"
@@ -943,25 +922,22 @@ backup.now () {
     }
 
     server_to_server ()  {
-        # build server to server copy command variables
+    # build server to server copy command variables
+
         gr.msg -c deep_pink "$from_domain:$store_domain"
         gr.ask "server to server NEVER TESTED!! continue? " || return 1
         from_param="$from_user@$from_domain 'rsync -ave ssh $from_location $store_user@$store_domain:$from_port:$store_location'"
         store_param=
-
-
     }
 
-
-### 1) get config for backup name
+    ### 1) get config for backup name
     [[ $backup_name ]] || backup.config $1
     local from_param="$from_location"
     local store_param="$store_location"
     local command_param="-a --progress --update"
     gr.msg -v3 "backup active" -c aqua_marine -k $GRBL_BACKUP_INDICATOR_KEY
 
-### 2) check and place variables for rsynck based on user.cfg
-
+    ### 2) check and place variables for rsynck based on user.cfg
     if [[ $from_domain ]] && [[ $store_domain ]] ; then
         server_to_server
     elif [[ $from_domain ]] ; then
@@ -985,105 +961,99 @@ backup.now () {
         fi
     fi
 
-### 3) check backup method get files out of service containers based settings in user.cfg
+    ### 3) check backup method get files out of service containers based settings in user.cfg
     case $backup_method in
         wekan)
+            if ! [[ $from_domain ]] ; then
+                gr.msg -e1 "empty server variables"
+                backup_log="$backup_log;exited before execution;113:empty server variables"
+                return 113
+            fi
 
-                if ! [[ $from_domain ]] ; then
-                    gr.msg -e1 "empty server variables"
-                    backup_log="$backup_log;exited before execution;113:empty server variables"
-                    return 113
-                fi
-
-                backup.wekan $from_domain $from_port $from_user $from_location || return $?
-                ;;
+            backup.wekan $from_domain $from_port $from_user $from_location || return $?
+            ;;
         mediawiki)
-                echo "TBD mediawiki backup"
-                ;;
+            echo "TBD mediawiki backup"
+            ;;
         git|gitea)
-                echo "TBD git server backup"
-                ;;
+            echo "TBD git server backup"
+            ;;
     esac
 
-### 4) file checks to avoid broken/infected copy over good files
-
+    ### 4) file checks to avoid broken/infected copy over good files
     # crypto virus checks only if from location is remote and store location is local
     if [[ $from_domain ]] && ! [[ $store_domain ]] ; then
 
-            # wannacry test
-            local list_of_files=($(ssh $from_user@$from_domain "find $from_location -type f -name '*' "))
+        # wannacry test
+        local list_of_files=($(ssh $from_user@$from_domain "find $from_location -type f -name '*' "))
 
-            for file in ${list_of_files[@]} ; do
+        for file in ${list_of_files[@]} ; do
+            case $file in
+                *.WNCRY*)
+                        gr.msg -c red -k $GRBL_BACKUP_INDICATOR_KEY \
+                            "POTENTIAL VIRUS: wannacry tracks detected!"
+                        gr.msg -c light_blue "$file"
+                        gr.msg -e1 "backup of $from_location canceled"
+                        backup_log="$backup_log;exited before execution;101:wannacry detected"
+                        return 101
+                        ;;
 
-                case $file in
-                    *.WNCRY*)
-                            gr.msg -c red -k $GRBL_BACKUP_INDICATOR_KEY \
-                                "POTENTIAL VIRUS: wannacry tracks detected!"
-                            gr.msg -c light_blue "$file"
-                            gr.msg -e1 "backup of $from_location canceled"
-                            backup_log="$backup_log;exited before execution;101:wannacry detected"
-                            return 101
-                            ;;
+                 *WORM*)
+                        gr.msg "TBD other virus track marks here"
+                        # echo "last_backup_error=102" >>$backup_stat_file
+                        backup_log="$backup_log;exited before execution;102:virus track marks"
+                        return 102
+                        ;;
+            esac
+        done
 
-                     *WORM*)
-                            gr.msg "TBD other virus track marks here"
-                            # echo "last_backup_error=102" >>$backup_stat_file
-                            backup_log="$backup_log;exited before execution;102:virus track marks"
-                            return 102
-                            ;;
-                    esac
-            done
+        # check if honeypot file exists
+        if ssh $from_user@$from_domain "test -e $honeypot_file" ; then
+            [[ -f /tmp/$USER/honeypot.txt ]] && rm -f /tmp/$USER/honeypot.txt
+            gr.msg -v2 -n "getting honeypot file.. "
+            # get honeypot file
 
-            # check if honeypot file exists
-            if ssh $from_user@$from_domain "test -e $honeypot_file" ; then
-                [[ -f /tmp/$USER/honeypot.txt ]] && rm -f /tmp/$USER/honeypot.txt
-                gr.msg -v2 -n "getting honeypot file.. "
-                # get honeypot file
-
-                gr.msg -v3 -N -c deep_pink "eval rsync $command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null"
-                if eval rsync "$command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null" ; then
-                    gr.msg -v2 -c green "ok"
-                else
-                    gr.msg -e1 "cannot get honeypot file "
-                fi
+            gr.msg -v3 -N -c deep_pink "eval rsync $command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null"
+            if eval rsync "$command_param $from_user@$from_domain:$honeypot_file /tmp >/dev/null" ; then
+                gr.msg -v2 -c green "ok"
+            else
+                gr.msg -e1 "cannot get honeypot file "
             fi
         fi
+    fi
 
     # check is text in honeypot.txt file changed
     if [[ -f /tmp/$USER/honeypot.txt ]] ; then
-            gr.msg -v2 -n "checking honeypot file.. "
-            local contain=($(cat /tmp/$USER/honeypot.txt))
-            rm -f /tmp/$USER/honeypot.txt
+        gr.msg -v2 -n "checking honeypot file.. "
+        local contain=($(cat /tmp/$USER/honeypot.txt))
+        rm -f /tmp/$USER/honeypot.txt
 
-            gr.msg -n -v3 "expecting 'honeypot' got '${contain[3]}' "
+        gr.msg -n -v3 "expecting 'honeypot' got '${contain[3]}' "
 
-            if ! [[ ${contain[3]} == "honeypot" ]] ; then
-                    gr.msg -e1 \
-                         "honeypot file changed! got '${contain[3]}' when 'honeypot' expected."
-                    gr.msg -c light_blue "${contain[@]}"
-                    gr.msg -c red -k $GRBL_BACKUP_INDICATOR_KEY \
-                         "backup canceled cause of potential crypto virus action detected in source destination!"
-                    export GRBL_BACKUP_ENABLED=
+        if ! [[ ${contain[3]} == "honeypot" ]] ; then
+            gr.msg -e1 \
+                 "honeypot file changed! got '${contain[3]}' when 'honeypot' expected."
+            gr.msg -c light_blue "${contain[@]}"
+            gr.msg -c red -k $GRBL_BACKUP_INDICATOR_KEY \
+                 "backup canceled cause of potential crypto virus action detected in source destination!"
+            export GRBL_BACKUP_ENABLED=
 
-                    # echo "last_backup_error=104" >>$backup_stat_file
-                    # echo "### backup canceled cause of potential crypto virus action detected!" >>$backup_stat_file
-                    backup_log="$backup_log;exited before execution;104:potential crypto virus"
-                    return 104
-                fi
-            gr.msg -v2 -c green "ok"
+            # echo "last_backup_error=104" >>$backup_stat_file
+            # echo "### backup canceled cause of potential crypto virus action detected!" >>$backup_stat_file
+            backup_log="$backup_log;exited before execution;104:potential crypto virus"
+            return 104
         fi
+        gr.msg -v2 -c green "ok"
+    fi
 
-### 5) check size
+    ### 5) check size
     if [[ $from_size -gt $store_size ]] ; then
         gr.msg -e1 "not enough space in target device. ($(numfmt $store_size --to=iec) < $(numfmt $from_size --to=iec))"
         backup_log="$backup_log;exited before execution;105:no space on store"
         return 105
     fi
 
-
-
-### 6) perform copy
-
+    ### 6) perform copy
     local _error=$?
     #gr.debug "$FUNCNAME: eval rsync $command_param $from_param $store_param"
 
@@ -1095,40 +1065,40 @@ backup.now () {
     backup_log="$backup_log;$_command"
 
     # do the thing
-    echo $backup_name>$backup_running
-    eval $_command
-    rm $backup_running
+    if [[ $backup_dryrun ]]
+        echo $backup_name>$backup_running
+        echo eval $_command
+        echo rm $backup_running
+    else
+        echo $backup_name>$backup_running
+        eval $_command
+        rm $backup_running
+    fi
 
     if [[ $_error -gt 0 ]] ; then
-            gr.msg "$from_location error: $backup_method $_error" \
-                 -c red -k $GRBL_BACKUP_INDICATOR_KEY
+        gr.msg "$from_location error: $backup_method $_error" \
+        -c red -k $GRBL_BACKUP_INDICATOR_KEY
+        echo "last_backup_error=120" >>$backup_stat_file
+        # add error to log
+        backup_log="$backup_log;$_error:backup failed"
+        return 120
+    else
+        echo "### $backup_name $(date '+%d.%m.%Y %H:%M')" >$backup_stat_file
+        echo "last_backup_version='$(head -n1 $GRBL_BIN/version)'" >>$backup_stat_file
+        echo "last_backup_name=$backup_name" >>$backup_stat_file
+        echo "last_backup_time=$(date +%s)" >>$backup_stat_file
+        echo "last_backup_error=$_error" >>$backup_stat_file
+        gr.msg -v3 "$from_location ok" -c green -k $GRBL_BACKUP_INDICATOR_KEY
 
-                 echo "last_backup_error=120" >>$backup_stat_file
-                 # add error to log
-                 backup_log="$backup_log;$_error:backup failed"
-
-            return 120
-        else
-            echo "### $backup_name $(date '+%d.%m.%Y %H:%M')" >$backup_stat_file
-            echo "last_backup_version='$(head -n1 $GRBL_BIN/version)'" >>$backup_stat_file
-            echo "last_backup_name=$backup_name" >>$backup_stat_file
-            echo "last_backup_time=$(date +%s)" >>$backup_stat_file
-            echo "last_backup_error=$_error" >>$backup_stat_file
-            gr.msg -v3 "$from_location ok" -c green -k $GRBL_BACKUP_INDICATOR_KEY
-
-            # add error to log
-            backup_log="$backup_log;$_error:ok"
-
-            return 0
-        fi
-
+        # add error to log
+        backup_log="$backup_log;$_error:ok"
+        return 0
+    fi
 }
 
-
-
-
 backup.plan () {
-    # backup all in active list
+# backup all in active list
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     local schedule='daily'
     [[ $1 ]] && schedule=$1
@@ -1137,89 +1107,88 @@ backup.plan () {
     local entries=()
     local entry=
 
-    # make it global to get schedule to log
-
     case $schedule in
-            hourly|daily|weekly|monthly|yearly)
-                    backup_schedule=$schedule
-                    entries=($(eval echo '${GRBL_BACKUP_SCHEDULE_'"${schedule^^}[@]}"))
-                    ;;
-            "")
-                    gr.msg -e1 "unknown schedule '$schedule'"
-                    return 11
-                    ;;
-            *)      # try if its set in user.cfg
-                    variable="GRBL_BACKUP_SCHEDULE_${schedule^^}[@]"
-                    entries=($(eval echo ${!variable}))
-                    if ! [[ $entries ]] ; then
-                            gr.msg -e1 "unknown schedule '$schedule'"
-                            return 12
-                        fi
-                    ;;
-        esac
+        hourly|daily|weekly|monthly|yearly)
+            backup_schedule=$schedule
+            entries=($(eval echo '${GRBL_BACKUP_SCHEDULE_'"${schedule^^}[@]}"))
+            ;;
+        "")
+            gr.msg -e1 "unknown schedule '$schedule'"
+            return 11
+            ;;
+        *)
+            variable="GRBL_BACKUP_SCHEDULE_${schedule^^}[@]"
+            entries=($(eval echo ${!variable}))
+            if ! [[ $entries ]] ; then
+                gr.msg -e1 "unknown schedule '$schedule'"
+                return 12
+            fi
+            ;;
+    esac
 
     if ! [[ $entries ]] ; then
-            gr.msg "no entries"
-            return 0
-        fi
+        gr.msg "no entries"
+        return 0
+    fi
 
     gr.msg -v3 -c light_blue "entries: ${entries[@]}"
 
     for (( i = 0; i < ${#entries[@]}; i++ )); do
-            entry=${entries[$i]}
-            gr.msg -n "backing up $entry $(( $i + 1 ))/${#entries[@]}.. "
+        entry=${entries[$i]}
+        gr.msg -n "backing up $entry $(( $i + 1 ))/${#entries[@]}.. "
 
-            backup.config $entry
+        backup.config $entry
 
-            # check is last backup old enough
-            if [[ -f $backup_stat_file ]] ; then
-                    source $backup_stat_file
+        # check is last backup old enough
+        if [[ -f $backup_stat_file ]] ; then
+            source $backup_stat_file
 
-                    case $schedule in
-                             hourly)
-                                add_seconds=3600
-                                ;;
-                             daily)
-                                add_seconds=86400
-                                ;;
-                             weekly)
-                                add_seconds=604800
-                                ;;
-                             monthly)
-                                add_seconds=2629743
-                                ;;
-                             yearly)
-                                add_seconds=31556926
-                                ;;
-                        esac
+            case $schedule in
+                 hourly)
+                    add_seconds=3600
+                    ;;
+                 daily)
+                    add_seconds=86400
+                    ;;
+                 weekly)
+                    add_seconds=604800
+                    ;;
+                 monthly)
+                    add_seconds=2629743
+                    ;;
+                 yearly)
+                    add_seconds=31556926
+                    ;;
+            esac
 
-                    next_backup=$(( last_backup_time + add_seconds ))
-                    # gr.msg "next_backup: $next_backup last_backup_time: $last_backup_time add_seconds: $add_seconds"
+            next_backup=$(( last_backup_time + add_seconds ))
+            # gr.msg "next_backup: $next_backup last_backup_time: $last_backup_time add_seconds: $add_seconds"
 
-                    if [[ $(date +%s) -lt $next_backup ]] && ! [[ $GRBL_FORCE ]]; then
-                            gr.msg -c dark_grey "waiting $(date -d @$next_backup '+%d.%m.%Y %H:%M')"
-                            continue
-                        fi
-                fi
+            if [[ $(date +%s) -lt $next_backup ]] && ! [[ $GRBL_FORCE ]]; then
+                gr.msg -c dark_grey "waiting $(date -d @$next_backup '+%d.%m.%Y %H:%M')"
+                continue
+            fi
+        fi
 
-            backup.now $entry || (( _error++ ))
-            backup.log_write $?
-        done
+        backup.now $entry || (( _error++ ))
+        backup.log_write $?
+    done
 
     if [[ $_error -gt 0 ]] ; then
-            gr.msg "$_error warnings, check log above" -e1 -k $GRBL_BACKUP_INDICATOR_KEY
-            [[ $GRBL_BACKUP_VERBOSE ]] && gr.ind say -m "$_error warnings during $schedule backup"
-            return 12
-        else
-            #gr.msg -v3 -c green "$schedule done"
-            [[ $GRBL_BACKUP_VERBOSE ]] && gr.ind done -m "$schedule backup" -k $GRBL_BACKUP_INDICATOR_KEY
-            return 0
-        fi
-    }
+        gr.msg "$_error warnings, check log above" -e1 -k $GRBL_BACKUP_INDICATOR_KEY
+        [[ $GRBL_BACKUP_VERBOSE ]] && gr.ind say -m "$_error warnings during $schedule backup"
+        return 12
+    else
+        #gr.msg -v3 -c green "$schedule done"
+        [[ $GRBL_BACKUP_VERBOSE ]] && gr.ind done -m "$schedule backup" -k $GRBL_BACKUP_INDICATOR_KEY
+        return 0
+    fi
+}
 
 
 backup.scheduled () {
-        # run an set scheduled backup
+# run an set scheduled backup
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     local schedule='daily'
     [[ $1 ]] && schedule=$1
@@ -1228,8 +1197,8 @@ backup.scheduled () {
     local epic_backup=$(cat $backup_data_folder/next)
 
     if [[ $(date '+%s') -lt $epic_backup ]] ; then
-            return 0
-        fi
+        return 0
+    fi
 
     # run given schedule list
     backup.plan $schedule
@@ -1270,34 +1239,36 @@ backup.scheduled () {
 
 
 backup.poll () {
-    # poll functions
+# poll functions
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     local _cmd="$1" ; shift
 
     case $_cmd in
-            start )
-                gr.msg -v1 -t -c black "${FUNCNAME[0]}: backup status polling started" -k $GRBL_BACKUP_INDICATOR_KEY
-                ;;
-            end )
-                gr.msg -v1 -t -c reset "${FUNCNAME[0]}: backup status polling ended" -k $GRBL_BACKUP_INDICATOR_KEY
-                ;;
-            status )
-                backup.status
-                backup.scheduled daily
-                ;;
-            *)  gr.msg -c dark_grey "function not written"
-                return 0
-        esac
+        start )
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: backup status polling started" -k $GRBL_BACKUP_INDICATOR_KEY
+            ;;
+        end )
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: backup status polling ended" -k $GRBL_BACKUP_INDICATOR_KEY
+            ;;
+        status )
+            backup.status
+            backup.scheduled daily
+            ;;
+        *)  gr.msg -c dark_grey "function not written"
+            return 0
+    esac
 }
 
 
 backup.rc () {
 # source configurations
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     if ! [[ -f $backup_rc ]] || [[ $(( $(stat -c %Y $backup_config) - $(stat -c %Y $backup_rc) )) -gt 0 ]] ; then
-            backup.make_rc && \
-            gr.msg -v1 -c dark_gray "$backup_rc updated"
-        fi
+        backup.make_rc && \
+        gr.msg -v1 -c dark_gray "$backup_rc updated"
+    fi
 
     source $backup_rc
 }
@@ -1305,32 +1276,34 @@ backup.rc () {
 
 backup.make_rc () {
 # make core module rc file out of configuration file
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     if ! source config.sh ; then
-            gr.msg -e1 "unable to load configuration module"
-            return 100
-        fi
+        gr.msg -e1 "unable to load configuration module"
+        return 100
+    fi
 
     if [[ -f $backup_rc ]] ; then
-            rm -f $backup_rc
-        fi
+        rm -f $backup_rc
+    fi
 
     if ! config.make_rc "$backup_config" $backup_rc ; then
-            gr.msg -e1 "configuration failed"
-            return 101
-        fi
+        gr.msg -e1 "configuration failed"
+        return 101
+    fi
 
     chmod +x $backup_rc
 
     if ! source $backup_rc ; then
-            gr.msg -c red "unable to source configuration"
-            return 202
-        fi
+        gr.msg -c red "unable to source configuration"
+        return 202
+    fi
 }
 
 
 backup.install () {
-    # install needed tools
+# install needed tools
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     sudo apt update && \
     sudo apt install ssh scp rsync sshfs pv
@@ -1339,18 +1312,19 @@ backup.install () {
 
 
 backup.remove () {
-    # remove stuff
+# remove stuff
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     gr.msg "no point to remove so basic tools.."
     return 0
 }
 
-
+# update configurations
 backup.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # backup.debug
-    # [[ -f ~/.grblrc ]] && source ~/.grblrc
     backup.main "$@"
     exit "$?"
+else
+    gr.msg -v4 -n -c $__backup_color "$__backup [$LINENO] sourced  " >&2 # debug
 fi
