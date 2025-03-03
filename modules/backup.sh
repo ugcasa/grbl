@@ -1065,7 +1065,7 @@ backup.now () {
     backup_log="$backup_log;$_command"
 
     # do the thing
-    if [[ $backup_dryrun ]]
+    if [[ $backup_dryrun ]]; then
         gr.msg -h "$backup_name>$backup_running"
         gr.msg -h "eval $_command"
         _error=4
