@@ -973,8 +973,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     fi
 
     # corsair indication
-    if [[ $GRBL_CORSAIR_ENABLED ]] ; then
-        source corsair.sh
+    GRBL_VERBOSE=0
+    source corsair.sh
+    if [[ $GRBL_CORSAIR_ENABLED ]] && corsair.check; then
         corsair.indicate error
         corsair.main type "er$_error_code" >/dev/null
     fi
