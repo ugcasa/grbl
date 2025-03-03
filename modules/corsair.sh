@@ -545,6 +545,24 @@ corsair.check () {
     return 0
 }
 
+corsair.pipe () {
+# write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
+    gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+
+    local _button=$1
+    shift
+
+    local _color=$1
+    shift
+
+    local _bright="FF"
+    [[ $1 ]] && _bright="$1"
+
+    echo "rgb $_color$_bright" > "$_button"
+    return 0
+}
+
+
 corsair.init () {
 # load default profile and set wanted mode, default is set in user configuration
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
@@ -707,7 +725,7 @@ corsair.indicate () {
         important)      blink="red yellow 0.75 3600" ;;
     esac
 
-    corsair.blink_set $key $blink >/dev/null 2>/dev/null
+    (corsair.blink_set $key $blink) >/dev/null 2>/dev/null
     return 0
 }
 
@@ -834,14 +852,16 @@ corsair.type () {
 # blink string characters by key lights. input color of keys and then string
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    gr.msg "disabled"
-    return 6
 
-    color=$1
-    shift
     string=${@,,}
 
+    # set color (optional)
+    color=white
+    #colors=($(gr.colors))
+
     touch /tmp/$USER/grbl_corsair-typing
+
+    [[ $GRBL_SPEECH_ENABLED ]] && $GURU_CALL say "$string"
 
     for (( i=0 ; i < ${#string} ; i++ )) ; do
 
@@ -894,11 +914,13 @@ corsair.type () {
             gr.msg -n -v3 $key
         esac
 
-        corsair.main set $key ${color,,}
+        #color=${GRBL_COLOR_LIST[$i]}
         # if color given in upcase, leave letters to shine
-        [[ ${color:0:1} == [A-Z] ]] && continue
-        sleep 0.5
+        #[[ ${color:0:1} == [A-Z] ]] && continue
+        corsair.main set $key $color
+        sleep 0.4
         corsair.main reset $key
+        sleep 0.2
 
     done & 2>/dev/null
     #echo $! >/tmp/$USER/grbl_corsair.pid
