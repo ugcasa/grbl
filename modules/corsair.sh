@@ -19,6 +19,8 @@ corsair_daemon_service="/usr/lib/systemd/system/ckb-next-daemon.service"
 suspend_script="/lib/systemd/system-sleep/grbl-suspend.sh"
 # poll order is read from  environment list ${GRBL_DAEMON_POLL_ORDER[@]} set in user.cfg
 pipelist_file="$GRBL_CFG/corsair-pipelist.cfg"
+ms_available=
+kb_available=
 
 # import colors f
 [[ -f "$GRBL_CFG/rgb-color.cfg" ]] && source "$GRBL_CFG/rgb-color.cfg"
@@ -392,94 +394,100 @@ corsair.key-id () {
 
 corsair.enabled () {
 # check is corsair enabled in current user config
-# remove?: none of functions using this exept user call?
-# nothing should go broken, calling from main is not even listed
-# some other moduĺe might still use this ahter soursing this file
-
-    # gr.msg -n -v2 "checking corsair is enabled.. "
-    #     if [[ $GRBL_CORSAIR_ENABLED ]] ; then
-    #             gr.msg -v1 -c green "enabled"
-    #         else
-    #             gr.msg -v1 -c dark_grey "disabled"
-    #             # remove?: why make difference, some bubble cum?
-    #             # gr.msg -v1 -V2 -c dark_grey "corsair disabled"
-    #             return 1
-    #         fi
-
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    gr.debug  "function disabled, if see this during debug run, inform casa "
-
+    gr.msg -n -v2 "checking corsair is enabled.. "
+    if [[ $GRBL_CORSAIR_ENABLED ]] ; then
+        gr.msg -v2 -c green "enabled"
+        return 0
+    else
+        gr.msg -v2 -c dark_grey "disabled"
+        return 1
+    fi
 }
 
 corsair.check () {
 # Check keyboard driver is available, app and pipes are started and launch those if needed
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    gr.msg -n -v2 "checking corsair is enabled.. "
+    gr.msg -n -v3 "checking corsair is enabled.. "
     if [[ $GRBL_CORSAIR_ENABLED ]] ; then
-        gr.msg -v2 -c green "enabled"
+        gr.msg -v3 -c green "enabled"
+        gr.msg -n -v2 -V3 -c green "enabled "
     else
-        gr.msg -v2 -c dark_grey "disabled"
+        gr.msg -v3 -c dark_grey "disabled"
+        gr.msg -n -v2 -V3 -c dark_grey "disabled "
         return 1
     fi
 
-    gr.msg -n -v2 "checking ${GRBL_CORSAIR_KEYBOARD}.. "
+    gr.msg -n -v3 "checking ${GRBL_CORSAIR_KEYBOARD}.. "
     #TODO: save device ID during config
     if [[ ${GRBL_CORSAIR_KEYBOARD_ID} ]]; then
-            gr.msg -v2 -n -c green "configured, "
+            gr.msg -v3 -n -c green "configured, "
         if lsusb | grep -q ${GRBL_CORSAIR_KEYBOARD_ID}; then
-            gr.msg -v2 -c green "connected"
+            gr.msg -v3 -c green "connected"
+            gr.msg -n -v2 -V3 -c green "kb "
+            kb_available=true
         else
-            gr.msg -c dark_grey "disconnected"
-            return 2
+            gr.msg -v3 -c black "disconnected"
+            gr.msg -n -v2 -V3 -c black "kb "
+            kb_available=
         fi
     else
-        gr.msg -c black "not configured"
+        gr.msg -v3 -c black "not configured"
+        gr.msg -n -v2 -V3 -c dark_grey "kb "
     fi
 
-    gr.msg -n -v2 "checking ${GRBL_CORSAIR_MOUSE}.. "
+    gr.msg -n -v3 "checking ${GRBL_CORSAIR_MOUSE}.. "
     #TODO: save device ID during config
     if [[ ${GRBL_CORSAIR_KEYBOARD_ID} ]]; then
-        gr.msg -v2 -n -c green "configured, "
+        gr.msg -v3 -n -c green "configured, "
         if lsusb | grep -q ${GRBL_CORSAIR_MOUSE_ID}; then
-            gr.msg -v2 -c green "connected"
+            gr.msg -v3 -c green "connected"
+            gr.msg -n -v2 -V3 -c green "ms "
+            ms_available=true
         else
-            gr.msg -c dark_grey "disconnected"
+            gr.msg -v3 -c black "disconnected"
+            gr.msg -n -v2 -V3 -c black "ms "
+            ms_available=
         fi
     else
-        gr.msg -c black "not configured"
+        gr.msg -v3 -c black "not configured"
+        gr.msg -n -v2 -V3 -c dark_grey "ms "
     fi
 
-
-    gr.msg -n -v2 "checking ckb-next-daemon.. "
+    gr.msg -n -v3 "checking ckb-next-daemon.. "
     if ps auxf | grep "ckb-next-daemon" | grep -q -v grep; then
-        gr.msg -v2 -c green "running"
+        gr.msg -v3 -c green "daemon running"
+        gr.msg -n -v2 -V3 -c green "daemon "
     else
-        gr.msg -c dark_grey "ckb-next-daemon not running"
-        [[ $GRBL_FORCE ]] || gr.msg -v2 -c white "start by '$GRBL_CALL corsair start -f'"
-        return 3
+        gr.msg -v3 -c red "daemon off"
+        gr.msg -n -v2 -V3 -c red "daemon "
+        [[ $GRBL_FORCE ]] || gr.msg -v3 -c white "start by '$GRBL_CALL corsair start -f'"
+        return 13
     fi
 
-    gr.msg -n -v2 "checking ckb-next.. "
+    gr.msg -n -v3 "checking ckb-next.. "
     if ps auxf | grep "ckb-next" | grep -v "daemon" | grep -q -v grep; then
-        gr.msg -v2 -c green "running"
+        gr.msg -v3 -c green "app running"
+        gr.msg -n -v2 -V3 -c green "app "
 
     else
-        gr.msg -c yellow "ckb-next application not running"
-        [[ $GRBL_FORCE ]] || gr.msg -v2 -c white "command: $GRBL_CALL corsair start"
-        return 4
+        gr.msg -v3 -c red "app off"
+        gr.msg -n -v2 -V3 -c red "app "
+        [[ $GRBL_FORCE ]] || gr.msg -v3 -c white "command: $GRBL_CALL corsair start"
+        return 14
     fi
 
     source system.sh
 
     if system.suspend flag ; then
-        gr.msg -v2 -c yellow "computer suspended, ckb-next restart requested"
+        gr.msg -v3 -c yellow "computer suspended, ckb-next restart requested"
         gr.msg -v3 -c white "command: $GRBL_CALL corsair start -f"
-        return 4
+        return 15
     fi
 
-    gr.msg -n -v2 "checking pipes.. "
+    gr.msg -n -v3 "checking pipes.. "
 
     corsair_mode=$(< $corsair_last_mode)
 
@@ -494,24 +502,29 @@ corsair.check () {
             amount=$(wc -l < /tmp/$USER/result)
 
             if [[ $amount -gt 0 ]] ; then
-                gr.msg -v2 -c green "found $amount pipe(s)"
+                gr.msg -v3 -c green "$amount pipe(s)"
+                gr.msg -n -v2 -V3 -c green "$amount "
                 rm /tmp/$USER/result
             else
-                gr.msg -c red "no pipes found"
-                corsair.help-profile
-                return 6
+                gr.msg -v3 -c black "no pipes"
+                gr.msg -n -v2 -V3 -c black "0 "
+                if [[ $kb_available ]]; then
+                    corsair.help-profile
+                    return 16
+                fi
+
             fi
         ;;
 
         *)
-            gr.msg -c yellow "not available in '$corsair_mode' mode"
-            gr.msg -c white "select one of following modes to plumber: " -v3 -n
-            gr.msg -c list "${status_modes[@]}" -v3
+            gr.msg -v3 -c yellow "not available in '$corsair_mode' mode"
+            gr.msg -v3 -c white "select one of following modes to plumber: " -v3 -n
+            gr.msg -v3 -c list "${status_modes[@]}" -v3
         ;;
     esac
 
     # check daemon warnings
-    gr.msg -n -v2 "checking daemon service.. "
+    gr.msg -n -v3 "checking daemon warnings.. "
     if systemctl status ckb-next-daemon.service |grep -q -e Timeout -e Unable; then
         gr.msg -v3 -e1 "warnings found:"
         [[ $GRBL_VERBOSE -gt 2 ]] && systemctl status ckb-next-daemon.service |grep -e Timeout -e Unable;
@@ -588,22 +601,6 @@ corsair.set () {
     return 0
 }
 
-# corsair.pipe () {
-# # write color to key: input <KEY_PIPE_FILE> _<COLOR_CODE>
-#     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
-
-#     local _button=$1
-#     shift
-
-#     local _color=$1
-#     shift
-
-#     local _bright="FF"
-#     [[ $1 ]] && _bright="$1"
-
-#     echo "rgb $_color$_bright" >"$_button"
-# }
-
 corsair.reset () {
 # application level function, not restarting daemon or application, return normal, if no input reset all
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
@@ -630,12 +627,8 @@ corsair.clear () {
 
 corsair.end () {
 # reserve some keys for future purposes by coloring them now
-# wtf above means? Anyway, this is not endig shit, just chanching profile twice.
-# what is the point? commenting out extra showcase 20240602
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
-    #corsair.init ftb
-    #sleep 1
-    #corsair.init $GRBL_CORSAIR_MODE
+
     corsair.blink_kill $@
     return $?
 }
@@ -747,7 +740,7 @@ corsair.blink_set () {
     time_out=$(( time_out + timeout ))
 
     # https://stackoverflow.com/questions/11097761/is-there-a-way-to-make-bash-job-control-quiet
-    ## noted: () encapsulation will brake pid save - removed
+    ## note: () encapsulation will brake pid save - removed
     while true ; do
 
         time_now=$(date +%s)
@@ -823,52 +816,6 @@ corsair.blink_kill () {
         fi
     done
     return 0
-}
-
-corsair.blink_test () {
-# quick test that lights up esc and function keys
-    gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
-
-    source flag.sh
-
-    list=(working pause cancel error warning alert panic passed failed message call customer)
-
-    flag.set pause
-
-    gr.msg -c white -n "testing set, stop and kill with arguments.. "
-    corsair.blink_set esc white black 0 3 red
-    sleep 0.5
-    corsair.blink_kill esc
-    corsair.blink_set esc yellow blue 0 5 green
-    corsair.blink_stop esc
-    gr.msg -c green "ok"
-
-    key=1
-    gr.msg -c white -n "testing corsair.indicate: "
-    for item in ${list[@]} ; do
-
-        (( key > 12 )) && key=1
-
-        if corsair.indicate $item "f$key" 2>/dev/null ; then
-                gr.msg -n "f$key "
-            else
-                gr.msg -n -c yellow "f$key $? "
-            fi
-        (( key++ ))
-
-    done \
-        && gr.msg -c green "passed" \
-        || gr.msg -c red "failed"
-
-    sleep 3
-
-    gr.msg -c white -n "testing corsair.blink_kill.. "
-    corsair.blink_kill #2>/dev/null
-    file /tmp/$USER/blink_pid | grep "empty" >/dev/null \
-        && gr.msg -c green "passed" \
-        || gr.msg -c red "failed $?"
-    #gr corsair end
-    flag.rm pause
 }
 
 corsair.type_end () {
@@ -953,7 +900,7 @@ corsair.type () {
         corsair.main reset $key
 
     done & 2>/dev/null
-        #echo $! >/tmp/$USER/grbl_corsair.pid
+    #echo $! >/tmp/$USER/grbl_corsair.pid
     gr.msg -v3
 }
 
@@ -1291,9 +1238,12 @@ corsair.clone () {
 
     cd /tmp
     [[ -d ckb-next ]] && rm -rf ckb-next
-    git clone https://github.com/ckb-next/ckb-next.git \
-        && gr.msg -c green "ok" \
-        || gr.msg -x 101 -c yellow "cloning error"
+
+    if git clone https://github.com/ckb-next/ckb-next.git ; then
+        gr.msg -c green "ok"
+    else
+        gr.msg -x 101 -c yellow "cloning error"
+    fi
 }
 
 corsair.patch () {
@@ -1382,13 +1332,19 @@ corsair.status () {
 # get status for daemon (or user)
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
+    gr.msg -n -v1 -V3 -t "${FUNCNAME[0]}: "
     if corsair.check ; then
-        gr.msg -v1 -c green "corsair on service"
+        gr.msg -n -v3 -t "${FUNCNAME[0]}: "
+
+        gr.msg -n -c aqua "on service"
+        [[ $kb_available ]] || gr.msg -V2 -n -c black " keyboard disconnected"
+        [[ $ms_available ]] || gr.msg -V2 -n -c black  " mouse disconnected "
+        gr.msg
         return 0
     else
-        gr.msg -v1 -c red "corsair is not in service"
-        return 100
+        gr.msg -n -v3 -t "${FUNCNAME[0]}: "
+        gr.msg -c black "offline"
+        return 5
     fi
 }
 
