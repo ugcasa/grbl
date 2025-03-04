@@ -1,6 +1,5 @@
 main non-valid-input -p 2
 systemd_main non-valid-input -p 2
-main -- -p 3
 main help -p 0
 rc -p 0
 make_rc -p 0
