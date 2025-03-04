@@ -861,8 +861,6 @@ corsair.type () {
 
     touch /tmp/$USER/grbl_corsair-typing
 
-    [[ $GRBL_SPEECH_ENABLED ]] && $GURU_CALL say "$string"
-
     for (( i=0 ; i < ${#string} ; i++ )) ; do
 
         # TBD following does not work when called from script, dunno why
