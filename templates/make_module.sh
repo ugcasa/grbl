@@ -48,6 +48,29 @@ case $ans in
 		cp $config $GRBL_CFG/$GRBL_USER
 esac
 
-echo $script
-echo $config
-echo "add '$module_name' to 'install.sh' 'modules_to_install' list"
+# make tester
+read -p "make tester? " ans
+case $ans in
+	y|Y)
+		cases="1-6"
+		cd "../test/"
+		./build-tester.sh $module_name
+		template_tc="../templates/template.tc"
+		cp $template_tc "../test/$module_name.tc"
+
+		read -p "run test cases $cases? " ans
+		case $ans in
+			y|Y)
+				./test-$module_name.sh c $cases
+		esac
+esac
+
+echo
+echo "Generated files for $module_name module"
+echo "  script:  $script"
+echo "  config:  $config"
+echo "  tester:  ../test/test-$module_name.sh"
+echo "  cases:   ../test/$module_name.tc"
+echo
+echo "- add '$module_name' to 'install.sh' 'modules_to_install' list"
+echo "- run tests: go to '../test' folder and run './test-$module_name.sh c $cases'"
