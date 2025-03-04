@@ -2,6 +2,8 @@
 # install applications casa@ujo.guru 2019-2021
 # module or module adapter scripts should have install and remove functions called by <module>.main install/remove
 # these are stand alone installers for application no worth to make module (or adapter script)
+source /etc/os-release
+source /etc/upstream-release/lsb-release
 
 source $GRBL_BIN/common.sh
 
@@ -11,24 +13,51 @@ install.main () {
             shift
         fi
 
-    # architecture selection
+    # architecture selection TODO os.sh can this shit
     case $(uname -m) in
         aarch64|arm64) SYSTEM_ARCHITECTURE="arm64" ;;
         amd64|x86_64) SYSTEM_ARCHITECTURE="amd64" ;;
         *) gr.msg -c red "unknown architecture" -k caps
+           return 100
+           ;;
     esac
 
-    case "$argument" in
-        steam|status|earth|help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams|fail2ban)
-                    install.$argument "$@" ;;
-        *)          gr.msg -v dark_grey "no installer for '$argument'"; install.help
+    # this change is not tested, should work dough
+    case "$argument" in \
+        dropbox|\
+        steam|\
+        status|\
+        earth|\
+        help|\
+        minecraft|\
+        unity|\
+        virtualbox|\
+        tiv|\
+        django|\
+        java|\
+        hackrf|\
+        fosphor|\
+        spectrumanalyzer|\
+        radio|\
+        webmin|\
+        anaconda|\
+        kaldi|\
+        python|\
+        vscode|\
+        teams|\
+        fail2ban)
+            gr.msg -v1 "installing $argument.."
+            install.$argument "$@"
+            ;;
+        *)
+            gr.msg -v dark_grey "no installer for '$argument'"
+            install.help
     esac
 }
 
 install.status () {
     gr.msg -t "${FUNCNAME[0]}: available "
 }
-
 
 install.help () {
     gr.msg -v1 -c white "grbl installer help "
@@ -50,15 +79,67 @@ install.help () {
     gr.msg -v1 " vscode               ms visual code "
     gr.msg -v1 " webmin               webmin tools "
     gr.msg -v1 " minecraft            minecraft block game"
-
+    gr.msg -v1 " dropbox              install: headless daemon, control script or gui app"
     gr.msg -v2 " unity                TBD unity "
     gr.msg -v2 " mqtt                 TBD mopsquitto MQTT client "
     gr.msg -v2 " mqtt-server          TBD mopsquitto MQTT server "
-
-
     gr.msg -v2
 }
 
+install.dropbox () {
+# install dropbox daemon, control script and gui client app
+
+    # for Ubuntu (18.04, 20.04, 22.04, 23.04) or equivalent (Linux Mint 19+, Pop!_OS)
+    # tested once
+
+    # get os module functions in use
+    source os.sh
+    source /etc/os-release
+    source /etc/upstream-release/lsb-release
+    gr.msg "$NAME $VERSION_ID '$VERSION_CODENAME' based on $DISTRIB_ID $DISTRIB_RELEASE '$DISTRIB_CODENAME' $HOME_URL"
+
+    if [[ $DISTRIB_ID != "Ubuntu" ]] ; then
+        gr.msg "Ubuntu based systems only!"
+        return 2
+    fi
+
+    case $DISTRIB_RELEASE in
+        # 22.10 or higher
+        22.10|23*|24*)
+            newist="22024.04.17"
+            ;;
+        # 18.04 - 22.04
+        18*|19*|20.10|22.04)
+            newist="2020.03.04"
+            ;;
+        *) gr.msg -e0 "not supported"
+            return 3
+    esac
+
+    gr.msg "$newist"
+
+    if gr.ask "install frontend client"; then
+        [[ -d ~/apps ]] && cd ~/apps
+        app_deb_url=https://www.dropbox.com/download?dl=packages/ubuntu/dropbox_${newist}_amd64.deb
+        wget -q $app_deb_url
+        sudo dpkg -i "dropbox_${newist}_amd64.deb"
+    fi
+
+    if gr.ask "install headless daemon"; then
+        # daemon
+        cd ~ wget -q -O - "https://www.dropbox.com/download?plat=lnx.x86_64" | tar xzf -
+        ln -s ~/.dropbox-dist/dropboxd ~/apps/dropboxd
+        gr.msg -h "run daemon by './apps/dropboxd &'"
+    fi
+
+    if gr.ask "get control script"; then
+        ## control script
+        cd apps
+        wget https://www.dropbox.com/download?dl=packages/dropbox.py -O dropbox.py
+        chmod +x dropbox.py
+        gr.msg -h "run script by '~/apps/dropbox.py'"
+    fi
+}
 
 install.earth () {
     clear
@@ -107,6 +188,29 @@ install.unity () {
     sudo apt-get install unityhub || return 103
 
     return 0
+}
+
+install.signal () {
+# install signal app to Ubuntu/Mint desktop
+
+    # NOTE: These instructions only work for 64-bit Debian-based
+    # Linux distributions such as Ubuntu, Mint etc.
+
+    gr.msg $DISTRIB_CODENAME
+
+    # 1. Install our official public software signing key:
+    wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg
+    cat signal-desktop-keyring.gpg | sudo tee /usr/share/keyrings/signal-desktop-keyring.gpg > /dev/null
+
+    # 2. Add our repository to your list of repositories:
+    # echo "deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt $DISTRIB_CODENAME main" |\
+    #   sudo tee /etc/apt/sources.list.d/signal-$DISTRIB_CODENAME.list
+    echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main' |\
+        sudo tee /etc/apt/sources.list.d/signal-xenial.list
+
+    # 3. Update your package database and install Signal:
+    sudo apt update && sudo apt install signal-desktop
+
 }
 
 
