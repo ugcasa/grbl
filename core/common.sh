@@ -212,6 +212,9 @@ gr.msg () {
         _column_width=${#_message}
     fi
 
+    _message_length=$_column_width
+    # [[ ${#_column_width} -gt 1 ]] && local _message_length=$(( $_column_width - 1))
+
     # -e) error messages to stderr
     if [[ $_error ]] ; then
         if [[ $GRBL_COLOR ]] && ! [[ $GRBL_VERBOSE -eq 0 ]]; then
@@ -226,17 +229,17 @@ gr.msg () {
             _color_code=${!_c_var}
             printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message}" >&2
         else
-            printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_column_width}" >&2
+            printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_message_length}" >&2
         fi
         return 0
     fi
 
     # -c) color printout
     if [[ $GRBL_COLOR ]] && ! [[ $GRBL_VERBOSE -eq 0 ]]; then
-        printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_column_width}"
+        printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_message_length}"
     else
         # *) normal printout without formatting
-        printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_column_width}"
+        printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_message_length}"
     fi
 
     if [[ $_say ]] && [[ $GRBL_SOUND_ENABLED ]] && [[ $GRBL_SPEECH_ENABLED ]] || [[ $GRBL_SPEAK ]]; then
@@ -261,7 +264,7 @@ gr.msg () {
 
 gr.emsg () {
 # sond know what this is, remove
-     printf "$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_column_width}"
+     printf "$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_message_length}"
     $@
 }
 
