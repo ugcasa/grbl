@@ -1,8 +1,13 @@
 #!/bin/bash
-# make test
-# TODO omg how old ways to do shit, review pls.
+# grbl build tester for module
+# creates template based tester script for existing module
+# input: <module_name>
+# output: test-<module_name>.sh
+
 source $GRBL_RC
-source $GRBL_BIN/common.sh
+source common.sh
+GRBL_COLOR=true
+GRBL_VERBOSE=2
 
 [[ "$1" ]] && module=$1 || read -p "module name to create test for (no file ending): " module
 
@@ -15,25 +20,28 @@ if [[ -f "../core/$module.sh" ]] ; then
         module_to_test="$GRBL_BIN/$module.sh"
     else
         gr.msg -c yellow "no module '$module' found in any location"
-        return 12
+        exit 12
     fi
 
 gr.msg -c white "generating tester for $module_to_test"
-# inldes only if space is left between function name and "()" TEST space removed!
-functions_to_test=($(cat $module_to_test | grep "()"  | grep -v "#" |cut -f1 -d " "))
+# only if space is left between function name and "()" TEST space removed!
+functions_to_test=($(cat $module_to_test | grep " ()"  | grep -v "#" |cut -f1 -d " "))
+# TODO TEST better: functions_to_test=($(grep $module_to_test -e " ()"  | grep -v "#" | cut -f1 -d " "))
 tester_file_name="test-""$module"".sh"
 
-gr.msg -v1 -c blue "module: $module_to_test"
-gr.msg -v1 -c blue "output: $tester_file_name"
+gr.msg -v3 -c blue "module: $module_to_test"
+gr.msg -v3 -c blue "output: $tester_file_name"
 gr.msg "${#functions_to_test[@]} functions to test"
 
 # check if tester exist
-if [[ -f $tester_file_name ]] && gr.ask "tester '$tester_file_name' exist, overwrite?" ; then
-            gr.msg "overwriting.."
-        else
-            gr.msg "canceling.."
-            return 12
+if [[ -f $tester_file_name ]]; then
+    if gr.ask "tester '$tester_file_name' exist, overwrite?"; then
+        gr.msg "overwriting.."
+    else
+        gr.msg "canceling.."
+        exit 12
     fi
+fi
 
 cat >$tester_file_name <<EOL
 #!/bin/bash
@@ -52,7 +60,7 @@ gr.msg -v3 -e1 "initial conditions not written"
 
 testNr=1
 results=()
-results[0]="result:return:note"
+results[0]="result:function:arguments:return:note"
 
 runf () {
 # result pass/fail handler
@@ -114,29 +122,29 @@ runf () {
 
     gr.msg -n -h "Result of test \$testNr: "
     if [[ \$returnValue -eq \$passCond ]]; then
-        gr.msg -c pass "PASSED"
-        results[\$testNr]="p:\$returnValue:clean result"
+        gr.msg -c green "PASSED"
+        results[\$testNr]="p:\$function:\${arguments[@]}:\$returnValue:clean result"
 
     elif [[ \$returnValue -gt 1 ]] && [[ \$returnValue -lt 9 ]]; then
         gr.msg -e1 "WARNING"
-        results[\$testNr]="w:\$returnValue:warning"
+        results[\$testNr]="w:\$function:\${arguments[@]}:\$returnValue:warning"
 
     elif [[ \$returnValue -eq 127 ]]; then
         gr.msg -e2 "NO RESULT"
-        results[\$testNr]="e:\$returnValue:non existing, can be test case issue"
+        results[\$testNr]="e:\$function:\${arguments[@]}:\$returnValue:non existing, check case"
 
     elif [[ \$returnValue -eq 254 ]]; then
         gr.msg -n -c fail "FAILED"
         gr.msg -e1 " with comment"
-        results[\$testNr]="c:\$returnValue:\$comment"
+        results[\$testNr]="c:\$function:\${arguments[@]}:\$returnValue:\$comment"
 
     elif [[ \$returnValue -gt 99 ]] && [[ \$returnValue -lt 256 ]]; then
         gr.msg -c fail "FAILED"
-        results[\$testNr]="f:\$returnValue:non zero result"
+        results[\$testNr]="f:\$function:\${arguments[@]}:\$returnValue:non zero result"
 
     else
         gr.msg -e1 "NO RESULT"
-        results[\$testNr]="e:\$returnValue:error in test case"
+        results[\$testNr]="e:\$function:\${arguments[@]}:\$returnValue:error in test case"
     fi
 
     let testNr++
@@ -181,39 +189,49 @@ print_results () {
         gr.msg -n -h -w 4 "\$i: "
         case \$(cut -d ':' -f 1 <<<\${results[\$i]}) in
             p)
-                gr.msg -w 10 -n -c pass "PASSED "
-                gr.msg -w 4 -n -c gray "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
-                gr.msg -w 60 -c dark_grey "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                gr.msg -w 10 -n -c green "PASSED "
+                gr.msg -w 15 -n -c light_blue "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
+                gr.msg -w 35 -n -c gray "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                gr.msg -w 35 -n -c white "\$(cut -d ':' -f 5 <<<\${results[\$i]}) "
+                gr.msg -w 4 -n -c gray "\$(cut -d ':' -f 4 <<<\${results[\$i]}) "
                 let passes++
                 ;;
             f)
                 gr.msg -w 10 -n -c fail "FAILED "
-                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
-                gr.msg -w 60 -c dark_grey "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                gr.msg -w 15 -n -c light_blue "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
+                gr.msg -w 35 -n -c gray "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                gr.msg -w 35 -n -c white "\$(cut -d ':' -f 5 <<<\${results[\$i]}) "
+                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 4 <<<\${results[\$i]}) "
                 let fails++
                 ;;
             w)
                 gr.msg -w 10 -n -e1 "PASSED "
-                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
-                gr.msg -w 60 -c dark_grey "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                gr.msg -w 15 -n -c light_blue "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
+                gr.msg -w 35 -n -c gray "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                gr.msg -w 35 -n -c white "\$(cut -d ':' -f 5 <<<\${results[\$i]}) "
+                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 4 <<<\${results[\$i]}) "
                 let warnings++
                 let passes++
                 ;;
             c)
                 gr.msg -w 10 -n -c fail "FAILED "
-                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
-                gr.msg -w 60 -e1 "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                gr.msg -w 15 -n -c light_blue "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
+                gr.msg -w 35 -n -c gray "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                gr.msg -w 35 -n -e1 "\$(cut -d ':' -f 5 <<<\${results[\$i]}) "
+                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 4 <<<\${results[\$i]}) "
                 let warnings++
                 let failes++
                 ;;
             e|*)
                 gr.msg -w 10 -n -e2 "NO RESULT "
-                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
-                gr.msg -w 60 -c dark_grey "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                gr.msg -w 15 -n -c light_blue "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
+                gr.msg -w 35 -n -c gray "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
+                gr.msg -w 35 -n -c white "\$(cut -d ':' -f 5 <<<\${results[\$i]}) "
+                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 4 <<<\${results[\$i]}) "
                 let errors++
                 ;;
         esac
-
+        echo
 
     done
     gr.msg -h "Summary: \$passes passed, \$fails fails, \$warnings warnings and \$errors with no result"
@@ -321,8 +339,8 @@ EOL
 # test function processor
 for _function in "${functions_to_test[@]}" ; do
     test_function_name=${_function//"$module."/"$module.test_"}
-    gr.msg -v2 -c light_blue "$_function"
-    gr.msg -v2 -c light_green "$test_function_name"
+    gr.msg -v3 -c light_blue "$_function"
+    gr.msg -v3 -c light_green "$test_function_name"
 
     cat >>$tester_file_name <<EOL
 $test_function_name () {
@@ -359,7 +377,6 @@ if [[ \${BASH_SOURCE[0]} == \${0} ]]; then
 fi
 EOL
 
-# make runnable
 chmod +x "$tester_file_name"
 
 # open for edit
