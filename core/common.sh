@@ -494,7 +494,7 @@ gr.ask () {
         echo
     fi
 
-    if [[ $_comment ]] || [[ $_answer == c ]]; then
+    if [[ $_answer == c ]]; then
         read -p "comment: " _comment_ans
         gr.msg -v3 -c white "$_comment_ans"
         echo $_comment_ans >/tmp/$USER/ask.comment

@@ -113,6 +113,7 @@ corsair.help () {
     gr.msg -v2 "                                   set f1 to blink red and blue second interval "
     gr.msg -v2 "                                   for 10 seconds and leave green when exit"
     gr.msg -v0 "For more detailed help, increase verbose with option" -V2
+    return 21
 }
 
 corsair.keytable () {

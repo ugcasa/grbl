@@ -13,24 +13,24 @@ GRBL_VERBOSE=2
 
 # module location
 if [[ -f "../core/$module.sh" ]] ; then
-        module_to_test="../core/$module.sh"
-    elif [[ -f "../modules/$module.sh" ]] ; then
-        module_to_test="../modules/$module.sh"
-    elif [[ -f "$GRBL_BIN/$module.sh" ]] ; then
-        module_to_test="$GRBL_BIN/$module.sh"
-    else
-        gr.msg -c yellow "no module '$module' found in any location"
-        exit 12
-    fi
+    module_to_test="../core/$module.sh"
+elif [[ -f "../modules/$module.sh" ]] ; then
+    module_to_test="../modules/$module.sh"
+elif [[ -f "$GRBL_BIN/$module.sh" ]] ; then
+    module_to_test="$GRBL_BIN/$module.sh"
+else
+    gr.msg -c yellow "no module '$module' found in any location"
+    exit 12
+fi
 
 gr.msg -c white "generating tester for $module_to_test"
 # only if space is left between function name and "()" TEST space removed!
 functions_to_test=($(cat $module_to_test | grep " ()"  | grep -v "#" |cut -f1 -d " "))
 # TODO TEST better: functions_to_test=($(grep $module_to_test -e " ()"  | grep -v "#" | cut -f1 -d " "))
-tester_file_name="test-""$module"".sh"
+tester_file_name="test-${module}.sh"
 
-gr.msg -v3 -c blue "module: $module_to_test"
-gr.msg -v3 -c blue "output: $tester_file_name"
+gr.varlist debug module_to_test tester_file_name
+
 gr.msg "${#functions_to_test[@]} functions to test"
 
 # check if tester exist
@@ -61,6 +61,8 @@ gr.msg -v3 -e1 "initial conditions not written"
 testNr=1
 results=()
 results[0]="result:function:arguments:return:note"
+comment=
+case_number=0
 
 runf () {
 # result pass/fail handler
@@ -69,6 +71,7 @@ runf () {
     local manualMsg=()
     local passCond=0
     local function=
+    local comment=
 
     # getop or getops cannot get string arguments for options, therefore following..
     local m=
@@ -81,6 +84,10 @@ runf () {
                 ;;
             -p) p=true
                 m=
+                continue
+                ;;
+            -s)
+                summary=true
                 continue
                 ;;
         esac
@@ -107,11 +114,12 @@ runf () {
     returnValue=\$?
 
     [[ -f /tmp/\$USER/ask.comment ]] && rm /tmp/\$USER/ask.comment
+
     if [[ \$manualMsg ]]; then
-        if gr.ask "\${manualMsg[@]}"; then
+        if gr.ask -c "\${manualMsg[@]}"; then
             reurnValue=0
         else
-            local comment=\$(cat /tmp/\$USER/ask.comment)
+            comment=\$(cat /tmp/\$USER/ask.comment)
             if [[ \$comment ]]; then
                 returnValue=254
             else
@@ -121,30 +129,70 @@ runf () {
     fi
 
     gr.msg -n -h "Result of test \$testNr: "
+
+    # 0 as expected
     if [[ \$returnValue -eq \$passCond ]]; then
         gr.msg -c green "PASSED"
-        results[\$testNr]="p:\$function:\${arguments[@]}:\$returnValue:clean result"
+        results[\$testNr]="\$case_number;p;\$function;\${arguments[@]};\$passCond;\$returnValue;clean return"
 
-    elif [[ \$returnValue -gt 1 ]] && [[ \$returnValue -lt 9 ]]; then
-        gr.msg -e1 "WARNING"
-        results[\$testNr]="w:\$function:\${arguments[@]}:\$returnValue:warning"
+    # 1 boolean delivery bit
+    elif [[ \$returnValue -eq 1 ]]; then
+        # before return code review, assume fail
+        #gr.msg -c pass "PASSED"
+        #results[\$testNr]="\$case_number;p;\$function;\${arguments[@]};\$passCond;\$returnValue;boolean level return"
+        gr.msg -c -e2 "FAILED"
+        results[\$testNr]="\$case_number;f;\$function;\${arguments[@]};\$passCond;\$returnValue;boolean level return"
 
+    # 2-9 status delivery level dows not cause fails
+    # TODO this does not apply in many modules!
+    elif [[ \$returnValue -lt 9 ]]; then
+        # before return code review, assume fail
+        #gr.msg -c -e1 "PASSED"
+        #results[\$testNr]="\$case_number;w;\$function;\${arguments[@]};\$passCond;\$returnValue;delivery level return"
+        gr.msg -c fail "FAILED"
+        results[\$testNr]="\$case_number;f;\$function;\${arguments[@]};\$passCond;\$returnValue;delivery level return"
+
+    # 10-100 are warnings
+    # TODO this does not apply in many modules!
+    elif [[ \$returnValue -gt 10 ]] && [[ \$returnValue -lt 100 ]]; then
+        # before return code review, assume fail
+        #gr.msg -e2 "PASSED"
+        #results[\$testNr]="\$case_number;w;\$function;\${arguments[@]};\$passCond;\$returnValue;warning level return"
+        gr.msg -c fail "FAILED"
+        results[\$testNr]="\$case_number;f;\$function;\${arguments[@]};\$passCond;\$returnValue;warning level return"
+
+    # 100-126 are core errors
+    # TODO this does not apply in any core exits!
+    elif [[ \$returnValue -gt 100 ]] && [[ \$returnValue -lt 127 ]]; then
+        gr.msg -c fail "FAILED"
+        results[\$testNr]="\$case_number;f;\$function;\${arguments[@]};\$passCond;\$returnValue;core error code"
+
+    # 127 no case error
     elif [[ \$returnValue -eq 127 ]]; then
-        gr.msg -e2 "NO RESULT"
-        results[\$testNr]="e:\$function:\${arguments[@]}:\$returnValue:non existing, check case"
+        gr.msg -h "NO RESULT"
+        results[\$testNr]="\$case_number;e;\$function;\${arguments[@]};\$passCond;\$returnValue;non existing, check case"
 
+    # 127-199 are module errors
+    elif [[ \$returnValue -gt 127 ]] && [[ \$returnValue -lt 200 ]]; then
+        gr.msg -c fail "FAILED"
+        results[\$testNr]="\$case_number;f;\$function;\${arguments[@]};\$passCond;\$returnValue;module error"
+
+    # 200 - 254 reserved
+
+    # 254 tester failes with comment
     elif [[ \$returnValue -eq 254 ]]; then
         gr.msg -n -c fail "FAILED"
-        gr.msg -e1 " with comment"
-        results[\$testNr]="c:\$function:\${arguments[@]}:\$returnValue:\$comment"
+        gr.msg -e0 " with comment \$comment"
+        results[\$testNr]="\$case_number;c;\$function;\${arguments[@]};\$passCond;\$returnValue;tester: '\$comment'"
 
-    elif [[ \$returnValue -gt 99 ]] && [[ \$returnValue -lt 256 ]]; then
-        gr.msg -c fail "FAILED"
-        results[\$testNr]="f:\$function:\${arguments[@]}:\$returnValue:non zero result"
+    # 255 failed by tester
+    elif [[ \$returnValue -eq 255 ]]; then
+        gr.msg -n -c fail "FAILED"
+        results[\$testNr]="\$case_number;c;\$function;\${arguments[@]};\$passCond;\$returnValue;failed by tester "
 
     else
         gr.msg -e1 "NO RESULT"
-        results[\$testNr]="e:\$function:\${arguments[@]}:\$returnValue:error in test case"
+        results[\$testNr]="\$case_number;e;\$function;\${arguments[@]};\$passCond;\$returnValue;error in test case"
     fi
 
     let testNr++
@@ -154,9 +202,10 @@ runc () {
 # run list of cases
 
     local cases=(\$@)
+    local i=1
 
     for case in \${cases[@]}; do
-
+        let i++
         case \$case in
             all)
                 while read case; do
@@ -165,77 +214,115 @@ runc () {
                 ;;
             [1-9]|[1-9][0-9]|[1-9][0-9][0-9])
 
+                case_number=\$case
                 runf \$(head -\$case $module.tc | tail +\$case)
                 ;;
         esac
-
     done
-
     print_results
 }
 
 print_results () {
+# printout summary report
+
+    # no need if only one test case
+    if [[ \${#results[@]} -lt 3 ]] && ! [[ \$summary ]]; then
+        let testNr++
+        return 0
+    fi
 
     local warnings=0
     local passes=0
     local fails=0
     local errors=0
+    local result=0
+    local function=""
+    local arguments=""
+    local returnValue=0
+    local message=""
+    local comment_highlight=
 
-    # echo "\${#results[@]}:\${results[@]}"
-
+    # printout header
     gr.msg -N -h "Results \$(date -d today +\${GRBL_FORMAT_DATE}_\${GRBL_FORMAT_TIME})"
+
+    # go through result array
     for (( i = 1; i < \${#results[@]}; i++ )); do
 
-        gr.msg -n -h -w 4 "\$i: "
-        case \$(cut -d ':' -f 1 <<<\${results[\$i]}) in
+        # read results array
+        local caseNr=\$(cut -d ';' -f 1 <<<\${results[\$i]})
+        local result=\$(cut -d ';' -f 2 <<<\${results[\$i]})
+        local function=\$(cut -d ';' -f 3 <<<\${results[\$i]})
+        local arguments=\$(cut -d ';' -f 4 <<<\${results[\$i]})
+        local passCond=\$(cut -d ';' -f 5 <<<\${results[\$i]})
+        local returnValue=\$(cut -d ';' -f 6 <<<\${results[\$i]})
+        local message=\$(cut -d ';' -f 7 <<<\${results[\$i]})
+
+        # printing test line starting with number
+        gr.msg -n -h -w 4 "\$i"
+        gr.msg -n -c white -w 6 "[\$caseNr]"
+
+        # printing result to line
+        case \$result in
             p)
                 gr.msg -w 10 -n -c green "PASSED "
-                gr.msg -w 15 -n -c light_blue "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
-                gr.msg -w 35 -n -c gray "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
-                gr.msg -w 35 -n -c white "\$(cut -d ':' -f 5 <<<\${results[\$i]}) "
-                gr.msg -w 4 -n -c gray "\$(cut -d ':' -f 4 <<<\${results[\$i]}) "
                 let passes++
                 ;;
             f)
                 gr.msg -w 10 -n -c fail "FAILED "
-                gr.msg -w 15 -n -c light_blue "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
-                gr.msg -w 35 -n -c gray "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
-                gr.msg -w 35 -n -c white "\$(cut -d ':' -f 5 <<<\${results[\$i]}) "
-                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 4 <<<\${results[\$i]}) "
                 let fails++
                 ;;
             w)
                 gr.msg -w 10 -n -e1 "PASSED "
-                gr.msg -w 15 -n -c light_blue "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
-                gr.msg -w 35 -n -c gray "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
-                gr.msg -w 35 -n -c white "\$(cut -d ':' -f 5 <<<\${results[\$i]}) "
-                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 4 <<<\${results[\$i]}) "
-                let warnings++
                 let passes++
+                let warnings++
                 ;;
             c)
                 gr.msg -w 10 -n -c fail "FAILED "
-                gr.msg -w 15 -n -c light_blue "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
-                gr.msg -w 35 -n -c gray "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
-                gr.msg -w 35 -n -e1 "\$(cut -d ':' -f 5 <<<\${results[\$i]}) "
-                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 4 <<<\${results[\$i]}) "
-                let warnings++
                 let failes++
+                let warnings++
                 ;;
             e|*)
-                gr.msg -w 10 -n -e2 "NO RESULT "
-                gr.msg -w 15 -n -c light_blue "\$(cut -d ':' -f 2 <<<\${results[\$i]}) "
-                gr.msg -w 35 -n -c gray "\$(cut -d ':' -f 3 <<<\${results[\$i]}) "
-                gr.msg -w 35 -n -c white "\$(cut -d ':' -f 5 <<<\${results[\$i]}) "
-                gr.msg -w 4 -n -c grey "\$(cut -d ':' -f 4 <<<\${results[\$i]}) "
+                gr.msg -w 10 -n -e2 "NO-RESULT "
                 let errors++
                 ;;
         esac
-        echo
+
+        # printing data to line
+        gr.msg -w 15 -n -c light_blue "\$function "
+        gr.msg -w 35 -n -c gray "\$arguments "
+
+        local sing color
+
+        if [[ \$passCond -eq \$returnValue ]]; then
+            sing="="
+            c_col=gray
+            s_col=green
+            r_col=gray
+        elif [[ \$passCond -gt \$returnValue ]]; then
+            sing="/"
+            c_col=gray
+            s_col=red
+            r_col=white
+        elif [[ \$passCond -lt \$returnValue ]]; then
+            sing="/"
+            c_col=gray
+            s_col=red
+            r_col=white
+        else
+            sing="/"
+            c_col=white
+            s_col=red
+            r_col=white
+        fi
+
+        gr.msg -n -w3  -c \$c_col "\$passCond"
+        gr.msg -n -w2 -c \$s_col "\$sing"
+        gr.msg -n -w4 -c \$r_col "\$returnValue"
+        gr.msg -c \$r_col "\$message"
 
     done
-    gr.msg -h "Summary: \$passes passed, \$fails fails, \$warnings warnings and \$errors with no result"
-
+    # printing summary
+    gr.msg -N -h "Summary: \$passes passes, \$fails fails, \$warnings warnings and \$errors with no result"
 }
 
 case_parcer () {
@@ -315,7 +402,6 @@ $module.test() {
         all)
         # all tests = all functions in introduction order
         # TODO: remove non wanted functions and check run order.
-
 EOL
 
 # TODO change following to use common error delivery result print
@@ -323,7 +409,7 @@ _i=100
 for _function in "${functions_to_test[@]}" ; do
     test_function_name=${_function//"$module."/"$module.test_"}
     (( _i++ ))
-    printf "\t\t\techo ; $test_function_name"' || _err=("${_err[@]}" "'"$_i"'") \n' >> $tester_file_name
+    printf "\t\t\t\trunf $_function\n" >> $tester_file_name
 done
 
 cat >>$tester_file_name <<EOL
@@ -338,30 +424,18 @@ EOL
 
 # test function processor
 for _function in "${functions_to_test[@]}" ; do
+
     test_function_name=${_function//"$module."/"$module.test_"}
-    gr.msg -v3 -c light_blue "$_function"
-    gr.msg -v3 -c light_green "$test_function_name"
+    gr.varlist debug _function test_function_name
 
     cat >>$tester_file_name <<EOL
 $test_function_name () {
 # function to test $module module function $_function
 
-    local _error=0
-    gr.msg -v0 -c white testing $_function
-
     ## TODO: add pre-conditions here
 
-    $_function ; _error=\$?
-
-    ## TODO: add analysis here and manipulate $_error
-
-    if  ((_error<1)) ; then
-        gr.msg -v0 -c green $_function passed
-        return 0
-    else
-        gr.msg -v0 -c red $_function failed
-        return $_error
-    fi
+    runf $_function
+    return \$?
 }
 
 EOL
@@ -373,7 +447,7 @@ cat >>$tester_file_name <<EOL
 if [[ \${BASH_SOURCE[0]} == \${0} ]]; then
     source \$GRBL_RC
     GRBL_VERBOSE=2
-        $module.test \$@
+    $module.test \$@
 fi
 EOL
 
