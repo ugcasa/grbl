@@ -259,7 +259,7 @@ print_results () {
 
         # printing test line starting with number
         gr.msg -n -h -w 4 "\$i"
-        gr.msg -n -c white -w 6 "[\$caseNr]"
+        gr.msg -n -c white -w 5 "#\$caseNr"
 
         # printing result to line
         case \$result in
