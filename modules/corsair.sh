@@ -985,9 +985,7 @@ corsair.systemd_fix () {
 
         6)
             gr.msg -v1 "re-starting corsair application.. "
-            systemctl --user stop corsair.service
-            system.suspend rm_flag
-            corsair.systemd_start_app
+            corsair.systemd_restart_app
             ;;
 
         7)
@@ -1086,8 +1084,13 @@ corsair.systemd_start_app () {
         gr.msg -c green "ok"
         return 0
     else
-        gr.msg -e1 "failed"
-        return 103
+        gr.msg -v1 -n "restarting.. "
+        if systemctl --user restart corsair.service; then
+            gr.msg -c green "ok"
+        else
+            gr.msg -e1 "failed"
+            return 103
+        fi
     fi
 }
 
@@ -1243,8 +1246,7 @@ corsair.suspend_recovery () {
     [[ $GRBL_CORSAIR_ENABLED ]] || return 0
 
     # restart ckb-next
-    #corsair.systemd_restart
-    corsair.systemd_start_app
+    corsair.systemd_restart_app
 
     # wait corsair to start
     corsair.check_pipe 4
