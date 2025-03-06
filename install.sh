@@ -1,7 +1,7 @@
 #!/bin/bash
 # installer for grbl. ujo.guru casa@ujo.guru 2017-2024
 
-modules_to_install=(onedrive parental phone ai android audio backup cal conda convert corsair display dokuwiki fingrid game mqtt note place print program project radio say scan ssh stamp tag telegram timer tmux tor trans tunnel vol vpn yle youtube)
+modules_to_install=(onedrive spy phone ai android audio backup cal conda convert corsair display dokuwiki fingrid game mqtt note place print program project radio say scan ssh stamp tag telegram timer tmux tor trans tunnel vol vpn yle youtube)
 code_modules=(cheatsheet config counter daemon flag help install keyboard mount net os prompt system uninstall unmount user )
 
 [[ -f $HOME/.grblrc ]] && installed=true || installed=

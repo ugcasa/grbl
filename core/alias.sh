@@ -1,27 +1,61 @@
 #!/bin/bash
+# grbl aliases, run commands without need to grbl or gr
 
-## grbl place for aliases
-# GRBL_* environmental values are in available.
-
-# examples:
-# alias work='grbl timer start'
-# alias lunch='grbl timer end'
+## TODO: from alias.cfg
+## [alias]
+# stopwatch="timer stopwatch"
+# clean=( "convert webp -f"
+#         "convert webm -f"
+#         "place memes -f"
+#         "place mime move -f")
+# echo ${clean[2]}
+## TODO main,add, del, status, list, help
 
 alias $GRBL_SYSTEM_ALIAS="$GRBL_CALL"
+alias active="$GRBL_CALL active"
+alias backup="$GRBL_CALL backup"
+alias countdown="$GRBL_CALL timer countdown"
+alias mqtt="$GRBL_CALL mqtt"
+alias notes="$GRBL_CALL note"
+alias radio="$GRBL_CALL audio radio"
+alias kb="$GRBL_CALL corsair"
+alias speak="$GRBL_CALL say"
+alias stopwatch="$GRBL_CALL timer stopwatch"
 alias tube="$GRBL_CALL youtube"
 alias tubes="$GRBL_CALL youtube search"
-alias stopwatch="$GRBL_CALL timer stopwatch"
-alias countdown="$GRBL_CALL timer countdown"
-alias vartti="$GRBL_CALL timer countdown 15 m"
-alias puolituntia="$GRBL_CALL timer countdown 30 m"
-alias tunti="$GRBL_CALL timer countdown 60 m"
+alias tunel="$GRBL_CALL tunnel"
+alias status="$GRBL_CALL status"
+alias spy="$GRBL_CALL spy monitor firefox"
 
 
-## place for simple functions used as aliases
-# freedom from 'grbl' or 'gr.' prefixes
+connect () {
+    $GRBL_CALL mount $@
+    #$GRBL_CALL tunnel
+}
+
+cloud () {
+    $GRBL_CALL onedrive mount
+    #$GRBL_CALL dropbox start
+    $GRBL_CALL mount
+}
+
+clean () {
+    $GRBL_CALL convert webp -f
+    $GRBL_CALL convert webm -f
+    $GRBL_CALL place memes -f
+    $GRBL_CALL place mime move -f
+}
+
+disconnect () {
+# connect to mountpoint
+    $GRBL_CALL daemon stop
+    $GRBL_CALL tunnel close all
+    $GRBL_CALL unmount all
+    $GRBL_CALL status
+}
 
 google () {
-    # open google search in browser, query as argument
+# open google search in browser, query as argument
     local url=https://www.google.com/search?q="$(sed 's/ /%20/g' <<< ${@})"
     case $GRBL_PREFERRED_BROWSER in
         firefox|chromium)
@@ -37,45 +71,4 @@ google () {
     return $?
 }
 
-
-backup () {
-	grbl backup daily
-}
-
-
-play () {
-
-    case $1 in
-            perttu)
-                grbl audio play list perttu
-            ;;
-            pasila)
-                grbl audio play list pasila
-            ;;
-            "")
-                grbl audio play list liimatta
-            ;;
-            *)
-                grbl audio play list $@
-        esac
-
-}
-
-
-listen () {
-
-    case $1 in
-            rock)
-                grbl audio listen rock
-            ;;
-            puhe)
-                grbl audio listen yle puhe
-            ;;
-            "")
-                grbl audio listen yle puhe
-            ;;
-            *)
-                grbl audio listen $@
-        esac
-}
 

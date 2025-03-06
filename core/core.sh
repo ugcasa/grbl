@@ -218,6 +218,37 @@ core.active () {
 core.status () {
 # simple status check
 
+
+    local modules=($@)
+
+    # get module status
+    if [[ ${modules[0]} ]]; then
+
+        for module in ${modules[@]}; do
+            # get module status for all
+            if [[ $module == "all" ]]; then
+                for mod in ${GRBL_MODULES[@]}; do
+                    source $mod.sh
+                    $mod.status
+                done
+                return 0
+            fi
+
+            # for given modulename
+            if [[ "${GRBL_MODULES[@]}" =~ " $module " ]]; then
+                source $module.sh
+                $module.status
+                continue
+            else
+                gr.msg -e1 "no sutch module '$module'"
+                continue
+            fi
+
+        done
+        return 0
+    fi
+
+    # else core status
     gr.msg -t -n "${FUNCNAME[0]}: "
     gr.msg -n -c white "v$GRBL_VERSION $GRBL_VERSION_NAME installed "
 
@@ -227,9 +258,9 @@ core.status () {
     gr.msg -c dark_gold -k 'r' >/dev/null
 
     if core.online ; then
-        gr.msg -c aqua "connected "
+        gr.msg -c aqua "connected " -k caps
     else
-        gr.msg -v1 -c black "offline " -k $GRBL_MPLAB_INDICATOR_KEY
+        gr.msg -v1 -c black "offline " -k caps
     fi
 }
 
