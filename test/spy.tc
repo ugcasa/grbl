@@ -1,0 +1,5 @@
+main non-valid-input -p 2
+main help -p 0
+rc -p 0
+make_rc -p 0
+main status -p 0 -m Should output module status information

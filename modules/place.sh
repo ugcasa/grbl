@@ -134,13 +134,14 @@ place.mime () {
     # collect files from
         ifs=$IFS
         IFS=$'\n'
-        file_list=($(file -i -h -r * | grep -v inode/directory | tr -s " "))
+        file_list=($(file -i -h -r $PWD/*  | grep -v inode/directory | tr -s " "))
         gr.debug "$FUNCNAME file_list: ${file_list[@]})"
         IFS=$ifs
         # get filenames and mime types to arrows
         for (( i = 0; i < ${#file_list[@]}; i++ )); do
-            file_names+=("$(echo ${file_list[$i]} | cut -d':' -f1)")
-            mime_types+=("$(echo ${file_list[$i]} | cut -d':' -f2 | cut -d';' -f1 | xargs)")
+            file_paths="$(cut -d':' -f1 <<<${file_list[$i]})"
+            file_names+=( "${file_paths##*/}" )
+            mime_types+=( "$(echo ${file_list[$i]} | cut -d':' -f2 | cut -d';' -f1 | xargs)" )
         done
         file_count=$i
 
@@ -202,12 +203,18 @@ place.mime () {
     mime.list () {
     # printout file lists and ask user to continue before copying
         local files=
-
+        local color=(list aqua_marine)
+        local c=0
         for (( i = 0; i < ${#type_list[@]}; i++ )); do
             files=$(eval echo '${#'${type_list[$i]}'[@]}')
             if [[ $files -gt 0 ]] ; then
                 gr.msg -n -v1 -c white "${type_list[$i]} ($files) >${dest_list[$i]}: "
-                gr.msg  -c list "$(eval echo '${'${type_list[$i]}'[@]}') "
+                for (( ii = 0; ii < $files; ii++ )); do
+                    item=$(eval echo '${'${type_list[$i]}'['$ii']}')
+                    gr.msg -n -c ${color[$(( $c & 1 ))]} "$item "
+                    let c++
+                done
+                echo
                 sorted_files=$(($sorted_files + $files))
             fi
         done
@@ -298,7 +305,7 @@ place.mime () {
         move|mv|all)
             mime.config || return $?
             mime.given_list $@ || return $?
-            gr.ask "move all types of files?" || return 0
+            [[ $GRBL_FORCE ]] || gr.ask "move all types of files?" || return 0
             mime.sort || return $?
             mime.move
             ;;
