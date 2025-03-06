@@ -62,13 +62,15 @@ modulename.help () {
     #: options section
     #: avoid using '-' character in first letter with gr.msg, otherwise it is read as gr.msg option'
     gr.msg -v2 "Options:" -c white
-    gr.msg -v2 "  o                 say 'ooo-o'"
+    gr.msg -v2 "  -v 1..4             set module verbose level"
+    gr.msg -v2 "  -d                  set module to debug mode"
     gr.msg -v4
     gr.msg -v4 " when module called trough GRBL core.sh module options are given with double hyphen '--'"
     gr.msg -v4 " and bypassed by GRBL core.sh witch removes one hyphen to avoid collision with core.sh options. "
     gr.msg -v3
     #: mainly for people who writes GRBL modules
     gr.msg -v3 "Internal functions: " -c white
+    gr.msg -v3
     gr.msg -v3 " Following functions can be used when this file is sourced by command: 'source modulename.sh' "
     gr.msg -v3 " Any of external 'commands' are available after sourcing by name 'modulename.<function> arguments -options' "
     gr.msg -v3
@@ -113,9 +115,6 @@ modulename.main () {
     #: remember to shift command out of argument list '$@' after reading it to variable
     local _first="$1"
     shift
-
-    gr.debug "option -a: $_op_a"
-    gr.debug "option -o: $_op_o"
 
     #: process first command given by user.
     #: to add other level of commands make another command parser function named by first command
@@ -257,7 +256,7 @@ modulename.option() {
     # process module options
     [[ $GRBL_DEBUG ]] && gr.msg -n -c $__modulename_color "$__modulename [$LINENO] $FUNCNAME: ">&2; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # DEBUG
 
-    local options=$(getopt -l "open;auto:;debug;verbose:" -o "doa:v:" -a -- "$@")
+    local options=$(getopt -l "debug;verbose:" -o "dv:" -a -- "$@")
 
     if [[ $? -ne 0 ]]; then
         echo "option error"
@@ -274,14 +273,6 @@ modulename.option() {
                 ;;
             -v|verbose)
                 GRBL_VERBOSE=$2
-                shift 2
-                ;;
-            -o|open)
-                _op_o=true
-                shift
-                ;;
-            -a|auto)
-                _op_a="$2"
                 shift 2
                 ;;
             --)

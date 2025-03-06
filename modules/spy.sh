@@ -29,13 +29,22 @@ spy.help () {
     gr.msg -v1 " uninstall            remove required software: ${spy_require[@]}"
     gr.msg -v1 " help                 get more detailed help by increasing verbose level '$GRBL_CALL spy -v2' "
     gr.msg -v2
-    gr.msg -v2 "Options:" -c white
-    gr.msg -v2 "  o                 say 'ooo-o'"
-    gr.msg -v4
-    gr.msg -v4 " when module called trough GRBL core.sh module options are given with double hyphen '--'"
-    gr.msg -v4 " and bypassed by GRBL core.sh witch removes one hyphen to avoid collision with core.sh options. "
+    gr.msg -v3 "Options:" -c white
+    gr.msg -v3 "  o                 say 'ooo-o'"
     gr.msg -v3
+    gr.msg -v2 "Attack functions " -c white
+    gr.msg -v2
+    gr.msg -v2 " spy.infect             infect target service "
+    gr.msg -v2 "   <service> <target>   service = program on target"
+    gr.msg -v2 " spy.monitor            monitor varies services "
+    gr.msg -v2 "   <service> <target>   service = program on target"
+    gr.msg -v2 " spy.wait_remote        wait target to answer ping "
+    gr.msg -v2 " spy.check_firefox      check is script installed to target"
+    gr.msg -v2 " spy.monitor_firefox    monitor firefox sites on target device "
+    gr.msg -v2 " spy.infect_firefox     copy monitoring scripts to target system"
+    gr.msg -v2
     gr.msg -v3 "Basic functions: " -c white
+    gr.msg -v3
     gr.msg -v3 " Following functions can be used when this file is sourced by command: 'source spy.sh' "
     gr.msg -v3 " Any of external 'commands' are available after sourcing by name 'spy.<function> arguments -options' "
     gr.msg -v3
@@ -61,18 +70,9 @@ spy.help () {
     gr.msg -v3 " spy.stop           daemon interface: things needed to do when daemon request module to stop "
     gr.msg -v3 " spy.status         one line status printout "
     gr.msg -v3
-    gr.msg -v2 " Attack functions " -c white
-    gr.msg -v2
-    gr.msg -v2 " spy.infect             infect target service "
-    gr.msg -v2 "   <service> <target>   service = program on target device"
-    gr.msg -v2 " spy.monitor            monitor varies services "
-    gr.msg -v2 "   <service> <target>   service = program on target device"
-    gr.msg -v2 " spy.wait_remote        wait target to answer ping "
-    gr.msg -v2 " spy.monitor_firefox    listen firefox sites "
-    gr.msg -v2 " spy.infect_firefox     copy monitoring scripts to target system"
-    gr.msg -v2
     gr.msg -v2 "Examples:" -c white
-    gr.msg -v2 "  $GRBL_CALL spy infect firefox localhost   # copy firefox scripts to localhost "
+    gr.msg -v2
+    gr.msg -v2 "  $GRBL_CALL spy infect firefox localhost    # copy firefox scripts to localhost "
     gr.msg -v2 "  $GRBL_CALL spy monitor firefox localhost   # monitor local firefox session "
     gr.msg -v2
 }
@@ -133,6 +133,7 @@ spy.check_known () {
 }
 
 spy.monitor () {
+# monitor some service on target device
 
     local _first="$1"
     shift
@@ -155,6 +156,7 @@ spy.monitor () {
 }
 
 spy.infect () {
+# copy spying scripts to target device
 
     local _first="$1"
     shift
@@ -176,8 +178,7 @@ spy.infect () {
 }
 
 spy.wait_remote () {
-# Wait till
-    #gr.msg -v2 "waiting $_target to answer"
+# wait target to answer
 
     local _target=$1
 
@@ -196,6 +197,7 @@ spy.wait_remote () {
 }
 
 spy.monitor_firefox () {
+# monitor firefox sites
 
     local _target=$1
 
@@ -210,6 +212,7 @@ spy.monitor_firefox () {
 }
 
 spy.check_firefox () {
+# check is script already installed to target
 
     local _target=$1
 
@@ -223,6 +226,7 @@ spy.check_firefox () {
 }
 
 spy.infect_firefox () {
+# copy firefox spying script to target device
 
     local _target=$1
 
