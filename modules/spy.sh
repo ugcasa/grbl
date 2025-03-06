@@ -29,10 +29,14 @@ spy.help () {
     gr.msg -v1 " uninstall            remove required software: ${spy_require[@]}"
     gr.msg -v1 " help                 get more detailed help by increasing verbose level '$GRBL_CALL spy -v2' "
     gr.msg -v2
-    gr.msg -v3 "Options:" -c white
-    gr.msg -v3 "  o                 say 'ooo-o'"
-    gr.msg -v3
+    gr.msg -v2 "Options:" -c white
+    gr.msg -v2 "  -v 1..4             set module verbose level"
+    gr.msg -v2 "  -d                  set module to debug mode"
+    gr.msg -v2
     gr.msg -v2 "Attack functions " -c white
+    gr.msg -v2
+    gr.msg -v2 " Following functions can be used when this file is sourced by command: 'source spy.sh' "
+    gr.msg -v2 " Any of external 'commands' are available after sourcing by name 'spy.<function> arguments' "
     gr.msg -v2
     gr.msg -v2 " spy.infect             infect target service "
     gr.msg -v2 "   <service> <target>   service = program on target"
@@ -44,9 +48,6 @@ spy.help () {
     gr.msg -v2 " spy.infect_firefox     copy monitoring scripts to target system"
     gr.msg -v2
     gr.msg -v3 "Basic functions: " -c white
-    gr.msg -v3
-    gr.msg -v3 " Following functions can be used when this file is sourced by command: 'source spy.sh' "
-    gr.msg -v3 " Any of external 'commands' are available after sourcing by name 'spy.<function> arguments -options' "
     gr.msg -v3
     gr.msg -v3 " spy.main           main command parser "
     gr.msg -v3 " spy.check          check all is fine, return 0 or error number "
@@ -359,7 +360,7 @@ spy.option() {
     # process module options
     [[ $GRBL_DEBUG ]] && gr.msg -n -c $__spy_color "$__spy [$LINENO] $FUNCNAME: ">&2; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # DEBUG
 
-    local options=$(getopt -l "open;auto:;debug;verbose:" -o "doa:v:" -a -- "$@")
+    local options=$(getopt -l "debug;verbose:" -o "d:v:" -a -- "$@")
 
     if [[ $? -ne 0 ]]; then
         echo "option error"
@@ -376,14 +377,6 @@ spy.option() {
                 ;;
             -v|verbose)
                 GRBL_VERBOSE=$2
-                shift 2
-                ;;
-            -o|open)
-                _op_o=true
-                shift
-                ;;
-            -a|auto)
-                _op_a="$2"
                 shift 2
                 ;;
             --)
