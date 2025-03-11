@@ -27,10 +27,16 @@ alias tunel="$GRBL_CALL tunnel"
 alias status="$GRBL_CALL status"
 alias spy="$GRBL_CALL spy monitor firefox"
 
+alias con="connect"
+alias rel="release"
 
 connect () {
     $GRBL_CALL mount $@
     #$GRBL_CALL tunnel
+}
+
+release () {
+    $GRBL_CALL unmount $@
 }
 
 cloud () {

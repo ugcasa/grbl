@@ -40,12 +40,12 @@ mount.main () {
 
     case "$command" in
 
-            help|ls|info|check|mounted|poll|status|start|stop|install|uninstall|available|mounted|online|config)
+            help|ls|info|check|mounted|poll|status|start|stop|install|uninstall|mounted|online|config)
                 mount.$command $@
                 _error=$?
                 ;;
 
-            list)
+            list|avail*)
                 mount.available $@
                 _error=$?
                 ;;
@@ -92,6 +92,9 @@ mount.main () {
                 elif echo ${all_list[@]} | grep -q -w "$command" ; then
                     gr.debug "found in all list"
                     mount.known_remote $command $@
+                # check is list named as user input
+                elif [[ $(eval echo '${GRBL_MOUNT_'${command^^}'_LIST[@]^^}') ]]; then
+                    mount.listed $command
                 else
                     gr.debug "trying to mount location defined in other module configuration"
                     mount.known_remote $command $@
@@ -125,6 +128,14 @@ mount.rc () {
             cut -d '=' -f1))
             all_list=(${all_list[@],,})
     gr.debug "all_list:(${all_list[@]})"
+
+    # declare -g list_list=($(\
+    #     grep "export GRBL_MOUNT_" $mount_rc | \
+    #     grep -e '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
+    #     sed 's/^.*MOUNT_//' | \
+    #     cut -d '=' -f1))
+    #     list_list=(${list_list[@],,})
+    # gr.debug "list_list:(${list_list[@]})"
 }
 
 mount.make_rc () {
@@ -305,7 +316,7 @@ mount.check () {
 
         */.*)
             [[ $_online ]] \
-                && color=hot_pink \
+                && color=black \
                 || color=null
             ;;
 
@@ -448,7 +459,13 @@ mount.available () {
 # printout list of available mount points
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
-    gr.msg -c light_blue "${all_list[@]}"
+    for _mount_point in ${all_list[@]} ; do
+        _target=$(eval echo '${GRBL_MOUNT_'"${_mount_point^^}[0]}")
+        mount.check $_target && _online=1 || _online=
+    done
+    echo
+
+    # gr.msg -c light_blue "${all_list[@]}"
     return 0
 }
 

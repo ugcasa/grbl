@@ -45,7 +45,7 @@ unmount.main () {
         all)
             gr.end $GRBL_MOUNT_INDICATOR_KEY
             unmount.all
-            mount.status quiet
+            # mount.status quiet
             ;;
 
         ls|defaults|status|help|status)
@@ -55,37 +55,41 @@ unmount.main () {
        "")
             gr.end $GRBL_MOUNT_INDICATOR_KEY
             unmount.defaults
-            mount.status quiet
+            # mount.status quiet
             return $?
             ;;
        *)
 
             gr.end $GRBL_MOUNT_INDICATOR_KEY
             if echo ${GRBL_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$argument" ; then
-                    gr.msg -v3 -c green "found in defauls list"
-                    unmount.known_remote $argument $@
+                gr.msg -v3 -c green "found in defauls list"
+                unmount.known_remote $argument $@
 
-                elif echo ${all_list[@]} | grep -q -w "$argument" ; then
-                    gr.msg -v3 -c green "found in all list"
-                    unmount.known_remote $argument $@
+            elif echo ${all_list[@]} | grep -q -w "$argument" ; then
+                gr.msg -v3 -c green "found in all list"
+                unmount.known_remote $argument $@
 
-                elif echo ${mounted_list[@]} | grep -q -w "$argument" ; then
-                    gr.msg -v3 -c green "found mounted list"
+            # check is there list named as user input
+            elif [[ $(eval echo '${GRBL_MOUNT_'${argument^^}'_LIST[@]^^}') ]]; then
+                unmount.listed $command
 
-                    local val=
-                    for val in ${mounted_list[@]}; do
-                       if echo $val | grep -q -w $argument ; then
-                            # gr.msg -v3 -c yellow "mountpoint: $val"
-                            unmount.remote $mount_point $val
-                        fi
-                    done
+            elif echo ${mounted_list[@]} | grep -q -w "$argument" ; then
+                gr.msg -v3 -c green "found mounted list"
 
-                else
-                    gr.debug "trying to mount location defined in other module configuration"
-                    unmount.known_remote $argument $@
-                fi
-                source mount.sh
-                mount.status quiet
+                local val=
+                for val in ${mounted_list[@]}; do
+                   if echo $val | grep -q -w $argument ; then
+                        # gr.msg -v3 -c yellow "mountpoint: $val"
+                        unmount.remote $mount_point $val
+                    fi
+                done
+
+            else
+                gr.debug "trying to mount location defined in other module configuration"
+                unmount.known_remote $argument $@
+            fi
+            source mount.sh
+            # mount.status quiet
     esac
 }
 
@@ -260,18 +264,36 @@ unmount.remote () {
 }
 
 
+unmount.listed () {
+# unmount all local/cloud pairs defined in userrc
+
+    local list_name=$1
+    local _error=()
+    local _unmount_list=($(eval echo '${GRBL_MOUNT_'${list_name^^}'_LIST[@]^^}'))
+
+    if [[ $_unmount_list ]] ; then
+        # gr.debug "$FUNCNAME: _unmount_list: ${_unmount_list[@]}"
+        true
+    else
+        gr.msg -e0 "$FUNCNAME: no list"
+        return 1
+    fi
+
+    for _item in "${_unmount_list[@]}" ; do
+        _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
+        if ! [[ $_target ]] ; then
+            gr.msg -e0 "<empty>"
+        fi
+        unmount.remote "$_target" || _error+=$?
+    done
+
+    return ${_error[0]}
+}
+
 unmount.defaults () {
 # unmount all local/cloud pairs defined in userrc
 
     local _unmount_list=(${GRBL_MOUNT_DEFAULT_LIST[@]^^})
-
-    # fill default list if not set in user configuration
-    # [[ $_unmount_list ]] || _unmount_list=($(\
-    #         cat $GRBL_RC | \
-    #         grep 'GRBL_MOUNT_' | \
-    #         grep -v "DEFAULT_LIST" | \
-    #         sed 's/^.*MOUNT_//' | \
-    #         cut -d '=' -f1))
 
     [[ "$1" ]] && _unmount_list=(${1[@]})
 
@@ -290,7 +312,6 @@ unmount.defaults () {
     done
 
     return $_error
-
 }
 
 
