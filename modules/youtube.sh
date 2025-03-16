@@ -570,9 +570,9 @@ youtube.search () {
                 else
                     save_to_file=true
                     todo="to download"
-                    if [[ $optimization == "video" ]] ; then
-                        gr.ask "convert to webm files to mp4 format?" && mp4=true || mp4=
-                    fi
+                    # if [[ $optimization == "video" ]] ; then
+                    #     gr.ask "convert to webm files to mp4 format?" && mp4=true || mp4=
+                    # fi
                 fi
                 gr.msg "selected $todo"
                 continue
@@ -892,23 +892,243 @@ youtube.search_list () {
 youtube.get_media () {
 # download videos from tube by youtube id
 
-    id=$1
-    url_base="https://www.youtube.com/watch?v"
+    local input=$1
+    local url_base="https://www.youtube.com/watch?v"
+    local url=
+    local filename=
+    local save_location=$(pwd)
+    local resolution=
+    local quality="-f best"
+    local color=gray
+    local audio=
+    local selected=
 
     # check is installed
-    yt-dlp --version || youtube.install
+    yt-dlp --version >/dev/null || youtube.install
 
     # source mount module and mount video file folder in cloud
-    source mount.sh
-    mount.main video
+    if [[ $GRBL_VERBOSE -gt 0 ]] && gr.ask "download to videos to server?"; then
+        source mount.sh
+        mount.main videos
+        save_location=$GRBL_MOUNT_VIDEOS
+    fi
 
-    [[ -d $data_location ]] || mkdir -p $GRBL_MOUNT_VIDEO
+    gr.msg -v1 "saving to $save_location.."
+    # [[ -d $save_location ]] || mkdir -p $GRBL_MOUNT_VIDEOS
 
-    gr.msg -c white "downloading $url_base=$id to $GRBL_MOUNT_VIDEO.. "
-    yt-dlp --ignore-errors --continue --no-overwrites \
-           --output "$GRBL_MOUNT_VIDEO/%(title)s.%(ext)s" \
-           "$url_base=$id"
-    return $?
+    if [[ $input == "https:"* ]]; then
+        # input is url
+        url="$input"
+    else
+        # input is video id
+        url="$url_base=$input"
+    fi
+
+    ## Select video
+    ifs=$IFS
+    IFS=$'\n'
+    list=( $(yt-dlp -F $url 2>/dev/null) )
+
+    # for (( i = 0; i < ${#list[@]}; i++ )); do
+    #     if echo ${list[$i]} | grep -q "video only"; then
+    #         video_list+=(${list[$i]})
+    #     elif echo ${list[$i]} | grep -q "audio only"; then
+    #         audio_list+=(${list[$i]})
+    #     fi
+
+    # done
+    video_list=( $(yt-dlp -F $url 2>/dev/null | grep -e "ID" -e "video only") )
+
+    IFS=$ifs
+
+    gr.msg -h "#   ${video_list[0]}"
+    for (( i = 1; i < ${#video_list[@]}; i++ )); do
+        color=list
+        gr.msg -n -h -w 4 "$i:"
+        # x="$(echo ${list[$i]} | cut -d " " -f6 | cut -d "x" -f1)"
+        # if [[ $x -le 128 ]] ; then  color=dark_grey
+        # elif [[ $x -gt 128 ]] && [[ $x -lt 640 ]] ; then color=list
+        # elif [[ $x -ge 640  ]] && [[ $x -lt 854 ]] ; then color=green
+        # elif [[ $x -ge 854  ]] && [[ $x -lt 1280 ]] ; then color=lime
+        # elif [[ $x -ge 1280  ]] && [[ $x -lt 1920 ]] ; then color=yellow
+        # elif [[ $x -ge 1920  ]] && [[ $x -lt 3840 ]] ; then color=orange
+        # elif [[ $x -ge 3840 ]]; then color=red
+        # fi
+
+        size="$(echo ${video_list[$i]} | cut -d " " -f6 | cut -d "x" -f1)"
+        [[ $size == '~' ]] && size="$(echo ${video_list[$i]} | cut -d " " -f7 | cut -d "x" -f1)"
+        size=${size//'~'/}
+        size=${size/'iB'/}
+        case $size in
+            *K)
+                size=${size/'K'/}
+                size=${size%%.*}
+                color=black
+                ;;
+            *M)
+                size=${size/'M'/}
+                size=${size%%.*}
+                if [[ $size -lt 5 ]] ; then  color=dark_gray
+                elif [[ $size -ge 5 ]] && [[ $size -lt 10 ]] ; then color=gray
+                elif [[ $size -ge 10  ]] && [[ $size -lt 30 ]] ; then color=green
+                elif [[ $size -ge 30  ]] && [[ $size -lt 50 ]] ; then color=white
+                elif [[ $size -ge 50  ]] && [[ $size -lt 100 ]] ; then color=lime
+                elif [[ $size -ge 100  ]] && [[ $size -lt 300 ]] ; then color=yellow
+                elif [[ $size -ge 300  ]] && [[ $size -lt 500 ]] ; then color=orange
+                elif [[ $size -ge 500  ]] && [[ $size -lt 999 ]] ; then color=red
+                fi
+                ;;
+            *G)
+                size=${size/'G'/}
+                size=${size%%.*}
+                color=deep_pink
+                ;;
+            # *T)
+            #     size=${size/'T'/}
+            #     color=black
+            #     ;;
+        esac
+
+        gr.msg -c $color "${video_list[$i]}"
+    done
+
+    # # clear keyboard buffer
+    while read -e -t 0.1; do : ; done
+
+    while true; do
+        read -p "select video: " ans
+
+        if [[ $ans == "q" ]]; then
+            echo
+            return 12
+        elif [[ $ans == "b" ]] || [[ $ans == "" ]]; then
+            quality="-f $(cut -d " " -f1 <<<${video_list[${#video_list[@]}]})"
+            resolution="$(cut -d " " -f3 <<<${video_list[${#video_list[@]}]})"
+            break
+        elif ! [[ $ans =~ ^[0-9]+$ ]] || [[ $ans -lt 1 ]] || [[ $ans -gt ${#video_list[@]} ]]; then
+            gr.msg -N "please select 1..${#video_list[@]} or 'q' to exit"
+            continue
+        else
+            quality="-f $(cut -d " " -f1 <<<${video_list[$ans]})"
+            resolution="$(cut -d " " -f3 <<<${video_list[$ans]})"
+            v_size="$(echo ${video_list[$ans]} | cut -d " " -f6 | cut -d "x" -f1)"
+            [[ $v_size == '~' ]] && v_size="$(echo ${video_list[$i]} | cut -d " " -f7 | cut -d "x" -f1)"
+            v_size=${v_size//'~'/}
+            break
+        fi
+    done
+
+
+    ## Select audio
+    ifs=$IFS
+    IFS=$'\n' audio_list=( $(yt-dlp -F $url 2>/dev/null | grep -e "ID" -e "audio only" ) )
+    IFS=$ifs
+
+    # clear keyboard buffer
+    while read -e -t 0.1; do : ; done
+
+    while true; do
+
+        gr.msg -h "#   ${audio_list[0]}"
+        for (( i = 1; i < ${#audio_list[@]}; i++ )); do
+            number_color="-h"
+
+            # x="$(echo ${list[$i]} | cut -d " " -f6 | cut -d "x" -f1)"
+            # if [[ $x -le 128 ]] ; then  color=dark_grey
+            # elif [[ $x -gt 128 ]] && [[ $x -lt 640 ]] ; then color=list
+            # elif [[ $x -ge 640  ]] && [[ $x -lt 854 ]] ; then color=green
+            # elif [[ $x -ge 854  ]] && [[ $x -lt 1280 ]] ; then color=lime
+            # elif [[ $x -ge 1280  ]] && [[ $x -lt 1920 ]] ; then color=yellow
+            # elif [[ $x -ge 1920  ]] && [[ $x -lt 3840 ]] ; then color=orange
+            # elif [[ $x -ge 3840 ]]; then color=red
+            # fi
+            if echo ${audio_list[$i]} | grep -q "unknown" ; then
+                continue
+            elif echo ${audio_list[$i]} | grep -q "en-" ; then
+                color=lime
+            elif echo ${audio_list[$i]} | grep -q "fi-" ; then
+                color=white
+            elif echo ${audio_list[$i]} | grep -q "de-" ; then
+                [[ $list_all ]] || continue
+                color=gray
+                number_color="-c white"
+            else
+                [[ $list_all ]] || continue
+                color=dark_gray
+                number_color="-c gray"
+            fi
+
+
+            gr.msg -n $number_color -w 4 "$i:"
+            gr.msg -c $color "${audio_list[$i]}"
+        done
+
+        read -p "select audio: " ans
+
+        if [[ $ans == "q" ]]; then
+            echo
+            return 12
+        elif [[ $ans == "a" ]]; then
+            [[ $list_all ]] && list_all= || list_all=true
+            continue
+        elif [[ $ans == "b" ]] || [[ $ans == "" ]]; then
+            audio="$(cut -d " " -f1 <<<${audio_list[${#audio_list[@]}]})"
+            a_size="$(echo ${audio_list[${#audio_list[@]}]} | cut -d " " -f6 | cut -d "x" -f1)"
+            break
+        elif ! [[ $ans =~ ^[0-9]+$ ]] || [[ $ans -lt 1 ]] || [[ $ans -gt ${#audio_list[@]} ]]; then
+            gr.msg -N "please select 1..${#audio_list[@]} or 'q' to exit"
+            continue
+        else
+            audio=$(cut -d " " -f1 <<<${audio_list[$ans]})
+            a_size="$(echo ${audio_list[$ans]} | cut -d " " -f7 | cut -d "x" -f1)"
+            break
+        fi
+    done
+
+    local raw_filename=$(yt-dlp $quality --print filename $url 2>/dev/null)
+
+    filename=${raw_filename%%.*}
+    file_ending=${raw_filename##*.}
+    filename=${filename/\＂/-}
+    filename=${filename//\＂/}
+    filename=${filename//\ /_}
+    filename=${filename//'!'/}
+    filename=${filename//'['/}
+    filename=${filename//']'/}
+    filename="${filename}-${resolution}.${file_ending}"
+
+    if [[ -f $filename ]]; then
+        gr.ask "file already downloaded, overwrite?" || return 0
+    fi
+
+    gr.msg -c white "downloading ${url} ${v_size}+${a_size}"
+
+    # combine video and audio selections
+    selected="$quality+$audio"
+
+    if yt-dlp -q --progress --ignore-errors --continue --no-overwrites \
+           --output "${save_location}/${filename}" \
+            $selected "$url" 2>/dev/null
+    then
+        if [[ -f ${save_location}/${filename} ]]; then
+            gr.msg -N -c green "saved to "
+            gr.msg -c white "${save_location}/${filename}"
+        else
+            gr.msg -e1 "error during download"
+        fi
+    else
+        gr.msg -e1 "failed to download"
+    fi
+
+    # if [[ $GRBL_VERBOSE -gt 0 ]] && gr.ask "convert to mp4?"; then
+    #     source convert.sh
+    #     convert.video $save_location/$filename mp4
+    # fi
+
+    # if [[ $GRBL_VERBOSE -gt 0 ]] && gr.ask "convert to mp3?"; then
+    #     source convert.sh
+    #     convert.video $save_location/$filename mp3
+    # fi
 }
 
 
