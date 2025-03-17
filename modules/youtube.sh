@@ -1,6 +1,44 @@
 #!/bin/bash
 # grbl play and get from youtube casa@ujo.guru 2022
 
+# youtube on 80x24 terminal window
+# based on youtube-dl (before), yt-dlp (currently)
+# - no adds (still works)
+# - search and download
+# - colorful menu view
+# - thumbnails (tiv)
+# - scalable on terminal size 80x24 > (240x200)
+# status: demo is functional, enough
+
+# Features (on above)
+# - player gui (mpv) when playing
+# - mpv playtime keyboard ui
+# - pipe option to communicate with
+#  - mpv daemon tools (audio/mpv.sh)
+# - scalable on terminal window
+#   -tip: remove toolbar (gnome terminal)
+#     -scale terminal down
+#     -make long slim window
+#     -set verbose to 3 to enable thumbnails
+#     -scale till numbers are visible
+# - lives in grbl module environment
+# - audio.sh can be used as interface
+#   - now playing (wmctrl)
+#   - audio status
+#   - modules can control others audio feed
+#     - pause and stop and volume (mpv)
+#     - skip list, "the Pause" (exit control)
+# - options
+#   '-video' optimize search for # TODO keywords to cfg
+#   '-audio' optimize search for # TODO keywords to cfg < and walk trough argument "audio"
+#   '-save' call TODO youtube.get_media < +dl get download
+#   '-continue, -loop'
+
+# nice to have
+# - tile view with thumbs
+# - standalone version with git magic
+# - silly rapidness and acronomatis
+
 source flag.sh
 source audio.sh
 
@@ -12,12 +50,12 @@ declare -g continue_to_play=
 # more global variables downstairs (after sourcing rc file)
 
 youtube.help () {
-
+# main help of youtube module
     gr.msg -v1 "grbl youtube help " -h
     gr.msg -v2
-    gr.msg -v0  "usage:    $GRBL_CALL youtube play|get|list|song|search|install|uninstall|help"
+    gr.msg -v0 "Usage:    $GRBL_CALL youtube play|get|list|song|search|install|uninstall|help"
     gr.msg -v2
-    gr.msg -v1 "commands: " -c white
+    gr.msg -v1 "Commands: " -c white
     gr.msg -v2
     gr.msg -v1 "  play <id|url>           play media from stream"
     gr.msg -v1 "  get <ids|url>           download list of media to media folder "
@@ -28,30 +66,75 @@ youtube.help () {
     gr.msg -v1 "  uninstall               remove requirements "
     gr.msg -v1 "  help                    this help window"
     gr.msg -v2
-    gr.msg -v1 "options: " -c white
+    gr.msg -v1 "Options: " -c white
     gr.msg -v2
-    gr.msg -v1 "   --video          optimized for video quality"
-    gr.msg -v1 "   --audio          optimized for audio quality (video may not have audio only version)"
+    gr.msg -v1 "   --video          optimized for video quality and play"
+    gr.msg -v1 "   --audio          optimized for audio quality, play without video screen"
     gr.msg -v1 "   --continue       if result is list start to play it and continue to do so "
     gr.msg -v1 "   --loop           play it forever"
     gr.msg -v1 "   --save           save media, audio is converted to mp3"
-#TODO gr.msg -v1 "   --pos           start play from position hh:mm"
     gr.msg -v2
-    gr.msg -v1 "examples: " -c white
+    gr.msg -v1 "Search menu: " -c white
     gr.msg -v2
-    gr.msg -v1 "  $GRBL_CALL youtube search nyan cat"
-    gr.msg -v1 "  $GRBL_CALL youtube juna kulkee taas"
-    gr.msg -v1 "  $GRBL_CALL youtube play eF1D-W27Wzg"
+    gr.msg -v1 " Launch by alias 'tubes' or '$GRBL_CALL youtube'"
+    gr.msg -v1 " Menu navigation is key based, see command keys below. "
+    gr.msg -v1 " Search string can be given as argument. Options should also apply here.  "
+    gr.msg -v2
+    gr.msg -v1 "    <search phrase>       just type to something to find in youtube"
+    gr.msg -v1 "    <1..20>               select media from result list"
+    gr.msg -v1 "    (n)ext                jump to next list item "
+    gr.msg -v1 "    (p)revious            jump to previous in list"
+    gr.msg -v1 "    (w)ait                wait until previous audio is ended"
+    gr.msg -v1 "    (a)utoplay            continue to play next item "
+    gr.msg -v1 "    (s)ingin              sing in with google account add details to youtube.cfg"
+    gr.msg -v1 "    (t)ype                switch between audio or video mode"
+    gr.msg -v1 "    (d)onwload            switch between  download ans player mode"
+    gr.msg -v1 "    (l)ist                printout list of search result"
+    gr.msg -v1 "    (e)rror               print last error "
+    gr.msg -v1 "    (v)erbose <1..3>      1= basic, 2=more details, 3= thumbnails"
+    gr.msg -v1 "    (q)uit                bye bye"
+    gr.msg -v2
+    gr.msg -v1 "Functions:" -c white
+    gr.msg -v2
+    gr.msg -v1 " Fist source script file 'source youtube.sh' and then run functions 'youtube.status'"
+    gr.msg -v2
+    gr.msg -v3 "  youtube.help                printout help "
+    gr.msg -v3 "  youtube.main                main command parser "
+    gr.msg -v3 "  youtube.status              status oneliner "
+    gr.msg -v3 "  youtube.options             command line option parser"
+    gr.msg -v3 "  youtube.rc                  lift configuratios to environment "
+    gr.msg -v3 "  youtube.make_rc             configuration changer "
+    gr.msg -v3 "  youtube.search              search tool "
+    gr.msg -v3 "  youtube.firefox_cookies     get cookies from browser to sync google account"
+    gr.msg -v3 "  youtube.search_n_play       search menu "
+    gr.msg -v3 "  youtube.get_media           donwload media by url or id"
+    gr.msg -v3 "  youtube.get_audio           donwload audio by url or id"
+    gr.msg -v3 "  youtube.play                seach an select first hit to play"
+    gr.msg -v3 "  youtube.upgrade             updrade yt-dlp and python lib"
+    gr.msg -v3 "  youtube.install             install needed softeare and libs"
+    gr.msg -v3 "  youtube.uninstall           remove installation"
+    gr.msg -v3
+    gr.msg -v1 "Examples: " -c white
+    gr.msg -v2
     gr.msg -v1 "  $GRBL_CALL youtube get https://www.youtube.com/watch?v=eF1D-W27Wzg"
+    gr.msg -v1 "  $GRBL_CALL youtube play eF1D-W27Wzg"
+    gr.msg -v1 "  $GRBL_CALL youtube search nyan cat "
+    gr.msg -v1 "  $GRBL_CALL youtube juna kulkee taas "
     gr.msg -v2
-    gr.msg -v2 "aliases 'tube' and 'tubes' are present to to replace '$GRBL_CALL youtube' and 'search'"
-}
+    gr.msg -v2 "Aliases:" -c white
+    gr.msg -v2 " 'tube' and 'tubes' are present"
+    gr.msg -v2
+    gr.msg -v1 "  tube eF1D-W27Wzg"
+    gr.msg -v1 "  tubes mitä kuuluu marja leena"
+    gr.msg -v2
 
+
+}
 
 youtube.main () {
 # module command parser
 
-    youtube.arguments $@
+    youtube.options $@
 
     case ${module_command[@]:0:1} in
 
@@ -95,7 +178,7 @@ youtube.status () {
 }
 
 
-youtube.arguments () {
+youtube.options () {
 # module argument parser
 
     local got_args=($@)
@@ -449,42 +532,32 @@ youtube.search () {
 
         local media_address="https://www.youtube.com${url[$item]}"
 
-        # indicate playing
-        gr.msg -c dark_grey "$media_address"
-
+        # if download selected
         if [[ $save_to_file ]] ; then
-
-            youtube_options="--ignore-errors --continue --no-overwrites --restrict-filenames --progress --quiet"
-
-            case $optimization in
-                audio)
-                    youtube_options="$youtube_options -x --audio-format mp3 "
-                    ;;
-
-                video)
-                    youtube_options="$youtube_options --output %(title)s.%(ext)s"
-                    [[ $mp4 ]] && youtube_options="$youtube_options --recode-video mp4"
-                    ;;
-            esac
-
-            # yt-dlp --ignore-errors --continue --no-overwrites --recode-video mp4 --output '%(title)s.%(ext)s' "https://www.youtube.com/watch?v=zQCZCvkbqHk"
-            gr.ind doing -k d
-            [[ $mp4 ]] && gr.msg "converting might take some time, please be patient.."
-            yt-dlp $youtube_options $sing_in_option $media_address 2>$youtube_error
-            _error=$?
-
-            [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && rm $GRBL_AUDIO_NOW_PLAYING
-            gr.end d
-            gr.msg -c green "done"
-            #ls *mp4
-            return $_error
+            # open repository to select quality separately for video and audio
+            youtube.get_media $media_address
+            # nothing more to do here?
+            return $?
         fi
 
+        # print media address below the thumbnail (link to youtube)
+        gr.msg -c dark_grey "$media_address"
+
+        # if corsair enabled, control keyboard rgb leds to indicate statuses.
         gr.ind playing -k play
 
+        # this is shown only then debug mote '-d' is flagged (or verbose 4+)
         gr.debug "yt-dlp $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -"
 
+        # at the moment, debug = dryrun in 25% modules, others just run shit, this good habit is
+        if [[ $GRBL_DEBUG ]]; then
+            echo "yt-dlp $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -"
+            return 0
+        fi
+
         yt-dlp $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -
+        # in every module, function error is returned to core in continued return chain, and can be processed by core to
+        # exits from module function are logged specially old method gr.msg -x 128 exits can cause extra logging, more for lacy prototyping
         _error=$?
 
         # remove playing indications
@@ -495,9 +568,11 @@ youtube.search () {
         gr.debug "$FUNCNAME _error:$_error"
 
         # remove now playing only if it's created by current me. made by checking creation time
+        # Okey, here is late night implementation, but it seem to work, stay there then.
         [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && [[ $(($(stat -c %Y $GRBL_AUDIO_NOW_PLAYING) - $create_time)) -lt 1 ]] \
             && rm $GRBL_AUDIO_NOW_PLAYING
 
+        # module maker (2025) declare module error as $_error=(), compatible with below
         (( $_error > 0 )) && gr.msg -c yellow "${FUNCNAME[0]} returned $_error"
         return $_error
     }
@@ -759,8 +834,6 @@ youtube.firefox_cookies () {
 }
 
 
-
-
 youtube.search_n_play () {
 # search input and play it from youtube. use long arguments --video or --audio to select optimization
 
@@ -768,7 +841,7 @@ youtube.search_n_play () {
     local _error=
 
     # to fulfill global variables: save_to_file save_location mpv_options youtube_options
-    youtube.arguments $@
+    youtube.options $@
 
     # make search and get media data and address
     local query=$(youtube.find 1 json ${module_command[@]})
@@ -890,7 +963,9 @@ youtube.search_list () {
 
 
 youtube.get_media () {
-# download videos from tube by youtube id
+# download videos from tube by youtube id or url
+# print list of formats and let user select proper one
+# can be used to download audio only, select '0' or 'a' in video list
 
     local input=$1
     local url_base="https://www.youtube.com/watch?v"
@@ -898,24 +973,17 @@ youtube.get_media () {
     local filename=
     local save_location=$(pwd)
     local resolution=
-    local quality="-f best"
+    local quality=
     local color=gray
     local audio=
     local selected=
+    local audio_only=
+    local base_name=
 
     # check is installed
     yt-dlp --version >/dev/null || youtube.install
 
-    # source mount module and mount video file folder in cloud
-    if [[ $GRBL_VERBOSE -gt 0 ]] && gr.ask "download to videos to server?"; then
-        source mount.sh
-        mount.main videos
-        save_location=$GRBL_MOUNT_VIDEOS
-    fi
-
-    gr.msg -v1 "saving to $save_location.."
-    # [[ -d $save_location ]] || mkdir -p $GRBL_MOUNT_VIDEOS
-
+    # url or id selector
     if [[ $input == "https:"* ]]; then
         # input is url
         url="$input"
@@ -924,41 +992,38 @@ youtube.get_media () {
         url="$url_base=$input"
     fi
 
-    ## Select video
+    # get data from youtube
     ifs=$IFS
     IFS=$'\n'
-    list=( $(yt-dlp -F $url 2>/dev/null) )
+    list=( $(yt-dlp -F $url 2>/dev/null | grep "|" ) )
 
-    # for (( i = 0; i < ${#list[@]}; i++ )); do
-    #     if echo ${list[$i]} | grep -q "video only"; then
-    #         video_list+=(${list[$i]})
-    #     elif echo ${list[$i]} | grep -q "audio only"; then
-    #         audio_list+=(${list[$i]})
-    #     fi
+    # make separated lists for video and audio
+    for (( i = 0; i < ${#list[@]}; i++ )); do
+        if echo ${list[$i]} | grep -q "video only"; then
+            video_list+=( "${list[$i]}" )
 
-    # done
-    video_list=( $(yt-dlp -F $url 2>/dev/null | grep -e "ID" -e "video only") )
+        elif echo ${list[$i]} | grep -q "audio only" ; then
+            audio_list+=( "${list[$i]}" )
 
+        fi
+    done
     IFS=$ifs
 
-    gr.msg -h "#   ${video_list[0]}"
+    ## video select loop
+    gr.msg -h "#   ${list[0]}"
     for (( i = 1; i < ${#video_list[@]}; i++ )); do
         color=list
         gr.msg -n -h -w 4 "$i:"
-        # x="$(echo ${list[$i]} | cut -d " " -f6 | cut -d "x" -f1)"
-        # if [[ $x -le 128 ]] ; then  color=dark_grey
-        # elif [[ $x -gt 128 ]] && [[ $x -lt 640 ]] ; then color=list
-        # elif [[ $x -ge 640  ]] && [[ $x -lt 854 ]] ; then color=green
-        # elif [[ $x -ge 854  ]] && [[ $x -lt 1280 ]] ; then color=lime
-        # elif [[ $x -ge 1280  ]] && [[ $x -lt 1920 ]] ; then color=yellow
-        # elif [[ $x -ge 1920  ]] && [[ $x -lt 3840 ]] ; then color=orange
-        # elif [[ $x -ge 3840 ]]; then color=red
-        # fi
 
+        # get file size
         size="$(echo ${video_list[$i]} | cut -d " " -f6 | cut -d "x" -f1)"
+
+        # clean up file size
         [[ $size == '~' ]] && size="$(echo ${video_list[$i]} | cut -d " " -f7 | cut -d "x" -f1)"
         size=${size//'~'/}
         size=${size/'iB'/}
+
+        # printout video selection menu, colorize by file size
         case $size in
             *K)
                 size=${size/'K'/}
@@ -970,7 +1035,7 @@ youtube.get_media () {
                 size=${size%%.*}
                 if [[ $size -lt 5 ]] ; then  color=dark_gray
                 elif [[ $size -ge 5 ]] && [[ $size -lt 10 ]] ; then color=gray
-                elif [[ $size -ge 10  ]] && [[ $size -lt 30 ]] ; then color=green
+                elif [[ $size -ge 10  ]] && [[ $size -lt 30 ]] ; then color=list
                 elif [[ $size -ge 30  ]] && [[ $size -lt 50 ]] ; then color=white
                 elif [[ $size -ge 50  ]] && [[ $size -lt 100 ]] ; then color=lime
                 elif [[ $size -ge 100  ]] && [[ $size -lt 300 ]] ; then color=yellow
@@ -983,34 +1048,53 @@ youtube.get_media () {
                 size=${size%%.*}
                 color=deep_pink
                 ;;
-            # *T)
-            #     size=${size/'T'/}
-            #     color=black
-            #     ;;
         esac
-
         gr.msg -c $color "${video_list[$i]}"
     done
 
-    # # clear keyboard buffer
-    while read -e -t 0.1; do : ; done
+    # clear keyboard buffer
+    # while read -e -t 0.1; do : ; done
 
+    # ask to select video (0 or a is audio only)
     while true; do
         read -p "select video: " ans
 
         if [[ $ans == "q" ]]; then
             echo
             return 12
-        elif [[ $ans == "b" ]] || [[ $ans == "" ]]; then
-            quality="-f $(cut -d " " -f1 <<<${video_list[${#video_list[@]}]})"
-            resolution="$(cut -d " " -f3 <<<${video_list[${#video_list[@]}]})"
+
+        # audio only
+        elif [[ $ans == "0" ]] || [[ $ans == "a" ]]; then
+            audio_only=true
+            quality=
             break
+
+        # select worst quality
+        elif [[ $ans == "w" ]] || [[ $ans == "" ]]; then
+            quality="-f $(echo ${video_list[0]} | cut -d " " -f1)"
+            resolution="$(echo ${video_list[0]} | cut -d " " -f3)"
+            v_size="$(echo ${video_list[0]} | cut -d " " -f6 | cut -d "x" -f1)"
+            [[ $v_size == '~' ]] && v_size="$(echo ${video_list[0]} | cut -d " " -f7 | cut -d "x" -f1)"
+            v_size=${v_size//'~'/}
+
+        # select best quality
+        elif [[ $ans == "b" ]] || [[ $ans == "" ]]; then
+            quality="-f $(echo ${video_list[${#video_list[@]}]} | cut -d " " -f1)"
+            resolution="$(echo ${video_list[${#video_list[@]}]} | cut -d " " -f3)"
+            v_size="$(echo ${video_list[${#video_list[@]}]} | cut -d " " -f6 | cut -d "x" -f1)"
+            [[ $v_size == '~' ]] && v_size="$(echo ${video_list[${#video_list[@]}]} | cut -d " " -f7 | cut -d "x" -f1)"
+            v_size=${v_size//'~'/}
+            break
+
+        # check answer is number
         elif ! [[ $ans =~ ^[0-9]+$ ]] || [[ $ans -lt 1 ]] || [[ $ans -gt ${#video_list[@]} ]]; then
-            gr.msg -N "please select 1..${#video_list[@]} or 'q' to exit"
+            gr.msg -N "please select 1..${#video_list[@]} 'b' for best, 'w' for worst, or 'q' to exit"
             continue
+
+        # go here if all fine
         else
-            quality="-f $(cut -d " " -f1 <<<${video_list[$ans]})"
-            resolution="$(cut -d " " -f3 <<<${video_list[$ans]})"
+            quality="-f $(echo ${video_list[$ans]} | cut -d " " -f1)"
+            resolution="$(echo ${video_list[$ans]} | cut -d " " -f3)"
             v_size="$(echo ${video_list[$ans]} | cut -d " " -f6 | cut -d "x" -f1)"
             [[ $v_size == '~' ]] && v_size="$(echo ${video_list[$i]} | cut -d " " -f7 | cut -d "x" -f1)"
             v_size=${v_size//'~'/}
@@ -1018,66 +1102,91 @@ youtube.get_media () {
         fi
     done
 
+    # get filename
+    local raw_filename=$(yt-dlp $quality --print filename $url 2>/dev/null)
 
-    ## Select audio
-    ifs=$IFS
-    IFS=$'\n' audio_list=( $(yt-dlp -F $url 2>/dev/null | grep -e "ID" -e "audio only" ) )
-    IFS=$ifs
+    # clean up filename
+    base_name=${raw_filename%%.*}
+    file_ending=${raw_filename##*.}
+    base_name=${base_name/\＂/-}
+    base_name=${base_name//\＂/}
+    base_name=${base_name//\ /_}
+    base_name=${base_name//'!'/}
+    base_name=${base_name//'['/}
+    base_name=${base_name//']'/}
+    base_name=${base_name//']'/}
+    base_name=${base_name//'('/}
+    base_name=${base_name//')'/}
+    base_name=${base_name//'?'/}
+    base_name=${base_name//'？'/} # that was not normal mot*fucker
+    base_name=${base_name//','/}
+    filename="${base_name}-${resolution}.${file_ending}"
 
     # clear keyboard buffer
-    while read -e -t 0.1; do : ; done
+    # while read -e -t 0.1; do : ; done
 
+    ## Audio select loop
     while true; do
 
-        gr.msg -h "#   ${audio_list[0]}"
+        # printout header
+        gr.msg -h "#   ${list[0]}"
+
+        # printout audio selection menu, red are non compatible formats
         for (( i = 1; i < ${#audio_list[@]}; i++ )); do
             number_color="-h"
 
-            # x="$(echo ${list[$i]} | cut -d " " -f6 | cut -d "x" -f1)"
-            # if [[ $x -le 128 ]] ; then  color=dark_grey
-            # elif [[ $x -gt 128 ]] && [[ $x -lt 640 ]] ; then color=list
-            # elif [[ $x -ge 640  ]] && [[ $x -lt 854 ]] ; then color=green
-            # elif [[ $x -ge 854  ]] && [[ $x -lt 1280 ]] ; then color=lime
-            # elif [[ $x -ge 1280  ]] && [[ $x -lt 1920 ]] ; then color=yellow
-            # elif [[ $x -ge 1920  ]] && [[ $x -lt 3840 ]] ; then color=orange
-            # elif [[ $x -ge 3840 ]]; then color=red
-            # fi
             if echo ${audio_list[$i]} | grep -q "unknown" ; then
                 continue
-            elif echo ${audio_list[$i]} | grep -q "en-" ; then
+            elif echo ${audio_list[$i]} | grep -q '\[en' ; then
                 color=lime
-            elif echo ${audio_list[$i]} | grep -q "fi-" ; then
+            elif echo ${audio_list[$i]} | grep -q '\[fi' ; then
+                color=aqua
+            elif echo ${audio_list[$i]} | grep -q '\[de' ; then
                 color=white
-            elif echo ${audio_list[$i]} | grep -q "de-" ; then
-                [[ $list_all ]] || continue
-                color=gray
-                number_color="-c white"
             else
-                [[ $list_all ]] || continue
-                color=dark_gray
+                color=gray
                 number_color="-c gray"
             fi
 
+            # skip non supported audio type
+            if [[ $file_ending == "mp4" ]] && echo ${audio_list[$i]} | grep -q "webm"; then
+                color=red
+                [[ $list_all ]] || continue
+            elif [[ $file_ending == "webm" ]] && echo ${audio_list[$i]} | grep -q "m4a"; then
+                color=red
+                [[ $list_all ]] || continue
+            fi
 
             gr.msg -n $number_color -w 4 "$i:"
             gr.msg -c $color "${audio_list[$i]}"
         done
 
+        # process audio selection
         read -p "select audio: " ans
 
+        # quit
         if [[ $ans == "q" ]]; then
             echo
             return 12
+        # toggle all items view (default is off)
         elif [[ $ans == "a" ]]; then
             [[ $list_all ]] && list_all= || list_all=true
             continue
+        # select best audio (last on list)
         elif [[ $ans == "b" ]] || [[ $ans == "" ]]; then
             audio="$(cut -d " " -f1 <<<${audio_list[${#audio_list[@]}]})"
             a_size="$(echo ${audio_list[${#audio_list[@]}]} | cut -d " " -f6 | cut -d "x" -f1)"
             break
+        # select worst audio (first on list)
+        elif [[ $ans == "w" ]]; then
+            audio="$(cut -d " " -f1 <<<${audio_list[0]})"
+            a_size="$(echo ${audio_list[0]} | cut -d " " -f6 | cut -d "x" -f1)"
+            break
+        # check answer is number
         elif ! [[ $ans =~ ^[0-9]+$ ]] || [[ $ans -lt 1 ]] || [[ $ans -gt ${#audio_list[@]} ]]; then
-            gr.msg -N "please select 1..${#audio_list[@]} or 'q' to exit"
+            gr.msg -N "please select 1..${#audio_list[@]} 'a' for all audio files, or 'q' to exit"
             continue
+        # all fine
         else
             audio=$(cut -d " " -f1 <<<${audio_list[$ans]})
             a_size="$(echo ${audio_list[$ans]} | cut -d " " -f7 | cut -d "x" -f1)"
@@ -1085,50 +1194,84 @@ youtube.get_media () {
         fi
     done
 
-    local raw_filename=$(yt-dlp $quality --print filename $url 2>/dev/null)
 
-    filename=${raw_filename%%.*}
-    file_ending=${raw_filename##*.}
-    filename=${filename/\＂/-}
-    filename=${filename//\＂/}
-    filename=${filename//\ /_}
-    filename=${filename//'!'/}
-    filename=${filename//'['/}
-    filename=${filename//']'/}
-    filename="${filename}-${resolution}.${file_ending}"
+    ### audio download
+    if [[ $audio_only ]];then
 
-    if [[ -f $filename ]]; then
-        gr.ask "file already downloaded, overwrite?" || return 0
+        # check existence
+        if [[ -f "${save_location}/$base_name.mp3" ]]; then
+            if gr.ask "file already downloaded, overwrite?"; then
+                rm "${save_location}/$base_name.mp3"
+            else
+                return 0
+            fi
+        fi
+
+        # download audio and convert it to mp3
+        if yt-dlp -q --progress -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
+               --output "${save_location}/$base_name.mp3" \
+               -f $audio "$url" 2>/tmp/$USER/youtube.error
+        then
+            # check file is created
+            if [[ -f ${save_location}/${base_name}.mp3 ]]; then
+                gr.msg -n -c green "saved to "
+                gr.msg -c white "${save_location}/${base_name}.mp3"
+                echo "${save_location}/${base_name}.mp3" | xclip -i -selection clipboard
+                return 0
+            else # file not created
+                gr.msg -e2 "error during download"
+                [[ $GRBL_VERBOSE -gt 0 ]] && cat /tmp/$USER/youtube.error
+                return 128
+            fi
+        else
+            # yt-dlp error
+            gr.msg -e1 "failed get data from youtube"
+            [[ $GRBL_VERBOSE -gt 0 ]] && cat /tmp/$USER/youtube.error
+            return 129
+        fi
     fi
 
-    gr.msg -c white "downloading ${url} ${v_size}+${a_size}"
+
+    ### video download
+    if [[ -f "${save_location}/$filename" ]]; then
+        if gr.ask "file already downloaded, overwrite?"; then
+            rm "${save_location}/$filename"
+        else
+            return 0
+        fi
+    fi
+
+    # information to user
+    gr.msg -v2 -c dark_gray "selected: $quality+$audio resolution: $resolution, video: ${v_size} audio: ${a_size}"
+    gr.msg -n -v2 -c white "downloading "
+    gr.msg -v1 -c white "${url}"
 
     # combine video and audio selections
     selected="$quality+$audio"
 
+    # make download
     if yt-dlp -q --progress --ignore-errors --continue --no-overwrites \
            --output "${save_location}/${filename}" \
-            $selected "$url" 2>/dev/null
+            $selected "$url" 2>/tmp/$USER/youtube.error
     then
+        # check file is created
         if [[ -f ${save_location}/${filename} ]]; then
-            gr.msg -N -c green "saved to "
+            gr.msg -n -c green "saved to "
             gr.msg -c white "${save_location}/${filename}"
+            echo ${save_location}/${filename} | xclip -i -selection clipboard
+            return 0
         else
-            gr.msg -e1 "error during download"
+            # file not created
+            gr.msg -e2 "error during download"
+            [[ $GRBL_VERBOSE -gt 0 ]] && cat /tmp/$USER/youtube.error
+            return 128
         fi
     else
-        gr.msg -e1 "failed to download"
+        # yt-dlp error
+        gr.msg -e1 "failed get data from youtube"
+        [[ $GRBL_VERBOSE -gt 0 ]] && cat /tmp/$USER/youtube.error
+        return 129
     fi
-
-    # if [[ $GRBL_VERBOSE -gt 0 ]] && gr.ask "convert to mp4?"; then
-    #     source convert.sh
-    #     convert.video $save_location/$filename mp4
-    # fi
-
-    # if [[ $GRBL_VERBOSE -gt 0 ]] && gr.ask "convert to mp3?"; then
-    #     source convert.sh
-    #     convert.video $save_location/$filename mp3
-    # fi
 }
 
 
@@ -1243,6 +1386,11 @@ youtube.uninstall(){
     pip3 uninstall youtube-search
     gr.msg -c green "uninstalled"
     return 0
+}
+
+youtube.option () {
+# core says error cause of changes, quick fix
+    true
 }
 
 # get configs and set variables
