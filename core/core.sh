@@ -27,8 +27,10 @@ declare -x GRBL_VERSION_NAME=$(echo $(tail $GRBL_BIN/version -n +2 | head -n 1 )
 
 # early exits
 case $1 in
-    # core debug option
 
+    # active core debug messages
+    ## option '-d' debug is not covering whole code.sh run
+    ## cheap trick and also make debug faster
     debug)
         source $GRBL_BIN/common.sh
         export GRBL_VERBOSE=4
@@ -37,6 +39,7 @@ case $1 in
         shift
         ;;
 
+    # quick version output makes
     version|--version|--ver)
         echo "$GRBL_VERSION $GRBL_VERSION_NAME"
         exit 0
@@ -48,19 +51,40 @@ case $1 in
         ;;
 esac
 
+
+# TODO vertaile kaikk
+# if [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/system.cfg) - $(stat -c %Y $GRBL_RC) )) -gt 0 ]]
+# # if module needs more than one config file here it can be done here
+# #     || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/lab.cfg) - $(stat -c %Y $GRBL_RC) )) -gt 0 ]] \
+# #     || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/mount.cfg) - $(stat -c %Y $GRBL_RC) )) -gt 0 ]]
+# then
+#     lab.make_rc && \
+#         gr.msg -v2 -c dark_gray "$GRBL_RC updated"
+# fi
+
+
+
 # check that config rc file exits
 if [[ -f $GRBL_RC ]] ; then
-        source $GRBL_RC
-        gr.debug "sourcing $GRBL_RC.. "
-    else
-        # run user configuration if not exist
-        source common.sh
-        source config.sh
-        config.main export $USER
-        source $GRBL_RC
-    fi
+    source $GRBL_RC
+    gr.debug "sourcing $GRBL_RC.. "
+else
+    # run user configuration if not exist
+    # assume that grbl environment is not present
+    source common.sh
+    source config.sh
+    config.main export $USER
 
-# determinate how to call grbl
+    if [[ -f $GRBL_RC ]]; then
+        source $GRBL_RC
+        gr.msg -c dark_grey "main rc updated"
+    else
+        echo "fatal: empty RC file '$GRBL_RC'"
+        return 127
+    fi
+fi
+
+# call name for grbl system is set in system.cfg
 [[ $GRBL_SYSTEM_NAME ]] && export GRBL_CALL=$GRBL_SYSTEM_NAME
 
 

@@ -175,7 +175,8 @@ config.make_style_rc () {
 
 
 config.export () {
-# export global configuration in use
+# make .grblrc
+
     gr.msg -v4 -n -c $__config_color "$__config [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo $@ >&2
 
     source flag.sh
@@ -187,33 +188,33 @@ config.export () {
     sleep 2
 
     config.export_type_selector () {
-    gr.msg -v4 -n -c $__config_color "$__config [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo $@ >&2
+        gr.msg -v4 -n -c $__config_color "$__config [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo $@ >&2
 
-            local _module_cfg="$1"
-            gr.debug "looking configs for $_module_cfg"
+        local _module_cfg="$1"
+        gr.debug "looking configs for $_module_cfg"
 
-            # configure file type is set in first line of config file after #!/bin/bash
-            if [[ -f $_module_cfg ]] ; then
-                case $(head -n 1 $_module_cfg) in
-                    *"global"*)
-                        echo "# from $_module_cfg" >>$_target_rc
-                        config.make_rc "$_module_cfg" "$_target_rc" append \
-                            || gr.msg -c red "error processing $_module_cfg" # TBD removed "-v1 -V2", test
-                    ;;
+        # configure file type is set in first line of config file after #!/bin/bash
+        if [[ -f $_module_cfg ]] ; then
+            case $(head -n 1 $_module_cfg) in
+                *"global"*)
+                    echo "# from $_module_cfg" >>$_target_rc
+                    config.make_rc "$_module_cfg" "$_target_rc" append \
+                        || gr.msg -c red "error processing $_module_cfg"
+                ;;
 
-                    *"module"*)
-                        gr.msg -v3 -c dark_grey "$_module_cfg ..skipping module config files"
-                    ;;
+                *"module"*)
+                    gr.msg -v3 -c dark_grey "$_module_cfg ..skipping module config files"
+                ;;
 
-                    *"source"*)
-                        gr.msg -v3 -c dark_grey "$_module_cfg ..no need to compile this type of configs"
-                    ;;
+                *"source"*)
+                    gr.msg -v3 -c dark_grey "$_module_cfg ..no need to compile this type of configs"
+                ;;
 
-                    *)
-                        gr.msg -v1 -c yellow "$_module_cfg ..unknown config file type"
-                esac
-                fi
-        }
+                *)
+                    gr.msg -v1 -c yellow "$_module_cfg ..unknown config file type"
+            esac
+        fi
+    }
 
     # make backup
     [[ -f "$_target_rc" ]] && mv -f "$_target_rc" "$_target_rc.old"
@@ -250,7 +251,13 @@ config.export () {
     done
 
     config.make_style_rc "$GRBL_CFG/rgb-color.cfg" "$_target_rc" append
-    # set path
+
+    # autocomplete of core module
+    echo 'list="${GRBL_MODULES[@]}"' >>$_target_rc
+    echo 'complete -W "$list" $GRBL_CALL' >>$_target_rc
+    echo 'complete -W "$list" $GRBL_SYSTEM_ALIAS' >>$_target_rc
+
+    # make basic functions always available
     echo "source $GRBL_BIN/common.sh" >> $_target_rc
     echo "source $GRBL_BIN/prompt.sh" >> $_target_rc
     echo "source $GRBL_BIN/alias.sh" >> $_target_rc
