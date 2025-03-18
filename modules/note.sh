@@ -1,5 +1,10 @@
 #!/bin/bash
-# note tools for grbl casa@ujo.guru 2017-2022
+# note tools for grbl casa@ujo.guru 2017-2025
+
+# Note is earlier variations of modules where configure function sets bunch of global variables
+# and rest of functions made the job. straight forward, works, no touchy. New ideas when all
+# modules will be re-written. Anyway new features are welcome also to bash version of gtbl. casa@2025
+
 source mount.sh
 
 __note=$(readlink --canonicalize --no-newline $BASH_SOURCE)
@@ -32,6 +37,7 @@ note.help () {
     gr.msg -v1 " office         compile to .odt format open it"
     gr.msg -v2 "   <date>       change note date"
     gr.msg -v2 "   <team_name>  change template file"
+    gr.msg -v1 " pre* <date>    preview, open in $GRBL_PREFERRED_BROWSER"
     gr.msg -v1 " html <date>    compile and open note with $GRBL_PREFERRED_BROWSER "
     gr.msg -v2
 }
@@ -59,6 +65,15 @@ note.main () {
                 note.$command "$@"
                 return $?
                 ;;
+        pre*)
+                note.preview "$@"
+                return $?
+                ;;
+        bytag)
+                note.tag_find_and_open "$@"
+                return $?
+                ;;
+
         help)
                 note.help
                 return $?
@@ -114,7 +129,9 @@ note.config () {
     [[ $1 ]] || _input="today"
     local _year _month _day _datestamp
     local _re='^[0-9]+$'
-    # gr.debug "date_format: $GRBL_FORMAT_FILE_DATE"
+
+    # check is note and template folder mounted, mount if not
+    note.online || note.remount
 
     case $_input in
         *.*)
@@ -191,10 +208,12 @@ note.config () {
 
     # test variables
     gr.varlist "debug _day _month _year _datestamp"
-    # date -d "$_year" +%Y  >/dev/null || exit 112
-    # date -d "$_month" +%m >/dev/null || exit 113
-    # date -d "$_day" +%d >/dev/null || exit 114
-    # date -d "$_datestamp" >/dev/null || exit 115
+
+    # Test time variables, non valid data causes error
+    date -d "$_year" +%Y  >/dev/null || return  112
+    date -d "$_month" +%m >/dev/null || return  113
+    date -d "$_day" +%d >/dev/null || return  114
+    date -d "$_datestamp" >/dev/null || return  115
 
     # fulfill note variables with given date in user config formats TBD bad naming ünd shit
     note_date=$(date -d $_datestamp +$GRBL_FORMAT_DATE)
@@ -203,7 +222,10 @@ note.config () {
     note_file="$note_folder/$note_file_name"
     template_file_name="template.$GRBL_USER_NAME.$GRBL_USER_TEAM.md"
     template="$GRBL_MOUNT_TEMPLATES/$template_file_name"
+
+    # see results
     gr.varlist "debug note_date note_folder note_file_name note_file template_file_name template"
+    return 0
 }
 
 note.check () {
@@ -233,20 +255,16 @@ note.locate () {
 
     note.locate_check () {
         # make variables
-        gr.msg -v4 -n -c $__note_color "$__note [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
-
-        note.config "$1"
-        gr.msg -v1 "$note_file "
-
+        note_file_name="${GRBL_USER_NAME}_notes_$(date -d $@ +$GRBL_FORMAT_FILE_DATE).md"
+        note_folder="$GRBL_MOUNT_NOTES/$GRBL_USER_NAME/$(date -d $@ +%Y)/$(date -d $@ +%m)"
+        note_file="$note_folder/$note_file_name"
         if [[ -f $note_file ]] ; then
+            echo "$note_file"
             return 0
         else
-            return 1
+            return 127
         fi
     }
-
-    # check is note and template folder mounted, mount if not
-    note.online || note.remount
 
     case $1 in
         all)
@@ -261,6 +279,7 @@ note.locate () {
             ;;
         *)
             note.locate_check $@
+            return $?
             ;;
     esac
 }
@@ -415,9 +434,6 @@ note.tag () {
 # add/read/rm tag from note files
     gr.msg -v4 -n -c $__note_color "$__note [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    source tag.sh
-    note.online || note.remount
-
     # get date for note
     if date +$GRBL_FORMAT_FILE_DATE -d $1 >/dev/null ; then
         _note_date=$(date +$GRBL_FORMAT_FILE_DATE -d $1)
@@ -430,8 +446,9 @@ note.tag () {
 
     note.config $_note_date
 
-    gr.debug "_note_date: '$_note_date', user_input: '$user_input', note_file: '$note_file'"
+    gr.varlist "debug _note_date user_input note_file "
 
+    source tag.sh
     tag.main add $note_file $user_input
 }
 
@@ -529,6 +546,70 @@ note.open_editor () {
     fi
 }
 
+note.preview () {
+# open today's, of given day in preferred browser set in user.cfg
+    gr.msg -v4 -n -c $__note_color "$__note [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+
+    local input="$@" # weird, needed to make variable for input to bypass it for date
+    local _date=
+    local _file=
+    local _file_list=()
+
+    # translations
+    case $1 in
+
+        y|yd|eilen|eilinen|eiliset)
+            _date=$(date -d yesterday +$GRBL_FORMAT_FILE_DATE)
+            ;;
+
+        yy|ts|toissapäivä|toissapäiväinen|toissapäiväiset)
+            _date=$(date -d "-2 day" +$GRBL_FORMAT_FILE_DATE)
+            ;;
+
+        vv|viimeviikko)
+            for (( i = 0; i < 5; i++ )); do
+                _date=$(date -d "last monday +$i day" +$GRBL_FORMAT_FILE_DATE)
+                _file=$(note.locate $_date)
+                [[ -f $_file ]] && _file_list+=( "$_file" )
+            done
+            ;;
+
+        tv|toissaviikko)
+            for (( i = 0; i < 5; i++ )); do
+                _date=$(date -d "-2 weeks monday +$i day" +$GRBL_FORMAT_FILE_DATE)
+                _file=$(note.locate $_date)
+                [[ -f $_file ]] && _file_list+=( "$_file" )
+            done
+            ;;
+
+        vk|kk|kuukausi|viimekuu)
+            for (( i = 0; i < 30; i++ )); do
+                _date=$(date -d "-$i day" +$GRBL_FORMAT_FILE_DATE)
+                _file=$(note.locate $_date)
+                [[ -f $_file ]] && _file_list+=( "$_file" )
+            done
+            ;;
+
+        "")
+            _date=$(date -d today +$GRBL_FORMAT_FILE_DATE)
+            ;;
+        *)
+            _date=$(date -d "$input" +$GRBL_FORMAT_FILE_DATE)
+
+            ;;
+    esac
+
+    if ! date -d $_date +$GRBL_FORMAT_FILE_DATE; then
+        gr.msg -e1 "not valid date"
+        return 128
+    fi
+
+    [[ $_file_list ]] || _file_list+=( $(note.locate $_date) )
+
+    $GRBL_PREFERRED_BROWSER ${_file_list[@]}
+}
+
+
 note.office () {
 # create .odt from team template out of given day's note
     gr.msg -v4 -n -c $__note_color "$__note [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
@@ -544,7 +625,7 @@ note.office () {
         _date=$(date +$GRBL_FORMAT_FILE_DATE)
     fi
 
-    # fulfill note file variables
+    # fulfill global variables
     note.config "$_date"
 
     # template group name
@@ -774,7 +855,6 @@ note.search_tag () {
     gr.msg -w 80 -v1 -n -r " " >&2
 }
 
-
 note.find () {
 # find keywords from tags in notes
 
@@ -851,7 +931,7 @@ note.find () {
     # verbose and question
     if [[ ${#matches[@]} -gt 0 ]]; then
 
-        if gr.ask "open found files with $GRBL_PREFERRED_EDITOR?" ; then
+        if gr.ask "edit to $GRBL_PREFERRED_EDITOR?" ; then
 
             if [[ ${GRBL_NOTE_CHANGE_LOG} ]]; then
                 for match in ${matches[@]}; do
@@ -860,10 +940,10 @@ note.find () {
             fi
 
             $GRBL_PREFERRED_EDITOR ${matches[@]}
-        # else
-        #     for filename in ${matches[@]}; do
-        #         gr.msg -v-c list "$filename"
-        #     done
+        fi
+
+        if gr.ask "read in $GRBL_PREFERRED_BROWSER?" ; then
+            $GRBL_PREFERRED_BROWSER ${matches[@]}
         fi
     else
         gr.msg -v1 "no matches found"
