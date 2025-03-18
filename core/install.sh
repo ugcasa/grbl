@@ -2,8 +2,10 @@
 # install applications casa@ujo.guru 2019-2021
 # module or module adapter scripts should have install and remove functions called by <module>.main install/remove
 # these are stand alone installers for application no worth to make module (or adapter script)
+source /etc/os-release
+source /etc/upstream-release/lsb-release
 
-source $GURU_BIN/common.sh
+source $GRBL_BIN/common.sh
 
 install.main () {
     if [[ "$1" ]] ; then
@@ -11,17 +13,45 @@ install.main () {
             shift
         fi
 
-    # architecture selection
+    # architecture selection TODO os.sh can this shit
     case $(uname -m) in
         aarch64|arm64) SYSTEM_ARCHITECTURE="arm64" ;;
         amd64|x86_64) SYSTEM_ARCHITECTURE="amd64" ;;
         *) gr.msg -c red "unknown architecture" -k caps
+           return 100
+           ;;
     esac
 
-    case "$argument" in
-        steam|status|earth|help|minecraft|unity|virtualbox|tiv|django|java|hackrf|fosphor|spectrumanalyzer|radio|webmin|anaconda|kaldi|python|vscode|teams|fail2ban)
-                    install.$argument "$@" ;;
-        *)          gr.msg -v dark_grey "no installer for '$argument'"; install.help
+    # this change is not tested, should work dough
+    case "$argument" in \
+        dropbox|\
+        steam|\
+        status|\
+        earth|\
+        help|\
+        minecraft|\
+        unity|\
+        virtualbox|\
+        tiv|\
+        django|\
+        java|\
+        hackrf|\
+        fosphor|\
+        spectrumanalyzer|\
+        radio|\
+        webmin|\
+        anaconda|\
+        kaldi|\
+        python|\
+        vscode|\
+        teams|\
+        fail2ban)
+            gr.msg -v1 "installing $argument.."
+            install.$argument "$@"
+            ;;
+        *)
+            gr.msg -v dark_grey "no installer for '$argument'"
+            install.help
     esac
 }
 
@@ -29,11 +59,10 @@ install.status () {
     gr.msg -t "${FUNCNAME[0]}: available "
 }
 
-
 install.help () {
-    gr.msg -v1 -c white "guru-client installer help "
+    gr.msg -v1 -c white "grbl installer help "
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL install application_name "
+    gr.msg -v0  "usage:    $GRBL_CALL install application_name "
     gr.msg -v2
     gr.msg -v1 -c white  "application list:"
     gr.msg -v1 " anaconda             anaconda dev tool"
@@ -50,15 +79,76 @@ install.help () {
     gr.msg -v1 " vscode               ms visual code "
     gr.msg -v1 " webmin               webmin tools "
     gr.msg -v1 " minecraft            minecraft block game"
-
+    gr.msg -v1 " dropbox              install: headless daemon, control script or gui app"
     gr.msg -v2 " unity                TBD unity "
     gr.msg -v2 " mqtt                 TBD mopsquitto MQTT client "
     gr.msg -v2 " mqtt-server          TBD mopsquitto MQTT server "
-
-
     gr.msg -v2
 }
 
+install.dropbox () {
+# install dropbox daemon, control script and gui client app
+
+    # for Ubuntu (18.04, 20.04, 22.04, 23.04) or equivalent (Linux Mint 19+, Pop!_OS)
+    # tested once
+
+    # get os module functions in use
+    source os.sh
+    source /etc/os-release
+    source /etc/upstream-release/lsb-release
+    gr.msg "$NAME $VERSION_ID '$VERSION_CODENAME' based on $DISTRIB_ID $DISTRIB_RELEASE '$DISTRIB_CODENAME' $HOME_URL"
+
+    if [[ $DISTRIB_ID != "Ubuntu" ]] ; then
+        gr.msg "Ubuntu based systems only!"
+        return 2
+    fi
+
+    case $DISTRIB_RELEASE in
+        # 22.10 or higher
+        22.10|23*|24*)
+            newist="22024.04.17"
+            ;;
+        # 18.04 - 22.04
+        18*|19*|20*|22.04)
+            newist="2020.03.04"
+            ;;
+        *) gr.msg -e0 "not supported"
+            return 3
+    esac
+
+    gr.msg "$newist"
+
+    if gr.ask "install frontend client"; then
+        [[ -d ~/apps ]] && cd ~/apps
+        if ! [[ -f dropbox_${newist}_amd64.deb ]]; then
+            app_deb_url=https://www.dropbox.com/download?dl=packages/ubuntu/dropbox_${newist}_amd64.deb
+            wget -q $app_deb_url
+        fi
+        sudo dpkg -i "dropbox_${newist}_amd64.deb"
+    fi
+
+    if gr.ask "install headless daemon"; then
+        # daemon
+        cd ~
+        wget -q -O - "https://www.dropbox.com/download?plat=lnx.x86_64" | tar xzf -
+        ln -s ~/.dropbox-dist/dropboxd ~/apps/dropboxd
+        gr.msg -h "run daemon by './apps/dropboxd &'"
+    fi
+
+    if gr.ask "get control script"; then
+        ## control script
+        cd apps
+        if ! [[ -f dropbox.py ]]; then
+            wget https://www.dropbox.com/download?dl=packages/dropbox.py -O dropbox.py
+        fi
+        chmod +x dropbox.py
+        gr.msg -h "run script by '~/apps/dropbox.py'"
+    fi
+
+    if gr.ask "run daemon?"; then
+        ./dropboxd &
+    fi
+}
 
 install.earth () {
     clear
@@ -96,8 +186,8 @@ install.unity () {
         return $?
     fi
 
-    # if tiv -help >/tmp/tiv.help ; then
-    #     gr.msg "already installed: $(head -n1 /tmp/tiv.help) "
+    # if tiv -help >/tmp/$USER/tiv.help ; then
+    #     gr.msg "already installed: $(head -n1 /tmp/$USER/tiv.help) "
     #     gr.ask "force reinstall" || return 0
     # fi
 
@@ -107,6 +197,29 @@ install.unity () {
     sudo apt-get install unityhub || return 103
 
     return 0
+}
+
+install.signal () {
+# install signal app to Ubuntu/Mint desktop
+
+    # NOTE: These instructions only work for 64-bit Debian-based
+    # Linux distributions such as Ubuntu, Mint etc.
+
+    gr.msg $DISTRIB_CODENAME
+
+    # 1. Install our official public software signing key:
+    wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg
+    cat signal-desktop-keyring.gpg | sudo tee /usr/share/keyrings/signal-desktop-keyring.gpg > /dev/null
+
+    # 2. Add our repository to your list of repositories:
+    # echo "deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt $DISTRIB_CODENAME main" |\
+    #   sudo tee /etc/apt/sources.list.d/signal-$DISTRIB_CODENAME.list
+    echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main' |\
+        sudo tee /etc/apt/sources.list.d/signal-xenial.list
+
+    # 3. Update your package database and install Signal:
+    sudo apt update && sudo apt install signal-desktop
+
 }
 
 
@@ -136,7 +249,7 @@ install.virtualbox () {
 
     # install usb support
     echo "file > preferences > extencions > [+]"
-    $GURU_PREFERRED_BROWSER https://download.virtualbox.org/virtualbox/6.1.16/VirtualBoxSDK-6.1.16-140961.zip
+    $GRBL_PREFERRED_BROWSER https://download.virtualbox.org/virtualbox/6.1.16/VirtualBoxSDK-6.1.16-140961.zip
     sudo usermod -aG vboxusers $USER
 }
 
@@ -157,7 +270,7 @@ install.tiv () {
         gr.ask "already installed force reinstall?" || return 0
     fi
 
-    [[ -d /tmp/TerminalImageViewer ]] && rm /tmp/TerminalImageViewer -rf
+    [[ -d /tmp/$USER/TerminalImageViewer ]] && rm /tmp/$USER/TerminalImageViewer -rf
     cd /tmp
     sudo apt-get update && OK "update"
     sudo apt-get install imagemagick && OK "imagemagick"
@@ -165,7 +278,7 @@ install.tiv () {
     cd TerminalImageViewer/src/main/cpp
     make && OK "compile"
     sudo make install && OK "install"
-    rm /tmp/TerminalImageViewer -rf && OK "clean"
+    rm /tmp/$USER/TerminalImageViewer -rf && OK "clean"
 }
 
 
@@ -181,7 +294,7 @@ install.java () {
 
     [ "$action" ] || read -r -p "install or remove?: " action
     printf "need to install $require, ctrl+c or enter local "
-    sudo apt-get update && eval sudo apt-get "$action" "$require" && printf "\n guru is now ready to script java\n\n"
+    sudo apt-get update && eval sudo apt-get "$action" "$require" && printf "\n grbl is now ready to script java\n\n"
 }
 
 
@@ -196,9 +309,9 @@ install.hackrf () {
     cd $HOME/git/labtools/radio
     git clone https://github.com/mossmann/hackrf.git
     git clone https://github.com/mossmann/hackrf.wiki.git
-    git clone https://ujoguru@bitbucket.org/ugdev/radlab.git
+    git clone https://ujogrbl@bitbucket.org/ugdev/radlab.git
     echo "Documentation file://$HOME/git/labtools/radio/hackrf.wiki"
-    printf "\n guru is now ready to radio\n\n"
+    printf "\n grbl is now ready to radio\n\n"
     read -r -p "to start GNU radio press anykey (or CTRL+C to exit): " nouse
     return 0
 }
@@ -213,7 +326,7 @@ install.fosphor () {
     mkdir build
     cd build
     cmake ../ -DBUILD_SHARED_LIBS=true
-    make && printf "\n guru is now ready to analyze some radio\n\n"
+    make && printf "\n grbl is now ready to analyze some radio\n\n"
     sudo make install
     sudo ldconfig
     #rm -fr glfw
@@ -233,7 +346,7 @@ install.spectrumanalyzer () {
     git clone https://github.com/xmikos/qspectrumanalyzer.git
     cd qspectrumanalyzer
     pip3 install --user .
-    qspectrumanalyzer && printf "\n guru is now ready to analyze some radio\n\n"
+    qspectrumanalyzer && printf "\n grbl is now ready to analyze some radio\n\n"
     return 0
 }
 
@@ -250,7 +363,7 @@ install.radio () {
     install.fosphor || gr.msg -v yellow "fosphor isntall error"
 
     # launch
-    [[ $GURU_FORCE ]] && gnuradio-companion &
+    [[ $GRBL_FORCE ]] && gnuradio-companion &
 }
 
 
@@ -295,7 +408,7 @@ install.anaconda () {
     bash $anaconda_installer -u && rm $anaconda_installer installer_sum || return 12
     source ~/.bashrc
     gr.msg -c green  "anaconda install done"
-    gr.msg -c1 "run setup by typing: '$GURU_CALL anaconda set'"
+    gr.msg -c1 "run setup by typing: '$GRBL_CALL anaconda set'"
     return 0
 }
 
@@ -316,7 +429,7 @@ install.kaldi (){
     cd ../src/
     ./configure --shared
     make depend -j $cores
-    make -j $cores && printf "\n guru is now ready to analyze some audio\n\n"
+    make -j $cores && printf "\n grbl is now ready to analyze some audio\n\n"
     return $?
 }
 
@@ -366,15 +479,15 @@ install.vscode () {
     # sudo sh -c 'echo "deb [arch=$SYSTEM_ARCHITECTURE signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
     # sudo apt-get install apt-transport-https                    # https://whydoesaptnotusehttps.com/
     # sudo apt-get update
-    # sudo apt-get install code && printf "\n guru is now ready to code \n\n"
+    # sudo apt-get install code && printf "\n grbl is now ready to code \n\n"
 }
 
 
 install.teams () {
 
     # Step 1 make temp
-    temp_folder='/tmp/teams'
-    mkdir $temp_folder && cd $temp_folder
+    temp_folder="/tmp/$USER/teams"
+    mkdir -p $temp_folder && cd $temp_folder
 
     # Step 2 get package
     if wget https://go.microsoft.com/fwlink/p/?LinkID=2112886 -O "$temp_folder/teams.deb" ; then
@@ -430,7 +543,7 @@ install.steam () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source "$GURU_RC"
+    source "$GRBL_RC"
     install.main "$@"
     exit $?
 fi

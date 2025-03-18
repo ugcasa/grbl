@@ -4,7 +4,7 @@
 
 # needed modules
 source common.sh
-source $GURU_CFG/$USER/dokuwiki.cfg
+source $GRBL_CFG/$USER/dokuwiki.cfg
 # global variables for module space
 declare -g dokuwiki_functions="tick" # just for testing
 # enable configuration
@@ -41,7 +41,7 @@ dokuwiki.main () {
 
 dokuwiki.backup () {
 # make a backup of .. does not access all the dokuwiki files, all tactical dough
-    local _timestamp="$(date -d now +$GURU_FORMAT_FILE_DATE-$GURU_FORMAT_FILE_TIME)"
+    local _timestamp="$(date -d now +$GRBL_FORMAT_FILE_DATE-$GRBL_FORMAT_FILE_TIME)"
     tar zcpfv "$dokuwiki_backup_location/dokuwiki-backup-$_timestamp.tar.gz" "$dokuwiki_wiki_mount_location"
     return $?
 }
@@ -53,7 +53,7 @@ dokuwiki.upgrade() {
     return 100
 
     cd /tmp
-    # no real root forlder mount inside container, needs changes to guru-svr
+    # no real root forlder mount inside container, needs changes to grbl-svr
     wget https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz
     tar zxvf "dokuwiki-stable.tgz $dokuwiki_wiki_mount_location"
 
@@ -64,7 +64,7 @@ dokuwiki.help () {
 # module help
     gr.msg -v1 "dokuwiki tool help " -c white
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL dokuwiki install|upgrade|uninstall|help <arguments>"
+    gr.msg -v0 "usage:    $GRBL_CALL dokuwiki install|upgrade|uninstall|help <arguments>"
     gr.msg -v2
     gr.msg -v1 "command 					explanation" -c white
     gr.msg -v1 " upgrade <id:name>  		update service or platform"
@@ -74,7 +74,7 @@ dokuwiki.help () {
     gr.msg -v2
     gr.msg -v1 "examples " -c white
     gr.msg -v2
-    gr.msg -v1 "    $GURU_CALL dokuwiki upgrade 5a617646ecca:wiki-ug "
+    gr.msg -v1 "    $GRBL_CALL dokuwiki upgrade 5a617646ecca:wiki-ug "
     gr.msg -v2
 }
 
@@ -89,11 +89,11 @@ dokuwiki.copy_notes() {
 
 
     # Source directorie
-    source_dir="$GURU_MOUNT_NOTES/$GURU_USER"
+    source_dir="$GRBL_MOUNT_NOTES/$GRBL_USER"
     # Defines the destination directorie.
     destination_dir="$dokuwiki_page_mount_location"
 
-    if ! [[ $GURU_MOUNT_NOTES ]] || ! [[ $GURU_MOUNT_WIKIPAGES ]] ; then
+    if ! [[ $GRBL_MOUNT_NOTES ]] || ! [[ $GRBL_MOUNT_WIKIPAGES ]] ; then
         source mount.sh
     fi
 
@@ -137,9 +137,9 @@ dokuwiki.debug () {
 
 # this enables to source this file
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-        [[ $GURU_DEBUG ]] && dokuwiki.debug olive
+        [[ $GRBL_DEBUG ]] && dokuwiki.debug olive
         dokuwiki.main "$@"
-		[[ $GURU_DEBUG ]] && dokuwiki.debug green
+		[[ $GRBL_DEBUG ]] && dokuwiki.debug green
         exit "$?"
 	fi
 

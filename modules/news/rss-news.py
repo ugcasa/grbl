@@ -105,7 +105,7 @@ class menu:
         self.resize( self.term_columns, self.term_lines )
         # os.system( 'clear' )
 
-        self.feed_list_file = open( os.environ["GURU_CFG"] + "/" + os.environ["GURU_USER"] + "/rss-feed.list", "r" )
+        self.feed_list_file = open( os.environ["GRBL_CFG"] + "/" + os.environ["GRBL_USER"] + "/rss-feed.list", "r" )
         self.feed_list = self.feed_list_file.readlines()
         self.feed_list_file.close()
 
@@ -320,10 +320,10 @@ class menu:
 
 
     def browser ( self, link ):
-        "open news link to guru default browser"
+        "open news link to grbl default browser"
 
-        #profile = '--user-data-dir=' + os.environ[ "GURU_CHROME_USER_DATA" ]
-        browser = os.environ[ "GURU_PREFERRED_BROWSER" ]
+        #profile = '--user-data-dir=' + os.environ[ "GRBL_CHROME_USER_DATA" ]
+        browser = os.environ[ "GRBL_PREFERRED_BROWSER" ]
         os.system( browser  + ' ' + link + ' &' ) #+ ' ' + profile)
 
 
@@ -338,15 +338,15 @@ class menu:
         #os.environ['foo'] = 'bar'
 
         subprocess.run('''
-        wget $link -O /tmp/page.html -q
-        line=$(grep "og:image" /tmp/page.html)
+        wget $link -O /tmp/$USER/page.html -q
+        line=$(grep "og:image" /tmp/$USER/page.html)
         url=$(echo $line | cut -f3 -d "=" | cut -d " " -f1)
-        wget ${url//'"'/''} -O /tmp/news.jpg -q
+        wget ${url//'"'/''} -O /tmp/$USER/news.jpg -q
         ''',
         shell=True, check=True,env={'link': link},
         executable='/bin/bash')
         image_link = "os.environ['url']"
-        #image_link = "/tmp/news.jpg"
+        #image_link = "/tmp/$USER/news.jpg"
 
         # id 1 above
         if int( news_id ) < 0 or int( news_id ) > self.list_length :
@@ -454,7 +454,7 @@ class menu:
 
     def save_article( id ):
         "save article to notes in markdown format"
-        print( open( os.environ["GURU_LOCAL_NOTES"] ) )
+        print( open( os.environ["GRBL_LOCAL_NOTES"] ) )
 
 
     def quit ( self ) :
@@ -477,8 +477,8 @@ if len(sys.argv) > 1:
 
 
 m = menu( \
-    int(os.environ[ "GURU_NEWS_TERMINAL_COLUMNS" ]),\
-    int(os.environ[ "GURU_NEWS_TERMINAL_LINES" ])\
+    int(os.environ[ "GRBL_NEWS_TERMINAL_COLUMNS" ]),\
+    int(os.environ[ "GRBL_NEWS_TERMINAL_LINES" ])\
     )
 
 # sudo apt install imagemagick || yum install ImageMagick

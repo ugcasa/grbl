@@ -10,21 +10,21 @@
 # https://gist.github.com/sdondley/b01cc5bb1169c8c83401e438a652b84e
 # https://gist.github.com/Muzietto/325344c2b1b3b723985a85800cafef4f
 
-#source $GURU_BIN/common.sh
+#source $GRBL_BIN/common.sh
 tmux_indicator_key="f$(gr.poll tmux)"
 
 
 tmux.help () {
 # general help
-    gr.msg -v1 -h "guru-client tmux help "
+    gr.msg -v1 -h "grbl tmux help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL tmux ls|attach|config|status|start|end|install|remove|help "
+    gr.msg -v0 "usage:    $GRBL_CALL tmux ls|attach|config|status|start|end|install|remove|help "
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " ls                       list on running sessions "
     gr.msg -v1 " attach <session>         attach to exist session "
     gr.msg -v1 " config                   open configuration in dialog "
-    gr.msg -v1 " config edit              open configuration in $GURU_PREFERRED_EDITOR "
+    gr.msg -v1 " config edit              open configuration in $GRBL_PREFERRED_EDITOR "
     gr.msg -v1 " config undo              undo last config changes "
     gr.msg -v1 " status                   show status of default tmux server "
     gr.msg -v1 " install                  install client requirements "
@@ -33,8 +33,8 @@ tmux.help () {
     gr.msg -v1 " help                     printout this help use -v2 to more"
     gr.msg -v2
     gr.msg -v1 -c white "examples: "
-    gr.msg -v1 " $GURU_CALL tmux config "
-    gr.msg -v1 " $GURU_CALL attach 0 "
+    gr.msg -v1 " $GRBL_CALL tmux config "
+    gr.msg -v1 " $GRBL_CALL attach 0 "
     gr.msg -v2
 }
 
@@ -74,7 +74,7 @@ tmux.config () {
         if gr.ask "user configuration fur user did not found, create from template?" ; then
                 [[ -f /usr/share/doc/tmux/example_tmux.conf ]] \
                     && cp /usr/share/doc/tmux/example_tmux.conf $config_file \
-                    || gr.msg -c yellow "tmux default file not found try to install '$GURU_CALL tmux install'"
+                    || gr.msg -c yellow "tmux default file not found try to install '$GRBL_CALL tmux install'"
             else
                 gr.msg -v1 "nothing changed, using tmux default config"
                 return 0
@@ -84,7 +84,7 @@ tmux.config () {
     case $1 in
 
                 edit)
-                    $GURU_PREFERRED_EDITOR $config_file
+                    $GRBL_PREFERRED_EDITOR $config_file
                     return 0
                     ;;
                 undo|return)
@@ -123,7 +123,7 @@ tmux.config_dialog () {
             gr.msg -v1 "backup saved $config_file.old"
             echo "$new_file" >"$config_file"
             gr.msg -v1 -c white "configure saved"
-            gr.msg -v2 "to get previous configurations from sever type: '$GURU_CALL config undo'"
+            gr.msg -v2 "to get previous configurations from sever type: '$GRBL_CALL config undo'"
         else
             gr.msg -v1 -c dark_golden_rod "nothing changed"
         fi
@@ -169,7 +169,7 @@ tmux.status () {
 
     gr.msg -n -t "${FUNCNAME[0]}: "
 
-    if [[ $GURU_TMUX_ENABLED ]] ; then
+    if [[ $GRBL_TMUX_ENABLED ]] ; then
             gr.msg -n -c green "enabled, "
         else
             gr.msg -c reset "disabled " -k $tmux_indicator_key
@@ -251,7 +251,7 @@ tmux.install () {
 
     sudo apt update
     sudo apt install tmux \
-        && gr.msg -c green "guru is now ready to tmux" \
+        && gr.msg -c green "grbl is now ready to tmux" \
         || gr.msg -c yellow "error $? during install tmux"
     return 0
 

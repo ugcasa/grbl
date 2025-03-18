@@ -1,7 +1,7 @@
 #!/bin/bash
-# guru-cli project tools 2023 casa@ujo.guru
+# grbl project tools 2023 casa@ujo.guru
 
-declare -g project_rc="/tmp/guru-cli_project.rc"
+declare -g project_rc="/tmp/$USER/grbl_project.rc"
 
 project.main () {
 # main command parser
@@ -36,12 +36,12 @@ project.main () {
 project.help () {
 # verbose level based help output with decorations
 
-    gr.msg -v1 -c white "guru-cli project module help "
+    gr.msg -v1 -c white "grbl project module help "
     gr.msg -v2
     gr.msg -v1 "tools for project control"
     gr.msg -v2
-    gr.msg -V2 -v0 "usage:    $GURU_CALL project ls|info|add|rm|open|close "
-    gr.msg -v2 "usage:    $GURU_CALL project ls|new|open|status|close|rm|sublime|help  name/id"
+    gr.msg -V2 -v0 "usage:    $GRBL_CALL project ls|info|add|rm|open|close "
+    gr.msg -v2 "usage:    $GRBL_CALL project ls|new|open|status|close|rm|sublime|help  name/id"
     gr.msg -v2
     gr.msg -v1 -c white "commands:"
     gr.msg -v1 "  ls                      list of projects "
@@ -63,42 +63,42 @@ project.help () {
     gr.msg -v1 "  help                    this help "
     gr.msg -v1
     gr.msg -v1 -c white "example:"
-    gr.msg -v1 "  $GURU_CALL project ls             # list of projects "
-    gr.msg -v1 "  $GURU_CALL project add demo       # initialize new project called 'demo'"
-    gr.msg -v2 "  $GURU_CALL project archive        # list of archived projects "
-    gr.msg -v2 "  $GURU_CALL project edit demo      # edit 'demo' config and launcher script "
-    gr.msg -v2 "  $GURU_CALL project archive demo   # archive 'demo', needs to be done before rm "
-    gr.msg -v3 "  $GURU_CALL project rm demo        # remove all 'demo' project files "
+    gr.msg -v1 "  $GRBL_CALL project ls             # list of projects "
+    gr.msg -v1 "  $GRBL_CALL project add demo       # initialize new project called 'demo'"
+    gr.msg -v2 "  $GRBL_CALL project archive        # list of archived projects "
+    gr.msg -v2 "  $GRBL_CALL project edit demo      # edit 'demo' config and launcher script "
+    gr.msg -v2 "  $GRBL_CALL project archive demo   # archive 'demo', needs to be done before rm "
+    gr.msg -v3 "  $GRBL_CALL project rm demo        # remove all 'demo' project files "
     gr.msg -v2
     return 0
 }
 
 
 project.print_module_variables () {
-    gr.kvp "GURU_PROJECT_ENABLED" \
+    gr.kvp "GRBL_PROJECT_ENABLED" \
            "project_cfg" \
            "module_data_folder" \
            "project_archive" \
-           "GURU_PROJECT_INDICATOR" \
-           "GURU_PROJECT_GIT_BASE" \
-           "GURU_MOUNT_PROJECTS"
+           "GRBL_PROJECT_INDICATOR" \
+           "GRBL_PROJECT_GIT_BASE" \
+           "GRBL_MOUNT_PROJECTS"
 }
 
 
 project.print_project_variables () {
 
         gr.kvp "project_folder" \
-               "GURU_PROJECT_NAME" \
-               "GURU_PROJECT_DESCRIPTION" \
-               "GURU_PROJECT_COLOR" \
-               "GURU_PROJECT_MOUNT" \
-               "GURU_PROJECT_TICKET" \
-               "GURU_PROJECT_WIKI" \
-               "GURU_PROJECT_SCRIPT" \
-               "GURU_PROJECT_FOLDER" \
-               "GURU_PROJECT_GIT" \
-               "GURU_PROJECT_ENV" \
-               "GURU_PROJECT_ISSUES"
+               "GRBL_PROJECT_NAME" \
+               "GRBL_PROJECT_DESCRIPTION" \
+               "GRBL_PROJECT_COLOR" \
+               "GRBL_PROJECT_MOUNT" \
+               "GRBL_PROJECT_TICKET" \
+               "GRBL_PROJECT_WIKI" \
+               "GRBL_PROJECT_SCRIPT" \
+               "GRBL_PROJECT_FOLDER" \
+               "GRBL_PROJECT_GIT" \
+               "GRBL_PROJECT_ENV" \
+               "GRBL_PROJECT_ISSUES"
 }
 
 
@@ -117,7 +117,7 @@ project.info () {
     project.configure $project_name
 
     gr.msg -n -h "system folder.. "
-    if [[ -f $GURU_SYSTEM_MOUNT/.online ]] ; then
+    if [[ -f $GRBL_SYSTEM_MOUNT/.online ]] ; then
         gr.msg -c green "mounted"
     else
         gr.msg -c red "not mounted"
@@ -126,7 +126,7 @@ project.info () {
     fi
     # check is project file folder mounted
     gr.msg -n -h "project folder.. "
-    if [[ -f "$GURU_MOUNT_PROJECTS/.online" ]] ; then
+    if [[ -f "$GRBL_MOUNT_PROJECTS/.online" ]] ; then
         gr.msg -c green "mounted"
     else
         gr.msg -c red "not mounted"
@@ -146,9 +146,9 @@ project.info () {
     project.print_module_variables
 
     # active project information
-    if [[ -f $GURU_PROJECT_CFG ]]
+    if [[ -f $GRBL_PROJECT_CFG ]]
     then
-        source $GURU_PROJECT_SCRIPT
+        source $GRBL_PROJECT_SCRIPT
         project.print_project_variables
     else
         gr.msg "no $active project data available"
@@ -205,10 +205,10 @@ project.configure () {
     # fulfill pre
     declare -g project_folder="$module_data_folder/projects/$project_name"
     declare -g project_script="$project_folder/config.sh"
-    declare -g project_git="$GURU_GIT_HOME/$project_name"
-    # project_home="$GURU_MOUNT/projects/$project_name"
+    declare -g project_git="$GRBL_GIT_HOME/$project_name"
+    # project_home="$GRBL_MOUNT/projects/$project_name"
 
-    gr.msg -v3 "$GURU_USER working on $project_name home folder:$project_git"
+    gr.msg -v3 "$GRBL_USER working on $project_name home folder:$project_git"
 
     # check that project is in projects list
     if ! project.exist $project_name ; then
@@ -216,23 +216,23 @@ project.configure () {
         return 3
     fi
 
-    #[[ $GURU_DEBUG ]] && gr.kvp "GURU_PROJECT_NAME GURU_PROJECT_DESCRIPTION GURU_PROJECT_FOLDER GURU_PROJECT_SCRIPT GURU_PROJECT_CFG GURU_PROJECT_GIT"
+    #[[ $GRBL_DEBUG ]] && gr.kvp "GRBL_PROJECT_NAME GRBL_PROJECT_DESCRIPTION GRBL_PROJECT_FOLDER GRBL_PROJECT_SCRIPT GRBL_PROJECT_CFG GRBL_PROJECT_GIT"
     # # run project user script
     [[ -f $project_script ]] && source $project_script  #source $@
 
-    #[[ $GURU_DEBUG ]] && gr.kvp "GURU_PROJECT_NAME GURU_PROJECT_DESCRIPTION GURU_PROJECT_FOLDER GURU_PROJECT_SCRIPT GURU_PROJECT_CFG GURU_PROJECT_GIT"
+    #[[ $GRBL_DEBUG ]] && gr.kvp "GRBL_PROJECT_NAME GRBL_PROJECT_DESCRIPTION GRBL_PROJECT_FOLDER GRBL_PROJECT_SCRIPT GRBL_PROJECT_CFG GRBL_PROJECT_GIT"
 
-    # [[ $GURU_DEBUG ]] && gr.kvp "project_name project_description project_folder project_script project_cfg project_git"
+    # [[ $GRBL_DEBUG ]] && gr.kvp "project_name project_description project_folder project_script project_cfg project_git"
     # export configs for other modules // CHANCE RM this method will be removed some day make ready to chance
-    export GURU_PROJECT_NAME=$project_name
-    export GURU_PROJECT_DESCRIPTION=$project_description
-    export GURU_PROJECT_FOLDER=$project_folder
-    export GURU_PROJECT_SCRIPT=$project_script
-    export GURU_PROJECT_CFG=$project_cfg
-    export GURU_PROJECT_GIT=$project_git
-    [[ $project_color ]] && export GURU_PROJECT_COLOR=$project_color
+    export GRBL_PROJECT_NAME=$project_name
+    export GRBL_PROJECT_DESCRIPTION=$project_description
+    export GRBL_PROJECT_FOLDER=$project_folder
+    export GRBL_PROJECT_SCRIPT=$project_script
+    export GRBL_PROJECT_CFG=$project_cfg
+    export GRBL_PROJECT_GIT=$project_git
+    [[ $project_color ]] && export GRBL_PROJECT_COLOR=$project_color
 
-    #[[ $GURU_DEBUG ]] && gr.kvp "GURU_PROJECT_NAME GURU_PROJECT_DESCRIPTION GURU_PROJECT_FOLDER GURU_PROJECT_SCRIPT GURU_PROJECT_CFG GURU_PROJECT_GIT"
+    #[[ $GRBL_DEBUG ]] && gr.kvp "GRBL_PROJECT_NAME GRBL_PROJECT_DESCRIPTION GRBL_PROJECT_FOLDER GRBL_PROJECT_SCRIPT GRBL_PROJECT_CFG GRBL_PROJECT_GIT"
 }
 
 
@@ -246,7 +246,7 @@ project.run () {
 project.sublime () {
 # open sublime with project file
 
-    local project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
+    local project_file="$project_folder/$GRBL_USER-$project_name.sublime-project"
 
     if ! [[ -d $project_folder ]] ; then
             gr.msg -c yellow "project not exist"
@@ -299,8 +299,8 @@ project.open () {
 
     local project_name=$1
     gr.debug "$FUNCNAME got: $project_name"
-    [[ $GURU_DEBUG ]] && project.print_module_variables
-    [[ $GURU_DEBUG ]] && project_print_variables
+    [[ $GRBL_DEBUG ]] && project.print_module_variables
+    [[ $GRBL_DEBUG ]] && project_print_variables
     # set project variables
     if ! project.configure $project_name ; then return 0 ; fi
 
@@ -313,7 +313,7 @@ project.open () {
     # check is given project already active
     if [[ -f "$module_data_folder/active" ]] \
             && [[ "$project_name" == "$(cat $module_data_folder/active)" ]] \
-            && ! [[ $GURU_FORCE ]]
+            && ! [[ $GRBL_FORCE ]]
         then
             gr.msg -c green "project $project_name is active"
             return 0
@@ -332,16 +332,16 @@ project.open () {
 
     # set keyboard key to project color, what?! five different "color" variables, clean!
     declare key_color="${project[color]}"
-    [[ $GURU_PROJECT_COLOR ]] && key_color=$GURU_PROJECT_COLOR
+    [[ $GRBL_PROJECT_COLOR ]] && key_color=$GRBL_PROJECT_COLOR
 
     # set corsair keyboard RGB settings to indicate module state
-    gr.msg -v1 -c $key_color "$project_name" -m "$GURU_USER/project" -k $GURU_PROJECT_INDICATOR
+    gr.msg -v1 -c $key_color "$project_name" -m "$GRBL_USER/project" -k $GRBL_PROJECT_INDICATOR
 
     # open editor
-    [[ $GURU_PROJECT_EDITOR ]] && GURU_PREFERRED_EDITOR=$GURU_PROJECT_EDITOR
-    gr.debug "editor: $GURU_PREFERRED_EDITOR"
+    [[ $GRBL_PROJECT_EDITOR ]] && GRBL_PREFERRED_EDITOR=$GRBL_PROJECT_EDITOR
+    gr.debug "editor: $GRBL_PREFERRED_EDITOR"
 
-    case $GURU_PREFERRED_EDITOR in
+    case $GRBL_PREFERRED_EDITOR in
 
         sublime|subl|sub3|sub4)
             project.sublime
@@ -349,7 +349,7 @@ project.open () {
 
         code|vscode)
             gr.msg "project '$project_name' code folder '$project_git' "
-            [[ $GURU_FORCE ]] \
+            [[ $GRBL_FORCE ]] \
                 && code $project_git \
                 || gr.msg -v2 "let user launch editor $project_git"
 
@@ -364,7 +364,7 @@ project.open () {
             gr.msg "no support for joe project files" # TBD
         ;;
         *)
-            gr.msg -c red "unknown editor '$GURU_PREFERRED_EDITOR' project files"
+            gr.msg -c red "unknown editor '$GRBL_PREFERRED_EDITOR' project files"
 
     esac
 
@@ -381,14 +381,14 @@ project.terminal () {
     local project_name=$1
     project.configure $project_name
     gr.debug "$FUNCNAME: $project_name "
-    [[ $GURU_DEBUG ]] && project.print_module_variables
+    [[ $GRBL_DEBUG ]] && project.print_module_variables
 
     if [[ -f "$project_folder/config.sh" ]] ; then
         source "$project_folder/config.sh"
         # $project_folder/config.sh terminal $@
     fi
 
-    case $GURU_PREFERRED_TERMINAL in
+    case $GRBL_PREFERRED_TERMINAL in
 
             tmux)
                 if gr.installed tmux ; then
@@ -411,17 +411,17 @@ project.terminal () {
 
                 if [[ $DISPLAY ]] ; then
 
-                    if [[ $GURU_PROJECT_GIT ]] ; then
+                    if [[ $GRBL_PROJECT_GIT ]] ; then
                         gnome-terminal --tab --title="config" \
-                                       --working-directory="$GURU_PROJECT_FOLDER" \
+                                       --working-directory="$GRBL_PROJECT_FOLDER" \
                                        --tab --title="git" \
-                                       --working-directory="$GURU_PROJECT_GIT" \
+                                       --working-directory="$GRBL_PROJECT_GIT" \
                                        --tab --title="project" \
-                                       --working-directory="$GURU_PROJECT_MOUNT" \
+                                       --working-directory="$GRBL_PROJECT_MOUNT" \
                                        --tab --title="issues" \
-                                       --working-directory="$GURU_PROJECT_ISSUES"
+                                       --working-directory="$GRBL_PROJECT_ISSUES"
                     else
-                        gnome-terminal --working-directory="$GURU_PROJECT_FOLDER"
+                        gnome-terminal --working-directory="$GRBL_PROJECT_FOLDER"
                     fi
                 fi
             ;;
@@ -456,7 +456,7 @@ project.close () {
     # check active project
     if [[ -f $module_data_folder/active ]] ; then
         mv -f $module_data_folder/active $module_data_folder/last
-        gr.msg -v1 -c reset "$active_project closed" -k $GURU_PROJECT_INDICATOR
+        gr.msg -v1 -c reset "$active_project closed" -k $GRBL_PROJECT_INDICATOR
     fi
 
     user_config="$module_data_folder/projects/$project_name/config.sh post"
@@ -469,7 +469,7 @@ project.close () {
 project.toggle () {
 # open last project if not open already and close if its open
 
-    #local module_data_folder="$GURU_SYSTEM_MOUNT/project"
+    #local module_data_folder="$GRBL_SYSTEM_MOUNT/project"
     [[ -f $module_data_folder/active ]] && project.close || project.open $@
     sleep 2
     return 0
@@ -480,7 +480,7 @@ project.ls () {
 # list of projects
 
     #project.configure $1   # no point, only one variable needed
-    # local module_data_folder="$GURU_SYSTEM_MOUNT/project"
+    # local module_data_folder="$GRBL_SYSTEM_MOUNT/project"
     local project_folder="$module_data_folder/projects/$project_name"
 
     local _project_list=($(file "$module_data_folder/projects/"* \
@@ -573,7 +573,7 @@ project.add () {
 
     local project_folder="$module_data_folder/projects/$project_name"
     local archive_folder="$module_data_folder/archived"
-    local sublime_project_file="$project_folder/$GURU_USER-$project_name.sublime-project"
+    local sublime_project_file="$project_folder/$GRBL_USER-$project_name.sublime-project"
 
     if [[ -d "$archive_folder/$project_name" ]] ; then
         gr.msg -c yellow "project named $project_name exist in archive"
@@ -592,7 +592,7 @@ project.add () {
     fi
 
     gr.msg -v3 -c dark_grey "${FUNCNAME[0]} TBD: add project details and copy default config.sh"
-    cp $GURU_CFG/project-default.cfg $project_folder/config.sh
+    cp $GRBL_CFG/project-default.cfg $project_folder/config.sh
     gr.msg -c white "project added, config project $project_folder/config.sh "
 
 
@@ -648,14 +648,14 @@ project.rm () {
     for project_name in ${project_list[@]} ; do
 
         # set manually cause project.configure tries to gues the project name
-        #local module_data_folder="$GURU_SYSTEM_MOUNT/project"
+        #local module_data_folder="$GRBL_SYSTEM_MOUNT/project"
         local project_folder="$module_data_folder/projects/$project_name"
         local archive_folder="$module_data_folder/archived/$project_name"
 
         # check project folder and archive
         if [[ -d $project_folder ]] ; then
             gr.msg -v0 -c white "project needs to be archived before removeing"
-            gr.msg -v0 "to arvhive type: '$GURU_CALL project archive $project_name'"
+            gr.msg -v0 "to arvhive type: '$GRBL_CALL project archive $project_name'"
             continue
 
         elif [[ -d $archive_folder ]] ; then
@@ -690,7 +690,7 @@ project.exist () {
     local i=0
     local project_name=$1
 
-    #module_data_folder="$GURU_SYSTEM_MOUNT/project"
+    #module_data_folder="$GRBL_SYSTEM_MOUNT/project"
 
     if [[ -d $module_data_folder/projects/$project_name ]] ; then
         gr.msg -v3 -c green "project $project_name exist"
@@ -706,11 +706,11 @@ project.change () {
 # just open sublime for now
 
     local project_name=$1
-    #local module_data_folder="$GURU_SYSTEM_MOUNT/project"
+    #local module_data_folder="$GRBL_SYSTEM_MOUNT/project"
 
     echo $project_name > "$module_data_folder/active"
     echo $project_name > "$module_data_folder/last"
-    gr.msg -v2 "$project_name" -m "$GURU_USER/project"
+    gr.msg -v2 "$project_name" -m "$GRBL_USER/project"
 }
 
 
@@ -725,35 +725,35 @@ project.status () {
 
     gr.msg -v1 -n -t "${FUNCNAME[0]}: "
 
-    if [[ $GURU_PROJECT_ENABLED ]] ; then
-        gr.msg -v1 -n -c green "enabled, "  -k $GURU_PROJECT_INDICATOR
+    if [[ $GRBL_PROJECT_ENABLED ]] ; then
+        gr.msg -v1 -n -c green "enabled, "  -k $GRBL_PROJECT_INDICATOR
     else
-        gr.msg -v1 -c black "disabled " -k $GURU_PROJECT_INDICATOR
+        gr.msg -v1 -c black "disabled " -k $GRBL_PROJECT_INDICATOR
         return 1
     fi
 
     if [[ -d "$module_data_folder" ]] ; then
-        gr.msg -v1 -n -c green "installed, "  -k $GURU_PROJECT_INDICATOR
+        gr.msg -v1 -n -c green "installed, "  -k $GRBL_PROJECT_INDICATOR
     else
-        gr.msg -v1 -n -c red "$module_data_folder not installed, " -k $GURU_PROJECT_INDICATOR
+        gr.msg -v1 -n -c red "$module_data_folder not installed, " -k $GRBL_PROJECT_INDICATOR
         return 2
     fi
 
     # check are projects mounted
     if [[ -f "$project_folder/.online" ]] ; then
-        gr.msg -v1 -n -c green "mounted "  -k $GURU_PROJECT_INDICATOR
+        gr.msg -v1 -n -c green "mounted "  -k $GRBL_PROJECT_INDICATOR
     else
-        gr.msg -v1 -c yellow "not mounted" -k $GURU_PROJECT_INDICATOR
+        gr.msg -v1 -c yellow "not mounted" -k $GRBL_PROJECT_INDICATOR
     fi
 
     # print
-    [[ $GURU_VERBOSE -gt 0 ]] && project.ls
+    [[ $GRBL_VERBOSE -gt 0 ]] && project.ls
 
     if [[ -f $module_data_folder/active ]]; then
         local active=$(cat $module_data_folder/active)
-        gr.msg -v4 -n -c aqua_marine -k $GURU_PROJECT_INDICATOR
+        gr.msg -v4 -n -c aqua_marine -k $GRBL_PROJECT_INDICATOR
     else
-        gr.msg -v3 -c reset "no active projects " -k $GURU_PROJECT_INDICATOR
+        gr.msg -v3 -c reset "no active projects " -k $GRBL_PROJECT_INDICATOR
     fi
 
     return 0
@@ -767,11 +767,11 @@ project.poll () {
 
     case $_cmd in
         start)  gr.msg -v1 -t -c black \
-                    -k $GURU_PROJECT_INDICATOR \
+                    -k $GRBL_PROJECT_INDICATOR \
                     "${FUNCNAME[0]}: project status polling started"
             ;;
         end)    gr.msg -v1 -t -c reset \
-                    -k $GURU_PROJECT_INDICATOR \
+                    -k $GRBL_PROJECT_INDICATOR \
                     "${FUNCNAME[0]}: project status polling ended"
             ;;
         status) project.status
@@ -801,8 +801,8 @@ project.rc () {
     gr.debug "$FUNCNAME: $project_rc"
 
     if [[ ! -f $project_rc ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/project.cfg) - $(stat -c %Y $project_rc) )) -gt 0 ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $project_rc) )) -gt 0 ]]
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/project.cfg) - $(stat -c %Y $project_rc) )) -gt 0 ]] \
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/mount.cfg) - $(stat -c %Y $project_rc) )) -gt 0 ]]
     then
         project.make_rc && gr.msg -v1 -c dark_gray "$project_rc updated"
     fi
@@ -824,8 +824,8 @@ project.make_rc () {
         rm -f $project_rc
     fi
 
-    config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $project_rc
-    config.make_rc "$GURU_CFG/$GURU_USER/project.cfg" $project_rc append
+    config.make_rc "$GRBL_CFG/$GRBL_USER/mount.cfg" $project_rc
+    config.make_rc "$GRBL_CFG/$GRBL_USER/project.cfg" $project_rc append
     chmod +x $project_rc
 
     source $project_rc
@@ -833,19 +833,19 @@ project.make_rc () {
 }
 
 
-# fulfill basic variables from guru-client core configs // may overwrite user configs, should be sourced by core
-# source "$GURU_RC"
+# fulfill basic variables from grbl core configs // may overwrite user configs, should be sourced by core
+# source "$GRBL_RC"
 
-# fulfill module variables based on configuration file $GURU_CFG/project.cfg with auto update
+# fulfill module variables based on configuration file $GRBL_CFG/project.cfg with auto update
 project.rc
 
 # declare some module level globals
-declare -g project_cfg="$GURU_CFG/$GURU_USER/project.cfg"
+declare -g project_cfg="$GRBL_CFG/$GRBL_USER/project.cfg"
 declare -g project_git=
-declare -g module_data_folder="$GURU_SYSTEM_MOUNT/project"
-declare -g project_archive="$GURU_SYSTEM_MOUNT/project/archived"
+declare -g module_data_folder="$GRBL_SYSTEM_MOUNT/project"
+declare -g project_archive="$GRBL_SYSTEM_MOUNT/project/archived"
 
-[[ $GURU_DEBUG ]] && gr.kvp "project_cfg project_git module_data_folder project_archive"
+[[ $GRBL_DEBUG ]] && gr.kvp "project_cfg project_git module_data_folder project_archive"
 
 # source this file as library by sourcing module functions in use for other modules
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then

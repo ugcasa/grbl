@@ -3,8 +3,8 @@
 # casa@ujo.guru 2023
 
 # datqabase file is in Google contact csv format
-export GURU_VENV="$HOME/guru/env"
-export GURU_HR_DATA="$GURU_DATA/hr"
+export GRBL_VENV="$HOME/grbl/env"
+export GRBL_HR_DATA="$GRBL_DATA/hr"
 target_base="contacts"
 
 
@@ -19,8 +19,8 @@ hr.main () {
 
 		open|add|remove|edit|append)
 			# open virtual environment and run command
-			[[ -d "$GURU_VENV/hr/bin" ]] || hr.install
-			source "$GURU_VENV/hr/bin/activate"
+			[[ -d "$GRBL_VENV/hr/bin" ]] || hr.install
+			source "$GRBL_VENV/hr/bin/activate"
 			python3 hr.py $target_base $@
 			deactivate
 			;;
@@ -42,20 +42,20 @@ hr.install () {
 	sudo apt install virtualenv python3-pip
 
 	# create virtual environment base folder
-	[[ -d "$GURU_VENV" ]] || mkdir -p "$GURU_VENV"
+	[[ -d "$GRBL_VENV" ]] || mkdir -p "$GRBL_VENV"
 
 	# check virtual environment is set, setup if not
-	if ! [[ -d "$GURU_VENV/hr/bin" ]] ; then
-		virtualenv -p python3 "$GURU_VENV/hr"
+	if ! [[ -d "$GRBL_VENV/hr/bin" ]] ; then
+		virtualenv -p python3 "$GRBL_VENV/hr"
 		# install requirements in virtual env.
-		source "$GURU_VENV/hr/bin/activate"
+		source "$GRBL_VENV/hr/bin/activate"
 		pip3 install pandas
 		deactivate
 	fi
 
 	# place empty table
-	[[ -d $GURU_HR_DATA ]] || mkdir "$GURU_HR_DATA"
-	[[ -f "$GURU_HR_DATA/database.csv" ]] || cp "$GURU_CFG/hr_database_temp.csv" "$GURU_HR_DATA/database.csv"
+	[[ -d $GRBL_HR_DATA ]] || mkdir "$GRBL_HR_DATA"
+	[[ -f "$GRBL_HR_DATA/database.csv" ]] || cp "$GRBL_CFG/hr_database_temp.csv" "$GRBL_HR_DATA/database.csv"
 
 }
 

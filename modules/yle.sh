@@ -4,20 +4,20 @@
 source audio.sh
 source flag.sh
 
-declare -g yle_rc="/tmp/guru-cli_yle.rc"
+declare -g yle_rc="/tmp/$USER/grbl_yle.rc"
 declare -g yle_run_folder="$(pwd)"
-declare -g yle_date_folder="$GURU_DATA/yle"
-declare -g yle_playlist_folder="$GURU_DATA/yle/playlists"
-declare -g yle_temp_folder="$HOME/tmp/yle"
+declare -g yle_date_folder="$GRBL_DATA/yle"
+declare -g yle_playlist_folder="$GRBL_DATA/yle/playlists"
+declare -g yle_temp_folder="$HOME/tmp/$USER/yle"
 declare -g yle_episodes=()
 declare -g yle_media_address=
 declare -g yle_media_filename=
 
 yle.help () {
 
-    gr.msg -v1 "guru-cli yle help " -c white
+    gr.msg -v1 "grbl yle help " -c white
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL yle get|play|radio|playlist|news|episodes|sub|metadata|install|uninstall|help"
+    gr.msg -v0  "usage:    $GRBL_CALL yle get|play|radio|playlist|news|episodes|sub|metadata|install|uninstall|help"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v2
@@ -34,7 +34,7 @@ yle.help () {
     gr.msg -v1 "  playlist <name>     play playlist"
     gr.msg -v2 "    list              list of playlists"
     gr.msg -v2 "    add               add new playlist"
-    gr.msg -v2 "    edit              open playlist in $GURU_PREFERRED_EDITOR"
+    gr.msg -v2 "    edit              open playlist in $GRBL_PREFERRED_EDITOR"
     gr.msg -v2 "    mv                rename playlist"
     gr.msg -v2 "    rm                remove playlist"
     gr.msg -v2 "    <name> nro        play list item nro"
@@ -45,11 +45,11 @@ yle.help () {
     gr.msg -v2
     gr.msg -v1 "examples: " -c white
     gr.msg -v2
-    gr.msg -v1 "  $GURU_CALL yle get 1-4454526        # download media id (or url)"
-    gr.msg -v1 "  $GURU_CALL yle play 1-2707315       # play media id (or url)"
-    gr.msg -v1 "  $GURU_CALL yle playlist default 4   # play default playlist item 4"
-    gr.msg -v1 "  $GURU_CALL yle radio puhe           # to play yle puhe stream"
-    gr.msg -v1 "  $GURU_CALL yle episodes https://areena.yle.fi/audio/1-1792200   "
+    gr.msg -v1 "  $GRBL_CALL yle get 1-4454526        # download media id (or url)"
+    gr.msg -v1 "  $GRBL_CALL yle play 1-2707315       # play media id (or url)"
+    gr.msg -v1 "  $GRBL_CALL yle playlist default 4   # play default playlist item 4"
+    gr.msg -v1 "  $GRBL_CALL yle radio puhe           # to play yle puhe stream"
+    gr.msg -v1 "  $GRBL_CALL yle episodes https://areena.yle.fi/audio/1-1792200   "
     gr.msg -v2
 }
 
@@ -76,11 +76,11 @@ yle.main () {
             ;;
 
         play)
-            # echo "$1" | grep "https://" && $GURU_YLE_BASE_URL="" || $GURU_YLE_BASE_URL="https://areena.yle.fi/" >/dev/null
-            # gr.msg "getting from url ${GURU_YLE_BASE_URL%/}$1"
-            echo "yle ${GURU_YLE_BASE_URL%/}$1" >$GURU_AUDIO_NOW_PLAYING
-            yle-dl --pipe "${GURU_YLE_BASE_URL%/}$1" 2>/dev/null 2>/tmp/yle.error | mpv $mpv_options -
-            [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+            # echo "$1" | grep "https://" && $GRBL_YLE_BASE_URL="" || $GRBL_YLE_BASE_URL="https://areena.yle.fi/" >/dev/null
+            # gr.msg "getting from url ${GRBL_YLE_BASE_URL%/}$1"
+            echo "yle ${GRBL_YLE_BASE_URL%/}$1" >$GRBL_AUDIO_NOW_PLAYING
+            yle-dl --pipe "${GRBL_YLE_BASE_URL%/}$1" 2>/dev/null 2>/tmp/$USER/yle.error | mpv $mpv_options -
+            [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && rm $GRBL_AUDIO_NOW_PLAYING
             return $?
             ;;
 
@@ -102,7 +102,7 @@ yle.main () {
                 listen|watch)
                     yle.${1}_${command} ;;
                 *)
-                    $GURU_CALL news
+                    $GRBL_CALL news
             esac
             ;;
 
@@ -136,9 +136,9 @@ yle.main () {
         play)
             yle.get_metadata "$command" || return 127
             echo "osoite: $yle_media_address"
-            echo "yle $yle_media_address" >$GURU_AUDIO_NOW_PLAYING
-            yle-dl --pipe "$yle_media_address" 2>/dev/null 2>/tmp/yle.error | mpv $mpv_options -
-            [[ -f $GURU_AUDIO_NOW_PLAYING ]] && mr $GURU_AUDIO_NOW_PLAYING
+            echo "yle $yle_media_address" >$GRBL_AUDIO_NOW_PLAYING
+            yle-dl --pipe "$yle_media_address" 2>/dev/null 2>/tmp/$USER/yle.error | mpv $mpv_options -
+            [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && mr $GRBL_AUDIO_NOW_PLAYING
             ;;
 
         subtitle|subtitles|sub|subs)
@@ -177,10 +177,10 @@ yle.watch_news () {
 
     source corsair.sh
 
-    gr.debug "$FUNCNAME: GURU_YLE_TV_NEWS_URL: $GURU_YLE_TV_NEWS_URL"
-    gr.debug "$FUNCNAME: yle-dl --showepisodepage $GURU_YLE_TV_NEWS_URL"
+    gr.debug "$FUNCNAME: GRBL_YLE_TV_NEWS_URL: $GRBL_YLE_TV_NEWS_URL"
+    gr.debug "$FUNCNAME: yle-dl --showepisodepage $GRBL_YLE_TV_NEWS_URL"
 
-    declare -a url_list=($(yle-dl --showepisodepage $GURU_YLE_TV_NEWS_URL))
+    declare -a url_list=($(yle-dl --showepisodepage $GRBL_YLE_TV_NEWS_URL))
     gr.debug "$FUNCNAME: url_list: ${#url_list[*]}: ${url_list[@]}"
 
     for (( i = $((${#url_list[@]}-1)); i > 0; i-- )); do
@@ -197,15 +197,15 @@ yle.watch_news () {
        fi
     done
 
-    mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-uutiset"
+    mpv_options="--input-ipc-server=$GRBL_AUDIO_MPV_SOCKET-uutiset"
     gr.debug "$FUNCNAME: mpv $mpv_options $media_url"
 
-    echo "uutiset $latest_url" >$GURU_AUDIO_NOW_PLAYING
-    corsair.indicate grinding $GURU_YLE_INDICATOR_KEY
+    echo "uutiset $latest_url" >$GRBL_AUDIO_NOW_PLAYING
+    corsair.indicate grinding $GRBL_YLE_INDICATOR_KEY
     mpv $mpv_options $media_url
-    corsair.blink_stop $GURU_YLE_INDICATOR_KEY
+    corsair.blink_stop $GRBL_YLE_INDICATOR_KEY
 
-    [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+    [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && rm $GRBL_AUDIO_NOW_PLAYING
 }
 
 
@@ -217,13 +217,13 @@ yle.listen_news () {
     local item=
     local link=
     local link_list=()
-    local intro_theme="$yle_date_folder/$GURU_YLE_NEWS_INTRO"
-    local trans_theme="$yle_date_folder/$GURU_YLE_NEWS_TRANSITION"
-    local end_theme="$yle_date_folder/$GURU_YLE_NEWS_END"
-    mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-uutiset"
+    local intro_theme="$yle_date_folder/$GRBL_YLE_NEWS_INTRO"
+    local trans_theme="$yle_date_folder/$GRBL_YLE_NEWS_TRANSITION"
+    local end_theme="$yle_date_folder/$GRBL_YLE_NEWS_END"
+    mpv_options="--input-ipc-server=$GRBL_AUDIO_MPV_SOCKET-uutiset"
 
     # play intro and indicate
-    corsair.indicate grinding $GURU_YLE_INDICATOR_KEY
+    corsair.indicate grinding $GRBL_YLE_INDICATOR_KEY
     [[ -f "$intro_theme" ]] && mpv $mpv_options "$intro_theme" --quiet >/dev/null
 
     if flag.get cancel ; then
@@ -234,7 +234,7 @@ yle.listen_news () {
     audio.mpv pause true 2>/dev/null
 
     # get main news page and cut it to raw lines
-    local links=($(curl --silent $GURU_YLE_NEWS_URL | tr " " "\n" | grep fullUrl |  tr "," "\n" | grep fullUrl))
+    local links=($(curl --silent $GRBL_YLE_NEWS_URL | tr " " "\n" | grep fullUrl |  tr "," "\n" | grep fullUrl))
     gr.debug "$FUNCNAME rw link lines: '${links[@]}'"
 
     # clean up frest news article links
@@ -251,7 +251,7 @@ yle.listen_news () {
         item=$(($i+1))
 
         # reached maximum amount of news
-        if [[ $i -ge $GURU_YLE_NEWS_READ_MAX ]]; then
+        if [[ $i -ge $GRBL_YLE_NEWS_READ_MAX ]]; then
             break
         fi
 
@@ -264,10 +264,10 @@ yle.listen_news () {
         gr.debug "$FUNCNAME found link: '${honey_line}'"
 
         # indicate user and update now playing information
-        gr.msg -n "$link [$item/$GURU_YLE_NEWS_READ_MAX] "
+        gr.msg -n "$link [$item/$GRBL_YLE_NEWS_READ_MAX] "
 
         if [[ $honey_line ]] ; then
-            echo "uutiset $link [$item/$GURU_YLE_NEWS_READ_MAX]" >$GURU_AUDIO_NOW_PLAYING
+            echo "uutiset $link [$item/$GRBL_YLE_NEWS_READ_MAX]" >$GRBL_AUDIO_NOW_PLAYING
 
             # play transition theme
             gr.msg -c aqua "playing.. "
@@ -275,14 +275,14 @@ yle.listen_news () {
             [[ $trans_theme ]] && mpv $mpv_options "$trans_theme" --quiet >/dev/null
 
             # play news
-            corsair.indicate grinding $GURU_YLE_INDICATOR_KEY
+            corsair.indicate grinding $GRBL_YLE_INDICATOR_KEY
             mpv $mpv_options $honey_line --quiet >/dev/null
 
             # quit if stopped by other module or user with keyboard
             _error=$?
             gr.debug "$FUNCNAME _error:$_error"
 
-            corsair.blink_stop $GURU_YLE_INDICATOR_KEY
+            corsair.blink_stop $GRBL_YLE_INDICATOR_KEY
 
             if [[ $_error -gt 0 ]] ; then
                 # check is user requested next item instead of stop
@@ -305,8 +305,8 @@ yle.listen_news () {
     done
 
     # stop blinking and play end tune
-    corsair.blink_stop $GURU_YLE_INDICATOR_KEY 2>/dev/null
-    [[ -f "$GURU_AUDIO_NOW_PLAYING" ]] && rm -f $GURU_AUDIO_NOW_PLAYING
+    corsair.blink_stop $GRBL_YLE_INDICATOR_KEY 2>/dev/null
+    [[ -f "$GRBL_AUDIO_NOW_PLAYING" ]] && rm -f $GRBL_AUDIO_NOW_PLAYING
     [[ -f "$end_theme" ]] && mpv $mpv_options "$end_theme" --quiet >/dev/null
     audio.mpv pause false 2>/dev/null
 }
@@ -316,8 +316,8 @@ yle.podcast () {
 # play yle.areena podcasts
 
     declare -g areena_url=
-    declare -g temp_playlist="$GURU_DATA/yle/playlists/temp.playlist"
-    declare -g json_folder="$GURU_DATA/yle/podcasts"
+    declare -g temp_playlist="$GRBL_DATA/yle/playlists/temp.playlist"
+    declare -g json_folder="$GRBL_DATA/yle/podcasts"
     declare -ag episode_list=()
     declare -g serie_id="single"
     declare -g selected_podcast_file=
@@ -339,7 +339,7 @@ yle.podcast () {
 
         # now playing for other modules
         local np="yle ${title[$item]} [$1/${#title[@]}]"
-        echo ${np} >$GURU_AUDIO_NOW_PLAYING
+        echo ${np} >$GRBL_AUDIO_NOW_PLAYING
 
         # printout user view
         gr.msg -N -h ${np}
@@ -349,11 +349,11 @@ yle.podcast () {
 
         # play item
 
-        mpv $mpv_options $(yle-dl "${webpage[$item]}" --showurl 2>/tmp/yle.error)
+        mpv $mpv_options $(yle-dl "${webpage[$item]}" --showurl 2>/tmp/$USER/yle.error)
         _error=$?
         gr.debug "$FUNCNAME _error:$_error"
 
-        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+        [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && rm $GRBL_AUDIO_NOW_PLAYING
 
         return $_error
     }
@@ -367,22 +367,22 @@ yle.podcast () {
     #         read -p "Annan sarjan koontisivu tai sivun id: " got
     #     fi
 
-    #     if [[ $got =~ "${GURU_YLE_PODCAST_URL%/}" ]] ; then
+    #     if [[ $got =~ "${GRBL_YLE_PODCAST_URL%/}" ]] ; then
     #         areena_url=$got
     #     else
-    #         areena_url=${GURU_YLE_PODCAST_URL%/}/$got
+    #         areena_url=${GRBL_YLE_PODCAST_URL%/}/$got
     #     fi
 
     #     output_filename=
-    #     episode_list=($(yle-dl --showepisodepage $areena_url 2>/tmp/yle.error))
+    #     episode_list=($(yle-dl --showepisodepage $areena_url 2>/tmp/$USER/yle.error))
 
     #     for (( i = 0; i < ${#episode_list[@]}; i++ )); do
-    #         metadata=$(yle-dl --showmetadata ${episode_list[$i]} 2>/tmp/yle.error | jq -s 'flatten' )
+    #         metadata=$(yle-dl --showmetadata ${episode_list[$i]} 2>/tmp/$USER/yle.error | jq -s 'flatten' )
     #         title="$(jq '.[] | .episode_title' <<<$metadata | head -n1 | cut -d':' -f1 )"
 
     #         output_filename=title_${episode_list[$i]}
 
-    #         yle-dl "${episode_list[$i]}" --showurl -o "$output_filename" 2>/tmp/yle.error
+    #         yle-dl "${episode_list[$i]}" --showurl -o "$output_filename" 2>/tmp/$USER/yle.error
     #     done
     # }
 
@@ -397,13 +397,13 @@ yle.podcast () {
             read -p "Annan sarjan koontisivu tai sivun id: " got
         fi
 
-        if [[ $got =~ "${GURU_YLE_PODCAST_URL%/}" ]] ; then
+        if [[ $got =~ "${GRBL_YLE_PODCAST_URL%/}" ]] ; then
             areena_url=$got
         else
-            areena_url=${GURU_YLE_PODCAST_URL%/}/$got
+            areena_url=${GRBL_YLE_PODCAST_URL%/}/$got
         fi
 
-        gr.debug "$FUNCNAME: GURU_YLE_PODCAST_URL:${GURU_YLE_PODCAST_URL%/}, areena_url: $areena_url"
+        gr.debug "$FUNCNAME: GRBL_YLE_PODCAST_URL:${GRBL_YLE_PODCAST_URL%/}, areena_url: $areena_url"
 
         # all program_id's start with '1-'
         if ! [[ "$areena_url" =~ "/1-" ]] ; then
@@ -411,7 +411,7 @@ yle.podcast () {
             return 101
         fi
 
-        episode_list=($(yle-dl --showepisodepage $areena_url 2>/tmp/yle.error))
+        episode_list=($(yle-dl --showepisodepage $areena_url 2>/tmp/$USER/yle.error))
 
         # check is program_id valid (yle-dl crashes if not)
         _error=$?
@@ -437,7 +437,7 @@ yle.podcast () {
             return 104
         fi
 
-        echo ${episode_list[@]} >/home/casa/guru/.data/yle/playlists/playlist
+        echo ${episode_list[@]} >/home/casa/grbl/.data/yle/playlists/playlist
         return 0
     }
 
@@ -454,7 +454,7 @@ yle.podcast () {
         gr.msg -V2 -n "building database for ${#episode_list[@]} episodes "
         for (( i = 0; i < ${#episode_list[@]}; i++ )); do
             gr.msg -v2 -c dark_grey "$(($i+1)) ${episode_list[$i]}"
-            yle-dl --showmetadata ${episode_list[$i]} 2>/tmp/yle.error | jq -s 'flatten' >>$selected_podcast_file
+            yle-dl --showmetadata ${episode_list[$i]} 2>/tmp/$USER/yle.error | jq -s 'flatten' >>$selected_podcast_file
             gr.msg -V2 -n -c dark_grey "."
         done
         gr.msg -c green "ok"
@@ -483,7 +483,7 @@ yle.podcast () {
         # printout list of known series
             local _title=
             local _episodes
-            [[ $GURU_DEBUG ]] || clear
+            [[ $GRBL_DEBUG ]] || clear
             gr.msg -h "yle.areena podcasts"
             for (( i = 0; i < ${#podcast_list_title[@]}; i++ )); do
 
@@ -531,7 +531,7 @@ yle.podcast () {
                     ;;
                 v)  read -p "select verbosity: " selection
                     if [[ $selection -ge 0 ]] && [[ $selection -lt 3 ]] ; then
-                        export GURU_VERBOSE=$selection
+                        export GRBL_VERBOSE=$selection
                     fi
                     ;;
                 r)  read -p "podcast to remove: " selection
@@ -566,7 +566,7 @@ yle.podcast () {
         # episode_url=($(jq '.[] | .flavors[] | .url' $selected_podcast_file))
 
         # podcast name
-        [[ $GURU_DEBUG ]] || clear
+        [[ $GRBL_DEBUG ]] || clear
         podcast_name=$(cut -d":" -f1 <<<${title[0]//'"'})
         gr.msg -h "${podcast_name//'–'/'-'}"
 
@@ -639,13 +639,13 @@ yle.podcast () {
                     [[ $selection -ge 1 ]] && [[ $selection -le $max ]] && item=$selection || continue ;;
                 n)  [[ $item -lt $max ]] && item=$(( item + 1 )) || continue ;;
                 p)  [[ $item -gt 1 ]] && item=$(( item - 2 )) || continue ;;
-                l)  export GURU_VERBOSE=2 ; podcast.episodes ; continue ;;
+                l)  export GRBL_VERBOSE=2 ; podcast.episodes ; continue ;;
                 u)  podcast.update ; podcast.episodes ; continue ;;
                 g)  local temp_id=${selected_podcast_file%.*}
                     podcast.get ${temp_id##*'/'} ; podcast.build ; podcast.update ; podcast.episodes ; continue ;;
                 s)  podcast.select ; podcast.menu ;;
                 a)  podcast.get ; podcast.build ; podcast.select ; podcast.menu ;;
-                d)  [[ $GURU_VERBOSE -gt 2 ]] && export GURU_VERBOSE=2 || export GURU_VERBOSE=3 ; podcast.episodes ; continue ;;
+                d)  [[ $GRBL_VERBOSE -gt 2 ]] && export GRBL_VERBOSE=2 || export GRBL_VERBOSE=3 ; podcast.episodes ; continue ;;
                 c)  ! [[ $timeout ]] && timeout=5 || timeout= ; continue ;;
                 q*)  exit 0 ;;
                 continue) true ;;
@@ -697,7 +697,7 @@ yle.podcast () {
 
             # print list when it goes hide
             loops=$((loops-1))
-            if [[ $GURU_VERBOSE -lt 3 ]] && [[ $loops -le 0 ]]; then
+            if [[ $GRBL_VERBOSE -lt 3 ]] && [[ $loops -le 0 ]]; then
                 podcast.episodes
                 loops=3
             fi
@@ -748,7 +748,7 @@ yle.playlist () {
     case $name in
         list) ls ${playlist%/*} ; return 0 ;;
         rm) rm "${playlist%/*}/$1" ; return 0  ;;
-        add|edit) $GURU_PREFERRED_EDITOR "${playlist%/*}/$1" ; return 0 ;;
+        add|edit) $GRBL_PREFERRED_EDITOR "${playlist%/*}/$1" ; return 0 ;;
         mv|rename) mv ${playlist%/*}/$1 ${playlist%/*}/$2 ; return 0;;
         show|view) cat ${playlist%/*}/$1 ; return 0;;
     esac
@@ -763,7 +763,7 @@ yle.playlist () {
 
         # check condition of playlist file
         if ! [[ $(head -n1 $playlist) ]] ; then
-            $GURU_PREFERRED_EDITOR $playlist
+            $GRBL_PREFERRED_EDITOR $playlist
             gr.msg -c yellow "playlist file empty, please add link to https://areena.yle.fi content"
             gr.ask "ready to continue" || break
             line=0
@@ -806,14 +806,14 @@ yle.playlist () {
 
         case $ans1 in
             q|Q) break ;;
-            e|E) $GURU_PREFERRED_EDITOR $playlist & ;;
+            e|E) $GRBL_PREFERRED_EDITOR $playlist & ;;
             p|P) line=$(( line - 2 )) ; [[ $ans2 == "p" ]] && line=$(( line - 1 )) ; continue ;;
             [0-9]*) line="$ans1$ans2$ans3" ; line=$(( line - 1 )) ;;
         esac
 
     done
 
-    gr.msg -v2 "guru say bye bye"
+    gr.msg -v2 "grbl say bye bye"
 }
 
 
@@ -948,9 +948,9 @@ yle.playlist () {
 yle.sort () {
 
     if [[ $yle_do_play ]] ; then
-        echo "yle $yle_do_play" >$GURU_AUDIO_NOW_PLAYING
+        echo "yle $yle_do_play" >$GRBL_AUDIO_NOW_PLAYING
         yle.make_playlist $@ | mpv $mpv_options --playlist= -
-        [[ -f $GURU_AUDIO_NOW_PLAYING ]] && $GURU_AUDIO_NOW_PLAYING
+        [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && $GRBL_AUDIO_NOW_PLAYING
 
     else
         yle.make_playlist $@
@@ -991,13 +991,13 @@ yle.get_metadata () {
     [[ -d "$yle_temp_folder" ]] || mkdir -p "$yle_temp_folder"
     cd "$yle_temp_folder"
 
-    #local $GURU_YLE_BASE_URL="https://areena.yle.fi/"
+    #local $GRBL_YLE_BASE_URL="https://areena.yle.fi/"
     # do not add base url if it already given
     if echo $1 | grep "http" ; then
             media_url=$1
         fi
 
-    media_url="${GURU_YLE_BASE_URL%/}$1"
+    media_url="${GRBL_YLE_BASE_URL%/}$1"
 
     gr.msg -v3 -c deep_pink "media_url: $media_url"
 
@@ -1010,7 +1010,7 @@ yle.get_metadata () {
     [[ ${yle_episodes[0]} ]] && media_url=${yle_episodes[0]}
 
     # Get metadata
-    yle-dl $media_url --showmetadata 2>/tmp/yle.error > $meta_data
+    yle-dl $media_url --showmetadata 2>/tmp/$USER/yle.error > $meta_data
 
     grep "error" $meta_data && error=$(cat $meta_data | jq '.[].flavors[].error')
 
@@ -1053,7 +1053,7 @@ yle.get_media () {
         fi
 
     # download stuff
-    yle-dl "$media_url" -o "$output_filename" --sublang all 2>/tmp/yle.error
+    yle-dl "$media_url" -o "$output_filename" --sublang all 2>/tmp/$USER/yle.error
 
     # to check did yle-dl change format
     local got_filename=$(echo ${output_filename%.*}*)
@@ -1078,7 +1078,7 @@ yle.get_subtitles () {
     [ -d "$yle_temp_folder" ] && rm -rf "$yle_temp_folder"
     mkdir -p "$yle_temp_folder"
     cd "$yle_temp_folder"
-    yle-dl "$media_url" --subtitlesonly 2>/tmp/yle.error
+    yle-dl "$media_url" --subtitlesonly 2>/tmp/$USER/yle.error
     #yle_media_filename=$(detox -v * | grep -v "Scanning")
     #yle_media_filename=${yle_media_filename#*"-> "}
 }
@@ -1099,9 +1099,9 @@ yle.radio_listen () {
     local channel="yle $@"
     channel=$(echo $channel | sed -r 's/(^| )([a-z])/\U\2/g' )
     local url="https://icecast.live.yle.fi/radio/$channel/icecast.audio"
-    echo "yle $url" >$GURU_AUDIO_NOW_PLAYING
+    echo "yle $url" >$GRBL_AUDIO_NOW_PLAYING
     mpv $mpv_options $url
-    [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
+    [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && rm $GRBL_AUDIO_NOW_PLAYING
 }
 
 
@@ -1119,22 +1119,22 @@ yle.place_media () {
             return 124
         fi
 
-    #$GURU_CALL tag "$yle_media_filename" "yle $(date +$GURU_FILE_DATE_FORMAT) $yle_media_title $media_url"
+    #$GRBL_CALL tag "$yle_media_filename" "yle $(date +$GRBL_FILE_DATE_FORMAT) $yle_media_title $media_url"
 
     source mount.sh
     case "$media_file_format" in
 
         mp3|wav)
             mount.main audio
-            location="$GURU_MOUNT_AUDIO" ;;
+            location="$GRBL_MOUNT_AUDIO" ;;
 
 
         mkv|mp4|src|sub|avi)
             mount.main video
-            location="$GURU_MOUNT_TV" ;;
+            location="$GRBL_MOUNT_TV" ;;
         *)
             mount.main downloads
-            location="$GURU_MOUNT_DOWNLOADS" ;;
+            location="$GRBL_MOUNT_DOWNLOADS" ;;
     esac
 
     # input overwrites basic shit
@@ -1153,9 +1153,9 @@ yle.place_media () {
 
 
 yle.play_media () {
-    echo "yle $1" >$GURU_AUDIO_NOW_PLAYING
+    echo "yle $1" >$GRBL_AUDIO_NOW_PLAYING
     mpv $mpv_options --play-and-exit "$1" &
-    [[ -f $GURU_AUDIO_NOW_PLAYING ]] && $GURU_AUDIO_NOW_PLAYING
+    [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && $GRBL_AUDIO_NOW_PLAYING
 
 }
 
@@ -1200,14 +1200,14 @@ yle.status () {
 
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
-    if [[ $GURU_YLE_ENABLED ]] ; then
+    if [[ $GRBL_YLE_ENABLED ]] ; then
             gr.msg -v1 -c green "enabled"
         else
             gr.msg -v1 -c black "disabled"
             return 100
         fi
 
-        times=($GURU_YLE_NEWS_TIME)
+        times=($GRBL_YLE_NEWS_TIME)
         now=$(date -d now +%s)
         for _time in ${times[@]} ; do
             diff=$(( $now - $(date -d "$_time" +%s)))
@@ -1249,8 +1249,8 @@ yle.rc () {
 # source configurations (to be faster)
 
     if [[ ! -f $yle_rc ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/yle.cfg) - $(stat -c %Y $yle_rc) )) -gt 0 ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/audio.cfg) - $(stat -c %Y $yle_rc) )) -gt 0 ]]
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/yle.cfg) - $(stat -c %Y $yle_rc) )) -gt 0 ]] \
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/audio.cfg) - $(stat -c %Y $yle_rc) )) -gt 0 ]]
         then
             yle.make_rc && \
                 gr.msg -v1 -c dark_gray "$yle_rc updated"
@@ -1270,21 +1270,21 @@ yle.make_rc () {
             rm -f $yle_rc
         fi
 
-    config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $yle_rc
-    config.make_rc "$GURU_CFG/$GURU_USER/yle.cfg" $yle_rc append
+    config.make_rc "$GRBL_CFG/$GRBL_USER/audio.cfg" $yle_rc
+    config.make_rc "$GRBL_CFG/$GRBL_USER/yle.cfg" $yle_rc append
     chmod +x $yle_rc
     source $yle_rc
 }
 
 yle.rc
-declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-yle"
-[[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet " #--force-seekable
+declare -g mpv_options="--input-ipc-server=$GRBL_AUDIO_MPV_SOCKET-yle"
+[[ $GRBL_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet " #--force-seekable
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # source "$GURU_RC"
+    # source "$GRBL_RC"
     yle.main "$@"
 fi
-# local $GURU_YLE_BASE_URL
+# local $GRBL_YLE_BASE_URL
 
 # same but for youtube
 

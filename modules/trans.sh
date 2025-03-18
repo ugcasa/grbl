@@ -25,7 +25,7 @@ trans.main() {
 
 
 trans.help () {
-    gr.msg -c white "usage:    $GURU_CALL trans source_lang:targed_lang <text>"
+    gr.msg -c white "usage:    $GRBL_CALL trans source_lang:targed_lang <text>"
     return 0
 }
 
@@ -60,8 +60,8 @@ trans.get () {
      # terminal based translator
      # TODO: bullshit, re-write (handy shit dow, in daily use)
 
-     if ! [ -f $GURU_BIN/trans ]; then
-        cd $GURU_BIN
+     if ! [ -f $GRBL_BIN/trans ]; then
+        cd $GRBL_BIN
         wget git.io/trans
         chmod +x ./trans
     fi
@@ -92,7 +92,7 @@ trans.get () {
         variable=""
     fi
 
-    $GURU_BIN/trans $argument1 $argument2 $variable "$word"
+    $GRBL_BIN/trans $argument1 $argument2 $variable "$word"
 }
 
 trans.install () {

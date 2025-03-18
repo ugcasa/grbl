@@ -1,27 +1,27 @@
 #!/bin/bash
-# guru-client single file place template casa@ujo.guru 2022
+# grbl single file place template casa@ujo.guru 2022
 
-declare -g temp_file="/tmp/guru-place.tmp"
+declare -g temp_file="/tmp/$USER/grbl-place.tmp"
 declare -g place_indicator_key="f5"
-declare -g place_rc="/tmp/guru-cli_place.rc"
-declare -g undo_script=/tmp/guru-place-undo.rc
+declare -g place_rc="/tmp/$USER/grbl_place.rc"
+declare -g undo_script=/tmp/$USER/grbl-place-undo.rc
 
 place.help () {
     # user help
-    gr.msg -h "guru-cli place help "
+    gr.msg -h "grbl place help "
     gr.msg -v2
     gr.msg -v1 "mime type based and fuzzy logic to place files to right locations."
     gr.msg -v2
     gr.msg -v1 "usage:    " -c white
-    gr.msg -v0 "    $GURU_CALL place ls|help|poll|memes|photos|videos|media"
-    gr.msg -v0 "    $GURU_CALL place mime list|move|dryrun"
+    gr.msg -v0 "    $GRBL_CALL place ls|help|poll|memes|photos|videos|media"
+    gr.msg -v0 "    $GRBL_CALL place mime list|move|dryrun"
     gr.msg -v2
     gr.msg -v1 "commands: " -c white
     gr.msg -v2 " ls             list of places "
     gr.msg -v2 " help           printout this help "
-    gr.msg -v1 " memes          move memes to $GURU_MOUNT_PICTURES/memes"
-    gr.msg -v1 " photos         move photos to $GURU_MOUNT_PHOTOS "
-    gr.msg -v1 " videos         move videos to $GURU_MOUNT_VIDEO"
+    gr.msg -v1 " memes          move memes to $GRBL_MOUNT_PICTURES/memes"
+    gr.msg -v1 " photos         move photos to $GRBL_MOUNT_PHOTOS "
+    gr.msg -v1 " videos         move videos to $GRBL_MOUNT_VIDEO"
     gr.msg -v1 " media          move media to somewhere"
     gr.msg -v2
     gr.msg -v1 "mime: " -c white
@@ -33,10 +33,10 @@ place.help () {
     gr.msg -v1 " mime undo      undo last moves. run undo manually: 'bash $undo_script'"
     gr.msg -v2
     gr.msg -v1 "example:  " -c white
-    gr.msg -v1      "$GURU_CALL place ls                # list of found files that can be moved based on name"
-    gr.msg -v1      "$GURU_CALL mime list               # list of found files that can be moved based on mime type"
-    gr.msg -v1      "$GURU_CALL mime move               # move all files to their destination locations"
-    gr.msg -v1      "$GURU_CALL mime image video        # move images and videos to their destination locations"
+    gr.msg -v1      "$GRBL_CALL place ls                # list of found files that can be moved based on name"
+    gr.msg -v1      "$GRBL_CALL mime list               # list of found files that can be moved based on mime type"
+    gr.msg -v1      "$GRBL_CALL mime move               # move all files to their destination locations"
+    gr.msg -v1      "$GRBL_CALL mime image video        # move images and videos to their destination locations"
     gr.msg -v2
 }
 
@@ -77,7 +77,7 @@ place.mime () {
     mime.config () {
     # get configurations
 
-        type_list=($GURU_PLACE_TYPE_LIST)
+        type_list=($GRBL_PLACE_TYPE_LIST)
         # type_list=(image video audio other_system archive document code other)
         gr.debug "$FUNCNAME type_list: ${type_list[@]}"
         if ! [[ $type_list ]] ; then
@@ -85,8 +85,8 @@ place.mime () {
             return 98
         fi
 
-        dest_list=($GURU_PLACE_DEST_LIST)
-        # dest_list=($GURU_MOUNT_PICTURES $GURU_MOUNT_VIDEO $GURU_MOUNT_AUDIO $HOME $GURU_MOUNT_DOCUMENTS $GURU_MOUNT_DOCUMENTS $HOME/git $HOME)
+        dest_list=($GRBL_PLACE_DEST_LIST)
+        # dest_list=($GRBL_MOUNT_PICTURES $GRBL_MOUNT_VIDEO $GRBL_MOUNT_AUDIO $HOME $GRBL_MOUNT_DOCUMENTS $GRBL_MOUNT_DOCUMENTS $HOME/git $HOME)
         gr.debug "$FUNCNAME dest_list: ${dest_list[@]}"
         if ! [[ $dest_list ]] ; then
             gr.msg -e3 "destination list is empty, check place.cfg in user configurations"
@@ -134,13 +134,14 @@ place.mime () {
     # collect files from
         ifs=$IFS
         IFS=$'\n'
-        file_list=($(file -i -h -r * | grep -v inode/directory | tr -s " "))
+        file_list=($(file -i -h -r $PWD/*  | grep -v inode/directory | tr -s " "))
         gr.debug "$FUNCNAME file_list: ${file_list[@]})"
         IFS=$ifs
         # get filenames and mime types to arrows
         for (( i = 0; i < ${#file_list[@]}; i++ )); do
-            file_names+=("$(echo ${file_list[$i]} | cut -d':' -f1)")
-            mime_types+=("$(echo ${file_list[$i]} | cut -d':' -f2 | cut -d';' -f1 | xargs)")
+            file_paths="$(cut -d':' -f1 <<<${file_list[$i]})"
+            file_names+=( "${file_paths##*/}" )
+            mime_types+=( "$(echo ${file_list[$i]} | cut -d':' -f2 | cut -d';' -f1 | xargs)" )
         done
         file_count=$i
 
@@ -202,12 +203,18 @@ place.mime () {
     mime.list () {
     # printout file lists and ask user to continue before copying
         local files=
-
+        local color=(list aqua_marine)
+        local c=0
         for (( i = 0; i < ${#type_list[@]}; i++ )); do
             files=$(eval echo '${#'${type_list[$i]}'[@]}')
             if [[ $files -gt 0 ]] ; then
                 gr.msg -n -v1 -c white "${type_list[$i]} ($files) >${dest_list[$i]}: "
-                gr.msg  -c list "$(eval echo '${'${type_list[$i]}'[@]}') "
+                for (( ii = 0; ii < $files; ii++ )); do
+                    item=$(eval echo '${'${type_list[$i]}'['$ii']}')
+                    gr.msg -n -c ${color[$(( $c & 1 ))]} "$item "
+                    let c++
+                done
+                echo
                 sorted_files=$(($sorted_files + $files))
             fi
         done
@@ -298,7 +305,7 @@ place.mime () {
         move|mv|all)
             mime.config || return $?
             mime.given_list $@ || return $?
-            gr.ask "move all types of files?" || return 0
+            [[ $GRBL_FORCE ]] || gr.ask "move all types of files?" || return 0
             mime.sort || return $?
             mime.move
             ;;
@@ -368,9 +375,9 @@ place.memes () {
 # place pictures and videos with 9gag patterns to meme folder
     local picture_pattern='*bwp.* *swp* *w_0.* *wp_0.*'
     local video_pattern='*_460s* *_700w*'
-    local meme_folder="$GURU_MOUNT_PICTURES/memes"
+    local meme_folder="$GRBL_MOUNT_PICTURES/memes"
 
-    if ! [[ -f $GURU_MOUNT_PICTURES/.online ]] ; then
+    if ! [[ -f $GRBL_MOUNT_PICTURES/.online ]] ; then
             source mount.sh
             mount.main pictures || return 123
         fi
@@ -393,11 +400,11 @@ place.photos () {
 
     #source mount.sh
 
-    local phone_temp_folder="/tmp/guru/android"
+    local phone_temp_folder="/tmp/$USER/grbl/android"
     local _photo_format="jpg"
     [[ $1 ]] && _photo_format=$1
 
-    mount.online $GURU_MOUNT_PHOTOS || mount.known_remote photos
+    mount.online $GRBL_MOUNT_PHOTOS || mount.known_remote photos
 
     # when $phone_temp_folder/photos if filled?
 
@@ -409,7 +416,7 @@ place.photos () {
             return 0
         fi
 
-    gr.msg -v2 -c white "tagging and moving photos to $GURU_MOUNT_PHOTOS "
+    gr.msg -v2 -c white "tagging and moving photos to $GRBL_MOUNT_PHOTOS "
 
     local _year=1970
     local _month=1
@@ -434,14 +441,14 @@ place.photos () {
             tag.main "$phone_temp_folder/photos/$_file" add "phone photo $_date" >/dev/null 2>&1
 
             # move file to target location
-            if ! [[ -d $GURU_MOUNT_PHOTOS/$_year/$_month ]] ; then
-                    mkdir -p "$GURU_MOUNT_PHOTOS/$_year/$_month"
+            if ! [[ -d $GRBL_MOUNT_PHOTOS/$_year/$_month ]] ; then
+                    mkdir -p "$GRBL_MOUNT_PHOTOS/$_year/$_month"
                     gr.msg -n -v1 -V2 "o"
-                    gr.msg -N -v2 "$GURU_MOUNT_PHOTOS/$_year/$_month"
+                    gr.msg -N -v2 "$GRBL_MOUNT_PHOTOS/$_year/$_month"
                 fi
 
             # place photos to right folders
-            if mv "$phone_temp_folder/photos/$_file" "$GURU_MOUNT_PHOTOS/$_year/$_month" ; then
+            if mv "$phone_temp_folder/photos/$_file" "$GRBL_MOUNT_PHOTOS/$_year/$_month" ; then
                     gr.msg -n -v1 -V2 "."
                     gr.msg -n -v2 "$_file "
                 else
@@ -456,11 +463,11 @@ place.photos () {
 place.videos () {
     # analyze, tag and relocate video files
 
-    local phone_temp_folder="/tmp/guru/android"
+    local phone_temp_folder="/tmp/$USER/grbl/android"
     local _video_format="mp4"
     [[ $1 ]] && _video_format=$1
 
-    mount.online $GURU_MOUNT_VIDEO || mount.known_remote video
+    mount.online $GRBL_MOUNT_VIDEO || mount.known_remote video
 
     # read file list
     local _file_list=($(ls "$phone_temp_folder/videos" 2>/dev/null | grep ".$_video_format" ))
@@ -470,7 +477,7 @@ place.videos () {
             return 0
         fi
 
-    gr.msg -n -c white "moving videos to $GURU_MOUNT_VIDEO "
+    gr.msg -n -c white "moving videos to $GRBL_MOUNT_VIDEO "
     local _year=1970
     local android_file_count=0
 
@@ -485,14 +492,14 @@ place.videos () {
             # echo "year: $_year"
 
             # move file to target location
-            if ! [[ -d $GURU_MOUNT_VIDEO/$_year ]] ; then
-                    mkdir -p "$GURU_MOUNT_VIDEO/$_year"
+            if ! [[ -d $GRBL_MOUNT_VIDEO/$_year ]] ; then
+                    mkdir -p "$GRBL_MOUNT_VIDEO/$_year"
                     gr.msg -n -v1 -V2 "o"
-                    gr.msg -N -v2 "$GURU_MOUNT_VIDEO/$_year"
+                    gr.msg -N -v2 "$GRBL_MOUNT_VIDEO/$_year"
                 fi
 
             # place videos to right folders
-            if mv "$phone_temp_folder/videos/$_file" "$GURU_MOUNT_VIDEO/$_year" ; then
+            if mv "$phone_temp_folder/videos/$_file" "$GRBL_MOUNT_VIDEO/$_year" ; then
                     gr.msg -n -v1 -V2 "."
                     gr.msg -n -v2 "$_file "
                 else
@@ -508,13 +515,13 @@ place.media () {
     # process photos and videos from camera
     # expects that files are already copied/moved from home to $phone_temp_folder
 
-    mount.online $GURU_MOUNT_PHOTOS || mount.known_remote photos
-    mount.online $GURU_MOUNT_VIDEO || mount.known_remote video
+    mount.online $GRBL_MOUNT_PHOTOS || mount.known_remote photos
+    mount.online $GRBL_MOUNT_VIDEO || mount.known_remote video
 
     place.photos "jpg"
     place.videos "mp4"
 
-    local phone_temp_folder="/tmp/guru/android"
+    local phone_temp_folder="/tmp/$USER/grbl/android"
     local _left_over=$(ls $phone_temp_folder)
 
     if [[ "$_left_over" ]] ; then
@@ -532,7 +539,7 @@ place.media () {
 
     gr.msg -c white "$android_file_count files processed"
 
-    if [[ $GURU_FORCE ]] || gr.ask "remove source files from phone" ; then
+    if [[ $GRBL_FORCE ]] || gr.ask "remove source files from phone" ; then
             source android.sh
             android.rmdir "/storage/emulated/0/DCIM/Camera"
         fi
@@ -541,10 +548,10 @@ place.media () {
 
 place.ls () {
     # list something
-    GURU_VERBOSE=2
-    if [[ $GURU_MOUNT_ENABLED ]] ; then
+    GRBL_VERBOSE=2
+    if [[ $GRBL_MOUNT_ENABLED ]] ; then
             # source mount.sh
-            [[ $GURU_VERBOSE -lt 2 ]] \
+            [[ $GRBL_VERBOSE -lt 2 ]] \
                 && mount.main ls \
                 || mount.main info
         fi
@@ -601,8 +608,8 @@ place.rc () {
 # source configurations (to be faster)
 
     if [[ ! -f $place_rc ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/place.cfg) - $(stat -c %Y $place_rc) )) -gt 0 ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/mount.cfg) - $(stat -c %Y $place_rc) )) -gt 0 ]]
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/place.cfg) - $(stat -c %Y $place_rc) )) -gt 0 ]] \
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/mount.cfg) - $(stat -c %Y $place_rc) )) -gt 0 ]]
         then
             place.make_rc && \
                 gr.msg -v1 -c dark_gray "$place_rc updated"
@@ -622,8 +629,8 @@ place.make_rc () {
             rm -f $place_rc
         fi
 
-    config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $place_rc
-    config.make_rc "$GURU_CFG/$GURU_USER/place.cfg" $place_rc append
+    config.make_rc "$GRBL_CFG/$GRBL_USER/mount.cfg" $place_rc
+    config.make_rc "$GRBL_CFG/$GRBL_USER/place.cfg" $place_rc append
     chmod +x $place_rc
     source $place_rc
 }
@@ -632,7 +639,7 @@ place.rc
 
 # if called place.sh file configuration is sourced and main place.main called
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # source "$GURU_RC"
+    # source "$GRBL_RC"
     place.main "$@"
     exit "$?"
 fi

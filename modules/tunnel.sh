@@ -1,14 +1,14 @@
 #!/bin/bash
-# guru-client tunneling functions 2021
+# grbl tunneling functions 2021
 
-declare -g tunnel_rc="/tmp/guru-cli_tunnel.rc"
+declare -g tunnel_rc="/tmp/$USER/grbl_tunnel.rc"
 
 
 tunnel.help () {
 # tunnel commands
-    gr.msg -v1 "guru-client tunnel help " -c white
+    gr.msg -v1 "grbl tunnel help " -c white
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL tunnel status|ls|open|close|add|rm|start|end|install|remove] "
+    gr.msg -v0 "usage:    $GRBL_CALL tunnel status|ls|open|close|add|rm|start|end|install|remove] "
     gr.msg -v2
     gr.msg -v1 "commands:" -c white
     gr.msg -v1 " ls               list, active highlighted"
@@ -23,7 +23,7 @@ tunnel.help () {
     gr.msg -v3 " hop              TBD hopping tunnel support"
     gr.msg -v2
     gr.msg -v1 "example:" -c white
-    gr.msg -v1 "    $GURU_CALL tunnel open wiki"
+    gr.msg -v1 "    $GRBL_CALL tunnel open wiki"
     gr.msg -v2
 }
 
@@ -41,7 +41,7 @@ tunnel.main () {
 
         add|rm|open|close|ls|tmux)
                 case $1 in
-                    all)    for service in ${GURU_TUNNEL_LIST[@]} ; do
+                    all)    for service in ${GRBL_TUNNEL_LIST[@]} ; do
                                 tunnel.$command $service
                             done ;;
                       *) tunnel.$command $@
@@ -67,7 +67,7 @@ tunnel.rc () {
 # source configurations
 
     if  [[ ! -f $tunnel_rc ]] || \
-        [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/tunnel.cfg) - $(stat -c %Y $tunnel_rc) )) -gt 0 ]]
+        [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/tunnel.cfg) - $(stat -c %Y $tunnel_rc) )) -gt 0 ]]
         then
             tunnel.make_rc && \
                 gr.msg -v1 -c dark_gray "$tunnel_rc updated"
@@ -89,7 +89,7 @@ tunnel.make_rc () {
             rm -f $tunnel_rc
         fi
 
-    if ! config.make_rc "$GURU_CFG/$GURU_USER/tunnel.cfg" $tunnel_rc ; then
+    if ! config.make_rc "$GRBL_CFG/$GRBL_USER/tunnel.cfg" $tunnel_rc ; then
             gr.msg -c yellow "configuration failed"
             return 101
         fi
@@ -110,29 +110,29 @@ tunnel.status () {
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
 
     # check system is able to service
-    if [[ $GURU_TUNNEL_ENABLED ]] ; then
-            gr.msg -v1 -n -c green "enabled, " -k $GURU_TUNNEL_INDICATOR_KEY
+    if [[ $GRBL_TUNNEL_ENABLED ]] ; then
+            gr.msg -v1 -n -c green "enabled, " -k $GRBL_TUNNEL_INDICATOR_KEY
         else
-            gr.msg -v1 -c black "disabled" -k $GURU_TUNNEL_INDICATOR_KEY
+            gr.msg -v1 -c black "disabled" -k $GRBL_TUNNEL_INDICATOR_KEY
             return 1
         fi
 
     # check system is able to service
     if [[ -f /usr/bin/ssh ]] ; then
-            gr.msg -v1 -n -c green "available " -k $GURU_TUNNEL_INDICATOR_KEY
+            gr.msg -v1 -n -c green "available " -k $GRBL_TUNNEL_INDICATOR_KEY
         else
-            gr.msg -v1 -c red "not installed" -k $GURU_TUNNEL_INDICATOR_KEY
+            gr.msg -v1 -c red "not installed" -k $GRBL_TUNNEL_INDICATOR_KEY
             return 2
         fi
 
     # list of tunnels all verbose levels
-    [[ $GURU_VERBOSE -gt 0 ]] && tunnel.ls
+    [[ $GRBL_VERBOSE -gt 0 ]] && tunnel.ls
 
     # indicate user if active tunnels
     if ps -x | grep -v grep | grep "ssh -L " | grep -q localhost ; then
-            gr.msg -v3 -c aqua "active tunnels" -k $GURU_TUNNEL_INDICATOR_KEY
+            gr.msg -v3 -c aqua "active tunnels" -k $GRBL_TUNNEL_INDICATOR_KEY
         else
-            gr.msg -v3 -c green "no active tunnels" -k $GURU_TUNNEL_INDICATOR_KEY
+            gr.msg -v3 -c green "no active tunnels" -k $GRBL_TUNNEL_INDICATOR_KEY
         fi
 
     return 0
@@ -169,7 +169,7 @@ tunnel.rm () {
 tunnel.check () {
 # check tunnel is active, if no input use first iten on list
 
-    local service=${GURU_TUNNEL_LIST[0]}
+    local service=${GRBL_TUNNEL_LIST[0]}
     [[ $1 ]] && service=$1
 
     tunnel.get_config $service
@@ -185,12 +185,12 @@ tunnel.check () {
 tunnel.toggle () {
 # open default tunnel list and closes
 
-    local state="/tmp/tunnel.toggle"
+    local state="/tmp/$USER/tunnel.toggle"
 
     if [[ -f $state ]] && tunnel.check >/dev/null; then
             tunnel.close && rm $state
         else
-            tunnel.open ${GURU_TUNNEL_DEFAULT[@]} # &&
+            tunnel.open ${GRBL_TUNNEL_DEFAULT[@]} # &&
             touch $state
         fi
     #tunnel.ls
@@ -201,7 +201,7 @@ tunnel.toggle () {
 tunnel.ls () {
 # list of ssh tunnels
 
-    local all_services=(${GURU_TUNNEL_LIST[@]})
+    local all_services=(${GRBL_TUNNEL_LIST[@]})
     # [[ $1 ]] && all_services=($@)
     local _return=1
 
@@ -223,7 +223,7 @@ tunnel.in_list () {
 # dub
     local service_name=$1
 
-    for service_list_item in ${GURU_TUNNEL_LIST[@]} ; do
+    for service_list_item in ${GRBL_TUNNEL_LIST[@]} ; do
             [[ ${service_list_item} == $service_name ]] && return 0
         done
     return 1
@@ -237,8 +237,8 @@ tunnel.get_config () {
     local service_nr=0
     local value=
     local service_name=$1
-    local all_services=(${GURU_TUNNEL_LIST[@]})
-    local options=${GURU_TUNNEL_OPTIONS[@]}
+    local all_services=(${GRBL_TUNNEL_LIST[@]})
+    local options=${GRBL_TUNNEL_OPTIONS[@]}
 
     # exit if not in list
     if ! tunnel.in_list $service_name ; then
@@ -254,7 +254,7 @@ tunnel.get_config () {
 
     # evaluate variables
     for parameter in ${options[@]} ; do
-        value="GURU_TUNNEL_${GURU_TUNNEL_LIST[$service_nr]^^}[$i]"
+        value="GRBL_TUNNEL_${GRBL_TUNNEL_LIST[$service_nr]^^}[$i]"
         gr.msg -v4 -c pink "$value $parameter=${!value}"
         eval $parameter=${!value}
         (( i++ ))
@@ -277,7 +277,7 @@ tunnel.open () {
     if [[ $1 ]] ; then
             service_name=($@)
         else
-            service_name=(${GURU_TUNNEL_DEFAULT[@]})
+            service_name=(${GRBL_TUNNEL_DEFAULT[@]})
         fi
 
     local ssh_param="-o ServerAliveInterval=15"
@@ -285,7 +285,7 @@ tunnel.open () {
     for _service in ${service_name[@]} ; do
 
             if ! tunnel.get_config $_service ; then
-                gr.ind error $GURU_TUNNEL_INDICATOR_KEY
+                gr.ind error $GRBL_TUNNEL_INDICATOR_KEY
                 continue
             fi
 
@@ -311,11 +311,11 @@ tunnel.open () {
                 else
                     # console environment
                     gr.msg -v0 -c dark_cyan "ssh -L $to_port:localhost:$from_port $user@$domain -p $ssh_port"
-                    #gr.ind fail $GURU_TUNNEL_INDICATOR_KEY
+                    #gr.ind fail $GRBL_TUNNEL_INDICATOR_KEY
 
                 fi
 
-            gr.msg -v1 -c aqua "$_service: $url" -k $GURU_TUNNEL_INDICATOR_KEY
+            gr.msg -v1 -c aqua "$_service: $url" -k $GRBL_TUNNEL_INDICATOR_KEY
 
         done
     return 0
@@ -325,7 +325,7 @@ tunnel.open () {
 tunnel.close () {
 # close ssh tunnel
 
-    local data_folder="$GURU_SYSTEM_MOUNT/tunnel/$(hostname)"
+    local data_folder="$GRBL_SYSTEM_MOUNT/tunnel/$(hostname)"
     local pid_list=()
 
     if [[ $1 ]] ; then
@@ -371,7 +371,7 @@ tunnel.close () {
 
             if kill -15 $pid ; then
                     gr.msg -v1 -c green "$pid killed"
-                    gr.ind ok $GURU_TUNNEL_INDICATOR_KEY
+                    gr.ind ok $GRBL_TUNNEL_INDICATOR_KEY
                 else
                     kill -9 $pid || gr.msg -c yellow "$pid kill failed"
                 fi
@@ -379,7 +379,7 @@ tunnel.close () {
 
     if tunnel.check >/dev/null; then
             gr.msg -v2 -c yellow "active tunnels detected"
-            gr.ind error $GURU_TUNNEL_INDICATOR_KEY
+            gr.ind error $GRBL_TUNNEL_INDICATOR_KEY
         fi
 
     return 0
@@ -389,8 +389,8 @@ tunnel.close () {
 
 ssh.end_remote_tunnel_sessions () {
 
-    local _server="$GURU_USER@$GURU_ACCESS_DOMAIN"
-    local _port="$GURU_ACCESS_PORT"
+    local _server="$GRBL_USER@$GRBL_ACCESS_DOMAIN"
+    local _port="$GRBL_ACCESS_PORT"
 
     [[ $1 ]] && _server=$1
     [[ $2 ]] && _port=$2
@@ -401,7 +401,7 @@ ssh.end_remote_tunnel_sessions () {
             | grep -v grep \
             | grep '?' \
             | grep sshd \
-            | grep "$GURU_USER@notty"\
+            | grep "$GRBL_USER@notty"\
             | sed -e's/  */ /g' \
             | cut -d' ' -f 2
             ))
@@ -445,10 +445,10 @@ tunnel.poll () {
 
     case $_cmd in
         start )
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: tunnel status polling started" -k $GURU_TUNNEL_INDICATOR_KEY
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: tunnel status polling started" -k $GRBL_TUNNEL_INDICATOR_KEY
             ;;
         end )
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: tunnel status polling ended" -k $GURU_TUNNEL_INDICATOR_KEY
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: tunnel status polling ended" -k $GRBL_TUNNEL_INDICATOR_KEY
             ;;
         status )
             tunnel.status $@
@@ -467,13 +467,13 @@ tunnel.requirements () {
     [[ "$action" ]] || read -r -p "install or remove? :" action
     local require="ssh rsync"
     gr.msg -c yellow "need to install $require, ctrl+c? or input local "
-    sudo apt update && eval sudo apt "$action" "$require" && gr.msg -c white "guru is now ready to tunnel"
+    sudo apt update && eval sudo apt "$action" "$require" && gr.msg -c white "grbl is now ready to tunnel"
 }
 
 tunnel.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # source $GURU_RC
+    # source $GRBL_RC
     tunnel.main "$@"
     exit 0
 fi

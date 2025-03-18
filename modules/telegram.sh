@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru telegram integration based on telegram-cli casa@ujo.guru 2021
+# grbl telegram integration based on telegram-cli casa@ujo.guru 2021
 
 crypto_method="libcrypto"
 #telegram_indicator_key="f$(gr.poll telegram)"
@@ -31,7 +31,7 @@ telegram.main () {
 telegram.enabled () {
     # check is telegram enabled in user.cfg
 
-    if [[ $GURU_TELEGRAM_ENABLED ]] ; then
+    if [[ $GRBL_TELEGRAM_ENABLED ]] ; then
             gr.msg -v1 -c green "enabled"
             return 0
         else
@@ -130,7 +130,7 @@ telegram.install () {
 
     # clone source to temp
     cd /tmp
-    if ! [[ -d /tmp/tg ]] ; then
+    if ! [[ -d /tmp/$USER/tg ]] ; then
             if git clone --recursive https://github.com/vysheng/tg.git ; then
                     gr.msg -c green "clone OK"
                 else
@@ -166,7 +166,7 @@ telegram.install () {
     # compile
 
     if make ; then
-            gr.msg -N -v1 -c green "$GURU_CALL is ready to telegram messaging"
+            gr.msg -N -v1 -c green "$GRBL_CALL is ready to telegram messaging"
         else
             gr.msg -c yellow "error $? during make"
         fi
@@ -186,7 +186,7 @@ telegram.install () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # source "$GURU_RC"
+    # source "$GRBL_RC"
     #source common.sh
     telegram.main "$@"
     exit "$?"

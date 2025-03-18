@@ -162,7 +162,7 @@ voipt.start_sender () {
             # sterting is not running
             gnome-terminal -t "sender tx $sender_address" \
                 --geometry=40x4 --hide-menubar -- \
-                /tmp/trx/tx -h $sender_address -p $app_udb_port
+                /tmp/$USER/trx/tx -h $sender_address -p $app_udb_port
 
             # test
             if ps auxf | grep trx/tx >/dev/null ; then
@@ -199,7 +199,7 @@ voipt.start_sender () {
 voipt.help () {
     echo  "voipt help "
     echo
-    echo   "usage:    $GURU_CALL voipt [ls|open|close|help|install]"
+    echo   "usage:    $GRBL_CALL voipt [ls|open|close|help|install]"
     echo  "commands:"
     echo
     echo  " ls           list of active tunnels "

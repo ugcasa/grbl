@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-client testing functions for all modules
+# grbl testing functions for all modules
 #
 # Test case actions             TODO forget this
 #  1) quick check
@@ -13,14 +13,14 @@
 #  release) release validation tests
 #  clean) make clean
 
-source $GURU_RC
-source $GURU_BIN/common.sh
-source $GURU_BIN/counter.sh
+source $GRBL_RC
+source $GRBL_BIN/common.sh
+source $GRBL_BIN/counter.sh
 
 test.main() {
     # main test case parser
     export all_tools=("mount" "project" "note" "system" "corsair" "tunnel")
-    #export GURU_VERBOSE=true
+    #export GRBL_VERBOSE=true
     export LOGGING=true
 
     case "$1" in
@@ -35,9 +35,9 @@ test.main() {
 
 
 test.help () {
-    gr.msg -v1 -c white "guru-client tester help "
+    gr.msg -v1 -c white "grbl tester help "
     gr.msg -v2
-    gr.msg -v0 "usage: $GURU_CALL test <tool>|all|release <tc_nr>|all "
+    gr.msg -v0 "usage: $GRBL_CALL test <tool>|all|release <tc_nr>|all "
     gr.msg -v2
     gr.msg -v1 -c white "tools:"
     gr.msg -v1 " <tool> <tc_nr>|all    all test cases "
@@ -45,9 +45,9 @@ test.help () {
     gr.msg -v1 " release               run full validation test "
     gr.msg -v2
     gr.msg -v1 -c white "example:"
-    gr.msg -v1 " $GURU_CALL test mount 1 "
-    gr.msg -v1 " $GURU_CALL test remote all "
-    gr.msg -v1 " $GURU_CALL test release "
+    gr.msg -v1 " $GRBL_CALL test mount 1 "
+    gr.msg -v1 " $GRBL_CALL test remote all "
+    gr.msg -v1 " $GRBL_CALL test release "
     gr.msg -v2
     return 0
 }
@@ -66,13 +66,13 @@ test.tool() {
     [[ "$1" ]] && _tool="$1" || read -r -p "input tool name to test: " _tool
     [[ "$2" ]] && _case="$2" || _case="all"
 
-    _test_id=$(counter.main get guru-client_test_id)
-    counter.main add guru-client_test_id
-    gr.msg -N -c white "TEST $_test_id: guru-client $_tool #$_case - $(date)"
+    _test_id=$(counter.main get grbl_test_id)
+    counter.main add grbl_test_id
+    gr.msg -N -c white "TEST $_test_id: grbl $_tool #$_case - $(date)"
 
-    if [[ -f "$GURU_BIN/test/test-$_tool.sh" ]] ; then
+    if [[ -f "$GRBL_BIN/test/test-$_tool.sh" ]] ; then
                 _lang="sh"
-    elif [[ -f "$GURU_BIN/test/test-$_tool.py" ]] ; then
+    elif [[ -f "$GRBL_BIN/test/test-$_tool.py" ]] ; then
                 _lang="py"
         else
                 gr.msg "tool '$_tool' not found"
@@ -82,9 +82,9 @@ test.tool() {
         fi
 
     # source function under test
-    source $GURU_BIN/$_tool.$_lang
+    source $GRBL_BIN/$_tool.$_lang
     # source tester functions
-    source $GURU_BIN/test/test-$_tool.$_lang
+    source $GRBL_BIN/test/test-$_tool.$_lang
 
     # run test
     $1.test "$_case" ; _error=$?
@@ -130,9 +130,9 @@ test.all() {
 test.release() {
     # validation test, tests all but prints out only module reports
     local _error=0
-    local _test_id=$(counter.main add guru-client_validation_test_id)
+    local _test_id=$(counter.main add grbl_validation_test_id)
 
-        gr.msg -c white "RELEASE TEST $_test_id: guru-client v.$GURU_VERSION $(date)"
+        gr.msg -c white "RELEASE TEST $_test_id: grbl v.$GRBL_VERSION $(date)"
         test.all |grep --color=never "result is:" |grep "TEST" || _error=$?
 
         if ((_error<9)); then
@@ -150,7 +150,7 @@ test.release() {
 
 test.terminal () {
     # printout unit test output
-    export GURU_VERBOSE=true
+    export GRBL_VERBOSE=true
 
     # do not log to file
     export LOGGING=
@@ -167,7 +167,7 @@ test.terminal () {
           [1-9])  _case=$_cmd                       ;;
               # change tool to test
               t)  local _pre_tool=$_tool ; read -r -p "change tool: " _tool
-                  [ -f $GURU_BIN/test/$_tool.sh ] || _tool=$_pre_tool;;
+                  [ -f $GRBL_BIN/test/$_tool.sh ] || _tool=$_pre_tool;;
               # next case
               n)  ((_case<9)) && _case=$((_case+1)) ;;
               # previous case
@@ -175,17 +175,17 @@ test.terminal () {
               # quit
               q)  return 0                          ;;
               # next line  open new terminal
-              r)  gnome-terminal -- /bin/bash -c $GURU_CALL' test loop '$_tool' '$_case'; exec bash' ;;
+              r)  gnome-terminal -- /bin/bash -c $GRBL_CALL' test loop '$_tool' '$_case'; exec bash' ;;
               # prevent note wrong commands
               *)  gr.msg -c red $_cmd$
           esac
 
           # source user settings
-          source $HOME/.gururc
+          source $HOME/.grblrc
           # source function under test
-          source $GURU_BIN/$_tool.sh
+          source $GRBL_BIN/$_tool.sh
           # source tester functions
-          source $GURU_BIN/test/test-$_tool.sh
+          source $GRBL_BIN/test/test-$_tool.sh
 
           # if case not given
           if [ "$_case" ]; then
@@ -202,9 +202,9 @@ test.terminal () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    source $GURU_RC
-    source $GURU_BIN/common.sh
-    source $GURU_BIN/counter.sh
+    source $GRBL_RC
+    source $GRBL_BIN/common.sh
+    source $GRBL_BIN/counter.sh
 
     case "$1" in
         loop) shift ; test.terminal $@ ; exit $? ;;

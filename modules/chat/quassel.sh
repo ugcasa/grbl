@@ -2,7 +2,7 @@
 # quick quassel buildscript (draft) edited by casa@ujo.guru 2023
 
 # initialize your local git-repository once with this command
-declare -g source_folder="$GURU_APP/quassel"
+declare -g source_folder="$GRBL_APP/quassel"
 
 
 

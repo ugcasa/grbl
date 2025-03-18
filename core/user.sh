@@ -1,81 +1,65 @@
 #!/bin/bash
-# user settings for guru-client
-# casa@ujo.guru 2020
-
+# user settings for grbl casa@ujo.guru 2020
 
 # TBD NON FUNCTIONAL: Please review after check there is no usage.
 # Do not remove, user.cfg is load cause this exists
 
-
 user.main () {
-    # command parser
+# command parser
 
-    command="$1"; shift
+    command="$1"
+    shift
 
     case "$command" in
         add|rm)
-            [ "$1" == "server" ] && ${command}_user_server "$@" || ${command}_user "$@"
+            [[ "$1" == "server" ]] && ${command}_user_server "$@" || ${command}_user "$@"
             ;;
         info)
             user.info
             ;;
         help)
-            echo "usage:    $GURU_CALL user [add|rm|change|help]"
+            echo "usage:    $GRBL_CALL user [add|rm|change|help]"
             ;;
         status)
             gr.msg -n -v1 -t "${FUNCNAME[0]}: "
-            [[ "$GURU_USER" == "$GURU_USER_NAME" ]] \
-                && gr.msg -c green "username OK" \
-                || gr.msg -c red "username mismatch! $GURU_USER:$GURU_USER_NAME"
+            [[ "$GRBL_USER" == "$GRBL_USER_NAME" ]] \
+                && gr.msg -c green "username ok" \
+                || gr.msg -e2 "username mismatch! $GRBL_USER:$GRBL_USER_NAME"
             ;;
         change|*)
             user.change "$@"
             ;;
-
     esac
-
-
 }
 
 
 user.info () {
-
+# printout user information
     gr.msg -h "user information"
-    gr.kvp GURU_USER
-    gr.kvp GURU_USER_FULL_NAME
-    gr.kvp GURU_USER_EMAIL
-    gr.kvp GURU_USER_PHONE
-    gr.kvp GURU_USER_DOMAIN
-    gr.kvp GURU_USER_TEAM
+    gr.varlist "GRBL_USER GRBL_USER_FULL_NAME GRBL_USER_EMAIL GRBL_USER_PHONE GRBL_USER_DOMAIN GRBL_USER_TEAM"
 
     gr.msg -h "system information"
-    gr.kvp GURU_SYSTEM_CALL_NAME
-    gr.kvp GURU_SYSTEM_ALIAS
-    gr.kvp GURU_SYSTEM_LOCATION
-    gr.kvp GURU_SYSTEM_MOUNT
+    gr.varlist "GRBL_SYSTEM_CALL_NAME GRBL_SYSTEM_ALIAS GRBL_SYSTEM_LOCATION GRBL_SYSTEM_MOUNT"
 
     gr.msg -h "service information"
-    gr.kvp GURU_SERVICE_DOMAIN
-    gr.kvp GURU_ACCESS_DOMAIN
-    gr.kvp GURU_CLOUD_DOMAIN
+    gr.varlist "GRBL_SERVICE_DOMAIN GRBL_ACCESS_DOMAIN GRBL_CLOUD_DOMAIN"
 }
 
-
 user.set_value () {
-    # set value to user (or any) config file
+# set value to user (or any) config file
 
-    [ -f "$GURU_SYSTEM_RC" ] && target_rc="$GURU_SYSTEM_RC" || target_rc="$GURU_RC"        #
+    [ -f "$GRBL_SYSTEM_RC" ] && target_rc="$GRBL_SYSTEM_RC" || target_rc="$GRBL_RC"        #
     #[ $3 ] && target_rc=$3
     sed -i -e "/$1=/s/=.*/=$2 $3 $4/" "$target_rc"
 
 }
 
 user.add () {
-    # add user (futile)
+# add user (futile)
 
     [ "$1" ] && new_user="$1" || read -p "user name to change to : " new_user
-    echo "adding $new_user"
-    # ask/get user name
+    echo "TBD $new_user"
+    # TBD ask/get user name
     # make config folder
     # copy user config template to user name
     # add user add request to server
@@ -83,8 +67,9 @@ user.add () {
     # user.change
     return 0
 }
+
 user.add_server () {
-    # Run this only at accesspoint server for now
+# Run this only at accesspoint server for now
 
     echo "add user to access point server TBD"
     [ "$1" ] && new_user="$1" || read -p "user name to add : " new_user
@@ -93,15 +78,15 @@ user.add_server () {
 }
 
 user.change () {
-    # change user, futile done bu guru config export -u <username>
+# change user, futile done bu grbl config export -u <username>
 
     [ "$1" ] && new_user="$1" || read -p "user name to change to : " new_user
 
-    new_user_rc=$GURU_CFG/$new_user/userrc2
+    new_user_rc=$GRBL_CFG/$new_user/userrc2
 
     if [ -d "$new_user_rc" ]; then
         echo "user exist"
-        user.set_value GURU_USER "${new_user,,}"             # set user to en
+        user.set_value GRBL_USER "${new_user,,}"             # set user to en
         source "$new_user_rc"                           # get user configuration on use
         pull_config_files                               # get newest configurations from server
     else
@@ -116,9 +101,8 @@ user.change () {
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$GURU_RC"
     user.main "$@"
-    return 0
+    return $?
 fi
 
 

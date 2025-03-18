@@ -1,8 +1,8 @@
-# guru-client os functions for installer casa@ujo.guru 2020
+# grbl os functions for installer casa@ujo.guru 2020
 # echo "common.sh: included by: $0"
 os_indicator_key=f8
 system_indicator_key=caps
-os_rc=/tmp/guru-cli_os.rc
+os_rc=/tmp/$USER/grbl_os.rc
 
 __os_color="light_blue"
 __os=$(readlink --canonicalize --no-newline $BASH_SOURCE)
@@ -10,11 +10,11 @@ __os=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 os.help () {
 # Operating system functions help
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    gr.msg -v1 -c white "guru-client installer help "
+    gr.msg -v1 -c white "grbl installer help "
     gr.msg -v2
-    gr.msg -v0  "usage:    $GURU_CALL status|info|poll|get|capslock|upgrade|update|usermerge "
+    gr.msg -v0  "usage:    $GRBL_CALL status|info|poll|get|capslock|upgrade|update|usermerge "
     gr.msg -v2
     gr.msg -v1 -c white  "commands:"
     gr.msg -v1 " status             operating system info with kernel version"
@@ -40,7 +40,7 @@ os.help () {
 
 os.main () {
 # main command parser
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     local command=$1 ; shift
     case $command in
         status|info|poll|capslock|upgrade|update|usermerge|help|get)
@@ -54,7 +54,7 @@ os.main () {
 
 os.compatible_with () {
 # check that current os is compatible with input [ID] {VERSION_ID}
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     source /etc/os-release
     #[ "$ID" == "$1" ] && return 0 || return 255
     if [ "$ID" == "$1" ]; then
@@ -73,7 +73,7 @@ os.compatible_with () {
 
 os.status () {
 # returns least linux distribution name
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     gr.msg -n && alias 'gr.msg'='echo'
     if [[ -f /etc/os-release ]]; then
         source /etc/os-release
@@ -85,7 +85,7 @@ os.status () {
 
 os.information () {
 # printout
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     local variable=$1
     shift
     local dmi_var_list=(bios-vendor bios-version bios-release-date baseboard-manufacturer baseboard-product-name baseboard-version chassis-type processor-family processor-manufacturer processor-version processor-frequency)
@@ -160,7 +160,7 @@ os.information () {
 
 os.variables () {
 # list of os variables
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     variables=($(cat /etc/os-release | cut -d'=' -f1))
     variables=(${variables[@]} $(cat /etc/upstream-release/lsb-release | cut -d'=' -f1))
     echo ${variables[@]}
@@ -169,7 +169,7 @@ os.variables () {
 
 os.get () {
 # printout os variables
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local variable="$1"
 
@@ -200,12 +200,12 @@ os.get () {
 
 os.info () {
 # returns least linux distribution name
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     source /etc/os-release
     source /etc/upstream-release/lsb-release
 
-    case $GURU_VERBOSE in
+    case $GRBL_VERBOSE in
         0) gr.msg "$NAME $VERSION_ID/$DISTRIB_ID $DISTRIB_RELEASE" ;;
         1) gr.msg "$NAME $VERSION_ID '$VERSION_CODENAME' based on $DISTRIB_ID $DISTRIB_RELEASE '$DISTRIB_CODENAME' $HOME_URL" ;;
         2) gr.kvp NAME VERSION SUPPORT_URL  DISTRIB_ID DISTRIB_RELEASE DISTRIB_CODENAME ;;
@@ -218,7 +218,7 @@ os.info () {
 
 os.update () {
 # update operating system
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     aptitude search '%p' '~U' 2>/dev/null
 
     # dpkg --get-selections \
@@ -241,7 +241,7 @@ os.update () {
 
 os.upgrade () {
 # upgrade system
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _return=
     source net.sh
@@ -253,11 +253,11 @@ os.upgrade () {
 
     #gr.msg -v2 -h "upgrading system.." -k $system_indicator_key
 
-    case $GURU_VERBOSE in
+    case $GRBL_VERBOSE in
 
      ""|0)
-        # log="$GURU_DATA/system.upgrade.log"
-        # echo "guru-client system upgrade by $GURU_USER $(date)" >>$log
+        # log="$GRBL_DATA/system.upgrade.log"
+        # echo "grbl system upgrade by $GRBL_USER $(date)" >>$log
         # apt_options='>>'"$log"
         # pip_options='>>'"$log"
         false
@@ -281,7 +281,7 @@ os.upgrade () {
     gr.msg -v1 -V2 -n "updating.. "
     gr.msg -v2 -h "updating resources "
 
-    if [[ $GURU_VERBOSE -lt 2 ]] ; then
+    if [[ $GRBL_VERBOSE -lt 2 ]] ; then
             sudo apt-get update >/dev/null
             _return=$?
         else
@@ -345,7 +345,7 @@ os.upgrade () {
 
 os.usermerge () {
 # merge /bin → /usr/bin, /sbin → /usr/sbin, /lib → /usr/lib, /lib64 → /usr/lib64
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 # https://wiki.debian.org/UsrMerge
 # https://www.freedesktop.org/wiki/Software/systemd/TheCaseForTheUsrMerge/
 # HOX: not run ever!
@@ -385,7 +385,7 @@ os.usermerge () {
 
 os.poll () {
 # daemon poller interface
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _cmd="$1" ; shift
 
@@ -415,7 +415,7 @@ os.poll () {
 
 os.check_distro() {
 # returns least linux distribution name
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     if [ -f /etc/os-release ]; then
         source /etc/os-release
         echo "$ID"
@@ -453,9 +453,9 @@ os.check_distro() {
 
 os.check_space () {
 # check free space of server disk
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    local mount_point=$GURU_SYSTEM_MOUNT
+    local mount_point=$GRBL_SYSTEM_MOUNT
     [[ $1 ]] && mount_point=$1
     local column=4
     if [[ $2 ]] ; then
@@ -474,7 +474,7 @@ os.check_space () {
 
     # df with parameters
     declare -g server_free_space=$(df \
-        | grep $GURU_SYSTEM_MOUNT \
+        | grep $GRBL_SYSTEM_MOUNT \
         | tr -s " " \
         | cut -d " " -f $column \
         | sed 's/[^0-9]*//g')
@@ -486,11 +486,11 @@ os.check_space () {
 
 os.capslock() {
 # toggle capslock status
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     capslock_state() {
     # return true is capslock is set
-        gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+        gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
         case $(xset -q | sed -n 's/^.*Caps Lock:\s*\(\S*\).*$/\1/p') in
             off) return 1 ;;
             on) return 0 ;;
@@ -529,20 +529,20 @@ os.rc () {
 # source module rc file if exist, generate it from configurations if not
 # this could be in core/config.sh but in here soursing of config.sh is not done every time module is run
     # debug function view
-    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     # files
-    local config_file=$GURU_CFG/$GURU_USER/os.cfg
-    local rc_file="/tmp/guru-cli_os.rc"
+    local config_file=$GRBL_CFG/$GRBL_USER/os.cfg
+    local rc_file="/tmp/$USER/grbl_os.rc"
 
     if [[ -f $config_file ]]; then
     # use user configuration
         true
         #gr.msg -v3 -c dark_gray "using user config $config_file"
 
-    elif [[ -f $GURU_CFG/os.cfg ]]; then
+    elif [[ -f $GRBL_CFG/os.cfg ]]; then
     # Use default configuration
-        config_file=$GURU_CFG/os.cfg
+        config_file=$GRBL_CFG/os.cfg
         #gr.msg -v3 -c dark_gray "using default config $config_file"
     else
     # configuration missing
@@ -578,10 +578,10 @@ os.rc () {
 # }
 
 
-if [[ $GURU_CFG/$GURU_USER/os.cfg ]]; then
-    config_file=$GURU_CFG/$GURU_USER/os.cfg
+if [[ $GRBL_CFG/$GRBL_USER/os.cfg ]]; then
+    config_file=$GRBL_CFG/$GRBL_USER/os.cfg
 else
-    config_file=$GURU_CFG/os.cfg
+    config_file=$GRBL_CFG/os.cfg
 fi
 
 

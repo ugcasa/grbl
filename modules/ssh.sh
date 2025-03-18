@@ -1,7 +1,7 @@
 #!/bin/bash
 ## bash script to add SSH key to remote service provider
 # tested: 2/2020 ubuntu desktop 18.04 and mint cinnamon 19.2
-source $GURU_BIN/common.sh
+source $GRBL_BIN/common.sh
 
 ssh.main () {
     # main selector off ssh functions
@@ -61,13 +61,13 @@ ssh.status () {
 
 
 ssh.help () {
-    gr.msg -v1 -c white "guru-client ssh help "
+    gr.msg -v1 -c white "grbl ssh help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL ssh [key|keys] [agent|ps|ls|add|rm|help] <key_file> <host> <port> <user>"
+    gr.msg -v0 "usage:    $GRBL_CALL ssh [key|keys] [agent|ps|ls|add|rm|help] <key_file> <host> <port> <user>"
     gr.msg -v2
     gr.msg -v1 -c white "Commands:"
     gr.msg -v1 " set                    setup and start ssh-agent systed service "
-    gr.msg -v1 " key|keys               key management tools, try '$GURU_CALL ssh key help' for more info."
+    gr.msg -v1 " key|keys               key management tools, try '$GRBL_CALL ssh key help' for more info."
     gr.msg -v1 "   key ps               list of activekeys "
     gr.msg -v1 "   key send             send keys to server"
     gr.msg -v1 "    "
@@ -76,7 +76,7 @@ ssh.help () {
     gr.msg -v1 "   key add <server>     add keys to known server: ujo.guru, git.ujo.guru, github, bitbucket"
     gr.msg -v2
     gr.msg -v1 -c white "Example: "
-    gr.msg -v1 "      $GURU_CALL ssh key add $GURU_ACCESS_DOMAIN"
+    gr.msg -v1 "      $GRBL_CALL ssh key add $GRBL_ACCESS_DOMAIN"
     gr.msg -v1
     gr.msg -v1 "Any on known ssh command is passed trough to open-ssh client"
     gr.msg -v2
@@ -114,10 +114,10 @@ ssh.add_key () {
         help|*)
            gr.msg -v1 "Add key to server and rule to '~/.ssh/config'"
            gr.msg -v2
-           gr.msg -v0 "Usage:    $GURU_CALL ssh key add [ujo.guru|git.ujo.guru|github|bitbucket] or [domain] [port] [user_name]"
+           gr.msg -v0 "Usage:    $GRBL_CALL ssh key add [ujo.guru|git.ujo.guru|github|bitbucket] or [domain] [port] [user_name]"
            gr.msg -v2
            gr.msg -v1 "providers:"
-           gr.msg -v1 " 1|ujo.guru        add key to access $GURU_ACCESS_DOMAIN "
+           gr.msg -v1 " 1|ujo.guru        add key to access $GRBL_ACCESS_DOMAIN "
            gr.msg -v1 " 2|git.ujo.guru    add key to own git server "
            gr.msg -v1 " 3|github          add key to github.com [user_email] "
            gr.msg -v1 " 4|bitbucket       add key to bitbucket.org [user_email] "
@@ -126,7 +126,7 @@ ssh.add_key () {
            gr.msg -v1 "Without variables script asks input during process"
            gr.msg -v1
            gr.msg -v1 "Example: "
-           gr.msg -v1 "       $GURU_CALL ssh key add github "
+           gr.msg -v1 "       $GRBL_CALL ssh key add github "
         esac
     return "$error"
 }
@@ -142,7 +142,7 @@ ssh.generate_key () {
 
 ssh.keygen () {
     local key_file=$1 ; shift
-    local user=$GURU_USER ; [[ $1 ]] && user=$1
+    local user=$GRBL_USER ; [[ $1 ]] && user=$1
     gr.msg -c white "generating keys "
     if ssh-keygen -t rsa -b 4096 -C "$user" -f "$key_file" ; then
             gr.msg -c green "ok"
@@ -274,9 +274,9 @@ ssh.agent_add () {
 ssh.copy-id () {
     # send key to server
     local key_file=$1
-    local server="$GURU_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
-    local port="$GURU_ACCESS_PORT" ; [[ $3 ]] && port=$3
-    local user="$GURU_USER" ; [[ $4 ]] && name=$4
+    local server="$GRBL_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
+    local port="$GRBL_ACCESS_PORT" ; [[ $3 ]] && port=$3
+    local user="$GRBL_USER" ; [[ $4 ]] && name=$4
     gr.msg -c white "sending public keys to server "
     if ssh-copy-id -f -p "$port" -i "$key_file" "$user@$server" ; then
             gr.msg -c green "ok"
@@ -288,9 +288,9 @@ ssh.copy-id () {
 
 ssh.add_rule () {
     local key_file=$1
-    local server="$GURU_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
-    #local port="$GURU_ACCESS_PORT" ; [[ $3 ]] && port=$3
-    local user="$GURU_USER" ; [[ $3 ]] && user=$3
+    local server="$GRBL_ACCESS_DOMAIN" ; [[ $2 ]] && server=$2
+    #local port="$GRBL_ACCESS_PORT" ; [[ $3 ]] && port=$3
+    local user="$GRBL_USER" ; [[ $3 ]] && user=$3
     if cat $HOME/.ssh/config | grep "$user-$server" >/dev/null ; then
         gr.msg -c green "rule already exist, ok"
     else
@@ -305,8 +305,8 @@ ssh.add_rule () {
 
 ssh.add_key_accesspoint () {
     # function to add keys to ujo.guru access point server
-    local server=$GURU_ACCESS_DOMAIN
-    local key_file="$HOME/.ssh/$GURU_USER-$server"'_id_rsa'
+    local server=$GRBL_ACCESS_DOMAIN
+    local key_file="$HOME/.ssh/$GRBL_USER-$server"'_id_rsa'
 
     ssh.keygen "$key_file"
     ssh.agent_start
@@ -322,11 +322,11 @@ ssh.add_key_github () {
     if xclip -help >/dev/null 2>&1 ; then
             key_output="xclip"
         else
-            [[ "$GURU_INSTALL_TYPE" == "desktop" ]] && sudo apt install xclip && key_output="xclip"
+            [[ "$GRBL_INSTALL_TYPE" == "desktop" ]] && sudo apt install xclip && key_output="xclip"
     fi
 
     local server="github.com"
-    local key_file="$HOME/.ssh/$GURU_USER-$server"'_id_rsa'
+    local key_file="$HOME/.ssh/$GRBL_USER-$server"'_id_rsa'
     local ssh_key_add_url="https://github.com/settings/ssh/new"
     [[ "$1" ]] && user_email="$1" || read -r -p "github login email: " user_email
 
@@ -350,7 +350,7 @@ ssh.add_key_github () {
             *)  gr.msg "key saved to $key_file.pub and $key_file"
         esac
 
-    if [[ "$GURU_INSTALL_TYPE" == "desktop" ]] ; then
+    if [[ "$GRBL_INSTALL_TYPE" == "desktop" ]] ; then
             firefox "$ssh_key_add_url" &
         else
             echo "open browser ans go to url: $ssh_key_add_url"
@@ -362,7 +362,7 @@ ssh.add_key_github () {
 ssh.add_key_bitbucket () {
     # function to setup ssh key login with bitbucket.
     local server="bitbucket.org"
-    local key_file="$HOME/.ssh/$GURU_USER-$server"'_id_rsa'
+    local key_file="$HOME/.ssh/$GRBL_USER-$server"'_id_rsa'
     local ssh_key_add_url="https://bitbucket.org"                               # no able to generalize beep link
 
     [ "$1" ] && user_email="$1" || read -r -p "bitbucket login email: " user_email
@@ -388,7 +388,7 @@ ssh.add_key_bitbucket () {
     # open remote profile settings
     gr.msg -c orange "step 1) login to bitbucket then go to 'Profile' -> 'Personal settings' -> 'SSH keys' -> 'Add key'"
     gr.msg -c orange "step 2) paste the key into the text box and add 'Title' $USER@$HOSTNAME and click 'Add key'"
-    if [[ "$GURU_INSTALL_TYPE" == "desktop" ]] ; then
+    if [[ "$GRBL_INSTALL_TYPE" == "desktop" ]] ; then
             gr.msg -c white "paste public key (stored to clipboard) to text box and use $USER@$HOSTNAME as a 'Title'"
             firefox "$ssh_key_add_url" &
         else
@@ -408,8 +408,8 @@ ssh.add_key_my_git () {
 # ssh.check_connections () {
 # # print a list of connection an simple quest of connection type
 
-#     local _server="$GURU_USER@$GURU_ACCESS_DOMAIN"
-#     local _port="$GURU_ACCESS_PORT"
+#     local _server="$GRBL_USER@$GRBL_ACCESS_DOMAIN"
+#     local _port="$GRBL_ACCESS_PORT"
 
 #     [[ $1 ]] && _server=$1
 #     [[ $2 ]] && _port=$2
@@ -451,7 +451,7 @@ ssh.add_key_other () {
     [[ "$2" ]] && port="$2" || read -r -p "port: " port
     [[ "$3" ]] && user="$3" || read -r -p "user name: " user
     local key_file="$HOME/.ssh/$user-$server"'_id_rsa'
-    export GURU_USER=$user
+    export GRBL_USER=$user
     ssh.keygen "$key_file"
     ssh.agent_start
     ssh.agent_add "$key_file"
@@ -462,7 +462,7 @@ ssh.add_key_other () {
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # source "$GURU_RC"
+    # source "$GRBL_RC"
     ssh.main "$@"
     exit "$?"
 fi

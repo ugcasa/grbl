@@ -1,4 +1,4 @@
-#!/usr/bin/env guru
+#!/usr/bin/env grbl
 mount system
 # set verbose 1
 # daemon start ISSUE #5
