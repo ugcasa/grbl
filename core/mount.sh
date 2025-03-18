@@ -143,7 +143,7 @@ mount.make_rc () {
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     if ! source config.sh ; then
-        gr.msg -c yellow "unable to load configuration module"
+        gr.msg -e1 "unable to load configuration module"
         return 100
     fi
 
@@ -152,7 +152,7 @@ mount.make_rc () {
     fi
 
     if ! config.make_rc "$GRBL_CFG/$GRBL_USER/mount.cfg" $mount_rc ; then
-        gr.msg -c yellow "configuration failed"
+        gr.msg -e1 "configuration failed"
         return 101
     fi
 
@@ -223,7 +223,7 @@ mount.info () {
 
     done
 
-    ((_error>0)) && gr.msg -c yellow "perl not installed or internal error, pls try to install perl and try again."
+    ((_error>0)) && gr.msg -e1 "perl not installed or internal error, pls try to install perl and try again."
     return $_error
 }
 
@@ -378,8 +378,9 @@ mount.remote () {
     # check is target populated and append if is
     if ! [[ -z "$(ls -A $_target_folder)" ]] ; then
         # Check that target directory is empty
-        gr.msg -c yellow "target folder is not empty!"
+        gr.msg -e1 "target folder is not empty!"
 
+        # Check force options
         if ! [[ $GRBL_FORCE ]] ; then
             gr.msg -v2 -c white "try '-f' to force or: '$GRBL_CALL -f mount $_source_folder $_target_folder"
             return 25
@@ -416,10 +417,10 @@ mount.remote () {
         gr.debug "cp $_temp_folder/${_target_folder##*/} > $_target_folder"
 
         cp -a "$_temp_folder/${_target_folder##*/}/." "$_target_folder" \
-            || gr.msg -c yellow "failed to append/return files to $_target_folder, check also $_temp_folder"
+            || gr.msg -e1 "failed to append/return files to $_target_folder, check also $_temp_folder"
 
         rm -rf "$_temp_folder" \
-            || gr.msg -c yellow "failed to remote $_temp_folder"
+            || gr.msg -e1 "failed to remote $_temp_folder"
     fi
 
     # if symlink given check if exist and create if not
@@ -430,18 +431,18 @@ mount.remote () {
         else
             gr.msg -n -v2 "linking "
             ln -s $_target_folder $_symlink && error=0 \
-                || gr.msg -x 25 -c yellow "error creating $_symlink"
+                || gr.msg -x 25 -e1 "error creating $_symlink"
         fi
     fi
 
     # check sshfs error
     if ((error>0)) ; then
-        gr.msg -c yellow "error $error when sshf"
+        gr.msg -e1 "error $error when sshf"
         gr.msg -v2 "check user configuration '$GRBL_CALL config user'"
 
         ## check that is not listed in /etc/mtab
         if grep -wq $_target_folder /etc/mtab ; then
-            gr.msg -c yellow "listed in mtab, not able to remove $_target_folder"
+            gr.msg -e1 "listed in mtab, not able to remove $_target_folder"
             return 27
         fi
 
@@ -486,7 +487,7 @@ mount.listed () {
     if [[ ${_mount_list} ]] ; then
                 gr.debug "$FUNCNAME: ${_mount_list[@]}"
             else
-                gr.msg -c yellow "default mount list is empty, edit $GRBL_CFG/$GRBL_USER/user.cfg and then '$GRBL_CALL config export'"
+                gr.msg -e1 "default mount list is empty, edit $GRBL_CFG/$GRBL_USER/user.cfg and then '$GRBL_CALL config export'"
             return 1
         fi
 
@@ -523,7 +524,7 @@ mount.all () {
     if [[ $_mount_list ]] ; then
                 gr.debug "$FUNCNAME: ${_mount_list[@]}"
             else
-                gr.msg -c yellow "default mount list is empty, edit $GRBL_CFG/$GRBL_USER/user.cfg and then '$GRBL_CALL config export'"
+                gr.msg -e1 "default mount list is empty, edit $GRBL_CFG/$GRBL_USER/user.cfg and then '$GRBL_CALL config export'"
             return 1
         fi
 
