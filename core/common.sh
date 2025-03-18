@@ -98,11 +98,13 @@ gr.error () {
 gr.msg () {
 # function for output messages and make log notifications
 
-    local verbose_trigger=0
-    local verbose_limiter=5                         # maximum + 1 verbose level
+    # options
+    local _verbose_trigger=0
+    local _verbose_limiter=5                        # maximum + 1 verbose level
     local _newline="\n"                             # newline is on by default
     local _pre_newline=                             # newline before text disable by default
-    local _timestamp=                               # timestamp is disabled by default
+    local _timestamp=
+    local _datestamp=                                # timestamp is disabled by default
     local _message=                                 # message container
     local _logging=                                 # logging is disabled by default
     local _say=                                     # speak
@@ -117,6 +119,9 @@ gr.msg () {
     local _debug=
     local _error=
     local _return=
+    local _function=
+    # shopt -s extdebug; declare -Ff quote; shopt -u extdebug
+    # https://askubuntu.com/questions/1146269/how-can-i-find-where-certain-bash-function-is-defined
 
     # parse flags
     TEMP=`getopt --long -o "tlsrnhNpde:x:w:V:v:c:C:q:k:m:" "$@"`
@@ -126,22 +131,30 @@ gr.msg () {
         case "$1" in
             #-r ) _repeat="$2 "                              ; shift ;;
             -t ) _timestamp="$(date +$GRBL_FORMAT_TIME) "   ; shift ;;
-            -l ) _logging=true                              ; shift ;;
             -s ) _say=true                                  ; shift ;;
             -h ) _color_code="$C_HEADER"                    ; shift ;;
             -n ) _newline=                                  ; shift ;;
             -p ) _newline="\n\n"                            ; shift ;;
             -r ) _return="\r" ;_newline=                    ; shift ;;
             -N ) _pre_newline="\n"                          ; shift ;;
-            -d ) _debug=true                                ; shift ;;
-            -e ) _error=$2                                  ; shift 2 ;;
             -x ) _exit=$2                                   ; shift 2 ;;
             -w ) _column_width=$2                           ; shift 2 ;;
-            -V ) verbose_limiter=$2                         ; shift 2 ;;
-            -v ) verbose_trigger=$2                         ; shift 2 ;;
+            -V ) _verbose_limiter=$2                        ; shift 2 ;;
+            -v ) _verbose_trigger=$2                        ; shift 2 ;;
             -m ) _mqtt_topic="$2"                           ; shift 2 ;;
             -q ) _mqtt_topic="$GRBL_HOSTNAME/$2"            ; shift 2 ;;
             -k ) _indicator_key=$2                          ; shift 2 ;;
+
+            -l ) _logging=true
+                 shift
+                 ;;
+            -d ) _debug=true
+                 shift
+                 ;;
+            -e ) _error=$2
+                 [[ $GRBL_VERBOSE -ge 2 ]] && logging=true
+                 shift 2
+                 ;;
             -C ) _color=$2
                  _color_only=true
                  _c_var="C_${_color^^}"
@@ -159,16 +172,54 @@ gr.msg () {
     local _arg="$@"
     [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
+    # -C) print only color code
+    if [[ $_color_only ]] ; then
+        echo -n "$_color_code"
+        return 0
+    fi
+
+    if [[ $_logging ]]; then
+        _datestamp=$(date +$GRBL_FORMAT_LOGSTAMP)
+        _function=$(caller 0 | awk '{print $2}')
+        [[ -d ${GRBL_LOG%/*} ]] && printf '%s %s: %s\n' $_datestamp $_function "$_message" >> $GRBL_LOG
+    fi
+
     # -d) debug messages to stderr
     if [[ $_debug ]] ; then
         _c_var="C_FUCHSIA"
         _color_code=${!_c_var}
-        >&2 printf "$_color_code%s\033[0m" "${_message}"
+        _function=$(caller 0 | awk '{print $2}')
+        >&2 printf "$_function $_color_code%s\033[0m" "${_message}"
+
+        # bash --debugger
+        # declare -Ff quote
+        # nl -ba /usr/share/bash-completion/bash_completion | sed -n 143,150p
+
+        return 0
+    fi
+
+    if [[ $_verbose_trigger -gt $GRBL_VERBOSE ]]; then
+        return 0
+    fi
+    # -v) given verbose level is lower than trigger level, do not print
+    # "print only if higher verbose level than this"
+    if [[ $_verbose_trigger -gt $GRBL_VERBOSE ]]; then
+        return 0
+    fi
+
+    # -V) given verbose level is higher than high limiter, do not print
+    # "do not print after this verbose level"
+    if [[ $_verbose_limiter -le $GRBL_VERBOSE ]]; then
         return 0
     fi
 
     # -x) add exit code to message
-    [[ $_exit -gt 0 ]] && _message="$_exit: $_message"
+    if [[ $_exit -gt 0 ]]; then
+        _message="$_exit: $_message"
+        _datestamp=$(date +$GRBL_FORMAT_LOGSTAMP)
+        _function=$(caller 0 | awk '{print $2}')
+        printf '%s warning early exit (%s)' $_datestamp $_function $_exit >> $GRBL_LOG
+    fi
 
     # -k) set corsair key is '-k <key>' used
     if [[ $_indicator_key ]] && [[ $GRBL_CORSAIR_ENABLED ]]; then
@@ -180,6 +231,7 @@ gr.msg () {
         else
             corsair.main set "$_indicator_key" "$_color"
         fi
+        [[ $_message ]] || return 0
     fi
 
     # -m) publish to mqtt if '-q|-m <topic>' used
@@ -187,24 +239,7 @@ gr.msg () {
         source mqtt.sh
         # mqtt.enabled || return 0
         mqtt.pub "$_mqtt_topic" "$_message"
-    fi
-
-    # -C) print only color code
-    if [[ $_color_only ]] ; then
-        echo -n "$_color_code"
-        return 0
-    fi
-
-    # -v) given verbose level is lower than trigger level, do not print
-    # "print only if higher verbose level than this"
-    if [[ $verbose_trigger -gt $GRBL_VERBOSE ]]; then
-        return 0
-    fi
-
-    # -V) given verbose level is higher than high limiter, do not print
-    # "do not print after this verbose level"
-    if [[ $verbose_limiter -le $GRBL_VERBOSE ]]; then
-        return 0
+        return $?
     fi
 
     # -w) fill message length to column limiter
@@ -217,6 +252,8 @@ gr.msg () {
 
     # -e) error messages to stderr
     if [[ $_error ]] ; then
+        # get caller function name
+        _function=$(caller 0 | awk '{print $2}')
         if [[ $GRBL_COLOR ]] && ! [[ $GRBL_VERBOSE -eq 0 ]]; then
             case $_error in
                 0) _c_var="C_WHITE" ;;
@@ -227,9 +264,13 @@ gr.msg () {
                 ""|*) _c_var="C_YELLOW" ; _message="undefined error" ; _column_width=${#_message};;
             esac
             _color_code=${!_c_var}
-            printf "$_pre_newline$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message}" >&2
+            [[ $GRBL_VERBOSE -ge 2 ]] && printf "%s:" "${_function} "
+            printf "$_color_code%-${_column_width}s$_newline\033[0m$_return" "${_message} " >&2
+            #printf "${_pre_newline}%s: ${_color_code}%s${_newline}\033[0m${_return}" "${_function}" "${_message}" >&2
         else
-            printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_message_length}" >&2
+            [[ $GRBL_VERBOSE -ge 2 ]] && printf "%s:" "${_function} "
+            printf "%s: %-${_column_width}s$_newline$_return" "${_function}" "${_message:0:$_message_length}" >&2
+            #printf "${_pre_newline}%s%s${_newline$_return}" "${_timestamp}" "${_message:0:$_message_length}" >&2
         fi
         return 0
     fi
@@ -242,6 +283,7 @@ gr.msg () {
         printf "$_pre_newline%s%-${_column_width}s$_newline$_return" "${_timestamp}" "${_message:0:$_message_length}"
     fi
 
+
     if [[ $_say ]] && [[ $GRBL_SOUND_ENABLED ]] && [[ $GRBL_SPEECH_ENABLED ]] || [[ $GRBL_SPEAK ]]; then
 
         # remove colors and stuff
@@ -252,7 +294,9 @@ gr.msg () {
         #say_message="$(echo $say_message | sed -r 's/ {2,}/, /g')"
 
         #[[ $GRBL_VERBOSE -gt 0 ]] && printf "%s\n" "$_message"
-        [[ $GRBL_DEBUG ]] || espeak "${say_message//-}"  #-p $GRBL_SPEAK_PITCH -s $GRBL_SPEAK_SPEED -v $GRBL_SPEAK_LANG "$_message"
+        #-p $GRBL_SPEECH_PITCH -s $GRBL_SPEECH_SPEED -v $GRBL_SPEECH_LANG "$_message"
+        speech
+        [[ $GRBL_DEBUG ]] || espeak -p $GRBL_SPEECH_PITCH -s $GRBL_SPEECH_SPEED -v $GRBL_SPEECH_LANG "${say_message//-}"
         #return 0
     fi
 
@@ -261,6 +305,17 @@ gr.msg () {
 
     return 0
 }
+
+#test
+# export GRBL_VERBOSE=2
+# export GRBL_COLOR=true
+# source ~/code/grbl/core/common.sh
+# t1 () {
+#     gr.msg -e1 "vittu"
+# }
+# t1
+
+
 
 gr.emsg () {
 # sond know what this is, remove
@@ -448,6 +503,7 @@ gr.ask () {
     local _arg="$@"
     [[ "$_arg" != "--" ]] && _message="${_arg#* }"
 
+
     # format timeout box
     if [[ $_timeout ]] ; then
         _message="$_message ($_timeout sec timeout)"
@@ -485,6 +541,9 @@ gr.ask () {
         _message="$(gr.msg -n -c dark_cyan $_message)"
         fi
     fi
+
+    # clear keyboard buffer
+    while read -e -t 0.1; do : ; done
 
     # ask the question
     if [[ $GRBL_FORCE ]] ; then
@@ -719,7 +778,7 @@ gr.debug2 () {
 gr.debug () {
 # printout debug messages
     if [[ $GRBL_DEBUG ]] ; then
-        gr.msg -d "${FUNCNAME[0]^^}: " >&2
+        gr.msg -d "${FUNCNAME[0]^^}: $(caller 0 | awk '{print $2}') " >&2
         echo ${@} >&2
     fi
 }
