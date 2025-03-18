@@ -584,18 +584,21 @@ note.preview () {
 
         vk|kk|kuukausi|viimekuu)
             for (( i = 0; i < 30; i++ )); do
+            done
                 _date=$(date -d "-$i day" +$GRBL_FORMAT_FILE_DATE)
                 _file=$(note.locate $_date)
                 [[ -f $_file ]] && _file_list+=( "$_file" )
-            done
             ;;
 
         "")
             _date=$(date -d today +$GRBL_FORMAT_FILE_DATE)
+            _file=$(note.locate $_date)
+            [[ -f $_file ]] && _file_list+=( "$_file" )
             ;;
         *)
             _date=$(date -d "$input" +$GRBL_FORMAT_FILE_DATE)
-
+            _file=$(note.locate $_date)
+            [[ -f $_file ]] && _file_list+=( "$_file" )
             ;;
     esac
 
@@ -604,9 +607,7 @@ note.preview () {
         return 128
     fi
 
-    [[ $_file_list ]] || _file_list+=( $(note.locate $_date) )
-
-    $GRBL_PREFERRED_BROWSER ${_file_list[@]}
+    [[ $_file_list ]] && $GRBL_PREFERRED_BROWSER ${_file_list[@]}
 }
 
 
