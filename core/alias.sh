@@ -11,7 +11,6 @@
 # echo ${clean[2]}
 ## TODO main,add, del, status, list, help
 
-alias $GRBL_SYSTEM_ALIAS="$GRBL_CALL"
 alias active="$GRBL_CALL active"
 alias backup="$GRBL_CALL backup"
 alias countdown="$GRBL_CALL timer countdown"
@@ -27,8 +26,26 @@ alias tunel="$GRBL_CALL tunnel"
 alias status="$GRBL_CALL status"
 alias spy="$GRBL_CALL spy monitor firefox"
 
+# variables
+alias $GRBL_SYSTEM_ALIAS="$GRBL_CALL"
+$GRBL_ANDROID_NAME >/dev/null 2>/dev/null || alias $GRBL_ANDROID_NAME="gr phone"
+
+# shorts
 alias con="connect"
+alias discon="disconnect"
 alias rel="release"
+
+play () {
+    local media=$(xclip -o -selection clipboard)
+    [[ -f $media ]]
+
+    # mediafile
+    if file $media | grep -q -e mp4 -e mp3 -e webm -e avi; then
+        mpv $media
+    fi
+
+    # TODOadd rest of playables here
+}
 
 connect () {
     $GRBL_CALL mount $@
