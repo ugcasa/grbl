@@ -298,6 +298,7 @@ help.common() {
         gr.msg -v1 "Format list of sting pairs to two column list view"
         gr.msg -v2
         gr.msg -v0 'usage   gr.kvt <variable> <value> <variable> <value> ... ' -c white
+    }
 
     common.kvp () {
         gr.msg -v1 "print key value pairs based list of variable names"    gr.msg -v2
