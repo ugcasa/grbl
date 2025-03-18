@@ -109,7 +109,7 @@ install.dropbox () {
             newist="22024.04.17"
             ;;
         # 18.04 - 22.04
-        18*|19*|20.10|22.04)
+        18*|19*|20*|22.04)
             newist="2020.03.04"
             ;;
         *) gr.msg -e0 "not supported"
@@ -120,14 +120,17 @@ install.dropbox () {
 
     if gr.ask "install frontend client"; then
         [[ -d ~/apps ]] && cd ~/apps
-        app_deb_url=https://www.dropbox.com/download?dl=packages/ubuntu/dropbox_${newist}_amd64.deb
-        wget -q $app_deb_url
+        if ! [[ -f dropbox_${newist}_amd64.deb ]]; then
+            app_deb_url=https://www.dropbox.com/download?dl=packages/ubuntu/dropbox_${newist}_amd64.deb
+            wget -q $app_deb_url
+        fi
         sudo dpkg -i "dropbox_${newist}_amd64.deb"
     fi
 
     if gr.ask "install headless daemon"; then
         # daemon
-        cd ~ wget -q -O - "https://www.dropbox.com/download?plat=lnx.x86_64" | tar xzf -
+        cd ~
+        wget -q -O - "https://www.dropbox.com/download?plat=lnx.x86_64" | tar xzf -
         ln -s ~/.dropbox-dist/dropboxd ~/apps/dropboxd
         gr.msg -h "run daemon by './apps/dropboxd &'"
     fi
@@ -135,9 +138,15 @@ install.dropbox () {
     if gr.ask "get control script"; then
         ## control script
         cd apps
-        wget https://www.dropbox.com/download?dl=packages/dropbox.py -O dropbox.py
+        if ! [[ -f dropbox.py ]]; then
+            wget https://www.dropbox.com/download?dl=packages/dropbox.py -O dropbox.py
+        fi
         chmod +x dropbox.py
         gr.msg -h "run script by '~/apps/dropbox.py'"
+    fi
+
+    if gr.ask "run daemon?"; then
+        ./dropboxd &
     fi
 }
 
