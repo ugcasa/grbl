@@ -132,84 +132,76 @@ note.config () {
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
+    gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME return: '$?'" >&2
 
     case $_input in
         *.*)
-            # gr.debug "got date with dots"
+            gr.debug "got date with dots"
+            # https://www.studytonight.com/post/printf-09-and-08-are-invalid-octal-values
+            # "numbers that start with a zero are interpreted as octal numbers. The digits 0-7 are valid in octal notation, but 8 and 9 are not."
             _day=$(cut -d "." -f1 <<<$_input)
-            _day=$(printf "%02d" "$_day")
+            _day=$(printf "%02d" "${_day#0}")
             _month=$(cut -d"." -f2 <<<$_input)
-            _month=$(printf "%02d" "$_month")
+            _month=$(printf "%02d" "${_month#0}")
             _year=$(cut -d"." -f3 <<<$_input)
 
             if date -d "$_year$_month$_day" >/dev/null; then
+                gr.debug "Finnish date DD.MM.YYYY $_day.$_month.$_year"
                 true
-                # gr.debug "Finnish date DDMMYYYY $_day.$_month.$_year"
             elif date -d "$_day$_month$_year" >/dev/null; then
-                gr.debug "UK date YYYYMMDD $_year.$_month.$_day"
+                gr.debug "UK date YYYY.MM.DD $_year.$_month.$_day"
                 local temp=$_year
                 _year=$_day
                 _day=$temp
             elif date -d "$_year$_day$_month" >/dev/null; then
-                # gr.debug "US date MMDDYYYY $_month.$_day.$_year"
+                gr.debug "US date MM.DD.YYYY $_month.$_day.$_year"
                 local temp=$_month
                 _month=$_day
                 _day=$temp
+            else
+                gr.msg "cannot solve date '$_input'"
+                return 128
             fi
+
             _datestamp="${_year}${_month}${_day}"
 
-            # this cannot be done
-            # # check is four digit year
-            # if [[ ${#_year} -lt 4 ]]; then
-            #     # check is year less than 1000
-            #     if [[ ${#_year} -gt 2 ]] || [[ ${#_year} -lt 2 ]]; then
-            #         gr.msg -e1 "please enter year in two or four digits"
-            #         exit 2
-            #     else
-            #     # two digit year assume all before 50 to be 1950 and mote than that 2050
-            #     if [[ $_year -ge 50 ]]; then
-            #         _year="19$_year"
-            #         else
-            #         _year="20$_year"
-            #         fi
-            #     fi
-            # fi
+            gr.debug "_datestamp:$_datestamp Ymd}"
+            ;;
 
-        ;;
         "")
-            # gr.debug "got empty input, using today"
+            gr.debug "got empty input, using today"
             _datestamp=$(date -d now $GRBL_FORMAT_FILE_DATE)
             _year=$(date -d $_datestamp +%Y)
             _month=$(date -d $_datestamp +%m)
             _day=$(date -d $_datestamp +%d)
-        ;;
+            ;;
         *)
             # check it contain numbers
             if [[ $_input =~ $_re ]] ; then
-                # gr.debug "got date stamp format"
+                gr.debug "got date stamp format"
                 _year=${_input::-4}
                 _month=${_input:4:2}
                 _day=${_input:6:2}
                 _datestamp="${_year}${_month}${_day}"
             else
-                # gr.debug "got textual input"
+                gr.debug "got textual input"
                 _datestamp=$(date -d "${_input[@]}" +%Y%m%d)
 
                 if ! [[ $_datestamp ]]; then
                     gr.msg -e1 "unknown date '${_input[@]}'"
-                    exit 122
+                    return 122
                 fi
                 _year=$(date -d $_datestamp +%Y)
                 _month=$(date -d $_datestamp +%m)
                 _day=$(date -d $_datestamp +%d)
             fi
-        ;;
+            ;;
     esac
 
     # test variables
     gr.varlist "debug _day _month _year _datestamp"
 
-    # Test time variables, non valid data causes error
+    # test time variables, non valid data causes error
     date -d "$_year" +%Y  >/dev/null || return  112
     date -d "$_month" +%m >/dev/null || return  113
     date -d "$_day" +%d >/dev/null || return  114
@@ -558,56 +550,66 @@ note.preview () {
     # translations
     case $1 in
 
-        y|yd|eilen|eilinen|eiliset)
-            _date=$(date -d yesterday +$GRBL_FORMAT_FILE_DATE)
+        d*|td|t|tä*|"")
+            _file_list+=("$(note.locate $(date -d today +$GRBL_FORMAT_FILE_DATE))")
             ;;
 
-        yy|ts|toissapäivä|toissapäiväinen|toissapäiväiset)
-            _date=$(date -d "-2 day" +$GRBL_FORMAT_FILE_DATE)
+        y*|e|ei*)
+             _file_list+=("$(note.locate $(date -d yesterday +$GRBL_FORMAT_FILE_DATE))")
             ;;
 
-        vv|viimeviikko)
-            for (( i = 0; i < 5; i++ )); do
-                _date=$(date -d "last monday +$i day" +$GRBL_FORMAT_FILE_DATE)
+        yy|tda|tp|toissap*)
+            _file_list+=("$(note.locate $(date -d "-2 day" +$GRBL_FORMAT_FILE_DATE))")
+            ;;
+
+        [0-9]|[0-9][0-9]|[0-9][0-9][0-9])
+            _file_list+=("$(note.locate $(date -d "-$1 day" +$GRBL_FORMAT_FILE_DATE))")
+            ;;
+
+        lw|w|v*)
+            for (( i = 5; i > 0; i-- )); do
+                _date=$(date -d "last friday -$i day" +$GRBL_FORMAT_FILE_DATE)
                 _file=$(note.locate $_date)
                 [[ -f $_file ]] && _file_list+=( "$_file" )
             done
             ;;
 
-        tv|toissaviikko)
-            for (( i = 0; i < 5; i++ )); do
-                _date=$(date -d "-2 weeks monday +$i day" +$GRBL_FORMAT_FILE_DATE)
+        lww|llw|twa|ww|tv|toissav*)
+            for (( i = 5; i > 0 ; i-- )); do
+                _date=$(date -d "-2 weeks friday -$i day" +$GRBL_FORMAT_FILE_DATE)
                 _file=$(note.locate $_date)
                 [[ -f $_file ]] && _file_list+=( "$_file" )
             done
             ;;
 
-        vk|kk|kuukausi|viimekuu)
+        lm|vk|kk|kuuk*|viimek*)
             for (( i = 0; i < 30; i++ )); do
-            done
                 _date=$(date -d "-$i day" +$GRBL_FORMAT_FILE_DATE)
                 _file=$(note.locate $_date)
                 [[ -f $_file ]] && _file_list+=( "$_file" )
+            done
             ;;
 
-        "")
-            _date=$(date -d today +$GRBL_FORMAT_FILE_DATE)
-            _file=$(note.locate $_date)
-            [[ -f $_file ]] && _file_list+=( "$_file" )
-            ;;
         *)
-            _date=$(date -d "$input" +$GRBL_FORMAT_FILE_DATE)
-            _file=$(note.locate $_date)
-            [[ -f $_file ]] && _file_list+=( "$_file" )
+            if date -d "$input" +$GRBL_FORMAT_FILE_DATE 2>/dev/null >/dev/null; then
+                _date=$(date -d "$input" +$GRBL_FORMAT_FILE_DATE)
+                _file=$(note.locate $_date)
+                [[ -f $_file ]] && _file_list+=( "$_file" )
+            else
+                gr.msg -e0 "non valid day '$input'"
+                return 2
+            fi
+
             ;;
     esac
 
-    if ! date -d $_date +$GRBL_FORMAT_FILE_DATE; then
-        gr.msg -e1 "not valid date"
-        return 128
+    if [[ ${_file_list[0]} ]]; then
+        $GRBL_PREFERRED_BROWSER ${_file_list[@]}
+        return 0
+    else
+        gr.msg -v1 "no notes"
+        return 1
     fi
-
-    [[ $_file_list ]] && $GRBL_PREFERRED_BROWSER ${_file_list[@]}
 }
 
 
