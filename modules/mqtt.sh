@@ -21,7 +21,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DE
                 mqtt.enabled || return 1
                 mqtt.$_cmd "$@"
                 ;;
-           *)   gr.msg -c yellow "${FUNCNAME[0]}: unknown command: $_cmd"
+           *)   gr.msg -e1 "unknown command: $_cmd"
                 return 2
     esac
 }
@@ -73,7 +73,7 @@ mqtt.make_rc () {
 gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     if ! source config.sh ; then
-        gr.msg -c yellow "unable to load configuration module"
+        gr.msg -e1 "unable to load configuration module"
         return 100
     fi
 
@@ -82,7 +82,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DE
     fi
 
     if ! config.make_rc "$GRBL_CFG/$GRBL_USER/mqtt.cfg" $mqtt_rc ; then
-        gr.msg -c yellow "configuration failed"
+        gr.msg -e1 "configuration failed"
         return 101
     fi
 
@@ -103,7 +103,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DE
         # gr.msg -v2 -c green "MQTT enabled"
         return 0
     else
-        gr.msg -v2 -c black "MQTT disabled in user config"
+        gr.msg -v2 -c black "disabled in user config"
         gr.msg -v3 "type '$GRBL_CALL config user' to change configurations"
         return 1
     fi
@@ -127,7 +127,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DE
             -t "$GRBL_HOSTNAME/online" \
             -m "$(date +$GRBL_FORMAT_DATE) $(date +$GRBL_FORMAT_TIME)" \
              >/dev/null 2>&1 \
-                || gr.msg -v2 -c yellow "timeout or MQTT publish issue: $?" -k $GRBL_MQTT_INDICATOR_KEY
+                || gr.msg -v2 -e1 "timeout or publish issue: $?" -k $GRBL_MQTT_INDICATOR_KEY
     }
 
     # delayed publish
@@ -145,7 +145,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DE
             gr.msg -v4 -c green -k $GRBL_MQTT_INDICATOR_KEY
             return 0
         else
-            gr.msg -v2 -c yellow "MQTT subscribe issue: $?" -k $GRBL_MQTT_INDICATOR_KEY
+            gr.msg -v2 -e1 "subscribe issue: $?" -k $GRBL_MQTT_INDICATOR_KEY
             return 1
     fi
 }
@@ -212,7 +212,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DE
         if (( $_error )) ; then
               gr.msg -v2 -c red \
                 -k $GRBL_MQTT_INDICATOR_KEY \
-                "MQTT connection $_i error $_error"
+                "connection $_i error $_error"
           else
               gr.msg -v4 -c green -k $GRBL_MQTT_INDICATOR_KEY
               break
@@ -256,7 +256,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DE
         # -u $GRBL_MQTT_USER
 
     if ! [[ $answer ]]; then
-        gr.msg -c yellow "timeout no message to '$_topic' on $GRBL_MQTT_BROKER:$GRBL_MQTT_PORT "
+        gr.msg -e1 "timeout no message to '$_topic' on $GRBL_MQTT_BROKER:$GRBL_MQTT_PORT "
         gr.blink $GRBL_MQTT_INDICATOR_KEY "error"
         return 100
     fi
@@ -290,7 +290,7 @@ mqtt.status () {
 # check MQTT broker is reachable
 gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    gr.msg -n -v1 -t "${FUNCNAME[0]}: "
+    gr.msg -n -v1 -t ""
 
     if [[ $GRBL_MQTT_ENABLED ]] ; then
             gr.msg -v1 -n -c green "enabled, " -k $GRBL_MQTT_INDICATOR_KEY
@@ -324,12 +324,12 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DE
         start )
             gr.msg -v1 -t -c black \
                 -k $GRBL_MQTT_INDICATOR_KEY \
-                "${FUNCNAME[0]}: MQTT status polling started"
+                "mqtt status polling started"
             ;;
         end )
             gr.msg -v1 -t -c reset \
                 -k $GRBL_MQTT_INDICATOR_KEY \
-                "${FUNCNAME[0]}: MQTT status polling ended"
+                "mqtt status polling ended"
             ;;
         status )
             mqtt.status
@@ -416,7 +416,7 @@ gr.msg -v4 -n -c $__mqtt_color "$__mqtt [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DE
     sudo apt update
     sudo apt install mosquitto-clients \
         && gr.msg -c green "grbl is now ready to MQTT" \
-        || gr.msg -c yellow "error $? during install mosquitto-clients"
+        || gr.msg -e1 "error $? during install mosquitto-clients"
     return 0
 
     # TBD certification requirements
