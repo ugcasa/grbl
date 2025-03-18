@@ -1,134 +1,114 @@
-# guru-client easy to use platform for ubuntu based os.
+# GRBL - easy to use terminal tool kit for Debian/Ubuntu Linux.
 
-guru-client contains:
+Welcome to the **GRBL** project! This project aims to simplify and streamline various terminal commands and operations through a modular, user-friendly structure. 
 
-- simplify and rationalize terminal commands (core.sh)
-- module based structure, all modules should run alone, but may lean on guru-cli environmental variables
-- user level flag controlled daemon for timed operations to avoid need of root privileges (daemon.sh)
-- sshfs based file sharing in local network (mount.sh)
-- ssh based keys only access to local server (ssh.sh)
-- ssl tunnel management tools (tunnel.sh)
-- keeps critical personal keys, tokens and configurations available for future projects, locally and server
-- takes backup from files and configurations from server to local encrypted hd.
-- takes backups of containerd services  (backup.sh)
-- vpn account and client usage simplification (vpn.sh)
-- local message network clinet tools (mqtt.sh)
-- simple speaking capabilities (say.sh)
-- simple project, timing and invoicing tools (project.sh, timer.sh, counter.sh)
-- system upgrading, installing and removing tools (system.sh, os.sh)
-- many fun tools for Corsair keyboard and mice based on ckb-next driver (corsair.sh, corsair_raw.sh)
-- finance tools for budgeting and follow up (stonks.sh) prototype
-- few cloud api's (fingrid.sh, google.sh, stonks/op.sh)
-- audio, video and picture placing converting and tagging tools (place.sh, convert.sh, tag.sh)
-- youtube and yleisradio file download and stream viewing tools (youtube.sh yle.sh)
-- audio control and tunneling tools
-- web radio and fm radio listening tools with three key control (radio.sh )
-- tor tools (tor.sh)
-- microchip, st and at-mega chip programmer environment installer (program.sh)
-- messaging tool installer and terminal based integration (telegram.sh)
-- some simple ai tool integrations (ai.sh ailib.sh)
-- note taking, coding and idea cloud tools edi integration subl, vscode, obsidian (note.sh, configs)
-- some automatic template generating tools for new modules and semi automated test templates
+![Flowchart](flowchart.png)
+*Basic principal who GRBL works*
 
-guru.server will be:
+Below is an overview of the functionalities provided by **GRBL**:
 
-- local server scripts guru-server (under development)
+## Features
 
-casa@ujo.guru 2018-2024
+- **Simplified Terminal Commands**: Streamline and rationalize terminal commands using `core.sh`.
+- **Modular Structure**: Each module is designed to run independently but can leverage grbl environmental variables for enhanced functionality.
+- **User-Level Daemon**: Control timed operations without needing root privileges using `daemon.sh`.
+- **File Sharing**: Utilize SSHFS for secure file sharing within a local network with `mount.sh`.
+- **Key and Configuration Management**: Store critical personal keys, tokens, and configurations for future projects, both locally and on the server.
+- **Backup Solutions**: Take backups of files, configurations, and container services from the server to a local encrypted hard drive using `backup.sh`.
 
+### Network and Communication
 
-## runnign demo
+- **VPN Simplification**: Simplify VPN account and client usage with `vpn.sh`.
+- **Local Message Network**: Use MQTT-based tools for local messaging networks with `mqtt.sh`.
+- **SSL Tunnel Management**: Manage SSL tunnels efficiently with `tunnel.sh`.
+- **Secure Access**: Implement SSH-based key-only access to the local server with `ssh.sh`.
 
-guru-client reguires account in server to store configuration and status data.
-Hesus Testman have a demo account access.
-Basic configuration is set to use minimal read only system.
+### Utility Tools
 
-```bash
-git clone https://github.com/ugcasa/guru-client.git
-cd guru-client
-./install.sh -c -u hesus
-```
+- **Speech Capabilities**: Enable simple speaking capabilities with `say.sh`.
+- **Project Management**: Simplify project management, timing, and invoicing with `project.sh`, `timer.sh`, and `counter.sh`.
+- **System Management**: Upgrade, install, and remove system tools with `system.sh` and `os.sh`.
 
-logout and login to run /etc/profiles to set path
+### Hardware and Software Integration
 
-Pull current configurations for Hesus
-```bash
-guru config pull
-```
+- **Corsair Device Tools**: Fun tools for Corsair keyboards and mice based on the `ckb-next` driver with `corsair.sh` and `corsair_raw.sh`.
+- **Finance Tools**: Prototype finance tools for budgeting and follow-up with `stonks.sh`.
+- **Cloud APIs**: Integrate with various cloud APIs using `fingrid.sh`, `google.sh`, and `stonks/op.sh`.
 
-Setting can be changed with dialog by
-```bash
-guru config user
-```
+### Media and Entertainment
 
-..Or with editor
-```bash
-guru config edit
-```
+- **Media Management**: Place, convert, and tag audio, video, and pictures with `place.sh`, `convert.sh`, and `tag.sh`.
+- **Streaming Tools**: Download and stream files from YouTube and Yleisradio with `youtube.sh` and `yle.sh`.
+- **Audio Control**: Control and tunnel audio with dedicated tools.
+- **Radio Tools**: Listen to web and FM radio with three-key control using `radio.sh`.
 
-Take configuration on use
-```bash
-guru config export
-```
+### Security, Programming, AI and Productivity
 
-Mount system folder
-```bash
-guru mount system
-```
+- **Tor Tools**: Utilize Tor-based tools with `tor.sh`.
+- **Chip Programmer**: Install a programming environment for Microchip, ST, and AT-Mega chips with `program.sh`.
+- **Messaging Tools**: Install and integrate messaging tools like Telegram with `telegram.sh`.
+- **AI Integrations**: Integrate simple AI tools with `ai.sh` and `ailib.sh`.
+- **Note-Taking and Coding**: Integrate note-taking, coding, and idea cloud tools with editors like Sublime, VSCode, and Obsidian using `note.sh` and configuration files.
+- **Template Generation**: Automatically generate templates for new modules and semi-automated test templates.
 
-Start daemon
-```bash
-guru start
-```
+## Getting Started
 
-### reinstall
+TODO: Coming soon!
 
-When something goes wrong in install try to reinstall
+To get started with **GRBL**, follow these steps:
 
-```bash
-./install.sh -fc -u hesus
-```
+1. **Clone the Repository**:
+   ```sh
+   git clone https://github.com/ugcasa/grbl.git
+   cd grbl
+   ```
 
-### uninstalling
+2. **Install Dependencies**:
+   ```sh
+   ```
 
-Uninstalling the test installation
+3. **Run Modules**:
+   ```sh
+   ```
 
-```bash
-gr uninstall
-# or
-guru uninstall
-# or
-$HOME/bin/uninstall.sh
-```
+## Contributing
 
-## feature creep
+Contributions are welcome! Please open an issue or submit a pull request.
 
-- alias 'gr' set to call guru core. alias can be set in user.cfg
-- if module is not working, try to install dependencies by 'gr <module> install"
-- read news in text terminal, including picture: 'gr news'. (add/remove feeds edit .config/guru/<user>/rss-feed.list)
-
-
-## getting account to ujo.guru server
-
-Cause of global cyber security state after year 2018 curent server is not available for external users. 
-
-Sandbox server will be added during year 2024. 
-
-## Examples - Basic functions
-
-### UI print function 'gr.msg' and read function 'gr.ask'
-
-gr.msg supports verbose leveling, text color, speak out, control line width, blink indication keys on keyboard, timestamps etc.
-gr.ask is simple yes no selector. it is ´read´ wrap with almost same properties than gr.msg.
-With both, message string cannot stat with a line '-'
-
-
-```bash
-gr.ask -s "did it explode?" && gr.msg -c green "it did" -s || gr.msg -s "it didn't"
-```
-
-speaks out the question and answer, blinks 'y' key green and 'n' key red on corsair rgb gaming keyboard.
-
-----
+## License
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+
+
+## Flow chart (mermaind test)
+
+```mermaid
+
+flowchart TD
+    Macros("Macros & Templates"):::block
+    Install("Installers & Versioning"):::block
+    User("User"):::block
+    CLI("CLI Interface"):::block
+    Core("grbl Core"):::block
+    Config("Configuration"):::block
+    Modules("Module Framework"):::block
+    Daemon("Daemon Service"):::block
+    External("External Services"):::block
+
+    %% Command invocation flow
+    User -->|"Command"| CLI
+    CLI -->|"SendsCommand"| Core
+    Core -->|"DispatchesModules"| Modules
+    Core -->|"TriggersService"| Daemon
+
+    %% Configuration propagation
+    Config -->|"ProvidesConfig"| Core
+    Config -->|"ProvidesConfig"| Modules
+
+    %% External integration from modules
+    Modules -->|"Calls"| External
+
+        %% Styles
+    classDef block fill:#FFFFFF,stroke:#333,stroke-width:2px;
+
+ ```

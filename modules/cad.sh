@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-cli cad software installer and configurator
+# grbl cad software installer and configurator
 
 
 cad.main () {
@@ -9,7 +9,7 @@ cad.main () {
 
 cad.run_rc () {
 
-    export blender_folder="$GURU_APP/blender"
+    export blender_folder="$GRBL_APP/blender"
 
 }
 
@@ -61,7 +61,7 @@ cad.install_blender () {
     # # list=$(echo ${page[@]} | sed -e 's/<\/b>/-/g' -e 's/<[^>]*>//g')
     # for line in $(echo ${page[@]} | sed -e 's/<\/b>/-/g' -e 's/<[^>]*>//g'blen) ;do
 
-    #         echo $line | grep -v 'md5' | cut -d' ' -f1 >>/tmp/list
+    #         echo $line | grep -v 'md5' | cut -d' ' -f1 >>/tmp/$USER/list
     #         zips+=("$(echo $line | grep -v 'md5' | cut -d' ' -f1 )" )
 
 

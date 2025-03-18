@@ -47,13 +47,13 @@ tag.main () {
                                                                         ##########  ##
 
 tag.help () {
-    echo "usage:    $GURU_CALL tag [add|rm|get] <file>"
+    echo "usage:    $GRBL_CALL tag [add|rm|get] <file>"
 }
 
 
 tag.text () {
     # If file has more than two lines it's taggable
-    local temp_file=/tmp/tag_temp
+    local temp_file=/tmp/$USER/tag_temp
 
     _get_tags () {
         current_tags=$(sed -n '2p' $tag_file_name)
@@ -73,7 +73,7 @@ tag.text () {
             sed '2d' $tag_file_name > $temp_file \
                 && mv -f $temp_file $tag_file_name
         else
-            current_tags="text ${tag_file_format,,} $GURU_USER $GURU_TEAM"
+            current_tags="text ${tag_file_format,,} $GRBL_USER $GRBL_TEAM"
         fi
 
         sed "2i\\tag: $current_tags ${_new_tags[@]}" "$tag_file_name" > "$temp_file" \
@@ -123,7 +123,7 @@ tag.audio () {
 
     _add_tags () {                                                                                      #; echo "current_tags:$current_tags|"; echo "new tags:$@|"
         _get_tags
-        [[ $current_tags == "" ]] && current_tags="audio ${tag_file_format,,} $GURU_USER $GURU_TEAM"
+        [[ $current_tags == "" ]] && current_tags="audio ${tag_file_format,,} $GRBL_USER $GRBL_TEAM"
         mid3v2 --$tag_container "${current_tags// /,},${@// /,}" "$tag_file_name"                   # use "," as separator to use multible tags
     }
 
@@ -169,7 +169,7 @@ tag.mp4 () {
     add () {
         new_tags=$@
         current_tags=$(get)
-        [[ $current_tags ]] || current_tags="video ${tag_file_format,,} $GURU_USER"
+        [[ $current_tags ]] || current_tags="video ${tag_file_format,,} $GRBL_USER"
         AtomicParsley "$tag_file_name" "$tag_container" "$current_tags $new_tags" --overWrite  >/dev/null
     }
 
@@ -196,7 +196,7 @@ tag.picture () {
 
     _add_tags () {
         _get_tags
-        [[ "$current_tags" == "" ]] && current_tags="picture ${tag_file_format,,} $GURU_USER $GURU_TEAM"
+        [[ "$current_tags" == "" ]] && current_tags="picture ${tag_file_format,,} $GRBL_USER $GRBL_TEAM"
         exiftool -quiet -$tag_container="$current_tags $@" "$tag_file_name" -overwrite_original_in_place -q
     }
 

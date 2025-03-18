@@ -1,15 +1,15 @@
 #!/bin/bash
-# guru-cli listener
+# grbl listener
 # casa@ujo.guru 2023
 
 
 
 
 
-# wait user to say "$GURU_CALL"
+# wait user to say "$GRBL_CALL"
 
 call_sing=
-[[ $GURU_CALL ]] && call_sing="$GURU_CALL"
+[[ $GRBL_CALL ]] && call_sing="$GRBL_CALL"
 
 
 listen.install () {
@@ -24,8 +24,8 @@ listen.install () {
     # https://github.com/mozilla/DeepSpeech/releases/tag/v0.9.3
 
     # Create and activate a virtualenv
-    virtualenv -p python3 $HOME/tmp/deepspeech-venv/
-    source $HOME/tmp/deepspeech-venv/bin/activate
+    virtualenv -p python3 $HOME/tmp/$USER/deepspeech-venv/
+    source $HOME/tmp/$USER/deepspeech-venv/bin/activate
     # Install DeepSpeech
     pip3 install deepspeech
 
@@ -46,8 +46,8 @@ listen.install () {
 listen.training() {
     # https://deepspeech.readthedocs.io/en/r0.9/TRAINING.html
     # git clone --branch v0.9.3 https://github.com/mozilla/DeepSpeech
-    # python3 -m venv $HOME/tmp/deepspeech-train-venv/
-    # source $HOME/tmp/deepspeech-train-venv/bin/activate
+    # python3 -m venv $HOME/tmp/$USER/deepspeech-train-venv/
+    # source $HOME/tmp/$USER/deepspeech-train-venv/bin/activate
     # pip3 install --upgrade pip==20.2.2 wheel==0.34.2 setuptools==49.6.0
     # pip3 install --upgrade -e .
     # sudo apt-get install python3-dev
@@ -59,7 +59,7 @@ listen.training() {
 
 # server  https://www.digikey.com/en/maker/projects/how-to-run-custom-speechtotext-stt-and-texttospeech-tts-servers/90ec03ef27854b9b83b6e27090b767b3
 
-deepspeech --hot_words $GURU_CALL:1 --model deepspeech-0.9.3-models.pbmm --scorer deepspeech-0.9.3-models.scorer --audio audio/2830-3980-0043.wav
+deepspeech --hot_words $GRBL_CALL:1 --model deepspeech-0.9.3-models.pbmm --scorer deepspeech-0.9.3-models.scorer --audio audio/2830-3980-0043.wav
 
 
 mic_vad_streaming.py  -v 2 -m ~/deepspeech-0.9.3-models.pbmm -s ~/deepspeech-0.9.3-models.scorer -d 10

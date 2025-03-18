@@ -1,4 +1,4 @@
-# Suunnitelma `guru-cli 0.7.5` final ja nimenvaihto `grbl` "gerbil" 
+# Suunnitelma `grbl 0.7.5` final ja nimenvaihto `grbl` "gerbil" 
 
 - `feature/modulin_nimi` Pyritään pitämään eteneminen selkeänä, moduli kerrallaan 
 
@@ -11,40 +11,39 @@
     - jos on pakko tehdä niin tehdään varovaisesti ja cherrypikataan featureen 
 
 
-## 1. Luodaan nykyisestä uusi haara joka jäänee haisemaan sellaisenaan 
-
-- [ ] cloonastaan uuteen hakemistoon `code` 
-- [ ] tehdään `release/0.7.5` haara 
-- [ ] ja pusketaan remoteen 
-- tämä hakemisto saa jäädä paikalliseksi arkistoksi ja josta voidaan intalloida toimiva 
-
-```sh
-cd code
-git pull https://github.com/ugcasa/guru-client.git
-git checkout master
-git tag 0.7.5
-git checkout -b release/0.7.5
-git push origin release/0.7.5
-```
 
 ## 2. `gpbl` muutetaan remotessa projektin nimi 
 
-- [ ] cloonataan uuteen hakemistoon
+- [x] muutetaan remotessa projektin nimi `gpbl`
+- [x] cloonastaan uuteen hakemistoon `code` 
   - tällä pitäisi välttyä origin nimen säätelystä lokalina
   - jos kuitenkin tulee konffailla, sitten konffaillaan
-- [ ] testataan että konfigit toimii
+- [x] testataan että konfigit toimii
 
 ```sh
-cd ..
-git https://github.com/ugcasa/grbl.git
-git config --global origin="nnnn tms"
-git push 
+cd code
+git pull https://github.com/ugcasa/grbl.git
+git remote set-url origin git@github.com:ugcasa/grbl.git
+```
+## 1. Luodaan nykyisestä uusi haara `release/0.7.5`
+
+- [x] tehdään `release/0.7.5` haara 
+- [x] ja pusketaan remoteen 
+- tämä hakemisto saa jäädä paikalliseksi arkistoksi ja josta voidaan intalloida toimiva 
+- ei tehdä pull reguestia, koskaan
+
+```sh
+git checkout master
+git checkout -b release/0.7.5
+git push origin release/0.7.5
+git tag 0.7.5
 ```
 
 ## 3. Tehdään `dev` haara
 
 - Otetaan masterista uusi haara nimeltä 'dev' josta haaroitellaan featuret ja bugfixit
 - Uudet ominaisuudet alkaa aina devistä
+- ei tehdä pull reguestia, vielä
 
 ```sh
 git checkout master
@@ -56,8 +55,9 @@ git push origin dev
 
 ## 4. Dellitään toimimattomat
 
-- [ ] vain toimivat 
-- [ ] ja ei tärkeät modulit pois
+- [ ] tehdään lista mitkä on välttämättömiä
+- [ ] dellitään huuhaamodulit pois
+- [ ] ei tärkeät modulit pois
 - [ ] testataan käsin että toimii
   - testaamista helpottaa että jäljellä on vain todella toiminan kannalta välttämättömät osat
 - [ ] testataan vielä kerran kielon päälle, tässä saa mennä aikaa
@@ -83,9 +83,9 @@ git push origin dev
 
 ```sh
 git checkout -b feature/name-change
-git commit -m "GURU_ -> GRBL_ "
-git commit -m "koodissa guru-cli nimi grbl:si"
-git commit -m "config tiedostoissa guru-cli nimi grbl:si"
+git commit -m "GRBL_ -> GRBL_ "
+git commit -m "koodissa grbl nimi grbl:si"
+git commit -m "config tiedostoissa grbl nimi grbl:si"
 git push origin feature/name-change
 git checkout dev
 git merge feature/name-change
@@ -98,7 +98,7 @@ git branch -d feature/name-change # dellii remoten
 
 - [ ] käydään rankenne läpi jos muutettavaa
   - [ ] tehdään symlinkit, mutta ei kosketa originaaleihin
-  - kaiken pitäisi toimia, guru nimi siellä täällä, mutta user konfiguraatiot pysyy kuitenkin samoina
+  - kaiken pitäisi toimia, grbl nimi siellä täällä, mutta user konfiguraatiot pysyy kuitenkin samoina
   - muutetaan myöhemmin mikäli tarpeelliseksi nähdään
 
 ```sh
@@ -116,7 +116,7 @@ ssh roima
 - [ ] tätä ei tarvitse testata, massamuutokset riitää
 
 ```sh
-cp guru-cli gr-0.7.5
+cp grbl gr-0.7.5
 git checkout release/0.7.5
 ```
 - Kun tämä vaihe valmis voidaan aloitaa vanhojen modulien tuonti uudelle puolelle

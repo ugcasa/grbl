@@ -132,7 +132,7 @@ voipt.start_sender () {
     echo "device $_device"
     # open soumd device input and send voip to port listened by socat
     gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
-        /tmp/trx/tx -d $_device -h $sender_address -p $app_udb_port
+        /tmp/$USER/trx/tx -d $_device -h $sender_address -p $app_udb_port
 
     # stuff udp traffic to tcp port for tunneling
     gnome-terminal --geometry=36x4 --hide-menubar --zoom=0.5 -- \
@@ -143,7 +143,7 @@ voipt.start_sender () {
 voipt.help () {
     echo  "voipt help "
     echo
-    echo   "usage:    $GURU_CALL voipt [ls|open|close|help|install]"
+    echo   "usage:    $GRBL_CALL voipt [ls|open|close|help|install]"
     echo  "commands:"
     echo
     echo  " ls           list of active tunnels "

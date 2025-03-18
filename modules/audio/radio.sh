@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-cli radio functionalities for guru-cli audio module casa@ujo.guru
+# grbl radio functionalities for grbl audio module casa@ujo.guru
 
 __radio_color="orange"
 __radio=$(readlink --canonicalize --no-newline $BASH_SOURCE)
@@ -7,8 +7,8 @@ __radio=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 source corsair.sh
 source flag.sh
 
-declare -g radio_rc="/tmp/guru-cli_radio.rc"
-declare -g radio_number_file="/tmp/guru-cli_radio.nr"
+declare -g radio_rc="/tmp/$USER/grbl_radio.rc"
+declare -g radio_number_file="/tmp/$USER/grbl_radio.nr"
 declare -g station_nro
 declare -g station_name
 declare -g station_url
@@ -17,10 +17,10 @@ radio.help () {
 # radio help
     gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
-    gr.msg -v1 -c white "guru-cli radio help "
+    gr.msg -v1 -c white "grbl radio help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL radio url, station name or station_number"
-    gr.msg -v1 "          $GURU_CALL radio url|listen|prev|next|list|ls|help"
+    gr.msg -v0 "usage:    $GRBL_CALL radio url, station name or station_number"
+    gr.msg -v1 "          $GRBL_CALL radio url|listen|prev|next|list|ls|help"
     gr.msg -v2
     gr.msg -v1 "commands:" -c white
     gr.msg -v2 " player                simple radio channel selector"
@@ -119,7 +119,7 @@ radio.selector () {
     gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     audio.stop
-    guru flag rm audio_stop
+    grbl flag rm audio_stop
 
     local firstime=true
     if [[ $1 ]] ; then
@@ -131,7 +131,7 @@ radio.selector () {
     while true ; do
         clear
 
-        guru flag get audio_stop && return 0
+        grbl flag get audio_stop && return 0
 
         radio.list $station_nro | column -s ':' 2>/dev/null
         gr.msg -v1 -n -c white "(p)rev (n)ext (c)ontinue (q)uit or station: "
@@ -156,7 +156,7 @@ radio.change () {
     local current=
     [[ -f $radio_number_file ]] && current=$(< $radio_number_file)
 
-    [[ -f $GURU_AUDIO_PAUSE_FLAG ]] && return 0
+    [[ -f $GRBL_AUDIO_PAUSE_FLAG ]] && return 0
 
     case $1 in
         next|n) next=$(( $current + 1 )) ;;
@@ -187,9 +187,9 @@ radio.ls () {
     gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     local all_channels=()
-    local favorite_channels=(${GURU_RADIO_FAVORITE_STATIONS[@]})
-    local commercial_stations=($(cat $GURU_CFG/radio.list | cut -d ' ' -f2-))
-    local yle_channels=(${GURU_RADIO_YLE_STATIONS[@]})
+    local favorite_channels=(${GRBL_RADIO_FAVORITE_STATIONS[@]})
+    local commercial_stations=($(cat $GRBL_CFG/radio.list | cut -d ' ' -f2-))
+    local yle_channels=(${GRBL_RADIO_YLE_STATIONS[@]})
 
     # add favorite channels (0-9)
     for (( i = 0; i <= 9; i++ )); do
@@ -264,7 +264,7 @@ radio.parse () {
         # by favorite list
         [0-9])
             gr.debug "1-9: $got"
-            station_str="${GURU_RADIO_FAVORITE_STATIONS[$got]}"
+            station_str="${GRBL_RADIO_FAVORITE_STATIONS[$got]}"
             station_nro=$got
             ;;
         # by radio list file
@@ -277,14 +277,14 @@ radio.parse () {
                 return 101
             fi
 
-            local first_yle_station=$(( ${#GURU_RADIO_FAVORITE_STATIONS[@]} + ${#commercial_stations[@]}))
+            local first_yle_station=$(( ${#GRBL_RADIO_FAVORITE_STATIONS[@]} + ${#commercial_stations[@]}))
 
             if [[ $station_nro -ge $first_yle_station ]]; then
                 yle_location=$(( $station_nro - $first_yle_station ))
-                station_str=${GURU_RADIO_YLE_STATIONS[$yle_location]}
+                station_str=${GRBL_RADIO_YLE_STATIONS[$yle_location]}
                 gr.debug "station_str:$station_str, first_yle_station:$first_yle_station, yle_stations[yle_location]:${yle_stations[$yle_location]}"
             else
-                station_str=$(sed -n "$(( $station_nro - 9 ))p" < "$GURU_CFG/radio.list")
+                station_str=$(sed -n "$(( $station_nro - 9 ))p" < "$GRBL_CFG/radio.list")
                 station_url=$(cut -d"_" -f1 <<<$station_str)
                 station_name=$(cut -d"_" -f2- <<<$station_str)
             fi
@@ -300,7 +300,7 @@ radio.parse () {
         yle)
             gr.debug "yle: $got, $1"
             station_str="yle_$1"
-            if ! [[ ${GURU_RADIO_YLE_STATIONS[@]} =~ $station_str ]] ; then
+            if ! [[ ${GRBL_RADIO_YLE_STATIONS[@]} =~ $station_str ]] ; then
                 gr.msg -e1 "station '$station_str' is not yle radio station "
                 return 100
             fi
@@ -354,7 +354,7 @@ radio.parse () {
 
     else
         gr.debug "radio.list"
-        local station_tmp=$(grep -e "$station_str" "$GURU_CFG/radio.list" | head -n1 )
+        local station_tmp=$(grep -e "$station_str" "$GRBL_CFG/radio.list" | head -n1 )
         station_url=$(cut -d' ' -f1 <<<$station_tmp)
         station_name=$(cut -d' ' -f2- <<<$station_tmp)
         station_name="${station_name//[_-]/ }"
@@ -374,13 +374,13 @@ radio.play () {
     # stop currently playing audio
     audio.stop
 
-    corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+    corsair.indicate playing $GRBL_AUDIO_INDICATOR_KEY
     echo $station_nro > $radio_number_file
 
   while true ; do
     # indicate and inform user
     gr.msg -v1 -h "Radio #$station_nro $station_name"
-    echo "Radio #$station_nro $station_name" >$GURU_AUDIO_NOW_PLAYING
+    echo "Radio #$station_nro $station_name" >$GRBL_AUDIO_NOW_PLAYING
 
     # play media
     mpv $station_url $mpv_options
@@ -398,10 +398,10 @@ radio.play () {
     fi
 
     done
-    #gnome-terminal --hide-menubar --geometry 30x5 --zoom 0.7 --title "guru radio $station_nro ${station_name^}" -- bash -c "mpv $station_url $mpv_options --no-resume-playback"
+    #gnome-terminal --hide-menubar --geometry 30x5 --zoom 0.7 --title "grbl radio $station_nro ${station_name^}" -- bash -c "mpv $station_url $mpv_options --no-resume-playback"
     # remove now playing and indications
-    [[ -f $GURU_AUDIO_NOW_PLAYING ]] && rm $GURU_AUDIO_NOW_PLAYING
-    gr.end $GURU_AUDIO_INDICATOR_KEY
+    [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && rm $GRBL_AUDIO_NOW_PLAYING
+    gr.end $GRBL_AUDIO_INDICATOR_KEY
 
     return 0
 }
@@ -418,8 +418,8 @@ radio.rc () {
     gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME '$1'" >&2
 
     if [[ ! -f $radio_rc ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/audio.cfg) - $(stat -c %Y $radio_rc) )) -gt 0 ]] \
-        || [[ $(( $(stat -c %Y $GURU_CFG/$GURU_USER/radio.cfg) - $(stat -c %Y $radio_rc) )) -gt 0 ]]
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/audio.cfg) - $(stat -c %Y $radio_rc) )) -gt 0 ]] \
+        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/radio.cfg) - $(stat -c %Y $radio_rc) )) -gt 0 ]]
         then
             radio.make_rc && \
                 gr.msg -v1 -c dark_gray "$radio_rc updated"
@@ -441,8 +441,8 @@ radio.make_rc () {
             rm -f $radio_rc
         fi
 
-    config.make_rc "$GURU_CFG/$GURU_USER/audio.cfg" $radio_rc
-    config.make_rc "$GURU_CFG/$GURU_USER/radio.cfg" $radio_rc append
+    config.make_rc "$GRBL_CFG/$GRBL_USER/audio.cfg" $radio_rc
+    config.make_rc "$GRBL_CFG/$GRBL_USER/radio.cfg" $radio_rc append
     chmod +x $radio_rc
     source $radio_rc
 }
@@ -452,17 +452,17 @@ gr.msg -v4 -c $__radio_color "$__radio [$LINENO] $FUNCNAME" >&2
 # located here cause rc needs to see some of functions above
 radio.rc
 
-declare -ga commercial_stations=($(cat $GURU_CFG/radio.list | cut -d ' ' -f2-))
-declare -g amount_of_stations=$(( ${#GURU_RADIO_FAVORITE_STATIONS[@]} + ${#commercial_stations[@]} + ${#GURU_RADIO_YLE_STATIONS[@]} -1 ))
+declare -ga commercial_stations=($(cat $GRBL_CFG/radio.list | cut -d ' ' -f2-))
+declare -g amount_of_stations=$(( ${#GRBL_RADIO_FAVORITE_STATIONS[@]} + ${#commercial_stations[@]} + ${#GRBL_RADIO_YLE_STATIONS[@]} -1 ))
 
 gr.debug "amount_of_stations:$amount_of_stations "
-gr.debug "GURU_RADIO_FAVORITE_STATIONS:${#GURU_RADIO_FAVORITE_STATIONS[@]} "
+gr.debug "GRBL_RADIO_FAVORITE_STATIONS:${#GRBL_RADIO_FAVORITE_STATIONS[@]} "
 gr.debug "commercial_stations: ${#commercial_stations[@]}"
-gr.debug "GURU_RADIO_YLE_STATIONS: ${#GURU_RADIO_YLE_STATIONS[@]}"
+gr.debug "GRBL_RADIO_YLE_STATIONS: ${#GRBL_RADIO_YLE_STATIONS[@]}"
 
 # variables that needs values that radio.rc provides
-declare -g mpv_options="--input-ipc-server=$GURU_AUDIO_MPV_SOCKET-radio"
-[[ $GURU_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
+declare -g mpv_options="--input-ipc-server=$GRBL_AUDIO_MPV_SOCKET-radio"
+[[ $GRBL_VERBOSE -lt 1 ]] && mpv_options="$mpv_options --really-quiet"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # if sourced it probably done by audio.sh, otherwise source here

@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-client android phone tools
+# grbl android phone tools
 # get files from android phone by connecting sshd running on phone
 # install this to android phone: https://play.google.com/store/apps/details?id=com.theolivetree.sshserver
 
@@ -7,15 +7,15 @@ source mount.sh
 source tag.sh
 
 android_verb="-q"
-if ((GURU_VERBOSE>2)) ; then android_verb="-v" ; fi
+if ((GRBL_VERBOSE>2)) ; then android_verb="-v" ; fi
     # TBD other way around
 android_first_time="$HOME/.data/android-suveren"
     # TBD to ram
-android_temp_folder="/tmp/guru/android"
+android_temp_folder="/tmp/$USER/grbl/android"
 android_server_url="https://play.google.com/store/apps/details?id=com.theolivetree.sshserver"
 
     # TBD user.cfg based shit
-android_config_file="$GURU_CFG/android.locations.cfg"
+android_config_file="$GRBL_CFG/android.locations.cfg"
     # TBD file tools
     # gr.msg -v2  " get /folder         download whole folder "
     # gr.msg -v2  " get /folder/file.md download single folder "
@@ -23,10 +23,10 @@ android_config_file="$GURU_CFG/android.locations.cfg"
 
 android.main () {
 
-      [[ $GURU_ANDROID_LAN_IP ]] || read -p "phone ip: "     GURU_ANDROID_LAN_IP
-    [[ $GURU_ANDROID_LAN_PORT ]] || read -p "sshd port: "    GURU_ANDROID_LAN_PORT
-    [[ $GURU_ANDROID_USERNAME ]] || read -p "ssh user: "     GURU_ANDROID_USERNAME
-    [[ $GURU_ANDROID_PASSWORD ]] || read -p "password: "     GURU_ANDROID_PASSWORD
+      [[ $GRBL_ANDROID_LAN_IP ]] || read -p "phone ip: "     GRBL_ANDROID_LAN_IP
+    [[ $GRBL_ANDROID_LAN_PORT ]] || read -p "sshd port: "    GRBL_ANDROID_LAN_PORT
+    [[ $GRBL_ANDROID_USERNAME ]] || read -p "ssh user: "     GRBL_ANDROID_USERNAME
+    [[ $GRBL_ANDROID_PASSWORD ]] || read -p "password: "     GRBL_ANDROID_PASSWORD
 
     # android phone command parser
     local _cmd="$1" ; shift
@@ -54,8 +54,8 @@ android.main () {
 android.help () {
 
     gr.msg -v2
-    gr.msg -v1 -c white "guru-client android help "
-    gr.msg -v0  "usage:    $GURU_CALL android [s|add|open|rm|check|media|camera|all|install] <application> "
+    gr.msg -v1 -c white "grbl android help "
+    gr.msg -v0  "usage:    $GRBL_CALL android [s|add|open|rm|check|media|camera|all|install] <application> "
     gr.msg -v2
     gr.msg -v1 -c white "commands:"
     gr.msg -v1  " terminal          open terminal to android "
@@ -66,9 +66,9 @@ android.help () {
     gr.msg -v1  " help              help printout "
     gr.msg -v2
     gr.msg -v1 -c white "example: "
-    gr.msg -v1  "       $GURU_CALL android terminal "
-    gr.msg -v1  "       $GURU_CALL android mount "
-    gr.msg -v1  "       $GURU_CALL android get "
+    gr.msg -v1  "       $GRBL_CALL android terminal "
+    gr.msg -v1  "       $GRBL_CALL android mount "
+    gr.msg -v1  "       $GRBL_CALL android get "
     gr.msg -v2
     return 0
 }
@@ -76,8 +76,8 @@ android.help () {
 
 android.confirm_key () {
 
-    if ssh -o HostKeyAlgorithms=+ssh-dss "$GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP" \
-        -p "$GURU_ANDROID_LAN_PORT"
+    if ssh -o HostKeyAlgorithms=+ssh-dss "$GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP" \
+        -p "$GRBL_ANDROID_LAN_PORT"
         then
             touch $android_first_time
         fi
@@ -87,9 +87,9 @@ android.confirm_key () {
 android.terminal () {
     # open ssh terminal connection to phone
     [[ -f $android_first_time ]] || android.confirm_key
-    sshpass -p "$GURU_ANDROID_PASSWORD" \
-        ssh -o HostKeyAlgorithms=+ssh-dss "$GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP" \
-        -p "$GURU_ANDROID_LAN_PORT"
+    sshpass -p "$GRBL_ANDROID_PASSWORD" \
+        ssh -o HostKeyAlgorithms=+ssh-dss "$GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP" \
+        -p "$GRBL_ANDROID_LAN_PORT"
     echo $?
     return $?
 }
@@ -98,12 +98,12 @@ android.terminal () {
 android.mount () {
     # mount phone folder set as in phone ssh server settings
     [[ -f $android_first_time ]] || android.confirm_key
-    local _mount_point="$HOME/android-$GURU_ANDROID_USERNAME" ; [[ "$1" ]] && _mount_point="$1"
+    local _mount_point="$HOME/android-$GRBL_ANDROID_USERNAME" ; [[ "$1" ]] && _mount_point="$1"
     gr.msg -v1 -N -c white "mounting $_mount_point"
 
     if [[ -d "$_mount_point" ]] ; then mkdir -p "$_mount_point" ; fi
-    sshfs -o HostKeyAlgorithms=+ssh-dss -p "$GURU_ANDROID_LAN_PORT" \
-        "$GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP:/storage/emulated/0" \
+    sshfs -o HostKeyAlgorithms=+ssh-dss -p "$GRBL_ANDROID_LAN_PORT" \
+        "$GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP:/storage/emulated/0" \
         "$_mount_point"
     return $?
 }
@@ -111,7 +111,7 @@ android.mount () {
 
 android.unmount () {
     # unmount folder
-    local _mount_point="$HOME/android-$GURU_ANDROID_USERNAME" ; [[ "$1" ]] && _mount_point="$1"
+    local _mount_point="$HOME/android-$GRBL_ANDROID_USERNAME" ; [[ "$1" ]] && _mount_point="$1"
     gr.msg -v1 -N -c white "unmounting $_mount_point"
     fusermount -u "$_mount_point" || sudo fusermount -u "$_mount_point"
     [[ -d "$_mount_point" ]] &&androidr "$_mount_point"
@@ -124,9 +124,9 @@ android.rmdir () {
     local _target_folder="$1" ; shift
     gr.msg -v1 -N -c white "removing: $_target_folder"
 
-    if sshpass -p "$GURU_ANDROID_PASSWORD" \
-        ssh "$GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP" \
-        -p "$GURU_ANDROID_LAN_PORT" \
+    if sshpass -p "$GRBL_ANDROID_PASSWORD" \
+        ssh "$GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP" \
+        -p "$GRBL_ANDROID_LAN_PORT" \
         -o "HostKeyAlgorithms=+ssh-dss" "rm -rf $_target_folder"
 
         then
@@ -145,9 +145,9 @@ android.rm () {
     local _target_files="$1" ; shift
     gr.msg -v1 -N -c white "removing: $_target_files"
 
-    if sshpass -p "$GURU_ANDROID_PASSWORD" \
-        ssh "$GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP" \
-        -p "$GURU_ANDROID_LAN_PORT" \
+    if sshpass -p "$GRBL_ANDROID_PASSWORD" \
+        ssh "$GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP" \
+        -p "$GRBL_ANDROID_LAN_PORT" \
         -o "HostKeyAlgorithms=+ssh-dss" "rm -f $_target_files"
         then
             gr.msg -c green "removed"
@@ -162,12 +162,12 @@ android.rm () {
 android.get () {
     # Get all media files from phone
 
-    # mount.online $GURU_MOUNT_PHOTOS || mount.known_remote photos
-    # mount.online $GURU_MOUNT_VIDEO || mount.known_remote video
-    # mount.online $GURU_MOUNT_PICTURES || mount.known_remote pictures
-    # mount.online $GURU_MOUNT_DOCUMENTS || mount.known_remote documents
-    # mount.online $GURU_MOUNT_VIDEO || mount.known_remote video
-    # mount.online $GURU_MOUNT_AUDIO || mount.known_remote audio
+    # mount.online $GRBL_MOUNT_PHOTOS || mount.known_remote photos
+    # mount.online $GRBL_MOUNT_VIDEO || mount.known_remote video
+    # mount.online $GRBL_MOUNT_PICTURES || mount.known_remote pictures
+    # mount.online $GRBL_MOUNT_DOCUMENTS || mount.known_remote documents
+    # mount.online $GRBL_MOUNT_VIDEO || mount.known_remote video
+    # mount.online $GRBL_MOUNT_AUDIO || mount.known_remote audio
 
     gr.msg -n -v1 "copying files "
     while IFS= read -r _line ; do
@@ -195,17 +195,17 @@ android.get () {
             if ! [[ -d "$_target" ]] ; then mkdir -p "$_target" ; fi
 
             # check folder exits
-            if sshpass -p $GURU_ANDROID_PASSWORD \
-                    ssh -o HostKeyAlgorithms=+ssh-dss -o StrictHostKeyChecking=no -p $GURU_ANDROID_LAN_PORT \
-                    $GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP stat "$_source"
+            if sshpass -p $GRBL_ANDROID_PASSWORD \
+                    ssh -o HostKeyAlgorithms=+ssh-dss -o StrictHostKeyChecking=no -p $GRBL_ANDROID_LAN_PORT \
+                    $GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP stat "$_source"
                 then
                     # copy all files in requested type $android_verb
-                    sshpass -p $GURU_ANDROID_PASSWORD \
-                    scp $android_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GURU_ANDROID_LAN_PORT \
-                    $GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP:"$_source/*.$_type" $_target
+                    sshpass -p $GRBL_ANDROID_PASSWORD \
+                    scp $android_verb -p -o HostKeyAlgorithms=+ssh-dss -P $GRBL_ANDROID_LAN_PORT \
+                    $GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP:"$_source/*.$_type" $_target
                     _error=$?
                 else
-                    gr.msg -c deep_pink -v3 "$GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP $_source not exist"
+                    gr.msg -c deep_pink -v3 "$GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP $_source not exist"
                 fi
 
             case $_error in
@@ -223,13 +223,13 @@ android.get () {
 android.install () {
 
     sudo apt install sshpass sshfs fusermount
-    $GURU_BROWSER $android_server_url
+    $GRBL_BROWSER $android_server_url
 }
 
 
 android.connected () {
 
-    if ping -c3 -W2 $GURU_ANDROID_LAN_IP >/dev/null ; then
+    if ping -c3 -W2 $GRBL_ANDROID_LAN_IP >/dev/null ; then
             return 0
         else
             return 1
@@ -239,9 +239,9 @@ android.connected () {
 
 android.ssh_active () {
 
-    if  timeout 7 sshpass -p $GURU_ANDROID_PASSWORD \
-        ssh -o "HostKeyAlgorithms=+ssh-dss" -p $GURU_ANDROID_LAN_PORT \
-        $GURU_ANDROID_USERNAME@$GURU_ANDROID_LAN_IP ls \
+    if  timeout 7 sshpass -p $GRBL_ANDROID_PASSWORD \
+        ssh -o "HostKeyAlgorithms=+ssh-dss" -p $GRBL_ANDROID_LAN_PORT \
+        $GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP ls \
         >/dev/null \
         2>/dev/null
 
@@ -257,7 +257,7 @@ android.status () {
 
     local _device_name='phone'
 
-    [[ $GURU_ANDROID_NAME ]] && _device_name=$GURU_ANDROID_NAME
+    [[ $GRBL_ANDROID_NAME ]] && _device_name=$GRBL_ANDROID_NAME
     gr.msg -n "checking $_device_name.. "
 
     if android.connected ; then
@@ -301,7 +301,7 @@ android.poll () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
-        #source "$GURU_RC"
+        #source "$GRBL_RC"
         android.main "$@"
     fi
 

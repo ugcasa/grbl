@@ -1,9 +1,9 @@
-# guru-cli project todo collector
+# grbl project todo collector
 
 
 
-# declare -g todo_list="$GURU_PROJECT_FOLDER/todo.list"
-# #declare -g todo_pre_list_file="$GURU_PROJECT_FOLDER"
+# declare -g todo_list="$GRBL_PROJECT_FOLDER/todo.list"
+# #declare -g todo_pre_list_file="$GRBL_PROJECT_FOLDER"
 
 # # [[ -d ${todo_list%/*} ]] || mkdir -p ${todo_list%/*}
 # [[ -f $todo_list ]] || touch $todo_list
@@ -13,13 +13,13 @@
 
 #     source project.sh
 
-#     if ! [[ $GURU_PROJECT_FOLDER ]] ; then
+#     if ! [[ $GRBL_PROJECT_FOLDER ]] ; then
 #         gr.msg -c error "not in project"
-#         gr.msg -v2 "try '$GURU_CALL project terminal'"
+#         gr.msg -v2 "try '$GRBL_CALL project terminal'"
 #         return 127
 #     fi
 
-#     project.run "$GURU_PREFERRED_EDITOR $todo_list/$PROJECT_NAME"
+#     project.run "$GRBL_PREFERRED_EDITOR $todo_list/$PROJECT_NAME"
 # }
 
 # todo.see

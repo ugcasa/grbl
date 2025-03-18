@@ -1,31 +1,31 @@
 #!/bin/bash
-# unmount tools for guru-client
+# unmount tools for grbl
 
 source common.sh
 
 # TBD fix this
-temp_rc="/tmp/mount.rc"
+temp_rc="/tmp/$USER/mount.rc"
 source config.sh
-config.make_rc "$GURU_CFG/$GURU_USER/mount.cfg" $temp_rc
+config.make_rc "$GRBL_CFG/$GRBL_USER/mount.cfg" $temp_rc
 chmod +x $temp_rc
 source $temp_rc
 
 all_list=($(\
-        grep "export GURU_MOUNT_" $temp_rc | \
+        grep "export GRBL_MOUNT_" $temp_rc | \
         grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve '_INDICATOR_KEY' | \
-        grep -v "GURU_MOUNT_SYSTEM" | \
+        grep -v "GRBL_MOUNT_SYSTEM" | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
 all_list=(${all_list[@],,})
 
 _default_list=($(\
         cat $temp_rc | \
-        grep 'GURU_MOUNT_' | \
+        grep 'GRBL_MOUNT_' | \
         grep -v "PROXY1_" | \
         grep -v "ENABLED" | \
-        grep -v "GURU_MOUNT_SYSTEM" | \
+        grep -v "GRBL_MOUNT_SYSTEM" | \
         grep -v "LIST" | \
-        grep -v '$GURU_MOUNT' | \
+        grep -v '$GRBL_MOUNT' | \
         grep -v 'INDICATOR_KEY' | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
@@ -43,9 +43,9 @@ unmount.main () {
     case "$argument" in
 
         all)
-            gr.end $GURU_MOUNT_INDICATOR_KEY
+            gr.end $GRBL_MOUNT_INDICATOR_KEY
             unmount.all
-            mount.status quiet
+            # mount.status quiet
             ;;
 
         ls|defaults|status|help|status)
@@ -53,39 +53,43 @@ unmount.main () {
             return $?
             ;;
        "")
-            gr.end $GURU_MOUNT_INDICATOR_KEY
+            gr.end $GRBL_MOUNT_INDICATOR_KEY
             unmount.defaults
-            mount.status quiet
+            # mount.status quiet
             return $?
             ;;
        *)
 
-            gr.end $GURU_MOUNT_INDICATOR_KEY
-            if echo ${GURU_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$argument" ; then
-                    gr.msg -v3 -c green "found in defauls list"
-                    unmount.known_remote $argument $@
+            gr.end $GRBL_MOUNT_INDICATOR_KEY
+            if echo ${GRBL_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$argument" ; then
+                gr.msg -v3 -c green "found in defauls list"
+                unmount.known_remote $argument $@
 
-                elif echo ${all_list[@]} | grep -q -w "$argument" ; then
-                    gr.msg -v3 -c green "found in all list"
-                    unmount.known_remote $argument $@
+            elif echo ${all_list[@]} | grep -q -w "$argument" ; then
+                gr.msg -v3 -c green "found in all list"
+                unmount.known_remote $argument $@
 
-                elif echo ${mounted_list[@]} | grep -q -w "$argument" ; then
-                    gr.msg -v3 -c green "found mounted list"
+            # check is there list named as user input
+            elif [[ $(eval echo '${GRBL_MOUNT_'${argument^^}'_LIST[@]^^}') ]]; then
+                unmount.listed $command
 
-                    local val=
-                    for val in ${mounted_list[@]}; do
-                       if echo $val | grep -q -w $argument ; then
-                            # gr.msg -v3 -c yellow "mountpoint: $val"
-                            unmount.remote $mount_point $val
-                        fi
-                    done
+            elif echo ${mounted_list[@]} | grep -q -w "$argument" ; then
+                gr.msg -v3 -c green "found mounted list"
 
-                else
-                    gr.debug "trying to mount location defined in other module configuration"
-                    unmount.known_remote $argument $@
-                fi
-                source mount.sh
-                mount.status quiet
+                local val=
+                for val in ${mounted_list[@]}; do
+                   if echo $val | grep -q -w $argument ; then
+                        # gr.msg -v3 -c yellow "mountpoint: $val"
+                        unmount.remote $mount_point $val
+                    fi
+                done
+
+            else
+                gr.debug "trying to mount location defined in other module configuration"
+                unmount.known_remote $argument $@
+            fi
+            source mount.sh
+            # mount.status quiet
     esac
 }
 
@@ -99,16 +103,16 @@ unmount.status () {
     local _private=
 
     # check is enabled
-    if [[ $GURU_MOUNT_ENABLED ]] ; then
-            gr.msg -v1 -n -c green "enabled " -k $GURU_MOUNT_INDICATOR_KEY
+    if [[ $GRBL_MOUNT_ENABLED ]] ; then
+            gr.msg -v1 -n -c green "enabled " -k $GRBL_MOUNT_INDICATOR_KEY
         else
-            gr.msg -v1 -c black "disabled" -k $GURU_MOUNT_INDICATOR_KEY
+            gr.msg -v1 -c black "disabled" -k $GRBL_MOUNT_INDICATOR_KEY
             return 100
         fi
 
     # go trough mount points
     for _mount_point in ${all_list[@]} ; do
-            _target=$(eval echo '${GURU_MOUNT_'"${_mount_point^^}[0]}")
+            _target=$(eval echo '${GRBL_MOUNT_'"${_mount_point^^}[0]}")
             mount.check $_target &&
                 case $_target in \
                     *'/.'*)  _private=true
@@ -118,30 +122,30 @@ unmount.status () {
 
     # serve enter
     [[ $_private ]] \
-        && gr.msg -c deep_pink -k $GURU_MOUNT_INDICATOR_KEY \
-        || gr.msg -c aqua -k $GURU_MOUNT_INDICATOR_KEY
+        && gr.msg -c deep_pink -k $GRBL_MOUNT_INDICATOR_KEY \
+        || gr.msg -c aqua -k $GRBL_MOUNT_INDICATOR_KEY
 
     return 0
 }
 
 
 unmount.help () {
-    gr.msg -v1 -c white "guru-client unmount help "
+    gr.msg -v1 -c white "grbl unmount help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL unmount <mount_point(s)>|defaults|all"
+    gr.msg -v0 "usage:    $GRBL_CALL unmount <mount_point(s)>|defaults|all"
     gr.msg -v2
     gr.msg -v1 -c white "commands:"
     gr.msg -v1 " ls               list of mounted folders "
     gr.msg -v1 " <mount_point>    unmount mount point "
     gr.msg -v1 " mp1 mp2 mp3      unmount varies known mountpoints set in user config "
     gr.msg -v1 " defaults         unmount default mount points set in user config "
-    gr.msg -v1 " all              unmount all mounted (exept /guru/.data) "
-    gr.msg -v1 " system           unmount /guru/.data "
+    gr.msg -v1 " all              unmount all mounted (exept /grbl/.data) "
+    gr.msg -v1 " system           unmount /grbl/.data "
     gr.msg -v2
     gr.msg -v1 -c white "example:"
-    gr.msg -v1 "      $GURU_CALL umount /home/$USER/guru/projects "
-    gr.msg -v1 "      $GURU_CALL umount projects "
-    gr.msg -v1 "      $GURU_CALL umount defaults "
+    gr.msg -v1 "      $GRBL_CALL umount /home/$USER/grbl/projects "
+    gr.msg -v1 "      $GRBL_CALL umount projects "
+    gr.msg -v1 "      $GRBL_CALL umount defaults "
 }
 
 
@@ -157,13 +161,13 @@ unmount.system () {
     local system_indicator_key="f$(gr.poll system)"
 
     gr.msg -v2 -n "checking system data folder.."
-    if ! [[ -f "$GURU_SYSTEM_MOUNT/.online" ]] ; then
+    if ! [[ -f "$GRBL_SYSTEM_MOUNT/.online" ]] ; then
             gr.msg -c red "not mounted " -k $system_indicator_key
         else
             gr.msg -v2 -n "unmounting.. "
-            gr.msg -v3 -c deep_pink "${GURU_SYSTEM_MOUNT[1]} -> $GURU_SYSTEM_MOUNT"
-            unmount.remote "$GURU_SYSTEM_MOUNT" \
-                && gr.msg -v2 -c red ".data folder unmounted, guru is unstable" -k $system_indicator_key \
+            gr.msg -v3 -c deep_pink "${GRBL_SYSTEM_MOUNT[1]} -> $GRBL_SYSTEM_MOUNT"
+            unmount.remote "$GRBL_SYSTEM_MOUNT" \
+                && gr.msg -v2 -c red ".data folder unmounted, grbl is unstable" -k $system_indicator_key \
                 || gr.msg -c yellow "error $?" -k $system_indicator_key
           fi
 }
@@ -172,7 +176,7 @@ unmount.system () {
 unmount.online () {
 # check if mountpoint "online", no printout, return code only input: mount point folder. usage: mount.online mount_point && echo "mounted" || echo "not mounted"
 
-    local _target_folder="$GURU_SYSTEM_MOUNT"
+    local _target_folder="$GRBL_SYSTEM_MOUNT"
     [[ "$1" ]] && _target_folder="$1"
 
     if [[ -f "$_target_folder/.online" ]] ; then
@@ -192,7 +196,7 @@ unmount.remote () {
 
     if ! [[ "$_mountpoint" ]] ; then
 
-            local _list=($(unmount.ls | grep -v $GURU_SYSTEM_MOUNT))
+            local _list=($(unmount.ls | grep -v $GRBL_SYSTEM_MOUNT))
             for item in "${_list[@]}" ; do
                 gr.msg -n -c white "$_i: "
                 gr.msg -c light_blue "${_list[_i]}"
@@ -241,7 +245,7 @@ unmount.remote () {
             return 0
         fi
 
-    if ! [[ $GURU_FORCE ]] ; then
+    if ! [[ $GRBL_FORCE ]] ; then
             gr.msg -c yellow "device busy"
             return 0
         fi
@@ -260,18 +264,36 @@ unmount.remote () {
 }
 
 
+unmount.listed () {
+# unmount all local/cloud pairs defined in userrc
+
+    local list_name=$1
+    local _error=()
+    local _unmount_list=($(eval echo '${GRBL_MOUNT_'${list_name^^}'_LIST[@]^^}'))
+
+    if [[ $_unmount_list ]] ; then
+        # gr.debug "$FUNCNAME: _unmount_list: ${_unmount_list[@]}"
+        true
+    else
+        gr.msg -e0 "$FUNCNAME: no list"
+        return 1
+    fi
+
+    for _item in "${_unmount_list[@]}" ; do
+        _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
+        if ! [[ $_target ]] ; then
+            gr.msg -e0 "<empty>"
+        fi
+        unmount.remote "$_target" || _error+=$?
+    done
+
+    return ${_error[0]}
+}
+
 unmount.defaults () {
 # unmount all local/cloud pairs defined in userrc
 
-    local _unmount_list=(${GURU_MOUNT_DEFAULT_LIST[@]^^})
-
-    # fill default list if not set in user configuration
-    # [[ $_unmount_list ]] || _unmount_list=($(\
-    #         cat $GURU_RC | \
-    #         grep 'GURU_MOUNT_' | \
-    #         grep -v "DEFAULT_LIST" | \
-    #         sed 's/^.*MOUNT_//' | \
-    #         cut -d '=' -f1))
+    local _unmount_list=(${GRBL_MOUNT_DEFAULT_LIST[@]^^})
 
     [[ "$1" ]] && _unmount_list=(${1[@]})
 
@@ -284,13 +306,12 @@ unmount.defaults () {
 
     for _item in "${_unmount_list[@]}" ; do
         # go trough of found variables
-        _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
+        _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
         # gr.msg -v3 -c pink "$FUNCNAME: ${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
 
     return $_error
-
 }
 
 
@@ -307,7 +328,7 @@ unmount.kill () {
 
     # Check is given string in mountable list
     if grep -q $_mount_name <<<${all_list[@]} ; then
-            _find=$(eval echo '${GURU_MOUNT_'"${_mount_name^^}}")
+            _find=$(eval echo '${GRBL_MOUNT_'"${_mount_name^^}}")
         fi
 
     # Check is given string mount_point
@@ -359,7 +380,7 @@ unmount.kill () {
 
 
 unmount.all () {
-# unmount all GURU_CLOUD_* defined in userrc
+# unmount all GRBL_CLOUD_* defined in userrc
 # unmount all local/cloud pairs defined in userrc
     # TBD this is terrible method to parse configs, figure some other way
 
@@ -375,7 +396,7 @@ unmount.all () {
 
     for _item in "${_default_list[@]}" ; do
         # go trough of found variables
-        _target=$(eval echo '${GURU_MOUNT_'"${_item}[0]}")
+        _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
         gr.msg -v3 -c pink "$FUNCNAME: ${_item,,} "
         unmount.remote "$_target" || _error=$?
     done
@@ -389,9 +410,9 @@ unmount.all () {
 }
 
 
-unmount.known_remote () { # unmount single GURU_CLOUD_* defined in userrc
+unmount.known_remote () { # unmount single GRBL_CLOUD_* defined in userrc
 
-    local _target=$(eval echo '${GURU_MOUNT_'"${1^^}[0]}")
+    local _target=$(eval echo '${GRBL_MOUNT_'"${1^^}[0]}")
     gr.msg -v3 -c pink "$FUNCNAME: ${_item,,} $_target"
     unmount.remote "$_target"
     return $?
@@ -400,7 +421,7 @@ unmount.known_remote () { # unmount single GURU_CLOUD_* defined in userrc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     # if sourced only import functions
-        #source "$GURU_RC"
+        #source "$GRBL_RC"
         unmount.main "$@"
         exit "$?"
     fi

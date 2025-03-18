@@ -1,26 +1,26 @@
 #!/bin/bash
-# simple file based counter for guru-client
+# simple file based counter for grbl
 
 counter.main () {
 
     argument="$1"   ; shift         # arguments
     id="$1"         ; shift         # counter name
     value="$1"      ; shift         # input value
-    id_file="$GURU_LOCAL_COUNTER/$id"   # counter location
+    id_file="$GRBL_LOCAL_COUNTER/$id"   # counter location
 
-    [[ -d "$GURU_LOCAL_COUNTER" ]] || return 70         # wont fuck up mount mkdir -p "$GURU_LOCAL_COUNTER"
+    [[ -d "$GRBL_LOCAL_COUNTER" ]] || return 70         # wont fuck up mount mkdir -p "$GRBL_LOCAL_COUNTER"
 
     case "$argument" in
 
                 status)
                     gr.msg -n -t -V1 "${FUNCNAME[0]}: " ; gr.msg -V1 -c green "ok"
-                    for _counter in $(ls $GURU_LOCAL_COUNTER/*) ; do
-                            gr.msg -v1 -c light_blue "${_counter//"$GURU_LOCAL_COUNTER/"/""} : $(cat $_counter)"
+                    for _counter in $(ls $GRBL_LOCAL_COUNTER/*) ; do
+                            gr.msg -v1 -c light_blue "${_counter//"$GRBL_LOCAL_COUNTER/"/""} : $(cat $_counter)"
                         done
                         ;;
 
                 ls)
-                    echo "$(ls $GURU_LOCAL_COUNTER)"
+                    echo "$(ls $GRBL_LOCAL_COUNTER)"
                     return 0
                     ;;
 
@@ -56,9 +56,9 @@ counter.main () {
                     ;;
 
                 help|"")
-                    gr.msg -v1 -c white "guru-client counter help "
+                    gr.msg -v1 -c white "grbl counter help "
                     gr.msg -v2
-                    gr.msg -v0 "usage:    $GURU_CALL counter [argument] [counter_name] <value>"
+                    gr.msg -v0 "usage:    $GRBL_CALL counter [argument] [counter_name] <value>"
                     gr.msg -v2
                     gr.msg -v1 -c white "arguments:"
                     gr.msg -v1 " get                         get counter value "
@@ -74,9 +74,9 @@ counter.main () {
                     ;;
 
                 *)
-                    id_file="$GURU_LOCAL_COUNTER/$argument"
+                    id_file="$GRBL_LOCAL_COUNTER/$argument"
                     if ! [[ -f $id_file ]] ; then
-                        echo "no such counter" >>$GURU_ERROR_MSG
+                        echo "no such counter" >>$GRBL_ERROR_MSG
                         return 73
                     fi
                     [[ "$id" ]] && echo "$id" >$id_file

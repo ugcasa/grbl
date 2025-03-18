@@ -2,40 +2,46 @@
 # grbl core
 # casa@ujo.guru 2020-2025
 
-# Do not let run guru as root
-case $USER in root|admin|sudo) echo "too dangerous to run guru-cli as root!" ; return 100; esac
+# Do not let run grbl as root
+case $USER in root|admin|sudo) echo "too dangerous to run grbl as root!" ; return 100; esac
+
+## BUGFIX
+[[ -d /tmp/$USER/ ]] || mkdir -p "/tmp/$USER/"
 
 # debug visualiser variables
 __core_color="black"
 __core=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 # global variables for core
-process_list=/tmp/guru-cli_ps.list
+process_list=/tmp/$USER/grbl_ps.list
 core_command=
 pass_to_core=()
 pass_to_module=()
 module_options=()
 
 # export variables for modules
-declare -x GURU_RC="$HOME/.gururc"
-declare -x GURU_BIN="$HOME/bin"
-declare -x GURU_VERSION=$(echo $(head -n1 $GURU_BIN/version) | tr -d '\n')
-declare -x GURU_VERSION_NAME=$(echo $(tail $GURU_BIN/version -n +2 | head -n 1 ) | tr -d '\n')
+declare -x GRBL_RC="$HOME/.grblrc"
+declare -x GRBL_BIN="$HOME/bin"
+declare -x GRBL_VERSION=$(echo $(head -n1 $GRBL_BIN/version) | tr -d '\n')
+declare -x GRBL_VERSION_NAME=$(echo $(tail $GRBL_BIN/version -n +2 | head -n 1 ) | tr -d '\n')
 
 # early exits
 case $1 in
-    # core debug option
 
+    # active core debug messages
+    ## option '-d' debug is not covering whole code.sh run
+    ## cheap trick and also make debug faster
     debug)
-        source $GURU_BIN/common.sh
-        export GURU_VERBOSE=4
-        export GURU_DEBUG=true
-        export GURU_COLOR=true
+        source $GRBL_BIN/common.sh
+        export GRBL_VERBOSE=4
+        export GRBL_DEBUG=true
+        export GRBL_COLOR=true
         shift
         ;;
 
+    # quick version output makes
     version|--version|--ver)
-        echo "$GURU_VERSION $GURU_VERSION_NAME"
+        echo "$GRBL_VERSION $GRBL_VERSION_NAME"
         exit 0
         ;;
     --help)
@@ -45,25 +51,46 @@ case $1 in
         ;;
 esac
 
-# check that config rc file exits
-if [[ -f $GURU_RC ]] ; then
-        source $GURU_RC
-        gr.debug "sourcing $GURU_RC.. "
-    else
-        # run user configuration if not exist
-        source common.sh
-        source config.sh
-        config.main export $USER
-        source $GURU_RC
-    fi
 
-# determinate how to call guru
-[[ $GURU_SYSTEM_NAME ]] && export GURU_CALL=$GURU_SYSTEM_NAME
+# TODO vertaile kaikk
+# if [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/system.cfg) - $(stat -c %Y $GRBL_RC) )) -gt 0 ]]
+# # if module needs more than one config file here it can be done here
+# #     || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/lab.cfg) - $(stat -c %Y $GRBL_RC) )) -gt 0 ]] \
+# #     || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/mount.cfg) - $(stat -c %Y $GRBL_RC) )) -gt 0 ]]
+# then
+#     lab.make_rc && \
+#         gr.msg -v2 -c dark_gray "$GRBL_RC updated"
+# fi
+
+
+
+# check that config rc file exits
+if [[ -f $GRBL_RC ]] ; then
+    source $GRBL_RC
+    gr.debug "sourcing $GRBL_RC.. "
+else
+    # run user configuration if not exist
+    # assume that grbl environment is not present
+    source common.sh
+    source config.sh
+    config.main export $USER
+
+    if [[ -f $GRBL_RC ]]; then
+        source $GRBL_RC
+        gr.msg -c dark_grey "main rc updated"
+    else
+        echo "fatal: empty RC file '$GRBL_RC'"
+        return 127
+    fi
+fi
+
+# call name for grbl system is set in system.cfg
+[[ $GRBL_SYSTEM_NAME ]] && export GRBL_CALL=$GRBL_SYSTEM_NAME
 
 
 core.main () {
 # parsing first word of user input, rest words are passed to next level parser
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _input="$1" ; shift
 
@@ -77,7 +104,7 @@ core.main () {
 
         start|poll|stop)
         # daemon controls
-            source $GURU_BIN/daemon.sh
+            source $GRBL_BIN/daemon.sh
             daemon.$_input
             return $?
             ;;
@@ -90,7 +117,7 @@ core.main () {
 
         uninstall)
         # use uninstaller of installed version
-            bash "$GURU_BIN/$_input.sh" "$@"
+            bash "$GRBL_BIN/$_input.sh" "$@"
             return $?
             ;;
 
@@ -108,7 +135,7 @@ core.main () {
 
         "")
         # ask more
-            gr.msg "$GURU_CALL need more instructions"
+            gr.msg "$GRBL_CALL need more instructions"
             ;;
     esac
 }
@@ -116,7 +143,7 @@ core.main () {
 
 core.list () {
 # printout lists of stuff
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local list=
 
@@ -124,11 +151,11 @@ core.list () {
 
         core)
             gr.msg -v2 -h "list of core modules:"
-            list=($(cat $GURU_CFG/installed.core ))
+            list=($(cat $GRBL_CFG/installed.core ))
             ;;
         installed|modules)
             gr.msg -v2 -h "list of installed modules:"
-            list=($(cat $GURU_CFG/installed.modules))
+            list=($(cat $GRBL_CFG/installed.modules))
             ;;
         commands)
             gr.msg -v2 -h "list of commands:"
@@ -137,7 +164,7 @@ core.list () {
             ;;
         available|*|"")
             gr.msg -v2 -h "list of available modules:"
-            list=(${GURU_MODULES[@]})
+            list=(${GRBL_MODULES[@]})
             ;;
     esac
 
@@ -147,12 +174,12 @@ core.list () {
 
 core.debug () {
 # some debug stuff, not used too often
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local wanted=$1
-    # local available=($(cat "$GURU_CFG/variable.list"))
-    # local available=($(set | grep 'GURU_' | grep -v '$'))
-    local available=$(cat $GURU_RC| grep "export GURU_" | cut -d "=" -f1 | cut -d' ' -f2)
+    # local available=($(cat "$GRBL_CFG/variable.list"))
+    # local available=($(set | grep 'GRBL_' | grep -v '$'))
+    local available=$(cat $GRBL_RC| grep "export GRBL_" | cut -d "=" -f1 | cut -d' ' -f2)
     local i=0
     local empty=0
 
@@ -167,7 +194,7 @@ core.debug () {
             let i++
         else
 
-            [[ $GURU_COLOR ]] \
+            [[ $GRBL_COLOR ]] \
                 && gr.msg -c yellow "false (empty)" \
                 || echo "   <-------------------------------------- empty or false"
 
@@ -181,18 +208,18 @@ core.debug () {
 
 core.active () {
 # start daemon
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     # ask key for server,
     # if key is no open, popup passphase input dialog appears
 
     # # set colors on terminal
-    # export GURU_COLOR=true
-    export GURU_VERBOSE=1
+    # export GRBL_COLOR=true
+    export GRBL_VERBOSE=1
 
     source mount.sh
 
-    # mount guru-cli data and cache
+    # mount grbl data and cache
     if ! mount.main system ; then
         gr.msg -c failed "unable to active, system data mount failed"
         return 127
@@ -202,7 +229,7 @@ core.active () {
     mount.main
 
     # copy sounds locally to be fast enough
-    cp $GURU_DATA/sounds/*wav /tmp
+    cp $GRBL_DATA/sounds/*wav /tmp
 
     # start daemon
     source daemon.sh
@@ -215,8 +242,39 @@ core.active () {
 core.status () {
 # simple status check
 
+
+    local modules=($@)
+
+    # get module status
+    if [[ ${modules[0]} ]]; then
+
+        for module in ${modules[@]}; do
+            # get module status for all
+            if [[ $module == "all" ]]; then
+                for mod in ${GRBL_MODULES[@]}; do
+                    source $mod.sh
+                    $mod.status
+                done
+                return 0
+            fi
+
+            # for given modulename
+            if [[ "${GRBL_MODULES[@]}" =~ " $module " ]]; then
+                source $module.sh
+                $module.status
+                continue
+            else
+                gr.msg -e1 "no sutch module '$module'"
+                continue
+            fi
+
+        done
+        return 0
+    fi
+
+    # else core status
     gr.msg -t -n "${FUNCNAME[0]}: "
-    gr.msg -n -c white "v$GURU_VERSION $GURU_VERSION_NAME installed "
+    gr.msg -n -c white "v$GRBL_VERSION $GRBL_VERSION_NAME installed "
 
     if gr.msg -c dark_gold -k 'g' >/dev/null ; then
         gr.msg -n -v1 -c dark_gold "responsive " -k 'g'
@@ -224,15 +282,15 @@ core.status () {
     gr.msg -c dark_gold -k 'r' >/dev/null
 
     if core.online ; then
-        gr.msg -c aqua "connected "
+        gr.msg -c aqua "connected " -k caps
     else
-        gr.msg -v1 -c black "offline " -k $GURU_MPLAB_INDICATOR_KEY
+        gr.msg -v1 -c black "offline " -k caps
     fi
 }
 
 core.ps () {
-# list of running guru-client processes
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+# list of running grbl processes
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     local ifs=$IFS
     local _pid _int _com _arg
     local data_string=()
@@ -241,9 +299,9 @@ core.ps () {
     IFS=$'\n'
 
     # get list of processes
-    # local raw_list=($(ps -eo %cpu,pid,args | grep -v grep | grep -e $GURU_BIN/$GURU_CALL))
-    local raw_list=($(ps -eo %cpu,pid,args | grep -v grep | grep -v $$ | grep -e $GURU_BIN/$GURU_CALL))
-    local raw_list+=($(ps -eo %cpu,pid,args | grep -v grep | grep -v $$ | grep -e "/tmp/mpvsocket-radio"))
+    # local raw_list=($(ps -eo %cpu,pid,args | grep -v grep | grep -e $GRBL_BIN/$GRBL_CALL))
+    local raw_list=($(ps -eo %cpu,pid,args | grep -v grep | grep -v $$ | grep -e $GRBL_BIN/$GRBL_CALL))
+    local raw_list+=($(ps -eo %cpu,pid,args | grep -v grep | grep -v $$ | grep -e "/tmp/$USER/mpvsocket-radio"))
     local raw_list+=($(ps -eo %cpu,pid,args | grep -v grep | grep -v $$ | grep -e "sshfs"))
 
     [[ -f $process_list ]] && rm $process_list
@@ -286,8 +344,8 @@ core.ps () {
 
 
 core.top () {
-# list of guru processes
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+# list of grbl processes
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     option=1
     while true ; do
 
@@ -336,8 +394,8 @@ core.top () {
 }
 
 core.kill () {
-# list of running guru-client processes
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+# list of running grbl processes
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local ifs=$IFS
     local gid=$1
@@ -377,7 +435,7 @@ core.kill () {
 
 core.stop () {
 # ask daemon to stop. daemon should get the message after next tick (about a second)
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     source flag.sh
     flag.set stop
     return $?
@@ -385,7 +443,7 @@ core.stop () {
 
 core.pause () {
 # This function asks the daemon to pause by toggling the pause flag in the system.
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 # The flag is stored using the system.s module.
 # If the flag is already set, it will be removed. If it is not set, it will be set. (chatgpt)
     source flag.sh
@@ -399,26 +457,26 @@ core.pause () {
 
 core.make_adapter () {
 # make adapter to multi file module
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local module=$1 ; shift
-    local temp_script=$GURU_BIN/$module.sh
+    local temp_script=$GRBL_BIN/$module.sh
 
     gr.msg -n -v2 -c dark_grey "generating adapter for $module module.. "
 
     cat > "$temp_script" <<EOL
 #!/bin/bash
-# guru-cli adapter generated by core $(date)
-source "$GURU_BIN/$module/$module.sh"
+# grbl adapter generated by core $(date)
+source "$GRBL_BIN/$module/$module.sh"
 if [[ "\${BASH_SOURCE[0]}" == "\${0}" ]]; then
-    gr.debug "\${0##*/}: adapting $module to $GURU_BIN/$module/$module.sh with variables \$@"
+    gr.debug "\${0##*/}: adapting $module to $GRBL_BIN/$module/$module.sh with variables \$@"
     $module.main "\$@"
 fi
 EOL
 
-    if [[ -f $GURU_BIN/$module.sh ]] ; then
+    if [[ -f $GRBL_BIN/$module.sh ]] ; then
         gr.msg -v2 -c green "ok"
-        chmod +x "$GURU_BIN/$module.sh"
+        chmod +x "$GRBL_BIN/$module.sh"
     else
         gr.msg -v2 -c error "file not generated in right location"
         return 123
@@ -428,13 +486,13 @@ EOL
 
 core.run_module () {
 # check is input in module list and if so, call module main
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local type_list=(".sh" ".py" "")
     local run_me=
 
     # check is given command in reserved words, if so change argument order
-     if gr.contain "$1" "${GURU_SYSTEM_RESERVED_CMD[@]}" ; then
+     if gr.contain "$1" "${GRBL_SYSTEM_RESERVED_CMD[@]}" ; then
         gr.debug "change order"
         local command=$1 ; shift
         local module=$1 ; shift
@@ -446,13 +504,13 @@ core.run_module () {
         local function=$1 ; shift
     fi
 
-    #if gr.contain "$1" "${GURU_SYSTEM_RESERVED_CMD[@]}" ; then
-    # if [[ "${GURU_SYSTEM_RESERVED_CMD[@]}" =~ $1 ]] ; then
+    #if gr.contain "$1" "${GRBL_SYSTEM_RESERVED_CMD[@]}" ; then
+    # if [[ "${GRBL_SYSTEM_RESERVED_CMD[@]}" =~ $1 ]] ; then
     #     gr.debug "fmc"
     #     local function=$1 ; shift
     #     local module=$1 ; shift
     #     local command=$1 ; shift
-    # elif [[ "${GURU_SYSTEM_RESERVED_CMD[@]}" =~ $1 ]] && [[ "${GURU_MODULES[@]}" =~ $2 ]]; then
+    # elif [[ "${GRBL_SYSTEM_RESERVED_CMD[@]}" =~ $1 ]] && [[ "${GRBL_MODULES[@]}" =~ $2 ]]; then
     #     gr.debug "cmf"
     #     local command=$1 ; shift
     #     local module=$1 ; shift
@@ -465,7 +523,7 @@ core.run_module () {
     # fi
 
     # go trough $modules if match do the $command and pas $function ans rest
-    for _module in ${GURU_MODULES[@]} ; do
+    for _module in ${GRBL_MODULES[@]} ; do
 
         # not match
         if ! [[ "$_module" == "$module" ]] ; then
@@ -476,24 +534,24 @@ core.run_module () {
         for _type in ${type_list[@]} ; do
 
             # check is module folder, create adpater if not found
-            if [[ -f "$GURU_BIN/$_module/$_module.sh" ]] && ! [[ -f "$GURU_BIN/$_module.sh" ]]; then
+            if [[ -f "$GRBL_BIN/$_module/$_module.sh" ]] && ! [[ -f "$GRBL_BIN/$_module.sh" ]]; then
                 core.make_adapter $_module
             fi
 
             # module in recognized format found
-            if [[ -f "$GURU_BIN/$_module$_type" ]] ; then
+            if [[ -f "$GRBL_BIN/$_module$_type" ]] ; then
 
                 # make command
                 run_me="$_module$_type $command $function $@"
 
                 # speak out what ever module returns
-                if [[ $GURU_SPEAK ]] ; then
+                if [[ $GRBL_SPEAK ]] ; then
                     local module_output="$(${run_me[@]//  / })"
                     module_output="$(echo $module_output | sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g'))"
                     gr.msg -v2 "$module_output"
-                    espeak -p $GURU_SPEAK_PITCH \
-                           -s $GURU_SPEAK_SPEED \
-                           -v $GURU_SPEAK_LANG \
+                    espeak -p $GRBL_SPEAK_PITCH \
+                           -s $GRBL_SPEAK_SPEED \
+                           -v $GRBL_SPEAK_LANG \
                            "${module_output[@]}" &
                     return $?
                 fi
@@ -506,7 +564,7 @@ core.run_module () {
         done
     done
 
-    gr.msg -v1 "guru recognize no module named '$module'"
+    gr.msg -v1 "grbl recognize no module named '$module'"
     return $?
 
     # if gr.ask "passing to request to operating system?" ; then
@@ -517,7 +575,7 @@ core.run_module () {
 
 core.print_description () {
 # printout function description for documentation and debugging
-    #gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    #gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local module=$1
     shift
@@ -535,10 +593,10 @@ core.print_description () {
 
 core.run_module_function () {
 # run methods (functions) in module
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    # guru add ssh key @ -> guru ssh key add @
-    if gr.contain "$1" "${GURU_SYSTEM_RESERVED_CMD[@]}" ; then
+    # grbl add ssh key @ -> grbl ssh key add @
+    if gr.contain "$1" "${GRBL_SYSTEM_RESERVED_CMD[@]}" ; then
         gr.debug "order: cmf"
         local command=$1 ; shift
         local module=$1 ; shift
@@ -551,12 +609,12 @@ core.run_module_function () {
     fi
 
     # ei jaksa testailla on yö ja huomenna koulua
-    # if [[ "${GURU_SYSTEM_RESERVED_CMD[@]}" =~ $1 ]] ; then
+    # if [[ "${GRBL_SYSTEM_RESERVED_CMD[@]}" =~ $1 ]] ; then
     #     gr.debug "fmc"
     #     local function=$1 ; shift
     #     local module=$1 ; shift
     #     local command=$1 ; shift
-    # elif [[ "${GURU_SYSTEM_RESERVED_CMD[@]}" =~ $1 ]] && [[ "${GURU_MODULES[@]}" =~ $2 ]]; then
+    # elif [[ "${GRBL_SYSTEM_RESERVED_CMD[@]}" =~ $1 ]] && [[ "${GRBL_MODULES[@]}" =~ $2 ]]; then
     #     gr.debug "cmf"
     #     local command=$1 ; shift
     #     local module=$1 ; shift
@@ -571,25 +629,25 @@ core.run_module_function () {
     gr.varlist "debug module command function module_options"
 
         # check is module on that name installed
-        if [[ "${GURU_MODULES[@]}" =~ "$module" ]] ; then
+        if [[ "${GRBL_MODULES[@]}" =~ "$module" ]] ; then
             # check is module folder, create adapter if is not found
-            if [[ -f "$GURU_BIN/$module/$module.sh" ]] && ! [[ -f "$GURU_BIN/$module.sh" ]] ; then
+            if [[ -f "$GRBL_BIN/$module/$module.sh" ]] && ! [[ -f "$GRBL_BIN/$module.sh" ]] ; then
                 core.make_adapter $module
             fi
 
             # printout module documentation link
-            gr.msg -v3 -c white "documentation: $GURU_DOCUMENTATION:module:$module"
+            gr.msg -v3 -c white "documentation: $GRBL_DOCUMENTATION:module:$module"
 
             # check if module is shell script
-            if [[ -f "$GURU_BIN/$module.sh" ]] ; then
+            if [[ -f "$GRBL_BIN/$module.sh" ]] ; then
 
                 # printout function description
-                core.print_description $module "$command" "$GURU_BIN/$module.sh"
+                core.print_description $module "$command" "$GRBL_BIN/$module.sh"
 
                 # source module as function collection
-                source $GURU_BIN/$module.sh
+                source $GRBL_BIN/$module.sh
                 # check if module contains options function
-                if grep $GURU_BIN/$module.sh -e "$module.option" -q; then
+                if grep $GRBL_BIN/$module.sh -e "$module.option" -q; then
                     # if module do parse it's onw options, it needs to be done here
                     $module.option "$function" "$@"
                 fi
@@ -599,21 +657,21 @@ core.run_module_function () {
             fi
 
             # run one function in python script
-            if [[ -f "$GURU_BIN/$module.py" ]] ; then
+            if [[ -f "$GRBL_BIN/$module.py" ]] ; then
                 # TBD add environment
                 $module.py "$command" "$function" "$@"
                 return $?
             fi
 
             # run binaries
-            if [[ -f "$GURU_BIN/$module" ]] ; then
+            if [[ -f "$GRBL_BIN/$module" ]] ; then
                 $module "$command" "$function" "$@"
                 return $?
             fi
         fi
 
     # if here something went wrong, raise warning
-    gr.msg -v1 -V2 -c error "$GURU_CALL see no sense in your request '$module'"
+    gr.msg -v1 -V2 -c error "$GRBL_CALL see no sense in your request '$module'"
     gr.msg -v2 -c error "$FUNCNAME: function '$function' in module '$module' not found"
     return 12
 }
@@ -621,32 +679,32 @@ core.run_module_function () {
 
 core.multi_module_function () {
 # run function name of all installed modules
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
 
     local function_to_run=$1
     shift
 
-    for (( mod_count = 0; mod_count < ${#GURU_MODULES[@]}; mod_count++ )); do
-    # for _module in ${GURU_MODULES[@]} ; do
-        _module=${GURU_MODULES[$mod_count]}
+    for (( mod_count = 0; mod_count < ${#GRBL_MODULES[@]}; mod_count++ )); do
+    # for _module in ${GRBL_MODULES[@]} ; do
+        _module=${GRBL_MODULES[$mod_count]}
 
         gr.msg -v2 -c olive "$mod_count: $_module $function_to_run"
-        gr.msg -v3 -c olive "DUCUMENT: $_module: $GURU_DOCUMENTATION:module:$_module"
+        gr.msg -v3 -c olive "DUCUMENT: $_module: $GRBL_DOCUMENTATION:module:$_module"
 
         # fun shell script module functions
-        if [[ -f "$GURU_BIN/$_module.sh" ]] ; then
-            source $GURU_BIN/$_module.sh
+        if [[ -f "$GRBL_BIN/$_module.sh" ]] ; then
+            source $GRBL_BIN/$_module.sh
             $_module.main "$function_to_run" "$@"
         fi
 
         # run python module functions
-        if [[ -f "$GURU_BIN/$_module.py" ]] ; then
+        if [[ -f "$GRBL_BIN/$_module.py" ]] ; then
             $_module.py "$function_to_run" "$@"
         fi
 
         # run binary module functions
-        if [[ -f "$GURU_BIN/$_module" ]] ; then
+        if [[ -f "$GRBL_BIN/$_module" ]] ; then
             $_module "$function_to_run" "$@"
         fi
     done
@@ -657,19 +715,19 @@ core.multi_module_function () {
 
 
 core.change_user () {
-# change guru user temporarily
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+# change grbl user temporarily
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _input_user=$1
-    if [[ "$_input_user" == "$GURU_USER" ]] ; then
+    if [[ "$_input_user" == "$GRBL_USER" ]] ; then
         gr.msg -c yellow "user is already $_input_user"
         return 0
     fi
 
-    export GURU_USER=$_input_user
-    source $GURU_BIN/config.sh
+    export GRBL_USER=$_input_user
+    source $GRBL_BIN/config.sh
 
-    if [[ -d "$GURU_CFG/$GURU_USER" ]] ; then
+    if [[ -d "$GRBL_CFG/$GRBL_USER" ]] ; then
         gr.msg -c white "changing user to $_input_user"
         config.main export $_input_user
     else
@@ -680,9 +738,9 @@ core.change_user () {
 
 core.online () {
 # check is online, set pause for daemon if not
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    declare -g offline_flag="/tmp/guru-offline.flag"
+    declare -g offline_flag="/tmp/$USER/grbl-offline.flag"
     source net.sh
     source flag.sh
 
@@ -705,17 +763,17 @@ core.online () {
 
 core.mount_system_base () {
 # check is access point enabled and mount is not
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     source mount.sh
     # is access functionality enabled?
-    if ! [[ $GURU_ACCESS_ENABLED ]] ; then
+    if ! [[ $GRBL_ACCESS_ENABLED ]] ; then
         gr.msg -c error "access not enabled"
         return 12
     fi
 
     # is mount functionality enabled?
-    if ! [[ $GURU_MOUNT_ENABLED ]] ; then
+    if ! [[ $GRBL_MOUNT_ENABLED ]] ; then
         gr.msg -c error "mount not enabled"
         return 13
     fi
@@ -734,7 +792,7 @@ core.mount_system_base () {
 
 core.run_macro () {
 # run macro
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local file_name="${1}"
     gr.msg -c dark_grey -v2 "running macro '$file_name'"
@@ -750,14 +808,14 @@ core.run_macro () {
         case ${words_list[0]} in *'#'*|"") continue ; esac
 
         # re place commands if found in reserved words_list list
-        if [[ " ${GURU_SYSTEM_RESERVED_CMD[@]} " =~ " ${words_list[0]} " ]]; then
+        if [[ " ${GRBL_SYSTEM_RESERVED_CMD[@]} " =~ " ${words_list[0]} " ]]; then
             core.run_module_function "${words_list[1]}"\
                                      "${words_list[2]}"\
                                      "${words_list[0]}"\
                                      "${words_list[@]:3}"
             continue
         # check is there module named as given command
-        elif [[ " ${GURU_MODULES[@]} " =~ " ${words_list[0]} " ]]; then
+        elif [[ " ${GRBL_MODULES[@]} " =~ " ${words_list[0]} " ]]; then
             core.run_module_function "${words_list[@]}"
             continue
         else
@@ -772,16 +830,16 @@ core.run_macro () {
 
 core.is_macro () {
 # check is core called by macro and if so, remove macro name from input string
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     case ${1} in
         *.gm)
-            [[ $GURU_DEBUG ]] && echo "yes $@" >&2
+            [[ $GRBL_DEBUG ]] && echo "yes $@" >&2
             core.run_macro $@
             return 0
             ;;
         *)
-            [[ $GURU_DEBUG ]] && echo "nope" >&2
+            [[ $GRBL_DEBUG ]] && echo "nope" >&2
             return 1
     esac
 }
@@ -792,7 +850,7 @@ core.process_module_opts () {
 # This function processes command line arguments for a module and core, making sure that each argument is
 # correctly assigned to the appropriate variable. The processed arguments are then exported as environment
 # variables for use in other parts of the program. Comments of this function are generated by chatGPT.
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     # The function starts by initializing three variables: input_string_list, pass_to_module, and pass_to_core.
     # The input_string_list variable holds all the command line arguments passed to the function, while pass_to_module
@@ -867,15 +925,15 @@ core.process_module_opts () {
 
 core.process_core_opts () {
 # process core level options
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GURU_DEBUG ]] && echo "'$@'" >&2
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     # default values for global control variables
-    declare -gx GURU_FORCE=
-    declare -gx GURU_SPEAK=
-    declare -gx GURU_LOGGING=
-    declare -gx GURU_HOSTNAME=$(hostname)
-    declare -gx GURU_VERBOSE=$GURU_FLAG_VERBOSE
-    declare -gx GURU_COLOR=$GURU_FLAG_COLOR
+    declare -gx GRBL_FORCE=
+    declare -gx GRBL_SPEAK=
+    declare -gx GRBL_LOGGING=
+    declare -gx GRBL_HOSTNAME=$(hostname)
+    declare -gx GRBL_VERBOSE=$GRBL_FLAG_VERBOSE
+    declare -gx GRBL_COLOR=$GRBL_FLAG_COLOR
 
     # go trough core arguments, long options should be on cause passing command trough this too
     TEMP=`getopt --longoptions -o "dcsflqh:u:v:" $@`
@@ -885,33 +943,33 @@ core.process_core_opts () {
         case "$1" in
 
             -d)
-                export GURU_DEBUG=true
-                export GURU_VERBOSE=4
+                export GRBL_DEBUG=true
+                export GRBL_VERBOSE=4
                 shift
                 ;;
             -c)
-                export GURU_COLOR=
+                export GRBL_COLOR=
                 shift
                 ;;
             -s)
-                export GURU_VERBOSE=2
-                export GURU_SPEAK=true
+                export GRBL_VERBOSE=2
+                export GRBL_SPEAK=true
                 shift
                 ;;
             -f)
-                export GURU_FORCE=true
+                export GRBL_FORCE=true
                 shift
                 ;;
             -h)
-                export GURU_HOSTNAME="$2"
+                export GRBL_HOSTNAME="$2"
                 shift 2 ;;
             -l)
-                export GURU_LOGGING=true
+                export GRBL_LOGGING=true
                 shift
                 ;;
             -q)
-                export GURU_VERBOSE=
-                export GURU_GURU_SPEAK=
+                export GRBL_VERBOSE=
+                export GRBL_GRBL_SPEAK=
                 shift
                 ;;
             -u)
@@ -919,14 +977,14 @@ core.process_core_opts () {
                 shift 2
                 ;;
             -v)
-                export GURU_VERBOSE="$2"
+                export GRBL_VERBOSE="$2"
                 shift 2
                 ;;
              *) break
         esac
     done
 
-    gr.varlist "debug GURU_DEBUG GURU_COLOR GURU_VERBOSE GURU_SPEAK GURU_COLOR GURU_FORCE GURU_HOSTNAME GURU_LOGGING "
+    gr.varlist "debug GRBL_DEBUG GRBL_COLOR GRBL_VERBOSE GRBL_SPEAK GRBL_COLOR GRBL_FORCE GRBL_HOSTNAME GRBL_LOGGING "
 
     # clean rest of user input
     local left_overs="$@"
@@ -940,7 +998,7 @@ core.process_core_opts () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 
     # import needed modules
-    source $GURU_BIN/common.sh
+    source $GRBL_BIN/common.sh
 
     # check is core called as interrupter by macro
     core.is_macro $@ && exit $?
@@ -963,15 +1021,16 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     # error handler
     if (( _error_code < 100 )) ; then
     # # less than 100 are warnings
-        gr.msg -v3 -c yellow "warning: $_error_code $GURU_LAST_ERROR"
+        gr.msg -v3 -c yellow "warning: $_error_code $GRBL_LAST_ERROR"
     else
     # real errors
-        gr.msg -v2 -c red  "error: $_error_code $GURU_LAST_ERROR"
+        gr.msg -v2 -c red  "error: $_error_code $GRBL_LAST_ERROR"
     fi
 
     # corsair indication
-    if [[ $GURU_CORSAIR_ENABLED ]] ; then
-        source corsair.sh
+    GRBL_VERBOSE=0
+    source corsair.sh
+    if [[ $GRBL_CORSAIR_ENABLED ]] && corsair.check; then
         corsair.indicate error
         corsair.main type "er$_error_code" >/dev/null
     fi

@@ -1,16 +1,16 @@
 #!/bin/bash
-# guru client program functions
+# grbl client program functions
 # casa@ujo.guru 2020-2021
 # TODO: https://www.instructables.com/How-to-Setup-AVR-Programming-Environment-on-Linux/
 # TODO: https://developerhelp.microchip.com/xwiki/bin/view/software-tools/ides/x/archive/linux/
 
-source $GURU_BIN/common.sh
+source $GRBL_BIN/common.sh
 program_indicator_key="f8"
 
 program.help () {
-    gr.msg -v1 -c white "guru-client program help "
+    gr.msg -v1 -c white "grbl program help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL program start|end|status|help|install|remove|single|sub|pub "
+    gr.msg -v0 "usage:    $GRBL_CALL program start|end|status|help|install|remove|single|sub|pub "
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " remove                   remove installed requirements "
@@ -18,13 +18,13 @@ program.help () {
     gr.msg -v2 " help                     printout this help "
     gr.msg -v2
     gr.msg -v1 -c white "example: "
-    gr.msg -v1 "         $GURU_CALL program status "
+    gr.msg -v1 "         $GRBL_CALL program status "
     gr.msg -v2
 }
 
 # program.debug () {
-#     export GURU_VERBOSE=1
-#     export GURU_FLAG_COLOR=
+#     export GRBL_VERBOSE=1
+#     export GRBL_FLAG_COLOR=
 #     program.status $@
 #     return $?
 # }
@@ -32,13 +32,13 @@ program.help () {
 program.main () {
     # command parser
 
-    last_programmer_file="$GURU_SYSTEM_MOUNT/program/program.last"
+    last_programmer_file="$GRBL_SYSTEM_MOUNT/program/program.last"
     #gr.msg -c pink $last_programmer_file
 
-    if ! [[ -d $GURU_SYSTEM_MOUNT/program ]] ; then
+    if ! [[ -d $GRBL_SYSTEM_MOUNT/program ]] ; then
         source mount.sh
         mount.main mount system
-        [[ $GURU_SYSTEM_MOUNT./online ]] && mkdir $GURU_SYSTEM_MOUNT/program
+        [[ $GRBL_SYSTEM_MOUNT./online ]] && mkdir $GRBL_SYSTEM_MOUNT/program
     fi
 
     # last programmer
@@ -74,7 +74,7 @@ program.main () {
 
     # check selection
 
-    local _runnable="$GURU_BIN/program/$programmer.sh"
+    local _runnable="$GRBL_BIN/program/$programmer.sh"
     # gr.msg -c pink $_runnable
 
     if [[ -f "$_runnable" ]] ; then
@@ -147,7 +147,7 @@ program.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$GURU_RC"
+    #source "$GRBL_RC"
     program.main "$@"
     exit "$?"
 else

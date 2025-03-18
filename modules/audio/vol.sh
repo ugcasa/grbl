@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-client volume control functions. casa@ujo.guru 2020
+# grbl volume control functions. casa@ujo.guru 2020
 declare -g volume=
 
 vol.main () {
@@ -24,7 +24,7 @@ vol.main () {
                 ;;
 
             help)
-                echo "usage:    $GURU_CALL vol [get|mute|unmute|up|down|fadeup|fadedown|help]"
+                echo "usage:    $GRBL_CALL vol [get|mute|unmute|up|down|fadeup|fadedown|help]"
                 ;;
             *)
                 vol.status

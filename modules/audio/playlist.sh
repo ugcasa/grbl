@@ -4,14 +4,14 @@ playlist.main () {
 # play playlist file
 
     local user_input=$1
-    #local audio_last_played_pointer="/tmp/guru-cli_audio.last"
+    #local audio_last_played_pointer="/tmp/$USER/grbl_audio.last"
     #local item_search_string=
     #[[ $2 ]] && item_search_string=$2
 
     case $user_input in
 
         continue|last)
-            playlist.play /tmp/guru-cli_audio.playlist
+            playlist.play /tmp/$USER/grbl_audio.playlist
             ;;
 
         list|ls)
@@ -46,7 +46,7 @@ playlist.play () {
     local user_input=$1
     local item_search_string=
     local list_to_play=
-    local audio_last_played_pointer="/tmp/guru-cli_audio.last"
+    local audio_last_played_pointer="/tmp/$USER/grbl_audio.last"
     [[ $2 ]] && item_search_string=$2
 
     gr.debug "$audio_playlist_folder/$user_input.list"
@@ -91,7 +91,7 @@ playlist.play () {
     fi
 
     # indicate user (now playing data is from mpv stat server)
-    corsair.indicate playing $GURU_AUDIO_INDICATOR_KEY
+    corsair.indicate playing $GRBL_AUDIO_INDICATOR_KEY
 
     # stop current audio
     [[ $audio_playing_pid ]] && kill $audio_playing_pid
@@ -100,7 +100,7 @@ playlist.play () {
     mpv $list_to_play $mpv_options --save-position-on-quit
 
     # stop play indication
-    gr.end $GURU_AUDIO_INDICATOR_KEY
+    gr.end $GRBL_AUDIO_INDICATOR_KEY
 
     return 0
 }
@@ -115,7 +115,7 @@ playlist.config () {
 
     local user_input=$1
     # check does configuration contain line named by user request
-    local found_line=$(grep "GURU_PLAYLIST_${user_input^^}=" $audio_rc)
+    local found_line=$(grep "GRBL_PLAYLIST_${user_input^^}=" $audio_rc)
 
     found_line="${found_line//'export '/''}"
 
@@ -126,7 +126,7 @@ playlist.config () {
 
     declare -g playlist_found_name=$(echo $found_line | cut -f3 -d '_' | cut -f1 -d '=')
 
-    local variable="GURU_PLAYLIST_${playlist_found_name}"
+    local variable="GRBL_PLAYLIST_${playlist_found_name}"
     local found_settings=($(eval echo ${!variable}))
 
     declare -g playlist_location=${found_settings[0]}
@@ -190,14 +190,14 @@ playlist.compose () {
 playlist.list () {
 # list of playlists
 
-    local _list=($(cat $audio_rc | grep "GURU_PLAYLIST_" | grep -v "local" | cut -f3 -d '_' | cut -f1 -d '='))
+    local _list=($(cat $audio_rc | grep "GRBL_PLAYLIST_" | grep -v "local" | cut -f3 -d '_' | cut -f1 -d '='))
     _list=(${_list[@],,})
 
     # if verbose is lover than 1
     gr.msg -V2 -c light_blue "${_list[@]}"
 
     # higher verbose
-    if [[ $GURU_VERBOSE -gt 1 ]] ; then
+    if [[ $GRBL_VERBOSE -gt 1 ]] ; then
 
             for _list_item in ${_list[@]} ; do
                     playlist.config $_list_item

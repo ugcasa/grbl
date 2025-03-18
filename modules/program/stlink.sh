@@ -21,9 +21,9 @@ stlink.main () {
 
 
 stlink.help () {
-    gr.msg -v1 -c white "guru-client st-link help "
+    gr.msg -v1 -c white "grbl st-link help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL st-link start|end|status|help|install|remove"
+    gr.msg -v0 "usage:    $GRBL_CALL st-link start|end|status|help|install|remove"
     gr.msg -v2
     gr.msg -v1 -c white "commands: "
     gr.msg -v1 " install                  install st-link programmer for st mcu "
@@ -31,7 +31,7 @@ stlink.help () {
     gr.msg -v2 " help                     printout this help "
     gr.msg -v2
     gr.msg -v1 -c white "example: "
-    gr.msg -v1 "         $GURU_CALL programmer st-link status "
+    gr.msg -v1 "         $GRBL_CALL programmer st-link status "
     gr.msg -v2
 }
 
@@ -79,7 +79,7 @@ stlink.install () {
     sudo cp etc/udev/rules.d/49-stlinkv* /etc/udev/rules.d/ -f
     #and restart udev
     sudo udevadm control --reload
-    gr.msg -c green "guru is now ready to program st mcu's"
+    gr.msg -c green "grbl is now ready to program st mcu's"
     gr.msg -v1 "usage: st-flash --reset read test.bin 0x8000000 4096"
 
 }
@@ -104,7 +104,7 @@ stlink.poll () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$GURU_RC"
+    #source "$GRBL_RC"
     stlink.main "$@"
     exit $?
 fi

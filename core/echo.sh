@@ -1,5 +1,5 @@
 #!/bin/bash
-# guru-client core echo module for printing out data and configures from run environment
+# grbl core echo module for printing out data and configures from run environment
 # casa@ujo.guru 2023
 
 echo.main () {
@@ -11,7 +11,7 @@ echo.main () {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
 # run entry function only is called from terminal
-    gr.debug "documentation: http://localhost:8181/doku.php?id=guru-cli:modules:as_library"
+    gr.debug "documentation: http://localhost:8181/doku.php?id=grbl:modules:as_library"
     echo.main "$@"
 fi
 

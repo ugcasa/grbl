@@ -1,18 +1,18 @@
 #!/bin/bash
-# simple voice for guru casa@ujo.guru 2023
+# simple voice for grbl casa@ujo.guru 2023
 
 # configuration placeholder
 declare -A say_cfg=()
-declare -g say_cfg_file="$GURU_CFG/say.cfg"
-declare -g say_cfg_usr_file="$GURU_CFG/$GURU_USER/say.cfg"
+declare -g say_cfg_file="$GRBL_CFG/say.cfg"
+declare -g say_cfg_usr_file="$GRBL_CFG/$GRBL_USER/say.cfg"
 declare -g module_command=()
 
 
 say.help () {
 
-    gr.msg -v1 -c white "guru-cli say help "
+    gr.msg -v1 -c white "grbl say help "
     gr.msg -v2
-    gr.msg -v0 "usage:    $GURU_CALL say file|help"
+    gr.msg -v0 "usage:    $GRBL_CALL say file|help"
     gr.msg -v2
     gr.msg -v1 "  file <filename>       read file "
     gr.msg -v1 '  string "string"       read sting '
@@ -92,17 +92,17 @@ say.test () {
 # quck test cases
 
     local sting="one two tree four"
-    echo "$sting" >/tmp/test.say
+    echo "$sting" >/tmp/$USER/test.say
 
     say.main string "string test: $sting"
     gr.ask -s "did you hear numbers from one to four?" || let error++
 
     say.main "file test:"
-    say.main file /tmp/test.say
+    say.main file /tmp/$USER/test.say
     gr.ask -s "did you hear numbers from one to four?" || let error++
 
     say.main "stdin test:"
-    cat /tmp/test.say |say.main stdin
+    cat /tmp/$USER/test.say |say.main stdin
     gr.ask -s "did you hear numbers from one to four?" || let error++
 
     gr.msg -n -h "test result is " -s

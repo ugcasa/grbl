@@ -3,11 +3,11 @@
 
 declare -A prompt
 
-[[ -f $GURU_CFG/prompt.cfg ]] && source $GURU_CFG/prompt.cfg
-[[ -f $GURU_CFG/$GURU_USER/prompt.cfg ]] && source $GURU_CFG/$GURU_USER/prompt.cfg
+[[ -f $GRBL_CFG/prompt.cfg ]] && source $GRBL_CFG/prompt.cfg
+[[ -f $GRBL_CFG/$GRBL_USER/prompt.cfg ]] && source $GRBL_CFG/$GRBL_USER/prompt.cfg
 
 
-if [[ ${prompt[enabled]} ]] && [[ $GURU_FLAG_COLOR ]]; then
+if [[ ${prompt[enabled]} ]] && [[ $GRBL_FLAG_COLOR ]]; then
 
 	PS1=${debian_chroot:+($debian_chroot)}
 
@@ -25,7 +25,7 @@ if [[ ${prompt[enabled]} ]] && [[ $GURU_FLAG_COLOR ]]; then
 
 	_c_var="C_${prompt[project]^^}"
 	_color_code=${!_c_var}
-	PS1="$PS1\[$(printf %s $_color_code)\]#$GURU_PROJECT_NAME"
+	PS1="$PS1\[$(printf %s $_color_code)\]#$GRBL_PROJECT_NAME"
 
 	_c_var="C_${prompt[folder]^^}"
 	_color_code=${!_c_var}
@@ -36,7 +36,7 @@ if [[ ${prompt[enabled]} ]] && [[ $GURU_FLAG_COLOR ]]; then
 	PS1="$PS1\[$(printf %s $_color_code)\]$ "
 
 else
-	export PS1='${debian_chroot:+($debian_chroot)}\u@\h#$GURU_PROJECT_NAME:\w$ '
+	export PS1='${debian_chroot:+($debian_chroot)}\u@\h#$GRBL_PROJECT_NAME:\w$ '
 fi
 
 prompt.main () {

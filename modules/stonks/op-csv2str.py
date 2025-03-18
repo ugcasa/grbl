@@ -29,7 +29,7 @@ if args.lines:
 if args.file:
     file = args.file
 else:
-    file = os.environ["GURU_OP_DATA"]+"/"+args.database_name+".csv"
+    file = os.environ["GRBL_OP_DATA"]+"/"+args.database_name+".csv"
 
 print("name: "+args.database_name)
 print("file: "+file)
@@ -55,7 +55,7 @@ df.to_json(file+".json", orient='index')
 
 # pd.set_option('display.max_rows', lines)
 
-# database=pd.read_csv(os.environ["GURU_OP_DATA"]+"/"+args.database_name+".csv",
+# database=pd.read_csv(os.environ["GRBL_OP_DATA"]+"/"+args.database_name+".csv",
 #         sep=';',
 #         header=0,
 #         usecols=['Arvopäivä',
