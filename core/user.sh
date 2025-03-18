@@ -1,20 +1,18 @@
 #!/bin/bash
-# user settings for grbl
-# casa@ujo.guru 2020
-
+# user settings for grbl casa@ujo.guru 2020
 
 # TBD NON FUNCTIONAL: Please review after check there is no usage.
 # Do not remove, user.cfg is load cause this exists
 
-
 user.main () {
-    # command parser
+# command parser
 
-    command="$1"; shift
+    command="$1"
+    shift
 
     case "$command" in
         add|rm)
-            [ "$1" == "server" ] && ${command}_user_server "$@" || ${command}_user "$@"
+            [[ "$1" == "server" ]] && ${command}_user_server "$@" || ${command}_user "$@"
             ;;
         info)
             user.info
@@ -25,44 +23,30 @@ user.main () {
         status)
             gr.msg -n -v1 -t "${FUNCNAME[0]}: "
             [[ "$GRBL_USER" == "$GRBL_USER_NAME" ]] \
-                && gr.msg -c green "username OK" \
-                || gr.msg -c red "username mismatch! $GRBL_USER:$GRBL_USER_NAME"
+                && gr.msg -c green "username ok" \
+                || gr.msg -e2 "username mismatch! $GRBL_USER:$GRBL_USER_NAME"
             ;;
         change|*)
             user.change "$@"
             ;;
-
     esac
-
-
 }
 
 
 user.info () {
-
+# printout user information
     gr.msg -h "user information"
-    gr.kvp GRBL_USER
-    gr.kvp GRBL_USER_FULL_NAME
-    gr.kvp GRBL_USER_EMAIL
-    gr.kvp GRBL_USER_PHONE
-    gr.kvp GRBL_USER_DOMAIN
-    gr.kvp GRBL_USER_TEAM
+    gr.varlist "GRBL_USER GRBL_USER_FULL_NAME GRBL_USER_EMAIL GRBL_USER_PHONE GRBL_USER_DOMAIN GRBL_USER_TEAM"
 
     gr.msg -h "system information"
-    gr.kvp GRBL_SYSTEM_CALL_NAME
-    gr.kvp GRBL_SYSTEM_ALIAS
-    gr.kvp GRBL_SYSTEM_LOCATION
-    gr.kvp GRBL_SYSTEM_MOUNT
+    gr.varlist "GRBL_SYSTEM_CALL_NAME GRBL_SYSTEM_ALIAS GRBL_SYSTEM_LOCATION GRBL_SYSTEM_MOUNT"
 
     gr.msg -h "service information"
-    gr.kvp GRBL_SERVICE_DOMAIN
-    gr.kvp GRBL_ACCESS_DOMAIN
-    gr.kvp GRBL_CLOUD_DOMAIN
+    gr.varlist "GRBL_SERVICE_DOMAIN GRBL_ACCESS_DOMAIN GRBL_CLOUD_DOMAIN"
 }
 
-
 user.set_value () {
-    # set value to user (or any) config file
+# set value to user (or any) config file
 
     [ -f "$GRBL_SYSTEM_RC" ] && target_rc="$GRBL_SYSTEM_RC" || target_rc="$GRBL_RC"        #
     #[ $3 ] && target_rc=$3
@@ -71,11 +55,11 @@ user.set_value () {
 }
 
 user.add () {
-    # add user (futile)
+# add user (futile)
 
     [ "$1" ] && new_user="$1" || read -p "user name to change to : " new_user
-    echo "adding $new_user"
-    # ask/get user name
+    echo "TBD $new_user"
+    # TBD ask/get user name
     # make config folder
     # copy user config template to user name
     # add user add request to server
@@ -83,8 +67,9 @@ user.add () {
     # user.change
     return 0
 }
+
 user.add_server () {
-    # Run this only at accesspoint server for now
+# Run this only at accesspoint server for now
 
     echo "add user to access point server TBD"
     [ "$1" ] && new_user="$1" || read -p "user name to add : " new_user
@@ -93,7 +78,7 @@ user.add_server () {
 }
 
 user.change () {
-    # change user, futile done bu grbl config export -u <username>
+# change user, futile done bu grbl config export -u <username>
 
     [ "$1" ] && new_user="$1" || read -p "user name to change to : " new_user
 
@@ -116,9 +101,8 @@ user.change () {
 
 # if not runned from terminal, use as library
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    #source "$GRBL_RC"
     user.main "$@"
-    return 0
+    return $?
 fi
 
 
