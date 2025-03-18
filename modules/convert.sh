@@ -10,57 +10,6 @@
 convert_indicator_key=f7
 [[ $GRBL_CONVERT_INDICATOR ]] && convert_indicator_key=$GRBL_CONVERT_INDICATOR
 
-convert.main () {
-    # convert format parser
-    # TBD: analysis: from - to periaate oletuksilla?
-    #   input filun formaatti kun on tiedossa niin output kiinnostelee
-    #   gr convert dokuwiki, oletus = to_dokuwiki = ok
-    #   gr convert markdown, oletus = to_markdown oli input ketä vaan jos from ja to löytyy = ok
-    #   kerii listan jos ei inputtia määritelty
-    # new shit: nielee myös option '--i as input_file' ja '--f as format' jos filun nimestä ei selkene (TBD core.sh second level options: upvote!)
-
-    local format=$1
-    shift
-
-    case $format in
-
-        install|remove|compile|check)
-            convert.$format
-            return $?
-            ;;
-
-        webp|webm|mkv|a|avif)
-            convert.check_format $format || return 100
-            convert.from_$format $@
-            return $?
-            ;;
-
-        dokuwiki|png)
-            convert.to_$format $@
-            return $?
-            ;;
-
-        doc|document|ods)
-            convert.to_ods $@
-            return $?
-            ;;
-
-        help|poll|status)
-            convert.$format $@
-            return $?
-            ;;
-        *)
-            #gr.msg -c yellow "unknown format $format"
-            ## TODO wanted command example 'gr convert hello.jpg to png', see following function below help
-            convert.to $@
-        ;;
-
-
-    esac
-    return 0
-}
-
-
 convert.help () {
 # general help
 
@@ -74,6 +23,8 @@ convert.help () {
     gr.msg -v1 " <format>      specify from format and all pictures are converted to $GRBL_FORMAT_PICTURE"
     gr.msg -v1 "               specify from format and all videos are converted to $GRBL_FORMAT_VIDEO"
     gr.msg -v1 "               supported formats: webp webm mkv avif"
+    gr.msg -v1 " <file(s)> <format> "
+    gr.msg -v1 "               convert list of tiles to given format TODO: only videos supported for now"
     gr.msg -v1 " <target>      specify target format to convert to it (experimental)"
     gr.msg -v1 "               supported formats: dokuwiki, png, ods"
     gr.msg -v2
@@ -83,6 +34,104 @@ convert.help () {
     gr.msg -v1 "      $GRBL_CALL convert ods <filename.md>   # converts markdown file to Libre Office Writer format "
     gr.msg -v2
     gr.msg -v1 "avif support is still issue 2018 to 2023 >:/ https://github.com/ImageMagick/ImageMagick/issues/1432"
+    return 0
+}
+
+convert.main () {
+    # convert format parser
+    # TBD: analysis: from - to periaate oletuksilla?
+    #   input filun formaatti kun on tiedossa niin output kiinnostelee
+    #   gr convert dokuwiki, oletus = to_dokuwiki = ok
+    #   gr convert markdown, oletus = to_markdown oli input ketä vaan jos from ja to löytyy = ok
+    #   kerii listan jos ei inputtia määritelty
+    # new shit: nielee myös option '--i as input_file' ja '--f as format' jos filun nimestä ei selkene (TBD core.sh second level options: upvote!)
+
+    local format=$1
+    shift
+
+    case $input in
+
+
+        install|remove|compile|check)
+            convert.$input
+            return $?
+            ;;
+
+        webp|webm|mkv|a|avif)
+            convert.check_format $input || return 100
+            convert.from_$input $@
+            return $?
+            ;;
+
+        dokuwiki|png)
+            convert.to_$input $@
+            return $?
+            ;;
+
+        doc|document|ods)
+            convert.to_ods $@
+            return $?
+            ;;
+
+        help|poll|status)
+            convert.$input $@
+            return $?
+            ;;
+        *)
+            ## TODO wanted command example 'gr convert hello.jpg to png', see following function below help
+            # this badly written module is, rewrite desirable
+            local list=($input $@)
+            local file_list=()
+            local orig_format=
+
+            # check all items in list
+            for item in ${list[@]}; do
+                gr.debug "checking $item.."
+
+                # Non positional destination format check
+                case $item in
+                    # video format
+                    mkv|avi|mp4|webm)
+                        to_format=$item
+                        gr.debug "format is $to_format"
+                        method=video
+                        continue
+                        ;;
+
+                    # picture format
+                    webp|tiff|png|jpg|jpeg|avif)
+                        to_format=$item
+                        gr.debug "format is $to_format"
+                        method=picture
+                        continue
+                        ;;
+                esac
+
+                if [[ -f $item ]]; then
+                    gr.debug "file $item found"
+                    file_list+=("$item")
+                else
+                    gr.msg "file $item not found"
+                    continue
+                fi
+            done
+
+            if ! [[ $method ]] || ! [[ $to_format ]] || ! [[ $file_list ]]; then
+                gr.msg -e1 "some of variables are empty"
+                gr.debug "method:$method format:$to_format file_list:${file_list[@]}"
+                return 128
+            fi
+
+            for file in ${file_list[@]}; do
+                gr.msg "processing $file.."
+                orig_format=${file##*.}
+
+                gr.debug "call: convert.${method} $file $to_format"
+                convert.${method} $file $to_format
+            done
+        ;;
+
+    esac
     return 0
 }
 
@@ -134,7 +183,6 @@ convert.target_options () {
     return 0
 }
 
-
 convert.perform () {
 
     source_app=$(convert.source_options | cut -f1 -d' ')
@@ -151,6 +199,110 @@ convert.perform () {
     # otherwise figure out best method to perform convert process
     gr.msg "unable to perform, TBD: find out what conversion are not available with single app and are those even possible nor needed"
 }
+
+
+## Functions to convert from.format -> to.format
+
+convert.mkv_to_mp4 () {
+# Convert video from mkv to mp4
+
+    local dest_format=mp4
+
+    local file=$1
+
+    if ![[ -f $file ]]; then
+        gr.msg -e1 "$FUNCNAME: file $file not found"
+        return 127
+    fi
+
+    file_base_name=${file%%.*}
+
+    gr.msg -c aqua -k $convert_indicator_key
+
+    # convert
+    gr.msg -v1 -n -c light_blue "$file_base_name$rand.${dest_format}.. "
+
+    local dest_file=$file_base_name.${dest_format}
+
+    # there is a file with same name
+    if [[ -f "$dest_file" ]] ; then
+        gr.msg -h -n "$dest_file exists "
+        dest_file=$file_base_name$RANDOM.${dest_format}
+    fi
+
+    if ffmpeg -y -hide_banner -loglevel error -i "$file" "$dest_file" ; then
+        gr.msg -v1 -c green "ok" -k $convert_indicator_key
+    else
+        gr.msg -v1 -c red "failed $?" -k $convert_indicator_key
+        return 128
+    fi
+
+    # force remove original if convert success
+    [[ $GRBL_FORCE ]] && [[ -f $dest_file ]] && rm $file
+    return 0
+}
+
+convert.video () {
+# Cross convert video files
+
+    local file=$1
+    shift
+    local dest_format=$1
+    shift
+
+    if [[ $1 ]]; then
+        gr.msg -v3 -e3 "$FUNCNAME WARNING: extra operand(s): $@"
+    fi
+
+    if ! [[ -f $file ]]; then
+        gr.msg -v1 -e1 "$FUNCNAME: file $file not found"
+        return 127
+    fi
+
+    case $dest_format in
+        mkv|avi|mp4|webm) true ;;
+        *)
+            gr.msg -v1 "$FUNCNAME: unknow target format $dest_format"
+            return 129
+    esac
+
+    case ${file##*.} in
+        mkv|avi|mp4|webm) true ;;
+        *)
+            gr.msg -v1 "$FUNCNAME: unknow source format $dest_format"
+            return 130
+    esac
+
+    file_base_name=${file%%.*}
+
+    gr.msg -c aqua -k $convert_indicator_key
+
+    # convert
+    gr.msg -v1 -n -c light_blue "$file_base_name$rand.${dest_format}.. "
+
+    local dest_file=$file_base_name.${dest_format}
+
+    # there is a file with same name
+    if [[ -f "$dest_file" ]] ; then
+        gr.msg -v1 -h -n "$dest_file exists "
+        dest_file=$file_base_name$RANDOM.${dest_format}
+    fi
+
+    if ffmpeg -y -hide_banner -loglevel error -i "$file" "$dest_file" ; then
+        gr.msg -v1 -c green "ok" -k $convert_indicator_key
+    else
+        gr.msg -v1 -c red "failed $?" -k $convert_indicator_key
+        return 128
+    fi
+
+    # force remove original if convert success
+    [[ $GRBL_FORCE ]] && [[ -f $dest_file ]] && rm $file
+    return 0
+}
+
+
+## Function to convert all files from -> $GRBL_FORMAT_*
+
 
 # convert from methods. Always convert to png
 ## TODO issue #59 make one convert.format <format> all there three are almost identical
