@@ -40,5 +40,9 @@ gr.kv() {
     gr.msg -c ${colors[1]} "$value"
 }
 
-gr.kvt -w 40 key value 2 3 4 5 6 7 8 9 100 200 ei muista
+# gr.kvt -w 40 key value 2 3 4 5 6 7 8 9 100 200 ei muista
+
+list=${GURU_MODULES[@]}
+complete -W "$list" grbl
+
 
