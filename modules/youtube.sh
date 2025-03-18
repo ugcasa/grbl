@@ -1115,6 +1115,7 @@ youtube.get_media () {
     base_name=${base_name//'['/}
     base_name=${base_name//']'/}
     base_name=${base_name//']'/}
+    base_name=${base_name//'#'/}
     base_name=${base_name//'('/}
     base_name=${base_name//')'/}
     base_name=${base_name//'?'/}
@@ -1250,7 +1251,7 @@ youtube.get_media () {
     selected="$quality+$audio"
 
     # make download
-    if yt-dlp -q --progress --ignore-errors --continue --no-overwrites \
+    if yt-dlp -q --progress --ignore-errors --continue --write-auto-sub --sub-lang "en,fi" --no-overwrites \
            --output "${save_location}/${filename}" \
             $selected "$url" 2>/tmp/$USER/youtube.error
     then
