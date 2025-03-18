@@ -1,8 +1,15 @@
 main non-valid-input -p 2
 systemd_main non-valid-input -p 2
 main help -p 0
+main raw help -p 0
+raw_status -p 0
 rc -p 0
 make_rc -p 0
+set 1 red -p 0
+set 2 green -p 0
+main set 3 blue -p 0 -m number 1=red 2=green 3=blue
+reset 1 -p 0 -m 1 -p 0
+main reset 1 2 3 -p 0 -m 1 2 3 resetted
 main status -p 0 -m Should output module status information
 blink_set esc red white 1 20 fullpipe -m Escape should change color from red to white -p 0
 main end esc -m "Blinking should stop and return to basic color"
