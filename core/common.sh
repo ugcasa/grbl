@@ -761,26 +761,32 @@ gr.filedate () {
 
 gr.debug2 () {
 # printout debug messages
+
+    if [[ -z $GRBL_DEBUG ]] || [[ -z $1 ]]; then return 0; fi
+
     local colors=(white fuchsia deep_pink hot_pink orchid dark_orchid dark_violet)
     # local colors=(white red dark_orange orange salmon moccasin)
     local words=(${@})
-    if [[ $GRBL_DEBUG ]] ; then
-        gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n >&2
-        for (( i = 0; i < ${#words[@]}; i++ )); do
-            [[ ${colors[$i]} ]] || colors[$i]=${colors[-1]}
-            gr.msg -n -c ${colors[$i]} "${words[$i]} " >&2
-        done
-        echo
-    fi
+
+    gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n >&2
+    for (( i = 0; i < ${#words[@]}; i++ )); do
+        [[ ${colors[$i]} ]] || colors[$i]=${colors[-1]}
+        gr.msg -n -c ${colors[$i]} "${words[$i]} " >&2
+    done
+    echo
 }
 
 
 gr.debug () {
 # printout debug messages
-    if [[ $GRBL_DEBUG ]] ; then
-        gr.msg -d "${FUNCNAME[0]^^}: $(caller 0 | awk '{print $2}') " >&2
-        echo ${@} >&2
-    fi
+
+    if [[ -z $GRBL_DEBUG ]] || [[ -z $1 ]]; then return 0; fi
+
+    local _c_var="C_FUCHSIA"
+    local _color_code=${!_c_var}
+    local _function=$(caller 0 | awk '{print $2}')
+
+    printf "$_function $_color_code%s\033[0m\n" "$@" >&2
 }
 
 
