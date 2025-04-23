@@ -7,6 +7,7 @@ __corsair=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 corsair_rc=/tmp/$USER/corsair.rc
 corsair_config="$GRBL_CFG/$GRBL_USER/corsair.cfg"
+corsair_submodule="/$GRBL_BIN/corsair"
 # active key list
 key_pipe_list=$(file /tmp/ckbpipe0* | grep fifo | cut -f1 -d ":")
 # modes with status bar function set. if add on this list, add name=<rgb color> to rgb-color.cfg
@@ -23,7 +24,10 @@ ms_available=
 kb_available=
 corsair_mode=
 #home="$GRBL_BIN/corsiar"
-home="/home/casa/code/grbl/modules/corsair"
+
+# whatta shit is this shit here?
+# looks like old hard coded workaround for some test, still in use.. f*ck. note to me: never do this.
+
 
 # import colors f
 [[ -f "$GRBL_CFG/rgb-color.cfg" ]] && source "$GRBL_CFG/rgb-color.cfg"
@@ -61,7 +65,7 @@ corsair.main () {
         # indicator functions
         status|init|set|reset|clear|end|indicate|keytable|key-id|type)
             # corsair efect library
-            source $home/efects.sh
+            source $corsair_submodule/effects.sh
             corsair.$cmd $@
             return $?
             ;;
@@ -69,8 +73,8 @@ corsair.main () {
         # blink functions
         blink|b)
             [[ $GRBL_CORSAIR_ENABLED ]] || return 2
-            # corsair efect library
-            source $home/efects.sh
+            # corsair effect library
+            source $corsair_submodule/effects.sh
             local tool=$1
             shift
 
@@ -85,21 +89,21 @@ corsair.main () {
 
         # systemd method is used after v0.6.4
         enable|start|stop|restart|disable)
-            ource $home/systemd.sh
+            source $corsair_submodule/systemd.sh
             corsair.systemd_main $cmd $@
             return $?
             ;;
 
         # grbl.client daemon functions
         check|install|patch|compile|remove|poll)
-            source $home/install.sh
+            source $corsair_submodule/install.sh
             corsair.$cmd $@
             return $?
             ;;
 
         # non systemd control aka. raw_method for non systemd releases like devuan
         raw)
-            source $home/corsair-raw.sh
+            source $corsair_submodule/corsair-raw.sh
             corsair.raw.$1 $@
             ;;
 
@@ -108,7 +112,7 @@ corsair.main () {
             ;;
 
         help)
-           source $home/help.sh
+           source $corsair_submodule/help.sh
            case $1 in  profile) corsair.help-profile ;;
                   *) corsair.help
             esac
@@ -129,7 +133,7 @@ corsair.systemd_main () {
     shift
 
     source system.sh #
-    source $home/systemd.sh # corsiar module systemd controls
+    source $corsair_submodule/systemd.sh # corsiar module systemd controls
 
     if ! system.init_system_check systemd >/dev/null; then
         gr.msg -c yellow -x 133 "corsair systemd: systemd not in use, try raw_start or raw_stop"
@@ -278,7 +282,7 @@ corsair.check () {
 
     gr.msg -n -v3 "checking pipes.. "
 
-    corsair_mode=$(< $corsair_last_mode)
+    corsair_mode=$(cat $corsair_last_mode)
 
     gr.debug "corsair mode: $corsair_mode" # debug
     gr.debug "status modes: ${status_modes[@]}" # debug
@@ -520,24 +524,24 @@ corsair.pipe () {
     return 0
 }
 
-corsair.check_pipe () {
-# check that piping is activated. timeout can be set by first paramater
-    gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+# corsair.check_pipe () {
+# # check that piping is activated. timeout can be set by first parameter
+#     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    local timeout=10
-    [[ $1 ]] && timeout=$1
+#     local timeout=10
+#     [[ $1 ]] && timeout=$1
 
-    for (( i = 0; i < $((timeout*2)); i++ )); do
-        if ps auxf | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null ; then
-            continue
-        fi
-        sleep 0.5
-    done
-    return 127
-}
+#     for (( i = 0; i < $((timeout*2)); i++ )); do
+#         if ps auxf | grep "ckb-next" | grep "ckb-next-animations/pipe" | grep -v grep >/dev/null ; then
+#             continue
+#         fi
+#         sleep 0.5
+#     done
+#     return 127
+# }
 
 # run these functions every time corsair is called
-source $home/config.sh
+source $corsair_submodule/config.sh
 corsair.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

@@ -254,23 +254,22 @@ gr.msg () {
     if [[ $_error ]] ; then
         # get caller function name
         _function=$(caller 0 | awk '{print $2}')
-        if [[ $GRBL_COLOR ]] && ! [[ $GRBL_VERBOSE -eq 0 ]]; then
+        [[ ${_function} ]] && printf "%s:" "${_function} "
+
+        if [[ $GRBL_COLOR ]] && [[ $GRBL_VERBOSE -gt 0 ]]; then
             case $_error in
                 0) _c_var="C_WHITE" ;;
                 1) _c_var="C_YELLOW" ;;
                 2) _c_var="C_ORANGE" ;;
                 3) _c_var="C_RED" ;;
                 4) _c_var="C_FUCHSIA" ;;
-                ""|*) _c_var="C_YELLOW" ; _message="undefined error" ; _column_width=${#_message};;
+                ""|*) _c_var="C_YELLOW" ; _message="undefined error" ; _column_width=${#_message}
+                ;;
             esac
             _color_code=${!_c_var}
-            [[ $GRBL_VERBOSE -ge 2 ]] && printf "%s:" "${_function} "
             printf "$_color_code%-${_column_width}s$_newline\033[0m$_return" "${_message} " >&2
-            #printf "${_pre_newline}%s: ${_color_code}%s${_newline}\033[0m${_return}" "${_function}" "${_message}" >&2
         else
-            [[ $GRBL_VERBOSE -ge 2 ]] && printf "%s:" "${_function} "
             printf "%s: %-${_column_width}s$_newline$_return" "${_function}" "${_message:0:$_message_length}" >&2
-            #printf "${_pre_newline}%s%s${_newline$_return}" "${_timestamp}" "${_message:0:$_message_length}" >&2
         fi
         return 0
     fi

@@ -21,10 +21,12 @@ corsair.help () {
 # general help
     gr.msg -v1 "grbl corsair keyboard indicator help" -h
     gr.msg -v2
+
     gr.msg -v0 "usage:           $GRBL_CALL corsair start|init|reset|end|status|help|set|blink <key/profile> <color>"
     gr.msg -v1 "setup:           install|compile|patch|remove"
     gr.msg -v2 "without systemd: raw start|raw status|raw stop "
     gr.msg -v2
+
     gr.msg -v1 "commands: " -c white
     gr.msg -v1 "  status                            printout status "
     gr.msg -v1 "  start                             start ckb-next-daemon "
@@ -48,6 +50,7 @@ corsair.help () {
     gr.msg -v1 "  key-id                            printout key indication codes"
     gr.msg -v1 "  keytable                          printout key table, with id's increase verbose -v2"
     gr.msg -v2
+
     gr.msg -v1 "installation and setup" -c white
     gr.msg -v2 "  patch <device>                    edit source devices: K68, IRONCLAW"
     gr.msg -v2 "  compile                           only compile, do not clone or patch"
@@ -55,17 +58,20 @@ corsair.help () {
     gr.msg -v1 "  remove                            remove corsair driver "
     gr.msg -v2 "  set-suspend                       active suspend control to avoid suspend issues"
     gr.msg -v2
+
     gr.msg -v2 "WARNING: This module can prevent system to go suspend and stop keyboard for responding" -c white
     gr.msg -v2 "If this happens please be patient, control will be returned:"
     gr.msg -v2 "  - wait until login window reactivate, it should take less than 2 minutes "
     gr.msg -v2 "  - log back in and remove file '/lib/systemd/system-sleep/grbl-suspend.sh'"
     gr.msg -v2 "System suspending should work normally. You may try to install suspend scripts again "
     gr.msg -v2
+
     gr.msg -v2 "setting up daemon and suspend manually: " -c white
     gr.msg -v2 "  $GRBL_CALL corsair help profile       show how configure profile"
     gr.msg -v2 "  $GRBL_CALL corsair enable             enable corsair background service"
     gr.msg -v2 "  $GRBL_CALL system suspend install     set up grbl suspend scripts"
     gr.msg -v2
+
     gr.msg -v1 "examples:" -c white
     gr.msg -v1 "  $GRBL_CALL corsair help -v2            get more detailed help by adding verbosity flag"
     gr.msg -v1 "  $GRBL_CALL corsair status              printout status report "
@@ -74,6 +80,7 @@ corsair.help () {
     gr.msg -v2 "  $GRBL_CALL corsair blink set f1 red blue 1 10 green"
     gr.msg -v2 "                                   set f1 to blink red and blue second interval "
     gr.msg -v2 "                                   for 10 seconds and leave green when exit"
+
     gr.msg -v0 "For more detailed help, increase verbose with option" -V2
 }
 

@@ -1012,25 +1012,40 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     core.main $core_command ${pass_to_module[@]}
     # collect return code
     _error_code=$?
-    # check errors, exit if none
-    if (( _error_code < 1 )) ; then
-        gr.msg -v4 -c $__core_color "$__core [$LINENO] 'no errors'" >&2
-        exit 0
-    fi
 
-    # error handler
-    if (( _error_code < 100 )) ; then
-    # # less than 100 are warnings
-        gr.msg -v3 -c yellow "warning: $_error_code $GRBL_LAST_ERROR"
+    # check errors
+
+    # 1 - 9 are reserved for signaling
+    if (( _error_code < 10 )); then
+        gr.msg -v4 -e0 "exit signal: $_error_code $GRBL_LAST_ERROR"
+        return $_error_code
+    # 11 - 50 core error are errors
+    elif (( _error_code < 50 )) ; then
+        gr.msg -v3 -e2 "core error: $_error_code $GRBL_LAST_ERROR"
+    elif (( _error_code < 100 )) ; then
+    # 51 - 99 are warnings
+        gr.msg -v3 -e0 "warning: $_error_code $GRBL_LAST_ERROR"
+    # 255 total fuck up
+    elif (( _error_code == 255 )); then
+        gr.msg -v3 -e4 "fatal: $_error_code $GRBL_LAST_ERROR"
+    # more than 200 are fails
+    elif (( _error_code >= 200 )); then
+        gr.msg -v3 -e3 "failed: $_error_code $GRBL_LAST_ERROR"
     else
-    # real errors
-        gr.msg -v2 -c red  "error: $_error_code $GRBL_LAST_ERROR"
+    # module errors 100 - 199
+        gr.msg -v2 -e1 "error: $_error_code $GRBL_LAST_ERROR"
     fi
 
     # corsair indication
-    GRBL_VERBOSE=0
-    source corsair.sh
-    if [[ $GRBL_CORSAIR_ENABLED ]] && corsair.check; then
+    if [[ $GRBL_CORSAIR_ENABLED ]] && corsair.check ; then
+        GRBL_VERBOSE=0
+
+        # TODO remove need of following
+        # automated link file $GURU_BIN/corsair.sh need to be formatted that
+        # it just sources $GURU_BIN/corsair/corsair.sh when sourced
+        source $GRBL_BIN/corsair/corsair.sh
+
+        corsair.check || return $_error_code
         corsair.indicate error
         corsair.main type "er$_error_code" >/dev/null
     fi

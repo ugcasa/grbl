@@ -84,13 +84,8 @@ alias.main () {
 }
 
 
-alias.make_alias.sh () {
-
-    for
-
-}
-
-
+# alias.make_alias.sh () {
+# }
 
 
 alias.status () {
