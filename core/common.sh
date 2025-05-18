@@ -314,13 +314,52 @@ gr.msg () {
 # }
 # t1
 
+gr.commands() {
+# make list separated by spaces to case validator list first item is "core", juts deal with it ;)
 
+    #local temp=($@)
+    local separator=' '
+    local modules=$(cat $GRBL_CFG/installed.modules)
+    local core=$(cat $GRBL_CFG/installed.core)
+    local list=($core $modules)
+    local mods=
 
-gr.emsg () {
-# sond know what this is, remove
-     printf "$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_message_length}"
-    $@
+    case $1 in
+        --bar) separator='|'; shift;;
+        --semicom) separator=';'; shift;;
+        --comma) separator=','; shift;;
+        --line) separator='-'; shift;;
+        --space) separator=' '; shift;;
+        --fot) separator='.'; shift;;
+        --newline|enter) separator=$'\n'; shift;;
+    esac
+
+    for (( i = 0; i < ${#list[@]}; i++ )); do
+
+        if [[ $mods ]] ; then
+            mods="${mods}${separator}${list[$i]}"
+        else
+            mods="${list[$i]}"
+        fi
+    done
+
+    #echo "'@("$mods")'"
+    printf "%s\n" "$mods"
 }
+
+gr.cut() {
+# cut by spaces
+    local temp=($@)
+    for (( i = 0; i < ${#temp[@]}; i++ )); do
+        echo ${temp[$i]}
+    done
+}
+
+# gr.emsg () {
+# # dond know what this is, remove
+#     printf "$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_message_length}"
+#     $@
+# }
 
 gr.end () {
 # stop blinking in next cycle
