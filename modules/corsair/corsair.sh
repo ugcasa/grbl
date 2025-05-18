@@ -7,7 +7,7 @@ __corsair=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
 corsair_rc=/tmp/$USER/corsair.rc
 corsair_config="$GRBL_CFG/$GRBL_USER/corsair.cfg"
-corsair_submodule="/$GRBL_BIN/corsair"
+corsair_submodule="$GRBL_BIN/corsair"
 # active key list
 key_pipe_list=$(file /tmp/ckbpipe0* | grep fifo | cut -f1 -d ":")
 # modes with status bar function set. if add on this list, add name=<rgb color> to rgb-color.cfg
@@ -133,6 +133,7 @@ corsair.systemd_main () {
     shift
 
     source system.sh #
+    gr.debug "$corsair_submodule/systemd.sh"
     source $corsair_submodule/systemd.sh # corsiar module systemd controls
 
     if ! system.init_system_check systemd >/dev/null; then
@@ -156,11 +157,11 @@ corsair.systemd_main () {
         stop|start|restart)
             case $second in
                 app|application)
-                    corsair.systemd_${first}_app
-                    return $?
+                    corsair.systemd_app ${first} || return $?
+                    corsair.init || return $?
                     ;;
                 daemon|service|backend|driver)
-                    corsair.systemd_${first}_daemon
+                    corsair.systemd_daemon ${first}
                     return $?
                     ;;
                 "")

@@ -84,26 +84,27 @@ corsair.systemd_start () {
 corsair.systemd_stop () {
 # full stack
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
-    corsair.systemd_daemon stop
     corsair.systemd_app stop
+    corsair.systemd_daemon stop
 }
 
 corsair.systemd_restart () {
 # full stack
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+    corsair.systemd_app stop
     corsair.systemd_daemon restart
-    corsair.systemd_app restart
+    corsair.systemd_app start
 }
 
 corsair.systemd_daemon () {
 # systemd method restart function
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    gr.msg -v1 -n "re-starting daemon service.. "
+    gr.msg -v1 -n "$1 daemon service.. "
     if sudo systemctl $1 ckb-next-daemon; then
-        gr.msg -c green "ok"
+        gr.msg -c green "done"
     else
-        gr.msg -e1 "failed"
+        gr.msg -e2 "failed"
         return 101
     fi
 }
@@ -112,14 +113,31 @@ corsair.systemd_app () {
 # try to start, if fails, restart and it that failes to run setup again
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    gr.msg -v1 -n "re-starting corsair app service.. "
-    if systemctl --user $1 corsair.service; then
-        gr.msg -c green "ok"
-        return 0
-    else
-        gr.msg -e1 "failed"
-        return 103
-    fi
+    gr.msg -v1 -n "$1 corsair app service.. "
+
+    case $1 in
+        stop)
+
+            if ! sudo pkill ckb-next 2>/dev/null; then
+                gr.msg -c dark_grey "not running"
+                return $?
+            fi
+            ;;
+        restart)
+            if sudo pkill ckb-next 2>/dev/null; then
+                gr.msg -n -c white "killed.. "
+            else
+                gr.msg -n -c dark_grey "not running.. "
+            fi
+
+            ckb-next 1>/dev/null 2>/dev/null &
+            ;;
+        start|*)
+            ckb-next 1>/dev/null 2>/dev/null &
+            ;;
+    esac
+    gr.msg -c green "done"
+
 }
 
 
