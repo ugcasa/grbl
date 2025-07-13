@@ -35,6 +35,8 @@ audio.help () {
     gr.msg -v1 "  stop                        try to stop audio sources (TBD)"
     gr.msg -v1 "  pause                       pause all audio and video"
     gr.msg -v1 "  reload                      reload fallen audio system "
+    gr.msg -v1 "  next                        jump to next item/station "
+    gr.msg -v1 "  prev                        jump to previous item/station "
     gr.msg -v2 "  mount                       mount audio media file locations"
     gr.msg -v2 "  unmount                     unmount audio media file locations"
     gr.msg -v2 "  ls                          list of local audio devices "

@@ -332,9 +332,11 @@ net.check_server () {
     local _server=$GRBL_ACCESS_DOMAIN
     [[ $1 ]] && _server=$1
 
+    [[ $GRBL_NET_ACCESSPOINT_TIMEOUT ]] || GRBL_NET_ACCESSPOINT_TIMEOUT=4
+
     #gr.msg -t -n "server.status "
-    gr.debug "ping $_server.. "
-    if timeout 2 ping $_server -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
+    gr.debug "ping $_server.. timeout $GRBL_NET_ACCESSPOINT_TIMEOUT "
+    if timeout $GRBL_NET_ACCESSPOINT_TIMEOUT ping $_server -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
         gr.msg -v3 -c green "$_server available "
         gr.end $GRBL_NET_INDICATOR_KEY
         return 0
@@ -351,8 +353,9 @@ net.check () {
 # quick check network connection, no analysis
     gr.msg -v4 -n -c $__net_color "$__net [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    gr.debug "ping google.com.. "
-    if timeout 4 ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
+    [[ $GRBL_NET_BASE_TIMEOUT ]] || GRBL_NET_BASE_TIMEOUT=2
+    gr.debug "ping google.com.. timeout $GRBL_NET_BASE_TIMEOUT"
+    if timeout $GRBL_NET_BASE_TIMEOUT ping google.com -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
 
         gr.end $GRBL_NET_INDICATOR_KEY
         gr.msg -v1 -c green "online " -k $GRBL_NET_INDICATOR_KEY
