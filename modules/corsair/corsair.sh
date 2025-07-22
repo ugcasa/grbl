@@ -217,9 +217,9 @@ corsair.check () {
     gr.msg -n -v3 "checking ${GRBL_CORSAIR_KEYBOARD}.. "
     #TODO: save device ID during config
     if [[ ${GRBL_CORSAIR_KEYBOARD_ID} ]]; then
-            gr.msg -v3 -n -c green "configured, "
+            gr.msg -v3 -n -c green "configured "
         if lsusb | grep -q ${GRBL_CORSAIR_KEYBOARD_ID}; then
-            gr.msg -v3 -c green "connected"
+            gr.msg -v3 -c cyan "connected"
             gr.msg -n -v2 -V3 -c green "kb "
             kb_available=true
         else
@@ -235,9 +235,9 @@ corsair.check () {
     gr.msg -n -v3 "checking ${GRBL_CORSAIR_MOUSE}.. "
     #TODO: save device ID during config
     if [[ ${GRBL_CORSAIR_KEYBOARD_ID} ]]; then
-        gr.msg -v3 -n -c green "configured, "
+        gr.msg -v3 -n -c green "configured "
         if lsusb | grep -q ${GRBL_CORSAIR_MOUSE_ID}; then
-            gr.msg -v3 -c green "connected"
+            gr.msg -v3 -c cyan "connected"
             gr.msg -n -v2 -V3 -c green "ms "
             ms_available=true
         else
@@ -263,7 +263,7 @@ corsair.check () {
 
     gr.msg -n -v3 "checking ckb-next.. "
     if ps auxf | grep "ckb-next" | grep -v "daemon" | grep -q -v grep; then
-        gr.msg -v3 -c green "app running"
+        gr.msg -v3 -c cyan "running"
         gr.msg -n -v2 -V3 -c green "app "
 
     else
@@ -297,7 +297,7 @@ corsair.check () {
 
             if [[ $amount -gt 0 ]] ; then
                 gr.msg -v3 -c green "$amount pipe(s)"
-                gr.msg -n -v2 -V3 -c green "$amount "
+                gr.msg -n -v2 -V3 -c cyan "$amount "
                 rm /tmp/$USER/result
             else
                 gr.msg -v3 -c black "no pipes"
@@ -389,6 +389,49 @@ corsair.set () {
         gr.msg -v4 -n -t -c $2 "$1 < $2"
     else
         gr.msg -c yellow "io error, $key_pipefile check cbk-next profile settings"
+        return 103
+    fi
+
+    return 0
+}
+
+
+corsair.set2() {
+    # Set RGB color for a Corsair keyboard key.
+    # Usage: corsair.set <key> <color_name> [brightness]
+
+    if ! [[ $GRBL_CORSAIR_ENABLED ]]; then
+        gr.debug "Corsair RGB is disabled"
+        return 1
+    fi
+
+    local key="$1"
+    local color_var="rgb_$2"
+    local brightness="${3:-FF}"
+
+    if [[ -z $key || -z $2 ]]; then
+        gr.msg -v3 -c yellow "Usage: corsair.set <key> <color_name> [brightness]"
+        return 101
+    fi
+
+    # Resolve color code (e.g., from rgb_red → FF0000)
+    local color="${!color_var}"
+    if [[ -z $color ]]; then
+        gr.msg -v3 -c yellow "Unknown color: '$2'"
+        return 102
+    fi
+
+    local full_color="${color}${brightness}"
+
+    # Get pipe file for the specified key
+    local pipefile
+    pipefile="$(corsair.get_pipefile "$key")" || return 100
+
+    if file "$pipefile" | grep -q fifo; then
+        echo "rgb $full_color" > "$pipefile"
+        gr.msg -v4 -n -t -c "$2" "$key ← $2 ($full_color)"
+    else
+        gr.msg -c yellow "I/O error: $pipefile is not a valid pipe. Check CBK-next profile settings."
         return 103
     fi
 
@@ -543,6 +586,7 @@ corsair.pipe () {
 
 # run these functions every time corsair is called
 source $corsair_submodule/config.sh
+source $corsair_submodule/help.sh
 corsair.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
