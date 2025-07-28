@@ -266,14 +266,14 @@ mount.online () {
 }
 
 mount.mounted () {
-# check is givven list name already mounted
+# check is given list name already mounted
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _mount_list_name=$1
 
     if ! [[ "$_mount_list_name" ]]; then
         gr.msg -c error -v2 "please give mount point name"
-        return
+        return 127
     fi
 
     local _target_folder=$(eval echo '${GRBL_MOUNT_'"${_mount_list_name^^}[0]}")
@@ -368,21 +368,28 @@ mount.remote () {
         return 0
     fi
 
+    # TODO check server is online
+    # gr.msg -e1 "Cannot connect $_source_server"
+    # return 21
+
+    # TODO check folder exists on remote
+    # gr.msg -e1 "No folder $_source_folder on $_source_server"
+    # return 22
+
     # check mount point exist, create if not
     if ! [[ -d "$_target_folder" ]] ; then
         mkdir -p "$_target_folder"
     fi
 
-    echo $_target_folder | xclip -i -selection clipboard
-
     # check is target populated and append if is
     if ! [[ -z "$(ls -A $_target_folder)" ]] ; then
+
         # Check that target directory is empty
-        gr.msg -e1 "target folder is not empty!"
+        gr.msg -e0 "local files found"
 
         # Check force options
         if ! [[ $GRBL_FORCE ]] ; then
-            gr.msg -v2 -c white "try '-f' to force or: '$GRBL_CALL -f mount $_source_folder $_target_folder"
+            gr.msg -v2 -c white "try '-f' to force or: '$GRBL_CALL mount $_source_folder $_target_folder -f"
             return 25
         fi
 
@@ -391,25 +398,47 @@ mount.remote () {
         read -r -p "append above files to $_target_folder?: " _reply
 
         case $_reply in
+
             y)
                 [[ -d $_temp_folder ]] && rm -rf "$_temp_folder"
                 gr.debug "mv $_target_folder -> $_temp_folder"
                 mkdir -p "$_temp_folder"
                 mv "$_target_folder" "$_temp_folder"
                 ;;
-            *)  gr.msg -c red "unable to mount $_target_folder is populated"
+
+            *)
+                gr.msg -e0 "canceling.."
                 return 26
         esac
     fi
 
+
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
 
+    # TODO make function out of this and variable _source_user might be nice.
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks \
           -p "$_source_port" \
           "$GRBL_CLOUD_USERNAME@$_source_server:$_source_folder" \
           "$_target_folder"
 
     error=$?
+
+    # check sshfs error
+    if ((error>0)) ; then
+        gr.msg -e1 "inaccessible"
+        gr.msg -v2 "check user configuration '$GRBL_CALL config user'"
+
+        # TODO check real need of this
+        # check that is not listed in /etc/mtab
+        if grep -wq $_target_folder /etc/mtab ; then
+            gr.msg -e1 "listed in mtab, not able to remove $_target_folder"
+            return 27
+        fi
+
+        # remove folder if empty
+        [[ -d "$_target_folder" ]] && rmdir "$_target_folder"
+        return $error
+    fi
 
     # copy files from temp if exist
     if [[ -d "$_temp_folder/${_target_folder##*/}" ]] ; then
@@ -423,38 +452,26 @@ mount.remote () {
             || gr.msg -e1 "failed to remote $_temp_folder"
     fi
 
+    # create .online file if not exist
+    [[ -f "$_target_folder/.online" ]] || touch "$_target_folder/.online"
+
     # if symlink given check if exist and create if not
     if [[ $_symlink ]] ; then
 
-        if file -h $_symlink | grep "symbolic" >/dev/null ; then
-            gr.msg -n -v3 "link exist "
-        else
+        # TODO check is it link by mime
+        if ! file -h $_symlink | grep "symbolic" >/dev/null ; then
             gr.msg -n -v2 "linking "
             ln -s $_target_folder $_symlink && error=0 \
-                || gr.msg -x 25 -e1 "error creating $_symlink"
+                || gr.msg -e1 "unable to link"
         fi
     fi
 
-    # check sshfs error
-    if ((error>0)) ; then
-        gr.msg -e1 "error $error when sshf"
-        gr.msg -v2 "check user configuration '$GRBL_CALL config user'"
+    # TODO if user presses shift, copy link to clipboard
+    echo $_target_folder | xclip -i -selection clipboard
 
-        ## check that is not listed in /etc/mtab
-        if grep -wq $_target_folder /etc/mtab ; then
-            gr.msg -e1 "listed in mtab, not able to remove $_target_folder"
-            return 27
-        fi
-
-        # remove folder only if empty
-        [[ -d "$_target_folder" ]] && rmdir "$_target_folder"
-        return $error
-    else
-        [[ -f "$_target_folder/.online" ]] || touch "$_target_folder/.online"
-        gr.msg -v1 -c green "mounted"
-        return 0
-    fi
+    gr.msg -v1 -c aqua "mounted"
 }
+
 
 mount.available () {
 # printout list of available mount points
