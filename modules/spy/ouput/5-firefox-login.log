@@ -1,0 +1,17 @@
+tcp        0      0 electra.ujo.guru:58406  roima:ssh               ESTABLISHED
+tcp        0      0 electra.ujo.guru:44632  server-18-165-122:https ESTABLISHED
+tcp        0      0 electra.ujo.guru:60904  82.221.107.34.bc.g:http ESTABLISHED
+tcp        0      0 electra.ujo.guru:41052  191.144.160.34.bc:https ESTABLISHED
+tcp        0      0 electra.ujo.guru:37060  192.229.221.95:http     ESTABLISHED
+tcp        0      0 electra.ujo.guru:60890  82.221.107.34.bc.g:http ESTABLISHED
+tcp        0      0 electra.ujo.guru:43574  cdn-185-199-109-1:https ESTABLISHED
+tcp        0      0 electra.ujo.guru:56052  209.100.149.34.bc:https ESTABLISHED
+tcp        0      0 electra.ujo.guru:51042  140.227.186.35.bc:https ESTABLISHED
+tcp        0      0 electra.ujo.guru:36302  a62-145-163-105.de:http ESTABLISHED
+tcp        0      0 electra.ujo.guru:35308  93.243.107.34.bc.:https ESTABLISHED
+tcp        0      0 electra.ujo.guru:44642  server-18-165-122:https TIME_WAIT  
+tcp        0      0 electra.ujo.guru:39854  roima:ssh               ESTABLISHED
+tcp        0      0 electra.ujo.guru:50862  168.207.110.34.bc:https ESTABLISHED
+tcp        0      0 electra.ujo.guru:39872  roima:ssh               ESTABLISHED
+tcp        0      0 electra.ujo.guru:39868  roima:ssh               ESTABLISHED
+udp        0      0 electra.ujo.guru:bootpc router:bootps           ESTABLISHED

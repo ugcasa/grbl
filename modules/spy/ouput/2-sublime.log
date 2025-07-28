@@ -1,0 +1,5 @@
+tcp        0      0 electra.ujo.guru:58406  roima:ssh               ESTABLISHED
+udp        0      0 electra.ujo.guru:51575  router:domain           ESTABLISHED
+udp        0      0 electra.ujo.guru:36801  router:domain           ESTABLISHED
+udp        0      0 localhost:57010         localhost:domain        ESTABLISHED
+udp        0      0 electra.ujo.guru:bootpc router:bootps           ESTABLISHED
