@@ -335,8 +335,8 @@ net.check_server () {
     [[ $GRBL_NET_ACCESSPOINT_TIMEOUT ]] || GRBL_NET_ACCESSPOINT_TIMEOUT=4
 
     #gr.msg -t -n "server.status "
-    gr.debug "ping $_server.. timeout $GRBL_NET_ACCESSPOINT_TIMEOUT "
-    if timeout $GRBL_NET_ACCESSPOINT_TIMEOUT ping $_server -W 2 -c 1 -q >/dev/null 2>/dev/null ; then
+    gr.debug "ssh $_server ls | grep grbl -q timeout $GRBL_NET_ACCESSPOINT_TIMEOUT "
+    if timeout $GRBL_NET_ACCESSPOINT_TIMEOUT ssh $_server ls | grep grbl -q >/dev/null 2>/dev/null ; then
         gr.msg -v3 -c green "$_server available "
         gr.end $GRBL_NET_INDICATOR_KEY
         return 0
@@ -468,6 +468,7 @@ net.status () {
     gr.msg -v1 -n -t "net.server "
     if net.check_server >/dev/null; then
         gr.msg -v1 -n -c green "available, "
+
         if ps auxf | grep $GRBL_DATA | grep -v grep -q ; then
             gr.msg -v1 -c aqua "connected "
         else
