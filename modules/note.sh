@@ -202,10 +202,10 @@ note.config () {
     gr.varlist "debug _day _month _year _datestamp"
 
     # test time variables, non valid data causes error
-    date -d "$_year" +%Y  >/dev/null || return  112
-    date -d "$_month" +%m >/dev/null || return  113
-    date -d "$_day" +%d >/dev/null || return  114
-    date -d "$_datestamp" >/dev/null || return  115
+    # date -d "$_year" +%Y  >/dev/null || return  172
+    # date -d "$_month" +%m >/dev/null || return  173
+    # date -d "$_day" +%d >/dev/null || return  174
+    # date -d "$_datestamp" >/dev/null || return  175
 
     # fulfill note variables with given date in user config formats TBD bad naming ünd shit
     note_date=$(date -d $_datestamp +$GRBL_FORMAT_DATE)
@@ -387,11 +387,17 @@ note.open () {
     gr.msg -v4 -n -c $__note_color "$__note [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     # check is note and template folder mounted, mount if not
-    note.online || note.remount
+    # note.online || note.remount
 
     local _note_date="$@"
 
     note.config "$_note_date"
+    local _err=$?
+
+    if [[ $_err -gt 0 ]] ; then
+        gr.msg -e1 "$_err configuration error"
+        return $_err
+    fi
 
     if [[ -f "$note_file" ]]; then
         note.add_change "opened"
@@ -534,7 +540,7 @@ note.open_editor () {
     if $_command; then
         return 0
     else
-        return 123
+        return 166
     fi
 }
 
@@ -665,7 +671,7 @@ note.office () {
     # check file exist
     if ! [ -f "$note_file" ]; then
         gr.msg -e1 "no note for $(date +$GRBL_FORMAT_DATE -d $_date)"
-        return 123
+        return 168
     fi
 
     # add change log line
@@ -746,7 +752,7 @@ note.html () {
     # check file exist
     if ! [ -f "$note_file" ]; then
         gr.msg -e1 "no note for $(date +$GRBL_FORMAT_DATE -d $_date)"
-        return 123
+        return 168
     fi
 
     # add line to change log

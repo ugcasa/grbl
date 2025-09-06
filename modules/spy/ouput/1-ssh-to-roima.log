@@ -1,0 +1,2 @@
+tcp        0      0 electra.ujo.guru:58406  roima:ssh               ESTABLISHED
+udp        0      0 electra.ujo.guru:bootpc router:bootps           ESTABLISHED

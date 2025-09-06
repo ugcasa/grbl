@@ -254,23 +254,22 @@ gr.msg () {
     if [[ $_error ]] ; then
         # get caller function name
         _function=$(caller 0 | awk '{print $2}')
-        if [[ $GRBL_COLOR ]] && ! [[ $GRBL_VERBOSE -eq 0 ]]; then
+        [[ ${_function} ]] && printf "%s:" "${_function} "
+
+        if [[ $GRBL_COLOR ]] && [[ $GRBL_VERBOSE -gt 0 ]]; then
             case $_error in
                 0) _c_var="C_WHITE" ;;
                 1) _c_var="C_YELLOW" ;;
                 2) _c_var="C_ORANGE" ;;
                 3) _c_var="C_RED" ;;
                 4) _c_var="C_FUCHSIA" ;;
-                ""|*) _c_var="C_YELLOW" ; _message="undefined error" ; _column_width=${#_message};;
+                ""|*) _c_var="C_YELLOW" ; _message="undefined error" ; _column_width=${#_message}
+                ;;
             esac
             _color_code=${!_c_var}
-            [[ $GRBL_VERBOSE -ge 2 ]] && printf "%s:" "${_function} "
             printf "$_color_code%-${_column_width}s$_newline\033[0m$_return" "${_message} " >&2
-            #printf "${_pre_newline}%s: ${_color_code}%s${_newline}\033[0m${_return}" "${_function}" "${_message}" >&2
         else
-            [[ $GRBL_VERBOSE -ge 2 ]] && printf "%s:" "${_function} "
             printf "%s: %-${_column_width}s$_newline$_return" "${_function}" "${_message:0:$_message_length}" >&2
-            #printf "${_pre_newline}%s%s${_newline$_return}" "${_timestamp}" "${_message:0:$_message_length}" >&2
         fi
         return 0
     fi
@@ -315,13 +314,52 @@ gr.msg () {
 # }
 # t1
 
+gr.commands() {
+# make list separated by spaces to case validator list first item is "core", juts deal with it ;)
 
+    #local temp=($@)
+    local separator=' '
+    local modules=$(cat $GRBL_CFG/installed.modules)
+    local core=$(cat $GRBL_CFG/installed.core)
+    local list=($core $modules)
+    local mods=
 
-gr.emsg () {
-# sond know what this is, remove
-     printf "$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_message_length}"
-    $@
+    case $1 in
+        --bar) separator='|'; shift;;
+        --semicom) separator=';'; shift;;
+        --comma) separator=','; shift;;
+        --line) separator='-'; shift;;
+        --space) separator=' '; shift;;
+        --fot) separator='.'; shift;;
+        --newline|enter) separator=$'\n'; shift;;
+    esac
+
+    for (( i = 0; i < ${#list[@]}; i++ )); do
+
+        if [[ $mods ]] ; then
+            mods="${mods}${separator}${list[$i]}"
+        else
+            mods="${list[$i]}"
+        fi
+    done
+
+    #echo "'@("$mods")'"
+    printf "%s\n" "$mods"
 }
+
+gr.cut() {
+# cut by spaces
+    local temp=($@)
+    for (( i = 0; i < ${#temp[@]}; i++ )); do
+        echo ${temp[$i]}
+    done
+}
+
+# gr.emsg () {
+# # dond know what this is, remove
+#     printf "$_color_code%s%-${_column_width}s$_newline\033[0m$_return" "${_timestamp}" "${_message:0:$_message_length}"
+#     $@
+# }
 
 gr.end () {
 # stop blinking in next cycle
@@ -761,26 +799,32 @@ gr.filedate () {
 
 gr.debug2 () {
 # printout debug messages
+
+    if [[ -z $GRBL_DEBUG ]] || [[ -z $1 ]]; then return 0; fi
+
     local colors=(white fuchsia deep_pink hot_pink orchid dark_orchid dark_violet)
     # local colors=(white red dark_orange orange salmon moccasin)
     local words=(${@})
-    if [[ $GRBL_DEBUG ]] ; then
-        gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n >&2
-        for (( i = 0; i < ${#words[@]}; i++ )); do
-            [[ ${colors[$i]} ]] || colors[$i]=${colors[-1]}
-            gr.msg -n -c ${colors[$i]} "${words[$i]} " >&2
-        done
-        echo
-    fi
+
+    gr.msg -n -c fuchsia "${FUNCNAME[0]^^}: " -n >&2
+    for (( i = 0; i < ${#words[@]}; i++ )); do
+        [[ ${colors[$i]} ]] || colors[$i]=${colors[-1]}
+        gr.msg -n -c ${colors[$i]} "${words[$i]} " >&2
+    done
+    echo
 }
 
 
 gr.debug () {
 # printout debug messages
-    if [[ $GRBL_DEBUG ]] ; then
-        gr.msg -d "${FUNCNAME[0]^^}: $(caller 0 | awk '{print $2}') " >&2
-        echo ${@} >&2
-    fi
+
+    if [[ -z $GRBL_DEBUG ]] || [[ -z $1 ]]; then return 0; fi
+
+    local _c_var="C_FUCHSIA"
+    local _color_code=${!_c_var}
+    local _function=$(caller 0 | awk '{print $2}')
+
+    printf "$_function $_color_code%s\033[0m\n" "$@" >&2
 }
 
 

@@ -51,6 +51,7 @@ declare -g continue_to_play=
 
 youtube.help () {
 # main help of youtube module
+
     gr.msg -v1 "grbl youtube help " -h
     gr.msg -v2
     gr.msg -v0 "Usage:    $GRBL_CALL youtube play|get|list|song|search|install|uninstall|help"
@@ -74,28 +75,10 @@ youtube.help () {
     gr.msg -v1 "   --loop           play it forever"
     gr.msg -v1 "   --save           save media, audio is converted to mp3"
     gr.msg -v2
-    gr.msg -v1 "Search menu: " -c white
-    gr.msg -v2
-    gr.msg -v1 " Launch by alias 'tubes' or '$GRBL_CALL youtube'"
-    gr.msg -v1 " Menu navigation is key based, see command keys below. "
-    gr.msg -v1 " Search string can be given as argument. Options should also apply here.  "
-    gr.msg -v2
-    gr.msg -v1 "    <search phrase>       just type to something to find in youtube"
-    gr.msg -v1 "    <1..20>               select media from result list"
-    gr.msg -v1 "    (n)ext                jump to next list item "
-    gr.msg -v1 "    (p)revious            jump to previous in list"
-    gr.msg -v1 "    (w)ait                wait until previous audio is ended"
-    gr.msg -v1 "    (a)utoplay            continue to play next item "
-    gr.msg -v1 "    (s)ingin              sing in with google account add details to youtube.cfg"
-    gr.msg -v1 "    (t)ype                switch between audio or video mode"
-    gr.msg -v1 "    (d)onwload            switch between  download ans player mode"
-    gr.msg -v1 "    (l)ist                printout list of search result"
-    gr.msg -v1 "    (e)rror               print last error "
-    gr.msg -v1 "    (v)erbose <1..3>      1= basic, 2=more details, 3= thumbnails"
-    gr.msg -v1 "    (q)uit                bye bye"
-    gr.msg -v2
-    gr.msg -v1 "Functions:" -c white
-    gr.msg -v2
+
+    # own function to able player menu access for menu player function
+    gr.player_help
+
     gr.msg -v1 " Fist source script file 'source youtube.sh' and then run functions 'youtube.status'"
     gr.msg -v2
     gr.msg -v3 "  youtube.help                printout help "
@@ -127,9 +110,35 @@ youtube.help () {
     gr.msg -v1 "  tube eF1D-W27Wzg"
     gr.msg -v1 "  tubes mitä kuuluu marja leena"
     gr.msg -v2
-
-
 }
+
+
+youtube.player_help () {
+# menu help
+    gr.msg -v1 "Search menu: " -c white
+    gr.msg -v2
+    gr.msg -v1 " Launch by alias 'tubes' or '$GRBL_CALL youtube'"
+    gr.msg -v1 " Menu navigation is key based, see command keys below. "
+    gr.msg -v1 " Search string can be given as argument. Options should also apply here.  "
+    gr.msg -v2
+    gr.msg -v1 "    <search phrase>       just type to something to find in youtube"
+    gr.msg -v1 "    <1..20>               select media from result list"
+    gr.msg -v1 "    (n)ext                jump to next list item "
+    gr.msg -v1 "    (p)revious            jump to previous in list"
+    gr.msg -v1 "    (w)ait                wait until previous audio is ended"
+    gr.msg -v1 "    (a)utoplay            continue to play next item "
+    gr.msg -v1 "    (s)ingin              sing in with google account add details to youtube.cfg"
+    gr.msg -v1 "    (t)ype                switch between audio or video mode"
+    gr.msg -v1 "    (d)onwload            switch between  download ans player mode"
+    gr.msg -v1 "    (l)ist                printout list of search result"
+    gr.msg -v1 "    (e)rror               print last error "
+    gr.msg -v1 "    (v)erbose <1..3>      1= basic, 2=more details, 3= thumbnails"
+    gr.msg -v1 "    (q)uit                bye bye"
+    gr.msg -v2
+    gr.msg -v1 "Functions:" -c white
+    gr.msg -v2
+}
+
 
 youtube.main () {
 # module command parser
@@ -166,6 +175,8 @@ youtube.main () {
 
 
 youtube.status () {
+# printout status
+
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
     if [[ -f /usr/local/bin/yt-dlp ]] || [[ -f /usr/bin/yt-dlp ]] ; then
         gr.msg -c green "installed"
@@ -174,7 +185,6 @@ youtube.status () {
         gr.msg -c dark_grey "not installed"
         return 1
     fi
-
 }
 
 
