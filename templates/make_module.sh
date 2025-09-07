@@ -11,10 +11,10 @@ script="../modules/$module_name.sh"
 config="../cfg/$module_name.cfg"
 template_script="module_template.sh"
 template_config="module_template.cfg"
+owsrc=true
 owcfg=
 owtst=
 owtca=
-owsrc=
 
 if [[ -f $script ]] ; then
 	read -p "overwrite script? " ans
@@ -22,30 +22,45 @@ if [[ -f $script ]] ; then
 		y|Y)
 			owsrc=true
 			rm $script
+			echo "making script"
 			;;
 		*)
-			return 1
+			owsrc=
+			echo "keeping original"
 	esac
 fi
 
-# copy template
-cp $template_script $script
+# make script
+if [[ $owsrc ]]; then 
+	# copy template	
+	cp $template_script $script
 
-# change to modulename
-sed -i -e "s/modulename/$module_name/g" $script
-sed -i -e "s/MODULENAME/${module_name^^}/g" $script
-sed -i -e "s/YEAR/$(date -d today +%Y)/g" $script
-sed -i -e "s/EMAIL/$GRBL_USER_EMAIL/g" $script
+	# change to modulename
+	sed -i -e "s/modulename/$module_name/g" $script
+	sed -i -e "s/MODULENAME/${module_name^^}/g" $script
+	sed -i -e "s/YEAR/$(date -d today +%Y)/g" $script
+	sed -i -e "s/EMAIL/$GRBL_USER_EMAIL/g" $script
+fi
 
-read -p "overwrite configs? :" ans
-case $ans in y|Y)
-		cp $template_config $config
-		sed -i -e "s/modulename/$module_name/g" $config
-		sed -i -e "s/MODULENAME/${module_name^^}/g" $config
-		owcfg=true
-		;;
-	*)
-esac
+# check config
+if [[ -f $config ]] ; then
+	read -p "overwrite configs? " ans
+	case $ans in 
+		y|Y)
+			owcfg=true
+			;;
+		*)
+			echo "keeping original"
+			owcfg=
+	esac
+fi
+
+# make config
+if [[ $owcfg ]] || ! [[ -f $config ]] ; then
+	cp $template_config $config
+	sed -i -e "s/modulename/$module_name/g" $config
+	sed -i -e "s/MODULENAME/${module_name^^}/g" $config
+fi
 
 read -p "remove instructions? " ans
 case $ans in y|Y)
@@ -59,7 +74,7 @@ case $ans in y|Y)
 	[[ $owcfg ]] && sed -i '/# DEBUG/d' $config
 esac
 
-# copy aslto users cfg folder
+# copy to user cfg folder
 read -p "copy config to user config folder? " ans
 case $ans in y|Y)
 	cp $config $GRBL_CFG/$GRBL_USER
@@ -107,3 +122,5 @@ printf "  cases:   ../test/$module_name.tc "
 echo
 echo "- add '$module_name' to 'install.sh' 'modules_to_install' list"
 echo "- run tests: go to '../test' folder and run './test-$module_name.sh c $cases'"
+
+$GRBL_PREFERRED_EDITOR $script $config
