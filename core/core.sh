@@ -532,10 +532,11 @@ core.run_module () {
         # match, go trough possible filenames
         for _type in ${type_list[@]} ; do
 
+            # TODO, remove this if installer can handle
             # check is module folder, create adpater if not found
-            if [[ -f "$GRBL_BIN/$_module/$_module.sh" ]] && ! [[ -f "$GRBL_BIN/$_module.sh" ]]; then
-                core.make_adapter $_module
-            fi
+            # if [[ -f "$GRBL_BIN/$_module/$_module.sh" ]] && ! [[ -f "$GRBL_BIN/$_module.sh" ]]; then
+            #     core.make_adapter $_module
+            # fi
 
             # module in recognized format found
             if [[ -f "$GRBL_BIN/$_module$_type" ]] ; then
@@ -630,9 +631,9 @@ core.run_module_function () {
         # check is module on that name installed
         if [[ "${GRBL_MODULES[@]}" =~ "$module" ]] ; then
             # check is module folder, create adapter if is not found
-            if [[ -f "$GRBL_BIN/$module/$module.sh" ]] && ! [[ -f "$GRBL_BIN/$module.sh" ]] ; then
-                core.make_adapter $module
-            fi
+            # if [[ -f "$GRBL_BIN/$module/$module.sh" ]] && ! [[ -f "$GRBL_BIN/$module.sh" ]] ; then
+            #     core.make_adapter $module
+            # fi
 
             # printout module documentation link
             gr.msg -v3 -c white "documentation: $GRBL_DOCUMENTATION:module:$module"
