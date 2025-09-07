@@ -584,9 +584,12 @@ corsair.pipe () {
 #     return 127
 # }
 
-# run these functions every time corsair is called
+# source sub tools
 source $corsair_submodule/config.sh
+source $corsair_submodule/effects.sh
 source $corsair_submodule/help.sh
+
+# run/make rc file to temp
 corsair.rc
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
