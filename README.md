@@ -1,11 +1,12 @@
-# GRBL - easy to use terminal tool kit for Debian/Ubuntu Linux.
+# Gerbil project - Debian Accessibility Layer for degenerates 
 
-Welcome to the **GRBL** project! This project aims to simplify and streamline various terminal commands and operations through a modular, user-friendly structure. 
+*grbl* project aims to simplify and streamline various terminal commands and operations through a modular, user-friendly structure. 
 
-![Flowchart](flowchart.png)
-*Basic principal who GRBL works*
+![banner](doc/grbl-banner-wquote.jpg)
 
-Below is an overview of the functionalities provided by **GRBL**:
+/dəˈdʒɛnəˌreɪdᵻd/ past data stars that having lost the physical, mental, or moral qualities considered normal and desirable; showing evidence of decline.
+
+Below is an overview of the functionalities provided by *grbl*:
 
 ## Features
 
@@ -51,36 +52,7 @@ Below is an overview of the functionalities provided by **GRBL**:
 - **Note-Taking and Coding**: Integrate note-taking, coding, and idea cloud tools with editors like Sublime, VSCode, and Obsidian using `note.sh` and configuration files.
 - **Template Generation**: Automatically generate templates for new modules and semi-automated test templates.
 
-## Getting Started
-
-TODO: Coming soon!
-
-To get started with **GRBL**, follow these steps:
-
-1. **Clone the Repository**:
-   ```sh
-   git clone https://github.com/ugcasa/grbl.git
-   cd grbl
-   ```
-
-2. **Install Dependencies**:
-   ```sh
-   ```
-
-3. **Run Modules**:
-   ```sh
-   ```
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## License
-
-[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-
-
-## Flow chart (mermaind test)
+## Flow chart 
 
 ```mermaid
 
@@ -112,3 +84,36 @@ flowchart TD
     classDef block fill:#FFFFFF,stroke:#333,stroke-width:2px;
 
  ```
+
+## Getting Started
+
+Coming soon (or later.. probably never ;)
+
+To get started with **GRBL**, follow these steps:
+
+1. **Clone the Repository**:
+   ```sh
+   git clone https://github.com/ugcasa/grbl.git
+   cd grbl
+   ```
+
+2. **Install Dependencies**:
+   ```sh
+   TBD
+   pls. do not install grbl to native os for now.
+   ```
+
+3. **Run Modules**:
+   ```sh
+   TBD
+   Some environmental variable starting with GRBL_* need to be full filled to run modules 
+   ```
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+## License
+
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+
