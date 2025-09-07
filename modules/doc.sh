@@ -97,7 +97,7 @@ doc.convert() {
     local _original="$1"
     shift
     
-    [[ $_format ]] || read "output format pdf|docx|odt? " _format
+    [[ $_format ]] || read -p "output format pdf|docx|odt? " _format
 
     if ! [[ -f $_original ]]; then 
         gr.msg -e1 "$_original does not exist, canceling.."
