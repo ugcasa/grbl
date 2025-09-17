@@ -88,7 +88,7 @@ corsair.indicate () {
         important)      blink="red yellow 0.75 3600" ;;
     esac
 
-    (corsair.blink_set $key $blink) >/dev/null 2>/dev/null
+    (corsair.blink_set $key $blink) #>/dev/null 2>/dev/null
     return 0
 }
 

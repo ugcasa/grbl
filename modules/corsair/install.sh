@@ -101,6 +101,8 @@ corsair.install () {
     case $DISTRIB_RELEASE in
         18.*|19.*|20.*|22.*|23.*)
             # There is PPA but K68 dows not work with it, need patch source code, then compile
+            # FIX later: test need of compile, I think this is not needed (old as fuck messy bugfix)
+            # Seems that version 0.4.4-1 is still for xenial 
             corsair.requirements && \
             corsair.clone && \
             corsair.patch K68 && \
@@ -114,13 +116,31 @@ corsair.install () {
             cp -f $corsair_daemon_service $GRBL_CFG
         ;;
         24.*)
-            # Trying with re-compiled version
-            # https://launchpad.net/~tatokis/+archive/ubuntu/ckb-next
+            # FIX later: after least 24.* repository version is ok, might be VERY NICE to check is need to compile previous releases, if it is ok, pugre above
             sudo add-apt-repository ppa:tatokis/ckb-next
             sudo apt update
             sudo apt install ckb-next
         ;;
     esac
+
+    # Add suspend script to auto restart daemon afer suspend
+
+    if ! [[ $suspend_script ]]; then 
+        fi gr.ask "set auto restart daemon afer suspend (sudo needed to se it)"; then 
+        # FIX later: not sure does tabs(spaces) fuckup EOT, keep safe by doing this stupid looking thing: 
+        # https://launchpad.net/~tatokis/+archive/ubuntu/ckb-next
+        sudo tee -a $suspend_script > /dev/null <<EOT 
+case $1 in
+  post)
+    systemctl restart ckb-next-daemon.service
+    ;;
+esac
+EOT
+        chmod +x $suspend_script
+        fi
+
+    fi
+
     return 0
 }
 

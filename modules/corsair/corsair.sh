@@ -2,32 +2,45 @@
 # grbl corsair led notification functions
 # casa@ujo.guru 2020-2025
 
+
+# For debugger
 __corsair_color="light_blue"
 __corsair=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 
+# Config variables
 corsair_rc=/tmp/$USER/corsair.rc
 corsair_config="$GRBL_CFG/$GRBL_USER/corsair.cfg"
 corsair_submodule="$GRBL_BIN/corsair"
-# active key list
+
+# Generate active key list
+# TODO. Critical issue! To avoid unnecessary processor draw of ckb-nest app. 
+# There should be implement mechanism to change mode when more pipes needed, no point to poll 102+ pipes all time.
+# this list needs to be updated if mode is changed, therefore this method is not robust enough
 key_pipe_list=$(file /tmp/ckbpipe0* | grep fifo | cut -f1 -d ":")
-# modes with status bar function set. if add on this list, add name=<rgb color> to rgb-color.cfg
-status_modes=(olive fullpipe, halfpipe, blue, eq)
-corsair_last_mode="/tmp/$USER/corsair.mode"
-# service configurations for ckb-next application
-corsair_service="$HOME/.config/systemd/user/corsair.service"
+
+# Service configurations for ckb-next application
 corsair_daemon_service="/usr/lib/systemd/system/ckb-next-daemon.service"
-# just know what to delete then disable option/lib/systemd/system-sleep/grbl-suspend.sh
-suspend_script="/lib/systemd/system-sleep/grbl-suspend.sh"
-# poll order is read from  environment list ${GRBL_DAEMON_POLL_ORDER[@]} set in user.cfg
-pipelist_file="$GRBL_CFG/corsair-pipelist.cfg"
+corsair_service="$HOME/.config/systemd/user/corsair.service"
+suspend_script="/lib/systemd/system-sleep/ckb-restart.sh" # if issues with this, just delete .sh
+
+# HW availability variables
 ms_available=
 kb_available=
+
+## Mode variables
+# TODO: list of modes that have pipes to least F1-F12. Not sure is this in use anywhere else than corsair.check. Purge following when mode change mechanism is implemented
+status_modes=(fullpipe, halfpipe, tinypipe, olive, eq) # other modes do not not have pipes configured
+corsair_last_mode="/tmp/$USER/corsair.mode"
 corsair_mode=
-#home="$GRBL_BIN/corsiar"
 
-# whatta shit is this shit here?
-# looks like old hard coded workaround for some test, still in use.. f*ck. note to me: never do this.
-
+# ckb-next last mode data: if daemon is unconnected, mode needs to be kept somewhere 
+# TODO: do something for this, ugly
+if [[ -f $corsair_last_mode ]] ; then
+    corsair_mode="$(head -1 $corsair_last_mode)"
+else
+    corsair_mode=$GRBL_CORSAIR_MODE
+    echo $corsair_mode > $corsair_last_mode
+fi
 
 # import colors f
 [[ -f "$GRBL_CFG/rgb-color.cfg" ]] && source "$GRBL_CFG/rgb-color.cfg"
@@ -50,13 +63,6 @@ declare -ga corsair_keytable=(\
 corsair.main () {
 # command parser
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
-
-    # ckb-next last mode data
-    if [[ -f $corsair_last_mode ]] ; then
-            corsair_mode="$(head -1 $corsair_last_mode)"
-        else
-            corsair_mode=$GRBL_CORSAIR_MODE
-        fi
 
     local cmd="$1"
     shift
@@ -202,6 +208,8 @@ corsair.enabled () {
 
 corsair.check () {
 # Check keyboard driver is available, app and pipes are started and launch those if needed
+# TODO this may not be the fastest way, and is used too often. Lightweight this or figure some other way. 
+
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     gr.msg -n -v3 "checking corsair is enabled.. "
@@ -386,7 +394,8 @@ corsair.set () {
     # write color code to button pipe file and let device to receive and process command (surprisingly slow)
     if file $key_pipefile | grep -q fifo >/dev/null ; then
         echo "rgb $_color" > $key_pipefile
-        gr.msg -v4 -n -t -c $2 "$1 < $2"
+        # gr.debug "echo rgb $_color > $key_pipefile"
+        # gr.msg -v4 -n -t -c $2 "$1 < $2"
     else
         gr.msg -c yellow "io error, $key_pipefile check cbk-next profile settings"
         return 103
