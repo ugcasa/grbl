@@ -14,8 +14,6 @@ declare -g note_file
 declare -g note_date
 declare -g note_file_name
 declare -g note_rc=/tmp/$USER/grbl_note.rc
-declare -g require=(nacal pandoc gnome-terminal)
-
 
 note.help () {
 # notes help printout
@@ -30,8 +28,8 @@ note.help () {
     gr.msg -v1 " open|edit      open given date notes (use time format $GRBL_FORMAT_FILE_DATE "
     gr.msg -v1 "  <yesterday>   literal date pointing available"
     gr.msg -v1 "  <next month>  ... "
-    gr.msg -v1 " install        install required software: ${require[@]}"
-    gr.msg -v2 " uninstall      remove required software: ${require[@]}"
+    gr.msg -v1 " install        install required software"
+    gr.msg -v2 " uninstall      remove required software"
     gr.msg -v1 " tag            read from or add tags to note file "
     gr.msg -v1 " locate         returns file location of note given YYYYMMDD "
     gr.msg -v1 " office         compile to .odt format open it"
