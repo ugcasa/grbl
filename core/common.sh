@@ -850,6 +850,175 @@ gr.colors () {
         echo
 }
 
+gr.install() {
+# install requirements, -p package manager apt|apt-get|pip|flatpack|snap
+
+    local check=
+    local check_only=
+    local package_manager=apt
+    local install_required=
+
+    TEMP=`getopt --longoptions -o "fscp:" $@`
+    eval set -- "$TEMP"
+
+    while true ; do
+        case "$1" in
+
+        -p) # select package manager
+            package_manager=$2
+            shift 2
+            ;;
+        -s) # be silent
+            GRBL_VERBOSE=0
+            shift
+            ;;
+
+        -f) # do not ask every package
+            GRBL_FORCE=true
+            shift
+            ;;
+        -c) # check only
+            check_only=true
+            shift
+            ;;
+         *) break
+        esac
+    done
+
+
+    local required=
+
+    local left_overs="$@"
+    if [[ "$left_overs" != "--" ]] ; then
+        required="${left_overs#* }"
+    fi
+
+    if [[ ${#required[@]} -lt 1 ]]; then 
+        gr.msg -e1 "required list empty"
+        return 0
+    fi
+
+    ## 0) Install required package manager
+    
+    case $package_manager in 
+         pipx)
+            if ! apt list -i pipx 2>/dev/null >/dev/null | grep installed ; then 
+                gr.ask "install pipx package manager?" || return 12
+                sudo apt install pipx
+                pipx ensurepath
+                #sudo pipx ensurepath --global # optional to allow pipx actions with --global argument
+            fi
+            ;;
+
+        pip3|pip) 
+            if ! apt list -i pip3 2>/dev/null >/dev/null | grep installed ; then 
+                gr.ask "install pip3 package manager?" || return 12
+                sudo apt install python3-pip
+            fi
+            ;;
+    esac
+
+    ## 1) Check package 
+    
+    gr.msg -v2 -n "checking requirements.. "
+    for install in ${required[@]} ; do
+                
+        case $package_manager in 
+            
+            apt|apt-get) 
+                if apt list -i $install 2>/dev/null| grep -q installed; then
+                    gr.msg -v2 -n -c green "$install " 
+                else
+                    gr.msg -v2 -n -c red "$install " 
+                    install_required=true
+                fi
+                ;;
+            
+            pip|pip3) 
+
+                if $package_manager list 2>/dev/null | grep -q $install; then 
+                    gr.msg -v2 -n -c green "$install " 
+                else
+                    gr.msg -v2 -n -c red "$install " 
+                    install_required=true
+                fi
+                ;;
+
+            flat*) 
+                gr.msg "flatpack TBD"
+                return 100
+                ;;
+            
+            snap*) 
+                gr.msg "snap not supported"
+                return 100
+                ;;
+        esac
+    done
+
+    
+    ## Inform, exit or continue
+
+    if [[ -z $install_required ]] ; then                 
+
+        gr.msg -v2 -c green "fulfilled" 
+        return 0
+
+    else
+
+        if [[ $check_only ]] ; then 
+            gr.msg -v2 -N -c yellow "install required" 
+            return 10
+        fi
+        
+        echo 
+        if gr.ask "install requirements?" ; then 
+            GRBL_FORCE=true
+        else
+            gr.msg -v2 -c yellow "some packages will be missed" 
+            return 11        
+        fi
+    fi 
+    
+
+    ## 2) install package
+
+    case $package_manager in 
+            
+        apt|apt-get) 
+            gr.msg "sudo privileges needed to install"
+            sudo apt-get update
+            for install in ${apt_require[@]} ; do
+                apt list -i $install 2>/dev/null >/dev/null | grep installed && continue
+                gr.ask -h "install $install?" || continue
+                sudo $package_manager -y install $install
+            done
+            ;;
+        
+        pip|pip3) 
+            pip3 install --upgrade pip
+            for install in ${apt_require[@]} ; do
+                $package_manager list 2>/dev/null | grep -q $install && continue
+                gr.ask -h "install $install?" || continue
+                $package_manager -y install $install
+            done
+            ;;
+
+        flat*) 
+            gr.msg "flatpack TBD"
+            return 100
+            ;;
+        
+        snap*) 
+            gr.msg "snap not supported"
+            return 100
+            ;;
+    esac
+
+    return 0
+}
+
+
 # TBD is following really needed or some old tail?
 # export -f gr.poll
 export -f gr.msg
