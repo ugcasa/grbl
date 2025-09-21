@@ -1,5 +1,7 @@
 #!/bin/bash
 # grbl play and get from youtube casa@ujo.guru 2022
+# Based on yt-dlp https://github.com/yt-dlp/yt-dlp
+
 
 # youtube on 80x24 terminal window
 # based on youtube-dl (before), yt-dlp (currently)
@@ -47,6 +49,8 @@ declare -g youtube_data=$GRBL_DATA/youtube
 declare -g youtube_error=/tmp/$USER/youtube.error
 declare -g mpv_error=/tmp/$USER/mpv.error
 declare -g continue_to_play=
+
+
 # more global variables downstairs (after sourcing rc file)
 
 youtube.help () {
@@ -810,36 +814,41 @@ EOF
 
 
 youtube.firefox_cookies () {
+# get youtube cookie from firefox 
+
+    local cookie_yt="$youtube_data/youtube_cookie.txt"
+
+    if [[ -f $cookie_yt ]]; then 
+        if ! gr.ask "$cookie_yt exist, overwrite?"; then 
+            gr.msg "skipping.. "
+            return 99
+        fi
+    fi
 
     local cookie_db="/tmp/$USER/fox-cookies.sqlite"
+    local profiles="$HOME/.mozilla/firefox/profiles.ini"
 
-    get_database () {
+    if ! [[ -f $profiles ]] ; then
+        gr.msg -e2 no profiles '$profiles' found
+        return 112
+    fi
 
-        local profiles="$HOME/.mozilla/firefox/profiles.ini"
+    # fast way to get default profile
+    head -n 3 $profiles | grep "Default" >/tmp/$USER/fox-profile
+    source /tmp/$USER/fox-profile
+    profile=$Default
+    rm /tmp/$USER/fox-profile
+    gr.debug "profile:'$profile'"
+    [[ $profile ]] || return 113
 
-        if ! [[ -f $profiles ]] ; then
-            gr.msg -e2 no profiles '$profiles' found
-            return 112
-        fi
+    # get cookies database
+    fox_cookie_db=$HOME/.mozilla/firefox/$profile/cookies.sqlite
+    gr.debug "cookie_db:'$fox_cookie_db'"
+    [[ -f $fox_cookie_db ]] || return 114
 
-        # fast way to get default profile
-        head -n 3 $profiles | grep "Default" >/tmp/$USER/fox-profile
-        source /tmp/$USER/fox-profile
-        profile=$Default
-        rm /tmp/$USER/fox-profile
-        gr.debug "$FUNCNAME profile:'$profile'"
-        [[ $profile ]] || return 113
+    cp $fox_cookie_db $cookie_db
 
-        # get cookies database
-        fox_cookie_db=$HOME/.mozilla/firefox/$profile/cookies.sqlite
-        gr.debug "$FUNCNAME cookie_db:'$fox_cookie_db'"
-        [[ -f $cookie_db ]] || return 114
-
-        cp $fox_cookie_db $cookie_db
-    }
-
-    [[ -f $cookie_db ]] || get_database
-    python3 "$GRBL_BIN/audio/get_cookie.py" youtube.com $cookie_db >$youtube_data/youtube_cookie.txt
+    python3 "$GRBL_BIN/audio/get_cookie.py" youtube.com $cookie_db >$cookie_yt
     rm $cookie_db
 }
 
@@ -1368,21 +1377,58 @@ youtube.upgrade() {
 youtube.install() {
 # install requirements
 
-    # install players, alternative youtube-dl, filename fixer and youtube seacher
+    local command=$1
+    shift 
+
+    local apt_require=(mpv ffmpeg detox python3-pip jq)
+    local pip_require=(yotube_search)
+
+    case $command in 
+        
+        check) 
+            gr.msg -v2 -n "checking requirements.. "
+            local install_required=
+            
+            for install in ${apt_require[@]} ; do
+                
+                if apt list -i $install 2>/dev/null >/dev/null | grep installed; then 
+                    true #gr.msg -v2 -n -c green "$install " 
+                else
+                    gr.msg -v2 -n -c red "$install " 
+                    install_required=true
+                fi
+            done
+
+            if [[ -z $install_required ]]; then                 
+                gr.msg -v2 -c green "ok" 
+            else
+                if gr.ask "install requrements?" 
+                    GRBL_FORCE=true
+                else
+                    return 0        
+                fi
+            fi
+            ;;
+    esac
+    
     sudo apt-get update
-    sudo apt-get install mpv ffmpeg yt-dlp detox
+
+    for install in ${apt_require[@]} ; do
+        # hash $install 2>/dev/null && continue # does not check package names but commands
+        apt list -i $install 2>/dev/null >/dev/null | grep installed && continue
+        gr.ask -h "install $install?" || continue
+        sudo apt-get -y install $install
+    done
+
     pip3 install --upgrade pip
     pip3 install youtube-search
 
     # install patched yt-dlp
     sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
     sudo chmod a+rx /usr/local/bin/yt-dlp
-    sudo ln -s /usr/local/bin/yt-dlp /usr/bin/yt-dlp
 
-    # install json tools
-    jq --version >/dev/null || sudo apt install jq -y
+    #sudo ln -s /usr/local/bin/yt-dlp /usr/bin/yt-dlp
 
-    #gr.msg -c green "mpv, ffmpeg, yt-dlp, detox and youtube-search installed"
     return 0
 }
 
@@ -1391,9 +1437,9 @@ youtube.uninstall(){
 # remove requirements
 
     # remove only youtube special requiderements, leave players etc.
-    [[ -f /usr/bin/yt-dlp ]] && rm -y /usr/bin/yt-dlp
+    #[[ -f /usr/bin/yt-dlp ]] && rm -y /usr/bin/yt-dlp
+
     [[ -f /usr/local/bin/yt-dlp ]] && rm -y /usr/local/bin/yt-dlp
-    sudo apt-get remove yt-dlp -y
     pip3 uninstall youtube-search
     gr.msg -c green "uninstalled"
     return 0
