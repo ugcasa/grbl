@@ -172,23 +172,23 @@ android.get () {
     gr.msg -n -v1 "copying files "
     while IFS= read -r _line ; do
 
-            gr.msg -v3 -c dark_cyan ":$_line:"
+            gr.msg -v3 -c cyan ":$_line:"
             _ifs=$IFS ; IFS='>' ; _list=($_line) ; IFS=$_ifs
 
             gr.msg -v3 -c green ":${_list[@]}:"
 
             _action=${_list[0]}
-            gr.msg -v3 -c deep_pink ":$_action:"   # cp=copy, mv=move
+            gr.msg -v3 -c pink ":$_action:"   # cp=copy, mv=move
 
             _type=${_list[1]}
-            gr.msg -v3 -c deep_pink ":$_type:"     # filetype
+            gr.msg -v3 -c pink ":$_type:"     # filetype
 
             _title=${_list[2]}
             _source=${_list[3]}
             _target=$(eval echo "${_list[4]}")
-            gr.msg -v3 -c deep_pink ":$_title:"
-            gr.msg -v3 -c deep_pink ":$_source:"
-            gr.msg -v3 -c deep_pink ":$_target:"
+            gr.msg -v3 -c pink ":$_title:"
+            gr.msg -v3 -c pink ":$_source:"
+            gr.msg -v3 -c pink ":$_target:"
 
             gr.msg -v1 -V2 -n "."
             gr.msg -n -v2 -c dark_crey "$_title > $_target "
@@ -205,7 +205,7 @@ android.get () {
                     $GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP:"$_source/*.$_type" $_target
                     _error=$?
                 else
-                    gr.msg -c deep_pink -v3 "$GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP $_source not exist"
+                    gr.msg -c pink -v3 "$GRBL_ANDROID_USERNAME@$GRBL_ANDROID_LAN_IP $_source not exist"
                 fi
 
             case $_error in
