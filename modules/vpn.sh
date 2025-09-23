@@ -294,7 +294,7 @@ vpn.open () {
         # proton*)  true;;
     esac
 
-
+    [[ -f $original_ip_file ]] || echo $(curl -s https://ipinfo.io/ip) >/tmp/casa/vpn-original-ip
 
     local original_ip=$(head -n1 $original_ip_file)
     local tunneled_ip=

@@ -118,7 +118,7 @@ game.poll () {
 
 game.minecraft_status () {
 # install minecraft bedrock
-    [[ $GRBL_GAME_FOLDER/menicraft ]] && return 0 || return 1
+    [[ -f $GRBL_GAME_FOLDER/minecraft ]] && return 0 || return 1
 }
 
 

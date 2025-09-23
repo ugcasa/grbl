@@ -51,19 +51,6 @@ case $1 in
         ;;
 esac
 
-
-# TODO vertaile kaikk
-# if [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/system.cfg) - $(stat -c %Y $GRBL_RC) )) -gt 0 ]]
-# # if module needs more than one config file here it can be done here
-# #     || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/lab.cfg) - $(stat -c %Y $GRBL_RC) )) -gt 0 ]] \
-# #     || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/mount.cfg) - $(stat -c %Y $GRBL_RC) )) -gt 0 ]]
-# then
-#     lab.make_rc && \
-#         gr.msg -v2 -c dark_gray "$GRBL_RC updated"
-# fi
-
-
-
 # check that config rc file exits
 if [[ -f $GRBL_RC ]] ; then
     source $GRBL_RC
@@ -88,22 +75,29 @@ fi
 [[ $GRBL_SYSTEM_NAME ]] && export GRBL_CALL=$GRBL_SYSTEM_NAME
 
 
-core.main () {
+core.main() {
 # parsing first word of user input, rest words are passed to next level parser
     gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     local _input="$1" ; shift
 
+    # Make list of module for case validator
+    shopt -s extglob
+    local modules="@($(gr.commands --bar))"
+    gr.debug "$modules"
+
     case "$_input" in
 
         all)
         # run command on all modules
+            gr.debug "running $_input function of all modules"
             core.multi_module_function "$@"
             return $?
             ;;
 
         start|poll|stop)
         # daemon controls
+            gr.debug "daemon $_input module control with variables: $@"
             source $GRBL_BIN/daemon.sh
             daemon.$_input
             return $?
@@ -111,6 +105,7 @@ core.main () {
 
         status|kill|top|ps|debug|pause|version|online|list|active)
         # core control functions
+            gr.debug "core $_input command with variables: $@"
             core.$_input $@
             return $?
             ;;
@@ -127,16 +122,20 @@ core.main () {
             return 0
             ;;
 
-        *)
+        $modules)
         # otherwise try is user input one of installed modules
+            gr.debug "calling $_input module with variables: $@"
             core.run_module_function "$_input" "$@"
             return $?
             ;;
 
         "")
         # ask more
-            gr.msg "$GRBL_CALL need more instructions"
+            gr.msg -e0 "$GRBL_CALL need more instructions"
             ;;
+        *)
+            gr.msg -e1 "$GRBL_CALL found no such module or command '$_input'"
+            return 127
     esac
 }
 
@@ -533,10 +532,11 @@ core.run_module () {
         # match, go trough possible filenames
         for _type in ${type_list[@]} ; do
 
+            # TODO, remove this if installer can handle
             # check is module folder, create adpater if not found
-            if [[ -f "$GRBL_BIN/$_module/$_module.sh" ]] && ! [[ -f "$GRBL_BIN/$_module.sh" ]]; then
-                core.make_adapter $_module
-            fi
+            # if [[ -f "$GRBL_BIN/$_module/$_module.sh" ]] && ! [[ -f "$GRBL_BIN/$_module.sh" ]]; then
+            #     core.make_adapter $_module
+            # fi
 
             # module in recognized format found
             if [[ -f "$GRBL_BIN/$_module$_type" ]] ; then
@@ -631,9 +631,9 @@ core.run_module_function () {
         # check is module on that name installed
         if [[ "${GRBL_MODULES[@]}" =~ "$module" ]] ; then
             # check is module folder, create adapter if is not found
-            if [[ -f "$GRBL_BIN/$module/$module.sh" ]] && ! [[ -f "$GRBL_BIN/$module.sh" ]] ; then
-                core.make_adapter $module
-            fi
+            # if [[ -f "$GRBL_BIN/$module/$module.sh" ]] && ! [[ -f "$GRBL_BIN/$module.sh" ]] ; then
+            #     core.make_adapter $module
+            # fi
 
             # printout module documentation link
             gr.msg -v3 -c white "documentation: $GRBL_DOCUMENTATION:module:$module"
@@ -1012,25 +1012,42 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     core.main $core_command ${pass_to_module[@]}
     # collect return code
     _error_code=$?
-    # check errors, exit if none
-    if (( _error_code < 1 )) ; then
-        gr.msg -v4 -c $__core_color "$__core [$LINENO] 'no errors'" >&2
-        exit 0
-    fi
 
-    # error handler
-    if (( _error_code < 100 )) ; then
-    # # less than 100 are warnings
-        gr.msg -v3 -c yellow "warning: $_error_code $GRBL_LAST_ERROR"
+    # check errors
+
+    # 1 - 9 are reserved for signaling
+    if (( _error_code < 10 )); then
+        gr.msg -v4 -e0 "exit signal: $_error_code $GRBL_LAST_ERROR"
+        exit $_error_code
+    # 11 - 50 core error are errors
+    elif (( _error_code < 50 )) ; then
+        gr.msg -v3 -e2 "core error: $_error_code $GRBL_LAST_ERROR"
+    elif (( _error_code < 100 )) ; then
+    # 51 - 99 are warnings
+        gr.msg -v3 -e0 "warning: $_error_code $GRBL_LAST_ERROR"
+    # 255 total fuck up
+    elif (( _error_code == 255 )); then
+        gr.msg -v3 -e4 "fatal: $_error_code $GRBL_LAST_ERROR"
+    # more than 200 are fails
+    elif (( _error_code >= 200 )); then
+        gr.msg -v3 -e3 "failed: $_error_code $GRBL_LAST_ERROR"
     else
-    # real errors
-        gr.msg -v2 -c red  "error: $_error_code $GRBL_LAST_ERROR"
+    # module errors 100 - 199
+        gr.msg -v2 -e1 "error: $_error_code $GRBL_LAST_ERROR"
     fi
 
     # corsair indication
-    GRBL_VERBOSE=0
-    source corsair.sh
-    if [[ $GRBL_CORSAIR_ENABLED ]] && corsair.check; then
+    if [[ $GRBL_CORSAIR_ENABLED ]]  then
+        GRBL_VERBOSE=0
+        source corsair.sh 
+        corsair.check || exit $_error_code
+
+        # TODO remove need of following
+        # automated link file $GURU_BIN/corsair.sh need to be formatted that
+        # it just sources $GURU_BIN/corsair/corsair.sh when sourced
+        source $GRBL_BIN/corsair/corsair.sh
+
+        corsair.check || exit $_error_code
         corsair.indicate error
         corsair.main type "er$_error_code" >/dev/null
     fi

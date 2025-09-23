@@ -1,25 +1,16 @@
 # grbl ms onedrive syck and other ms tools casa@ujo.guru 2025
 
-# NOTE: No point to write this. Microsoft blocks all actions I tried
-#       - to share my files from school (ms) account: share function just do nothing
-#       - share folder from my own ms account to school account: cannot be done, school account is not ms account they say, even it is.
-#       - only thing with free account can be done is sending emails and store some data to Microsoft
-#       - useless shit, who the fuck uses Microsoft?
-#       - why I do not learn that trying to use any of their services or software is just waist of time
-#       - script works dough, feel free to use it, I won't
-
 # debug shit
-__onedrive_color="light_blue"
-__onedrive=$(readlink --canonicalize --no-newline $BASH_SOURCE)
+# __onedrive_color="light_blue" # debug
+# __onedrive=$(readlink --canonicalize --no-newline $BASH_SOURCE) # debug
 
 onedrive_name=("home" "school")
 onedrive_sync_dir=("$HOME/onedrive" "$HOME/skuledrive")
 onedrive_config_file="$HOME/.config/onedriver/config.yml"
 onedrive_select=0
+onedrive_rc=/tmp/$USER/grbl_onedrive.rc
 
-grbl_config=/tmp/$USER/grbl_onedrive.rc
-
-[[ -f $grbl_config ]] && source $grbl_config
+[[ -f $onedrive_rc ]] && source $onedrive_rc
 export SERVICE_NAME=$(systemd-escape --template onedriver@.service --path ${onedrive_sync_dir[$onedrive_select]})
 
 # https://thelinuxcode.com/install-and-use-onedrive-on-linux-mint/
@@ -71,10 +62,10 @@ onedrive.install() {
 }
 
 onedrive.rm_confs() {
-# remove config file for re-configure
+# remove config file (for re-configure)
 
 	if [[ -f  $onedrive_config_file ]]; then
-	rm -rf $onedrive_config_file 	
+		rm -rf $onedrive_config_file
 		firefox.main backup
 		firefox.main rm
 	else 
@@ -84,17 +75,17 @@ onedrive.rm_confs() {
 
 onedrive.save_config () {
 # save configurations to file
-	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
-	gr.varlist "debug $onedrive_select $grbl_config"
+	# gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 ## debug
+	gr.varlist "debug $onedrive_select $onedrive_rc"
 
-	[[ -f $grbl_config ]] || touch $grbl_config
+	[[ -f $onedrive_rc ]] || touch $onedrive_rc
 	source config.sh
-	config.save $grbl_config onedrive_select $onedrive_select
+	config.save $onedrive_rc onedrive_select $onedrive_select
 }
 
 onedrive.mount() {
 # mount drive
-	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+	# gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 ## debug
 
 	export SERVICE_NAME=$(systemd-escape --template onedriver@.service --path ${onedrive_sync_dir[$onedrive_select]})
 	systemctl --user stop $SERVICE_NAME
@@ -105,7 +96,7 @@ onedrive.mount() {
 
 onedrive.config () {
 # set up configuration
-	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+	# gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 ## debug
 
 	[[ -d ${onedrive_sync_dir[$onedrive_select]} ]] || mkdir -p ${onedrive_sync_dir[$onedrive_select]}
 	[[ -d ${onedrive_config_file%/*} ]] || mkdir -p ${onedrive_config_file%/*}
@@ -117,30 +108,30 @@ onedrive.config () {
 onedrive.check () {
 # check is running
 ## TODO: for now just tail of service status
-	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+	# gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 ## debug
 
 	systemctl --user status $SERVICE_NAME | tail
 }
 
 onedrive.stop () {
-# check is running
-## TODO: for now just tail of service status
-	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+# check is runnin
+	# gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 ## debug
 
 	systemctl --user stop $SERVICE_NAME
 	systemctl --user daemon-reload
+	fusermount -uz ${onedrive_sync_dir[$onedrive_select]}
 }
 
 onedrive.test () {
 # try syncing
-	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+	# gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 ## debug
 
 	journalctl --user -u $SERVICE_NAME
 }
 
 onedrive.select () {
 # select drive
-	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+	# gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 ## debug
 
 	if [[ $1 ]]; then
 
@@ -175,12 +166,8 @@ onedrive.select () {
 
 onedrive.main () {
 # onedrive main stuff
-	gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+	# gr.msg -v4 -n -c $__onedrive_color "$__onedrive [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 ## debug
 	gr.varlist "debug onedrive_sync_dir onedrive_config_file"
-
-	# make needed folders
-	# read config
-	[[ -f $onedrive_config_file ]] && source $onedrive_config_file
 
 	local _first=$1
 	shift
@@ -205,7 +192,7 @@ onedrive.main () {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     onedrive.main "$@"
     exit "$?"
-else
-    gr.msg -v4 -c $__onedrive_color "$__onedrive [$LINENO] sourced " >&2
+# else
+    #gr.msg -v4 -c $__onedrive_color "$__onedrive [$LINENO] sourced " >&2 # debug
 fi
 

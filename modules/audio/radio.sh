@@ -373,7 +373,8 @@ radio.play () {
 
     # stop currently playing audio
     audio.stop
-
+    source corsair.sh
+    
     corsair.indicate playing $GRBL_AUDIO_INDICATOR_KEY
     echo $station_nro > $radio_number_file
 

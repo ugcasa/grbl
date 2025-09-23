@@ -11,8 +11,6 @@
     || gr.msg -c white "config module not found, unable send config data to server"
 
 backup_rc="$HOME/.bashrc.backup-by-grbl"
-GRBL_rc="$GRBL_RC"
-
 
 uninstall.main () {
     # remove mobules and applications installed by grbl
@@ -238,39 +236,56 @@ uninstall.remove () {
 
 
     # remove installed files
-    file_list=( $(cat $GRBL_CFG/installed.files) )
+    local file_list=( $(cat $GRBL_CFG/installed.files))
     gr.msg -v1 -n "deleting files " ; gr.msg -v2
     for _file in ${file_list[@]} ; do
         if [[ -f $_file ]] ; then
-                rm -rf $_file
                 gr.msg -n -v1 -V2 -c gray "."
                 gr.msg -v2 -c gray "$_file"
+                rm -f $_file #|| gr.msg -e1 "error: unable to delete"
             else
                 gr.msg -c yellow "warning: file '$_file' not found"
             fi
         done
     gr.msg -v1 -V2 -c green " done"
 
-    # remove installtion data
-    gr.msg -v1 "removing installer data.. "
-    rm -f "$GRBL_CFG/installed*" >/dev/null || gr.msg -v1 -c yellow "error while removing $GRBL_CFG/installed.*"
-    rm -f "$GRBL_CFG/modified*" >/dev/null || gr.msg -v1 -c yellow "error while removing $GRBL_CFG/modified.*"
+    # remove installed folders
+    local folder_list=( $(cat $GRBL_CFG/installed.folders) )
+    gr.msg -v1 -n "removing folders " ; gr.msg -v2
+    for _folder in ${folder_list[@]} ; do
+        if [[ -d $GRBL_BIN/$_folder ]] ; then
+                gr.msg -n -v1 -V2 -c gray "."
+                gr.msg -v2 -c gray "$_folder"
+                rmdir $GRBL_BIN/$_folder # || gr.msg -e1 "error: unable to remove"
+            else
+                gr.msg -c yellow "warning: folder '$GRBL_BIN/$_folder' not found"
+            fi
+        done
+    gr.msg -v1 -V2 -c green " done"
+
 
     # unlink core symbolic link
     gr.msg -v1 "unlinking core.. "
     unlink $GRBL_BIN/$GRBL_CALL || gr.msg -v1 -c yellow "error while unlinking $GRBL_BIN/$GRBL_CALL"
 
     # remove module folders, should be empty already
-    gr.msg -v1 "removing module folders.. "
-    cd $GRBL_BIN ; rmdir * >/dev/null 2>&1 || gr.msg -v1 -c yellow "error while removing module folders"
+    # gr.msg -v1 "removing module folders.. "
+    # cd $GRBL_BIN ; rmdir * >/dev/null 2>&1 || gr.msg -v1 -c yellow "error while removing module folders"
+## Tässä lähtee haemistot
 
     # remove binary folder if it's empty
-    gr.msg -v1 "removing bin folder.. "
-    cd ; rmdir $GRBL_BIN >/dev/null 2>&1 || gr.msg -v1 -c yellow "contains other stuff, $GRBL_BIN kept"
+    # gr.msg -v1 "removing bin folder.. "
+    # cd ; rmdir $GRBL_BIN >/dev/null 2>&1 || gr.msg -v1 -c yellow "contains other stuff, $GRBL_BIN kept"
 
-    # remove .grblrc file from home
+    # remove installtion data
+    gr.msg -v1 "removing installer data.. "
+    rm -f "$GRBL_CFG/installed*" >/dev/null || gr.msg -v1 -c yellow "error while removing $GRBL_CFG/installed.*"
+    rm -f "$GRBL_CFG/modified*" >/dev/null || gr.msg -v1 -c yellow "error while removing $GRBL_CFG/modified.*"
+
+    # remove rc files
     gr.msg -v1 "removing rc files.. "
-    rm -f "$GRBL_rc" || gr.msg -v1 -c yellow "error while removing $GRBL_rc "
+    rm -f "/tmp/$GURU_USER/*rc" || gr.msg -v1 -c yellow "error while removing /tmp/$GURU_USER rc files "
+    #rm $GRBL_RC || gr.msg -v1 -c yellow "error while removing $GRBL_RC "
 
     # pass
     gr.msg -c white "grbl v$version_to_uninstall removed"
@@ -279,7 +294,7 @@ uninstall.remove () {
 
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    [[ -f "$GRBL_rc" ]] && source "$GRBL_rc"
+    [[ -f "$GRBL_RC" ]] && source "$GRBL_RC"
     uninstall.main "$@"
     exit $?
 fi

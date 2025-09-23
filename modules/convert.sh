@@ -46,7 +46,7 @@ convert.main () {
     #   kerii listan jos ei inputtia määritelty
     # new shit: nielee myös option '--i as input_file' ja '--f as format' jos filun nimestä ei selkene (TBD core.sh second level options: upvote!)
 
-    local format=$1
+    local input=$1
     shift
 
     case $input in
@@ -78,58 +78,62 @@ convert.main () {
             return $?
             ;;
         *)
-            ## TODO wanted command example 'gr convert hello.jpg to png', see following function below help
-            # this badly written module is, rewrite desirable
-            local list=($input $@)
-            local file_list=()
-            local orig_format=
 
-            # check all items in list
-            for item in ${list[@]}; do
-                gr.debug "checking $item.."
+            gr.msg -e1 "unknown format/command "
+            return 1
+        ## TODO wanted command example 'gr convert hello.jpg to png', see following function below help
+        #   this badly written module is, rewrite desirable
+        #     local list=($input $@)
+        #     local methods=()
 
-                # Non positional destination format check
-                case $item in
-                    # video format
-                    mkv|avi|mp4|webm)
-                        to_format=$item
-                        gr.debug "format is $to_format"
-                        method=video
-                        continue
-                        ;;
+        #     local file_list=()
+        #     local orig_format=
+        #     local method=
 
-                    # picture format
-                    webp|tiff|png|jpg|jpeg|avif)
-                        to_format=$item
-                        gr.debug "format is $to_format"
-                        method=picture
-                        continue
-                        ;;
-                esac
+        #     # Non positional destination format check
+        #     for item in ${list[@]}; do
+        #         gr.debug "checking $item.."
 
-                if [[ -f $item ]]; then
-                    gr.debug "file $item found"
-                    file_list+=("$item")
-                else
-                    gr.msg "file $item not found"
-                    continue
-                fi
-            done
+        #         if [[ -f $item ]]; then
+        #             gr.debug "file $item found"
+        #             file_list+=("$item")
+        #             methods+=("file")
+        #             continue
+        #         else
+        #             gr.msg "file $item not found"
+        #             continue
+        #         fi
 
-            if ! [[ $method ]] || ! [[ $to_format ]] || ! [[ $file_list ]]; then
-                gr.msg -e1 "some of variables are empty"
-                gr.debug "method:$method format:$to_format file_list:${file_list[@]}"
-                return 128
-            fi
+        #         case $item in
+        #             # video format
+        #             mkv|avi|mp4|webm)
+        #                 to_format=$item
+        #                 gr.debug "format is $item"
+        #                 methods+=("video")
+        #                 continue
+        #                 ;;
 
-            for file in ${file_list[@]}; do
-                gr.msg "processing $file.."
-                orig_format=${file##*.}
+        #             # picture format
+        #             webp|tiff|png|jpg|jpeg|avif)
+        #                 to_format=$item
+        #                 methods+=("picture")
+        #                 gr.debug "format is $item"
+        #                 continue
+        #                 ;;
 
-                gr.debug "call: convert.${method} $file $to_format"
-                convert.${method} $file $to_format
-            done
-        ;;
+        #         esac
+
+        #     done
+
+        #     for (( i = 0; i < ${#file_list[@]}; i++ )); do
+        #         gr.msg "processing $file.."
+        #         orig_format=${file[$1]##*.}
+
+        #         gr.debug "call: convert.${method[$1]} ${file[$1]} ${to_format[$1]}"
+        #         convert.${method[$1]} ${file[$1]} ${to_format[$1]}
+
+        #     done
+        # ;;
 
     esac
     return 0

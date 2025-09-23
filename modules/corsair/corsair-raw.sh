@@ -34,7 +34,6 @@ corsair.raw.status () {
     gr.msg -N -v2 -c white "daemon status:"
     gr.msg -v2 "$(systemctl status ckb-next-daemon.service)"
     gr.msg -v3 "$(systemctl --user list-dependencies ckb-next-daemon.service)"
-
 }
 
 

@@ -202,20 +202,15 @@ install.unity () {
 install.signal () {
 # install signal app to Ubuntu/Mint desktop
 
-    # NOTE: These instructions only work for 64-bit Debian-based
-    # Linux distributions such as Ubuntu, Mint etc.
-
-    gr.msg $DISTRIB_CODENAME
-
+    gr.ask "This method only work for 64-bit Debian-based, Linux distributions such as Ubuntu, Mint etc. Continue? " || return 0
+    
     # 1. Install our official public software signing key:
-    wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg
+    wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg;
     cat signal-desktop-keyring.gpg | sudo tee /usr/share/keyrings/signal-desktop-keyring.gpg > /dev/null
 
     # 2. Add our repository to your list of repositories:
-    # echo "deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt $DISTRIB_CODENAME main" |\
-    #   sudo tee /etc/apt/sources.list.d/signal-$DISTRIB_CODENAME.list
-    echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main' |\
-        sudo tee /etc/apt/sources.list.d/signal-xenial.list
+    wget -O signal-desktop.sources https://updates.signal.org/static/desktop/apt/signal-desktop.sources;
+    cat signal-desktop.sources | sudo tee /etc/apt/sources.list.d/signal-desktop.sources > /dev/null
 
     # 3. Update your package database and install Signal:
     sudo apt update && sudo apt install signal-desktop

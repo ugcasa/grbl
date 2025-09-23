@@ -1,4 +1,4 @@
-0.7.7
+0.7.8
 'grbl'
 1 'configs' merged to 'master'
 2 Target is to get installable version. Last sub version removed, jump form 0.7.0.1 to 0.7.2
@@ -7,5 +7,5 @@
 5 parental and onedrive added, backup checks, module template and make_module script
 6 namechange
 7 corsair fix, tester and template re-write, cloud tools returned, auto complete added, new modules lab, onedrive
-
+8 corsair fix ended
 
