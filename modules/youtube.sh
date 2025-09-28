@@ -790,7 +790,7 @@ youtube.find () {
 # search from youtube and return json of $1 amount of results
 
     # deliver decimal value for inline python
-    export result_count=$1
+    result_count=$1
 
     # if output format is specified, set it and remove it from input string
     case $2 in
@@ -800,16 +800,23 @@ youtube.find () {
     esac
 
     # remove result count
-    shift
-    export search_string="$@"
+    shift    
+    search_string="$@"
 
     # with python, indentation is critical, therefore following lines needs to be like this
+    if [[ -f .venv/bin/activate ]]; then 
+        python3 -m venv .venv
+    fi
+
+    source .venv/bin/activate
     python3 - << EOF
 import os
+import json
 from youtube_search import YoutubeSearch
-results = YoutubeSearch(os.environ['search_string'], max_results=int(os.environ['result_count'])).to_$return_format()
+results = YoutubeSearch("$search_string", max_results=$result_count).to_$return_format()
 print(results)
 EOF
+
 }
 
 
@@ -1380,7 +1387,7 @@ youtube.install() {
     local command=$1
     shift 
 
-    local apt_require=(mpv ffmpeg detox python3-pip jq)
+    local apt_require=(mpv ffmpeg detox python3-pip jq pipx tiv)
     local pip_require=(yotube_search)
 
     case $command in 
@@ -1402,7 +1409,7 @@ youtube.install() {
             if [[ -z $install_required ]]; then                 
                 gr.msg -v2 -c green "ok" 
             else
-                if gr.ask "install requrements?" 
+                if gr.ask "install requrements?" ; then 
                     GRBL_FORCE=true
                 else
                     return 0        
@@ -1415,19 +1422,27 @@ youtube.install() {
 
     for install in ${apt_require[@]} ; do
         # hash $install 2>/dev/null && continue # does not check package names but commands
-        apt list -i $install 2>/dev/null >/dev/null | grep installed && continue
+        apt list -i $install 2>/dev/null | grep -q installed && continue
         gr.ask -h "install $install?" || continue
         sudo apt-get -y install $install
     done
 
+
+    if [[ -f .venv/bin/activate ]]; then 
+        python3 -m venv .venv
+    fi
+
+    source .venv/bin/activate
+    
+    ## TODO tähän testeri
     pip3 install --upgrade pip
     pip3 install youtube-search
 
     # install patched yt-dlp
-    sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
-    sudo chmod a+rx /usr/local/bin/yt-dlp
-
-    #sudo ln -s /usr/local/bin/yt-dlp /usr/bin/yt-dlp
+    if [[ -f /usr/local/bin/yt-dlp ]]; then 
+        sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
+        sudo chmod a+rx /usr/local/bin/yt-dlp
+    fi
 
     return 0
 }
