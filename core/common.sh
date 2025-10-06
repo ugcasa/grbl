@@ -135,7 +135,7 @@ gr.msg () {
             -h ) _color_code="$C_HEADER"                    ; shift ;;
             -n ) _newline=                                  ; shift ;;
             -p ) _newline="\n\n"                            ; shift ;;
-            -r ) _return="\r" ;_newline=                    ; shift ;;
+            -r ) _newline= ;_pre_newline="\r"               ; shift ;;
             -N ) _pre_newline="\n"                          ; shift ;;
             -x ) _exit=$2                                   ; shift 2 ;;
             -w ) _column_width=$2                           ; shift 2 ;;
