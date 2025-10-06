@@ -4,9 +4,11 @@
 source audio.sh
 source flag.sh
 
+# __yle=$(readlink --canonicalize --no-newline $BASH_SOURCE)
+# __yle_color="light_blue"
 declare -g yle_rc="/tmp/$USER/grbl_yle.rc"
 declare -g yle_run_folder="$(pwd)"
-declare -g yle_date_folder="$GRBL_DATA/yle"
+declare -g yle_data_folder="$GRBL_DATA/yle"
 declare -g yle_playlist_folder="$GRBL_DATA/yle/playlists"
 declare -g yle_temp_folder="$HOME/tmp/$USER/yle"
 declare -g yle_episodes=()
@@ -14,7 +16,7 @@ declare -g yle_media_address=
 declare -g yle_media_filename=
 
 yle.help () {
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     gr.msg -v1 "grbl yle help " -c white
     gr.msg -v2
     gr.msg -v0  "usage:    $GRBL_CALL yle get|play|radio|playlist|news|episodes|sub|metadata|install|uninstall|help"
@@ -55,7 +57,7 @@ yle.help () {
 
 
 yle.main () {
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     # yle.arguments $@
     command=$1
     shift
@@ -174,7 +176,7 @@ yle.main () {
 
 yle.watch_news () {
 # watch news stream from https://areena.yle.fi
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     source corsair.sh
 
     gr.debug "$FUNCNAME: GRBL_YLE_TV_NEWS_URL: $GRBL_YLE_TV_NEWS_URL"
@@ -211,25 +213,27 @@ yle.watch_news () {
 
 yle.listen_news () {
 # listen fresh news articles from https://yle.fi/uutiset
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     source corsair.sh
 
     local item=
     local link=
     local link_list=()
-    local intro_theme="$yle_date_folder/$GRBL_YLE_NEWS_INTRO"
-    local trans_theme="$yle_date_folder/$GRBL_YLE_NEWS_TRANSITION"
-    local end_theme="$yle_date_folder/$GRBL_YLE_NEWS_END"
+    local intro_theme="$GRBL_YLE_NEWS_INTRO"
+    local trans_theme="$GRBL_YLE_NEWS_TRANSITION"
+    local end_theme="$GRBL_YLE_NEWS_END"
     mpv_options="--input-ipc-server=$GRBL_AUDIO_MPV_SOCKET-uutiset"
-
+    gr.msg -n -c white "searching ${#link_list[@]} itmes "
+    
     # play intro and indicate
     corsair.indicate grinding $GRBL_YLE_INDICATOR_KEY
-    [[ -f "$intro_theme" ]] && mpv $mpv_options "$intro_theme" --quiet >/dev/null
 
-    if flag.get cancel ; then
-        flag.rm cancel
-        return 0
+    # play itro 
+    if [[ -f "$intro_theme" ]]; then 
+        mpv $mpv_options "$intro_theme" --quiet 2&>/dev/null &
+        intro=$!
     fi
+
     # set pause to other players
     audio.mpv pause true 2>/dev/null
 
@@ -244,7 +248,8 @@ yle.listen_news () {
         honey_link=$(echo ${honey_link//'"'})
         link_list+=("$honey_link")
     done
-    gr.debug "$FUNCNAME found news items '${#link_list[@]}'"
+
+    gr.msg -r -c white "found ${#link_list[@]} itmes "
 
     # parse media file from page and play news
     for (( i = 0; i < ${#link_list[@]}; i++ )); do
@@ -264,29 +269,37 @@ yle.listen_news () {
         gr.debug "$FUNCNAME found link: '${honey_line}'"
 
         # indicate user and update now playing information
-        gr.msg -n "$link [$item/$GRBL_YLE_NEWS_READ_MAX] "
+        gr.msg -r -c white "$link [$item/$GRBL_YLE_NEWS_READ_MAX] "
 
         if [[ $honey_line ]] ; then
             echo "uutiset $link [$item/$GRBL_YLE_NEWS_READ_MAX]" >$GRBL_AUDIO_NOW_PLAYING
 
             # play transition theme
-            gr.msg -c aqua "playing.. "
+            if [[ -f $trans_theme ]] && [[ $i -gt 0 ]]; then 
+                amixer -D pulse sset Master 10%- -q
+                mpv $mpv_options "$trans_theme" --quiet 2&>/dev/null
+                amixer -D pulse sset Master 10%+ -q
+            fi
 
-            [[ $trans_theme ]] && mpv $mpv_options "$trans_theme" --quiet >/dev/null
+            corsair.indicate grinding $GRBL_YLE_INDICATOR_KEY
+         
+            # stop itro
+            if [[ $intro ]]; then 
+                kill -15 $intro 2&>/dev/null
+                intro=
+            fi
 
             # play news
-            corsair.indicate grinding $GRBL_YLE_INDICATOR_KEY
-            mpv $mpv_options $honey_line --quiet >/dev/null
+            mpv $mpv_options $honey_line --quiet 2&>/dev/null
 
             # quit if stopped by other module or user with keyboard
             _error=$?
-            gr.debug "$FUNCNAME _error:$_error"
 
             corsair.blink_stop $GRBL_YLE_INDICATOR_KEY
 
             if [[ $_error -gt 0 ]] ; then
                 # check is user requested next item instead of stop
-                if flag.get next ; then
+                if flag.get next 2&>/dev/null; then
                     flag.rm next
                     continue
                 fi
@@ -294,27 +307,29 @@ yle.listen_news () {
             fi
 
             # if user cancels, read current iten and exit
-            if flag.get cancel ; then
+            if flag.get cancel 2&>/dev/null; then
                 flag.rm cancel
                 break
             fi
         else
-            gr.msg -c dark_grey "no speaky lady, skipping.. "
+            gr.msg -r -c dark_grey "no speaky lady, skipping.. "
+            sleep 1
         fi
 
     done
+    echo
 
     # stop blinking and play end tune
     corsair.blink_stop $GRBL_YLE_INDICATOR_KEY 2>/dev/null
     [[ -f "$GRBL_AUDIO_NOW_PLAYING" ]] && rm -f $GRBL_AUDIO_NOW_PLAYING
-    [[ -f "$end_theme" ]] && mpv $mpv_options "$end_theme" --quiet >/dev/null
+    [[ -f "$end_theme" ]] && mpv $mpv_options "$end_theme" --quiet 2&>/dev/null
     audio.mpv pause false 2>/dev/null
 }
 
 
 yle.podcast () {
 # play yle.areena podcasts
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     declare -g areena_url=
     declare -g temp_playlist="$GRBL_DATA/yle/playlists/temp.playlist"
     declare -g json_folder="$GRBL_DATA/yle/podcasts"
@@ -735,7 +750,7 @@ yle.podcast () {
 
 yle.playlist () {
 # play playlists
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     local url=
     local name="default"
     local line=0
@@ -946,7 +961,7 @@ yle.playlist () {
 
 
 yle.sort () {
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     if [[ $yle_do_play ]] ; then
         echo "yle $yle_do_play" >$GRBL_AUDIO_NOW_PLAYING
         yle.make_playlist $@ | mpv $mpv_options --playlist= -
@@ -961,7 +976,7 @@ yle.sort () {
 yle.make_playlist () {
 # process list of files given in file ardered by given way
 # do this to folder before: shopt -s globstar ; rename 's/_/-/g' * ; rename 's/ /-/g' *
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     local items_to_sort=$1
 
     # if input contains
@@ -982,7 +997,7 @@ yle.make_playlist () {
 
 
 yle.get_metadata () {
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     local error=
     local meta_data="$yle_temp_folder/meta.json"
     local yle_media_title="no media"
@@ -1032,8 +1047,7 @@ yle.get_metadata () {
 
 yle.get_media () {
     # get media from server and place it to /$USER/tmp
-
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     # detox filename
     output_filename=${yle_media_filename//. /-}
     output_filename=${output_filename//.: /-}
@@ -1073,7 +1087,7 @@ yle.get_media () {
 
 
 yle.get_subtitles () {
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     [ -d "$yle_temp_folder" ] && rm -rf "$yle_temp_folder"
     mkdir -p "$yle_temp_folder"
@@ -1085,7 +1099,7 @@ yle.get_subtitles () {
 
 
 yle.radio_listen () {
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     case $1 in
         ls|list)
             local possible=('puhe' 'radio1' 'kajaani' 'klassinen' 'x' 'x3 m' 'vega' 'kemi' 'turku' \
@@ -1106,7 +1120,7 @@ yle.radio_listen () {
 
 
 yle.place_media () {
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     #location="$@"
 
     media_file_format="${yle_media_filename: -5}"
@@ -1153,6 +1167,7 @@ yle.place_media () {
 
 
 yle.play_media () {
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     echo "yle $1" >$GRBL_AUDIO_NOW_PLAYING
     mpv $mpv_options --play-and-exit "$1" &
     [[ -f $GRBL_AUDIO_NOW_PLAYING ]] && $GRBL_AUDIO_NOW_PLAYING
@@ -1161,12 +1176,14 @@ yle.play_media () {
 
 
 yle.upgrade() {
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     # pip3 install --user --upgrade yle-dl
     python3 -m pip install --user --upgrade pipx
 }
 
 
 yle.install() {
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     # # Ubuntu 23.04 or above
     # sudo apt update
@@ -1188,6 +1205,7 @@ yle.install() {
 
 
 yle.uninstall(){
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     sudo -H pip3 uninstall --user yle-dl
     sudo apt remove ffmpeg jq  -y
@@ -1197,6 +1215,7 @@ yle.uninstall(){
 
 yle.status () {
 # printout network status
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     gr.msg -t -v1 -n "${FUNCNAME[0]}: "
 
@@ -1225,6 +1244,7 @@ yle.status () {
 
 
 yle.poll () {
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     # poll functions
 
     local _cmd="$1" ; shift
@@ -1247,7 +1267,7 @@ yle.poll () {
 
 yle.rc () {
 # source configurations (to be faster)
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     if [[ ! -f $yle_rc ]] \
         || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/yle.cfg) - $(stat -c %Y $yle_rc) )) -gt 0 ]] \
         || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/audio.cfg) - $(stat -c %Y $yle_rc) )) -gt 0 ]]
@@ -1262,7 +1282,7 @@ yle.rc () {
 
 yle.make_rc () {
 # configure yle module
-
+    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
     source config.sh
 
     # make rc out of config file and run it
