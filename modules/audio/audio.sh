@@ -112,7 +112,7 @@ audio.main () {
             return $?
             ;;
         next|prev)
-            audio.np
+            #audio.np
             audio.$command
             ;;
         mpvstat)
