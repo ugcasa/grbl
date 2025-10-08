@@ -121,6 +121,8 @@ note.make_rc () {
 
 note.config () {
 # populates global note variables based on given date in format YYYMMDD or literal date like "next month"
+# This is bullshit, do proper input handler. Yeah, it works on most cases, but hey, it's bullshit
+
     gr.msg -v4 -c blue "$__note [$LINENO] $FUNCNAME '$@'" >&2
 
     local _input="$(echo ${@}| xargs)"
@@ -143,15 +145,15 @@ note.config () {
             _month=$(printf "%02d" "${_month#0}")
             _year=$(cut -d"." -f3 <<<$_input)
 
-            if date -d "$_year$_month$_day" >/dev/null; then
+            if date -d "$_year$_month$_day" &>/dev/null; then
                 gr.debug "Finnish date DD.MM.YYYY $_day.$_month.$_year"
                 true
-            elif date -d "$_day$_month$_year" >/dev/null; then
+            elif date -d "$_day$_month$_year" &>/dev/null; then
                 gr.debug "UK date YYYY.MM.DD $_year.$_month.$_day"
                 local temp=$_year
                 _year=$_day
                 _day=$temp
-            elif date -d "$_year$_day$_month" >/dev/null; then
+            elif date -d "$_year$_day$_month" &>/dev/null; then
                 gr.debug "US date MM.DD.YYYY $_month.$_day.$_year"
                 local temp=$_month
                 _month=$_day
@@ -180,7 +182,7 @@ note.config () {
                 _year=${_input::-4}
                 _month=${_input:4:2}
                 _day=${_input:6:2}
-                _datestamp="${_year}${_month}${_day}"
+                _datestamp="${_year}${_month}${_day}"         
             else
                 gr.debug "got textual input"
                 _datestamp=$(date -d "${_input[@]}" +%Y%m%d)
@@ -196,7 +198,6 @@ note.config () {
             ;;
     esac
 
-    # test variables
     gr.varlist "debug _day _month _year _datestamp"
 
     # test time variables, non valid data causes error
@@ -210,11 +211,11 @@ note.config () {
     note_folder=$GRBL_MOUNT_NOTES/$GRBL_USER_NAME/$_year/$_month
     note_file_name=$GRBL_USER_NAME"_notes_"$_datestamp.md
     note_file="$note_folder/$note_file_name"
-    template_file_name="template.$GRBL_USER_NAME.$GRBL_USER_TEAM.md"
-    template="$GRBL_MOUNT_TEMPLATES/$template_file_name"
+    md_template_file_name="note-$GRBL_USER_NAME-$GRBL_USER_TEAM.md"
+    md_template="$GRBL_MOUNT_TEMPLATES/$md_template_file_name"
 
     # see results
-    gr.varlist "debug note_date note_folder note_file_name note_file template_file_name template"
+    gr.varlist "debug note_date note_folder note_file_name note_file md_template_file_name template"
     return 0
 }
 
@@ -349,7 +350,7 @@ note.add () {
         printf "tag: note $GRBL_USER $(gr.datestamp)\n" >>$note_file
 
         # place template line 1 to third line
-        [[ -f "$template" ]] && cat "$template" | head -n1 "$template" >>$note_file
+        [[ -f "${md_template}" ]] && cat "${md_template}" | head -n1 "${md_template}" >>$note_file
 
         # add calendar blog
         if source cal.sh ; then
@@ -362,7 +363,7 @@ note.add () {
         printf "\n\n# ${GRBL_NOTE_HEADER}\n\n" >>$note_file
 
         # template
-        [[ -f "$template" ]] && cat "$template"  |tail -n+2 >>$note_file || printf "customize your template to $template" >>$note_file
+        [[ -f "${md_template}" ]] && cat "${md_template}"  |tail -n+2 >>$note_file || printf "customize your template to ${md_template}" >>$note_file
 
         # changes table
         note.add_change "created"
@@ -619,10 +620,13 @@ note.preview () {
 
 note.office () {
 # create .odt from team template out of given day's note
+# argument 1 = date, today if no arguments. 2 = group name (optional) GRBL_USER_TEAM if left empty
     gr.msg -v4 -n -c $__note_color "$__note [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
+    local group_name=$GRBL_USER_TEAM
+    local template_option=
 
     # get date for note
     if [[ "$1" ]] ; then
@@ -637,22 +641,19 @@ note.office () {
 
     # template group name
     if [[ "$1" ]] ; then
-        local _template=$1
-    else
-        local _template=$GRBL_USER_TEAM
+        group_name=$1
     fi
 
     local odt_file="${note_file%%.*}.odt"
-    local odt_template="$GRBL_MOUNT_TEMPLATES/template-$_template.ott"
+    local odt_template="$GRBL_MOUNT_TEMPLATES/writer-${group_name}.ott"
 
     # make css option only if css. file exist
-    if [[ -f $odt_template ]]; then
-        gr.msg "using $_template template.. "
-        gr.debug "template options: '$template_option'"
-        template_option="--reference-doc=$odt_template " #--data-dir=$GRBL_MOUNT_TEMPLATES
+    if [[ -f $odt_template ]]; then        
+        gr.msg -v1 -V2 "using ${group_name} template.. "
+        gr.msg -v2 "using ${odt_template} template"        
+        template_option="--reference-doc=${odt_template} " #--data-dir=$GRBL_MOUNT_TEMPLATES
     else
-        gr.msg -e0 "template document does not exist, to avoid this error create $odt_template"
-        template_option=
+        gr.msg -e0 "template ${odt_template} does not exist"
     fi
 
     if [[ -f "$odt_file" ]]; then
@@ -660,11 +661,7 @@ note.office () {
     fi
 
     # printout variables for debug purposes
-    gr.debug "date:'$_date', \
-          note_file_name: '$note_file_name', \
-          note_file: '$note_file', \
-          odt_template: '$odt_template', \
-          odt_file: '$odt_file'"
+    gr.varlist "debug _date note_file_name note_file odt_template odt_file"
 
     # check file exist
     if ! [ -f "$note_file" ]; then
@@ -675,34 +672,27 @@ note.office () {
     # add change log line
     note.add_change "odt export"
 
-    # make command as variable for debugging purposes
-    _command="pandoc $note_file -f markdown -o $odt_file $template_option"
-
-    if [[ $GRBL_DEBUG ]]; then echo $_command ; fi
-
     # compile markdown to open office file format
-    $_command
+    gr.debug "pandoc $note_file -f markdown -o $odt_file $template_option"
+    pandoc $note_file -f markdown -o $odt_file $template_option
 
     # printout output file location
     gr.msg -v1 "$odt_file"
-
-    # make command as variable for debugging purposes
-    _command="$GRBL_PREFERRED_OFFICE_DOC $odt_file"
-    if [[ $GRBL_DEBUG ]]; then echo $_command >&2; fi
-
+    
     # open office program
-    $_command &
-
-    # $GRBL_PREFERRED_OFFICE_DOC "${note_file%%.*}.odt" &
+    gr.debug "$GRBL_PREFERRED_OFFICE_DOC $odt_file"
+    $GRBL_PREFERRED_OFFICE_DOC $odt_file &
 
 }
 
 note.html () {
 # create html of given day's note
+# argument 1 = date, today if no arguments. 2 = group name (optional) GRBL_USER_TEAM if left empty
     gr.msg -v4 -n -c $__note_color "$__note [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     # check is note and template folder mounted, mount if not
     note.online || note.remount
+    local group_name=$GRBL_USER_TEAM
 
     # get date for note
     if [[ "$1" ]] ; then
@@ -717,17 +707,16 @@ note.html () {
 
    # template group name
     if [[ "$1" ]] ; then
-        _template=$1
-    else
-        _template=$GRBL_USER_TEAM
+        group_name=$1
     fi
 
+
     local html_file="${note_file%%.*}.html"
-    local css_file="$GRBL_MOUNT_TEMPLATES/template-$_template.css"
+    local css_file="$GRBL_MOUNT_TEMPLATES/style-$group_name.css"
 
     # make css option only if css. file exist
     if [[ -f $css_file ]]; then
-        gr.msg "using $_template template.. "
+        gr.msg "using $group_name template.. "
         css_option="--css=$css_file"
         #css_option="-c $css_file"
         gr.debug "template options: '$css_option'"

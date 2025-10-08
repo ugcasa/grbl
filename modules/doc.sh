@@ -1,7 +1,7 @@
 #!/bin/bash
 # doc tools for GRBL casa@ujo.guru 2025
 
-## issue: converting to docx and odt format mathematical formula converting does not work. 
+## issue de la grande: converting to docx and odt format mathematical formula converting does not work. 
 
 declare -g doc_rc=/tmp/$USER/gtbl_doc.rc
 declare -g doc_config="$GRBL_CFG/$GRBL_USER/doc.cfg"
@@ -167,7 +167,7 @@ doc.convert.odt() {
     
     local original_file="$1"
     shift
-    local template_name="$1"
+    local group_name="$1"
     shift
 
     local odt_template=
@@ -179,21 +179,21 @@ doc.convert.odt() {
     fi
 
     # using template
-    if [[ $template_name ]]; then 
+    if [[ $group_name ]]; then 
         
         source mount.sh
-        local odt_template="$GRBL_MOUNT_TEMPLATES/template-${template_name}.ott"
+        local odt_template="$GRBL_MOUNT_TEMPLATES/writer-${group_name}.ott"
         
         if [[ -f $odt_template ]]; then
             template_option="--reference-doc=${odt_template} " #--data-dir=$GRBL_MOUNT_TEMPLATES
             gr.debug "template options: '$template_option'"
         else 
-            gr.msg "template $template_name not found, converting to planc"
+            gr.msg "template $group_name not found, converting to planc"
         fi
     fi
     
     source common.sh
-    gr.varlist "debug original_file template_name output_file odt_template template_option"
+    gr.varlist "debug original_file group_name output_file odt_template template_option"
     gr.debug "pandoc $original_file -f markdown -o $output_file $template_option"
     pandoc "$original_file" -f markdown -o "$output_file" $template_option && \
     libreoffice "$output_file" &

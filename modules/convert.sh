@@ -6,6 +6,8 @@
 #  all video  -> mp4
 #  all photos -> jpg
 
+# NOTE: review needed, for usable module, there is a lot of non valid code. This module is ancient. 
+
 #source common.sh
 convert_indicator_key=f7
 [[ $GRBL_CONVERT_INDICATOR ]] && convert_indicator_key=$GRBL_CONVERT_INDICATOR
@@ -633,16 +635,10 @@ convert.to_dokuwiki () {
 
 convert.to_ods () {
 # create odt from from input file, markdown original expexted (what else?)
-
-
-    local _template_name="default"
-
-    case $1 in
-        thin|new)
-        _template_name="thin"
-        shift
-        ;;
-    esac
+    
+    gr.ask "consider to use doc module, continue anyway?" || return 0
+    
+    local _template_name="thin"
 
     if [[ "$1" ]] ; then
         input_file="$1"
@@ -654,7 +650,7 @@ convert.to_ods () {
     _date=$(date +$GRBL_FORMAT_FILE_DATE-$GRBL_FORMAT_FILE_TIME)
 
     local odt_file="${input_file%%.*}_${_date}.odt"
-    local odt_template="$GRBL_MOUNT_TEMPLATES/$_template_name-template.odt"
+    local ott_template="$GRBL_MOUNT_TEMPLATES/writer-$_template_name.ott"
 
     # sub second filename ramdomizer
     if [ -f "$odt_file" ]; then
@@ -664,7 +660,7 @@ convert.to_ods () {
     # printout variables for debug purpoces
     gr.debug "date:'$_date', \
           input_file: '$input_file', \
-          odt_template: '$odt_template', \
+          ott_template: '$ott_template', \
           odt_file: '$odt_file'"
 
     if ! [ -f "$input_file" ]; then
@@ -673,7 +669,7 @@ convert.to_ods () {
     fi
 
     # compile markdown to open office file format
-    pandoc "$input_file" --reference-doc="$odt_template" \
+    pandoc "$input_file" --reference-doc="$ott_template" \
             -f markdown -o "$odt_file"
     local _error=$?
 
@@ -722,6 +718,8 @@ convert.md_to_pdf () {
 # create pdf from from markdown original
 # TODO make general function for many as possible formats
 
+    gr.ask "consider to use doc module, continue anyway?" || return 0
+
     if [[ "$1" ]] ; then
         input_file="$1"
     else
@@ -732,7 +730,6 @@ convert.md_to_pdf () {
     _date=$(date +$GRBL_FORMAT_FILE_DATE-$GRBL_FORMAT_FILE_TIME)
 
     local target_file="${input_file%%.*}_${_date}.pdf"
-
 
     # sub second filename random
     if [ -f "$target_file" ]; then
@@ -765,8 +762,8 @@ convert.md_to_pdf () {
     #printout output file location
     gr.msg -v1 "$target_file"
 
-    # open office program
-    $GRBL_PREFERRED_OFFICE_DOC "$target_file" 2>/dev/null &
+    firefox -n $target_file
+
 }
 
 # covert_bash_2_json () {
