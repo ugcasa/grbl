@@ -13,6 +13,7 @@ __note_color="light_blue"
 declare -g note_file
 declare -g note_date
 declare -g note_file_name
+declare -g note_folder
 declare -g note_rc=/tmp/$USER/grbl_note.rc
 
 note.help () {
@@ -79,6 +80,10 @@ note.main () {
          "")
                 note.open $(gr.datestamp)
                 return $?
+                ;;
+        cd)
+                note.config
+                gnome-terminal -- bash -c "cd $note_folder; exec bash"    
                 ;;
           *)
                 note.open "$command $@"
