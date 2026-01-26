@@ -343,8 +343,8 @@ mount.remote () {
     # set defaults
     local _target_folder=
     local _source_folder=
-    local _source_server=$GRBL_CLOUD_DOMAIN
-    local _source_port=$GRBL_CLOUD_PORT
+    local _source_server=
+    local _source_port=
     local _symlink=
 
     # temporary
@@ -356,8 +356,9 @@ mount.remote () {
     [[ "$1" ]] && _target_folder="$1" || read -r -p "local target mount point: " _target_folder
     [[ "$2" ]] && _source_folder="$2" || read -r -p "source folder at server: " _source_folder
     [[ "$3" ]] && _source_server="$3"
-    [[ "$4" ]] && _source_port="$4"
-    [[ "$5" ]] && _symlink="$5"
+    [[ "$4" ]] && _source_user="$4"
+    [[ "$5" ]] && _source_port="$5"
+    [[ "$6" ]] && _symlink="$6"
 
     local _mount_name=${_target_folder##*/}
     gr.msg -v1 -n "${_mount_name//./} "
@@ -412,13 +413,27 @@ mount.remote () {
         esac
     fi
 
+    if ! [[ $_source_user ]]; then
+
+            # if contains / it is symlink folder
+            if [[ _source_server =~ "/" ]]; then
+                _symlink=$_source_server
+            fi
+
+            _source_server=$GRBL_CLOUD_DOMAIN
+            _source_port=$GRBL_CLOUD_PORT
+            _source_user=$GRBL_CLOUD_USERNAME
+
+    fi
 
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
 
     # TODO make function out of this and variable _source_user might be nice.
+    gr.debug "-p $_source_port $_source_user@$_source_server:$_source_folder $_target_folder"
+
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks \
           -p "$_source_port" \
-          "$GRBL_CLOUD_USERNAME@$_source_server:$_source_folder" \
+          "$_source_user@$_source_server:$_source_folder" \
           "$_target_folder"
 
     error=$?
@@ -510,20 +525,22 @@ mount.listed () {
 
     # go trough of found variables
     for _item in ${_mount_list[@]} ; do
-            _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
-            _source=$(eval echo '${GRBL_MOUNT_'"${_item}[1]}")
-            _symlink=$(eval echo '${GRBL_MOUNT_'"${_item}[2]}")
-            IFS=':' read -r _server _port _source_folder <<<"$_source"
+        _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
+        _source=$(eval echo '${GRBL_MOUNT_'"${_item}[1]}")
+        _symlink=$(eval echo '${GRBL_MOUNT_'"${_item}[2]}")
+        # check if contains server separator, must then have 'user@server:port'
+        if [[ $_source =~ ":" ]]; then
+            _server=$(echo $_source |cut -d"@" -f2 | cut -d":" -f1)
+            _user=$(echo $_source |cut -d"@" -f1)
+            _port=$(echo $_source |cut -d"@" -f2 | cut -d":" -f2)
+            _source_folder=$(echo $_source |cut -d"@" -f2 | cut -d":" -f3)
+        else
+            # IFS=':' read -r _server _port _source_folder <<<"$_source"
+            _source_folder=$_source
+        fi
 
-            if ! [[ $_source_folder ]] ; then
-                    _source_folder=$_source
-                    _server=
-                    _port=
-                fi
-
-            gr.debug "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
-            mount.remote "$_target" "$_source_folder" "$_server" "$_port" "$_symlink"
-        done
+        mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_symlink"
+    done
 
     IFS="$_IFS"
     return $_error
@@ -546,22 +563,26 @@ mount.all () {
         fi
 
     for _item in "${_mount_list[@]}" ; do
-            # go trough of found variables
-            _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
-            _source=$(eval echo '${GRBL_MOUNT_'"${_item}[1]}")
-            _symlink=$(eval echo '${GRBL_MOUNT_'"${_item}[2]}")
-            IFS=':' read -r _server _port _source_folder <<<"$_source"
-            IFS="$_IFS"
+        # go trough of found variables
+        _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
+        _source=$(eval echo '${GRBL_MOUNT_'"${_item}[1]}")
+        _symlink=$(eval echo '${GRBL_MOUNT_'"${_item}[2]}")
 
-            if ! [[ $_source_folder ]] ; then
-                    _source_folder=$_source
-                    _server=
-                    _port=
-                fi
+        # check if contains server separator, must then have 'user@server:port'
+        if [[ $_source =~ ":" ]]; then
+            _server=$(echo $_source |cut -d"@" -f2 | cut -d":" -f1)
+            _user=$(echo $_source |cut -d"@" -f1)
+            _port=$(echo $_source |cut -d"@" -f2 | cut -d":" -f2)
+            _source_folder=$(echo $_source |cut -d"@" -f2 | cut -d":" -f3)
+        else
+            # IFS=':' read -r _server _port _source_folder <<<"$_source"
+            _source_folder=$_source
+        fi
 
-            gr.debug "$FUNCNAME: $_target < $_server:$_port:$_source ($_symlink)"
-            mount.remote "$_target" "$_source_folder" "$_server" "$_port" "$_symlink"
-        done
+        gr.debug "$_source | u:$_user s:$_server p:$_port f:$_source_folder"
+
+        mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_symlink"
+    done
 
     #mount.status >/dev/null
     return $_error
@@ -575,14 +596,23 @@ mount.known_remote () {
     local _source=$(eval echo '${GRBL_MOUNT_'"${1^^}[1]}")
     local _symlink=$(eval echo '${GRBL_MOUNT_'"${1^^}[2]}")
     local _IFS=$IFS
-    IFS=':' read -r _server _port _source_folder <<<"$_source"
 
-    if ! [[ $_source_folder ]] ; then
-            _source_folder=$_source
-            _server=
-            _port=
-        fi
-    mount.remote "$_target" "$_source_folder" "$_server" "$_port" "$_symlink"
+    # _source=$(eval echo '${GRBL_MOUNT_TILT[1]}')
+
+    # check if contains server separator, must then have 'user@server:port'
+    if [[ $_source =~ ":" ]]; then
+        _server=$(echo $_source |cut -d"@" -f2 | cut -d":" -f1)
+        _user=$(echo $_source |cut -d"@" -f1)
+        _port=$(echo $_source |cut -d"@" -f2 | cut -d":" -f2)
+        _source_folder=$(echo $_source |cut -d"@" -f2 | cut -d":" -f3)
+    else
+        # IFS=':' read -r _server _port _source_folder <<<"$_source"
+        _source_folder=$_source
+    fi
+
+    gr.debug "$_source | u:$_user s:$_server p:$_port f:$_source_folder"
+
+    mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_symlink"
     IFS=$_IFS
     return $?
 }
