@@ -49,6 +49,12 @@ declare -g youtube_data=$GRBL_DATA/youtube
 declare -g youtube_error=/tmp/$USER/youtube.error
 declare -g mpv_error=/tmp/$USER/mpv.error
 declare -g continue_to_play=
+declare -g youtube_java="--js-runtimes $(which deno)"
+declare -g youtube_remote_java="--remote-components ejs:github"
+
+# debug 
+__youtube=$(readlink --canonicalize --no-newline $BASH_SOURCE)
+__youtube_color="red"
 
 # more global variables downstairs (after sourcing rc file)
 
@@ -146,6 +152,8 @@ youtube.player_help () {
 youtube.main () {
 # module command parser
 
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
     youtube.venv
     youtube.options $@
 
@@ -181,6 +189,8 @@ youtube.main () {
 youtube.venv () {
 # activated venv
 
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
     gr.msg -n "checking venv.. "
 
     if [[ $VIRTUAL_ENV == $HOME/.venv ]] then 
@@ -198,6 +208,8 @@ youtube.venv () {
 youtube.status () {
 # printout status
 
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
     gr.msg -n -v1 -t "${FUNCNAME[0]}: "
     if [[ -f /usr/local/bin/yt-dlp ]] || [[ -f /usr/bin/yt-dlp ]] ; then
         gr.msg -c green "installed"
@@ -211,6 +223,8 @@ youtube.status () {
 
 youtube.options () {
 # module argument parser
+
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     local got_args=($@)
 
@@ -296,6 +310,8 @@ youtube.options () {
 youtube.rc () {
 # source configurations (to be faster)
 
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
     if [[ ! -f $youtube_rc ]] \
         || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/youtube.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]] \
         || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/audio.cfg) - $(stat -c %Y $youtube_rc) )) -gt 0 ]] \
@@ -310,6 +326,8 @@ youtube.rc () {
 
 youtube.make_rc () {
 # make rc out of config file and run it
+
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     source config.sh
 
@@ -326,6 +344,8 @@ youtube.make_rc () {
 
 youtube.search () {
 # search from youtube, print list of results and ask user to select one, then play it
+    
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     # initialize
     local items=
@@ -365,6 +385,8 @@ youtube.search () {
 
     search () {
     # search from by yt-dlp
+
+        gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
         # get search phrase
         search_phrase=$@
@@ -420,6 +442,9 @@ youtube.search () {
 
     print_list() {
     # format and printout list of composed search results
+        
+        gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
         cols=$(echo "cols" | tput -S)
 
         # print header
@@ -471,7 +496,9 @@ youtube.search () {
 
     print_prompt () {
     # print help and prompt
-
+        
+        gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+        
          # print menu help bar
         [[ $items -lt 1 ]] && gr.msg -N -p "search by typing search phrase and press enter"
 
@@ -535,7 +562,8 @@ youtube.search () {
 
     play_item () {
     # play item
-
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+    
         # limit thumbnail size
         local cols=$(echo "cols"|tput -S)
         local _error=0
@@ -580,15 +608,13 @@ youtube.search () {
         gr.ind playing -k play
 
         # this is shown only then debug mote '-d' is flagged (or verbose 4+)
-        gr.debug "yt-dlp $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -"
-
-        # at the moment, debug = dryrun in 25% modules, others just run shit, this good habit is
         if [[ $GRBL_DEBUG ]]; then
-            echo "yt-dlp $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -"
-            return 0
+            echo "yt-dlp --no-playlist $youtube_remote_java $youtube_java $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -"
+            yt-dlp --no-playlist $youtube_remote_java $youtube_java $youtube_options $sing_in_option $media_address -o - | mpv $mpv_options -
+            gr.ask "continue?" || return 192
         fi
 
-        yt-dlp $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -
+        yt-dlp --no-playlist $youtube_remote_java $youtube_java $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -
         # in every module, function error is returned to core in continued return chain, and can be processed by core to
         # exits from module function are logged specially old method gr.msg -x 128 exits can cause extra logging, more for lacy prototyping
         _error=$?
@@ -613,6 +639,7 @@ youtube.search () {
     set_sing_in () {
     # get cookies from firefox and set youtube sing in options for user set in configuration
     # NOTE: this might not work anymore: https://github.com/yt-dlp/yt-dlp/issues/8079
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
         if ! [[ -f $youtube_data/cookies.txt ]] ; then
             yt-dlp --cookies-from-browser $GRBL_PREFERRED_BROWSER --cookies $youtube_data/cookies.txt --skip-download 2>$youtube_error
@@ -807,6 +834,8 @@ youtube.search () {
 
 youtube.find () {
 # search from youtube and return json of $1 amount of results
+    
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     # deliver decimal value for inline python
     result_count=$1
@@ -841,7 +870,9 @@ EOF
 
 youtube.firefox_cookies () {
 # get youtube cookie from firefox 
-
+    
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+    
     local cookie_yt="$youtube_data/youtube_cookie.txt"
 
     if [[ -f $cookie_yt ]]; then 
@@ -881,7 +912,9 @@ youtube.firefox_cookies () {
 
 youtube.search_n_play () {
 # search input and play it from youtube. use long arguments --video or --audio to select optimization
-
+    
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+    
     local base_url="https://www.youtube.com"
     local _error=
 
@@ -906,7 +939,7 @@ youtube.search_n_play () {
         youtube_options="$youtube_options --continue --output $save_location/%(title)s.%(ext)s"
         gr.msg -v1 "downloading to $save_location.. "
         # save file
-        yt-dlp $youtube_options $media_address
+        yt-dlp --no-playlist $youtube_remove_java $youtube_options $media_address
         # a bit dangero if some of location variables are empty
         #new_name=$(detox -v *mp4 -n | grep ">" | cut -d '>' -f 2 |xargs)
         detox -v *mp3 *mp4 $save_location 2>/dev/null
@@ -919,8 +952,11 @@ youtube.search_n_play () {
     # make now playing info available for audio module
     echo "youtube $title" >$GRBL_AUDIO_NOW_PLAYING
 
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]]  # debug
+    
     # start stream and play
-    yt-dlp $youtube_options $media_address -o - 2>$youtube_error \
+    yt-dlp --no-playlist $youtube_remove_java $youtube_java \
+        $youtube_options $media_address -o - 2>$youtube_error \
         | mpv $mpv_options - >$mpv_error
 
     # in some cases there is word fuck or exposed tits in video, therefore:
@@ -936,7 +972,7 @@ youtube.search_n_play () {
             gr.msg -v2 "signing in as $GRBL_YOUTUBE_USER"
 
             # then perform re-try
-            yt-dlp -v $youtube_options $sing_in $media_address -o - 2>$youtube_error \
+            yt-dlp --no-playlist $youtube_remove_java -v $youtube_options $sing_in $media_address -o - 2>$youtube_error \
                 | mpv $mpv_options - >$mpv_error
     fi
 
@@ -961,6 +997,8 @@ youtube.search_n_play () {
 
 youtube.search_list () {
 # search input and play it from youtube, optimized for audio, no video at all
+
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     local base_url=https://www.youtube.com/watch?v=
 
@@ -1012,6 +1050,8 @@ youtube.get_media () {
 # print list of formats and let user select proper one
 # can be used to download audio only, select '0' or 'a' in video list
 
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
     local input=$1
     local url_base="https://www.youtube.com/watch?v"
     local url=
@@ -1032,8 +1072,8 @@ youtube.get_media () {
     deno=$(which deno)
 
     if [[ -z $deno ]]; then 
-        gr.msg -c yellow "unable to find java runtime, unabe to download"
-        return 101
+        gr.msg -e1 "unable to find java runtime, may be unabe to download"
+        gr.ask "install now?" && youtube.install
     fi
 
     # url or id selector
@@ -1049,15 +1089,16 @@ youtube.get_media () {
     ifs=$IFS
     IFS=$'\n'
     gr.debug "generating list"
-    #if [[ $GRBL_DEBUG ]]; then 
-    #    yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno -F $url 
-    #fi 
+    if [[ $GRBL_DEBUG ]]; then 
+        yt-dlp --no-playlist -F $url 
+        gr.ask "contunue?" || return 102
+    fi 
 
-    list=( $(yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno -F $url 2>/dev/null | grep "|" ) )
+    list=( $(yt-dlp --no-playlist -F $url 2>/dev/null | grep "|" ) )
     gr.debug "list ok"
     # make separated lists for video and audio
     for (( i = 0; i < ${#list[@]}; i++ )); do
-        if echo ${list[$i]} | grep -q -e "video only" -e "mp4"; then
+        if echo ${list[$i]} | grep -v "mp4a." | grep -q -e "video only" -e "mp4" ; then
             video_list+=( "${list[$i]}" )
         fi     
         if echo ${list[$i]} | grep -q -e "audio only" -e "m4a" -e "mp3" ; then
@@ -1108,7 +1149,7 @@ youtube.get_media () {
         esac
         gr.msg -c $color "${video_list[$i]}"
     done
-
+    gr.varlist "debug size video_list"
     # clear keyboard buffer
     # while read -e -t 0.1; do : ; done
     gr.debug "video list done"
@@ -1164,10 +1205,16 @@ youtube.get_media () {
     # get filename
     # --no-playlist --remote-components ejs:github --js-runtimes $deno
     if [[ $GRBL_DEBUG ]]; then 
-        yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno $quality --print filename $url 
+        yt-dlp --no-playlist $youtube_remote_java $youtube_java $quality --print filename $url 
+        gr.ask "contunue?" || return 103
     fi 
-    local raw_filename=$( yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno $quality --print filename $url 2>/dev/null)
+    local raw_filename=$(yt-dlp --no-playlist $youtube_remote_java $youtube_java $quality --print filename $url 2>/dev/null)
     gr.debug "raw file name: $raw_filename"
+    
+    if ! [[ $raw_filename ]]; then 
+        gr.msg -e1 "unable to get filename, pls try again"
+        return 192
+    fi
 
     # clean up filename
     base_name=${raw_filename%%.*}
@@ -1222,7 +1269,7 @@ youtube.get_media () {
                 [[ $list_all ]] || continue
             fi
 
-            gr.msg -n $number_color -w 4 "$i:"
+            gr.msg -n -h -w 4 "$i:"
             gr.msg -c $color "${audio_list[$i]}"
         done
 
@@ -1280,15 +1327,15 @@ youtube.get_media () {
         # --no-playlist --remote-components ejs:github --js-runtimes $deno
         # download audio and convert it to mp3
    
-        # if [[ $GRBL_DEBUG ]]; then 
-        #     yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno \
-        #        -q --progress -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
-        #        --output "${save_location}/$base_name.mp3" \
-        #        -f $audio "$url" 2>/tmp/$USER/youtube.error
-        #       return 102
-        # fi 
+        if [[ $GRBL_DEBUG ]]; then 
+            yt-dlp --no-playlist $youtube_remote_java $youtube_java \
+               -q --progress -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
+               --output "${save_location}/$base_name.mp3" \
+               -f $audio "$url" 2>/tmp/$USER/youtube.error
+              gr.ask "contunue?" || return 104
+        fi 
 
-        if yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno \
+        if yt-dlp --no-playlist $youtube_remote_java $youtube_java \
                 -q --progress -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
                 --output "${save_location}/$base_name.mp3" \
                 -f $audio "$url" 2>/tmp/$USER/youtube.error
@@ -1332,8 +1379,17 @@ youtube.get_media () {
     selected="$quality+$audio"
     gr.varlist "debug selected"
 
+    if [[ $GRBL_DEBUG ]]; then 
+        yt-dlp --no-playlist $youtube_remote_java $youtube_java \
+               -q --progress --ignore-errors --continue --write-auto-sub --sub-lang "en,fi" --no-overwrites \
+               --output "${save_location}/${filename}" \
+               $selected "$url" 2>/tmp/$USER/youtube.error
+
+          gr.ask "contunue?" || return 104
+    fi 
+
     # make download
-    if yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno \
+    if yt-dlp --no-playlist $youtube_remote_java $youtube_java \
             -q --progress --ignore-errors --continue --write-auto-sub --sub-lang "en,fi" --no-overwrites \
            --output "${save_location}/${filename}" \
             $selected "$url" 2>/tmp/$USER/youtube.error
@@ -1362,6 +1418,8 @@ youtube.get_media () {
 youtube.get_audio () {
 # download audio from tube by youtube id
 
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+
     local id=$1
     local url_base="https://www.youtube.com/watch?v"
 
@@ -1378,7 +1436,8 @@ youtube.get_audio () {
     gr.msg -c white "downloading $url_base=$id to $GRBL_MOUNT_AUDIO.. "
 
     # download and convert to mp3 format, then save to audio base location named by title
-    yt-dlp -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
+    yt-dlp --no-playlist $youtube_remote_java $youtube_java \
+           -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
            --output "$GRBL_MOUNT_AUDIO/%(title)s.%(ext)s" \
            "$url_base=$id"
     return $?
@@ -1387,6 +1446,8 @@ youtube.get_audio () {
 
 youtube.play () {
 # play input file
+
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     # check is user input url or id
     echo "$@" | grep -q "https://" && base_url="" || base_url="https://www.youtube.com/watch?v="
@@ -1407,7 +1468,7 @@ youtube.play () {
     # get steam and play
     gr.debug "$FUNCNAME yt-dlp $youtube_options $media_address -o - | mpv $mpv_options -"
 
-    yt-dlp $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -
+    yt-dlp --no-playlist $youtube_remote_java $youtube_java $youtube_options $sing_in_option $media_address -o - 2>$youtube_error | mpv $mpv_options -
     local _error=$?
     gr.debug "$FUNCNAME _error:$_error"
 
@@ -1427,6 +1488,8 @@ youtube.play () {
 
 youtube.upgrade() {
 # upgrade needed tools, youtube do changes often and shit causing weird errors
+    
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
     # get new version of
     sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
@@ -1441,7 +1504,9 @@ youtube.upgrade() {
 
 youtube.install() {
 # install requirements
-
+    
+    gr.msg -v4 -n -c $__youtube_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+    
     local command=$1
     shift 
 
