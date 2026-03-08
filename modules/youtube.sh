@@ -121,7 +121,6 @@ youtube.help () {
     gr.msg -v2
 }
 
-
 youtube.player_help () {
 # menu help
     gr.msg -v1 "Search menu: " -c white
@@ -1227,11 +1226,13 @@ youtube.get_media () {
     base_name=${base_name//']'/}
     base_name=${base_name//']'/}
     base_name=${base_name//'#'/}
+    base_name=${base_name//'*'/}
     base_name=${base_name//'('/}
     base_name=${base_name//')'/}
     base_name=${base_name//'?'/}
     base_name=${base_name//'？'/} # that was not normal mot*fucker
     base_name=${base_name//','/}
+    base_name="${base_name/'_-_'/'-'}" 
     filename="${base_name}-${resolution}.${file_ending}"
 
     # clear keyboard buffer
@@ -1381,7 +1382,7 @@ youtube.get_media () {
 
     if [[ $GRBL_DEBUG ]]; then 
         yt-dlp --no-playlist $youtube_remote_java $youtube_java \
-               -q --progress --ignore-errors --continue --write-auto-sub --sub-lang "en,fi" --no-overwrites \
+               -q --progress --ignore-errors --continue --write-auto-sub --sub-lang "$GRBL_YOUTUBE_SUB_LANG" --no-overwrites \
                --output "${save_location}/${filename}" \
                $selected "$url" 2>/tmp/$USER/youtube.error
 
@@ -1390,7 +1391,7 @@ youtube.get_media () {
 
     # make download
     if yt-dlp --no-playlist $youtube_remote_java $youtube_java \
-            -q --progress --ignore-errors --continue --write-auto-sub --sub-lang "en,fi" --no-overwrites \
+            -q --progress --ignore-errors --continue --write-auto-sub --sub-lang "$GRBL_YOUTUBE_SUB_LANG" --no-overwrites \
            --output "${save_location}/${filename}" \
             $selected "$url" 2>/tmp/$USER/youtube.error
     then
@@ -1603,15 +1604,18 @@ youtube.option () {
 youtube.rc
 
 # fix missing user configuration
+[[ $GRBL_YOUTUBE_SUB_LANG ]] || GRBL_YOUTUBE_SUB_LANG=en
 [[ $GRBL_YOUTUBE_RESULT_LIMIT ]] || GRBL_YOUTUBE_RESULT_LIMIT=20
 [[ $GRBL_YOUTUBE_THUMBNAIL_SIZE ]] || GRBL_YOUTUBE_THUMBNAIL_SIZE=60
+
+# import audio module functionalities and configs
+source $GRBL_BIN/audio.sh
+
+# fix missing user configuration
 [[ $GRBL_AUDIO_NOW_PLAYING ]] || GRBL_AUDIO_NOW_PLAYING=/tmp/$USER/now_playing
 [[ $GRBL_AUDIO_MPV_SOCKET ]] || GRBL_AUDIO_MPV_SOCKET=/tmp/$USER/youtube
-[[ $GRBL_AUDIO_INDICATOR_KEY ]] || GRBL_AUDIO_INDICATOR_KEY=f5
- # $GRBL_MOUNT_AUDIO
- # $GRBL_MOUNT_VIDEO
+[[ $GRBL_AUDIO_INDICATOR_KEY ]] || GRBL_AUDIO_INDICATOR_KEY=play
 
-source $GRBL_BIN/audio.sh
 declare -g module_command=()
 declare -g save_location=$GRBL_MOUNT_DOWNLOADS
 declare -g mpv_options="--input-ipc-server=$GRBL_AUDIO_MPV_SOCKET-youtube"
