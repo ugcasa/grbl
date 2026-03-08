@@ -412,7 +412,7 @@ yle.podcast () {
             read -p "Annan sarjan koontisivu tai sivun id: " got
         fi
 
-        if [[ $got =~ "${GRBL_YLE_PODCAST_URL%/}" ]] ; then
+        if [[ $got =~ "http" ]] ; then
             areena_url=$got
         else
             areena_url=${GRBL_YLE_PODCAST_URL%/}/$got
@@ -452,7 +452,7 @@ yle.podcast () {
             return 104
         fi
 
-        echo ${episode_list[@]} >/home/casa/grbl/.data/yle/playlists/playlist
+        echo ${episode_list[@]} >/home/$GRBL_USER/grbl/.data/yle/playlists/playlist
         return 0
     }
 
@@ -1009,10 +1009,10 @@ yle.get_metadata () {
     #local $GRBL_YLE_BASE_URL="https://areena.yle.fi/"
     # do not add base url if it already given
     if echo $1 | grep "http" ; then
-            media_url=$1
-        fi
-
-    media_url="${GRBL_YLE_BASE_URL%/}$1"
+        media_url=$1
+    else
+        media_url="${GRBL_YLE_BASE_URL%/}/$1"
+    fi
 
     gr.msg -v3 -c deep_pink "media_url: $media_url"
 
@@ -1126,7 +1126,8 @@ yle.place_media () {
     media_file_format="${yle_media_filename: -5}"
     media_file_format="${media_file_format#*.}"
     #media_file_format="${media_file_format^^}"
-    gr.msg -c deep_pink "media_file_format: $media_file_format, yle_media_filename $yle_media_filename"
+    local location='.'
+    gr.msg -c white "media_file_format: $media_file_format, yle_media_filename $yle_media_filename"
 
     if ! [[ -f $yle_media_filename ]] ; then
             gr.msg -c yellow "file $yle_media_filename not found"
@@ -1135,29 +1136,29 @@ yle.place_media () {
 
     #$GRBL_CALL tag "$yle_media_filename" "yle $(date +$GRBL_FILE_DATE_FORMAT) $yle_media_title $media_url"
 
-    source mount.sh
-    case "$media_file_format" in
+    #source mount.sh
+    #case "$media_file_format" in
 
-        mp3|wav)
-            mount.main audio
-            location="$GRBL_MOUNT_AUDIO" ;;
+    #    mp3|wav)
+    #        mount.main audio
+    #        location="$GRBL_MOUNT_AUDIO" ;;
+    #
 
+    #    mkv|mp4|src|sub|avi)
+    #        mount.main video
+    #        location="$GRBL_MOUNT_TV" ;;
+    #    *)
+    #        mount.main downloads
+    #        location="$GRBL_MOUNT_DOWNLOADS" ;;
+    #esac
 
-        mkv|mp4|src|sub|avi)
-            mount.main video
-            location="$GRBL_MOUNT_TV" ;;
-        *)
-            mount.main downloads
-            location="$GRBL_MOUNT_DOWNLOADS" ;;
-    esac
+    # # input overwrites basic shit
+    #if [[ "$1" ]] ; then
+    #        location="$1"
+    #        shift
+    #    fi
 
-    # input overwrites basic shit
-    if [[ "$1" ]] ; then
-            location="$1"
-            shift
-        fi
-
-    [[ -d $location ]] || mkdir -p $location
+    # [[ -d $location ]] || mkdir -p $location
 
     # moving to default location
     gr.msg -c white "saving to: $location/$yle_media_filename"
@@ -1196,7 +1197,6 @@ yle.install() {
     pipx install yle-dl --force
 
     # pip3 install --upgrade pip
-    # [[ -f /home/casa/.local/bin/yle-dl ]] || pip3 install --user --upgrade yle-dl
     ffmpeg -h >/dev/null 2>/dev/null || sudo apt install ffmpeg -y
     jq --version >/dev/null || sudo apt install jq -y
     sudo apt install detox mpv
@@ -1310,7 +1310,6 @@ fi
 
 # video.build () {
 
-#     data_location="/home/casa/karsulle"
 #     data_file="karsulle_katsottavaa.cfg"
 #     url_base="https://www.youtube.com/watch?v"
 
