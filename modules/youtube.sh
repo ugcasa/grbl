@@ -156,6 +156,7 @@ youtube.main () {
             ;;
 
         get|dl|download)
+            gr.msg "Download mode"
             for item in ${module_command[@]:1} ; do
                youtube.get_media $item
             done
@@ -322,6 +323,7 @@ youtube.search () {
     local todo="play"
     local mp4=
     # local youtube_data=$GRBL_DATA/youtube
+    [[ $save_to_file ]] && todo="download"
 
     # terminal type
     case $TERM in
@@ -477,7 +479,7 @@ youtube.search () {
         if [[ $cols -lt 60  ]] ; then
             _prompt=$'\r'"$last_item${optimization:0:1} search: "
         else
-            _prompt=$'\r'"[$last_item/${#title[@]}] search or select $todo $optimization: "
+            _prompt=$'\r'"[$last_item/${#title[@]}] search or select to $todo $optimization: "
         fi
 
         # if user hit caps-clock + esc, cancel continue playing
@@ -804,11 +806,11 @@ youtube.find () {
     search_string="$@"
 
     # with python, indentation is critical, therefore following lines needs to be like this
-    if [[ -f .venv/bin/activate ]]; then 
-        python3 -m venv .venv
+    if [[ -f $HOME/.venv/bin/activate ]]; then 
+        python3 -m venv $HOME/.venv
     fi
 
-    source .venv/bin/activate
+    source $HOME/.venv/bin/activate
     python3 - << EOF
 import os
 import json
