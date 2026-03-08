@@ -50,7 +50,6 @@ declare -g youtube_error=/tmp/$USER/youtube.error
 declare -g mpv_error=/tmp/$USER/mpv.error
 declare -g continue_to_play=
 
-
 # more global variables downstairs (after sourcing rc file)
 
 youtube.help () {
@@ -147,6 +146,7 @@ youtube.player_help () {
 youtube.main () {
 # module command parser
 
+    youtube.venv
     youtube.options $@
 
     case ${module_command[@]:0:1} in
@@ -178,6 +178,22 @@ youtube.main () {
     return 0
 }
 
+youtube.venv () {
+# activated venv
+
+    gr.msg -n "checking venv.. "
+
+    if [[ $VIRTUAL_ENV == $HOME/.venv ]] then 
+        gr.msg -c green "activated"
+    else 
+        if ! [[ -d $HOME/.venv ]]; then 
+            python3 -m venv $HOME/.venv
+            gr.msg -n -c white "set up "
+        fi
+        source $HOME/.venv/bin/activate
+        gr.msg -c aqua "actived"
+    fi      
+}
 
 youtube.status () {
 # printout status
@@ -551,6 +567,7 @@ youtube.search () {
         # if download selected
         if [[ $save_to_file ]] ; then
             # open repository to select quality separately for video and audio
+            gr.debug "download call $media_address"
             youtube.get_media $media_address
             # nothing more to do here?
             return $?
@@ -1010,6 +1027,14 @@ youtube.get_media () {
 
     # check is installed
     yt-dlp --version >/dev/null || youtube.install
+    gr.debug "soft check"
+
+    deno=$(which deno)
+
+    if [[ -z $deno ]]; then 
+        gr.msg -c yellow "unable to find java runtime, unabe to download"
+        return 101
+    fi
 
     # url or id selector
     if [[ $input == "https:"* ]]; then
@@ -1023,20 +1048,24 @@ youtube.get_media () {
     # get data from youtube
     ifs=$IFS
     IFS=$'\n'
-    list=( $(yt-dlp -F $url 2>/dev/null | grep "|" ) )
+    gr.debug "generating list"
+    #if [[ $GRBL_DEBUG ]]; then 
+    #    yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno -F $url 
+    #fi 
 
+    list=( $(yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno -F $url 2>/dev/null | grep "|" ) )
+    gr.debug "list ok"
     # make separated lists for video and audio
     for (( i = 0; i < ${#list[@]}; i++ )); do
-        if echo ${list[$i]} | grep -q "video only"; then
+        if echo ${list[$i]} | grep -q -e "video only" -e "mp4"; then
             video_list+=( "${list[$i]}" )
-
-        elif echo ${list[$i]} | grep -q "audio only" ; then
+        fi     
+        if echo ${list[$i]} | grep -q -e "audio only" -e "m4a" -e "mp3" ; then
             audio_list+=( "${list[$i]}" )
-
         fi
     done
     IFS=$ifs
-
+    gr.debug "video list"
     ## video select loop
     gr.msg -h "#   ${list[0]}"
     for (( i = 1; i < ${#video_list[@]}; i++ )); do
@@ -1082,10 +1111,10 @@ youtube.get_media () {
 
     # clear keyboard buffer
     # while read -e -t 0.1; do : ; done
-
+    gr.debug "video list done"
     # ask to select video (0 or a is audio only)
     while true; do
-        read -p "select video: " ans
+        read -p "select video (a audio only, w worst quality, b best, q exit): " ans
 
         if [[ $ans == "q" ]]; then
             echo
@@ -1130,8 +1159,15 @@ youtube.get_media () {
         fi
     done
 
+    gr.varlist "debug quality resolution v_size"
+    gr.debug "getting filename.."
     # get filename
-    local raw_filename=$(yt-dlp $quality --print filename $url 2>/dev/null)
+    # --no-playlist --remote-components ejs:github --js-runtimes $deno
+    if [[ $GRBL_DEBUG ]]; then 
+        yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno $quality --print filename $url 
+    fi 
+    local raw_filename=$( yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno $quality --print filename $url 2>/dev/null)
+    gr.debug "raw file name: $raw_filename"
 
     # clean up filename
     base_name=${raw_filename%%.*}
@@ -1153,7 +1189,7 @@ youtube.get_media () {
 
     # clear keyboard buffer
     # while read -e -t 0.1; do : ; done
-
+    gr.debug "fixed name: ${filename}"
     ## Audio select loop
     while true; do
 
@@ -1222,24 +1258,40 @@ youtube.get_media () {
             break
         fi
     done
-
-
+    gr.varlist "debug audio a_size"
+    
+    gr.debug "starting audio download"
+    gr.varlist "debug save_location base_name"
     ### audio download
-    if [[ $audio_only ]];then
 
+    if [[ $audio_only ]];then
+        gr.debug "output file: ${save_location}/$base_name.mp3"
         # check existence
         if [[ -f "${save_location}/$base_name.mp3" ]]; then
-            if gr.ask "file already downloaded, overwrite?"; then
+            if gr.ask "${save_location}/$base_name.mp3 exist, overwrite?"; then
                 rm "${save_location}/$base_name.mp3"
             else
                 return 0
             fi
         fi
 
+
+        # yt-dlp -q --progress -x --audio-format mp3 --ignore-errors --continue --no-overwrites  --output "${save_location}/$base_name.mp3" -f $audio "$url" 2>/tmp/$USER/youtube.error
+        # --no-playlist --remote-components ejs:github --js-runtimes $deno
         # download audio and convert it to mp3
-        if yt-dlp -q --progress -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
-               --output "${save_location}/$base_name.mp3" \
-               -f $audio "$url" 2>/tmp/$USER/youtube.error
+   
+        # if [[ $GRBL_DEBUG ]]; then 
+        #     yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno \
+        #        -q --progress -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
+        #        --output "${save_location}/$base_name.mp3" \
+        #        -f $audio "$url" 2>/tmp/$USER/youtube.error
+        #       return 102
+        # fi 
+
+        if yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno \
+                -q --progress -x --audio-format mp3 --ignore-errors --continue --no-overwrites \
+                --output "${save_location}/$base_name.mp3" \
+                -f $audio "$url" 2>/tmp/$USER/youtube.error
         then
             # check file is created
             if [[ -f ${save_location}/${base_name}.mp3 ]]; then
@@ -1260,10 +1312,11 @@ youtube.get_media () {
         fi
     fi
 
+    gr.debug "output file: ${save_location}/$filename"
 
     ### video download
     if [[ -f "${save_location}/$filename" ]]; then
-        if gr.ask "file already downloaded, overwrite?"; then
+        if gr.ask "${save_location}/$filename exist, overwrite?"; then
             rm "${save_location}/$filename"
         else
             return 0
@@ -1277,9 +1330,11 @@ youtube.get_media () {
 
     # combine video and audio selections
     selected="$quality+$audio"
+    gr.varlist "debug selected"
 
     # make download
-    if yt-dlp -q --progress --ignore-errors --continue --write-auto-sub --sub-lang "en,fi" --no-overwrites \
+    if yt-dlp --no-playlist --remote-components ejs:github --js-runtimes $deno \
+            -q --progress --ignore-errors --continue --write-auto-sub --sub-lang "en,fi" --no-overwrites \
            --output "${save_location}/${filename}" \
             $selected "$url" 2>/tmp/$USER/youtube.error
     then
@@ -1377,8 +1432,9 @@ youtube.upgrade() {
     sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
     sudo chmod a+rx /usr/local/bin/yt-dlp
 
+
     pip3 install --upgrade pip || rm -r ~/.cache/pip/selfcheck/ && pip3 install --upgrade pip
-    pip3 install --user --upgrade yt-dlp
+    pip3 install --upgrade yt-dlp
     return 0
 }
 
@@ -1389,7 +1445,7 @@ youtube.install() {
     local command=$1
     shift 
 
-    local apt_require=(mpv ffmpeg detox python3-pip jq pipx tiv)
+    local apt_require=(mpv ffmpeg detox python3-pip jq pipx tiv python3-full)
     local pip_require=(yotube_search)
 
     case $command in 
@@ -1430,12 +1486,22 @@ youtube.install() {
     done
 
 
-    if [[ -f .venv/bin/activate ]]; then 
-        python3 -m venv .venv
+    curl -Lo "/tmp/deno.zip" "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip"
+    # alternative
+    # if [ -z "$deno_version" ]; then
+    # deno_version="$(curl -s https://dl.deno.land/release-latest.txt)"
+    # fi
+    # deno_uri="https://dl.deno.land/release/${deno_version}/deno-${target}.zip"
+    # deno_install="${DENO_INSTALL:-$HOME/.deno}"
+
+    if ! [[ -f /tmp/deno.zip ]]; then 
+        gr.msg -c yellow "Unable to install java runtime, downloading videos will not work"
     fi
 
-    source .venv/bin/activate
-    
+    sudo unzip -d /usr/local/bin /tmp/deno.zip
+
+    youtube.venv 
+
     ## TODO tähän testeri
     pip3 install --upgrade pip
     pip3 install youtube-search
@@ -1458,6 +1524,7 @@ youtube.uninstall(){
 
     [[ -f /usr/local/bin/yt-dlp ]] && rm -y /usr/local/bin/yt-dlp
     pip3 uninstall youtube-search
+    sudo rm /usr/local/bin/deno
     gr.msg -c green "uninstalled"
     return 0
 }
@@ -1489,5 +1556,7 @@ declare -g save_to_file=
 
 # run main only if run, not sourced
 if [[ ${BASH_SOURCE[0]} == ${0} ]]; then
+    
+    youtube.venv && \
     youtube.main $@
 fi
