@@ -250,7 +250,7 @@ yle.listen_news () {
     done
 
     gr.msg -r -c white "found ${#link_list[@]} itmes "
-
+    flag.rm cancel
     # parse media file from page and play news
     for (( i = 0; i < ${#link_list[@]}; i++ )); do
         item=$(($i+1))
@@ -303,7 +303,17 @@ yle.listen_news () {
                     flag.rm next
                     continue
                 fi
-                break
+
+                if flag.get prev 2&>/dev/null; then
+                    flag.rm prev
+                    i=$(($i-1))
+                    continue
+                fi
+
+                if flag.get stop 2&>/dev/null; then
+                    flag.rm stop
+                    return 0
+                fi
             fi
 
             # if user cancels, read current iten and exit
