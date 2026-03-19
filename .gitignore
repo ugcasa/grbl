@@ -1,6 +1,6 @@
 *~
 __*__
 test/test-*
-*.sublime.project
-*.sublime.workspace
+*.sublime-project
+*.sublime-workspace
 
