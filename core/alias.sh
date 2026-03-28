@@ -25,6 +25,10 @@ alias tubes="$GRBL_CALL youtube search"
 alias tunel="$GRBL_CALL tunnel"
 alias status="$GRBL_CALL status"
 alias spy="$GRBL_CALL spy monitor firefox"
+alias caps_off="$GRBL_CALL os capslock off"
+alias CAPS_OFF="$GRBL_CALL os capslock off"
+alias caps_on="$GRBL_CALL os capslock on"
+
 
 # variables
 alias $GRBL_SYSTEM_ALIAS="$GRBL_CALL"

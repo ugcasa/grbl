@@ -488,6 +488,8 @@ os.capslock() {
 # toggle capslock status
     gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
+    xdotool --ver >/dev/null || sudo apt install xdotool sed
+
     capslock_state() {
     # return true is capslock is set
         gr.msg -n -v4 -c $__os_color "$__os [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
@@ -498,7 +500,6 @@ os.capslock() {
                return 1
            esac
     }
-
 
     case $1 in
             check|state|status)
