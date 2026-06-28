@@ -34,7 +34,6 @@ corsair_last_mode="/tmp/$USER/corsair.mode"
 corsair_mode=
 
 # ckb-next last mode data: if daemon is unconnected, mode needs to be kept somewhere 
-# TODO: do something for this, ugly
 if [[ -f $corsair_last_mode ]] ; then
     corsair_mode="$(head -1 $corsair_last_mode)"
 else
@@ -59,6 +58,26 @@ declare -ga corsair_keytable=(\
     )
     #thumb wheel logo mouse
 
+declare -ga corsair_mode_list=(fullpipe halfpipe shortpipe tinypipe nopipe)
+
+declare -ga corsair_fullpipe_keylist=${corsair_keytable[@]}
+
+declare -ga corsair_halfpipe_keylist=(
+    esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 print scroll pause stop prev play next\
+    half 1 2 3 4 5 6 7 8 9 0 plus query backscape \
+    tab q w e r t y u i o p å tilde enter \
+    caps a s d f g h j k l ö ä asterix \
+    shiftl less z x c v b n m comma perioid minus shiftr up \
+    lctrl func alt space altgr fn set rctrl left down right)
+
+declare -ga corsair_shortpipe_keylist=(
+    esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 stop prev play next\
+)
+
+declare -ga corsair_tinypipe_keylist=(
+    esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12\
+)
+
 
 corsair.main () {
 # command parser
@@ -70,7 +89,6 @@ corsair.main () {
     case "$cmd" in
         # indicator functions
         status|init|set|reset|clear|end|indicate|keytable|key-id|type)
-            # corsair efect library
             source $corsair_submodule/effects.sh
             corsair.$cmd $@
             return $?
@@ -79,7 +97,6 @@ corsair.main () {
         # blink functions
         blink|b)
             [[ $GRBL_CORSAIR_ENABLED ]] || return 2
-            # corsair effect library
             source $corsair_submodule/effects.sh
             local tool=$1
             shift
@@ -374,6 +391,8 @@ corsair.set () {
 
     # get user input
     local _key=$1
+    corsair.check_pipe $_key || return $?
+
     local _color='rgb_'"$2"
     local _bright="FF"
     [[ $3 ]] && _bright="$3"
@@ -436,7 +455,7 @@ corsair.set2() {
     local pipefile
     pipefile="$(corsair.get_pipefile "$key")" || return 100
 
-    if file "$pipefile" | grep -q fifo; then
+    if corsair.check_pipe $key ; then
         echo "rgb $full_color" > "$pipefile"
         gr.msg -v4 -n -t -c "$2" "$key ← $2 ($full_color)"
     else
@@ -455,8 +474,8 @@ corsair.reset () {
 
     if [[ ${keylist[0]} ]] ; then
         for key in $@; do
-            corsair.set $key $corsair_mode 10
-        done
+            corsair.set $key $GRBL_CORSAIR_PROFILE_COLOR 10 # TDB
+         done
     else
         for _key_pipe in $key_pipe_list ; do
             corsair.pipe $_key_pipe $(eval echo '$'rgb_$corsair_mode)
@@ -518,6 +537,18 @@ corsair.get_pipefile () {
         corsair.blink_stop $1
         return 2
     fi
+}
+
+corsair.check_pipe() {
+
+    # check is pipefile present
+    local key=$1
+    local pipe=/tmp/ckbpipe$(corsair.get_key_id $key)
+    if ! fuser -v $pipe >/dev/null 2>/dev/null ; then 
+        gr.msg -e1 "no binding for $key"
+        return 14
+    fi
+    return 0
 }
 
 corsair.key-id () {

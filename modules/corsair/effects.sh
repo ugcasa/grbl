@@ -1,5 +1,6 @@
 ############################ corsair indication efects ###############################
 # relies on corsair variables, source only from corsair module
+source common.sh
 
 corsair.blink_all () {
 # set blink animation to whole key map
@@ -25,8 +26,11 @@ corsair.blink_all () {
 corsair.end () {
 # reserve some keys for future purposes by coloring them now
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+    local key=$1
 
-    corsair.blink_kill $@
+    # check is pipefile present
+    corsair.check_pipe $key || return $?
+    corsair.blink_kill $key
     return $?
 }
 
@@ -38,19 +42,38 @@ corsair.indicate () {
     # corsair.check is too slow to go trough here
     if ! [[ $GRBL_CORSAIR_ENABLED ]] ; then
         gr.msg -v2 -c dark_grey "corsair disabled"
-        return 1
+        return 11
+    fi
+    
+    # check mode is known one
+    if ! [[ $corsair_mode ]] ; then 
+        gr..msg -e1 "no mode '$corsair_mode', canceling"
+        return 12
     fi
 
+    # if ! [[ ${corsair_mode_list[*]} =~ $corsair_mode ]]; then 
+    #     gr..msg -e1 "not known mode '$corsair_mode', canceling"
+    #     return 13
+    # fi
+        
     # default values
     local concern="warning"
     local key="esc"
     local color="aqua_marine"
     local blink="white black 0.2 1"
-
+    declare -a corsair_keylist
+    
     # user input
     [[ $1 ]] && concern=$1 ; shift
     [[ $1 ]] && key=$1 ; shift
     [[ $GRBL_PROJECT_COLOR ]] && color=$GRBL_PROJECT_COLOR
+
+    # corsair_keylist=($(eval echo '${corsair_'${corsair_mode}'_keylist[@]}'))    
+    
+    # check is pipefile present
+    corsair.check_pipe $key || return $?
+
+    gr.debug "'$pipe'"
 
     case $concern in
         # positions: fg color bg_color blink_interval timeout leave_color
@@ -112,6 +135,9 @@ corsair.blink_set () {
     [[ $1 ]] && delay=$1 ; shift
     [[ $1 ]] && timeout=$1 ; shift
     [[ $1 ]] && leave_color=$1 ; shift
+
+    # check is pipefile present
+    corsair.check_pipe $key || return $?
 
     # TBD slow method, do better
     if [[ -f /tmp/$USER/blink_pid ]] && cat /tmp/$USER/blink_pid | grep "\b$key\b" 2>/dev/null ; then
@@ -179,6 +205,9 @@ corsair.blink_kill () {
         fi
 
         [[ $pid ]] || return 0
+
+        # check is pipefile present
+        corsair.check_pipe $key || return $?
 
         [[ -f "/tmp/$USER/blink_$key" ]] && rm "/tmp/$USER/blink_$key"
 

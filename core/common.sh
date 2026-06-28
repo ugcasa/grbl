@@ -254,7 +254,7 @@ gr.msg () {
     if [[ $_error ]] ; then
         # get caller function name
         _function=$(caller 0 | awk '{print $2}')
-        [[ ${_function} ]] && printf "%s:" "${_function} "
+        [[ ${_function} ]] && printf "%s: " "${_function}"
 
         if [[ $GRBL_COLOR ]] && [[ $GRBL_VERBOSE -gt 0 ]]; then
             case $_error in
@@ -378,7 +378,8 @@ gr.blink () {
     local mood="panic"
     [[ $1 ]] && key=$1; shift
     [[ $1 ]] && mood=$1; shift
-    $GRBL_CALL corsair indicate $mood $key
+    source corsair.sh
+    corsair.indicate $mood $key    
 }
 
 gr.ind () {
@@ -484,7 +485,6 @@ gr.ind () {
     fi
 }
 
-
 gr.ask () {
 # yes or no with y and n bling on keyboard
 
@@ -498,9 +498,11 @@ gr.ask () {
     local _box=
     local _comment=
     local _comment_box=
+    local _highlight=
+    local _highlight_word=
 
     # parse arguments
-    TEMP=`getopt --long -o "csht:d:" "$@"`
+    TEMP=`getopt --long -o "chst:d:H:" "$@"`
     eval set -- "$TEMP"
 
     while true ; do
@@ -510,9 +512,14 @@ gr.ask () {
                 _read_it=true
                 shift
                 ;;
-            -h) # highlight last word
+            -h) # highlight all
                 _highlight=true
                 shift
+                ;;
+
+            -H) # highlight word
+                _highlight_word=$2
+                shift 2
                 ;;
             -t)
                 _timeout=$2
@@ -570,13 +577,26 @@ gr.ask () {
 
     # colorize message
     if [[ $GRBL_COLOR ]]; then
-        # highlight last word
+        # highlight word
         if [[ $_highlight ]]; then
-            _highlight="${_message##* }"
-            _message="$(sed '1{s/[^ ]\+\s*$//}' <<<$_message)"
-            _message="$(gr.msg -n -c dark_cyan $_message) $(gr.msg -n -c cyan $_highlight)"
+            _message="$(gr.msg -n -c cyan $_message)"
+        
+        # user specified hihglighted word 
+        elif [[ $_highlight_word ]]; then
+
+            read -ra _words <<< "$_message"
+            _message=""
+            for (( i = 0; i < ${#_words[@]}; i++ )); do
+                # allows word to contain ONE special character after it
+                if [[ ${_words[$i]} =~ ^${_highlight_word}[[:punct:]]?$ ]]; then
+                    _message+="$(gr.msg -n -c cyan ${_words[$i]}) "  
+                else
+                    _message+="$(gr.msg -n -c dark_cyan ${_words[$i]}) "
+                fi
+            done
+
         else
-        _message="$(gr.msg -n -c dark_cyan $_message)"
+            _message="$(gr.msg -n -c dark_cyan $_message)"
         fi
     fi
 
@@ -587,10 +607,11 @@ gr.ask () {
     if [[ $GRBL_FORCE ]] ; then
         _answer=y
     else
-        read $_options -n 1 -p "${_message} $_box" _answer
+        read $_options -n 1 -p "${_message% } $_box" _answer
         echo
     fi
 
+    ## commenting feature used used by testing module
     if [[ $_answer == c ]]; then
         read -p "comment: " _comment_ans
         gr.msg -v3 -c white "$_comment_ans"
@@ -614,6 +635,7 @@ gr.ask () {
     [[ $_read_it ]] && espeak "no" #& >/dev/null
     return 1
 }
+
 
 # TBD rename following three functions
 

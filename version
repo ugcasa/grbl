@@ -1,4 +1,4 @@
-0.7.9
+0.7.10
 'bullshit'
 1 'configs' merged to 'master'
 2 Target is to get installable version. Last sub version removed, jump form 0.7.0.1 to 0.7.2
@@ -9,3 +9,4 @@
 7 corsair fix, tester and template re-write, cloud tools returned, auto complete added, new modules lab, onedrive
 8 corsair fix ended
 9 note template name change (and a lot of more)
+10 bugfixes (mount, corsair)

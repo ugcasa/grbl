@@ -1037,20 +1037,20 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
     fi
 
     # corsair indication
-    if [[ $GRBL_CORSAIR_ENABLED ]]; then
-        GRBL_VERBOSE=0
-        source corsair.sh 
-        corsair.check || exit $_error_code
+    # if [[ $GRBL_CORSAIR_ENABLED ]]; then
+    #     GRBL_VERBOSE=0
+    #     source corsair.sh 
+    #     corsair.check || exit $_error_code
 
-        # TODO remove need of following
-        # automated link file $GURU_BIN/corsair.sh need to be formatted that
-        # it just sources $GURU_BIN/corsair/corsair.sh when sourced
-        source $GRBL_BIN/corsair/corsair.sh
+    #     # TODO remove need of following
+    #     # automated link file $GURU_BIN/corsair.sh need to be formatted that
+    #     # it just sources $GURU_BIN/corsair/corsair.sh when sourced
+    #     source $GRBL_BIN/corsair/corsair.sh
 
-        corsair.check || exit $_error_code
-        corsair.indicate error
-        corsair.main type "er$_error_code" >/dev/null
-    fi
+    #     corsair.check || exit $_error_code
+    #     corsair.indicate error
+    #     corsair.main type "er$_error_code" >/dev/null
+    # fi
 
     # return error code
     exit $_error_code
