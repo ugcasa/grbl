@@ -126,7 +126,7 @@ corsair.install () {
     # Add suspend script to auto restart daemon afer suspend
 
     if ! [[ $suspend_script ]]; then 
-        fi gr.ask "set auto restart daemon afer suspend (sudo needed to se it)"; then 
+        if gr.ask "set auto restart daemon afer suspend (sudo needed to se it)"; then 
         # FIX later: not sure does tabs(spaces) fuckup EOT, keep safe by doing this stupid looking thing: 
         # https://launchpad.net/~tatokis/+archive/ubuntu/ckb-next
         sudo tee -a $suspend_script > /dev/null <<EOT 
