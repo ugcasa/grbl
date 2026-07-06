@@ -73,8 +73,6 @@ corsair.indicate () {
     # check is pipefile present
     corsair.check_pipe $key || return $?
 
-    gr.debug "'$pipe'"
-
     case $concern in
         # positions: fg color bg_color blink_interval timeout leave_color
         ok)             blink="green slime 0.5 3 green" ;;
@@ -111,7 +109,7 @@ corsair.indicate () {
         important)      blink="red yellow 0.75 3600" ;;
     esac
 
-    (corsair.blink_set $key $blink) #>/dev/null 2>/dev/null
+    (corsair.blink_set $key $blink) 
     return 0
 }
 
@@ -125,10 +123,10 @@ corsair.blink_set () {
     local key="esc"
     local base_c="red"
     local high_c="orange"
-    local delay=0
-    local timeout=0
+    local delay=
+    local timeout=5
     local leave_color=$GRBL_CORSAIR_MODE
-
+    
     [[ $1 ]] && key=$1 ; shift
     [[ $1 ]] && base_c=$1 ; shift
     [[ $1 ]] && high_c=$1 ; shift
@@ -137,39 +135,37 @@ corsair.blink_set () {
     [[ $1 ]] && leave_color=$1 ; shift
 
     # check is pipefile present
-    corsair.check_pipe $key || return $?
+    # corsair.check_pipe $key || return $?
 
-    # TBD slow method, do better
-    if [[ -f /tmp/$USER/blink_pid ]] && cat /tmp/$USER/blink_pid | grep "\b$key\b" 2>/dev/null ; then
-        corsair.blink_kill $key 2>/dev/null
+    local blink_file="/tmp/$USER/blink_$key"
+    if [[ -f $blink_file ]]; then 
+        return 0 
     fi
 
-    touch /tmp/$USER/blink_$key
-    time_out=$(date +%s)
-    time_out=$(( time_out + timeout ))
-
+    touch $blink_file
+    local time_out=$(( $(date +%s) + timeout ))
+    gr.varlist "debug time_out timeout" 
+    
     # https://stackoverflow.com/questions/11097761/is-there-a-way-to-make-bash-job-control-quiet
     ## note: () encapsulation will brake pid save - removed
     while true ; do
-
         time_now=$(date +%s)
-
-        if ! [[ -f /tmp/$USER/blink_$key ]] || (( time_now > time_out )) ; then
-            corsair.set $key $leave_color
-            grep -v "\b$key\b" /tmp/$USER/blink_pid >/tmp/$USER/tmp_blink_pid
-            mv -f /tmp/$USER/tmp_blink_pid /tmp/$USER/blink_pid
-            break
-        else
+        if [[ -f /tmp/$USER/blink_$key ]] && (( time_now < time_out )) ; then
             corsair.set $key $base_c
             [[ $delay ]] && (sleep $delay)
             corsair.set $key $high_c
             [[ $delay ]] && (sleep $delay)
+        else
+            corsair.set $key $leave_color
+            [[ -f $blink_file ]] && rm $blink_file
+            return 0 
         fi
     done &
+    
+    # get pid of process
     pid=$!
-
     gr.debug "$pid;$key"
-    echo "$pid;$key" >>/tmp/$USER/blink_pid
+    echo $pid >$blink_file
 }
 
 corsair.blink_stop () {
@@ -186,47 +182,50 @@ corsair.blink_kill () {
 # stop blinking process now, input keyname
     gr.msg -v4 -n -c $__corsair_color "$__corsair [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
 
-    [[ -f /tmp/$USER/blink_pid ]] && pids_to_kill=($(cat /tmp/$USER/blink_pid))
-
-    local pid=""
-    local key=""
-    local _pid=""
+    # [[ -f /tmp/$USER/blink_pid ]] && pids_to_kill=($(cat /tmp/$USER/blink_pid))
+    local key=$1
     local leave_color="$GRBL_CORSAIR_MODE"
-
-    for _to_kill in ${pids_to_kill[@]} ; do
-
-        if [[ $1 ]] ; then
-            key=$1
-            _pid=$(cat /tmp/$USER/blink_pid | grep "\b$key\b")
-            pid=$(echo ${_pid} | cut -d ';' -f1)
-        else
-            key=$(echo ${_to_kill[@]} | cut -d ';' -f2)
-            pid=$(echo ${_to_kill[@]} | cut -d ';' -f1)
-        fi
-
-        [[ $pid ]] || return 0
-
-        # check is pipefile present
-        corsair.check_pipe $key || return $?
-
-        [[ -f "/tmp/$USER/blink_$key" ]] && rm "/tmp/$USER/blink_$key"
-
-        gr.varlist "debug key pid _pid"
-
-        if kill -15 $pid 2>/dev/null ; then
-            # gr.msg -n -c reset -k $key
+    
+    if [[ $key ]]; then 
+        local key_file=/tmp/$USER/blink_$key
+        if [[ -f $key_file ]]; then 
+            pid=$(head -n1 $key_file)
+            kill -15 $pid 2>/dev/null || \
+                kill -9 $pid 2>/dev/null
+            rm $key_file 2>/dev/null
             corsair.set $key $leave_color
-            #echo "$pid;$key" >>/tmp/$USER/blink_pid
-            grep -v "\b$key\b" /tmp/$USER/blink_pid >/tmp/$USER/tmp_blink_pid
-            mv -f /tmp/$USER/tmp_blink_pid /tmp/$USER/blink_pid
-            [[ $1 ]] && return 0
-
-        else
-            kill -9 $pid 2>/dev/null || \
-                gr.msg -v1 -c yellow "failed to kill $pid" -k $key
-                return 100
+            return 0
+        else 
+            gr.debug "no file '$key_file' for '$key'"
+            return 12
         fi
-    done
+        corsair.set $key $leave_color
+    fi
+
+    # else get alla ctive blinks
+    # active_blinks=$(ls /tmp/$USER/blink_*)
+    # if [[ ${#active_blinks[@]} -gt 0 ]]; then 
+    #     gr.debug "no active blinks"
+    #     return 0
+    # fi
+    # for blink in ${active_blinks[@]}; do 
+    #     pid_list+=$(head -n1 /tmp/$USER/blink_$blink)
+    # done
+
+    #     if kill -15 $pid 2>/dev/null ; then
+    #         # gr.msg -n -c reset -k $key
+    #         corsair.set $key $leave_color
+    #         #echo "$pid;$key" >>/tmp/$USER/blink_pid
+    #         grep -v "\b$key\b" /tmp/$USER/blink_pid >/tmp/$USER/tmp_blink_pid
+    #         mv -f /tmp/$USER/tmp_blink_pid /tmp/$USER/blink_pid
+    #         [[ $1 ]] && return 0
+
+    #     else
+    #         kill -9 $pid 2>/dev/null 
+    #             gr.msg -v1 -c yellow "failed to kill $pid" -k $key
+    #             return 100
+    #     fi
+    # done
     return 0
 }
 

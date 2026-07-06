@@ -2,10 +2,11 @@
 # grbl mount core module 2019 - 2022 casa@ujo.guru
 
 declare -g mount_rc="/tmp/$USER/grbl_mount.rc"
-__mount_color="navy"
+__mount_color="gray"
 __mount=$(readlink --canonicalize --no-newline $BASH_SOURCE)
-
 quiet=
+
+[[ $GRBL_DEBUG ]] && source common.sh
 
 mount.help () {
 # mount help
@@ -40,30 +41,35 @@ mount.main () {
 
     case "$command" in
 
-            help|ls|info|check|mounted|poll|status|start|stop|install|uninstall|mounted|online|config)
+            # direct function calls
+            help|ls|info|check|poll|status|start|stop|install|uninstall|mounted|online|config)
                 mount.$command $@
                 _error=$?
                 ;;
 
+            # alises for long name
             list|avail*)
                 mount.available $@
                 _error=$?
                 ;;
 
+            # function calls with status check
             defaults|all|toggle)
                 mount.$command $@
                 _error=$?
                 mount.status quiet
                 ;;
 
+            # alias for deep level check
             check-system)
                 mount.check "$GRBL_SYSTEM_MOUNT"
                 _error=$?
                 ;;
 
             mount)
+                gr.debug "mount: $@"
                 gr.end $GRBL_MOUNT_INDICATOR_KEY
-                mount.remote $command $@
+                mount.mount $@
                 mount.status quiet
                 _error=$?
                 ;;
@@ -85,23 +91,7 @@ mount.main () {
 
             *)
                 gr.end $GRBL_MOUNT_INDICATOR_KEY
-                if echo ${GRBL_MOUNT_DEFAULT_LIST[@]} | grep -q -w "$command" ; then
-                    gr.debug "found in defauls list"
-                    mount.known_remote $command $@
-
-                elif echo ${all_list[@]} | grep -q -w "$command" ; then
-                    gr.debug "found in all list"
-                    mount.known_remote $command $@
-                # check is list named as user input
-                elif [[ $(eval echo '${GRBL_MOUNT_'${command^^}'_LIST[@]^^}') ]]; then
-                    mount.listed $command
-                else
-                    gr.debug "trying to mount location defined in other module configuration"
-                    mount.known_remote $command $@
-                fi
-
-                mount.status quiet
-                error=$?
+                mount.mount $command $@
                 ;;
         esac
 
@@ -119,23 +109,19 @@ mount.rc () {
             gr.msg -v1 -c dark_gray "$mount_rc updated"
     fi
 
-    gr.debug "mount_rc:'$mount_rc'"
+    gr.varlist "debug mount_rc" #debug 
+    
     source $mount_rc
+    
     declare -g all_list=($(\
             grep "export GRBL_MOUNT_" $mount_rc | \
             grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
             all_list=(${all_list[@],,})
-    gr.debug "all_list:(${all_list[@]})"
+    
+    # gr.debug "debug all_list[@]" #debug 
 
-    # declare -g list_list=($(\
-    #     grep "export GRBL_MOUNT_" $mount_rc | \
-    #     grep -e '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
-    #     sed 's/^.*MOUNT_//' | \
-    #     cut -d '=' -f1))
-    #     list_list=(${list_list[@],,})
-    # gr.debug "list_list:(${list_list[@]})"
 }
 
 mount.make_rc () {
@@ -360,6 +346,8 @@ mount.remote () {
     [[ "$5" ]] && _source_port="$5"
     [[ "$6" ]] && _symlink="$6"
 
+    gr.varlist "debug _target_folder _source_folder _source_server _source_user _symlink"
+
     local _mount_name=${_target_folder##*/}
     gr.msg -v1 -n "${_mount_name//./} "
 
@@ -413,18 +401,12 @@ mount.remote () {
         esac
     fi
 
-    if ! [[ $_source_user ]]; then
+    # fulfill needed variables
+    [[ $_source_server ]] || _source_server=$GRBL_CLOUD_DOMAIN
+    [[ $_source_port ]] || _source_port=$GRBL_CLOUD_PORT
+    [[ $_source_user ]] || _source_user=$GRBL_CLOUD_USERNAME
 
-            # if contains / it is symlink folder
-            if [[ _source_server =~ "/" ]]; then
-                _symlink=$_source_server
-            fi
-
-            _source_server=$GRBL_CLOUD_DOMAIN
-            _source_port=$GRBL_CLOUD_PORT
-            _source_user=$GRBL_CLOUD_USERNAME
-
-    fi
+    gr.varlist "debug _target_folder _source_folder _source_server _source_user _symlink"
 
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
 
@@ -487,7 +469,6 @@ mount.remote () {
     gr.msg -v1 -c aqua "mounted"
 }
 
-
 mount.available () {
 # printout list of available mount points
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
@@ -546,28 +527,37 @@ mount.listed () {
     return $_error
 }
 
-mount.all () {
-# mount all GRBL_CLOUD_* defined in userrc
+mount.mount () {
+# mount list of mount points 
+# check that mountpoint is defined in mount.cfg
+# is no list given, mounts all
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _error=0
     local _IFS="$IFS"
     local _symlink=
     local _mount_list=(${all_list[@]^^})
+    
+    if [[ $1 ]]; then 
+        _mount_list=(${@^^})
+    fi
 
-    if [[ $_mount_list ]] ; then
-                gr.debug "$FUNCNAME: ${_mount_list[@]}"
-            else
-                gr.msg -e1 "default mount list is empty, edit $GRBL_CFG/$GRBL_USER/user.cfg and then '$GRBL_CALL config export'"
-            return 1
-        fi
+    # if [[ $_mount_list ]] ; then
+    #         gr.debug "$FUNCNAME: ${_mount_list[@]}"
+    #     else
+    #         gr.msg -e1 "default mount list is empty, edit $GRBL_CFG/$GRBL_USER/user.cfg and then '$GRBL_CALL config export'"
+    #     return 1
+    # fi
 
+    # TBD: eval is not really needed and is dangero, change this to bash direct variable name pointing
     for _item in "${_mount_list[@]}" ; do
         # go trough of found variables
         _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
         _source=$(eval echo '${GRBL_MOUNT_'"${_item}[1]}")
         _symlink=$(eval echo '${GRBL_MOUNT_'"${_item}[2]}")
 
+        gr.varlist "debug _item _target _source _symlink" #debug
+        
         # check if contains server separator, must then have 'user@server:port'
         if [[ $_source =~ ":" ]]; then
             _server=$(echo $_source |cut -d"@" -f2 | cut -d":" -f1)
@@ -579,7 +569,7 @@ mount.all () {
             _source_folder=$_source
         fi
 
-        gr.debug "$_source | u:$_user s:$_server p:$_port f:$_source_folder"
+        gr.varlist "debug _source _user _server _port _source_folder" #debug
 
         mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_symlink"
     done
@@ -620,10 +610,12 @@ mount.known_remote () {
 mount.status () {
 # daemon status function
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
+    case $1 in quiet|-q) quiet=true ;; esac
 
     [[ $1 == "quiet" ]] && quiet=true
 
     # printout header for status output
+    # local _error=0
     local _target
     local _private=
     local _online=
@@ -645,9 +637,10 @@ mount.status () {
     # go trough mount points
     for _mount_point in ${all_list[@]} ; do
         _target=$(eval echo '${GRBL_MOUNT_'"${_mount_point^^}[0]}")
-        mount.check $_target && _online=1 || _online=
-
-        # if some of mount points are "secret" and online
+        #mount.check $_target && _online=1 || _online=
+        _online=$(mount.online $_target) 
+        
+        # some mount points are for grbl system files of set private in mount.cfg
         case $_target in
             $GRBL_DATA)
                 [[ $_online ]] && _system=1
@@ -663,28 +656,39 @@ mount.status () {
     done
 
     # set indicate key color
+    # check gr.blink function in core/common.sh for animation types
+    
+    if [[ $_private ]]; then 
+        gr.blink $GRBL_MOUNT_INDICATOR_KEY ${MOUNT_SYSTEM_IND[1]} 
+    fi
+
+
+
+    ## This bullshit is
     if [[ $_private ]]; then
+        
         if [[ $_system ]]; then
-            gr.msg -n -c deep_pink -k $GRBL_MOUNT_INDICATOR_KEY
+            gr.msg -k $GRBL_MOUNT_INDICATOR_KEY -c ${MOUNT_SYSTEM_IND[0]}            
         else
-            gr.blink $GRBL_MOUNT_INDICATOR_KEY secred
+            gr.blink $GRBL_MOUNT_INDICATOR_KEY ${MOUNT_SYSTEM_IND[1]} 
         fi
+    
     elif [[ $_mounted ]]; then
+        
         if [[ $_system ]]; then
-            gr.msg -n -c aqua -k $GRBL_MOUNT_INDICATOR_KEY
+            gr.msg -c aqua -k $GRBL_MOUNT_INDICATOR_KEY
         else
             gr.blink $GRBL_MOUNT_INDICATOR_KEY partly
         fi
     else
         if [[ $_system ]]; then
-            gr.msg -n -c blue -k $GRBL_MOUNT_INDICATOR_KEY
+            gr.msg -c blue -k $GRBL_MOUNT_INDICATOR_KEY
         else
             gr.blink $GRBL_MOUNT_INDICATOR_KEY offline
         fi
     fi
-
-    # serve enter
-    [[ $quiet ]] || echo
+    
+    [[ $quiet ]] || gr.msg -n -v1
     return 0
 }
 
