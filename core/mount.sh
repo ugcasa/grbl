@@ -413,6 +413,13 @@ mount.remote () {
     # TODO make function out of this and variable _source_user might be nice.
     gr.debug "-p $_source_port $_source_user@$_source_server:$_source_folder $_target_folder"
 
+    if [[ $GRBL_DEBUG ]]; then
+          echo "sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks,idmap=user,umask=002,auto_cache \
+          -p $_source_port \
+          $_source_user@$_source_server:$_source_folder \
+          $_target_folder"
+    fi
+
     sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks,idmap=user,umask=002,auto_cache \
           -p "$_source_port" \
           "$_source_user@$_source_server:$_source_folder" \
