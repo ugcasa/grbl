@@ -221,21 +221,21 @@ mount.ls () {
     return $?
 }
 
-mount.system () {
-# mount system data
-    gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
+# mount.system () {
+# # mount system data
+#     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
-    gr.msg -v3 -n "checking system data folder.."
-    if [[ -f "$GRBL_SYSTEM_MOUNT/.online" ]] ; then
-            gr.debug "$FUNCNAME: mounted "
-    else
-        gr.msg -v3 -n "mounting.. "
-        # gr.debug "$FUNCNAME: ${GRBL_SYSTEM_MOUNT[1]} -> $GRBL_SYSTEM_MOUNT"
-        mount.remote "$GRBL_SYSTEM_MOUNT" "${GRBL_SYSTEM_MOUNT[1]}" \
-            && gr.debug "$FUNCNAME: ok"  \
-            || gr.debug "$FUNCNAME: error $?"
-    fi
-}
+#     gr.msg -v3 -n "checking system data folder.."
+#     if [[ -f "$GRBL_SYSTEM_MOUNT/.online" ]] ; then
+#             gr.debug "$FUNCNAME: mounted "
+#     else
+#         gr.msg -v3 -n "mounting.. "
+#         # gr.debug "$FUNCNAME: ${GRBL_SYSTEM_MOUNT[1]} -> $GRBL_SYSTEM_MOUNT"
+#         mount.remote "$GRBL_SYSTEM_MOUNT" "${GRBL_SYSTEM_MOUNT[1]}" \
+#             && gr.debug "$FUNCNAME: ok"  \
+#             || gr.debug "$FUNCNAME: error $?"
+#     fi
+# }
 
 mount.online () {
 # check is mount point "online", no printout,
@@ -331,6 +331,10 @@ mount.remote () {
     local _source_folder=
     local _source_server=
     local _source_port=
+    local _proxy_user=
+    local _proxy_server=
+    local _proxy_port=
+    local _proxy_jump=
     local _symlink=
 
     # temporary
@@ -341,12 +345,16 @@ mount.remote () {
 
     [[ "$1" ]] && _target_folder="$1" || read -r -p "local target mount point: " _target_folder
     [[ "$2" ]] && _source_folder="$2" || read -r -p "source folder at server: " _source_folder
-    [[ "$3" ]] && _source_server="$3"
-    [[ "$4" ]] && _source_user="$4"
-    [[ "$5" ]] && _source_port="$5"
-    [[ "$6" ]] && _symlink="$6"
+    # Optional
+    [[ "$3" != "null" ]] && _source_server="$3"
+    [[ "$4" != "null" ]] && _source_user="$4"
+    [[ "$5" != "null" ]] && _source_port="$5"
+    [[ "$6" != "null" ]] && _proxy_server="$6"
+    [[ "$7" != "null" ]] && _proxy_user="$7"
+    [[ "$8" != "null" ]] && _proxy_port="$8"
+    [[ "$9" != "null" ]] && _symlink="$9"
 
-    gr.varlist "debug _target_folder _source_folder _source_server _source_user _symlink"
+    gr.varlist "debug _target_folder _source_folder _source_server _source_user _source_port _proxy_server _proxy_user _proxy_port _symlink"
 
     local _mount_name=${_target_folder##*/}
     gr.msg -v1 -n "${_mount_name//./} "
@@ -406,21 +414,22 @@ mount.remote () {
     [[ $_source_port ]] || _source_port=$GRBL_CLOUD_PORT
     [[ $_source_user ]] || _source_user=$GRBL_CLOUD_USERNAME
 
-    gr.varlist "debug _target_folder _source_folder _source_server _source_user _symlink"
+    gr.varlist "debug _target_folder _source_folder _source_server _source_user _source_port _proxy_server _proxy_user _proxy_port _symlink"
 
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
 
-    # TODO make function out of this and variable _source_user might be nice.
-    gr.debug "-p $_source_port $_source_user@$_source_server:$_source_folder $_target_folder"
+    if [[ $_proxy_server ]] then 
+        _proxy_jump=",ProxyJump=$_proxy_user@$_proxy_server:$_proxy_port"
+    fi
 
     if [[ $GRBL_DEBUG ]]; then
-          echo "sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks,idmap=user,umask=002,auto_cache \
+          echo "sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks,idmap=user,umask=002,auto_cache$_proxy_jump \
           -p $_source_port \
           $_source_user@$_source_server:$_source_folder \
           $_target_folder"
     fi
 
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks,idmap=user,umask=002,auto_cache \
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks,idmap=user,umask=002,auto_cache$_proxy_jump \
           -p "$_source_port" \
           "$_source_user@$_source_server:$_source_folder" \
           "$_target_folder"
@@ -496,7 +505,16 @@ mount.listed () {
 
     local _error=0
     local _IFS="$IFS"
-    local _symlink=
+    local _symlink=null
+    local _target=null
+    local _source_folder=null
+    local _server=null
+    local _user=null
+    local _port=null
+    local _proxy_server=null
+    local _proxy_user=null
+    local _proxy_port=null
+    local _symlink=null
     local _list_name="default" ; [[ $1 ]] && _list_name=$1
 
     # get list given of mount points specified in mount.cfg
@@ -516,18 +534,35 @@ mount.listed () {
         _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
         _source=$(eval echo '${GRBL_MOUNT_'"${_item}[1]}")
         _symlink=$(eval echo '${GRBL_MOUNT_'"${_item}[2]}")
-        # check if contains server separator, must then have 'user@server:port'
-        if [[ $_source =~ ":" ]]; then
-            _server=$(echo $_source |cut -d"@" -f2 | cut -d":" -f1)
-            _user=$(echo $_source |cut -d"@" -f1)
-            _port=$(echo $_source |cut -d"@" -f2 | cut -d":" -f2)
+        [[ $_symlink ]] || _symlink=null
+        gr.varlist "debug _target _source _symlink"
+       
+        # check if contains proxy separator '§' , must then have 'proxy_user@proxy_server:proxy_port>user@server:port'
+        if [[ "$_source" =~ "!" ]]; then
+            local temp_source="$(echo $_source | cut -d"!" -f2)"
+            local _proxy="$(echo $_source | cut -d"!" -f1)"
+            _proxy_server="$(echo $_proxy |cut -d"@" -f2 | cut -d":" -f1)"
+            _proxy_user="$(echo $_proxy | cut -d"@" -f1)"
+            _proxy_port="$(echo $_proxy | cut -d"@" -f2 | cut -d":" -f2)"
+            gr.varlist "debug _proxy_server _proxy_user _proxy_port"
+            _source=$temp_source
+        fi
+
+        # check if contains server separator, must then have 'user@server:port:source_folder'
+        if [[ "$_source" =~ : ]]; then
+            _server=$(echo $_source | cut -d"@" -f2 | cut -d":" -f1)
+            _user=$(echo $_source | cut -d"@" -f1)
+            _port=$(echo $_source | cut -d"@" -f2 | cut -d":" -f2)
             _source_folder=$(echo $_source |cut -d"@" -f2 | cut -d":" -f3)
+            gr.varlist "debug _target_folder _source_folder _source_server _source_user _source_port _symlink"
+
         else
             # IFS=':' read -r _server _port _source_folder <<<"$_source"
             _source_folder=$_source
         fi
 
-        mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_symlink"
+        gr.varlist "debug _target _source_folder _server _user _port _proxy_server _proxy_user _proxy_port _symlink"
+        mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_proxy_server" "$_proxy_user" "$_proxy_port" "$_symlink"
     done
 
     IFS="$_IFS"
@@ -542,43 +577,56 @@ mount.mount () {
 
     local _error=0
     local _IFS="$IFS"
-    local _symlink=
+    local _source=
+    local _target=
+    local _source_folder=null
+    local _source_server=null
+    local _source_user=null
+    local _source_port=null
+    local _proxy_server=null
+    local _proxy_user=null
+    local _proxy_port=null
+    local _symlink=null
     local _mount_list=(${all_list[@]^^})
     
     if [[ $1 ]]; then 
         _mount_list=(${@^^})
     fi
 
-    # if [[ $_mount_list ]] ; then
-    #         gr.debug "$FUNCNAME: ${_mount_list[@]}"
-    #     else
-    #         gr.msg -e1 "default mount list is empty, edit $GRBL_CFG/$GRBL_USER/user.cfg and then '$GRBL_CALL config export'"
-    #     return 1
-    # fi
-
-    # TBD: eval is not really needed and is dangero, change this to bash direct variable name pointing
     for _item in "${_mount_list[@]}" ; do
         # go trough of found variables
         _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
         _source=$(eval echo '${GRBL_MOUNT_'"${_item}[1]}")
-        _symlink=$(eval echo '${GRBL_MOUNT_'"${_item}[2]}")
+        _symlink="$(eval echo '${GRBL_MOUNT_'"${_item}[2]}")"
+        [[ $_symlink ]] || _symlink="null"
 
-        gr.varlist "debug _item _target _source _symlink" #debug
+        gr.varlist "debug _target _source _symlink"
+       
+        # check if contains proxy separator '§' , must then have 'proxy_user@proxy_server:proxy_port>user@server:port'
+        if [[ "$_source" =~ "!" ]]; then
+            local temp_source="$(echo $_source | cut -d"!" -f2)"
+            local _proxy="$(echo $_source | cut -d"!" -f1)"
+            _proxy_server="$(echo $_proxy |cut -d"@" -f2 | cut -d":" -f1)"
+            _proxy_user="$(echo $_proxy | cut -d"@" -f1)"
+            _proxy_port="$(echo $_proxy | cut -d"@" -f2 | cut -d":" -f2)"
+            gr.varlist "debug _proxy_server _proxy_user _proxy_port"
+            _source=$temp_source
+        fi
         
         # check if contains server separator, must then have 'user@server:port'
         if [[ $_source =~ ":" ]]; then
-            _server=$(echo $_source |cut -d"@" -f2 | cut -d":" -f1)
-            _user=$(echo $_source |cut -d"@" -f1)
-            _port=$(echo $_source |cut -d"@" -f2 | cut -d":" -f2)
-            _source_folder=$(echo $_source |cut -d"@" -f2 | cut -d":" -f3)
+            _source_server="$(echo $_source |cut -d"@" -f2 | cut -d":" -f1)"
+            _source_user="$(echo $_source |cut -d"@" -f1)"
+            _source_port="$(echo $_source |cut -d"@" -f2 | cut -d":" -f2)"
+            _source_folder="$(echo $_source |cut -d"@" -f2 | cut -d":" -f3)"
         else
             # IFS=':' read -r _server _port _source_folder <<<"$_source"
             _source_folder=$_source
         fi
 
-        gr.varlist "debug _source _user _server _port _source_folder" #debug
+        gr.varlist "debug _target _source_folder _source_server _source_user _source_port _proxy_server _proxy_user _proxy_port _symlink"
+        mount.remote "$_target" "$_source_folder" "$_source_server" "$_source_user" "$_source_port" "$_proxy_server" "$_proxy_user" "$_proxy_port" "$_symlink"
 
-        mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_symlink"
     done
 
     #mount.status >/dev/null
@@ -589,12 +637,36 @@ mount.known_remote () {
 # mount single GRBL_CLOUD_* defined in userrc
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
+    local _symlink=null
+    local _target=null
+    local _source_folder=null
+    local _server=null
+    local _user=null
+    local _port=null
+    local _proxy_server=null
+    local _proxy_user=null
+    local _proxy_port=null
+    local _symlink=null
+
     local _target=$(eval echo '${GRBL_MOUNT_'"${1^^}[0]}")
     local _source=$(eval echo '${GRBL_MOUNT_'"${1^^}[1]}")
     local _symlink=$(eval echo '${GRBL_MOUNT_'"${1^^}[2]}")
+    [[ $_symlink ]] || _symlink=null
+
     local _IFS=$IFS
 
-    # _source=$(eval echo '${GRBL_MOUNT_TILT[1]}')
+    gr.varlist "debug _target _source _symlink"
+
+    # check if contains proxy separator '§' , must then have 'proxy_user@proxy_server:proxy_port>user@server:port'
+    if [[ "$_source" =~ "!" ]]; then
+        local temp_source="$(echo $_source | cut -d"!" -f2)"
+        local _proxy="$(echo $_source | cut -d"!" -f1)"
+        _proxy_server="$(echo $_proxy |cut -d"@" -f2 | cut -d":" -f1)"
+        _proxy_user="$(echo $_proxy | cut -d"@" -f1)"
+        _proxy_port="$(echo $_proxy | cut -d"@" -f2 | cut -d":" -f2)"
+        gr.varlist "debug _proxy_server _proxy_user _proxy_port"
+        _source=$temp_source
+    fi
 
     # check if contains server separator, must then have 'user@server:port'
     if [[ $_source =~ ":" ]]; then
@@ -607,9 +679,9 @@ mount.known_remote () {
         _source_folder=$_source
     fi
 
-    gr.debug "$_source | u:$_user s:$_server p:$_port f:$_source_folder"
+    gr.varlist "debug mount.remote _target _source_folder _server _user _port _proxy_server _proxy_user _proxy_port _symlink"
+    mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_proxy_server" "$_proxy_user" "$_proxy_port" "$_symlink"
 
-    mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_symlink"
     IFS=$_IFS
     return $?
 }
