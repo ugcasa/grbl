@@ -513,7 +513,7 @@ mount.remote () {
         # TODO check is it link by mime
         if ! file -h $_symlink | grep "symbolic" >/dev/null ; then
             gr.msg -n -v2 "linking "
-            ln -s $_target_folder $_symlink && error=0 \
+            ln -s $_target_folder  $HOME/$_symlink && error=0 \
                 || gr.msg -e1 "unable to link"
         fi
     fi
