@@ -6,7 +6,10 @@ __mount_color="gray"
 __mount=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 quiet=
 
-[[ $GRBL_DEBUG ]] && source common.sh
+if [[ $GRBL_DEBUG ]]; then 
+    export GRBL_VERBOSE=4
+    source common.sh
+fi
 
 mount.help () {
 # mount help
@@ -367,6 +370,8 @@ mount.remote () {
 # mount any remote location. usage: mount_point remote_folder optional: domain port symlink_to
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
+    gr.varlist "debug GRBL_MOUNT_COPY2CLIPBOARD GRBL_CLOUD_DOMAIN GRBL_CLOUD_PORT GRBL_CLOUD_USERNAME"
+
     # set defaults
     local _target_folder=
     local _source_folder=
@@ -394,7 +399,14 @@ mount.remote () {
     [[ "$8" != "null" ]] && _proxy_port="$8"
     [[ "$9" != "null" ]] && _symlink="$9"
 
-    gr.varlist "debug _target_folder _source_folder _source_server _source_user _source_port _proxy_server _proxy_user _proxy_port _symlink"
+    if [[ $_target_folder ]] && [[ $_source_folder ]]  then 
+        gr.varlist "debug _target_folder _source_folder"
+    else
+        gr.msg -e1 "empty variable: _source_folder=$_source_folder _target_folder=$_target_folder "
+        return 1
+    fi 
+
+    gr.varlist "debug _source_server _source_user _source_port _proxy_server _proxy_user _proxy_port _symlink"
 
     local _mount_name=${_target_folder##*/}
     gr.msg -v1 -n "${_mount_name//./} "
@@ -442,7 +454,7 @@ mount.remote () {
     fi
 
 
-    gr.varlist "debug _target_folder _source_folder _source_server _source_user _source_port _proxy_server _proxy_user _proxy_port _symlink"
+    gr.varlist "debug _mount_name _reply _temp_folder"
 
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
 
@@ -456,10 +468,12 @@ mount.remote () {
         $_target_folder"
     
     if [[ $GRBL_DEBUG ]]; then
-        gr.msg -c dark_gray "$command"
+        echo "$command" | xargs
     fi
 
     $command || error=$?
+
+    gr.varlist "debug error"
 
     # check sshfs error
     if ((error>0)) ; then
