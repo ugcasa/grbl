@@ -27,7 +27,7 @@ mount.help () {
     gr.msg -v3 " poll start|end             start or end module status polling "
     gr.msg -v2
     gr.msg -v1 -c white "example:"
-    gr.msg -v1 "      $GRBL_CALL mount /home/$GRBL_CLOUD_USERNAME/share /home/$USER/grbl/projects"
+    gr.msg -v1 "      $GRBL_CALL mount /home/$GRBL_DEFAULT_USERNAME/share /home/$USER/grbl/projects"
     gr.msg -v1 "      $GRBL_CALL umount /home/$USER/grbl/projects"
 }
 
@@ -329,22 +329,20 @@ mount.remote () {
     # set defaults
     local _target_folder=
     local _source_folder=
-    local _source_server=
-    local _source_port=
+    local _source_server=$GRBL_CLOUD_DOMAIN
+    local _source_port=$GRBL_CLOUD_PORT
+    local _source_user=$GRBL_CLOUD_USERNAME
     local _proxy_user=
     local _proxy_server=
     local _proxy_port=
     local _proxy_jump=
     local _symlink=
 
-    # temporary
-    local _temp_folder="/tmp/$USER/grbl/mount"
-    local _reply=
     # to avoid read function to pass without input set force mode off
     unset FORCE
 
-    [[ "$1" ]] && _target_folder="$1" || read -r -p "local target mount point: " _target_folder
-    [[ "$2" ]] && _source_folder="$2" || read -r -p "source folder at server: " _source_folder
+    [[ "$1" ]] && _target_folder="$1"  #|| read -r -p "local target mount point: " _target_folder
+    [[ "$2" ]] && _source_folder="$2"  #|| read -r -p "source folder at server: " _source_folder
     # Optional
     [[ "$3" != "null" ]] && _source_server="$3"
     [[ "$4" != "null" ]] && _source_user="$4"
@@ -365,14 +363,6 @@ mount.remote () {
         return 0
     fi
 
-    # TODO check server is online
-    # gr.msg -e1 "Cannot connect $_source_server"
-    # return 21
-
-    # TODO check folder exists on remote
-    # gr.msg -e1 "No folder $_source_folder on $_source_server"
-    # return 22
-
     # check mount point exist, create if not
     if ! [[ -d "$_target_folder" ]] ; then
         mkdir -p "$_target_folder"
@@ -391,28 +381,24 @@ mount.remote () {
         fi
 
         # move found files to temp
+        local _reply=
         gr.msg -c light_blue "$(ls $_target_folder)"
         read -r -p "append above files to $_target_folder?: " _reply
-
+    
         case $_reply in
-
             y)
+                local _temp_folder="/tmp/$USER/grbl/mount"
                 [[ -d $_temp_folder ]] && rm -rf "$_temp_folder"
                 gr.debug "mv $_target_folder -> $_temp_folder"
                 mkdir -p "$_temp_folder"
                 mv "$_target_folder" "$_temp_folder"
                 ;;
-
             *)
                 gr.msg -e0 "canceling.."
                 return 26
         esac
     fi
 
-    # fulfill needed variables
-    [[ $_source_server ]] || _source_server=$GRBL_CLOUD_DOMAIN
-    [[ $_source_port ]] || _source_port=$GRBL_CLOUD_PORT
-    [[ $_source_user ]] || _source_user=$GRBL_CLOUD_USERNAME
 
     gr.varlist "debug _target_folder _source_folder _source_server _source_user _source_port _proxy_server _proxy_user _proxy_port _symlink"
 
@@ -423,16 +409,18 @@ mount.remote () {
     fi
 
     if [[ $GRBL_DEBUG ]]; then
-          echo "sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks,idmap=user,umask=002,auto_cache$_proxy_jump \
-          -p $_source_port \
-          $_source_user@$_source_server:$_source_folder \
-          $_target_folder"
+        echo "sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,\
+        follow_symlinks,idmap=user,umask=002,auto_cache$_proxy_jump \
+        -p $_source_port \
+        $_source_user@$_source_server:$_source_folder \
+        $_target_folder"
     fi
 
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks,idmap=user,umask=002,auto_cache$_proxy_jump \
-          -p "$_source_port" \
-          "$_source_user@$_source_server:$_source_folder" \
-          "$_target_folder"
+    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,\
+        follow_symlinks,idmap=user,umask=002,auto_cache$_proxy_jump \
+        -p "$_source_port" \
+        "$_source_user@$_source_server:$_source_folder" \
+        "$_target_folder"
 
     error=$?
 
@@ -478,9 +466,11 @@ mount.remote () {
                 || gr.msg -e1 "unable to link"
         fi
     fi
-
-    # TODO if user presses shift, copy link to clipboard
-    echo $_target_folder | xclip -i -selection clipboard
+    
+    if [[ $GRBL_MOUNT_COPY2CLIPBOARD ]]; then 
+        gr.msg -n -v1 -c dark_gray "ctrl+v "    
+        echo $_target_folder | xclip -i -selection clipboard
+    fi
 
     gr.msg -v1 -c aqua "mounted"
 }
@@ -570,9 +560,7 @@ mount.listed () {
 }
 
 mount.mount () {
-# mount list of mount points 
-# check that mountpoint is defined in mount.cfg
-# is no list given, mounts all
+# mount list of mountpoints 
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
     local _error=0
@@ -589,15 +577,13 @@ mount.mount () {
     local _symlink=null
     local _mount_list=(${all_list[@]^^})
     
-    if [[ $1 ]]; then 
-        _mount_list=(${@^^})
-    fi
-
+    [[ $1 ]] && _mount_list=(${@})
+    
+    # go trough of found variables
     for _item in "${_mount_list[@]}" ; do
-        # go trough of found variables
-        _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
-        _source=$(eval echo '${GRBL_MOUNT_'"${_item}[1]}")
-        _symlink="$(eval echo '${GRBL_MOUNT_'"${_item}[2]}")"
+        _target=$(eval echo '${GRBL_MOUNT_'"${_item^^}[0]}")
+        _source=$(eval echo '${GRBL_MOUNT_'"${_item^^}[1]}")
+        _symlink="$(eval echo '${GRBL_MOUNT_'"${_item^^}[2]}")"
         [[ $_symlink ]] || _symlink="null"
 
         gr.varlist "debug _target _source _symlink"
