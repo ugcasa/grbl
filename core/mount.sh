@@ -378,6 +378,7 @@ mount.remote () {
     local _proxy_port=
     local _proxy_jump=
     local _symlink=
+    local error=0
 
     # to avoid read function to pass without input set force mode off
     unset FORCE
@@ -449,21 +450,16 @@ mount.remote () {
         _proxy_jump=",ProxyJump=$_proxy_user@$_proxy_server:$_proxy_port"
     fi
 
-    if [[ $GRBL_DEBUG ]]; then
-        echo "sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,\
-        follow_symlinks,idmap=user,umask=002,auto_cache$_proxy_jump \
+    local command="sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks,idmap=user,umask=002,auto_cache$_proxy_jump \
         -p $_source_port \
         $_source_user@$_source_server:$_source_folder \
         $_target_folder"
+    
+    if [[ $GRBL_DEBUG ]]; then
+        gr.msg -c dark_gray "$command"
     fi
 
-    sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,\
-        follow_symlinks,idmap=user,umask=002,auto_cache$_proxy_jump \
-        -p "$_source_port" \
-        "$_source_user@$_source_server:$_source_folder" \
-        "$_target_folder"
-
-    error=$?
+    $command || error=$?
 
     # check sshfs error
     if ((error>0)) ; then
