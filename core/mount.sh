@@ -115,7 +115,7 @@ mount.rc () {
     
     declare -g all_list=($(\
             grep "export GRBL_MOUNT_" $mount_rc | \
-            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
+            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' -ve '_IND' -ve 'COPY2CLIPBOARD'  | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
             all_list=(${all_list[@],,})
@@ -151,12 +151,53 @@ mount.make_rc () {
 
     declare -g all_list=($(\
             grep "export GRBL_MOUNT_" $mount_rc | \
-            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' | \
+            grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' -ve '_IND' -ve 'COPY2CLIPBOARD'  | \
             sed 's/^.*MOUNT_//' | \
             cut -d '=' -f1))
             all_list=(${all_list[@],,})
 }
 
+
+mount.setup_check () {
+# check is 
+    
+    local config="$HOME/.config/grbl/$GRBL_USER/mount.cfg"
+
+    # Enabling
+    if [[ $GRBL_MOUNT_ENABLED ]]; then 
+        gr.msg -v2 -c green "enabled"
+    else
+        gr.msg -c dark_gray "mount module disabled"
+        gr.msg -v2 -e0 "Enable by setting [mount] enabled 'true' in $config"
+        return 1
+    fi
+
+    # Mountpoints
+    #gr.msg -c dark_gray "$all_list"
+    if [[ $all_list ]]; then 
+        gr.msg -v2 -c green "mountpoints found"
+    else
+        gr.msg -e1 "no mountpoints set"
+        gr.msg -v2 -e0 "please fill least one mountpoint [mount] NAME=(MOUNTPOINT USER@SERVER:PORT:FOLDER) to $config"
+        return 1
+    fi
+
+    # Default server
+    if [[ $GRBL_CLOUD_DOMAIN ]] && [[ $GRBL_CLOUD_USER ]] && [[ $GRBL_CLOUD_PORT ]]; then 
+        gr.msg -v2 -c green "default server OK"
+    else 
+        gr.msg -c dark_gray "default server not set"
+        gr.msg -v2 -e0  "please fill [cloud], domain, user and port to $config"
+    fi
+
+    # Enables corsair indicatorion if set in mount.cfg
+    corsair_indication=
+    if [[ $GRBL_MOUNT_INDICATOR_KEY ]]; then 
+        corsair_indication="-k $GRBL_MOUNT_INDICATOR_KEY"
+        gr.msg -v2 -c green "corsair indications enabled"
+    fi
+
+}
 mount.local_size () {
 # check size of files in locally mounted folder
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
@@ -690,9 +731,9 @@ mount.status () {
         gr.msg -t -v1 -n "${FUNCNAME[0]}: "
         # check is enabled
         if [[ $GRBL_MOUNT_ENABLED ]] ; then
-            gr.msg -v1 -n -c green "enabled " -k $GRBL_MOUNT_INDICATOR_KEY
+            gr.msg -v1 -n -c green "enabled " $corsair_indication
         else
-            gr.msg -v1 -c black "disabled" -k $GRBL_MOUNT_INDICATOR_KEY
+            gr.msg -v1 -c black "disabled" $corsair_indication
             return 100
         fi
     fi
@@ -721,10 +762,10 @@ mount.status () {
     done
 
     # set indicate key color
-    # check gr.blink function in core/common.sh for animation types
+    # check [[ $corsair_indication ]] && gr.blink function in core/common.sh for animation types
     
     if [[ $_private ]]; then 
-        gr.blink $GRBL_MOUNT_INDICATOR_KEY ${MOUNT_SYSTEM_IND[1]} 
+        [[ $corsair_indication ]] && gr.blink $GRBL_MOUNT_INDICATOR_KEY ${MOUNT_SYSTEM_IND[1]} 
     fi
 
 
@@ -733,23 +774,23 @@ mount.status () {
     if [[ $_private ]]; then
         
         if [[ $_system ]]; then
-            gr.msg -k $GRBL_MOUNT_INDICATOR_KEY -c ${MOUNT_SYSTEM_IND[0]}            
+            gr.msg $corsair_indication -c ${MOUNT_SYSTEM_IND[0]}            
         else
-            gr.blink $GRBL_MOUNT_INDICATOR_KEY ${MOUNT_SYSTEM_IND[1]} 
+            [[ $corsair_indication ]] && gr.blink $GRBL_MOUNT_INDICATOR_KEY ${MOUNT_SYSTEM_IND[1]} 
         fi
     
     elif [[ $_mounted ]]; then
         
         if [[ $_system ]]; then
-            gr.msg -c aqua -k $GRBL_MOUNT_INDICATOR_KEY
+            gr.msg -c aqua $corsair_indication
         else
-            gr.blink $GRBL_MOUNT_INDICATOR_KEY partly
+            [[ $corsair_indication ]] && gr.blink $GRBL_MOUNT_INDICATOR_KEY partly
         fi
     else
         if [[ $_system ]]; then
-            gr.msg -c blue -k $GRBL_MOUNT_INDICATOR_KEY
+            gr.msg -c blue $corsair_indication
         else
-            gr.blink $GRBL_MOUNT_INDICATOR_KEY offline
+            [[ $corsair_indication ]] && gr.blink $GRBL_MOUNT_INDICATOR_KEY offline
         fi
     fi
     
@@ -820,10 +861,10 @@ mount.poll () {
 
     case $_cmd in
         start)
-            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" -k $GRBL_MOUNT_INDICATOR_KEY
+            gr.msg -v1 -t -c black "${FUNCNAME[0]}: started" $corsair_indication
             ;;
         end)
-            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" -k $GRBL_MOUNT_INDICATOR_KEY
+            gr.msg -v1 -t -c reset "${FUNCNAME[0]}: ended" $corsair_indication
             ;;
         status)
             mount.status $@
@@ -850,6 +891,10 @@ mount.uninstall () {
 }
 
 mount.rc
+
+## Setup checks
+mount.setup_check || exit $?
+
 
 if [[ ${BASH_SOURCE[0]} == ${0} ]] ; then
         #source $GRBL_RC
