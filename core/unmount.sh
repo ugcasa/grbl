@@ -1,5 +1,6 @@
 #!/bin/bash
 # unmount tools for grbl
+# Tämä on ihan paska.. voisi kirjoitaa uudetaan.. toisaalta kaikki on ihan paskaa.
 
 source common.sh
 
@@ -198,26 +199,26 @@ unmount.remote () {
 
     if ! [[ "$_mountpoint" ]] ; then
 
-            local _list=($(unmount.ls | grep -v $GRBL_SYSTEM_MOUNT))
-            for item in "${_list[@]}" ; do
-                gr.msg -n -c white "$_i: "
-                gr.msg -c light_blue "${_list[_i]}"
-                let _i++
-            done
-            let _i--
+        local _list=($(unmount.ls | grep -v $GRBL_SYSTEM_MOUNT))
+        for item in "${_list[@]}" ; do
+            gr.msg -n -c white "$_i: "
+            gr.msg -c light_blue "${_list[_i]}"
+            let _i++
+        done
+        let _i--
 
-            (( $_i < 1 )) && return 0
-            read -p "select mount point (0..$_i) " _ii
+        (( $_i < 1 )) && return 0
+        read -p "select mount point (0..$_i) " _ii
 
-            [[ $_ii ]] || return 0
+        [[ $_ii ]] || return 0
 
-            if [[ $_ii =~ $_numbers ]] && (( _ii <= _i )) && (( _ii >= 0 ))  ; then
-                    _mountpoint=${_list[_ii]}
-                else
-                    gr.msg -c yellow "invalid selection"
-                    return 12
-                fi
-        fi
+        if [[ $_ii =~ $_numbers ]] && (( _ii <= _i )) && (( _ii >= 0 ))  ; then
+                _mountpoint=${_list[_ii]}
+            else
+                gr.msg -c yellow "invalid selection"
+                return 12
+            fi
+    fi
 
     local _mount_name=${_mountpoint##*/}
     local link=
@@ -260,6 +261,7 @@ unmount.remote () {
         else 
             rmdir $_mountpoint
         fi 
+
         gr.msg -c green "unmounted"
         return 0
     fi
@@ -409,32 +411,11 @@ unmount.kill () {
 
 unmount.all () {
 # unmount all GRBL_CLOUD_* defined in userrc
-# unmount all local/cloud pairs defined in userrc
-    # TBD this is terrible method to parse configs, figure some other way
 
-    #[[ $1 ]] && _default_list=(${@})
-    [[ "$1" ]] && _default_list=(${1[@]})
-
-    if [[ $_default_list ]] ; then
-            gr.msg -v3 -c light_blue "$_default_list"
-        else
-            gr.msg -c yellow "default list is empty"
-            return 1
-        fi
-
-    for _item in "${_default_list[@]}" ; do
-        # go trough of found variables
-        _target=$(eval echo '${GRBL_MOUNT_'"${_item}[0]}")
-        gr.msg -v3 -c pink "$FUNCNAME: ${_item,,} "
-        unmount.remote "$_target" || _error=$?
+    for (( i = 0; i < ${#all_list[@]}; i++ )); do
+        _target=$(eval echo '${GRBL_MOUNT_'"${all_list[$i]^^}[0]}")
+        unmount.online $_target && unmount.remote $_target
     done
-
-    if [[ $_error -lt 1 ]] ; then
-        gr.msg -c green "unmounted" -k $indicator_key
-    else
-        gr.msg -c red "error: $_error" -k $indicator_key
-        return $_error
-    fi
 }
 
 

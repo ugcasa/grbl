@@ -527,7 +527,7 @@ mount.remote () {
             ln -s $_target_folder $_symlink && error=0 \
             || gr.msg -e1 "unable to link"
         fi
-        echo "$_mount_name;$_symlink" > $_target_folder/.linked
+        echo "$_mount_name;$_symlink" > "$_target_folder/.linked"
     fi
     
     if [[ $GRBL_MOUNT_COPY2CLIPBOARD ]]; then 
@@ -536,7 +536,7 @@ mount.remote () {
     fi
 
     gr.msg -n -v1 -c aqua "mounted"
-    [[ $_target_folder/.linked ]] && gr.msg -n -c dark_gray " -> $_symlink "
+    [[ -f $_target_folder/.linked ]] && gr.msg -n -c dark_gray " -> $_symlink"
     echo
 }
 
