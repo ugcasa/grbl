@@ -86,6 +86,9 @@ mount.main () {
                 mount.toggle_single $@ && \
                     mount.status quiet
                 ;;
+            l) # special
+                mount.listed $@ 
+                ;;
             "")
                 mount.listed default
                 _error=$?
@@ -373,6 +376,7 @@ mount.remote () {
     gr.varlist "debug GRBL_MOUNT_COPY2CLIPBOARD GRBL_CLOUD_DOMAIN GRBL_CLOUD_PORT GRBL_CLOUD_USERNAME"
 
     # set defaults
+    local _mount_name=
     local _target_folder=
     local _source_folder=
     local _source_server=$GRBL_CLOUD_DOMAIN
@@ -383,24 +387,26 @@ mount.remote () {
     local _proxy_port=
     local _proxy_jump=
     local _symlink=
+    local copytemp=
     local error=0
 
     # to avoid read function to pass without input set force mode off
     unset FORCE
 
-    [[ "$1" ]] && _target_folder="$1"  #|| read -r -p "local target mount point: " _target_folder
-    [[ "$2" ]] && _source_folder="$2"  #|| read -r -p "source folder at server: " _source_folder
+    [[ "$1" ]] && _mount_name="$1"
+    [[ "$2" ]] && _target_folder="$2"  #|| read -r -p "local target mount point: " _target_folder
+    [[ "$3" ]] && _source_folder="$3"  #|| read -r -p "source folder at server: " _source_folder
     # Optional
-    [[ "$3" != "null" ]] && _source_server="$3"
-    [[ "$4" != "null" ]] && _source_user="$4"
-    [[ "$5" != "null" ]] && _source_port="$5"
-    [[ "$6" != "null" ]] && _proxy_server="$6"
-    [[ "$7" != "null" ]] && _proxy_user="$7"
-    [[ "$8" != "null" ]] && _proxy_port="$8"
-    [[ "$9" != "null" ]] && _symlink="$9"
+    [[ "$4" != "null" ]] && _source_server="$4"
+    [[ "$5" != "null" ]] && _source_user="$5"
+    [[ "$6" != "null" ]] && _source_port="$6"
+    [[ "$7" != "null" ]] && _proxy_server="$7"
+    [[ "$8" != "null" ]] && _proxy_user="$8"
+    [[ "$9" != "null" ]] && _proxy_port="$9"
+    [[ "${10}" != "null" ]] && _symlink="${10}"
 
     if [[ $_target_folder ]] && [[ $_source_folder ]]  then 
-        gr.varlist "debug _target_folder _source_folder"
+        gr.varlist "debug _mount_name _target_folder _source_folder"
     else
         gr.msg -e1 "empty variable: _source_folder=$_source_folder _target_folder=$_target_folder "
         return 1
@@ -422,7 +428,10 @@ mount.remote () {
         mkdir -p "$_target_folder"
     fi
 
-    # check is target populated and append if is
+    # check is target populated and append, exept link script
+
+    [[ -f "${_symlink}/mount_${_mount_name}.sh" ]] && rm "${_symlink}/mount_${_mount_name}.sh"
+
     if ! [[ -z "$(ls -A $_target_folder)" ]] ; then
 
         # Check that target directory is empty
@@ -446,6 +455,7 @@ mount.remote () {
                 gr.debug "mv $_target_folder -> $_temp_folder"
                 mkdir -p "$_temp_folder"
                 mv "$_target_folder" "$_temp_folder"
+                copytemp=true
                 ;;
             *)
                 gr.msg -e0 "canceling.."
@@ -461,7 +471,7 @@ mount.remote () {
     if [[ $_proxy_server ]] then 
         _proxy_jump=",ProxyJump=$_proxy_user@$_proxy_server:$_proxy_port"
     fi
-
+    
     local command="sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks,idmap=user,umask=002,auto_cache$_proxy_jump \
         -p $_source_port \
         $_source_user@$_source_server:$_source_folder \
@@ -492,8 +502,10 @@ mount.remote () {
         return $error
     fi
 
+    
+
     # copy files from temp if exist
-    if [[ -d "$_temp_folder/${_target_folder##*/}" ]] ; then
+    if [[ $copytemp == "true" ]] && [[ -d "$_temp_folder/${_target_folder##*/}" ]] ; then
         # new fucked up space dot --> if [[ -d "$_temp_folder" ]] ; then
         gr.debug "cp $_temp_folder/${_target_folder##*/} > $_target_folder"
 
@@ -511,11 +523,11 @@ mount.remote () {
     if [[ $_symlink ]] ; then
 
         # TODO check is it link by mime
-        if ! file -h $_symlink | grep "symbolic" >/dev/null ; then
-            gr.msg -n -v2 "linking "
-            ln -s $_target_folder  $HOME/$_symlink && error=0 \
-                || gr.msg -e1 "unable to link"
+        if ! file -h $_symlink | grep "symbolic" >/dev/null ; then            
+            ln -s $_target_folder $_symlink && error=0 \
+            || gr.msg -e1 "unable to link"
         fi
+        echo "$_mount_name;$_symlink" > $_target_folder/.linked
     fi
     
     if [[ $GRBL_MOUNT_COPY2CLIPBOARD ]]; then 
@@ -523,7 +535,9 @@ mount.remote () {
         echo $_target_folder | xclip -i -selection clipboard
     fi
 
-    gr.msg -v1 -c aqua "mounted"
+    gr.msg -n -v1 -c aqua "mounted"
+    [[ $_target_folder/.linked ]] && gr.msg -n -c dark_gray " -> $_symlink "
+    echo
 }
 
 mount.available () {
@@ -603,7 +617,7 @@ mount.listed () {
         fi
 
         gr.varlist "debug _target _source_folder _server _user _port _proxy_server _proxy_user _proxy_port _symlink"
-        mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_proxy_server" "$_proxy_user" "$_proxy_port" "$_symlink"
+        mount.remote "$_item" "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_proxy_server" "$_proxy_user" "$_proxy_port" "$_symlink"
     done
 
     IFS="$_IFS"
@@ -662,7 +676,7 @@ mount.mount () {
         fi
 
         gr.varlist "debug _target _source_folder _source_server _source_user _source_port _proxy_server _proxy_user _proxy_port _symlink"
-        mount.remote "$_target" "$_source_folder" "$_source_server" "$_source_user" "$_source_port" "$_proxy_server" "$_proxy_user" "$_proxy_port" "$_symlink"
+        mount.remote "$_item" "$_target" "$_source_folder" "$_source_server" "$_source_user" "$_source_port" "$_proxy_server" "$_proxy_user" "$_proxy_port" "$_symlink"
 
     done
 
@@ -674,6 +688,7 @@ mount.known_remote () {
 # mount single GRBL_CLOUD_* defined in userrc
     gr.msg -v4 -c $__mount_color "$__mount [$LINENO] $FUNCNAME '$@'" >&2
 
+    local _item=${1}
     local _symlink=null
     local _target=null
     local _source_folder=null
@@ -685,9 +700,9 @@ mount.known_remote () {
     local _proxy_port=null
     local _symlink=null
 
-    local _target=$(eval echo '${GRBL_MOUNT_'"${1^^}[0]}")
-    local _source=$(eval echo '${GRBL_MOUNT_'"${1^^}[1]}")
-    local _symlink=$(eval echo '${GRBL_MOUNT_'"${1^^}[2]}")
+    local _target=$(eval echo '${GRBL_MOUNT_'"${_item^^}[0]}")
+    local _source=$(eval echo '${GRBL_MOUNT_'"${_item^^}[1]}")
+    local _symlink=$(eval echo '${GRBL_MOUNT_'"${_item^^}[2]}")
     [[ $_symlink ]] || _symlink=null
 
     local _IFS=$IFS
@@ -717,7 +732,7 @@ mount.known_remote () {
     fi
 
     gr.varlist "debug mount.remote _target _source_folder _server _user _port _proxy_server _proxy_user _proxy_port _symlink"
-    mount.remote "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_proxy_server" "$_proxy_user" "$_proxy_port" "$_symlink"
+    mount.remote "$_item" "$_target" "$_source_folder" "$_server" "$_user" "$_port" "$_proxy_server" "$_proxy_user" "$_proxy_port" "$_symlink"
 
     IFS=$_IFS
     return $?

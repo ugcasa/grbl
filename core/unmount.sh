@@ -12,7 +12,7 @@ source $temp_rc
 
 all_list=($(\
         grep "export GRBL_MOUNT_" $temp_rc | \
-        grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve '_INDICATOR_KEY' | \
+        grep -ve '_LIST' -ve '_ENABLED' -ve '_PROXY' -ve 'INDICATOR_KEY' -ve '_IND' -ve 'COPY2CLIPBOARD' | \
         grep -v "GRBL_MOUNT_SYSTEM" | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
@@ -27,6 +27,8 @@ _default_list=($(\
         grep -v "LIST" | \
         grep -v '$GRBL_MOUNT' | \
         grep -v 'INDICATOR_KEY' | \
+        grep -v '_IND'| \
+        grep -e 'COPY2CLIPBOARD' | \
         sed 's/^.*MOUNT_//' | \
         cut -d '=' -f1))
 
@@ -218,49 +220,75 @@ unmount.remote () {
         fi
 
     local _mount_name=${_mountpoint##*/}
+    local link=
+    local link_name=
 
     # empty
     gr.msg -n -v2 "unmounting "
-    gr.msg -n -v1 "$_mount_name "
+    gr.msg -n -v1 -c white "$_mount_name "
 
     # check is mounted
     if ! grep -wq "$_mountpoint" /etc/mtab ; then
-            gr.msg -v1 -c dark_gray "not mounted"
-            return 0
-        fi
+        gr.msg -c dark_gray "not mounted"
+        return 0
+    fi
 
     if ! [[ -f "$_mountpoint/.online" ]] ; then
-            gr.msg -n -v2 -c yellow "online flag file missing "
-         fi
+        gr.msg -n -v2 -c yellow "online flag file missing "
+    fi
+
+    if [[ -f $_mountpoint/.linked ]]; then 
+        link_name=$(cat $_mountpoint/.linked | cut -d";" -f1)
+        link=$(cat $_mountpoint/.linked | cut -d";" -f2)
+    fi
 
     # unmount target (normal action)
-    if ! fusermount -u "$_mountpoint" 2>/dev/null; then
-            gr.msg -v3 -c yellow "error $? "
-        fi
+    if fusermount -u "$_mountpoint" 2>/dev/null; then
+        true
+    else
+        gr.msg -v3 -c yellow "error $? "
+    fi
 
     # check is target unmounted
     if ! unmount.online "$_mountpoint" ; then
-            gr.msg -v1 -c green "done"
+
+        if [[ $link ]] ; then 
+            [[ -d $link ]] || mkdir $link
+            echo -e "#!/bin/bash\n${GRBL_CALL} mount ${link_name}" >"$link/mount_${link_name}.sh"
+            chmod +x "${link}/mount_${link_name}.sh"
+            # rm $link
+        else 
             rmdir $_mountpoint
-            return 0
-        fi
+        fi 
+        gr.msg -c green "unmounted"
+        return 0
+    fi
 
+            
     if ! [[ $GRBL_FORCE ]] ; then
-            gr.msg -c yellow "device busy"
-            return 0
-        fi
-
-    gr.msg -n -v1 -c white "force unmount "
+        gr.msg -c yellow "device busy"
+        return 0
+    fi
 
     # force unmount
     if unmount.kill "$_mountpoint" ; then
-            gr.msg -v1 -c green "done"
+
+        if [[ $link ]] ; then 
+            [[ -d $link ]] || mkdir $link
+            echo -e "#!/bin/bash\n${GRBL_CALL} mount ${link_name}" >"$link/mount_${link_name}.sh"
+            chmod +x "${link}/mount_${link_name}.sh"
+            # rm $link
+        else 
             rmdir $_mountpoint
-            return 0
-        else
-            gr.msg -c red "failed to force unmount $_mount_name "
-            return 124
-        fi
+        fi 
+
+        gr.msg -c green "unmounted2"
+        return 0
+
+    else
+        gr.msg -c red "failed to force unmount $_mount_name "
+        return 124
+    fi
 }
 
 
