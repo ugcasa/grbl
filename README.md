@@ -1,61 +1,41 @@
-# Gerbil project - Debian Accessibility Layer for degenerates 
+# grbl
 
-*grbl* project aims to simplify and streamline various terminal commands and operations through a modular, user-friendly structure. 
+**Modular bash-based tool collection for Debian/Ubuntu Linux**
 
-![banner](doc/grbl-banner-wquote.jpg)
-
-/dəˈdʒɛnəˌreɪdᵻd/ past data stars that having lost the physical, mental, or moral qualities considered normal and desirable; showing evidence of decline.
-
-Below is an overview of the functionalities provided by *grbl*:
+`grbl` unifies and simplifies common command-line workflows through a modular structure: each module operates independently but can leverage shared `GRBL_*` environment variables.
 
 ## Features
 
-- **Simplified Terminal Commands**: Streamline and rationalize terminal commands using `core.sh`.
-- **Modular Structure**: Each module is designed to run independently but can leverage grbl environmental variables for enhanced functionality.
-- **User-Level Daemon**: Control timed operations without needing root privileges using `daemon.sh`.
-- **File Sharing**: Utilize SSHFS for secure file sharing within a local network with `mount.sh`.
-- **Key and Configuration Management**: Store critical personal keys, tokens, and configurations for future projects, both locally and on the server.
-- **Backup Solutions**: Take backups of files, configurations, and container services from the server to a local encrypted hard drive using `backup.sh`.
+### Network and Connectivity
+- **SSH access**: key-only authentication to the local server (`ssh.sh`)
+- **File sharing**: secure file sharing on the local network via SSHFS (`mount.sh`)
+- **VPN**: simplified management of VPN accounts and clients (`vpn.sh`)
+- **SSL tunnels**: efficient tunnel management (`tunnel.sh`)
+- **MQTT**: MQTT-based local messaging network (`mqtt.sh`)
 
-### Network and Communication
+### System Management
+- **Command core**: unified command execution through `core.sh`
+- **User-level daemon**: scheduled operations without root privileges (`daemon.sh`)
+- **Package management**: install, upgrade, and remove system tools (`system.sh`, `os.sh`)
+- **Backup**: backup of files, configurations, and container services to an encrypted local drive (`backup.sh`)
+- **Keys and configuration**: storage of keys, tokens, and configurations locally and on the server
 
-- **VPN Simplification**: Simplify VPN account and client usage with `vpn.sh`.
-- **Local Message Network**: Use MQTT-based tools for local messaging networks with `mqtt.sh`.
-- **SSL Tunnel Management**: Manage SSL tunnels efficiently with `tunnel.sh`.
-- **Secure Access**: Implement SSH-based key-only access to the local server with `ssh.sh`.
+### Project Workflow
+- **Project management**: time tracking and invoicing helpers (`project.sh`, `timer.sh`, `counter.sh`)
+- **Notes and editors**: integration with editors such as Sublime, VSCode, and Obsidian (`note.sh`)
+- **Scaffolding**: automatic generation of templates for new modules and semi-automated test templates
 
-### Utility Tools
+### Integrations
+- **Cloud APIs**: integration with external APIs (e.g. `fingrid.sh`, `google.sh`)
+- **Messaging**: Telegram integration (`telegram.sh`)
+- **Speech**: simple text-to-speech capability (`say.sh`)
+- **Media**: audio, video, and image management, conversion, and tagging (`place.sh`, `convert.sh`, `tag.sh`); web and FM radio (`radio.sh`); streaming (`youtube.sh`, `yle.sh`)
+- **Hardware**: control of Corsair keyboards and mice via the `ckb-next` driver (`corsair.sh`)
+- **Embedded toolchains**: setup of programming environments for Microchip, ST, and ATmega microcontrollers (`program.sh`)
 
-- **Speech Capabilities**: Enable simple speaking capabilities with `say.sh`.
-- **Project Management**: Simplify project management, timing, and invoicing with `project.sh`, `timer.sh`, and `counter.sh`.
-- **System Management**: Upgrade, install, and remove system tools with `system.sh` and `os.sh`.
-
-### Hardware and Software Integration
-
-- **Corsair Device Tools**: Fun tools for Corsair keyboards and mice based on the `ckb-next` driver with `corsair.sh` and `corsair_raw.sh`.
-- **Finance Tools**: Prototype finance tools for budgeting and follow-up with `stonks.sh`.
-- **Cloud APIs**: Integrate with various cloud APIs using `fingrid.sh`, `google.sh`, and `stonks/op.sh`.
-
-### Media and Entertainment
-
-- **Media Management**: Place, convert, and tag audio, video, and pictures with `place.sh`, `convert.sh`, and `tag.sh`.
-- **Streaming Tools**: Download and stream files from YouTube and Yleisradio with `youtube.sh` and `yle.sh`.
-- **Audio Control**: Control and tunnel audio with dedicated tools.
-- **Radio Tools**: Listen to web and FM radio with three-key control using `radio.sh`.
-
-### Security, Programming, AI and Productivity
-
-- **Tor Tools**: Utilize Tor-based tools with `tor.sh`.
-- **Chip Programmer**: Install a programming environment for Microchip, ST, and AT-Mega chips with `program.sh`.
-- **Messaging Tools**: Install and integrate messaging tools like Telegram with `telegram.sh`.
-- **AI Integrations**: Integrate simple AI tools with `ai.sh` and `ailib.sh`.
-- **Note-Taking and Coding**: Integrate note-taking, coding, and idea cloud tools with editors like Sublime, VSCode, and Obsidian using `note.sh` and configuration files.
-- **Template Generation**: Automatically generate templates for new modules and semi-automated test templates.
-
-## Flow chart 
+## Architecture
 
 ```mermaid
-
 flowchart TD
     Macros("Macros & Templates"):::block
     Install("Installers & Versioning"):::block
@@ -80,40 +60,13 @@ flowchart TD
     %% External integration from modules
     Modules -->|"Calls"| External
 
-        %% Styles
     classDef block fill:#FFFFFF,stroke:#333,stroke-width:2px;
-
- ```
+```
 
 ## Getting Started
 
-Coming soon (or later.. probably never ;)
-
-To get started with **GRBL**, follow these steps:
-
-1. **Clone the Repository**:
-   ```sh
-   git clone https://github.com/ugcasa/grbl.git
-   cd grbl
-   ```
-
-2. **Install Dependencies**:
-   ```sh
-   TBD
-   pls. do not install grbl to native os for now.
-   ```
-
-3. **Run Modules**:
-   ```sh
-   TBD
-   Some environmental variable starting with GRBL_* need to be full filled to run modules 
-   ```
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
+Feel free to clone, but no not install.
 
 ## License
 
-[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-
+[GPL v2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
