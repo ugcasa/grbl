@@ -10,10 +10,11 @@ source mount.sh
 __note=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 __note_color="light_blue"
 
-declare -g note_file
+declare -g _day _month _year _datestamp
 declare -g note_date
 declare -g note_file_name
 declare -g note_folder
+declare -g note_file
 declare -g note_rc=/tmp/$USER/grbl_note.rc
 
 note.help () {
@@ -132,7 +133,6 @@ note.config () {
 
     local _input="$(echo ${@}| xargs)"
     [[ $1 ]] || _input="today"
-    local _year _month _day _datestamp
     local _re='^[0-9]+$'
 
     # check is note and template folder mounted, mount if not
@@ -213,7 +213,7 @@ note.config () {
 
     # fulfill note variables with given date in user config formats TBD bad naming ünd shit
     note_date=$(date -d $_datestamp +$GRBL_FORMAT_DATE)
-    note_folder=$GRBL_MOUNT_NOTES/$GRBL_USER_NAME/$_year/$_month
+    note_folder=$GRBL_MOUNT_NOTES/$_year/$_month
     note_file_name=$GRBL_USER_NAME"_notes_"$_datestamp.md
     note_file="$note_folder/$note_file_name"
     md_template_file_name="note-$GRBL_USER_NAME-$GRBL_USER_TEAM.md"
@@ -359,7 +359,7 @@ note.add () {
 
         # add calendar blog
         if source cal.sh ; then
-                printf "\n"'```calendar'"\n" >>$note_file
+                printf "\n"'```java'"\n" >>$note_file
                 cal.main notes >>$note_file # | grep -v $(date -d now +%Y)
                 printf '```'"\n" >>$note_file
             fi
@@ -382,7 +382,8 @@ note.open_obsidian_vault () {
     gr.msg -v4 -n -c $__note_color "$__note [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
     # gr.msg "${FUNCNAME[0]} TBD"
     # xdg-open obsidian://open?vault=${1}
-    local command="xdg-open obsidian://open?vault=${1}" #; while true ; do read -n1 ans ; case $ans in q) break ; esac ; done" # 2>/dev/null
+    vault="$1"
+    local command="xdg-open obsidian://open?vault=${vault}" #; while true ; do read -n1 ans ; case $ans in q) break ; esac ; done" # 2>/dev/null
     gnome-terminal --hide-menubar --geometry 130x6 --zoom 0.1 --title "obsidian launcher" -- bash -c "$command ; read "
 }
 
@@ -517,10 +518,9 @@ note.open_editor () {
     case "${GRBL_NOTE_EDITOR}" in # if was $GRBL_PREFERRED_EDITOR
 
         obsidian|obs)
-
-            GRBL_NOTE_EDITOR="xdg-open"
-            _options="obsidian://open?vault=${GRBL_NOTE_VAULT }"
-            #return $?
+            gr.varlist "debug _year _month note_file"
+            xdg-open "obsidian://open?vault=${GRBL_NOTE_VAULT}&file=$_year/$_month/$note_file_name"
+            return $?
             ;;
         subl|sublime|sublime3|sublime2)
             local project_folder=$GRBL_SYSTEM_MOUNT/project/projects/notes
