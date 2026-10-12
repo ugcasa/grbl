@@ -869,7 +869,7 @@ note.find () {
     local file_list="/tmp/$USER/note_search.list"
     # will be empty if no database exist
     local last_index=$(cat "${file_list}_year" 2>/dev/null)
-    local location=$GRBL_MOUNT_NOTES/$GRBL_USER_NAME
+    local location=$GRBL_MOUNT_NOTES
     local matches=()
 
     # check is year given (1000 - 9999)
