@@ -91,7 +91,7 @@ yle.main () {
                 do
                    yle.get_metadata "$item" || return 127
                    yle.get_media
-                   yle.place_media
+                   #yle.place_media
                 done
             ;;
 
@@ -117,22 +117,14 @@ yle.main () {
 
             yle.get_metadata $@ || return 127
 
-            if ! [[ $yle_episodes ]] ; then
-                gr.msg -c white "single episode"
-                return 0
-            fi
+        
 
-            gr.msg -c light_blue "${yle_episodes[@]}"
-
-            # if [[ $2 == "dl" ]] || gr.ask "download all ${#yle_episodes[@]} episodes?" ; then
             if gr.ask "download all ${#yle_episodes[@]} episodes?" ; then
 
-                    for episode in ${yle_episodes[@]} ; do
-                        yle.get_metadata $episode && \
-                        yle.get_media && \
-                        yle.place_media
-                        done
-                fi
+                for episode in ${yle_episodes[@]} ; do
+                    yle.get_media $episode
+                done
+            fi
             ;;
 
         play)
@@ -1014,11 +1006,11 @@ yle.get_metadata () {
 
     # make temp if not exist already
     [[ -d "$yle_temp_folder" ]] || mkdir -p "$yle_temp_folder"
-    cd "$yle_temp_folder"
+    #cd "$yle_temp_folder"
 
     #local $GRBL_YLE_BASE_URL="https://areena.yle.fi/"
     # do not add base url if it already given
-    if echo $1 | grep "http" ; then
+    if echo $1 | grep "http" -q ; then
         media_url=$1
     else
         media_url="${GRBL_YLE_BASE_URL%/}/$1"
@@ -1032,11 +1024,24 @@ yle.get_metadata () {
     gr.msg -v3 -c light_blue "yle_episodes: ${yle_episodes[@]}"
 
     # change media address poin to first episode
-    [[ ${yle_episodes[0]} ]] && media_url=${yle_episodes[0]}
+    #[[ ${yle_episodes[0]} ]] && media_url=${yle_episodes[0]}
+
+}
+
+
+
+yle.get_media () {
+    # get media from server and place it to /$USER/tmp
+    #gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
+    local url=$yle_media_address
+    local error
+
+    if [[ $1 ]]; then 
+        url=$1
+    fi
 
     # Get metadata
-    yle-dl $media_url --showmetadata 2>/tmp/$USER/yle.error > $meta_data
-
+    yle-dl $url --showmetadata 2>/tmp/$USER/yle.error >$meta_data 
     grep "error" $meta_data && error=$(cat $meta_data | jq '.[].flavors[].error')
 
     if [[ $error ]] ; then
@@ -1046,53 +1051,12 @@ yle.get_metadata () {
 
     # set variables (like they be local anyway)
     yle_media_title="$(cat "$meta_data" | jq '.[].title')"
-    gr.msg -v2 "${yle_media_title//'"'/""}"
+    #yle_media_filename=$(cat "$meta_data" | jq '.[].filename')
 
-    yle_media_address="$media_url "
-    #$(cat "$meta_data" | jq '.[].webpage')
-    #yle_media_address=${yle_media_address//'"'/""}
-    yle_media_filename=$(cat "$meta_data" | jq '.[].filename')
-}
+    gr.msg "${yle_media_title//'"'/""}"
+    gr.msg -c dark_gray "$url"
 
-
-yle.get_media () {
-    # get media from server and place it to /$USER/tmp
-    # gr.msg -v4 -n -c $__yle_color "$__yle [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2 # debug
-    # detox filename
-    output_filename=${yle_media_filename//. /-}
-    output_filename=${output_filename//.: /-}
-    output_filename=${output_filename//: /-}
-    output_filename=${output_filename// /-}
-    output_filename=${output_filename//-_-/-}
-    output_filename=${output_filename//--/-}
-    output_filename=${output_filename//'"'/}
-    output_filename=${output_filename,,}
-
-    gr.msg -v3 -c deep_pink "output filename: $output_filename"
-
-    # check is tmp file already there
-    if [[ -f $output_filename ]] ; then
-            gr.msg -c yellow "file exist, overwriting "
-            rm $output_filename
-        fi
-
-    # download stuff
-    yle-dl "$media_url" -o "$output_filename" --sublang all 2>/tmp/$USER/yle.error
-
-    # to check did yle-dl change format
-    local got_filename=$(echo ${output_filename%.*}*)
-
-    if [[ -f $got_filename ]] ; then
-            # got valid filename, update global variables
-            yle_media_filename=$got_filename
-            return 0
-        else
-            # update global variables
-            yle_media_filename=$output_filename
-            return 0
-        fi
-
-    return 127
+    yle-dl "$url" --vfat --restrict-filename-no-spaces --xattrs -qq 
 }
 
 
@@ -1101,8 +1065,7 @@ yle.get_subtitles () {
 
     [ -d "$yle_temp_folder" ] && rm -rf "$yle_temp_folder"
     mkdir -p "$yle_temp_folder"
-    cd "$yle_temp_folder"
-    yle-dl "$media_url" --subtitlesonly 2>/tmp/$USER/yle.error
+    yle-dl "$media_url" --subtitlesonly -o $yle_temp_folder 2>/tmp/$USER/yle.error
     #yle_media_filename=$(detox -v * | grep -v "Scanning")
     #yle_media_filename=${yle_media_filename#*"-> "}
 }
