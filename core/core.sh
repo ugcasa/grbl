@@ -89,7 +89,7 @@ core.main() {
 
     # Make system mount is online enbaled
 
-    [[ -f $GRBL_MOUNT_SYSTEM/.online ]] || core.mount_system_base 
+    #[[ -f $GRBL_MOUNT_SYSTEM/.online ]] || core.mount_system_base 
 
     case "$_input" in
 
