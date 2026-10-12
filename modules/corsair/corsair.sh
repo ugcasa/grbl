@@ -11,6 +11,8 @@ __corsair=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 corsair_rc=/tmp/$USER/corsair.rc
 corsair_config="$GRBL_CFG/$GRBL_USER/corsair.cfg"
 corsair_submodule="$GRBL_BIN/corsair"
+corsair_profile_files=${GRBL_MOUNT_SYSTEM[0]}/$GRBL_USER/data/corsair
+
 
 # Generate active key list
 # TODO. Critical issue! To avoid unnecessary processor draw of ckb-nest app. 
@@ -275,6 +277,7 @@ corsair.check () {
         gr.msg -n -v2 -V3 -c dark_grey "ms "
     fi
 
+
     gr.msg -n -v3 "checking ckb-next-daemon.. "
     if ps auxf | grep "ckb-next-daemon" | grep -q -v grep; then
         gr.msg -v3 -c green "daemon running"
@@ -296,6 +299,13 @@ corsair.check () {
         gr.msg -n -v2 -V3 -c red "app "
         [[ $GRBL_FORCE ]] || gr.msg -v3 -c white "command: $GRBL_CALL corsair start"
         return 14
+    fi
+
+    gr.msg -n -v3 "checking ckb- profile.. "
+    if [[ -f $corsair_profile_files/$GRBL_CORSAIR_PROFILE.ckb ]]; then 
+        gr.msg -v3 -c green "default profile exist"
+    else
+        gr.msg -v3 -c red "profile missing"
     fi
 
     source system.sh
@@ -369,7 +379,16 @@ corsair.init () {
 
     local _mode=$GRBL_CORSAIR_MODE ; [[ $1 ]] && _mode="$1"
 
-    if ckb-next -p grbl -m $_mode 2>/dev/null ; then
+    if ! [[ -f $corsair_profile_files/$GRBL_CORSAIR_PROFILE.ckb ]]; then 
+        gr.msg -e1 "profile missing, copying default.."
+        if [[ -f $GRBL_CFG/grbl.ckb ]]; then 
+            cp $GRBL_CFG/grbl.ckb $corsair_profile_files
+        else
+            gr.msg -e0 "$GRBL_CFG/grbl.ckb missing"
+        fi
+    fi
+
+    if ckb-next -p $GRBL_CORSAIR_PROFILE -m $_mode 2>/dev/null ; then
         export corsair_mode=$_mode
         echo $_mode > $corsair_last_mode
     else
