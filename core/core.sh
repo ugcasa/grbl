@@ -24,6 +24,7 @@ declare -x GRBL_RC="$HOME/.grblrc"
 declare -x GRBL_BIN="$HOME/bin"
 declare -x GRBL_VERSION=$(echo $(head -n1 $GRBL_BIN/version) | tr -d '\n')
 declare -x GRBL_VERSION_NAME=$(echo $(tail $GRBL_BIN/version -n +2 | head -n 1 ) | tr -d '\n')
+declare -g offline_flag="/tmp/$USER/grbl-offline.flag"
 
 # early exits
 case $1 in
@@ -85,6 +86,10 @@ core.main() {
     shopt -s extglob
     local modules="@($(gr.commands --bar))"
     gr.debug "$modules"
+
+    # Make system mount is online enbaled
+
+    [[ -f $GRBL_MOUNT_SYSTEM/.online ]] || core.mount_system_base 
 
     case "$_input" in
 
@@ -205,37 +210,37 @@ core.debug () {
 }
 
 
-core.active () {
-# start daemon
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+# core.active () {
+# # start daemon
+#     gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
-    # ask key for server,
-    # if key is no open, popup passphase input dialog appears
+#     # ask key for server,
+#     # if key is no open, popup passphase input dialog appears
 
-    # # set colors on terminal
-    # export GRBL_COLOR=true
-    export GRBL_VERBOSE=1
+#     # # set colors on terminal
+#     # export GRBL_COLOR=true
+#     export GRBL_VERBOSE=1
 
-    source mount.sh
+#     source mount.sh
 
-    # mount grbl data and cache
-    if ! mount.main system ; then
-        gr.msg -c failed "unable to active, system data mount failed"
-        return 127
-    fi
+#     # mount grbl data and cache
+#     if ! mount.main system ; then
+#         gr.msg -c failed "unable to active, system data mount failed"
+#         return 127
+#     fi
 
-    # mound defaults
-    mount.main
+#     # mound defaults
+#     mount.main
 
-    # copy sounds locally to be fast enough
-    cp $GRBL_DATA/sounds/*wav /tmp
+#     # copy sounds locally to be fast enough
+#     cp $GRBL_DATA/sounds/*wav /tmp
 
-    # start daemon
-    source daemon.sh
-    daemon.main start
-    return 0
-    gr.msg -c gold "bye!"
-}
+#     # start daemon
+#     source daemon.sh
+#     daemon.main start
+#     return 0
+#     gr.msg -c gold "bye!"
+# }
 
 
 core.status () {
@@ -738,31 +743,35 @@ core.change_user () {
 
 core.online () {
 # check is online, set pause for daemon if not
-    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+# TODO slow as fuck, make better
 
-    declare -g offline_flag="/tmp/$USER/grbl-offline.flag"
+    gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
+    local _return=0
+    
     source net.sh
     source flag.sh
 
     if net.check_server ; then
         if [[ -f $offline_flag ]] ; then
-            gr.end caps
             flag.rm pause
             rm $offline_flag
         fi
-        return 0
+        _return=0
     else
         touch $offline_flag
         gr.msg -v1 -c white "offline mode"
-        gr.end caps
         flag.set pause
-        return 127
+        _return=127
     fi
+    gr.end caps
+    return $_return
 }
 
 
 core.mount_system_base () {
 # check is access point enabled and mount is not
+# TODO slow as fuck, make better
+
     gr.msg -n -v4 -c $__core_color "$__core [$LINENO] $FUNCNAME: " >&2 ; [[ $GRBL_DEBUG ]] && echo "'$@'" >&2
 
     source mount.sh

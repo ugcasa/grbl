@@ -1,5 +1,5 @@
-0.7.11
-'new-server'
+0.7.12
+'this-is-the-end'
 1 'configs' merged to 'master'
 2 Target is to get installable version. Last sub version removed, jump form 0.7.0.1 to 0.7.2
 3 Rename to 'gerbil client', gb-client, alias gb
@@ -11,3 +11,4 @@
 9 note template name change (and a lot of more)
 10 bugfixes (mount, corsair)
 11 mount vaatii [cloud]:user,domain,port default tiedot ja tukee proxyjump toimintoa
+12 core.sh: system mount defination, corsair.sh: config file and default profile delivery
