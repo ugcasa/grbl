@@ -24,6 +24,7 @@ declare -x GRBL_RC="$HOME/.grblrc"
 declare -x GRBL_BIN="$HOME/bin"
 declare -x GRBL_VERSION=$(echo $(head -n1 $GRBL_BIN/version) | tr -d '\n')
 declare -x GRBL_VERSION_NAME=$(echo $(tail $GRBL_BIN/version -n +2 | head -n 1 ) | tr -d '\n')
+declare -x GRBL_SSH_PROXY=yes
 declare -g offline_flag="/tmp/$USER/grbl-offline.flag"
 
 # early exits
@@ -945,7 +946,7 @@ core.process_core_opts () {
     declare -gx GRBL_COLOR=$GRBL_FLAG_COLOR
 
     # go trough core arguments, long options should be on cause passing command trough this too
-    TEMP=`getopt --longoptions -o "dcsflqh:u:v:" $@`
+    TEMP=`getopt --longoptions -o "dcsflpqh:u:v:" $@`
     eval set -- "$TEMP"
 
     while true ; do
@@ -973,8 +974,14 @@ core.process_core_opts () {
                 export GRBL_HOSTNAME="$2"
                 shift 2 ;;
             -l)
-                export GRBL_LOGGING=true
+                #export GRBL_LOGGING=true
+                # now "local"
+                export GRBL_SSH_PROXY=
                 shift
+                ;;
+            -p)
+                export GRBL_SSH_PROXY="$2"
+                shift 2
                 ;;
             -q)
                 export GRBL_VERBOSE=

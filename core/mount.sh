@@ -1,9 +1,11 @@
 #!/bin/bash
 # grbl mount core module 2019 - 2022 casa@ujo.guru
 
-declare -g mount_rc="/tmp/$USER/grbl_mount.rc"
 __mount_color="gray"
 __mount=$(readlink --canonicalize --no-newline $BASH_SOURCE)
+
+declare -g _proxy_used=$GRBL_SSH_PROXY
+declare -g mount_rc="/tmp/$USER/grbl_mount.rc"
 quiet=
 
 if [[ $GRBL_DEBUG ]]; then 
@@ -468,7 +470,7 @@ mount.remote () {
 
     [[ -d "$_target_folder" ]] || mkdir -p "$_target_folder"
 
-    if [[ $_proxy_server ]] then 
+    if [[ $_proxy_server && $_proxy_used ]] then 
         _proxy_jump=",ProxyJump=$_proxy_user@$_proxy_server:$_proxy_port"
     fi
     

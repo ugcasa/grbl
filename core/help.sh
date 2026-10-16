@@ -156,7 +156,8 @@ help.common() {
         gr.msg -v1
         gr.msg -v1 "    -k <key_name>   keyboard key="
         gr.msg -v1 "    -m <topic>      MQTT server topic "
-        gr.msg -v1 "    -l              write to log"
+        gr.msg -v1 "    -l              local network sshfs mount, no tunnels "
+        gr.msg -v1 "    -l <server>     remote mounts, use tunnels trought configured server "
         gr.msg -v1 "    -s              speaks message out "
         gr.msg -v1 "    -q              quick message to default MQTT topic "
         gr.msg -v1 "    -x <exit_code>  exit after message with error code"
