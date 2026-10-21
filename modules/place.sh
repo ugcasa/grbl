@@ -5,6 +5,11 @@ declare -g temp_file="/tmp/$USER/grbl-place.tmp"
 declare -g place_indicator_key="f5"
 declare -g place_rc="/tmp/$USER/grbl_place.rc"
 declare -g undo_script=/tmp/$USER/grbl-place-undo.rc
+declare -g place_cfg=$GRBL_CFG/$GRBL_USER/place.cfg
+declare -A place
+
+source mount.sh
+
 
 place.help () {
     # user help
@@ -77,7 +82,14 @@ place.mime () {
     mime.config () {
     # get configurations
 
-        type_list=($GRBL_PLACE_TYPE_LIST)
+        # type_list=${!place[@]}
+
+        for p in ${!place[@]}; do 
+            # echo "$p: ${place[$p]}"
+            type_list+=( "$p" )
+            dest_list+=( "${place[$p]}" )
+        done
+
         # type_list=(image video audio other_system archive document code other)
         gr.debug "$FUNCNAME type_list: ${type_list[@]}"
         if ! [[ $type_list ]] ; then
@@ -85,7 +97,8 @@ place.mime () {
             return 98
         fi
 
-        dest_list=($GRBL_PLACE_DEST_LIST)
+        # dest_list=($GRBL_PLACE_DEST_LIST)
+        
         # dest_list=($GRBL_MOUNT_PICTURES $GRBL_MOUNT_VIDEO $GRBL_MOUNT_AUDIO $HOME $GRBL_MOUNT_DOCUMENTS $GRBL_MOUNT_DOCUMENTS $HOME/git $HOME)
         gr.debug "$FUNCNAME dest_list: ${dest_list[@]}"
         if ! [[ $dest_list ]] ; then
@@ -99,7 +112,7 @@ place.mime () {
         fi
     }
 
-     mime.given_list () {
+    mime.given_list () {
     # process list given by user
         local _type_list=()
         local _dest_list=()
@@ -183,6 +196,10 @@ place.mime () {
                     gr.msg -v3 -e1 "ignoring '${file_names[$i]}"
                     ignored_files=$((ignored_files + 1 ))
                     ;;
+                # *Bourne-Again*)
+                #     gr.msg -v3 -e1 "ignoring '${file_names[$i]}"
+                #     ignored_files=$((ignored_files + 1 ))
+                #     ;;
                 *)
                     other+=( "${file_names[$i]}" )
             esac
@@ -378,7 +395,7 @@ place.memes () {
     local meme_folder="$GRBL_MOUNT_PICTURES/memes"
 
     if ! [[ -f $GRBL_MOUNT_PICTURES/.online ]] ; then
-            source mount.sh
+            #source mount.sh
             mount.main pictures || return 123
         fi
 
@@ -404,7 +421,7 @@ place.photos () {
     local _photo_format="jpg"
     [[ $1 ]] && _photo_format=$1
 
-    mount.online $GRBL_MOUNT_PHOTOS || mount.known_remote photos
+    mount.main online $GRBL_MOUNT_PHOTOS || mount.main mount photos
 
     # when $phone_temp_folder/photos if filled?
 
@@ -467,7 +484,7 @@ place.videos () {
     local _video_format="mp4"
     [[ $1 ]] && _video_format=$1
 
-    mount.online $GRBL_MOUNT_VIDEO || mount.known_remote video
+    mount.main online $GRBL_MOUNT_VIDEO || mount.main mount videos
 
     # read file list
     local _file_list=($(ls "$phone_temp_folder/videos" 2>/dev/null | grep ".$_video_format" ))
@@ -515,8 +532,8 @@ place.media () {
     # process photos and videos from camera
     # expects that files are already copied/moved from home to $phone_temp_folder
 
-    mount.online $GRBL_MOUNT_PHOTOS || mount.known_remote photos
-    mount.online $GRBL_MOUNT_VIDEO || mount.known_remote video
+    mount.main online $GRBL_MOUNT_PHOTOS || mount.main mount photos
+    mount.main online $GRBL_MOUNT_VIDEO || mount.main mount videos
 
     place.photos "jpg"
     place.videos "mp4"
@@ -604,38 +621,45 @@ place.remove () {
 }
 
 
-place.rc () {
-# source configurations (to be faster)
+# place.rc () {
+# # source configurations (to be faster)
 
-    if [[ ! -f $place_rc ]] \
-        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/place.cfg) - $(stat -c %Y $place_rc) )) -gt 0 ]] \
-        || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/mount.cfg) - $(stat -c %Y $place_rc) )) -gt 0 ]]
-        then
-            place.make_rc && \
-                gr.msg -v1 -c dark_gray "$place_rc updated"
-        fi
+#     if [[ ! -f $place_rc ]] \
+#         || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/place.cfg) - $(stat -c %Y $place_rc) )) -gt 0 ]] \
+#         || [[ $(( $(stat -c %Y $GRBL_CFG/$GRBL_USER/mount.cfg) - $(stat -c %Y $place_rc) )) -gt 0 ]]
+#         then
+#             place.make_rc && \
+#                 gr.msg -v1 -c dark_gray "$place_rc updated"
+#         fi
 
-    source $place_rc
-}
+#     source $place_rc
+# }
 
 
-place.make_rc () {
-# configure place module
+# place.make_rc () {
+# # configure place module
 
-    source config.sh
+#     source config.sh
 
-    # make rc out of config file and run it
-    if [[ -f $place_rc ]] ; then
-            rm -f $place_rc
-        fi
+#     # make rc out of config file and run it
+#     if [[ -f $place_rc ]] ; then
+#             rm -f $place_rc
+#         fi
 
-    config.make_rc "$GRBL_CFG/$GRBL_USER/mount.cfg" $place_rc
-    config.make_rc "$GRBL_CFG/$GRBL_USER/place.cfg" $place_rc append
-    chmod +x $place_rc
-    source $place_rc
-}
+#     config.make_rc "$GRBL_CFG/$GRBL_USER/mount.cfg" $place_rc
+#     config.make_rc "$GRBL_CFG/$GRBL_USER/place.cfg" $place_rc append
+#     chmod +x $place_rc
+#     source $place_rc
+# }
 
-place.rc
+# place.rc
+
+if [[ -f $place_cfg ]] ; then 
+    source $place_cfg
+else 
+    gr.msg -e2 "Config file $place_cfg missing. please do 'gr config place'"
+    exit 100
+fi
 
 # if called place.sh file configuration is sourced and main place.main called
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
