@@ -640,7 +640,7 @@ audio.find_and_play () {
     ifs=$IFS
     IFS=$'\n'
     local _got=()
-    [[ -f $GRBL_MOUNT_MUUSIC/.online ]] && _got=($(find "$GRBL_MOUNT_MUSIC/" -iname $to_find 2>/dev/null | grep -v 'Trash-1000' | grep -e mp3 -e wav -e m4a))
+    [[ -f $GRBL_MOUNT_MUSIC/.online ]] && _got=($(find "$GRBL_MOUNT_MUSIC/" -iname $to_find 2>/dev/null | grep -v 'Trash-1000' | grep -e mp3 -e wav -e m4a))
     [[ -f $GRBL_MOUNT_AUDIO/.online ]] && _got+=($(find "$GRBL_MOUNT_AUDIO/" -iname $to_find 2>/dev/null | grep -v 'Trash-1000' | grep -e mp3 -e wav -e m4a))
     [[ -f $GRBL_MOUNT_AUDIOBOOKS/.online ]] && _got+=($(find "$GRBL_MOUNT_AUDIOBOOKS/" -iname $to_find 2>/dev/null | grep -v 'Trash-1000' | grep -e mp3 -e wav -e m4a))
     IFS=$ifs
