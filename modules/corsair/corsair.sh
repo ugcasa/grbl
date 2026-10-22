@@ -11,7 +11,7 @@ __corsair=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 corsair_rc=/tmp/$USER/corsair.rc
 corsair_config="$GRBL_CFG/$GRBL_USER/corsair.cfg"
 corsair_submodule="$GRBL_BIN/corsair"
-corsair_profile_files=${GRBL_MOUNT_SYSTEM[0]}/$GRBL_USER/data/corsair
+corsair_profile_files=${GRBL_SYSTEM_MOUNT[0]}/$GRBL_USER/data/corsair
 
 
 # Generate active key list
